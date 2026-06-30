@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundación IPPU — HCE · Protocolo IDEA · Analítica institucional</title>
+<style>
+  /* ============ TOKENS — paleta tomada de la presentación IPPU x UTEC ============ */
+  :root{
+    --navy:#0F2233;          /* fondo institucional oscuro */
+    --navy-2:#16314A;
+    --orange:#DD7B0C;        /* acento institucional IPPU */
+    --orange-soft:#FBEEDC;
+    --teal:#0E8F7E;          /* Escala A — Relación Social */
+    --teal-soft:#E3F4F1;
+    --escB:#DD7B0C;          /* Escala B — Comunicación y Lenguaje */
+    --escB-soft:#FBEEDC;
+    --purple:#6D3FBF;        /* Escala C — Anticipación / Flexibilidad */
+    --purple-soft:#EFE8FA;
+    --magenta:#C2185B;       /* Escala D — Simbolización */
+    --magenta-soft:#FAE4ED;
+    --bg:#F2F5F9;
+    --card:#FFFFFF;
+    --ink:#1B2A3A;
+    --ink-2:#5A6B7E;
+    --line:#E2E8F0;
+    --ok:#1B8A4C;
+    --warn:#C77700;
+    --bad:#C53030;
+    --radius:10px;
+    --shadow:0 1px 3px rgba(15,34,51,.08), 0 4px 14px rgba(15,34,51,.06);
+    font-size:15px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+    background:var(--bg); color:var(--ink); min-height:100vh;
+  }
+  button{font-family:inherit;cursor:pointer}
+
+  /* ============ TOPBAR ============ */
+  .topbar{
+    background:var(--navy); color:#fff; height:58px;
+    display:flex; align-items:center; gap:14px; padding:0 20px;
+    position:sticky; top:0; z-index:50;
+    border-bottom:3px solid var(--orange);
+  }
+  .logo{
+    width:36px;height:36px;border-radius:8px;background:var(--orange);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:.95rem;letter-spacing:.02em;color:#fff;flex:0 0 auto;
+  }
+  .topbar .title{line-height:1.15}
+  .topbar .title b{font-size:1rem;display:block}
+  .topbar .title span{font-size:.74rem;color:#ABC0D4}
+  .topbar .spacer{flex:1}
+  .userchip{display:flex;align-items:center;gap:10px;font-size:.82rem;color:#D7E2EC}
+  .userchip .avatar{width:30px;height:30px;border-radius:50%;background:#2C4A66;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+  .btn-exit{background:#2C4A66;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:.8rem}
+  .btn-exit:hover{background:#3B5E80}
+
+  /* ============ LAYOUT ============ */
+  .layout{display:flex;min-height:calc(100vh - 58px)}
+  .sidebar{
+    width:218px;background:var(--navy-2);padding:18px 0;flex:0 0 auto;
+    display:flex;flex-direction:column;
+  }
+  .sidebar .sec{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#7E97AD;padding:14px 20px 6px}
+  .navitem{
+    display:flex;align-items:center;gap:10px;color:#C9D8E5;background:none;border:none;
+    width:100%;text-align:left;padding:10px 20px;font-size:.88rem;border-left:3px solid transparent;
+  }
+  .navitem:hover{background:rgba(255,255,255,.06);color:#fff}
+  .navitem.active{background:rgba(221,123,12,.16);color:#fff;border-left-color:var(--orange);font-weight:600}
+  .navitem .ico{width:18px;text-align:center;opacity:.85}
+  .sidebar .foot{margin-top:auto;padding:16px 20px;font-size:.68rem;color:#6E879E;border-top:1px solid #234059}
+
+  main{flex:1;padding:26px 30px 60px;max-width:1180px}
+  .crumbs{font-size:.78rem;color:var(--ink-2);margin-bottom:14px}
+  .crumbs b{color:var(--ink)}
+
+  .view{display:none}
+  .view.active{display:block;animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  h1.pagetitle{font-size:1.35rem;margin-bottom:4px}
+  p.pagedesc{font-size:.86rem;color:var(--ink-2);margin-bottom:20px;max-width:760px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card .cardhead{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .card .cardhead h2{font-size:.95rem}
+  .card .cardbody{padding:18px}
+
+  /* ============ INICIO / NNA ============ */
+  table.lista{width:100%;border-collapse:collapse;font-size:.85rem}
+  table.lista th{
+    text-align:left;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);
+    padding:10px 14px;border-bottom:2px solid var(--line);background:#FAFBFD
+  }
+  table.lista td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+  table.lista tr:hover td{background:#F7FAFD}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:600}
+  .pill.done{background:#E3F4EA;color:var(--ok)}
+  .pill.pend{background:#FBEEDC;color:var(--warn)}
+  .pill.due{background:#FBE5E5;color:var(--bad)}
+  .nna-name{font-weight:700}
+  .nna-meta{font-size:.74rem;color:var(--ink-2)}
+  .btn{border:none;border-radius:7px;padding:8px 14px;font-size:.8rem;font-weight:600}
+  .btn-primary{background:var(--orange);color:#fff}
+  .btn-primary:hover{background:#C26A06}
+  .btn-ghost{background:#EEF3F8;color:var(--ink)}
+  .btn-ghost:hover{background:#E1EAF2}
+  .btn-link{background:none;color:var(--orange);padding:4px 6px}
+  .btn-link:hover{text-decoration:underline}
+  .kpirow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+  .kpi .lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+  .kpi .val{font-size:1.55rem;font-weight:800;margin-top:4px}
+  .kpi .sub{font-size:.72rem;color:var(--ink-2);margin-top:2px}
+  .kpi .val.ok{color:var(--ok)} .kpi .val.orange{color:var(--orange)} .kpi .val.purple{color:var(--purple)}
+
+  /* ============ FORMULARIO IDEA ============ */
+  .escala{border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);margin-bottom:22px;background:var(--card);box-shadow:var(--shadow)}
+  .escala>header{padding:12px 18px;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:.88rem;font-weight:700}
+  .escala>header .dims{font-size:.72rem;opacity:.9;font-weight:600}
+  .escala.eA>header{background:var(--teal)} .escala.eB>header{background:var(--escB)}
+  .escala.eC>header{background:var(--purple)} .escala.eD>header{background:var(--magenta)}
+  .dimension{padding:16px 18px;border-top:1px solid var(--line)}
+  .dimension .dname{font-size:.9rem;font-weight:700;margin-bottom:2px}
+  .dimension .dinstr{font-size:.73rem;color:var(--ink-2);margin-bottom:12px;font-style:italic}
+  /* Opciones principales (0,2,4,6,8) — cards descriptoras */
+  .opciones{display:flex;flex-direction:column;gap:6px}
+  .opcion{
+    display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border:1.5px solid var(--line);
+    border-radius:8px;background:#FAFBFD;cursor:pointer;text-align:left;width:100%;
+    transition:border-color .15s,background .15s
+  }
+  .opcion:hover{border-color:var(--orange);background:#FFFAF5}
+  .opcion.sel{border-color:var(--navy);background:#EEF3FA}
+  .opcion .score-badge{
+    min-width:32px;height:32px;border-radius:7px;background:var(--line);display:flex;
+    align-items:center;justify-content:center;font-size:.88rem;font-weight:800;
+    color:var(--ink-2);flex:0 0 auto
+  }
+  .opcion.sel .score-badge{background:var(--navy);color:#fff}
+  .opcion .desc{font-size:.8rem;line-height:1.45;color:var(--ink)}
+  /* Badge de color por severidad */
+  .badge-0{background:#E3F4EA!important;color:var(--ok)!important}
+  .badge-2{background:#EAF3EC!important;color:#1B7040!important}
+  .badge-4{background:#FDF3DC!important;color:#8A5A00!important}
+  .badge-6{background:#FDE8CC!important;color:#9B3A00!important}
+  .badge-8{background:#FBE5E5!important;color:var(--bad)!important}
+  /* Botones de puntaje intermedio (1,3,5,7) */
+  .inter-row{display:flex;gap:8px;margin-top:8px;padding:8px 12px;background:#F7FAFD;border-radius:8px;border:1px dashed var(--line);align-items:center;flex-wrap:wrap}
+  .inter-row .inter-label{font-size:.7rem;color:var(--ink-2);flex:0 0 auto}
+  .inter-btn{
+    padding:6px 14px;border:1.5px solid var(--line);background:#fff;border-radius:6px;
+    font-size:.78rem;font-weight:700;color:var(--ink-2);cursor:pointer
+  }
+  .inter-btn:hover{border-color:var(--orange)}
+  .inter-btn.sel{background:var(--navy);border-color:var(--navy);color:#fff}
+  .esc-foot{padding:10px 18px;background:#FAFBFD;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:.8rem}
+  .esc-foot b{margin-left:6px}
+  .esc-foot .subtxt{font-size:.72rem;color:var(--ink-2)}
+  .idea-summary{
+    position:sticky;bottom:0;background:var(--navy);color:#fff;border-radius:var(--radius);
+    padding:14px 20px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(15,34,51,.25);
+    margin-top:8px
+  }
+  .idea-summary .tot{font-size:1.7rem;font-weight:800}
+  .idea-summary .tot small{font-size:.85rem;font-weight:600;color:#ABC0D4}
+  .idea-summary .nivel{padding:5px 14px;border-radius:999px;font-size:.78rem;font-weight:700;background:#2C4A66}
+  .idea-summary .nota{font-size:.7rem;color:#ABC0D4;max-width:380px;line-height:1.35}
+  .idea-summary .spacer{flex:1}
+  .prog-dims{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px}
+  .prog-dim{width:22px;height:22px;border-radius:5px;background:#E2E8F0;font-size:.64rem;
+    font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+  .prog-dim.filled{background:var(--navy);color:#fff}
+
+  /* ============ EVAL INTERMEDIA ============ */
+  .lik-head{background:var(--teal);color:#fff;border-radius:var(--radius) var(--radius) 0 0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .lik-head h2{font-size:.92rem}
+  .lik-head .prog{font-size:.74rem;background:rgba(255,255,255,.18);padding:4px 12px;border-radius:999px}
+  .lik-item{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .lik-item .iname{font-weight:700;font-size:.86rem;margin-bottom:2px}
+  .lik-item .iq{font-size:.79rem;color:var(--ink-2);margin-bottom:10px}
+  .lik-opts{display:flex;gap:8px;flex-wrap:wrap}
+  .lik-opts button{
+    flex:1;min-width:74px;padding:9px 6px;border:1px solid var(--line);background:#F7FAFD;
+    border-radius:7px;font-size:.78rem;font-weight:600;color:var(--ink-2)
+  }
+  .lik-opts button:hover{border-color:var(--teal)}
+  .lik-opts button.sel{background:var(--teal);border-color:var(--teal);color:#fff}
+  .formula{
+    margin:14px 18px 18px;padding:12px 16px;border:1px dashed var(--teal);border-radius:8px;
+    background:var(--teal-soft);font-size:.83rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center
+  }
+  .formula b{color:var(--teal)}
+  .selector{display:flex;gap:10px;align-items:center;font-size:.83rem;margin-bottom:16px;flex-wrap:wrap}
+  select{font-family:inherit;font-size:.84rem;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink)}
+
+  /* ============ INFORME ============ */
+  .inf-banner{
+    background:linear-gradient(90deg,var(--purple),#8A5BD6);color:#fff;border-radius:var(--radius);
+    padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px
+  }
+  .inf-banner h2{font-size:1.05rem}
+  .inf-banner p{font-size:.76rem;opacity:.9;margin-top:2px}
+  .btn-print{background:#fff;color:var(--purple);border:none;border-radius:7px;padding:9px 16px;font-weight:700;font-size:.8rem}
+  .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}
+  @media(max-width:920px){.grid2{grid-template-columns:1fr}}
+  table.comp{width:100%;border-collapse:collapse;font-size:.82rem}
+  table.comp th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);text-align:left;padding:8px 10px;border-bottom:2px solid var(--line)}
+  table.comp td{padding:8px 10px;border-bottom:1px solid var(--line)}
+  .score-chip{display:inline-block;min-width:30px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:700;font-size:.78rem}
+  .s-high{background:#FBE5E5;color:var(--bad)} .s-mid{background:#FBEEDC;color:var(--warn)} .s-low{background:#E3F4EA;color:var(--ok)}
+  .resumen .big{font-size:1.6rem;font-weight:800}
+  .resumen .delta{color:var(--ok);font-weight:700;font-size:.88rem}
+  .resumen dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);margin-top:14px}
+  .resumen dd{font-size:.9rem;font-weight:700;margin-top:2px}
+  .barchart{display:flex;align-items:flex-end;gap:34px;height:190px;padding:10px 16px 0;justify-content:center}
+  .barchart .bar{width:64px;border-radius:6px 6px 0 0;position:relative;transition:height .5s ease}
+  .barchart .bar span{position:absolute;top:-22px;left:0;right:0;text-align:center;font-weight:800;font-size:.85rem}
+  .barchart .bar i{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-style:normal;font-size:.72rem;color:var(--ink-2)}
+  .chart-wrap{padding-bottom:34px}
+
+  /* ============ ANALÍTICA ============ */
+  .heat{border-collapse:collapse;font-size:.72rem;width:100%}
+  .heat th{font-weight:600;color:var(--ink-2);padding:6px;text-align:center;font-size:.68rem}
+  .heat th.row{text-align:left;white-space:nowrap}
+  .heat td{width:42px;height:30px;text-align:center;border:2px solid #fff;border-radius:5px;font-weight:700;color:#fff}
+  .legend{display:flex;gap:14px;font-size:.7rem;color:var(--ink-2);margin-top:10px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal}
+  .hbarrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:.78rem}
+  .hbarrow .lab{width:170px;flex:0 0 auto;color:var(--ink-2)}
+  .hbarrow .track{flex:1;background:#EEF3F8;border-radius:6px;height:18px;overflow:hidden}
+  .hbarrow .fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;color:#fff;font-size:.68rem;font-weight:700;min-width:34px}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  .note{font-size:.72rem;color:var(--ink-2);margin-top:12px;line-height:1.45}
+
+  .demo-tag{
+    position:fixed;bottom:14px;right:14px;background:var(--navy);color:#fff;font-size:.68rem;
+    padding:6px 12px;border-radius:999px;opacity:.85;z-index:60
+  }
+  @media(max-width:760px){
+    .layout{flex-direction:column}
+    .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:0}
+    .sidebar .sec,.sidebar .foot{display:none}
+    .navitem{border-left:none;border-bottom:3px solid transparent;white-space:nowrap}
+    .navitem.active{border-bottom-color:var(--orange)}
+    main{padding:18px 14px 60px}
+  }
+
+  /* ============ MODAL / WIZARD ALTA NNA ============ */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(15,34,51,.55);z-index:100;
+    display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto
+  }
+  .modal-bg.open{display:flex}
+  .modal{
+    background:var(--card);border-radius:14px;width:100%;max-width:680px;
+    box-shadow:0 20px 60px rgba(15,34,51,.35);animation:popin .2s ease
+  }
+  @keyframes popin{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:none}}
+  .modal-head{
+    background:var(--navy);color:#fff;padding:18px 24px;border-radius:14px 14px 0 0;
+    display:flex;justify-content:space-between;align-items:center
+  }
+  .modal-head h2{font-size:1.05rem}
+  .modal-head p{font-size:.76rem;color:#ABC0D4;margin-top:2px}
+  .modal-head .x{background:none;border:none;color:#ABC0D4;font-size:1.4rem;line-height:1;cursor:pointer}
+  .modal-head .x:hover{color:#fff}
+  /* stepper */
+  .stepper{display:flex;padding:16px 24px 0;gap:0}
+  .step{flex:1;text-align:center;position:relative;font-size:.72rem;color:var(--ink-2);padding-bottom:14px}
+  .step .dot{
+    width:28px;height:28px;border-radius:50%;background:#E2E8F0;color:var(--ink-2);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-weight:700;font-size:.8rem;
+    border:2px solid #E2E8F0;transition:.2s
+  }
+  .step.active .dot{background:var(--orange);border-color:var(--orange);color:#fff}
+  .step.done .dot{background:var(--teal);border-color:var(--teal);color:#fff}
+  .step.active{color:var(--ink);font-weight:600}
+  .step::after{content:"";position:absolute;top:14px;left:50%;width:100%;height:2px;background:#E2E8F0;z-index:-1}
+  .step:last-child::after{display:none}
+  .modal-body{padding:6px 24px 8px;max-height:52vh;overflow-y:auto}
+  .wizard-step{display:none} .wizard-step.active{display:block;animation:fadein .2s}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+  .form-grid.full{grid-template-columns:1fr}
+  @media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+  .field label{display:block;font-size:.74rem;font-weight:600;color:var(--ink);margin-bottom:5px}
+  .field label .req{color:var(--bad)}
+  .field input, .field select, .field textarea{
+    width:100%;font-family:inherit;font-size:.85rem;padding:9px 11px;border:1.5px solid var(--line);
+    border-radius:8px;background:#fff;color:var(--ink)
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--orange)}
+  .field textarea{resize:vertical;min-height:64px}
+  .field .hint{font-size:.68rem;color:var(--ink-2);margin-top:4px}
+  .field.invalid input, .field.invalid select{border-color:var(--bad);background:#FFF5F5}
+  .field .err{display:none;font-size:.68rem;color:var(--bad);margin-top:4px}
+  .field.invalid .err{display:block}
+  .section-label{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);
+    font-weight:700;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .section-label:first-child{margin-top:6px}
+  .chips-pick{display:flex;flex-wrap:wrap;gap:8px}
+  .chip-pick{padding:7px 14px;border:1.5px solid var(--line);border-radius:999px;background:#fff;
+    font-size:.78rem;cursor:pointer;color:var(--ink-2)}
+  .chip-pick:hover{border-color:var(--orange)}
+  .chip-pick.sel{background:var(--orange-soft);border-color:var(--orange);color:#9B5500;font-weight:600}
+  .review-box{background:#F7FAFD;border:1px solid var(--line);border-radius:10px;padding:16px}
+  .review-box dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:.83rem}
+  .review-box dt{color:var(--ink-2);font-weight:600}
+  .review-box dd{color:var(--ink);text-align:right}
+  .review-note{font-size:.74rem;color:var(--ink-2);margin-top:12px;display:flex;gap:8px;align-items:flex-start}
+  .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .modal-foot .left{font-size:.74rem;color:var(--ink-2)}
+
+  /* ============ EXPEDIENTE (HCE) ============ */
+  .exp-head{
+    background:linear-gradient(110deg,var(--navy),var(--navy-2));color:#fff;border-radius:var(--radius);
+    padding:22px 24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:20px
+  }
+  .exp-avatar{width:64px;height:64px;border-radius:14px;background:var(--orange);display:flex;
+    align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;flex:0 0 auto}
+  .exp-head h1{font-size:1.4rem}
+  .exp-head .meta{font-size:.82rem;color:#C9D8E5;margin-top:4px}
+  .exp-head .badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .exp-head .bdg{background:rgba(255,255,255,.12);padding:4px 12px;border-radius:999px;font-size:.74rem}
+  .exp-head .spacer{flex:1}
+  .exp-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+  @media(max-width:880px){.exp-grid{grid-template-columns:1fr}}
+  .info-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px}
+  .info-card>h3{font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);
+    padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .info-card>h3 .ic{color:var(--orange)}
+  .info-card .ib{padding:16px 18px}
+  .data-row{display:grid;grid-template-columns:140px 1fr;gap:10px;padding:6px 0;font-size:.84rem;border-bottom:1px solid #F0F4F8}
+  .data-row:last-child{border-bottom:none}
+  .data-row dt{color:var(--ink-2)}
+  .data-row dd{color:var(--ink);font-weight:500}
+  .tline{position:relative;padding-left:24px}
+  .tline::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tevent{position:relative;padding-bottom:18px}
+  .tevent:last-child{padding-bottom:0}
+  .tevent .tdot{position:absolute;left:-22px;top:2px;width:14px;height:14px;border-radius:50%;
+    border:3px solid #fff;box-shadow:0 0 0 2px var(--line)}
+  .tevent.idea .tdot{background:var(--teal);box-shadow:0 0 0 2px var(--teal)}
+  .tevent.lik .tdot{background:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+  .tevent.note .tdot{background:var(--purple);box-shadow:0 0 0 2px var(--purple)}
+  .tevent.alta .tdot{background:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+  .tevent .tdate{font-size:.7rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+  .tevent .ttitle{font-size:.86rem;font-weight:700;margin:2px 0}
+  .tevent .tdesc{font-size:.8rem;color:var(--ink-2)}
+  .tevent .tscore{display:inline-block;margin-top:4px;font-size:.74rem;font-weight:700;
+    padding:2px 10px;border-radius:6px;background:#EEF3FA;color:var(--navy)}
+  .empty-state{text-align:center;padding:32px 20px;color:var(--ink-2)}
+  .empty-state .big{font-size:2rem;margin-bottom:8px}
+  .talleres-list{display:flex;flex-wrap:wrap;gap:8px}
+  .taller-tag{background:var(--orange-soft);color:#9B5500;padding:5px 12px;border-radius:8px;font-size:.78rem;font-weight:600}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+
+  /* ============ TOAST ============ */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--teal);color:#fff;padding:13px 22px;border-radius:10px;font-size:.85rem;font-weight:600;
+    box-shadow:0 8px 24px rgba(14,143,126,.4);z-index:120;opacity:0;transition:.3s;display:flex;gap:10px;align-items:center
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="logo">IP</div>
+  <div class="title">
+    <b>Fundación IPPU</b>
+    <span>Historia Clínica Electrónica · Protocolo IDEA</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="userchip">
+    <div class="avatar">DG</div>
+    <div>Dr. González<br><span style="font-size:.7rem;color:#8FA9C0">Técnico · Psicología</span></div>
+  </div>
+  <button class="btn-exit">Salir</button>
+</header>
+
+<div class="layout">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <nav class="sidebar">
+    <div class="sec">Historia clínica</div>
+    <button class="navitem active" data-view="inicio"><span class="ico">⌂</span> Inicio / NNA</button>
+    <button class="navitem" onclick="openAlta()"><span class="ico">+</span> Registrar NNA</button>
+    <button class="navitem" data-view="idea"><span class="ico">✎</span> Evaluación IDEA</button>
+    <button class="navitem" data-view="intermedia"><span class="ico">◐</span> Eval. intermedia</button>
+    <button class="navitem" data-view="informes"><span class="ico">▤</span> Informes</button>
+    <div class="sec">Institucional</div>
+    <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
+    <div class="foot">v3.0 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+  </nav>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+
+    <!-- ============ VISTA: INICIO / NNA ============ -->
+    <section class="view active" id="view-inicio">
+      <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
+      <h1 class="pagetitle">Niños, niñas y adolescentes en seguimiento</h1>
+      <p class="pagedesc">Expedientes activos del convenio INAU con estado de sus evaluaciones IDEA del ciclo 2026. La evaluación completa se aplica en enero y noviembre; la intermedia (Likert) en junio.</p>
+
+      <div class="kpirow">
+        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div><div class="sub">Convenio INAU 2026</div></div>
+        <div class="kpi"><div class="lab">Con evaluación inicial</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">IDEA enero registrada</div></div>
+        <div class="kpi"><div class="lab">Intermedias pendientes</div><div class="val orange" id="kpiPend">5</div><div class="sub">Vencen 30 / 06 / 2026</div></div>
+        <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
+      </div>
+
+      <div class="card">
+        <div class="cardhead">
+          <h2>Listado de NNA — Grupo y estado de evaluación</h2>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost" onclick="go('idea')">Nueva evaluación IDEA</button>
+          <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
+        </div>
+        <table class="lista">
+          <thead>
+            <tr><th>NNA</th><th>Grupo / Taller</th><th>IDEA enero</th><th>Intermedia junio</th><th>Próxima evaluación</th><th></th></tr>
+          </thead>
+          <tbody id="tbodyNNA"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: EXPEDIENTE (HCE) ============ -->
+    <section class="view" id="view-expediente">
+      <div class="crumbs">Inicio › <b id="expCrumb">Expediente</b></div>
+      <div id="expedienteContent"></div>
+    </section>
+
+    <!-- ============ VISTA: EVALUACIÓN IDEA ============ -->
+    <section class="view" id="view-idea">
+      <div class="crumbs">Inicio › Evaluación IDEA › <b>Nueva evaluación</b></div>
+      <h1 class="pagetitle">Evaluación IDEA — Inventario del Espectro Autista</h1>
+      <p class="pagedesc">Protocolo de Ángel Rivière (1997): 4 escalas, 12 dimensiones, puntuación 0 – 96. Cada dimensión puntúa de 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b></p>
+
+      <div class="selector">
+        <label for="selNNA"><b>NNA evaluado:</b></label>
+        <select id="selNNA"></select>
+        <label for="selPeriodo" style="margin-left:8px"><b>Período:</b></label>
+        <select id="selPeriodo">
+          <option value="Enero 2026">Enero 2026 (inicial)</option>
+          <option value="Noviembre 2026">Noviembre 2026 (final)</option>
+        </select>
+        <span style="color:var(--ink-2)">Evaluador: Dr. González</span>
+      </div>
+
+      <div id="ideaForm"></div>
+
+      <div class="idea-summary">
+        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IDEA</div>
+        <div class="tot"><span id="ideaTotal">0</span><small> / 96</small></div></div>
+        <div class="nivel" id="ideaNivel">Sin puntuar</div>
+        <div class="spacer"></div>
+        <div class="nota">Banda orientativa de severidad para uso interno del equipo técnico. El juicio clínico del profesional prevalece siempre sobre el puntaje.</div>
+        <button class="btn btn-primary" onclick="guardarIDEA()">Guardar en expediente</button>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: EVAL INTERMEDIA ============ -->
+    <section class="view" id="view-intermedia">
+      <div class="crumbs">Inicio › Sofía R. › <b>Evaluación intermedia — Junio 2026</b></div>
+      <h1 class="pagetitle">Evaluación intermedia — Escala Likert 1 – 5</h1>
+      <p class="pagedesc">Seguimiento semestral abreviado: 3 ítems por dimensión en escala Likert. El sistema convierte el promedio a un <b>equivalente IDEA</b> para mantener la comparabilidad longitudinal con las evaluaciones completas.</p>
+
+      <div class="card">
+        <div class="lik-head">
+          <h2>Dimensión 3 — Teoría de la Mente <span style="font-weight:400;font-size:.74rem;opacity:.85">· Escala: Relación Social (D1 · D2 · D3)</span></h2>
+          <span class="prog">Dimensión 3 / 12</span>
+        </div>
+
+        <div class="lik-item">
+          <div class="iname">Ítem 1 — Presencia base</div>
+          <div class="iq">¿La niña muestra comprensión básica de estados mentales ajenos (deseos, emociones simples)?</div>
+          <div class="lik-opts" data-item="1">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2</button>
+            <button data-v="3">3 — Con apoyo</button><button data-v="4">4</button>
+            <button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+        <div class="lik-item">
+          <div class="iname">Ítem 2 — Funcionalidad</div>
+          <div class="iq">¿Realiza inferencias sobre intenciones o creencias de otros en situaciones cotidianas?</div>
+          <div class="lik-opts" data-item="2">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2 — Con mucha ayuda</button>
+            <button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+        <div class="lik-item" style="border-bottom:none">
+          <div class="iname">Ítem 3 — Autonomía</div>
+          <div class="iq">¿Comprende y utiliza la perspectiva del otro de manera espontánea en interacciones sociales?</div>
+          <div class="lik-opts" data-item="3">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2</button>
+            <button data-v="3">3 — Con apoyo</button><button data-v="4">4</button><button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+
+        <div class="formula" id="likFormula">
+          <b>Conversión automática:</b> seleccioná los 3 ítems para calcular el promedio y su equivalente IDEA = (5 − promedio) × 2.
+        </div>
+
+        <div style="display:flex;justify-content:space-between;padding:0 18px 18px">
+          <button class="btn btn-ghost">‹ Anterior</button>
+          <button class="btn btn-primary" style="background:var(--teal)">Siguiente ›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: INFORMES ============ -->
+    <section class="view" id="view-informes">
+      <div class="crumbs">Inicio › Martín G. › <b>Informe anual 2026</b></div>
+
+      <div class="inf-banner">
+        <div>
+          <h2>Informe final de evaluación — Año 2026</h2>
+          <p>Martín G. · 9 años · Grupo A · Generado automáticamente el 15/12/2026 · Lic. Torres</p>
+        </div>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimir PDF</button>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="cardhead"><h2>Comparativa IDEA — Enero vs Junio (equiv.) vs Noviembre</h2></div>
+          <div class="cardbody" style="padding:0 0 6px">
+            <table class="comp">
+              <thead><tr><th>Dimensión</th><th>Escala</th><th>Enero</th><th>Junio</th><th>Noviembre</th></tr></thead>
+              <tbody id="tbodyComp"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="cardhead"><h2>Evolución del puntaje total IDEA (0 – 96)</h2></div>
+            <div class="cardbody chart-wrap">
+              <div class="barchart">
+                <div class="bar" style="height:79%;background:#4A55C9"><span>38</span><i>Enero</i></div>
+                <div class="bar" style="height:58%;background:var(--teal)"><span>28</span><i>Junio</i></div>
+                <div class="bar" style="height:42%;background:var(--ok)"><span>20</span><i>Noviembre</i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card resumen">
+            <div class="cardhead"><h2>Resumen clínico</h2></div>
+            <div class="cardbody">
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)">Reducción total del puntaje</div>
+              <div class="big">38 → 20</div>
+              <div class="delta">▼ −18 puntos (47 % de mejora)</div>
+              <dl>
+                <dt>Mayor avance</dt>
+                <dd style="color:var(--teal)">D1 — Relación social: 6 → 2 (mejora severa → leve)</dd>
+                <dt>Área a reforzar</dt>
+                <dd style="color:var(--warn)">D8 — Estereotipias y rituales: meseta en 3 pts</dd>
+                <dt>Próxima evaluación completa</dt>
+                <dd>Enero 2027</dd>
+              </dl>
+              <button class="btn btn-ghost" style="margin-top:14px;width:100%">Ver informe completo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: ANALÍTICA INSTITUCIONAL ============ -->
+    <section class="view" id="view-analitica">
+      <div class="crumbs">Institucional › <b>Analítica institucional</b></div>
+      <h1 class="pagetitle">Analítica institucional — Dirección y equipo técnico</h1>
+      <p class="pagedesc">Indicadores agregados y anonimizados de la base de datos institucional: evolución poblacional de los puntajes IDEA, eficacia de los 18 talleres IPPU y cobertura de evaluaciones. Insumo para el Plan Anual y el reporte a INAU.</p>
+
+      <div class="kpirow">
+        <div class="kpi"><div class="lab">Mejora promedio anual</div><div class="val ok">−9,4 pts</div><div class="sub">Puntaje IDEA · población 2026</div></div>
+        <div class="kpi"><div class="lab">Cobertura de evaluación</div><div class="val">93 %</div><div class="sub">28 de 30 NNA con ciclo completo</div></div>
+        <div class="kpi"><div class="lab">Taller de mayor eficacia</div><div class="val orange">H. Sociales</div><div class="sub">−2,1 pts prom. en escala A</div></div>
+        <div class="kpi"><div class="lab">Sesiones registradas</div><div class="val purple">1.842</div><div class="sub">Ciclo 2026 · 18 talleres</div></div>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <div class="cardhead"><h2>Puntaje promedio por escala IDEA — Enero vs Noviembre</h2></div>
+          <div class="cardbody" id="escalasChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Heatmap — Talleres × mejora promedio por escala</h2></div>
+          <div class="cardbody">
+            <table class="heat" id="heatTable"></table>
+            <div class="legend">
+              <span><i style="background:#0E8F7E"></i>Mejora alta (≥ 1,5 pts)</span>
+              <span><i style="background:#6FBF9E"></i>Mejora media</span>
+              <span><i style="background:#D9C26B"></i>Mejora leve</span>
+              <span><i style="background:#C9CFD8"></i>Sin cambio</span>
+            </div>
+            <div class="note">Cruce de una muestra de los 18 talleres IPPU con la reducción promedio del puntaje IDEA por escala. Permite priorizar talleres en el Plan Anual.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Distribución de NNA por banda de severidad</h2></div>
+          <div class="cardbody" id="distChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Pipeline de datos institucional</h2></div>
+          <div class="cardbody">
+            <ol style="font-size:.82rem;line-height:1.7;padding-left:20px;color:var(--ink-2)">
+              <li><b style="color:var(--ink)">Fuentes:</b> HCE, evaluaciones IDEA, talleres, notas clínicas.</li>
+              <li><b style="color:var(--ink)">Ingesta:</b> extracción, validación de integridad, anonimización.</li>
+              <li><b style="color:var(--ink)">Análisis:</b> agregados poblacionales y comparativas entre períodos.</li>
+              <li><b style="color:var(--ink)">Visualización:</b> este panel, con corte por grupo, taller y escala.</li>
+              <li><b style="color:var(--ink)">Informe:</b> reporte automático para dirección, equipo e INAU.</li>
+            </ol>
+            <div class="note">Los datos individuales solo son visibles para el equipo técnico autorizado (roles y JWT por terapeuta). Este panel opera únicamente con datos agregados y anonimizados.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL: ALTA NUEVO NNA ===================== -->
+<div class="modal-bg" id="modalAlta">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Registrar nuevo NNA en la HCE</h2>
+        <p>Alta de expediente clínico · Convenio INAU — Fundación IPPU</p>
+      </div>
+      <button class="x" onclick="closeAlta()" title="Cerrar">×</button>
+    </div>
+
+    <div class="stepper">
+      <div class="step active" id="stp1"><div class="dot">1</div>Datos del NNA</div>
+      <div class="step" id="stp2"><div class="dot">2</div>Clínicos</div>
+      <div class="step" id="stp3"><div class="dot">3</div>Plan IPPU</div>
+      <div class="step" id="stp4"><div class="dot">4</div>Confirmar</div>
+    </div>
+
+    <div class="modal-body">
+      <!-- PASO 1: datos personales -->
+      <div class="wizard-step active" data-step="1">
+        <div class="section-label">Identificación</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre <span class="req">*</span></label>
+            <input id="f_nombre" placeholder="Ej. Lucas"><div class="err">Ingresá el nombre.</div></div>
+          <div class="field"><label>Apellido <span class="req">*</span></label>
+            <input id="f_apellido" placeholder="Ej. Méndez"><div class="err">Ingresá el apellido.</div></div>
+          <div class="field"><label>Fecha de nacimiento <span class="req">*</span></label>
+            <input id="f_nac" type="date"><div class="err">Ingresá la fecha.</div>
+            <div class="hint">La edad se calcula automáticamente.</div></div>
+          <div class="field"><label>Documento (C.I.)</label>
+            <input id="f_ci" placeholder="Ej. 5.123.456-7"></div>
+          <div class="field"><label>Sexo</label>
+            <select id="f_sexo"><option>Femenino</option><option>Masculino</option><option>Otro / no especifica</option></select></div>
+          <div class="field"><label>Localidad</label>
+            <input id="f_loc" placeholder="Ej. Montevideo" value="Montevideo"></div>
+        </div>
+        <div class="section-label">Referente familiar</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre del referente</label>
+            <input id="f_ref" placeholder="Ej. Ana Méndez (madre)"></div>
+          <div class="field"><label>Teléfono de contacto</label>
+            <input id="f_tel" placeholder="Ej. 099 123 456"></div>
+        </div>
+      </div>
+
+      <!-- PASO 2: datos clínicos -->
+      <div class="wizard-step" data-step="2">
+        <div class="section-label">Diagnóstico</div>
+        <div class="form-grid">
+          <div class="field"><label>Diagnóstico principal <span class="req">*</span></label>
+            <select id="f_dx">
+              <option>TEA — Trastorno del Espectro Autista</option>
+              <option>TEA con discapacidad intelectual asociada</option>
+              <option>TEA — en proceso diagnóstico</option>
+              <option>Trastorno del desarrollo (a especificar)</option>
+            </select></div>
+          <div class="field"><label>Fecha de diagnóstico</label>
+            <input id="f_dxfecha" type="date"></div>
+          <div class="field"><label>Profesional / centro derivante</label>
+            <input id="f_deriv" placeholder="Ej. Neuropediatría — Hospital Pereira Rossell"></div>
+          <div class="field"><label>Nivel de apoyo (DSM-5)</label>
+            <select id="f_apoyo"><option>Grado 1 — Requiere apoyo</option><option selected>Grado 2 — Requiere apoyo sustancial</option><option>Grado 3 — Requiere apoyo muy sustancial</option></select></div>
+        </div>
+        <div class="section-label">Antecedentes y observaciones</div>
+        <div class="form-grid full">
+          <div class="field"><label>Antecedentes relevantes</label>
+            <textarea id="f_antec" placeholder="Antecedentes perinatales, médicos, familiares, tratamientos previos…"></textarea></div>
+          <div class="field"><label>Medicación actual</label>
+            <input id="f_med" placeholder="Ej. Ninguna / Risperidona 0,5 mg"></div>
+          <div class="field"><label>Alertas clínicas</label>
+            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales con ruidos fuertes"></div>
+        </div>
+      </div>
+
+      <!-- PASO 3: plan IPPU -->
+      <div class="wizard-step" data-step="3">
+        <div class="section-label">Asignación institucional</div>
+        <div class="form-grid">
+          <div class="field"><label>Grupo <span class="req">*</span></label>
+            <select id="f_grupo"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+          <div class="field"><label>Técnico de referencia</label>
+            <select id="f_tecnico"><option>Dr. González — Psicología</option><option>Lic. Torres — Psicopedagogía</option><option>Lic. Pereira — Fonoaudiología</option><option>Dra. Silva — Neuropediatría</option></select></div>
+        </div>
+        <div class="section-label">Talleres asignados (Plan Anual)</div>
+        <div class="chips-pick" id="tallerPicker">
+          <span class="chip-pick" data-t="Habilidades sociales">Habilidades sociales</span>
+          <span class="chip-pick" data-t="Lenguaje y comunicación">Lenguaje y comunicación</span>
+          <span class="chip-pick" data-t="Motricidad">Motricidad</span>
+          <span class="chip-pick" data-t="Juego simbólico">Juego simbólico</span>
+          <span class="chip-pick" data-t="Música y expresión">Música y expresión</span>
+          <span class="chip-pick" data-t="Vida diaria (AVD)">Vida diaria (AVD)</span>
+          <span class="chip-pick" data-t="Arte y plástica">Arte y plástica</span>
+          <span class="chip-pick" data-t="Psicomotricidad">Psicomotricidad</span>
+        </div>
+        <div class="hint" style="margin-top:8px">Tocá los talleres en los que participará. Podés ajustarlos luego desde el expediente.</div>
+      </div>
+
+      <!-- PASO 4: revisión -->
+      <div class="wizard-step" data-step="4">
+        <div class="section-label">Revisá los datos antes de crear el expediente</div>
+        <div class="review-box"><dl id="reviewDl"></dl></div>
+        <div class="review-note">
+          <span style="color:var(--orange)">●</span>
+          <span>Al confirmar se crea el expediente en la HCE y el NNA queda disponible para su primera evaluación IDEA. En producción esto sería un <b>POST /api/nna</b> (FastAPI + JWT del terapeuta) con validación Pydantic y registro en PostgreSQL.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <span class="left" id="stepInfo">Paso 1 de 4</span>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="btnPrev" onclick="wizPrev()" style="display:none">‹ Atrás</button>
+        <button class="btn btn-primary" id="btnNext" onclick="wizNext()">Siguiente ›</button>
+        <button class="btn btn-primary" id="btnCreate" onclick="crearNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+
+<div class="demo-tag">Demo no funcional · Proyecto L1 — IPPU × UTEC 2026 · Datos simulados</div>
+
+<script>
+/* ================= MODELO HCE — Expedientes con historial clínico =================
+   Cada NNA es un expediente con: datos personales, datos clínicos, plan IPPU
+   y un historial cronológico de eventos (alta, evaluaciones IDEA, intermedias, notas).
+   Esto unifica HCE (el expediente) + IDEA (las evaluaciones dentro del expediente).   */
+let nnaSeq = 100; // generador de IDs de expediente
+
+const NNA = [
+  {
+    id: ++nnaSeq, nombre:"Sofía", apellido:"R.", nac:"2015-03-12", edad:11, sexo:"Femenino",
+    ci:"5.789.123-4", loc:"Montevideo", referente:"Marta R. (madre)", tel:"099 456 789",
+    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2019-08-20",
+    deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 2 — Requiere apoyo sustancial",
+    antec:"Embarazo y parto sin complicaciones. Retraso en aparición del lenguaje. Sin antecedentes familiares de TEA.",
+    med:"Ninguna", alerta:"Hipersensibilidad auditiva a ruidos fuertes",
+    talleres:["Habilidades sociales","Lenguaje y comunicación","Música y expresión"],
+    historial:[
+      {tipo:"alta", fecha:"2024-02-10", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Torres."},
+      {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Torres", score:42, total:96},
+      {tipo:"note", fecha:"2026-03-02", titulo:"Nota clínica", desc:"Buena adaptación al taller de música. Inicia contacto visual sostenido con la terapeuta."}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Martín", apellido:"G.", nac:"2017-06-05", edad:9, sexo:"Masculino",
+    ci:"6.012.345-1", loc:"Canelones", referente:"Pablo G. (padre)", tel:"098 222 111",
+    grupo:"A", tecnico:"Dr. González — Psicología",
+    dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2021-05-14",
+    deriv:"Centro de Diagnóstico Temprano — INAU", apoyo:"Grado 2 — Requiere apoyo sustancial",
+    antec:"Detección a los 3 años por la educadora del CAIF. Buena respuesta a intervención temprana.",
+    med:"Ninguna", alerta:"—",
+    talleres:["Habilidades sociales","Lenguaje y comunicación","Juego simbólico","Motricidad"],
+    historial:[
+      {tipo:"alta", fecha:"2023-03-01", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dr. González."},
+      {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Dr. González", score:38, total:96},
+      {tipo:"lik", fecha:"2026-06-10", titulo:"Evaluación intermedia (Likert)", desc:"Equivalente IDEA estimado", score:28, total:96},
+      {tipo:"idea", fecha:"2026-11-28", titulo:"Evaluación IDEA — final", desc:"Período Noviembre 2026 · Evaluador: Lic. Torres", score:20, total:96},
+      {tipo:"note", fecha:"2026-09-15", titulo:"Nota clínica", desc:"Avance notable en relación con pares. Inicia juego compartido espontáneo."}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Valentina", apellido:"P.", nac:"2013-11-22", edad:13, sexo:"Femenino",
+    ci:"5.345.678-9", loc:"Montevideo", referente:"Laura P. (madre)", tel:"091 777 333",
+    grupo:"C", tecnico:"Lic. Pereira — Fonoaudiología",
+    dx:"TEA con discapacidad intelectual asociada", dxFecha:"2017-02-10",
+    deriv:"Neuropediatría — Casa de Galicia", apoyo:"Grado 3 — Requiere apoyo muy sustancial",
+    antec:"Diagnóstico a los 4 años. Uso de comunicación aumentativa (pictogramas).",
+    med:"Risperidona 0,5 mg", alerta:"Crisis ante cambios bruscos de rutina",
+    talleres:["Lenguaje y comunicación","Vida diaria (AVD)","Psicomotricidad"],
+    historial:[
+      {tipo:"alta", fecha:"2022-04-12", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Pereira."},
+      {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Pereira", score:55, total:96},
+      {tipo:"lik", fecha:"2026-06-10", titulo:"Evaluación intermedia (Likert)", desc:"Equivalente IDEA estimado", score:49, total:96}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Joaquín", apellido:"M.", nac:"2018-01-30", edad:8, sexo:"Masculino",
+    ci:"6.234.567-8", loc:"Montevideo", referente:"Sofía M. (madre)", tel:"099 888 444",
+    grupo:"A", tecnico:"Dr. González — Psicología",
+    dx:"TEA — en proceso diagnóstico", dxFecha:"2025-11-03",
+    deriv:"Pediatría — policlínica barrial", apoyo:"Grado 1 — Requiere apoyo",
+    antec:"En proceso de confirmación diagnóstica. Buen nivel de lenguaje, dificultades en flexibilidad.",
+    med:"Ninguna", alerta:"—",
+    talleres:["Habilidades sociales","Juego simbólico"],
+    historial:[
+      {tipo:"alta", fecha:"2025-12-01", titulo:"Alta en HCE", desc:"Ingreso reciente. Expediente creado por Dr. González."},
+      {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Dr. González", score:31, total:96}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Lucía", apellido:"F.", nac:"2014-09-08", edad:12, sexo:"Femenino",
+    ci:"5.456.789-0", loc:"San José", referente:"Diego F. (padre)", tel:"092 555 666",
+    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2018-07-19",
+    deriv:"Neuropediatría — Hospital de San José", apoyo:"Grado 2 — Requiere apoyo sustancial",
+    antec:"Diagnóstico a los 4 años. Escolarizada con maestra de apoyo.",
+    med:"Ninguna", alerta:"Selectividad alimentaria importante",
+    talleres:["Habilidades sociales","Arte y plástica","Vida diaria (AVD)"],
+    historial:[
+      {tipo:"alta", fecha:"2023-02-20", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Torres."},
+      {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Torres", score:47, total:96},
+      {tipo:"lik", fecha:"2026-06-10", titulo:"Evaluación intermedia (Likert)", desc:"Equivalente IDEA estimado", score:40, total:96}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Tomás", apellido:"D.", nac:"2016-04-17", edad:10, sexo:"Masculino",
+    ci:"5.901.234-5", loc:"Montevideo", referente:"Carla D. (madre)", tel:"094 333 222",
+    grupo:"C", tecnico:"Dra. Silva — Neuropediatría",
+    dx:"TEA con discapacidad intelectual asociada", dxFecha:"2020-10-05",
+    deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 3 — Requiere apoyo muy sustancial",
+    antec:"Diagnóstico a los 4 años. Sin evaluación IDEA registrada aún en el ciclo 2026.",
+    med:"Ninguna", alerta:"—",
+    talleres:["Psicomotricidad","Vida diaria (AVD)"],
+    historial:[
+      {tipo:"alta", fecha:"2024-08-30", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dra. Silva."}
+    ]
+  }
+];
+
+/* Helpers de historial → derivan el estado de evaluaciones desde el historial */
+function getEval(nna, periodoKey){
+  // periodoKey: "inicial" | "lik" | "final"
+  if(periodoKey==="lik") return nna.historial.find(h=>h.tipo==="lik");
+  if(periodoKey==="final") return nna.historial.find(h=>h.tipo==="idea" && h.titulo.includes("final"));
+  return nna.historial.find(h=>h.tipo==="idea" && h.titulo.includes("inicial"));
+}
+function edadDesde(fechaNac){
+  if(!fechaNac) return "—";
+  const n=new Date(fechaNac), h=new Date("2026-06-10");
+  let e=h.getFullYear()-n.getFullYear();
+  if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate())) e--;
+  return e;
+}
+
+/* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997 ===============
+   Cada dimensión: array de [puntuación, descriptor_oficial]
+   Puntuaciones pares (0,2,4,6,8) = niveles principales
+   Puntuaciones impares (1,3,5,7) = casos claramente situados entre dos pares
+   Criterio: asignar siempre la puntuación más baja posible.
+   El 0 se reserva para ausencia de anomalías en esa dimensión.             */
+const DIMENSIONES = [
+  {
+    esc:"eA", escName:"Relación Social", color:"var(--teal)",
+    dims:[
+      {
+        id:"D1", label:"Dimensión 1: Relaciones Sociales",
+        opciones:[
+          [8,"Aislamiento completo. No apego a personas específicas. No relación con adultos o iguales."],
+          [6,"Incapacidad de relación. Vínculo con adultos. No relación con iguales."],
+          [4,"Relaciones infrecuentes, inducidas, externas con iguales. Las relaciones más como respuesta que a iniciativa propia."],
+          [2,"Motivación de relación con iguales, pero falta de relaciones por dificultad para comprender sutilezas sociales y escasa empatía. Conciencia de soledad."],
+          [0,"No hay trastorno cualitativo de la relación social."]
+        ]
+      },
+      {
+        id:"D2", label:"Dimensión 2: Capacidades de Referencia Conjunta",
+        opciones:[
+          [8,"Ausencia completa de acciones conjuntas o interés por las otras personas y sus acciones."],
+          [6,"Acciones conjuntas simples, sin miradas significativas de referencia conjunta."],
+          [4,"Empleo de miradas de referencia conjunta en situaciones dirigidas, pero no abiertas."],
+          [2,"Pautas establecidas de atención y acción conjunta, pero no de preocupación conjunta."],
+          [0,"No hay trastorno cualitativo de las capacidades de referencia conjunta."]
+        ]
+      },
+      {
+        id:"D3", label:"Dimensión 3: Capacidades Intersubjetivas y Mentalistas",
+        opciones:[
+          [8,"Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria). Falta de interés por las personas."],
+          [6,"Respuestas intersubjetivas primarias, pero ningún indicio de que se vive al otro como sujeto."],
+          [4,"Indicios de intersubjetividad secundaria, sin atribución explícita de estados mentales. No se resuelven tareas de Teoría de la Mente."],
+          [2,"Conciencia explícita de que las otras personas tienen mente (resolución de Teoría de la Mente de 1.er orden). En situaciones reales, el mentalismo es lento, simple y limitado."],
+          [0,"No hay trastorno cualitativo de capacidades intersubjetivas y mentalistas."]
+        ]
+      }
+    ]
+  },
+  {
+    esc:"eB", escName:"Comunicación y Lenguaje", color:"var(--escB)",
+    dims:[
+      {
+        id:"D4", label:"Dimensión 4: Funciones Comunicativas",
+        opciones:[
+          [8,"Ausencia de comunicación (relación intencionada, intencional y significante) y de conductas instrumentales con personas."],
+          [6,"Conductas instrumentales con personas para lograr cambios en el mundo físico (pedir), sin otras pautas de comunicación."],
+          [4,"Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencias o cambiar el mundo mental."],
+          [2,"Conductas comunicativas de declarar, comentar, etc., con escasas cualificaciones subjetivas de la experiencia y declaraciones sobre el mundo interno."],
+          [0,"No hay trastorno cualitativo de las funciones comunicativas."]
+        ]
+      },
+      {
+        id:"D5", label:"Dimensión 5: Lenguaje Expresivo",
+        opciones:[
+          [8,"Mutismo total o funcional. Puede haber verbalizaciones que no son propiamente lingüísticas."],
+          [6,"Lenguaje compuesto de palabras sueltas o ecolalias. No hay creación formal de sintagmas y oraciones."],
+          [4,"Lenguaje oracional. Hay oraciones que no son ecolalálicas, pero no configuran discurso o conversación."],
+          [2,"Discurso y conversación, con limitaciones de adaptación flexible y de selección de temas relevantes. Frecuentemente hay anomalías prosódicas."],
+          [0,"No hay trastorno cualitativo del lenguaje expresivo."]
+        ]
+      },
+      {
+        id:"D6", label:"Dimensión 6: Lenguaje Receptivo",
+        opciones:[
+          [8,"'Sordera central'. Tendencia a ignorar el lenguaje. No hay respuesta a órdenes, llamadas o indicaciones."],
+          [6,"Asociación de enunciados verbales con conductas propias, sin indicios de que los enunciados se asimilen a un código."],
+          [4,"Comprensión literal y poco flexible de enunciados, con algún análisis estructural. No se comprende discurso."],
+          [2,"Se comprende discurso y conversación, pero se diferencia con gran dificultad el significado literal del intencional."],
+          [0,"No hay trastorno cualitativo de las capacidades de comprensión."]
+        ]
+      }
+    ]
+  },
+  {
+    esc:"eC", escName:"Anticipación / Flexibilidad", color:"var(--purple)",
+    dims:[
+      {
+        id:"D7", label:"Dimensión 7: Anticipación",
+        opciones:[
+          [8,"Adherencia inflexible a estímulos que se repiten de forma idéntica (p. ej. películas de vídeo). Resistencia intensa a cambios. Falta de conductas anticipatorias."],
+          [6,"Conductas anticipatorias simples en rutinas cotidianas. Con frecuencia, oposición a cambios y empeoramiento en situaciones que implican cambios."],
+          [4,"Incorporadas estructuras temporales amplias (p. ej. Curso vs. Vacaciones). Puede haber reacciones catastróficas ante cambios no previstos."],
+          [2,"Alguna capacidad de regular el propio ambiente y de manejar los cambios. Se prefiere un orden claro y un ambiente predecible."],
+          [0,"No hay trastorno cualitativo de capacidades de anticipación."]
+        ]
+      },
+      {
+        id:"D8", label:"Dimensión 8: Flexibilidad",
+        opciones:[
+          [8,"Predominan las estereotipias motoras simples."],
+          [6,"Predominan los rituales simples. Resistencia a cambios mínimos."],
+          [4,"Rituales complejos. Apego excesivo a objetos. Preguntas obsesivas."],
+          [2,"Contenidos obsesivos y limitados de pensamiento. Intereses poco funcionales y flexibles. Rígido perfeccionismo."],
+          [0,"No hay trastorno cualitativo de la flexibilidad."]
+        ]
+      },
+      {
+        id:"D9", label:"Dimensión 9: Sentido de la Actividad",
+        opciones:[
+          [8,"Predominio masivo de conductas sin meta. Inaccesibilidad a consignas externas que dirijan la actividad."],
+          [6,"Sólo se realizan actividades funcionales breves con consignas externas. Cuando no las hay, se pasa al nivel anterior."],
+          [4,"Actividades autónomas de ciclo largo, que no se viven como partes de proyectos coherentes, y cuya motivación es externa."],
+          [2,"Actividades complejas de ciclo muy largo, cuya meta se conoce y desea, pero sin una estructura jerárquica de previsiones biográficas en que se inserten."],
+          [0,"No hay trastorno cualitativo del sentido de la actividad."]
+        ]
+      }
+    ]
+  },
+  {
+    esc:"eD", escName:"Simbolización", color:"var(--magenta)",
+    dims:[
+      {
+        id:"D10", label:"Dimensión 10: Ficción e Imaginación",
+        opciones:[
+          [8,"Ausencia completa de juego funcional o simbólico y de otras competencias de ficción."],
+          [6,"Juegos funcionales poco flexibles, poco espontáneos y de contenidos limitados."],
+          [4,"Juego simbólico, en general poco espontáneo y obsesivo. Dificultades importantes para diferenciar ficción y realidad."],
+          [2,"Capacidades complejas de ficción, que se emplean como recursos de aislamiento. Ficciones poco flexibles."],
+          [0,"No hay trastorno de competencias de ficción e imaginación."]
+        ]
+      },
+      {
+        id:"D11", label:"Dimensión 11: Imitación",
+        opciones:[
+          [8,"Ausencia completa de conductas de imitación."],
+          [6,"Imitaciones motoras simples, evocadas. No espontáneas."],
+          [4,"Imitación espontánea esporádica, poco versátil e intersubjetiva."],
+          [2,"Imitación establecida. Ausencia de modelos internos."],
+          [0,"No hay trastorno de las capacidades de imitación."]
+        ]
+      },
+      {
+        id:"D12", label:"Dimensión 12: Suspensión (capacidad de crear significantes)",
+        opciones:[
+          [8,"No se suspenden pre-acciones para crear gestos comunicativos. Comunicación ausente o por gestos instrumentales con personas."],
+          [6,"No se suspenden acciones instrumentales para crear símbolos enactivos. No hay juego funcional."],
+          [4,"No se suspenden propiedades reales de cosas o situaciones para crear ficciones y juego de ficción."],
+          [2,"No se dejan en suspenso representaciones para crear o comprender metáforas, o para comprender que los estados mentales no se corresponden necesariamente con las situaciones."],
+          [0,"No hay trastorno cualitativo de las capacidades de suspensión."]
+        ]
+      }
+    ]
+  }
+];
+
+/* Informe Martín G. — [enero, junio equiv., noviembre] */
+const COMP = [
+  ["D1 — Relación social","A",6,4,2],["D2 — Referencia conjunta","A",4,4,2],
+  ["D3 — Teoría de la Mente","A",6,4,4],["D4 — Func. comunicativas","B",4,2,2],
+  ["D5 — Lenguaje expresivo","B",4,2,2],["D6 — Lenguaje receptivo","B",2,2,1],
+  ["D7 — Anticipación","C",3,3,2],["D8 — Flexibilidad","C",3,3,3],
+  ["D9 — Sentido de actividad","C",2,2,1],["D10 — Ficción","D",2,1,1],
+  ["D11 — Imitación","D",1,1,0],["D12 — Suspensión","D",1,0,0]
+];
+
+/* ================= NAVEGACIÓN ================= */
+function go(view){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("view-"+view).classList.add("active");
+  document.querySelectorAll(".navitem").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+  window.scrollTo({top:0});
+}
+document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+
+/* ================= INICIO: TABLA NNA (re-renderizable) ================= */
+const tb = document.getElementById("tbodyNNA");
+const selNNA = document.getElementById("selNNA");
+
+function pillEval(ev){
+  if(!ev) return `<span class="pill due">sin evaluar</span>`;
+  return `<span class="pill done">${ev.score} pts</span>`;
+}
+function pillLik(ev, tieneInicial){
+  if(ev) return `<span class="pill done">${ev.score} pts</span>`;
+  return tieneInicial ? `<span class="pill pend">pendiente</span>` : `<span class="pill due">—</span>`;
+}
+function proxEval(nna){
+  const final = getEval(nna,"final");
+  if(final) return "Ciclo completo ✓";
+  const lik = getEval(nna,"lik");
+  if(lik) return "Completa · 11/2026";
+  const ini = getEval(nna,"inicial");
+  if(ini) return "Intermedia · 06/2026";
+  return "Completa · pendiente";
+}
+
+function renderNNA(){
+  tb.innerHTML = "";
+  selNNA.innerHTML = "";
+  NNA.forEach(p=>{
+    const ini = getEval(p,"inicial"), lik = getEval(p,"lik");
+    const tallerStr = p.talleres.length ? p.talleres[0] + (p.talleres.length>1?` +${p.talleres.length-1}`:"") : "—";
+    tb.insertAdjacentHTML("beforeend", `<tr>
+      <td><div class="nna-name">${p.nombre} ${p.apellido}</div><div class="nna-meta">${p.edad} años · Exp. #${p.id} · ${p.dx.split("—")[0].trim()}</div></td>
+      <td>Grupo ${p.grupo}<div class="nna-meta">${tallerStr}</div></td>
+      <td>${pillEval(ini)}</td>
+      <td>${pillLik(lik, !!ini)}</td>
+      <td style="font-size:.78rem;color:var(--ink-2)">${proxEval(p)}</td>
+      <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})">Abrir expediente →</button></td>
+    </tr>`);
+    selNNA.insertAdjacentHTML("beforeend",`<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`);
+  });
+  // KPIs dinámicos
+  const total = NNA.length;
+  const conInicial = NNA.filter(p=>getEval(p,"inicial")).length;
+  const pendInter = NNA.filter(p=>getEval(p,"inicial") && !getEval(p,"lik") && !getEval(p,"final")).length;
+  const totalEvals = NNA.reduce((a,p)=>a+p.historial.filter(h=>h.tipo==="idea"||h.tipo==="lik").length,0);
+  setKpi("kpiTotal", total);
+  setKpi("kpiAlDia", conInicial);
+  setKpi("kpiPend", pendInter);
+  setKpi("kpiInf", totalEvals);
+}
+function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+
+renderNNA();
+
+/* ================= FORMULARIO IDEA ================= */
+const form = document.getElementById("ideaForm");
+const ideaScores = {};
+
+// Indicador de progreso de las 12 dimensiones
+const progRow = document.createElement("div");
+progRow.className = "prog-dims";
+progRow.innerHTML = Array.from({length:12},(_,i)=>
+  `<div class="prog-dim" id="prog-d${i+1}" title="D${i+1}">${i+1}</div>`).join("");
+form.appendChild(progRow);
+
+const badgeClass = v => v===0?"badge-0":v<=2?"badge-2":v<=4?"badge-4":v<=6?"badge-6":"badge-8";
+
+DIMENSIONES.forEach((escala, ei)=>{
+  let html = `<div class="escala ${escala.esc}">
+    <header><span>${escala.escName}</span><span class="dims">D${ei*3+1} · D${ei*3+2} · D${ei*3+3} — Máx. 24 pts</span></header>`;
+
+  escala.dims.forEach((dim, di)=>{
+    const dimKey = `${ei}-${di}`;
+    const dimNum = ei*3 + di + 1;
+
+    let opcionesHtml = dim.opciones.map(([pts, desc])=>`
+      <button class="opcion" data-dim="${dimKey}" data-v="${pts}" type="button">
+        <span class="score-badge ${badgeClass(pts)}">${pts}</span>
+        <span class="desc">${desc}</span>
+      </button>`).join("");
+
+    html += `<div class="dimension" id="dim-${dimKey}">
+      <div class="dname">${dim.label}</div>
+      <div class="dinstr">Seleccioná la descripción que mejor caracterice al NNA — asignar siempre la puntuación más baja posible.</div>
+      <div class="opciones">${opcionesHtml}</div>
+      <div class="inter-row">
+        <span class="inter-label">¿El caso se sitúa claramente entre dos niveles?</span>
+        ${[1,3,5,7].map(v=>`<button class="inter-btn" data-dim="${dimKey}" data-inter="${v}" type="button">
+          Puntaje ${v}</button>`).join("")}
+        <span style="font-size:.68rem;color:var(--ink-2)">Puntuaciones intermedias según criterio de Rivière</span>
+      </div>
+      <div id="sel-${dimKey}" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;background:#EEF3FA;font-size:.76rem;color:var(--ink-2)">
+        Puntaje seleccionado: <b id="sval-${dimKey}">—</b>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="esc-foot">
+    <span class="subtxt">Puntaje 0 = sin trastorno · 8 = afectación severa</span>
+    <span>Subtotal escala: <b id="sub${ei}">0 / 24</b></span>
+  </div></div>`;
+
+  form.insertAdjacentHTML("beforeend", html);
+});
+
+function updateScore(dimKey, val){
+  ideaScores[dimKey] = val;
+  // mostrar selección
+  document.getElementById(`sel-${dimKey}`).style.display = "block";
+  document.getElementById(`sval-${dimKey}`).textContent = val;
+  // marcar progreso
+  const dimNum = parseInt(dimKey.split("-")[0])*3 + parseInt(dimKey.split("-")[1]) + 1;
+  const pd = document.getElementById(`prog-d${dimNum}`);
+  if(pd){ pd.classList.add("filled"); }
+  // recalcular subtotales y total
+  let total = 0;
+  DIMENSIONES.forEach((e,ei)=>{
+    let sub = 0;
+    e.dims.forEach((_,di)=>{ sub += ideaScores[`${ei}-${di}`] ?? 0; });
+    document.getElementById("sub"+ei).textContent = `${sub} / 24`;
+    total += sub;
+  });
+  document.getElementById("ideaTotal").textContent = total;
+  const nivel = document.getElementById("ideaNivel");
+  const answered = Object.keys(ideaScores).length;
+  const pct = Math.round(total/96*100);
+  if(answered < 12){
+    nivel.textContent = `${answered} / 12 dimensiones puntuadas`;
+    nivel.style.background="#2C4A66";
+  } else if(total >= 65){
+    nivel.textContent=`Espectro severo — ${total} pts (${pct}%)`;
+    nivel.style.background="var(--bad)";
+  } else if(total >= 33){
+    nivel.textContent=`Espectro moderado — ${total} pts (${pct}%)`;
+    nivel.style.background="var(--warn)";
+  } else {
+    nivel.textContent=`Espectro leve — ${total} pts (${pct}%)`;
+    nivel.style.background="var(--ok)";
+  }
+}
+
+form.addEventListener("click", ev=>{
+  // Opciones principales (0,2,4,6,8)
+  const opcion = ev.target.closest(".opcion[data-dim]");
+  if(opcion){
+    const dim = opcion.dataset.dim;
+    document.querySelectorAll(`.opcion[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
+    document.querySelectorAll(`.inter-btn[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
+    opcion.classList.add("sel");
+    updateScore(dim, +opcion.dataset.v);
+    return;
+  }
+  // Puntuaciones intermedias (1,3,5,7)
+  const interBtn = ev.target.closest(".inter-btn[data-dim]");
+  if(interBtn){
+    const dim = interBtn.dataset.dim;
+    document.querySelectorAll(`.opcion[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
+    document.querySelectorAll(`.inter-btn[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
+    interBtn.classList.add("sel");
+    updateScore(dim, +interBtn.dataset.inter);
+  }
+});
+
+/* ================= EVAL INTERMEDIA: LIKERT ================= */
+const likSel = {};
+document.querySelectorAll(".lik-opts").forEach(g=>{
+  g.addEventListener("click", ev=>{
+    const b = ev.target.closest("button"); if(!b) return;
+    g.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");
+    likSel[g.dataset.item] = +b.dataset.v;
+    if(Object.keys(likSel).length === 3){
+      const vals = Object.values(likSel);
+      const prom = vals.reduce((a,b)=>a+b,0)/3;
+      const eq = Math.round((5 - prom) * 2 * 10) / 10;
+      const niv = eq >= 5.5 ? "alto" : eq >= 3 ? "moderado-alto" : eq >= 1.5 ? "moderado" : "leve";
+      document.getElementById("likFormula").innerHTML =
+        `<b>Conversión:</b> Promedio = (${vals.join(" + ")}) / 3 = <b>${prom.toFixed(1)}</b>
+         &nbsp;→&nbsp; Equivalente IDEA = (5 − ${prom.toFixed(1)}) × 2 = <b>${eq}</b>
+         &nbsp;→&nbsp; Nivel: <b>${niv}</b>`;
+    }
+  });
+});
+
+/* ================= INFORME: TABLA COMPARATIVA ================= */
+const chip = v => `<span class="score-chip ${v>=5?"s-high":v>=3?"s-mid":"s-low"}">${v}</span>`;
+const escName = {A:"Rel. Social",B:"Comunicación",C:"Anticipación",D:"Simbolización"};
+document.getElementById("tbodyComp").innerHTML = COMP.map(r=>
+  `<tr><td>${r[0]}</td><td style="font-size:.74rem;color:var(--ink-2)">${escName[r[1]]}</td>
+   <td>${chip(r[2])}</td><td>${chip(r[3])}</td><td>${chip(r[4])}</td></tr>`).join("");
+
+/* ================= ANALÍTICA: GRÁFICOS ================= */
+// Barras horizontales por escala (enero vs noviembre, promedio poblacional /24)
+const escalas = [
+  ["Relación Social", 13.2, 8.1, "var(--teal)"],
+  ["Comunicación y Lenguaje", 11.8, 7.9, "var(--escB)"],
+  ["Anticipación / Flexibilidad", 9.6, 7.2, "var(--purple)"],
+  ["Simbolización", 7.4, 5.3, "var(--magenta)"]
+];
+document.getElementById("escalasChart").innerHTML = escalas.map(e=>`
+  <div class="hbarrow"><div class="lab">${e[0]}</div>
+    <div class="track"><div class="fill" style="width:${e[1]/24*100}%;background:#B9C6D6">${e[1]}</div></div></div>
+  <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:.68rem">→ Noviembre</div>
+    <div class="track"><div class="fill" style="width:${e[2]/24*100}%;background:${e[3]}">${e[2]}</div></div></div>
+`).join("") + `<div class="note">Promedio poblacional por escala (máx. 24 pts). Barra gris = enero · barra de color = noviembre. La reducción del puntaje indica mejora.</div>`;
+
+// Heatmap talleres × escalas
+const talleres = [
+  ["Habilidades sociales",[2.1,1.4,0.8,1.0]],
+  ["Lenguaje y comunicación",[1.2,2.0,0.5,0.9]],
+  ["Motricidad",[0.6,0.4,1.1,0.3]],
+  ["Juego simbólico",[1.0,0.8,0.6,1.8]],
+  ["Música y expresión",[0.9,1.1,0.7,1.2]],
+  ["Vida diaria (AVD)",[0.4,0.3,1.6,0.2]]
+];
+const heatColor = v => v>=1.5 ? "#0E8F7E" : v>=0.9 ? "#6FBF9E" : v>=0.4 ? "#D9C26B" : "#C9CFD8";
+document.getElementById("heatTable").innerHTML =
+  `<tr><th class="row">Taller</th><th>Rel. Soc.</th><th>Comun.</th><th>Anticip.</th><th>Simbol.</th></tr>` +
+  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td style="background:${heatColor(v)}">${v.toFixed(1)}</td>`).join("")}</tr>`).join("");
+
+// Distribución por banda de severidad
+const dist = [
+  ["Leve (0 – 32)", 11, "var(--ok)"],
+  ["Moderada (33 – 64)", 15, "var(--warn)"],
+  ["Severa (65 – 96)", 4, "var(--bad)"]
+];
+document.getElementById("distChart").innerHTML = dist.map(d=>`
+  <div class="hbarrow"><div class="lab">${d[0]}</div>
+    <div class="track" style="height:24px"><div class="fill" style="width:${d[1]/30*100}%;background:${d[2]}">${d[1]} NNA</div></div></div>
+`).join("") + `<div class="note">Distribución del padrón 2026 según banda orientativa del puntaje IDEA de noviembre. En enero la banda severa incluía 9 NNA: 5 pasaron a moderada durante el ciclo.</div>`;
+/* ===================== TOAST ===================== */
+function toast(msg){
+  const t = document.getElementById("toast");
+  document.getElementById("toastMsg").textContent = msg;
+  t.classList.add("show");
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(()=>t.classList.remove("show"), 3200);
+}
+
+/* ===================== WIZARD: ALTA DE NNA ===================== */
+let wizStep = 1;
+const wizTalleres = new Set();
+
+function openAlta(){
+  wizStep = 1;
+  wizTalleres.clear();
+  // limpiar campos
+  ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv","f_antec","f_med","f_alerta"]
+    .forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
+  document.getElementById("f_loc").value = "Montevideo";
+  document.querySelectorAll(".chip-pick").forEach(c=>c.classList.remove("sel"));
+  document.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
+  showWizStep(1);
+  document.getElementById("modalAlta").classList.add("open");
+}
+function closeAlta(){ document.getElementById("modalAlta").classList.remove("open"); }
+
+function showWizStep(n){
+  wizStep = n;
+  document.querySelectorAll(".wizard-step").forEach(s=>s.classList.toggle("active", +s.dataset.step===n));
+  // stepper visual
+  for(let i=1;i<=4;i++){
+    const st = document.getElementById("stp"+i);
+    st.classList.toggle("active", i===n);
+    st.classList.toggle("done", i<n);
+  }
+  document.getElementById("stepInfo").textContent = `Paso ${n} de 4`;
+  document.getElementById("btnPrev").style.display = n>1 ? "inline-block" : "none";
+  document.getElementById("btnNext").style.display = n<4 ? "inline-block" : "none";
+  document.getElementById("btnCreate").style.display = n===4 ? "inline-block" : "none";
+  if(n===4) buildReview();
+  document.querySelector(".modal-body").scrollTop = 0;
+}
+
+function validateStep(n){
+  let ok = true;
+  const need = id=>{
+    const f = document.getElementById(id).closest(".field");
+    const val = document.getElementById(id).value.trim();
+    if(!val){ f.classList.add("invalid"); ok=false; } else { f.classList.remove("invalid"); }
+  };
+  if(n===1){ need("f_nombre"); need("f_apellido"); need("f_nac"); }
+  // paso 2 y 3 tienen selects con valores por defecto, no requieren validación dura
+  return ok;
+}
+
+function wizNext(){
+  if(!validateStep(wizStep)){ toast("Completá los campos obligatorios"); return; }
+  if(wizStep<4) showWizStep(wizStep+1);
+}
+function wizPrev(){ if(wizStep>1) showWizStep(wizStep-1); }
+
+// selección de talleres
+document.getElementById("tallerPicker").addEventListener("click", e=>{
+  const c = e.target.closest(".chip-pick"); if(!c) return;
+  const t = c.dataset.t;
+  if(wizTalleres.has(t)){ wizTalleres.delete(t); c.classList.remove("sel"); }
+  else { wizTalleres.add(t); c.classList.add("sel"); }
+});
+
+function buildReview(){
+  const g = id=>document.getElementById(id).value.trim();
+  const edad = edadDesde(g("f_nac"));
+  const talleres = [...wizTalleres];
+  const rows = [
+    ["Nombre completo", `${g("f_nombre")} ${g("f_apellido")}`],
+    ["Edad", edad==="—" ? "—" : edad+" años"],
+    ["Documento", g("f_ci")||"—"],
+    ["Localidad", g("f_loc")||"—"],
+    ["Referente", g("f_ref")||"—"],
+    ["Diagnóstico", g("f_dx")],
+    ["Nivel de apoyo", g("f_apoyo")],
+    ["Grupo", g("f_grupo")],
+    ["Técnico de ref.", g("f_tecnico").split("—")[0].trim()],
+    ["Talleres", talleres.length ? talleres.join(", ") : "Ninguno asignado"]
+  ];
+  document.getElementById("reviewDl").innerHTML =
+    rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
+}
+
+function crearNNA(){
+  const g = id=>document.getElementById(id).value.trim();
+  if(!g("f_nombre")||!g("f_apellido")||!g("f_nac")){ showWizStep(1); toast("Faltan datos del NNA"); return; }
+  const hoy = new Date().toISOString().slice(0,10);
+  const nuevo = {
+    id: ++nnaSeq,
+    nombre: g("f_nombre"), apellido: g("f_apellido"),
+    nac: g("f_nac"), edad: edadDesde(g("f_nac")),
+    sexo: g("f_sexo"), ci: g("f_ci")||"—", loc: g("f_loc")||"—",
+    referente: g("f_ref")||"—", tel: g("f_tel")||"—",
+    grupo: g("f_grupo"), tecnico: g("f_tecnico"),
+    dx: g("f_dx"), dxFecha: g("f_dxfecha")||"—", deriv: g("f_deriv")||"—",
+    apoyo: g("f_apoyo"),
+    antec: g("f_antec")||"Sin antecedentes registrados.",
+    med: g("f_med")||"Ninguna", alerta: g("f_alerta")||"—",
+    talleres: [...wizTalleres],
+    historial: [
+      {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
+       desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA.`}
+    ]
+  };
+  NNA.push(nuevo);
+  renderNNA();
+  closeAlta();
+  toast(`Expediente de ${nuevo.nombre} ${nuevo.apellido} creado`);
+  setTimeout(()=>abrirExpediente(nuevo.id), 400);
+}
+
+/* ===================== EXPEDIENTE CLÍNICO (HCE) ===================== */
+function abrirExpediente(id){
+  const p = NNA.find(n=>n.id===id);
+  if(!p) return;
+  document.getElementById("expCrumb").textContent = `Expediente · ${p.nombre} ${p.apellido}`;
+  const iniciales = (p.nombre[0]||"")+(p.apellido[0]||"");
+  const ini = getEval(p,"inicial"), final = getEval(p,"final"), lik = getEval(p,"lik");
+
+  // timeline ordenada por fecha
+  const tipoLabel = {alta:"Alta", idea:"IDEA", lik:"Intermedia", note:"Nota"};
+  const eventos = [...p.historial].sort((a,b)=> a.fecha < b.fecha ? -1 : 1);
+  const timelineHtml = eventos.map(ev=>`
+    <div class="tevent ${ev.tipo}">
+      <div class="tdot"></div>
+      <div class="tdate">${fmtFecha(ev.fecha)} · ${tipoLabel[ev.tipo]||""}</div>
+      <div class="ttitle">${ev.titulo}</div>
+      <div class="tdesc">${ev.desc}</div>
+      ${ev.score!=null ? `<span class="tscore">Puntaje IDEA: ${ev.score} / ${ev.total}</span>` : ""}
+    </div>`).join("");
+
+  // tendencia simple
+  let tendencia = "Sin evaluaciones para comparar todavía.";
+  const scores = eventos.filter(e=>e.score!=null);
+  if(scores.length>=2){
+    const delta = scores[0].score - scores[scores.length-1].score;
+    tendencia = delta>0
+      ? `Reducción de ${delta} puntos desde la primera evaluación — evolución favorable.`
+      : delta<0 ? `Aumento de ${Math.abs(delta)} puntos — requiere revisión del plan.`
+      : "Puntaje estable entre evaluaciones.";
+  }
+
+  const tallerTags = p.talleres.length
+    ? p.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")
+    : `<span style="font-size:.8rem;color:var(--ink-2)">Sin talleres asignados aún.</span>`;
+
+  document.getElementById("expedienteContent").innerHTML = `
+    <div class="exp-head">
+      <div class="exp-avatar">${iniciales}</div>
+      <div>
+        <h1>${p.nombre} ${p.apellido}</h1>
+        <div class="meta">${p.edad} años · ${p.sexo} · Expediente #${p.id} · C.I. ${p.ci}</div>
+        <div class="badges">
+          <span class="bdg">Grupo ${p.grupo}</span>
+          <span class="bdg">${p.apoyo.split("—")[0].trim()}</span>
+          <span class="bdg">${p.tecnico.split("—")[0].trim()}</span>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary" onclick="evaluarDesdeExp(${p.id})">+ Nueva evaluación IDEA</button>
+        <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
+      </div>
+    </div>
+
+    <div class="exp-grid">
+      <div>
+        <div class="info-card">
+          <h3><span class="ic">▤</span> Datos clínicos</h3>
+          <div class="ib">
+            <div class="data-row"><dt>Diagnóstico</dt><dd>${p.dx}</dd></div>
+            <div class="data-row"><dt>Fecha dx.</dt><dd>${fmtFecha(p.dxFecha)}</dd></div>
+            <div class="data-row"><dt>Derivación</dt><dd>${p.deriv}</dd></div>
+            <div class="data-row"><dt>Nivel de apoyo</dt><dd>${p.apoyo}</dd></div>
+            <div class="data-row"><dt>Medicación</dt><dd>${p.med}</dd></div>
+            <div class="data-row"><dt>Alertas</dt><dd style="${p.alerta!=="—"?"color:var(--bad);font-weight:600":""}">${p.alerta}</dd></div>
+            <div class="data-row"><dt>Antecedentes</dt><dd style="text-align:left">${p.antec}</dd></div>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3><span class="ic">◫</span> Plan IPPU — Talleres asignados</h3>
+          <div class="ib"><div class="talleres-list">${tallerTags}</div></div>
+        </div>
+        <div class="info-card">
+          <h3><span class="ic">☎</span> Contacto familiar</h3>
+          <div class="ib">
+            <div class="data-row"><dt>Referente</dt><dd>${p.referente}</dd></div>
+            <div class="data-row"><dt>Teléfono</dt><dd>${p.tel}</dd></div>
+            <div class="data-row"><dt>Localidad</dt><dd>${p.loc}</dd></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="info-card">
+          <h3><span class="ic">◐</span> Seguimiento IDEA</h3>
+          <div class="ib">
+            <div class="data-row"><dt>Inicial (enero)</dt><dd>${ini?ini.score+" / 96":"<span style='color:var(--warn)'>pendiente</span>"}</dd></div>
+            <div class="data-row"><dt>Intermedia (junio)</dt><dd>${lik?lik.score+" / 96 (equiv.)":"—"}</dd></div>
+            <div class="data-row"><dt>Final (noviembre)</dt><dd>${final?final.score+" / 96":"—"}</dd></div>
+            <div style="margin-top:12px;padding:10px 12px;background:#F0F6F4;border-radius:8px;font-size:.8rem;color:var(--teal);font-weight:600">${tendencia}</div>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3><span class="ic">◷</span> Historial clínico</h3>
+          <div class="ib">
+            ${eventos.length ? `<div class="tline">${timelineHtml}</div>` :
+              `<div class="empty-state"><div class="big">◷</div>Sin eventos registrados todavía.</div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  go("expediente");
+}
+
+function fmtFecha(f){
+  if(!f||f==="—") return "—";
+  const meses=["ene","feb","mar","abr","may","jun","jul","ago","set","oct","nov","dic"];
+  const d=new Date(f+"T00:00:00");
+  if(isNaN(d)) return f;
+  return `${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// abrir IDEA preseleccionando el NNA del expediente
+function evaluarDesdeExp(id){
+  go("idea");
+  const sel = document.getElementById("selNNA");
+  sel.value = String(id);
+  // reset del formulario IDEA
+  resetIDEA();
+}
+
+/* ===================== GUARDAR EVALUACIÓN IDEA EN EL EXPEDIENTE ===================== */
+function resetIDEA(){
+  for(const k in ideaScores) delete ideaScores[k];
+  document.querySelectorAll(".opcion.sel, .inter-btn.sel").forEach(b=>b.classList.remove("sel"));
+  document.querySelectorAll(".prog-dim").forEach(p=>p.classList.remove("filled"));
+  document.querySelectorAll("[id^='sel-']").forEach(s=>{ if(s.id.startsWith("sel-")) s.style.display="none"; });
+  for(let ei=0;ei<4;ei++){ const sub=document.getElementById("sub"+ei); if(sub) sub.textContent="0 / 24"; }
+  document.getElementById("ideaTotal").textContent="0";
+  const nivel=document.getElementById("ideaNivel");
+  nivel.textContent="0 / 12 dimensiones puntuadas"; nivel.style.background="#2C4A66";
+}
+
+function guardarIDEA(){
+  const answered = Object.keys(ideaScores).length;
+  if(answered < 12){
+    toast(`Faltan ${12-answered} dimensiones por puntuar`);
+    return;
+  }
+  const id = parseInt(document.getElementById("selNNA").value);
+  const p = NNA.find(n=>n.id===id);
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  let total = 0;
+  for(const k in ideaScores) total += ideaScores[k];
+  const periodo = document.getElementById("selPeriodo").value;
+  const esFinal = periodo.includes("Noviembre");
+  const hoy = new Date().toISOString().slice(0,10);
+
+  p.historial.push({
+    tipo:"idea", fecha:hoy,
+    titulo:`Evaluación IDEA — ${esFinal?"final":"inicial"}`,
+    desc:`Período ${periodo} · Evaluador: Dr. González`,
+    score: total, total: 96
+  });
+
+  renderNNA();
+  toast(`Evaluación guardada en el expediente de ${p.nombre} (${total}/96)`);
+  resetIDEA();
+  setTimeout(()=>abrirExpediente(id), 500);
+}
+
+// cerrar modal al hacer clic en el fondo
+document.getElementById("modalAlta").addEventListener("click", e=>{
+  if(e.target.id==="modalAlta") closeAlta();
+});
+// cerrar modal con Escape
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeAlta(); });
+
+</script>
+</body>
+</html>
