@@ -395,10 +395,14 @@
     <button class="navitem" onclick="openAlta()"><span class="ico">+</span> Registrar NNA</button>
     <button class="navitem" data-view="idea"><span class="ico">✎</span> Evaluación IDEA</button>
     <button class="navitem" data-view="intermedia"><span class="ico">◐</span> Eval. intermedia</button>
+    <button class="navitem" data-view="areas"><span class="ico">▦</span> Eval. por áreas</button>
+    <button class="navitem" data-view="general"><span class="ico">◍</span> Eval. general</button>
     <button class="navitem" data-view="informes"><span class="ico">▤</span> Informes</button>
     <div class="sec">Institucional</div>
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
-    <div class="foot">v3.0 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
+    <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
+    <div class="foot">v3.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -625,6 +629,49 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- ============ VISTA: EVALUACIÓN POR ÁREAS ============ -->
+    <section class="view" id="view-areas">
+      <div class="crumbs">Inicio › Evaluación › <b>Por áreas / talleres</b></div>
+      <h1 class="pagetitle">Evaluación por áreas — Talleres IPPU</h1>
+      <p class="pagedesc">Seguimiento del progreso del NNA en cada taller/área en que participa, con escala Likert 1–5 por indicador. <b style="color:var(--warn)">Estructura provisional</b>: IPPU señaló que el protocolo de evaluación por áreas está en revisión, así que los indicadores son genéricos y deberán redefinirse con el equipo clínico.</p>
+      <div class="selector">
+        <label for="selNNAArea"><b>NNA evaluado:</b></label>
+        <select id="selNNAArea"></select>
+        <span style="color:var(--ink-2)">Período: Junio 2026 · Evaluador: Dr. González</span>
+      </div>
+      <div id="areasForm"></div>
+    </section>
+
+    <!-- ============ VISTA: EVALUACIÓN GENERAL ============ -->
+    <section class="view" id="view-general">
+      <div class="crumbs">Inicio › Evaluación › <b>General</b></div>
+      <h1 class="pagetitle">Evaluación general — Perfil global del NNA</h1>
+      <p class="pagedesc">Valoración global y observación clínica integradora, complementaria al IDEA y a la evaluación por áreas. <b style="color:var(--warn)">Estructura provisional</b>: el protocolo de evaluación general también está en revisión con IPPU.</p>
+      <div class="selector">
+        <label for="selNNAGen"><b>NNA evaluado:</b></label>
+        <select id="selNNAGen"></select>
+        <span style="color:var(--ink-2)">Período: Junio 2026</span>
+      </div>
+      <div id="generalForm"></div>
+    </section>
+
+    <!-- ============ VISTA: GRUPOS ============ -->
+    <section class="view" id="view-grupos">
+      <div class="crumbs">Institucional › <b>Grupos de referencia</b></div>
+      <h1 class="pagetitle">Grupos de referencia</h1>
+      <p class="pagedesc">Los NNA se organizan en grupos de referencia por edad y modalidad de funcionamiento. Cada grupo tiene técnicos encargados, días/horarios y talleres asignados. (Datos simulados.)</p>
+      <div class="kpirow" id="gruposKpi"></div>
+      <div id="gruposList"></div>
+    </section>
+
+    <!-- ============ VISTA: USUARIO / PERFIL ============ -->
+    <section class="view" id="view-usuarios">
+      <div class="crumbs">Institucional › <b>Mi usuario</b></div>
+      <h1 class="pagetitle">Mi perfil</h1>
+      <p class="pagedesc">Información de la cuenta del profesional con sesión iniciada y equipo técnico de la institución.</p>
+      <div id="usuarioContent"></div>
     </section>
 
   </main>
@@ -1551,6 +1598,261 @@ document.getElementById("modalAlta").addEventListener("click", e=>{
 });
 // cerrar modal con Escape
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeAlta(); });
+
+/* =====================================================================
+   MÓDULOS AÑADIDOS (v3.1): Eval. por áreas, Eval. general, Grupos, Usuario
+   Datos simulados. Las evaluaciones por áreas/general son ESTRUCTURA
+   PROVISIONAL — el protocolo definitivo se define con IPPU.
+   ===================================================================== */
+
+/* ---------- Selects de NNA para las evaluaciones nuevas ---------- */
+function populateEvalSelects(){
+  ["selNNAArea","selNNAGen"].forEach(selId=>{
+    const sel = document.getElementById(selId);
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = NNA.map(p=>
+      `<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`).join("");
+    if(prev) sel.value = prev;
+  });
+}
+
+/* ---------- EVALUACIÓN POR ÁREAS (provisional) ---------- */
+const AREA_ITEMS = [
+  "Participación e implicación en el taller",
+  "Logro de los objetivos del taller",
+  "Autonomía en las actividades"
+];
+const areaScores = {}; // `${ti}-${ii}` -> 1..5
+
+function renderAreas(){
+  const sel = document.getElementById("selNNAArea");
+  const cont = document.getElementById("areasForm");
+  if(!sel || !cont) return;
+  for(const k in areaScores) delete areaScores[k];
+  const p = NNA.find(n=>n.id===parseInt(sel.value));
+  if(!p){ cont.innerHTML = ""; return; }
+  if(!p.talleres.length){
+    cont.innerHTML = `<div class="card"><div class="cardbody"><div class="empty-state">Este NNA no tiene talleres asignados.</div></div></div>`;
+    return;
+  }
+  cont.innerHTML = p.talleres.map((t,ti)=>`
+    <div class="card" style="margin-bottom:18px">
+      <div class="lik-head"><h2>${t}</h2><span class="prog" id="areaAvg-${ti}">— / 5</span></div>
+      ${AREA_ITEMS.map((it,ii)=>`
+        <div class="lik-item" ${ii===AREA_ITEMS.length-1?'style="border-bottom:none"':''}>
+          <div class="iname">${it}</div>
+          <div class="lik-opts" data-taller="${ti}" data-item="${ii}">
+            <button data-v="1">1 — Inicial</button><button data-v="2">2</button>
+            <button data-v="3">3 — En proceso</button><button data-v="4">4</button>
+            <button data-v="5">5 — Logrado</button>
+          </div>
+        </div>`).join("")}
+    </div>`).join("") +
+    `<div class="idea-summary">
+      <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Promedio global por áreas</div>
+      <div class="tot"><span id="areaGlobal">—</span><small> / 5</small></div></div>
+      <div class="nota">Promedio orientativo de los talleres del NNA. El protocolo definitivo de evaluación por áreas se define con IPPU.</div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="guardarAreas()">Guardar evaluación</button>
+    </div>`;
+}
+
+document.getElementById("areasForm").addEventListener("click", ev=>{
+  const b = ev.target.closest(".lik-opts button"); if(!b) return;
+  const grp = b.parentElement;
+  grp.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
+  b.classList.add("sel");
+  areaScores[`${grp.dataset.taller}-${grp.dataset.item}`] = +b.dataset.v;
+  const tvals = AREA_ITEMS.map((_,i)=>areaScores[`${grp.dataset.taller}-${i}`]).filter(v=>v!=null);
+  if(tvals.length){
+    document.getElementById(`areaAvg-${grp.dataset.taller}`).textContent =
+      (tvals.reduce((a,c)=>a+c,0)/tvals.length).toFixed(1)+" / 5";
+  }
+  const all = Object.values(areaScores);
+  if(all.length){
+    document.getElementById("areaGlobal").textContent = (all.reduce((a,c)=>a+c,0)/all.length).toFixed(1);
+  }
+});
+function guardarAreas(){
+  const n = Object.keys(areaScores).length;
+  toast(n ? `Evaluación por áreas guardada (demo · ${n} indicadores)` : "Seleccioná al menos un indicador");
+}
+
+/* ---------- EVALUACIÓN GENERAL (provisional) ---------- */
+const GENERAL_DIMS = [
+  ["Autonomía / Vida diaria (AVD)","Desempeño en actividades cotidianas y autocuidado."],
+  ["Comunicación funcional","Uso comunicativo (verbal, gestual o aumentativo) en contexto."],
+  ["Integración y vínculo social","Relación con pares y adultos, participación grupal."],
+  ["Regulación emocional y conductual","Manejo de la frustración, anticipación y autorregulación."],
+  ["Participación en talleres","Implicación general en las actividades institucionales."]
+];
+const genScores = {};
+
+function renderGeneral(){
+  const sel = document.getElementById("selNNAGen");
+  const cont = document.getElementById("generalForm");
+  if(!sel || !cont) return;
+  for(const k in genScores) delete genScores[k];
+  const p = NNA.find(n=>n.id===parseInt(sel.value));
+  if(!p){ cont.innerHTML = ""; return; }
+  cont.innerHTML = `
+    <div class="card" style="margin-bottom:18px">
+      <div class="lik-head"><h2>Valoración global — ${p.nombre} ${p.apellido}</h2><span class="prog" id="genAvg">— / 5</span></div>
+      ${GENERAL_DIMS.map((d,i)=>`
+        <div class="lik-item" ${i===GENERAL_DIMS.length-1?'style="border-bottom:none"':''}>
+          <div class="iname">${d[0]}</div><div class="iq">${d[1]}</div>
+          <div class="lik-opts" data-dim="${i}">
+            <button data-v="1">1 — Inicial</button><button data-v="2">2</button>
+            <button data-v="3">3 — En proceso</button><button data-v="4">4</button>
+            <button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>`).join("")}
+    </div>
+    <div class="card" style="margin-bottom:18px">
+      <div class="cardhead"><h2>Observación clínica general</h2></div>
+      <div class="cardbody">
+        <textarea id="genObs" style="width:100%;min-height:96px;font-family:inherit;font-size:.85rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink)" placeholder="Síntesis cualitativa del período: avances, áreas a reforzar, recomendaciones…"></textarea>
+      </div>
+    </div>
+    <div class="idea-summary">
+      <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Promedio global</div>
+      <div class="tot"><span id="genGlobal">—</span><small> / 5</small></div></div>
+      <div class="nota">Valoración global orientativa. El protocolo definitivo de evaluación general se define con IPPU.</div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="guardarGeneral()">Guardar evaluación general</button>
+    </div>`;
+}
+
+document.getElementById("generalForm").addEventListener("click", ev=>{
+  const b = ev.target.closest(".lik-opts button"); if(!b) return;
+  const grp = b.parentElement;
+  grp.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
+  b.classList.add("sel");
+  genScores[grp.dataset.dim] = +b.dataset.v;
+  const vals = Object.values(genScores);
+  const avg = (vals.reduce((a,c)=>a+c,0)/vals.length).toFixed(1);
+  document.getElementById("genAvg").textContent = avg+" / 5";
+  document.getElementById("genGlobal").textContent = avg;
+});
+function guardarGeneral(){
+  const n = Object.keys(genScores).length;
+  toast(n ? `Evaluación general guardada (demo · ${n}/${GENERAL_DIMS.length} dimensiones)` : "Puntuá al menos una dimensión");
+}
+
+/* ---------- GRUPOS DE REFERENCIA ---------- */
+const GRUPOS = [
+  {id:"A", franja:"6 – 9 años",  dias:"Lun · Mié · Vie", horario:"9:00 – 12:00",
+   encargados:["Dr. González — Psicología","Lic. Pereira — Fonoaudiología"],
+   talleres:["Habilidades sociales","Lenguaje y comunicación","Juego simbólico","Motricidad"],
+   obs:"Grupo de menor edad. Énfasis en intervención temprana y juego."},
+  {id:"B", franja:"9 – 12 años", dias:"Lun · Mié · Vie", horario:"13:00 – 16:00",
+   encargados:["Lic. Torres — Psicopedagogía"],
+   talleres:["Habilidades sociales","Música y expresión","Arte y plástica","Vida diaria (AVD)"],
+   obs:"Trabajo en habilidades sociales y expresión."},
+  {id:"C", franja:"12 – 15 años", dias:"Mar · Jue", horario:"9:00 – 12:00",
+   encargados:["Lic. Pereira — Fonoaudiología","Dra. Silva — Neuropediatría"],
+   talleres:["Lenguaje y comunicación","Vida diaria (AVD)","Psicomotricidad"],
+   obs:"Mayor proporción de apoyos sustanciales. Foco en autonomía y CAA."},
+  {id:"D", franja:"15 – 18 años", dias:"Mar · Jue", horario:"13:00 – 16:00",
+   encargados:["Lic. Torres — Psicopedagogía"],
+   talleres:["Vida diaria (AVD)","Cocina","Habilidades sociales"],
+   obs:"Preparación para la vida adulta e inserción."},
+  {id:"E", franja:"Multiedad — taller abierto", dias:"Vie", horario:"9:00 – 12:00",
+   encargados:["Dr. González — Psicología"],
+   talleres:["Música y expresión","Actividades lúdicas"],
+   obs:"Espacio recreativo y de integración intergrupal."}
+];
+
+function renderGrupos(){
+  const kpi = document.getElementById("gruposKpi");
+  const cont = document.getElementById("gruposList");
+  if(!kpi || !cont) return;
+  kpi.innerHTML = `
+    <div class="kpi"><div class="lab">Grupos de referencia</div><div class="val">${GRUPOS.length}</div><div class="sub">Por edad y modalidad</div></div>
+    <div class="kpi"><div class="lab">NNA en seguimiento</div><div class="val ok">${NNA.length}</div><div class="sub">Distribuidos en grupos</div></div>
+    <div class="kpi"><div class="lab">Técnicos asignados</div><div class="val purple">${new Set(GRUPOS.flatMap(g=>g.encargados)).size}</div><div class="sub">Encargados de grupo</div></div>
+    <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 18 institucionales</div></div>`;
+  cont.innerHTML = GRUPOS.map(g=>{
+    const integrantes = NNA.filter(n=>n.grupo===g.id);
+    const intHtml = integrantes.length
+      ? `<div class="row-actions">${integrantes.map(n=>`<button class="btn btn-link" onclick="abrirExpediente(${n.id})">${n.nombre} ${n.apellido} (${n.edad}a) →</button>`).join("")}</div>`
+      : `<span style="font-size:.8rem;color:var(--ink-2)">Sin NNA cargados en este grupo (demo).</span>`;
+    return `<div class="card" style="margin-bottom:18px">
+      <div class="cardhead"><h2>Grupo ${g.id} <span style="font-weight:400;color:var(--ink-2);font-size:.8rem">· ${g.franja}</span></h2>
+        <div style="flex:1"></div><span class="pill done">${integrantes.length} NNA</span></div>
+      <div class="cardbody">
+        <div class="data-row"><dt>Días / horario</dt><dd>${g.dias} · ${g.horario}</dd></div>
+        <div class="data-row"><dt>Encargados</dt><dd>${g.encargados.join(" · ")}</dd></div>
+        <div class="data-row"><dt>Talleres</dt><dd><div class="talleres-list">${g.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")}</div></dd></div>
+        <div class="data-row"><dt>Observaciones</dt><dd>${g.obs}</dd></div>
+        <div class="data-row"><dt>Integrantes</dt><dd>${intHtml}</dd></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------- USUARIO / PERFIL ---------- */
+const USUARIO = {nombre:"Dr. González", rol:"Técnico · Psicología", email:"gonzalez@fundacionippu.uy", cargo:"Técnico de referencia", grupos:["A","E"]};
+const EQUIPO = [
+  {n:"Dr. González",  e:"Psicología",      g:"A · E"},
+  {n:"Lic. Torres",   e:"Psicopedagogía",  g:"B · D"},
+  {n:"Lic. Pereira",  e:"Fonoaudiología",  g:"A · C"},
+  {n:"Dra. Silva",    e:"Neuropediatría",  g:"C"}
+];
+function renderUsuario(){
+  const cont = document.getElementById("usuarioContent");
+  if(!cont) return;
+  const u = USUARIO;
+  const iniciales = u.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const nnaCargo = NNA.filter(n=>u.grupos.includes(n.grupo)).length;
+  cont.innerHTML = `
+    <div class="exp-head">
+      <div class="exp-avatar">${iniciales}</div>
+      <div>
+        <h1>${u.nombre}</h1>
+        <div class="meta">${u.rol} · ${u.email}</div>
+        <div class="badges">
+          <span class="bdg">${u.cargo}</span>
+          <span class="bdg">Grupos ${u.grupos.join(" · ")}</span>
+          <span class="bdg">${nnaCargo} NNA a cargo</span>
+        </div>
+      </div>
+    </div>
+    <div class="exp-grid">
+      <div class="info-card">
+        <h3><span class="ic">▤</span> Datos de la cuenta</h3>
+        <div class="ib">
+          <div class="data-row"><dt>Nombre</dt><dd>${u.nombre}</dd></div>
+          <div class="data-row"><dt>Rol</dt><dd>${u.rol}</dd></div>
+          <div class="data-row"><dt>Email</dt><dd>${u.email}</dd></div>
+          <div class="data-row"><dt>Grupos a cargo</dt><dd>${u.grupos.join(" · ")}</dd></div>
+          <div class="data-row"><dt>Acceso</dt><dd>Restringido a los grupos que coordina</dd></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <h3><span class="ic">◫</span> Equipo técnico</h3>
+        <div class="ib">
+          ${EQUIPO.map(t=>`<div class="data-row"><dt>${t.n}</dt><dd>${t.e} · Grupos ${t.g}</dd></div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:6px">Demo: el control de acceso real (autenticación JWT por terapeuta, roles y visibilidad por grupo) se implementa en el backend. Cada técnico solo ve los NNA de los grupos que coordina.</div>`;
+}
+
+/* ---------- Wiring + render inicial de los módulos nuevos ---------- */
+document.getElementById("selNNAArea").addEventListener("change", renderAreas);
+document.getElementById("selNNAGen").addEventListener("change", renderGeneral);
+document.querySelectorAll('.navitem[data-view="areas"]').forEach(b=>b.addEventListener("click",()=>{ populateEvalSelects(); renderAreas(); }));
+document.querySelectorAll('.navitem[data-view="general"]').forEach(b=>b.addEventListener("click",()=>{ populateEvalSelects(); renderGeneral(); }));
+document.querySelectorAll('.navitem[data-view="grupos"]').forEach(b=>b.addEventListener("click", renderGrupos));
+document.querySelectorAll('.navitem[data-view="usuarios"]').forEach(b=>b.addEventListener("click", renderUsuario));
+
+populateEvalSelects();
+renderAreas();
+renderGeneral();
+renderGrupos();
+renderUsuario();
 
 </script>
 </body>
