@@ -411,6 +411,24 @@
   .pill.activo{background:#E3F4EA;color:var(--ok)}
   .pill.inactivo{background:#EEF1F4;color:#64748B}
   tr.row-inactiva td:not(:last-child){opacity:.5}
+
+  /* ============ BARRA DE EVALUACIONES EN EXPEDIENTE ============ */
+  .eval-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;margin-bottom:20px}
+  .eval-bar-lbl{font-size:.78rem;font-weight:700;color:var(--ink-2);margin-right:4px}
+  .eval-bar .btn-ghost{border:1px solid var(--line)}
+
+  /* ============ IMPRESIÓN (informe → PDF) ============ */
+  @media print{
+    .topbar,.sidebar,.demo-tag,.toast,.no-print,.login-screen,.crumbs,.eval-bar{display:none!important}
+    .layout{display:block}
+    main{max-width:none;padding:0}
+    body{background:#fff}
+    .view:not(.active){display:none!important}
+    .card,.info-card,.inf-banner,.kpi{box-shadow:none;break-inside:avoid}
+    .inf-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .score-chip,.bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
 </style>
 </head>
 <body>
@@ -459,16 +477,12 @@
     <div class="sec">Historia clínica</div>
     <button class="navitem active" data-view="inicio"><span class="ico">⌂</span> Inicio / NNA</button>
     <button class="navitem" onclick="openAlta()"><span class="ico">+</span> Registrar NNA</button>
-    <button class="navitem" data-view="idea"><span class="ico">✎</span> Evaluación IDEA</button>
-    <button class="navitem" data-view="intermedia"><span class="ico">◐</span> Eval. intermedia</button>
-    <button class="navitem" data-view="areas"><span class="ico">▦</span> Eval. por áreas</button>
-    <button class="navitem" data-view="general"><span class="ico">◍</span> Eval. general</button>
-    <button class="navitem" data-view="informes"><span class="ico">▤</span> Informes</button>
+    <button class="navitem" data-view="pendientes"><span class="ico">◔</span> Pendientes</button>
     <div class="sec">Institucional</div>
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.2 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.3 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -478,20 +492,19 @@
     <section class="view active" id="view-inicio">
       <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
       <h1 class="pagetitle">Niños, niñas y adolescentes en seguimiento</h1>
-      <p class="pagedesc">Expedientes activos del convenio INAU con estado de sus evaluaciones IDEA del ciclo 2026. La evaluación completa se aplica en enero y noviembre; la intermedia (Likert) en junio.</p>
+      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico, cargar evaluaciones y generar el informe.</p>
 
       <div class="kpirow">
-        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div><div class="sub">Convenio INAU 2026</div></div>
-        <div class="kpi"><div class="lab">Con evaluación inicial</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">IDEA enero registrada</div></div>
-        <div class="kpi"><div class="lab">Intermedias pendientes</div><div class="val orange" id="kpiPend">5</div><div class="sub">Vencen 30 / 06 / 2026</div></div>
+        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div><div class="sub">Convenio INAU</div></div>
+        <div class="kpi"><div class="lab">Con IDEA 2026</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Evaluación anual registrada</div></div>
+        <div class="kpi" onclick="go('pendientes')" style="cursor:pointer" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
         <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
       </div>
 
       <div class="card">
         <div class="cardhead">
-          <h2>Listado de NNA — Grupo y estado de evaluación</h2>
+          <h2>Listado de NNA</h2>
           <div style="flex:1"></div>
-          <button class="btn btn-ghost" onclick="go('idea')">Nueva evaluación IDEA</button>
           <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
         </div>
         <div class="nna-toolbar">
@@ -507,7 +520,7 @@
         </div>
         <table class="lista">
           <thead>
-            <tr><th>NNA</th><th>Grupo / Taller</th><th>IDEA enero</th><th>Intermedia junio</th><th>Próxima evaluación</th><th>Estado</th><th></th></tr>
+            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody id="tbodyNNA"></tbody>
         </table>
@@ -529,10 +542,11 @@
       <div class="selector">
         <label for="selNNA"><b>NNA evaluado:</b></label>
         <select id="selNNA"></select>
-        <label for="selPeriodo" style="margin-left:8px"><b>Período:</b></label>
+        <label for="selPeriodo" style="margin-left:8px"><b>Año (evaluación anual):</b></label>
         <select id="selPeriodo">
-          <option value="Enero 2026">Enero 2026 (inicial)</option>
-          <option value="Noviembre 2026">Noviembre 2026 (final)</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+          <option value="2025">2025</option>
         </select>
         <span style="color:var(--ink-2)">Evaluador: Dr. González</span>
       </div>
@@ -598,59 +612,26 @@
       </div>
     </section>
 
-    <!-- ============ VISTA: INFORMES ============ -->
-    <section class="view" id="view-informes">
-      <div class="crumbs">Inicio › Martín G. › <b>Informe anual 2026</b></div>
+    <!-- ============ VISTA: INFORME (por NNA · generado automáticamente) ============ -->
+    <section class="view" id="view-informe">
+      <div class="crumbs">Inicio › Expediente › <b>Informe automático</b></div>
+      <div id="informeContent"></div>
+    </section>
 
-      <div class="inf-banner">
-        <div>
-          <h2>Informe final de evaluación — Año 2026</h2>
-          <p>Martín G. · 9 años · Grupo A · Generado automáticamente el 15/12/2026 · Lic. Torres</p>
-        </div>
-        <button class="btn-print" onclick="window.print()">🖨 Imprimir PDF</button>
-      </div>
-
-      <div class="grid2">
-        <div class="card">
-          <div class="cardhead"><h2>Comparativa IDEA — Enero vs Junio (equiv.) vs Noviembre</h2></div>
-          <div class="cardbody" style="padding:0 0 6px">
-            <table class="comp">
-              <thead><tr><th>Dimensión</th><th>Escala</th><th>Enero</th><th>Junio</th><th>Noviembre</th></tr></thead>
-              <tbody id="tbodyComp"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div>
-          <div class="card" style="margin-bottom:18px">
-            <div class="cardhead"><h2>Evolución del puntaje total IDEA (0 – 96)</h2></div>
-            <div class="cardbody chart-wrap">
-              <div class="barchart">
-                <div class="bar" style="height:79%;background:#4A55C9"><span>38</span><i>Enero</i></div>
-                <div class="bar" style="height:58%;background:var(--teal)"><span>28</span><i>Junio</i></div>
-                <div class="bar" style="height:42%;background:var(--ok)"><span>20</span><i>Noviembre</i></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card resumen">
-            <div class="cardhead"><h2>Resumen clínico</h2></div>
-            <div class="cardbody">
-              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)">Reducción total del puntaje</div>
-              <div class="big">38 → 20</div>
-              <div class="delta">▼ −18 puntos (47 % de mejora)</div>
-              <dl>
-                <dt>Mayor avance</dt>
-                <dd style="color:var(--teal)">D1 — Relación social: 6 → 2 (mejora severa → leve)</dd>
-                <dt>Área a reforzar</dt>
-                <dd style="color:var(--warn)">D8 — Estereotipias y rituales: meseta en 3 pts</dd>
-                <dt>Próxima evaluación completa</dt>
-                <dd>Enero 2027</dd>
-              </dl>
-              <button class="btn btn-ghost" style="margin-top:14px;width:100%">Ver informe completo</button>
-            </div>
-          </div>
-        </div>
+    <!-- ============ VISTA: PENDIENTES ============ -->
+    <section class="view" id="view-pendientes">
+      <div class="crumbs">Inicio › <b>Pendientes</b></div>
+      <h1 class="pagetitle">Pendientes de evaluación</h1>
+      <p class="pagedesc">NNA activos que aún no tienen registrada su <b>evaluación IDEA anual</b> del año en curso. La IDEA se aplica una vez al año; este listado ayuda a planificar el cierre del ciclo.</p>
+      <div class="kpirow" id="pendKpi"></div>
+      <div class="card">
+        <div class="cardhead"><h2>NNA sin IDEA del año en curso</h2></div>
+        <table class="lista">
+          <thead>
+            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Grupo</th><th>Última IDEA</th><th></th></tr>
+          </thead>
+          <tbody id="tbodyPend"></tbody>
+        </table>
       </div>
     </section>
 
@@ -759,8 +740,8 @@
   <div class="modal">
     <div class="modal-head">
       <div>
-        <h2>Registrar nuevo NNA en la HCE</h2>
-        <p>Alta de expediente clínico · Convenio INAU — Fundación IPPU</p>
+        <h2 id="modalTitle">Registrar nuevo NNA en la HCE</h2>
+        <p id="modalSub">Alta de expediente clínico · Convenio INAU — Fundación IPPU</p>
       </div>
       <button class="x" onclick="closeAlta()" title="Cerrar">×</button>
     </div>
@@ -1003,6 +984,47 @@ const NNA = [
       {tipo:"alta", fecha:"2024-08-30", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dra. Silva."},
       {tipo:"note", fecha:"2026-05-20", titulo:"Baja del programa", desc:"Egreso por traslado de domicilio. Expediente inactivo."}
     ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Bruno", apellido:"D.", nac:"2019-02-14", edad:7, sexo:"Masculino",
+    ci:"6.345.678-2", loc:"Montevideo", referente:"Carmen D. (madre)", tel:"099 111 222",
+    grupo:"A", tecnico:"Dr. González — Psicología",
+    dx:"TEA — en proceso diagnóstico", dxFecha:"2026-03-10",
+    deriv:"Pediatría — policlínica barrial", apoyo:"Grado 1 — Requiere apoyo",
+    antec:"Ingreso reciente. Aún sin evaluación IDEA en el ciclo.",
+    med:"Ninguna", alerta:"—",
+    talleres:["Habilidades sociales","Juego simbólico"],
+    activo:true,
+    anamnesis:{
+      motivo:"Ingreso reciente derivado de pediatría para valoración interdisciplinaria.",
+      perinatal:"Sin datos relevantes.",
+      desarrollo:"Marcha en tiempo. Lenguaje en evaluación.",
+      familiares:"Sin antecedentes conocidos."
+    },
+    historial:[
+      {tipo:"alta", fecha:"2026-06-05", titulo:"Alta en HCE", desc:"Ingreso reciente. Pendiente de primera evaluación IDEA anual."}
+    ]
+  },
+  {
+    id: ++nnaSeq, nombre:"Camila", apellido:"S.", nac:"2015-08-22", edad:10, sexo:"Femenino",
+    ci:"5.678.901-3", loc:"Canelones", referente:"Rosa S. (madre)", tel:"098 444 555",
+    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2020-04-18",
+    deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 2 — Requiere apoyo sustancial",
+    antec:"Última evaluación IDEA en 2025; pendiente la del ciclo actual.",
+    med:"Ninguna", alerta:"—",
+    talleres:["Habilidades sociales","Arte y plástica"],
+    activo:true,
+    anamnesis:{
+      motivo:"Seguimiento anual en el programa.",
+      perinatal:"Embarazo y parto sin complicaciones.",
+      desarrollo:"Retraso leve del lenguaje, buena evolución.",
+      familiares:"Sin antecedentes."
+    },
+    historial:[
+      {tipo:"alta", fecha:"2022-03-15", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Torres."},
+      {tipo:"idea", fecha:"2025-10-20", titulo:"Evaluación IDEA anual", desc:"Período 2025 · Evaluador: Lic. Torres", score:44, total:96}
+    ]
   }
 ];
 
@@ -1023,6 +1045,16 @@ function edadDesde(fechaNac){
   if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate())) e--;
   return e;
 }
+
+/* =============== FRECUENCIA IDEA: ANUAL — helpers =============== */
+const ANIO_ACTUAL = 2026;
+const anioDe = fecha => parseInt(String(fecha).slice(0,4));
+function ideaEvals(nna){ return nna.historial.filter(h=>h.tipo==="idea").sort((a,b)=> a.fecha < b.fecha ? -1 : 1); }
+function ultimaIdea(nna){ const e = ideaEvals(nna); return e.length ? e[e.length-1] : null; }
+function tieneIdeaAnio(nna, anio){ return ideaEvals(nna).some(e => anioDe(e.fecha) === anio); }
+function pendienteIdea(nna){ return nna.activo && !tieneIdeaAnio(nna, ANIO_ACTUAL); }
+const bandaIdea  = s => s>=65 ? "Severo" : s>=33 ? "Moderado" : "Leve";
+const colorBanda = s => s>=65 ? "var(--bad)" : s>=33 ? "var(--warn)" : "var(--ok)";
 
 /* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997 ===============
    Cada dimensión: array de [puntuación, descriptor_oficial]
@@ -1185,8 +1217,10 @@ const COMP = [
 
 /* ================= NAVEGACIÓN ================= */
 function go(view){
+  const target = document.getElementById("view-"+view);
+  if(!target) return;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  document.getElementById("view-"+view).classList.add("active");
+  target.classList.add("active");
   document.querySelectorAll(".navitem").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
   window.scrollTo({top:0});
 }
@@ -1232,17 +1266,14 @@ function coincideBusqueda(p, q){
 }
 
 function filaNNA(p){
-  const ini = getEval(p,"inicial"), lik = getEval(p,"lik");
-  const tallerStr = p.talleres.length ? p.talleres[0] + (p.talleres.length>1?` +${p.talleres.length-1}`:"") : "—";
   const estadoPill = p.activo
     ? `<span class="pill activo">Activo</span>`
     : `<span class="pill inactivo">Inactivo</span>`;
   return `<tr class="${p.activo?"":"row-inactiva"}">
-    <td><div class="nna-name">${p.nombre} ${p.apellido}</div><div class="nna-meta">${p.edad} años · Exp. #${p.id} · ${p.dx.split("—")[0].trim()}</div></td>
-    <td>Grupo ${p.grupo}<div class="nna-meta">${tallerStr}</div></td>
-    <td>${pillEval(ini)}</td>
-    <td>${pillLik(lik, !!ini)}</td>
-    <td style="font-size:.78rem;color:var(--ink-2)">${proxEval(p)}</td>
+    <td><b>#${p.id}</b></td>
+    <td>${p.ci}</td>
+    <td class="nna-name">${p.nombre}</td>
+    <td class="nna-name">${p.apellido}</td>
     <td>${estadoPill}</td>
     <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})">Abrir expediente →</button></td>
   </tr>`;
@@ -1257,7 +1288,7 @@ function applyNNAFilter(){
   });
   tb.innerHTML = lista.length
     ? lista.map(filaNNA).join("")
-    : `<tr><td colspan="7"><div class="empty-state"><div class="big">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
+    : `<tr><td colspan="6"><div class="empty-state"><div class="big">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
 }
 
 function setEstadoFiltro(estado){
@@ -1285,19 +1316,67 @@ function toggleActivo(id){
 function renderNNA(){
   // Dropdown de NNA (todos) para las evaluaciones IDEA
   selNNA.innerHTML = NNA.map(p=>
-    `<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`).join("");
-  // KPIs dinámicos (los tres primeros se calculan sobre NNA activos)
+    `<option value="${p.id}">#${p.id} · ${p.nombre} ${p.apellido} · Grupo ${p.grupo}</option>`).join("");
+  // KPIs dinámicos (frecuencia IDEA anual)
   const activos    = NNA.filter(p=>p.activo).length;
-  const conInicial = NNA.filter(p=>p.activo && getEval(p,"inicial")).length;
-  const pendInter  = NNA.filter(p=>p.activo && getEval(p,"inicial") && !getEval(p,"lik") && !getEval(p,"final")).length;
+  const conIdea    = NNA.filter(p=>p.activo && tieneIdeaAnio(p, ANIO_ACTUAL)).length;
+  const pend       = NNA.filter(pendienteIdea).length;
   const totalEvals = NNA.reduce((a,p)=>a+p.historial.filter(h=>h.tipo==="idea"||h.tipo==="lik").length,0);
   setKpi("kpiTotal", activos);
-  setKpi("kpiAlDia", conInicial);
-  setKpi("kpiPend", pendInter);
+  setKpi("kpiAlDia", conIdea);
+  setKpi("kpiPend", pend);
   setKpi("kpiInf", totalEvals);
   applyNNAFilter();
+  renderPendientes();
 }
 function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+
+/* --- Vista Pendientes (NNA activos sin IDEA del año en curso) --- */
+function renderPendientes(){
+  const kpi = document.getElementById("pendKpi");
+  const tb2 = document.getElementById("tbodyPend");
+  if(!tb2) return;
+  const pend = NNA.filter(pendienteIdea);
+  const activos = NNA.filter(p=>p.activo).length;
+  if(kpi){
+    const cobertura = activos ? Math.round((activos-pend.length)/activos*100) : 0;
+    kpi.innerHTML = `
+      <div class="kpi"><div class="lab">Pendientes de IDEA ${ANIO_ACTUAL}</div><div class="val orange">${pend.length}</div><div class="sub">NNA activos sin evaluación anual</div></div>
+      <div class="kpi"><div class="lab">Cobertura IDEA ${ANIO_ACTUAL}</div><div class="val ok">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
+      <div class="kpi"><div class="lab">Nunca evaluados</div><div class="val purple">${pend.filter(p=>!ultimaIdea(p)).length}</div><div class="sub">Sin ninguna IDEA registrada</div></div>`;
+  }
+  tb2.innerHTML = pend.length ? pend.map(p=>{
+    const u = ultimaIdea(p);
+    const ultimaTxt = u ? `${anioDe(u.fecha)} · ${u.score}/96` : `<span style="color:var(--warn);font-weight:600">nunca</span>`;
+    return `<tr>
+      <td><b>#${p.id}</b></td><td>${p.ci}</td>
+      <td class="nna-name">${p.nombre}</td><td class="nna-name">${p.apellido}</td>
+      <td>Grupo ${p.grupo}</td><td>${ultimaTxt}</td>
+      <td><button class="btn btn-link" onclick="irAEval('idea', ${p.id})">Cargar IDEA →</button></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>No hay NNA pendientes de IDEA anual. ¡Ciclo al día!</div></td></tr>`;
+}
+
+/* --- Navegación a una evaluación preseleccionando el NNA --- */
+function irAEval(view, id){
+  if(view==="idea"){
+    go("idea");
+    const s=document.getElementById("selNNA"); if(s) s.value=String(id);
+    resetIDEA();
+  } else if(view==="areas"){
+    go("areas"); populateEvalSelects();
+    const s=document.getElementById("selNNAArea"); if(s) s.value=String(id);
+    renderAreas();
+  } else if(view==="general"){
+    go("general"); populateEvalSelects();
+    const s=document.getElementById("selNNAGen"); if(s) s.value=String(id);
+    renderGeneral();
+  } else if(view==="intermedia"){
+    go("intermedia");
+  } else if(view==="anamnesis"){
+    openEditar(id, 3);
+  }
+}
 
 renderNNA();
 
@@ -1431,13 +1510,6 @@ document.querySelectorAll(".lik-opts").forEach(g=>{
   });
 });
 
-/* ================= INFORME: TABLA COMPARATIVA ================= */
-const chip = v => `<span class="score-chip ${v>=5?"s-high":v>=3?"s-mid":"s-low"}">${v}</span>`;
-const escName = {A:"Rel. Social",B:"Comunicación",C:"Anticipación",D:"Simbolización"};
-document.getElementById("tbodyComp").innerHTML = COMP.map(r=>
-  `<tr><td>${r[0]}</td><td style="font-size:.74rem;color:var(--ink-2)">${escName[r[1]]}</td>
-   <td>${chip(r[2])}</td><td>${chip(r[3])}</td><td>${chip(r[4])}</td></tr>`).join("");
-
 /* ================= ANALÍTICA: GRÁFICOS ================= */
 // Barras horizontales por escala (enero vs noviembre, promedio poblacional /24)
 const escalas = [
@@ -1502,24 +1574,63 @@ function logout(){
   window.scrollTo({top:0});
 }
 
-/* ===================== WIZARD: ALTA DE NNA ===================== */
+/* ===================== WIZARD: ALTA / EDICIÓN DE NNA ===================== */
 let wizStep = 1;
+let editId = null;              // null = alta; id = edición del expediente
 const wizTalleres = new Set();
+const CAMPOS_TXT = ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv",
+                    "f_antec","f_med","f_alerta","f_motivo","f_perinatal","f_desarrollo","f_famhist"];
 
 function openAlta(){
+  editId = null;
   wizStep = 1;
   wizTalleres.clear();
-  // limpiar campos
-  ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv","f_antec","f_med","f_alerta",
-   "f_motivo","f_perinatal","f_desarrollo","f_famhist"]
-    .forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
+  CAMPOS_TXT.forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
   document.getElementById("f_loc").value = "Montevideo";
+  ["f_sexo","f_dx","f_grupo","f_tecnico"].forEach(id=>{const el=document.getElementById(id); if(el) el.selectedIndex=0;});
+  document.getElementById("f_apoyo").value = "Grado 2 — Requiere apoyo sustancial";
   document.querySelectorAll(".chip-pick").forEach(c=>c.classList.remove("sel"));
   document.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
+  document.getElementById("modalTitle").textContent = "Registrar nuevo NNA en la HCE";
+  document.getElementById("modalSub").textContent = "Alta de expediente clínico · Convenio INAU — Fundación IPPU";
+  document.getElementById("btnCreate").textContent = "✓ Crear expediente";
   showWizStep(1);
   document.getElementById("modalAlta").classList.add("open");
 }
-function closeAlta(){ document.getElementById("modalAlta").classList.remove("open"); }
+
+function openEditar(id, step){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  editId = id;
+  wizStep = 1;
+  wizTalleres.clear();
+  const set = (fid,val)=>{ const el=document.getElementById(fid); if(el) el.value = (val==null||val==="—") ? "" : val; };
+  set("f_nombre",p.nombre); set("f_apellido",p.apellido); set("f_nac",p.nac);
+  set("f_ci",p.ci); set("f_ref",p.referente); set("f_tel",p.tel);
+  document.getElementById("f_loc").value = (p.loc && p.loc!=="—") ? p.loc : "Montevideo";
+  document.getElementById("f_sexo").value  = p.sexo || "Femenino";
+  document.getElementById("f_dx").value    = p.dx;
+  set("f_dxfecha",p.dxFecha); set("f_deriv",p.deriv);
+  document.getElementById("f_apoyo").value = p.apoyo;
+  set("f_med", p.med); set("f_alerta", p.alerta);
+  document.getElementById("f_grupo").value   = p.grupo;
+  document.getElementById("f_tecnico").value = p.tecnico;
+  const an = p.anamnesis || {};
+  set("f_motivo",an.motivo); set("f_perinatal",an.perinatal);
+  set("f_desarrollo",an.desarrollo); set("f_famhist",an.familiares);
+  set("f_antec", p.antec);
+  document.querySelectorAll(".chip-pick").forEach(c=>{
+    const on = (p.talleres||[]).includes(c.dataset.t);
+    c.classList.toggle("sel", on);
+    if(on) wizTalleres.add(c.dataset.t);
+  });
+  document.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
+  document.getElementById("modalTitle").textContent = `Editar datos — ${p.nombre} ${p.apellido}`;
+  document.getElementById("modalSub").textContent = `Expediente #${p.id} · Convenio INAU — Fundación IPPU`;
+  document.getElementById("btnCreate").textContent = "✓ Guardar cambios";
+  showWizStep(step && step>=1 && step<=4 ? step : 1);
+  document.getElementById("modalAlta").classList.add("open");
+}
+function closeAlta(){ editId = null; document.getElementById("modalAlta").classList.remove("open"); }
 
 function showWizStep(n){
   wizStep = n;
@@ -1588,9 +1699,9 @@ function buildReview(){
 function crearNNA(){
   const g = id=>document.getElementById(id).value.trim();
   if(!g("f_nombre")||!g("f_apellido")||!g("f_nac")){ showWizStep(1); toast("Faltan datos del NNA"); return; }
+  const modoEdit = editId;   // capturar antes de cerrar el modal
   const hoy = new Date().toISOString().slice(0,10);
-  const nuevo = {
-    id: ++nnaSeq,
+  const datos = {
     nombre: g("f_nombre"), apellido: g("f_apellido"),
     nac: g("f_nac"), edad: edadDesde(g("f_nac")),
     sexo: g("f_sexo"), ci: g("f_ci")||"—", loc: g("f_loc")||"—",
@@ -1601,23 +1712,37 @@ function crearNNA(){
     antec: g("f_antec")||"Sin antecedentes registrados.",
     med: g("f_med")||"Ninguna", alerta: g("f_alerta")||"—",
     talleres: [...wizTalleres],
-    activo: true,
     anamnesis: {
       motivo: g("f_motivo")||"—",
       perinatal: g("f_perinatal")||"—",
       desarrollo: g("f_desarrollo")||"—",
       familiares: g("f_famhist")||"—"
-    },
-    historial: [
-      {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
-       desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA.`}
-    ]
+    }
   };
-  NNA.push(nuevo);
-  renderNNA();
-  closeAlta();
-  toast(`Expediente de ${nuevo.nombre} ${nuevo.apellido} creado`);
-  setTimeout(()=>abrirExpediente(nuevo.id), 400);
+
+  if(modoEdit){
+    const p = NNA.find(n=>n.id===modoEdit);
+    if(p){
+      Object.assign(p, datos);
+      p.historial.push({tipo:"note", fecha:hoy, titulo:"Edición de datos", desc:"Se actualizaron datos del expediente (demo)."});
+    }
+    renderNNA();
+    closeAlta();
+    toast(`Datos de ${g("f_nombre")} ${g("f_apellido")} actualizados`);
+    setTimeout(()=>abrirExpediente(modoEdit), 300);
+  } else {
+    const nuevo = Object.assign({ id: ++nnaSeq, activo:true }, datos, {
+      historial: [
+        {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
+         desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA anual.`}
+      ]
+    });
+    NNA.push(nuevo);
+    renderNNA();
+    closeAlta();
+    toast(`Expediente de ${nuevo.nombre} ${nuevo.apellido} creado`);
+    setTimeout(()=>abrirExpediente(nuevo.id), 400);
+  }
 }
 
 /* ===================== EXPEDIENTE CLÍNICO (HCE) ===================== */
@@ -1626,7 +1751,8 @@ function abrirExpediente(id){
   if(!p) return;
   document.getElementById("expCrumb").textContent = `Expediente · ${p.nombre} ${p.apellido}`;
   const iniciales = (p.nombre[0]||"")+(p.apellido[0]||"");
-  const ini = getEval(p,"inicial"), final = getEval(p,"final"), lik = getEval(p,"lik");
+  const ideaEvs = ideaEvals(p);
+  const likEvs = p.historial.filter(h=>h.tipo==="lik").sort((x,y)=> x.fecha < y.fecha ? -1 : 1);
 
   // timeline ordenada por fecha
   const tipoLabel = {alta:"Alta", idea:"IDEA", lik:"Intermedia", note:"Nota"};
@@ -1680,10 +1806,20 @@ function abrirExpediente(id){
       </div>
       <div class="spacer"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-primary" onclick="evaluarDesdeExp(${p.id})">+ Nueva evaluación IDEA</button>
+        <button class="btn btn-primary" onclick="openEditar(${p.id})">✎ Editar datos</button>
+        <button class="btn btn-ghost" onclick="generarInforme(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">🖨 Generar informe</button>
         <button class="btn btn-ghost" onclick="toggleActivo(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
         <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
       </div>
+    </div>
+
+    <div class="eval-bar">
+      <span class="eval-bar-lbl">Cargar evaluación:</span>
+      <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Anamnesis</button>
+      <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
+      <button class="btn btn-ghost" onclick="irAEval('intermedia', ${p.id})">Eval. intermedia</button>
+      <button class="btn btn-ghost" onclick="irAEval('areas', ${p.id})">Eval. por áreas</button>
+      <button class="btn btn-ghost" onclick="irAEval('general', ${p.id})">Eval. general</button>
     </div>
 
     <div class="exp-grid">
@@ -1719,12 +1855,15 @@ function abrirExpediente(id){
 
       <div>
         <div class="info-card">
-          <h3><span class="ic">◐</span> Seguimiento IDEA</h3>
+          <h3><span class="ic">◐</span> Seguimiento IDEA (anual)</h3>
           <div class="ib">
-            <div class="data-row"><dt>Inicial (enero)</dt><dd>${ini?ini.score+" / 96":"<span style='color:var(--warn)'>pendiente</span>"}</dd></div>
-            <div class="data-row"><dt>Intermedia (junio)</dt><dd>${lik?lik.score+" / 96 (equiv.)":"—"}</dd></div>
-            <div class="data-row"><dt>Final (noviembre)</dt><dd>${final?final.score+" / 96":"—"}</dd></div>
+            ${ideaEvs.length
+              ? ideaEvs.map(e=>`<div class="data-row"><dt>IDEA ${anioDe(e.fecha)}</dt><dd>${e.score} / 96 · <b style="color:${colorBanda(e.score)}">${bandaIdea(e.score)}</b></dd></div>`).join("")
+              : `<div class="data-row"><dt>IDEA anual</dt><dd><span style='color:var(--warn)'>sin evaluación registrada</span></dd></div>`}
+            ${likEvs.length ? `<div class="data-row"><dt>Intermedia (opcional)</dt><dd>${likEvs[likEvs.length-1].score} / 96 (equiv.)</dd></div>` : ""}
             <div style="margin-top:12px;padding:10px 12px;background:#F0F6F4;border-radius:8px;font-size:.8rem;color:var(--teal);font-weight:600">${tendencia}</div>
+            ${pendienteIdea(p) ? `<div style="margin-top:8px;font-size:.76rem;color:var(--warn);font-weight:700">● Pendiente de IDEA ${ANIO_ACTUAL}</div>` : ""}
+            <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="generarInforme(${p.id})">🖨 Generar informe descargable</button>
           </div>
         </div>
         <div class="info-card">
@@ -1757,6 +1896,93 @@ function evaluarDesdeExp(id){
   resetIDEA();
 }
 
+/* ===================== INFORME AUTOMÁTICO POR NNA (descargable) ===================== */
+function generarInforme(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const cont = document.getElementById("informeContent");
+  const eventos = [...p.historial].sort((a,b)=> a.fecha < b.fecha ? -1 : 1);
+  const scored = eventos.filter(e=>e.score!=null);
+  const hoy = new Date();
+  const fechaGen = `${String(hoy.getDate()).padStart(2,"0")}/${String(hoy.getMonth()+1).padStart(2,"0")}/${hoy.getFullYear()}`;
+
+  const guia = `
+    <div class="card" style="margin-top:18px">
+      <div class="cardhead"><h2>Cómo interpretar el puntaje IDEA</h2></div>
+      <div class="cardbody">
+        <p style="font-size:.85rem;margin-bottom:12px">El Inventario del Espectro Autista (IDEA, Á. Rivière, 1997) evalúa <b>12 dimensiones</b> agrupadas en <b>4 escalas</b>. Cada dimensión puntúa de <b>0</b> (sin trastorno) a <b>8</b> (afectación severa); el total va de <b>0 a 96</b>. <b>Un puntaje más bajo indica menor afectación</b> (mejor evolución).</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-low">0 – 32</span> Espectro <b>leve</b> — menor afectación</div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-mid">33 – 64</span> Espectro <b>moderado</b></div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-high">65 – 96</span> Espectro <b>severo</b> — mayor afectación</div>
+        </div>
+        <p style="font-size:.78rem;color:var(--ink-2)">Escalas: <b>A</b> Relación social · <b>B</b> Comunicación y lenguaje · <b>C</b> Anticipación / flexibilidad · <b>D</b> Simbolización. La banda es orientativa para el equipo técnico; <b>el juicio clínico del profesional prevalece siempre sobre el puntaje</b>.</p>
+      </div>
+    </div>`;
+
+  if(!scored.length){
+    cont.innerHTML = `
+      <div class="inf-banner">
+        <div><h2>Informe de evaluación — ${p.nombre} ${p.apellido}</h2>
+          <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo} · Generado el ${fechaGen}</p></div>
+        <div class="no-print" style="display:flex;gap:8px">
+          <button class="btn-print" onclick="window.print()">🖨 Descargar PDF</button>
+          <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
+        </div>
+      </div>
+      <div class="card"><div class="cardbody"><div class="empty-state"><div class="big">▤</div>Este NNA aún no tiene evaluaciones IDEA registradas.<br>Cargá una evaluación para poder generar el informe.</div></div></div>
+      ${guia}`;
+    go("informe");
+    return;
+  }
+
+  const first = scored[0], last = scored[scored.length-1];
+  const delta = first.score - last.score;
+  const mejora = delta > 0;
+  const bars = scored.slice(-5).map(e=>{
+    const h = Math.max(6, Math.round(e.score/96*100));
+    const lbl = e.tipo==="lik" ? `${anioDe(e.fecha)} interm.` : String(anioDe(e.fecha));
+    return `<div class="bar" style="height:${h}%;background:${colorBanda(e.score)}"><span>${e.score}</span><i>${lbl}</i></div>`;
+  }).join("");
+
+  cont.innerHTML = `
+    <div class="inf-banner">
+      <div><h2>Informe de evaluación — ${p.nombre} ${p.apellido}</h2>
+        <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo} · ${p.tecnico.split("—")[0].trim()} · Generado automáticamente el ${fechaGen}</p></div>
+      <div class="no-print" style="display:flex;gap:8px">
+        <button class="btn-print" onclick="window.print()">🖨 Descargar PDF</button>
+        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead"><h2>Evolución del puntaje total IDEA (0 – 96)</h2></div>
+        <div class="cardbody chart-wrap">
+          <div class="barchart">${bars}</div>
+        </div>
+      </div>
+      <div class="card resumen">
+        <div class="cardhead"><h2>Resumen</h2></div>
+        <div class="cardbody">
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)">Puntaje ${scored.length>1?"inicial → actual":"actual"}</div>
+          <div class="big">${scored.length>1?`${first.score} → ${last.score}`:`${last.score}`} <small style="font-size:.9rem;color:var(--ink-2)">/ 96</small></div>
+          ${scored.length>1?`<div class="delta" style="color:${mejora?'var(--ok)':'var(--bad)'}">${mejora?'▼':'▲'} ${mejora?'−':'+'}${Math.abs(delta)} puntos ${mejora?`(${Math.round(Math.abs(delta)/first.score*100)} % de mejora)`:'(requiere revisión del plan)'}</div>`:''}
+          <dl>
+            <dt>Banda actual</dt>
+            <dd style="color:${colorBanda(last.score)}">${bandaIdea(last.score)} — ${last.score} / 96</dd>
+            <dt>Evaluaciones registradas</dt>
+            <dd>${scored.length} (última: ${fmtFecha(last.fecha)})</dd>
+            <dt>Diagnóstico</dt>
+            <dd style="text-align:left">${p.dx}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    ${guia}
+    <div class="note" style="margin:16px 2px">Informe generado automáticamente a partir de los datos del expediente (demo · datos simulados). En producción se generaría en el backend con los puntajes por dimensión y quedaría versionado en la HCE.</div>`;
+  go("informe");
+}
+
 /* ===================== GUARDAR EVALUACIÓN IDEA EN EL EXPEDIENTE ===================== */
 function resetIDEA(){
   for(const k in ideaScores) delete ideaScores[k];
@@ -1780,19 +2006,20 @@ function guardarIDEA(){
   if(!p){ toast("Seleccioná un NNA"); return; }
   let total = 0;
   for(const k in ideaScores) total += ideaScores[k];
-  const periodo = document.getElementById("selPeriodo").value;
-  const esFinal = periodo.includes("Noviembre");
-  const hoy = new Date().toISOString().slice(0,10);
+  const anio = document.getElementById("selPeriodo").value;
+  const hoy = new Date();
+  const mmdd = `${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
+  const fecha = `${anio}-${mmdd}`;
 
   p.historial.push({
-    tipo:"idea", fecha:hoy,
-    titulo:`Evaluación IDEA — ${esFinal?"final":"inicial"}`,
-    desc:`Período ${periodo} · Evaluador: Dr. González`,
+    tipo:"idea", fecha,
+    titulo:`Evaluación IDEA anual`,
+    desc:`Período ${anio} · Evaluador: Dr. González`,
     score: total, total: 96
   });
 
   renderNNA();
-  toast(`Evaluación guardada en el expediente de ${p.nombre} (${total}/96)`);
+  toast(`Evaluación IDEA ${anio} guardada en el expediente de ${p.nombre} (${total}/96)`);
   resetIDEA();
   setTimeout(()=>abrirExpediente(id), 500);
 }
