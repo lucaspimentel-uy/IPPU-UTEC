@@ -367,9 +367,75 @@
     box-shadow:0 8px 24px rgba(14,143,126,.4);z-index:120;opacity:0;transition:.3s;display:flex;gap:10px;align-items:center
   }
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* ============ LOGIN ============ */
+  .login-screen{
+    position:fixed;inset:0;z-index:200;background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    display:flex;align-items:center;justify-content:center;padding:24px
+  }
+  .login-screen.hidden{display:none}
+  .login-card{
+    background:var(--card);border-radius:16px;width:100%;max-width:384px;padding:34px 30px 22px;
+    box-shadow:0 24px 70px rgba(0,0,0,.4);text-align:center;animation:popin .25s ease
+  }
+  .login-logo{
+    width:56px;height:56px;border-radius:14px;background:var(--orange);color:#fff;font-weight:800;
+    font-size:1.3rem;display:flex;align-items:center;justify-content:center;margin:0 auto 14px
+  }
+  .login-card h1{font-size:1.3rem;color:var(--navy)}
+  .login-sub{font-size:.8rem;color:var(--ink-2);margin:4px 0 22px}
+  .login-field{text-align:left;margin-bottom:14px}
+  .login-field label{display:block;font-size:.74rem;font-weight:600;color:var(--ink);margin-bottom:5px}
+  .login-field input{
+    width:100%;font-family:inherit;font-size:.9rem;padding:11px 12px;border:1.5px solid var(--line);
+    border-radius:9px;background:#fff;color:var(--ink)
+  }
+  .login-field input:focus{outline:none;border-color:var(--orange)}
+  .login-btn{width:100%;padding:12px;font-size:.9rem;margin-top:6px}
+  .login-hint{
+    font-size:.72rem;color:#9B5500;margin-top:14px;background:var(--orange-soft);
+    border-radius:8px;padding:9px 12px;line-height:1.4
+  }
+  .login-foot{font-size:.68rem;color:var(--ink-2);margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+
+  /* ============ TOOLBAR BÚSQUEDA + FILTRO DE ESTADO ============ */
+  .nna-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--line);background:#FAFBFD}
+  .search-wrap{position:relative;flex:1;min-width:240px}
+  .search-wrap .search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-2);font-size:1rem;pointer-events:none}
+  .search-wrap input{width:100%;font-family:inherit;font-size:.85rem;padding:9px 12px 9px 34px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .search-wrap input:focus{outline:none;border-color:var(--orange)}
+  .estado-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip-estado{padding:7px 14px;border:1.5px solid var(--line);border-radius:999px;background:#fff;font-size:.78rem;font-weight:600;color:var(--ink-2)}
+  .chip-estado:hover{border-color:var(--orange)}
+  .chip-estado.active{background:var(--navy);border-color:var(--navy);color:#fff}
+  .pill.activo{background:#E3F4EA;color:var(--ok)}
+  .pill.inactivo{background:#EEF1F4;color:#64748B}
+  tr.row-inactiva td:not(:last-child){opacity:.5}
 </style>
 </head>
 <body>
+
+<!-- ===================== LOGIN (usuario pre-creado) ===================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">IP</div>
+    <h1>Fundación IPPU</h1>
+    <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
+    <form id="loginForm" onsubmit="return doLogin(event)">
+      <div class="login-field">
+        <label>Usuario / Email</label>
+        <input id="loginUser" value="gonzalez@fundacionippu.uy" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>Contraseña</label>
+        <input id="loginPass" type="password" value="demo1234" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary login-btn" type="submit">Ingresar</button>
+      <div class="login-hint">Usuario de demostración pre-cargado · <b>Dr. González</b> (Técnico · Psicología). Tocá «Ingresar».</div>
+    </form>
+    <div class="login-foot">Demo L1 · IPPU × UTEC-LIDIA · Datos simulados</div>
+  </div>
+</div>
 
 <!-- ===================== TOPBAR ===================== -->
 <header class="topbar">
@@ -383,7 +449,7 @@
     <div class="avatar">DG</div>
     <div>Dr. González<br><span style="font-size:.7rem;color:#8FA9C0">Técnico · Psicología</span></div>
   </div>
-  <button class="btn-exit">Salir</button>
+  <button class="btn-exit" onclick="logout()">Salir</button>
 </header>
 
 <div class="layout">
@@ -402,7 +468,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.2 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -428,9 +494,20 @@
           <button class="btn btn-ghost" onclick="go('idea')">Nueva evaluación IDEA</button>
           <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
         </div>
+        <div class="nna-toolbar">
+          <div class="search-wrap">
+            <span class="search-ico">⌕</span>
+            <input id="searchNNA" type="search" placeholder="Buscar por nombre, apellido, N.º de HCE o cédula…" oninput="applyNNAFilter()" autocomplete="off">
+          </div>
+          <div class="estado-chips">
+            <button class="chip-estado active" data-estado="activos" onclick="setEstadoFiltro('activos')">Activos</button>
+            <button class="chip-estado" data-estado="inactivos" onclick="setEstadoFiltro('inactivos')">Inactivos</button>
+            <button class="chip-estado" data-estado="todos" onclick="setEstadoFiltro('todos')">Todos</button>
+          </div>
+        </div>
         <table class="lista">
           <thead>
-            <tr><th>NNA</th><th>Grupo / Taller</th><th>IDEA enero</th><th>Intermedia junio</th><th>Próxima evaluación</th><th></th></tr>
+            <tr><th>NNA</th><th>Grupo / Taller</th><th>IDEA enero</th><th>Intermedia junio</th><th>Próxima evaluación</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody id="tbodyNNA"></tbody>
         </table>
@@ -690,8 +767,8 @@
 
     <div class="stepper">
       <div class="step active" id="stp1"><div class="dot">1</div>Datos del NNA</div>
-      <div class="step" id="stp2"><div class="dot">2</div>Clínicos</div>
-      <div class="step" id="stp3"><div class="dot">3</div>Plan IPPU</div>
+      <div class="step" id="stp2"><div class="dot">2</div>Datos clínicos</div>
+      <div class="step" id="stp3"><div class="dot">3</div>Anamnesis</div>
       <div class="step" id="stp4"><div class="dot">4</div>Confirmar</div>
     </div>
 
@@ -723,7 +800,7 @@
         </div>
       </div>
 
-      <!-- PASO 2: datos clínicos -->
+      <!-- PASO 2: datos clínicos + asignación institucional -->
       <div class="wizard-step" data-step="2">
         <div class="section-label">Diagnóstico</div>
         <div class="form-grid">
@@ -740,24 +817,15 @@
             <input id="f_deriv" placeholder="Ej. Neuropediatría — Hospital Pereira Rossell"></div>
           <div class="field"><label>Nivel de apoyo (DSM-5)</label>
             <select id="f_apoyo"><option>Grado 1 — Requiere apoyo</option><option selected>Grado 2 — Requiere apoyo sustancial</option><option>Grado 3 — Requiere apoyo muy sustancial</option></select></div>
-        </div>
-        <div class="section-label">Antecedentes y observaciones</div>
-        <div class="form-grid full">
-          <div class="field"><label>Antecedentes relevantes</label>
-            <textarea id="f_antec" placeholder="Antecedentes perinatales, médicos, familiares, tratamientos previos…"></textarea></div>
           <div class="field"><label>Medicación actual</label>
             <input id="f_med" placeholder="Ej. Ninguna / Risperidona 0,5 mg"></div>
           <div class="field"><label>Alertas clínicas</label>
-            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales con ruidos fuertes"></div>
+            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales"></div>
         </div>
-      </div>
-
-      <!-- PASO 3: plan IPPU -->
-      <div class="wizard-step" data-step="3">
         <div class="section-label">Asignación institucional</div>
         <div class="form-grid">
           <div class="field"><label>Grupo <span class="req">*</span></label>
-            <select id="f_grupo"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+            <select id="f_grupo"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
           <div class="field"><label>Técnico de referencia</label>
             <select id="f_tecnico"><option>Dr. González — Psicología</option><option>Lic. Torres — Psicopedagogía</option><option>Lic. Pereira — Fonoaudiología</option><option>Dra. Silva — Neuropediatría</option></select></div>
         </div>
@@ -773,6 +841,27 @@
           <span class="chip-pick" data-t="Psicomotricidad">Psicomotricidad</span>
         </div>
         <div class="hint" style="margin-top:8px">Tocá los talleres en los que participará. Podés ajustarlos luego desde el expediente.</div>
+      </div>
+
+      <!-- PASO 3: anamnesis / historia del desarrollo -->
+      <div class="wizard-step" data-step="3">
+        <div class="section-label">Anamnesis — Historia clínica del desarrollo</div>
+        <div class="form-grid full">
+          <div class="field"><label>Motivo de ingreso / consulta</label>
+            <textarea id="f_motivo" placeholder="Motivo por el que ingresa al programa IPPU y objetivos iniciales…"></textarea></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Antecedentes perinatales</label>
+            <textarea id="f_perinatal" placeholder="Embarazo, parto, período neonatal…"></textarea></div>
+          <div class="field"><label>Desarrollo evolutivo</label>
+            <textarea id="f_desarrollo" placeholder="Marcha, lenguaje, control de esfínteres, hitos madurativos…"></textarea></div>
+        </div>
+        <div class="form-grid full">
+          <div class="field"><label>Antecedentes familiares</label>
+            <textarea id="f_famhist" placeholder="Antecedentes familiares relevantes (TEA, neurológicos, psiquiátricos…)"></textarea></div>
+          <div class="field"><label>Antecedentes y observaciones generales</label>
+            <textarea id="f_antec" placeholder="Antecedentes médicos, tratamientos previos, otras observaciones…"></textarea></div>
+        </div>
       </div>
 
       <!-- PASO 4: revisión -->
@@ -819,6 +908,13 @@ const NNA = [
     antec:"Embarazo y parto sin complicaciones. Retraso en aparición del lenguaje. Sin antecedentes familiares de TEA.",
     med:"Ninguna", alerta:"Hipersensibilidad auditiva a ruidos fuertes",
     talleres:["Habilidades sociales","Lenguaje y comunicación","Música y expresión"],
+    activo:true,
+    anamnesis:{
+      motivo:"Derivada por dificultades en la interacción social y del lenguaje; ingresa para abordaje interdisciplinario.",
+      perinatal:"Embarazo controlado y parto a término sin complicaciones.",
+      desarrollo:"Marcha a los 14 meses. Retraso en la aparición del lenguaje (primeras palabras ~30 meses). Control de esfínteres adecuado.",
+      familiares:"Sin antecedentes familiares de TEA. Un tío materno con trastorno del lenguaje."
+    },
     historial:[
       {tipo:"alta", fecha:"2024-02-10", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Torres."},
       {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Torres", score:42, total:96},
@@ -834,6 +930,13 @@ const NNA = [
     antec:"Detección a los 3 años por la educadora del CAIF. Buena respuesta a intervención temprana.",
     med:"Ninguna", alerta:"—",
     talleres:["Habilidades sociales","Lenguaje y comunicación","Juego simbólico","Motricidad"],
+    activo:true,
+    anamnesis:{
+      motivo:"Detección temprana en el CAIF; ingresa para continuar intervención en habilidades sociales y lenguaje.",
+      perinatal:"Embarazo sin controles regulares en el primer trimestre. Parto a término.",
+      desarrollo:"Hitos motores en tiempo. Lenguaje con retraso leve, buena evolución tras intervención temprana.",
+      familiares:"Sin antecedentes familiares relevantes conocidos."
+    },
     historial:[
       {tipo:"alta", fecha:"2023-03-01", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dr. González."},
       {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Dr. González", score:38, total:96},
@@ -895,11 +998,16 @@ const NNA = [
     antec:"Diagnóstico a los 4 años. Sin evaluación IDEA registrada aún en el ciclo 2026.",
     med:"Ninguna", alerta:"—",
     talleres:["Psicomotricidad","Vida diaria (AVD)"],
+    activo:false, bajaFecha:"2026-05-20",
     historial:[
-      {tipo:"alta", fecha:"2024-08-30", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dra. Silva."}
+      {tipo:"alta", fecha:"2024-08-30", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dra. Silva."},
+      {tipo:"note", fecha:"2026-05-20", titulo:"Baja del programa", desc:"Egreso por traslado de domicilio. Expediente inactivo."}
     ]
   }
 ];
+
+/* Estado de actividad: por defecto activo si el expediente no lo especifica */
+NNA.forEach(n=>{ if(n.activo===undefined) n.activo = true; });
 
 /* Helpers de historial → derivan el estado de evaluaciones desde el historial */
 function getEval(nna, periodoKey){
@@ -1106,31 +1214,88 @@ function proxEval(nna){
   return "Completa · pendiente";
 }
 
-function renderNNA(){
-  tb.innerHTML = "";
-  selNNA.innerHTML = "";
-  NNA.forEach(p=>{
-    const ini = getEval(p,"inicial"), lik = getEval(p,"lik");
-    const tallerStr = p.talleres.length ? p.talleres[0] + (p.talleres.length>1?` +${p.talleres.length-1}`:"") : "—";
-    tb.insertAdjacentHTML("beforeend", `<tr>
-      <td><div class="nna-name">${p.nombre} ${p.apellido}</div><div class="nna-meta">${p.edad} años · Exp. #${p.id} · ${p.dx.split("—")[0].trim()}</div></td>
-      <td>Grupo ${p.grupo}<div class="nna-meta">${tallerStr}</div></td>
-      <td>${pillEval(ini)}</td>
-      <td>${pillLik(lik, !!ini)}</td>
-      <td style="font-size:.78rem;color:var(--ink-2)">${proxEval(p)}</td>
-      <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})">Abrir expediente →</button></td>
-    </tr>`);
-    selNNA.insertAdjacentHTML("beforeend",`<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`);
+/* --- Búsqueda + filtro de estado (activo / inactivo) --- */
+let nnaEstadoFiltro = "activos"; // activos | inactivos | todos
+// minúsculas + sin acentos (para búsqueda tolerante: "sofia" encuentra "Sofía")
+const deburr = s => (s||"").toString().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"");
+const norm = s => deburr(s).replace(/[.\-\s]/g,"");
+
+function coincideBusqueda(p, q){
+  if(!q) return true;
+  const ql = deburr(q).trim();
+  const qn = norm(q);
+  return deburr(`${p.nombre} ${p.apellido}`).includes(ql)                // nombre y apellido
+      || deburr(`${p.apellido} ${p.nombre}`).includes(ql)
+      || (qn.length>0 && norm(p.ci).includes(qn))                        // cédula (tolerante a puntos/guiones)
+      || (qn.length>0 && String(p.id).includes(qn))                      // N.º de HCE / expediente
+      || deburr(`exp #${p.id}`).includes(ql) || deburr(`hce ${p.id}`).includes(ql);
+}
+
+function filaNNA(p){
+  const ini = getEval(p,"inicial"), lik = getEval(p,"lik");
+  const tallerStr = p.talleres.length ? p.talleres[0] + (p.talleres.length>1?` +${p.talleres.length-1}`:"") : "—";
+  const estadoPill = p.activo
+    ? `<span class="pill activo">Activo</span>`
+    : `<span class="pill inactivo">Inactivo</span>`;
+  return `<tr class="${p.activo?"":"row-inactiva"}">
+    <td><div class="nna-name">${p.nombre} ${p.apellido}</div><div class="nna-meta">${p.edad} años · Exp. #${p.id} · ${p.dx.split("—")[0].trim()}</div></td>
+    <td>Grupo ${p.grupo}<div class="nna-meta">${tallerStr}</div></td>
+    <td>${pillEval(ini)}</td>
+    <td>${pillLik(lik, !!ini)}</td>
+    <td style="font-size:.78rem;color:var(--ink-2)">${proxEval(p)}</td>
+    <td>${estadoPill}</td>
+    <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})">Abrir expediente →</button></td>
+  </tr>`;
+}
+
+function applyNNAFilter(){
+  const q = (document.getElementById("searchNNA")?.value) || "";
+  const lista = NNA.filter(p=>{
+    const estadoOk = nnaEstadoFiltro==="todos" ? true
+                   : nnaEstadoFiltro==="activos" ? p.activo : !p.activo;
+    return estadoOk && coincideBusqueda(p, q);
   });
-  // KPIs dinámicos
-  const total = NNA.length;
-  const conInicial = NNA.filter(p=>getEval(p,"inicial")).length;
-  const pendInter = NNA.filter(p=>getEval(p,"inicial") && !getEval(p,"lik") && !getEval(p,"final")).length;
+  tb.innerHTML = lista.length
+    ? lista.map(filaNNA).join("")
+    : `<tr><td colspan="7"><div class="empty-state"><div class="big">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
+}
+
+function setEstadoFiltro(estado){
+  nnaEstadoFiltro = estado;
+  document.querySelectorAll(".chip-estado").forEach(c=>c.classList.toggle("active", c.dataset.estado===estado));
+  applyNNAFilter();
+}
+
+function toggleActivo(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  p.activo = !p.activo;
+  const hoy = new Date().toISOString().slice(0,10);
+  if(!p.activo){
+    p.bajaFecha = hoy;
+    p.historial.push({tipo:"note", fecha:hoy, titulo:"Baja del programa", desc:"NNA marcado como inactivo (demo)."});
+  } else {
+    delete p.bajaFecha;
+    p.historial.push({tipo:"note", fecha:hoy, titulo:"Reactivación", desc:"NNA reactivado en el programa (demo)."});
+  }
+  renderNNA();
+  abrirExpediente(id);
+  toast(p.activo ? `${p.nombre} reactivado` : `${p.nombre} dado de baja`);
+}
+
+function renderNNA(){
+  // Dropdown de NNA (todos) para las evaluaciones IDEA
+  selNNA.innerHTML = NNA.map(p=>
+    `<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`).join("");
+  // KPIs dinámicos (los tres primeros se calculan sobre NNA activos)
+  const activos    = NNA.filter(p=>p.activo).length;
+  const conInicial = NNA.filter(p=>p.activo && getEval(p,"inicial")).length;
+  const pendInter  = NNA.filter(p=>p.activo && getEval(p,"inicial") && !getEval(p,"lik") && !getEval(p,"final")).length;
   const totalEvals = NNA.reduce((a,p)=>a+p.historial.filter(h=>h.tipo==="idea"||h.tipo==="lik").length,0);
-  setKpi("kpiTotal", total);
+  setKpi("kpiTotal", activos);
   setKpi("kpiAlDia", conInicial);
   setKpi("kpiPend", pendInter);
   setKpi("kpiInf", totalEvals);
+  applyNNAFilter();
 }
 function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 
@@ -1321,6 +1486,22 @@ function toast(msg){
   window._toastT = setTimeout(()=>t.classList.remove("show"), 3200);
 }
 
+/* ===================== SESIÓN (login demo · usuario pre-creado) ===================== */
+function doLogin(e){
+  if(e) e.preventDefault();
+  const u = document.getElementById("loginUser").value.trim();
+  if(!u){ toast("Ingresá el usuario"); return false; }
+  document.getElementById("loginScreen").classList.add("hidden");
+  toast("Bienvenido, Dr. González");
+  return false;
+}
+function logout(){
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("loginPass").value = "demo1234";
+  go("inicio");
+  window.scrollTo({top:0});
+}
+
 /* ===================== WIZARD: ALTA DE NNA ===================== */
 let wizStep = 1;
 const wizTalleres = new Set();
@@ -1329,7 +1510,8 @@ function openAlta(){
   wizStep = 1;
   wizTalleres.clear();
   // limpiar campos
-  ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv","f_antec","f_med","f_alerta"]
+  ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv","f_antec","f_med","f_alerta",
+   "f_motivo","f_perinatal","f_desarrollo","f_famhist"]
     .forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
   document.getElementById("f_loc").value = "Montevideo";
   document.querySelectorAll(".chip-pick").forEach(c=>c.classList.remove("sel"));
@@ -1396,7 +1578,8 @@ function buildReview(){
     ["Nivel de apoyo", g("f_apoyo")],
     ["Grupo", g("f_grupo")],
     ["Técnico de ref.", g("f_tecnico").split("—")[0].trim()],
-    ["Talleres", talleres.length ? talleres.join(", ") : "Ninguno asignado"]
+    ["Talleres", talleres.length ? talleres.join(", ") : "Ninguno asignado"],
+    ["Motivo de ingreso", g("f_motivo") || "—"]
   ];
   document.getElementById("reviewDl").innerHTML =
     rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("");
@@ -1418,6 +1601,13 @@ function crearNNA(){
     antec: g("f_antec")||"Sin antecedentes registrados.",
     med: g("f_med")||"Ninguna", alerta: g("f_alerta")||"—",
     talleres: [...wizTalleres],
+    activo: true,
+    anamnesis: {
+      motivo: g("f_motivo")||"—",
+      perinatal: g("f_perinatal")||"—",
+      desarrollo: g("f_desarrollo")||"—",
+      familiares: g("f_famhist")||"—"
+    },
     historial: [
       {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
        desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA.`}
@@ -1465,21 +1655,33 @@ function abrirExpediente(id){
     ? p.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")
     : `<span style="font-size:.8rem;color:var(--ink-2)">Sin talleres asignados aún.</span>`;
 
+  const a = p.anamnesis;
+  const anamnesisHtml = a
+    ? `<div class="data-row"><dt>Motivo de ingreso</dt><dd style="text-align:left">${a.motivo||"—"}</dd></div>
+       <div class="data-row"><dt>Perinatales</dt><dd style="text-align:left">${a.perinatal||"—"}</dd></div>
+       <div class="data-row"><dt>Desarrollo</dt><dd style="text-align:left">${a.desarrollo||"—"}</dd></div>
+       <div class="data-row"><dt>Ant. familiares</dt><dd style="text-align:left">${a.familiares||"—"}</dd></div>
+       <div class="data-row"><dt>Observaciones</dt><dd style="text-align:left">${p.antec||"—"}</dd></div>`
+    : `<div class="data-row"><dt>Observaciones</dt><dd style="text-align:left">${p.antec||"—"}</dd></div>
+       <div style="font-size:.74rem;color:var(--ink-2);margin-top:8px">Sin anamnesis estructurada cargada en el expediente (demo).</div>`;
+
   document.getElementById("expedienteContent").innerHTML = `
     <div class="exp-head">
       <div class="exp-avatar">${iniciales}</div>
       <div>
         <h1>${p.nombre} ${p.apellido}</h1>
-        <div class="meta">${p.edad} años · ${p.sexo} · Expediente #${p.id} · C.I. ${p.ci}</div>
+        <div class="meta">${p.edad} años · ${p.sexo} · Expediente #${p.id} · C.I. ${p.ci}${!p.activo&&p.bajaFecha?` · Baja: ${fmtFecha(p.bajaFecha)}`:""}</div>
         <div class="badges">
           <span class="bdg">Grupo ${p.grupo}</span>
           <span class="bdg">${p.apoyo.split("—")[0].trim()}</span>
           <span class="bdg">${p.tecnico.split("—")[0].trim()}</span>
+          <span class="bdg" style="background:${p.activo?'rgba(27,138,76,.35)':'rgba(197,48,48,.35)'}">${p.activo?'Activo':'Inactivo'}</span>
         </div>
       </div>
       <div class="spacer"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-primary" onclick="evaluarDesdeExp(${p.id})">+ Nueva evaluación IDEA</button>
+        <button class="btn btn-ghost" onclick="toggleActivo(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
         <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
       </div>
     </div>
@@ -1495,8 +1697,11 @@ function abrirExpediente(id){
             <div class="data-row"><dt>Nivel de apoyo</dt><dd>${p.apoyo}</dd></div>
             <div class="data-row"><dt>Medicación</dt><dd>${p.med}</dd></div>
             <div class="data-row"><dt>Alertas</dt><dd style="${p.alerta!=="—"?"color:var(--bad);font-weight:600":""}">${p.alerta}</dd></div>
-            <div class="data-row"><dt>Antecedentes</dt><dd style="text-align:left">${p.antec}</dd></div>
           </div>
+        </div>
+        <div class="info-card">
+          <h3><span class="ic">❏</span> Anamnesis — Historia del desarrollo</h3>
+          <div class="ib">${anamnesisHtml}</div>
         </div>
         <div class="info-card">
           <h3><span class="ic">◫</span> Plan IPPU — Talleres asignados</h3>
