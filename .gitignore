@@ -28,3 +28,13 @@ Desktop.ini
 /handoff.md
 /CLAUDE.md
 /herramientas/conversor_docling.py
+
+# Secretos / credenciales — NUNCA subir al repo
+access_token.txt
+acces_token.txt
+*access_token*
+*acces_token*
+*.token
+.env
+.env.*
+!.env.example
