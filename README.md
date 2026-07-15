@@ -47,8 +47,8 @@ python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
 ```
 
 ## 👥 Equipo
-- **UTEC-LIDIA (estudiantes):** Bruno Delvalle, Samuel Furtado, Lucas Pimentel, Rafael Quintanilla, Victor Uria.
-- **UTEC (referentes):** Matías López, Mikaela/Ruth Pivani.
+- **UTEC-LIDIA (estudiantes):** Samuel Furtado, Lucas Pimentel, Victor Uria.
+- **UTEC (referentes):** Matías López.
 - **IPPU:** Fernando Sierra (Director).
 
 ## 🔒 Nota de privacidad
