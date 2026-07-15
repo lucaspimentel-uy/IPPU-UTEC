@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCE IPPU · Prototipo funcional v1 — Sistema de Evaluación TEA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b2a33; --ink-soft:#4a5d66; --paper:#f4f7f6; --card:#ffffff;
+  --brand:#0e5a63; --brand-deep:#083840; --brand-tint:#e3efef;
+  --amber:#b35c00; --amber-tint:#fdf1e2;
+  --ok:#2e7d4f; --ok-tint:#e8f3ec;
+  --danger:#b3403a; --danger-tint:#fbecea;
+  --lock:#8a979c; --line:#d9e2e0;
+  --radius:10px;
+  --font-display:'Bitter', Georgia, serif;
+  --font-body:'Archivo', -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{font-size:15px}
+body{font-family:var(--font-body); background:var(--paper); color:var(--ink); line-height:1.5}
+h1,h2,h3,h4{font-family:var(--font-display); font-weight:600; line-height:1.25; color:var(--brand-deep)}
+button{font-family:var(--font-body); cursor:pointer}
+a{color:var(--brand)}
+
+/* ===== Layout ===== */
+.app{display:grid; grid-template-columns:236px 1fr; min-height:100vh}
+.sidebar{background:var(--brand-deep); color:#dfeceb; padding:18px 0; position:sticky; top:0; height:100vh; overflow-y:auto}
+.logo{padding:0 18px 16px; border-bottom:1px solid rgba(255,255,255,.14); margin-bottom:12px}
+.logo h1{color:#fff; font-size:1.15rem}
+.logo .sub{font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:#9fc4c2; margin-top:3px}
+.navgrp{font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:#7fa6a4; padding:12px 18px 4px}
+.nav a{display:block; padding:8px 18px; color:#dfeceb; text-decoration:none; font-size:.92rem; border-left:3px solid transparent}
+.nav a:hover{background:rgba(255,255,255,.07)}
+.nav a.active{background:rgba(255,255,255,.1); border-left-color:#e8b25c; color:#fff; font-weight:600}
+.nav .tag{font-size:.62rem; background:rgba(255,255,255,.15); border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:1px}
+.main{padding:26px 34px 60px; max-width:1180px}
+.crumb{font-size:.78rem; color:var(--ink-soft); margin-bottom:6px}
+.pagehead{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:20px}
+.pagehead h2{font-size:1.5rem}
+.pagehead p{color:var(--ink-soft); font-size:.9rem; max-width:640px}
+
+/* ===== Cards & tables ===== */
+.card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; margin-bottom:18px}
+.card h3{font-size:1.05rem; margin-bottom:10px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+table{width:100%; border-collapse:collapse; font-size:.88rem}
+th{text-align:left; font-weight:600; color:var(--brand-deep); border-bottom:2px solid var(--brand); padding:7px 8px; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em}
+td{padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:hover td{background:#fafcfb}
+.num{text-align:center; font-variant-numeric:tabular-nums}
+
+/* ===== KPI ===== */
+.kpi{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px}
+.kpi .v{font-family:var(--font-display); font-size:1.7rem; font-weight:700; color:var(--brand)}
+.kpi .l{font-size:.76rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em}
+
+/* ===== Badges / estados ===== */
+.badge{display:inline-block; font-size:.7rem; font-weight:600; padding:2px 9px; border-radius:20px; letter-spacing:.02em}
+.b-firmado{background:var(--ok-tint); color:var(--ok)}
+.b-borrador{background:var(--amber-tint); color:var(--amber)}
+.b-bloqueado{background:#eef1f1; color:var(--lock)}
+.b-alerta{background:var(--danger-tint); color:var(--danger)}
+
+/* ===== Stepper (firma secuencial) — elemento distintivo ===== */
+.stepper{display:flex; align-items:stretch; gap:0; margin:14px 0 22px; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--card)}
+.step{flex:1; padding:12px 14px; border-right:1px solid var(--line); position:relative; cursor:pointer; min-width:0}
+.step:last-child{border-right:none}
+.step .code{font-size:.66rem; letter-spacing:.08em; color:var(--ink-soft)}
+.step .name{font-weight:600; font-size:.86rem; margin:2px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.step.s-firmado{background:linear-gradient(to bottom,var(--ok-tint),#fff); box-shadow:inset 0 3px 0 var(--ok)}
+.step.s-borrador{background:linear-gradient(to bottom,var(--amber-tint),#fff); box-shadow:inset 0 3px 0 var(--amber)}
+.step.s-bloqueado{background:#f4f6f6; color:var(--lock); box-shadow:inset 0 3px 0 var(--lock)}
+.step.s-bloqueado .name{color:var(--lock)}
+.step.active{outline:2px solid var(--brand); outline-offset:-2px; z-index:1}
+
+/* ===== Formularios ===== */
+label{display:block; font-size:.78rem; font-weight:600; color:var(--ink-soft); margin-bottom:3px; text-transform:uppercase; letter-spacing:.03em}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-family:var(--font-body); font-size:.92rem; background:#fff; color:var(--ink)}
+textarea{min-height:74px; resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand); outline-offset:0; border-color:var(--brand)}
+.frow{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:12px}
+fieldset:disabled input, fieldset:disabled select, fieldset:disabled textarea{background:#f2f4f4; color:#69777c}
+fieldset{border:none}
+.req::after{content:" *"; color:var(--danger)}
+.hint{font-size:.76rem; color:var(--ink-soft); margin-top:3px}
+
+/* ===== Likert / puntuación ===== */
+.likert{display:flex; gap:4px}
+.likert button{width:34px; height:34px; border:1px solid var(--line); background:#fff; border-radius:6px; font-weight:600; font-size:.85rem; color:var(--ink-soft)}
+.likert button:hover{border-color:var(--brand)}
+.likert button.sel{background:var(--brand); color:#fff; border-color:var(--brand)}
+.likert button.sel.v1{background:var(--danger); border-color:var(--danger)}
+.likert button.sel.v5{background:var(--ok); border-color:var(--ok)}
+.likert button.ns.sel{background:var(--lock); border-color:var(--lock)}
+.itemrow{display:grid; grid-template-columns:1fr auto; gap:14px; padding:12px 0; border-bottom:1px solid var(--line); align-items:start}
+.itemrow:last-child{border-bottom:none}
+.itemrow .txt{font-size:.9rem}
+.itemrow .ref{font-size:.72rem; color:var(--ink-soft); margin-top:2px}
+.itemrow textarea{min-height:40px; margin-top:6px; font-size:.85rem}
+.subtotal{display:flex; justify-content:flex-end; gap:20px; padding:10px 4px 2px; font-size:.9rem}
+.subtotal b{font-family:var(--font-display); font-size:1.05rem; color:var(--brand)}
+
+/* ===== Botones ===== */
+.btn{display:inline-block; padding:9px 18px; border-radius:8px; border:1px solid var(--brand); background:var(--brand); color:#fff; font-weight:600; font-size:.88rem}
+.btn:hover{background:var(--brand-deep)}
+.btn.ghost{background:#fff; color:var(--brand)}
+.btn.ok{background:var(--ok); border-color:var(--ok)}
+.btn.warn{background:#fff; border-color:var(--amber); color:var(--amber)}
+.btn:disabled{background:#c8d2d1; border-color:#c8d2d1; cursor:not-allowed}
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0}
+
+/* ===== Avisos ===== */
+.notice{border-radius:8px; padding:11px 14px; font-size:.86rem; margin:12px 0; border:1px solid}
+.n-info{background:var(--brand-tint); border-color:#bcd8d6; color:var(--brand-deep)}
+.n-warn{background:var(--amber-tint); border-color:#ecd0a8; color:var(--amber)}
+.n-ok{background:var(--ok-tint); border-color:#bfe0cc; color:var(--ok)}
+.n-danger{background:var(--danger-tint); border-color:#efc4c1; color:var(--danger)}
+
+/* ===== Tabs de módulos ===== */
+.tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px}
+.tabs button{padding:7px 14px; border-radius:20px; border:1px solid var(--line); background:#fff; font-size:.84rem; font-weight:600; color:var(--ink-soft)}
+.tabs button.active{background:var(--brand); border-color:var(--brand); color:#fff}
+.tabs button .lockico{font-size:.75rem}
+
+/* ===== Delta chips ===== */
+.delta{font-weight:700; font-variant-numeric:tabular-nums}
+.d-pos{color:var(--ok)} .d-neg{color:var(--danger)} .d-zero{color:var(--ink-soft)}
+
+/* ===== Manual ===== */
+.manual{display:grid; grid-template-columns:230px 1fr; gap:22px}
+.mtoc{position:sticky; top:20px; align-self:start; max-height:88vh; overflow-y:auto}
+.mtoc a{display:block; font-size:.82rem; padding:5px 10px; color:var(--ink-soft); text-decoration:none; border-left:2px solid var(--line)}
+.mtoc a:hover{color:var(--brand); border-left-color:var(--brand)}
+.mtoc .g{font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--brand); padding:12px 10px 4px; font-weight:700}
+.mbody h3{margin-top:22px; padding-top:14px; border-top:1px solid var(--line)}
+.mbody p, .mbody li{font-size:.9rem; margin-bottom:8px; color:#2b3b43}
+.mbody ul, .mbody ol{padding-left:20px; margin-bottom:10px}
+.mbody table{margin:10px 0 16px}
+
+/* ===== Radar SVG ===== */
+.radarwrap{display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start}
+.legend{font-size:.8rem}
+.legend span{display:inline-flex; align-items:center; gap:6px; margin-right:16px}
+.legend i{width:14px; height:4px; border-radius:2px; display:inline-block}
+
+/* ===== Criterios desplegables (IDEA) ===== */
+details.crit{margin-top:6px}
+details.crit summary{cursor:pointer; font-size:.78rem; font-weight:600; color:var(--brand); list-style:none; display:inline-block; padding:3px 10px; border:1px solid var(--brand); border-radius:14px}
+details.crit summary::before{content:'? '; font-weight:700}
+details.crit[open] summary{background:var(--brand); color:#fff}
+details.crit .critbody{margin-top:8px; background:#f6f9f8; border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:.82rem}
+details.crit .critbody .que{margin-bottom:8px; color:var(--brand-deep)}
+details.crit table td{padding:4px 8px; font-size:.8rem}
+details.crit td.lv{font-weight:700; width:26px; text-align:center; color:var(--brand)}
+
+/* ===== Documentos y fotos ===== */
+.thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; margin-top:12px}
+.thumb{border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff}
+.thumb img{width:100%; height:110px; object-fit:cover; display:block}
+.thumb .cap{font-size:.72rem; padding:6px 8px; color:var(--ink-soft)}
+.uprow{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:10px}
+.uprow > div{flex:1; min-width:160px}
+
+/* ===== Impresión de informe ===== */
+@media print{
+  .sidebar,.toolbar,.tabs,.stepper,.no-print{display:none!important}
+  .app{grid-template-columns:1fr}
+  .main{padding:0; max-width:none}
+  .card{border:none; padding:6px 0; break-inside:avoid}
+  body{background:#fff}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:static; height:auto}
+  .grid2,.grid3,.grid4,.manual{grid-template-columns:1fr}
+  .main{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>HCE · IPPU</h1>
+      <div class="sub">Fundación IPPU · Prototipo v1</div>
+      <div class="sub" style="margin-top:6px; color:#e8b25c">Para revisión UTEC-LIDIA</div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="navgrp">General</div>
+      <a href="#/inicio" data-route="inicio">Panel institucional</a>
+      <div class="navgrp">Servicio de Atención Diurna</div>
+      <a href="#/pacientes" data-route="pacientes">Usuarios y HCE</a>
+      <a href="#/grupos" data-route="grupos">Grupos de referencia</a>
+      <a href="#/reportes" data-route="reportes">Reportes</a>
+      <div class="navgrp">Otros servicios</div>
+      <a href="#/taller" data-route="taller">Taller Terapéutico <span class="tag">fase 2</span></a>
+      <a href="#/clinica" data-route="clinica">Clínica <span class="tag">fase 2</span></a>
+      <div class="navgrp">Documentación</div>
+      <a href="#/manual" data-route="manual">Manual de Procedimientos</a>
+      <a href="#/specs" data-route="specs">Especificaciones técnicas</a>
+    </nav>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<script>
+/* ================================================================
+   HCE IPPU — Prototipo funcional v1 (2026)
+   Sistema Integrado de Evaluación y Seguimiento TEA
+   Instrumentos: IDEA (Rivière, 2001) · Escala IPPU-TEA Prot. A/B ·
+   Informe de Cierre Anual. Manual de Procedimientos v1.0 integrado.
+   NOTA: prototipo sin persistencia (datos en memoria). El backend
+   real de UTEC deberá implementar base de datos, autenticación,
+   firma digital y registro de auditoría (HCE-LOG).
+   ================================================================ */
+
+/* ============ DEFINICIONES DE INSTRUMENTOS ============ */
+
+const ESCALAS = ['Relación Social','Comunicación y Lenguaje','Anticipación y Flexibilidad','Simbolización'];
+
+// IDEA (Rivière, 2001) — 12 dimensiones, escala 0/2/4/6/8 (impares intermedios), NS = sin observación suficiente
+const IDEA_DIMS = [
+ {d:1, e:0, n:'Trastorno de la relación social', ref:'Escala 1 · Relación Social'},
+ {d:2, e:0, n:'Trastorno de la referencia conjunta', ref:'Escala 1 · Relación Social'},
+ {d:3, e:0, n:'Trastorno intersubjetivo y mentalista', ref:'Escala 1 · Relación Social'},
+ {d:4, e:1, n:'Trastorno de las funciones comunicativas', ref:'Escala 2 · Comunicación y Lenguaje'},
+ {d:5, e:1, n:'Trastorno del lenguaje expresivo', ref:'Escala 2 · Comunicación y Lenguaje'},
+ {d:6, e:1, n:'Trastorno del lenguaje receptivo', ref:'Escala 2 · Comunicación y Lenguaje'},
+ {d:7, e:2, n:'Trastorno de la anticipación', ref:'Escala 3 · Anticipación y Flexibilidad'},
+ {d:8, e:2, n:'Trastorno de la flexibilidad', ref:'Escala 3 · Anticipación y Flexibilidad'},
+ {d:9, e:2, n:'Trastorno del sentido de la actividad', ref:'Escala 3 · Anticipación y Flexibilidad'},
+ {d:10,e:3, n:'Trastorno de la ficción y la imaginación', ref:'Escala 4 · Simbolización'},
+ {d:11,e:3, n:'Trastorno de la imitación', ref:'Escala 4 · Simbolización'},
+ {d:12,e:3, n:'Trastorno de la suspensión (creación de significantes)', ref:'Escala 4 · Simbolización'}
+];
+
+// Criterios de anclaje por dimensión — síntesis operativa adaptada de los descriptores
+// del IDEA (Rivière, 2001) para consulta rápida durante la puntuación. El texto íntegro
+// del instrumento original debe estar disponible para el equipo en HCE-DOC institucional.
+const IDEA_DESC = [
+ {que:'Cualidad del vínculo y del interés por las personas: desde el aislamiento completo hasta la motivación de relación con iguales.',
+  n8:'Aislamiento completo; impermeabilidad a las personas y a sus iniciativas.',
+  n6:'Incapacidad de relación con iguales, aunque hay vínculo establecido con algunos adultos.',
+  n4:'Relaciones con iguales infrecuentes, inducidas desde fuera y de carácter externo.',
+  n2:'Hay motivación por relacionarse con iguales, pero dificultad para establecer relaciones por falta de comprensión de las sutilezas sociales.',
+  n0:'Sin trastorno cualitativo de la relación social.'},
+ {que:'Capacidad de compartir la acción, la atención y la preocupación con otra persona (mirada referencial, acción conjunta).',
+  n8:'Ausencia completa de acciones conjuntas o de interés por las acciones de otras personas.',
+  n6:'Realiza acciones conjuntas simples, sin miradas significativas de referencia conjunta.',
+  n4:'Emplea miradas de referencia conjunta en situaciones dirigidas, pero no en situaciones abiertas.',
+  n2:'Pautas de atención y acción conjunta establecidas; pueden faltar la preocupación conjunta o los marcos comunes de referencia.',
+  n0:'Sin trastorno cualitativo de la referencia conjunta.'},
+ {que:'Sintonía emocional con las personas y comprensión de que los otros tienen mente (intersubjetividad, teoría de la mente).',
+  n8:'Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria); falta de interés por las personas.',
+  n6:'Respuestas intersubjetivas primarias ocasionales; sin indicios de intersubjetividad secundaria.',
+  n4:'Indicios de intersubjetividad secundaria, sin atribución explícita de mente; no resuelve tareas mentalistas.',
+  n2:'Conciencia explícita de que las otras personas tienen mente; resuelve tareas mentalistas simples pero con dificultades en situaciones naturales.',
+  n0:'Sin trastorno cualitativo intersubjetivo o mentalista.'},
+ {que:'Para qué se comunica: desde la ausencia de comunicación intencional hasta la capacidad de declarar y compartir experiencia.',
+  n8:'Ausencia de comunicación entendida como relación intencionada mediante significantes.',
+  n6:'Conductas instrumentales con personas para pedir (p. ej., llevar de la mano), sin otras pautas comunicativas.',
+  n4:'Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencia o cambiar el mundo mental.',
+  n2:'Comunica para declarar y comentar, con escasez de declaraciones sobre el mundo interno propio.',
+  n0:'Sin trastorno cualitativo de las funciones comunicativas.'},
+ {que:'Producción del lenguaje: desde el mutismo hasta el discurso conversacional.',
+  n8:'Mutismo total o funcional (pueden existir verbalizaciones sin valor comunicativo).',
+  n6:'Palabras sueltas o ecolalias; no hay oraciones creativas.',
+  n4:'Oraciones con algún grado de creación propia, que no llegan a configurar discurso ni conversación.',
+  n2:'Lenguaje discursivo con dificultades: conversación limitada, poco recíproca o poco flexible.',
+  n0:'Sin trastorno cualitativo del lenguaje expresivo.'},
+ {que:'Comprensión del lenguaje: desde la desatención total al habla hasta la comprensión del discurso con dificultades sutiles.',
+  n8:'"Sordera central": ignora por completo el lenguaje; no responde a órdenes ni a su nombre.',
+  n6:'Asocia enunciados verbales con conductas propias (comprende órdenes simples), sin comprender el lenguaje como sistema.',
+  n4:'Comprensión literal, poco flexible y descontextualizada de enunciados; no comprende discurso.',
+  n2:'Comprende discurso y participa en conversaciones, con dificultades para ironía, sarcasmo y doble sentido.',
+  n0:'Sin trastorno cualitativo del lenguaje receptivo.'},
+ {que:'Capacidad de anticipar lo que va a suceder y de manejar los cambios del entorno.',
+  n8:'Adherencia inflexible a estímulos que se repiten de forma idéntica; resistencia intensa a cambios; sin conductas anticipatorias.',
+  n6:'Conductas anticipatorias simples en rutinas cotidianas; oposición frecuente a los cambios.',
+  n4:'Incorpora estructuras temporales amplias; puede haber reacciones catastróficas ante cambios no anticipados.',
+  n2:'Alguna capacidad de regular el propio ambiente y de manejar cambios; prefiere un orden claro, con cierta flexibilidad.',
+  n0:'Sin trastorno cualitativo de la anticipación.'},
+ {que:'Rigidez conductual y mental: estereotipias, rituales, apegos y contenidos obsesivos.',
+  n8:'Predominio de estereotipias motoras simples.',
+  n6:'Rituales simples; resistencia a cambios mínimos del entorno.',
+  n4:'Rituales complejos; apego excesivo a objetos; preguntas obsesivas.',
+  n2:'Contenidos de pensamiento obsesivos y limitados; intereses poco funcionales y poco flexibles.',
+  n0:'Sin trastorno cualitativo de la flexibilidad.'},
+ {que:'Grado en que la actividad propia tiene propósito y sentido para la persona.',
+  n8:'Predominio masivo de conductas sin propósito ni meta.',
+  n6:'Actividades funcionales breves ante consignas externas; sin comprensión de la finalidad.',
+  n4:'Actividades autónomas de ciclo largo que se realizan sin comprensión precisa de su sentido.',
+  n2:'Presencia de motivos de logro; actividades complejas cuyo sentido se comprende de forma parcial; requiere motivación externa.',
+  n0:'Sin trastorno cualitativo del sentido de la actividad.'},
+ {que:'Juego funcional, juego simbólico y capacidad de crear ficciones.',
+  n8:'Ausencia completa de juego funcional y simbólico.',
+  n6:'Juegos funcionales elementales, poco flexibles, inducidos desde fuera y repetitivos.',
+  n4:'Juego simbólico evocado y poco espontáneo; ficciones escasas y poco flexibles.',
+  n2:'Ficciones complejas, utilizadas a veces como recurso de aislamiento o con dificultades para diferenciar ficción y realidad.',
+  n0:'Sin trastorno cualitativo de la ficción y la imaginación.'},
+ {que:'Capacidad de imitar acciones, gestos y modelos de otras personas.',
+  n8:'Ausencia completa de conductas de imitación.',
+  n6:'Imitaciones motoras simples, evocadas desde fuera; no espontáneas.',
+  n4:'Imitación espontánea esporádica, poco versátil y poco intersubjetiva.',
+  n2:'Imitación establecida; ausencia de modelos internos de referencia; imitación poco flexible.',
+  n0:'Sin trastorno cualitativo de la imitación.'},
+ {que:'Capacidad de "dejar en suspenso" acciones y significados para crear significantes: señalar, simbolizar, comprender metáforas.',
+  n8:'No suspende preacciones para crear gestos comunicativos (p. ej., no señala).',
+  n6:'No suspende acciones instrumentales para crear símbolos enactivos (no hay juego funcional).',
+  n4:'No suspende las propiedades reales de los objetos para crear ficciones y juego simbólico.',
+  n2:'No deja en suspenso representaciones para comprender metáforas, ironía o doble sentido.',
+  n0:'Sin trastorno cualitativo de la suspensión.'}
+];
+
+// Escala IPPU-TEA — 24 ítems (Protocolos A y B comparten ítems)
+const IPPU_ITEMS = [
+ // E1 Relación Social
+ {e:0,i:1,t:'Calidad y frecuencia del contacto visual intencional en intercambios sociales con adultos y pares',r:'DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)'},
+ {e:0,i:2,t:'Iniciativa e interés espontáneo hacia otras personas; respuesta a la presencia social',r:'DSM-5-TR A1b · CIF d720 · Wing & Gould (1979)'},
+ {e:0,i:3,t:'Atención conjunta: seguimiento de la mirada y el gesto del adulto; señalización para compartir interés',r:'DSM-5-TR A1a · CIF d7105 · Mundy & Newell (2007)'},
+ {e:0,i:4,t:'Comprensión de emociones y estados mentales ajenos; tareas mentalistas según nivel evolutivo',r:'DSM-5-TR A1 · CIF d710 · Baron-Cohen et al. (1985)'},
+ {e:0,i:5,t:'Reciprocidad emocional: adecuación de la respuesta afectiva al contexto y al interlocutor',r:'DSM-5-TR A1b · CIF d7200 · ADOS-2 (Lord et al., 2012)'},
+ {e:0,i:6,t:'Iniciación y mantenimiento de intercambios sociales con pares en contexto grupal',r:'DSM-5-TR A1c · CIF d750 · PEERS (Laugeson, 2014)'},
+ // E2 Comunicación y Lenguaje
+ {e:1,i:1,t:'Uso funcional del lenguaje oral o del sistema AAC (PECS, VOCA, pictogramas) como comunicación intencional',r:'DSM-5-TR A1a · CIE-11 6A02.1/6A02.3 · CIF d330 · Mirenda (2009)'},
+ {e:1,i:2,t:'Comprensión de consignas verbales simples y complejas en contexto natural y estructurado',r:'DSM-5-TR A1 · CIF d310 · Wetherby & Prizant (2002)'},
+ {e:1,i:3,t:'Reducción de patrones de lenguaje atípico (ecolalia, inversión pronominal) o incremento del uso funcional',r:'DSM-5-TR A1a · CIF d330 · Prizant & Duchan (1981)'},
+ {e:1,i:4,t:'Repertorio y uso funcional de gestos comunicativos: señalar, mostrar, dar, saludar con propósito social',r:'DSM-5-TR A1a · CIF d3350 · Capone & McGregor (2004)'},
+ {e:1,i:5,t:'Habilidades pragmáticas: ajuste al contexto, turno comunicativo, inicio y cierre de intercambios',r:'DSM-5-TR A1c · CIF d350 · Bishop (2011)'},
+ {e:1,i:6,t:'Integración de la comunicación no verbal (expresión facial, tono, postura) en el intercambio',r:'DSM-5-TR A1a · CIF d3350 · Wetherby & Prizant (2002)'},
+ // E3 Anticipación y Flexibilidad
+ {e:2,i:1,t:'Tolerancia a cambios en rutinas, horarios y entorno físico; adaptación ante imprevistos',r:'DSM-5-TR B2 · CIF d2303 · TEACCH (Mesibov et al., 2004)'},
+ {e:2,i:2,t:'Frecuencia e intensidad de comportamientos repetitivos que interfieren con el funcionamiento grupal',r:'DSM-5-TR B1 · CIF d230 · Y-BOCS adaptado (Scahill et al., 2006)'},
+ {e:2,i:3,t:'Flexibilización de rituales y estereotipias motoras o verbales; posibilidad de interrupción con apoyo',r:'DSM-5-TR B1 · CIF d2303 · Turner (1999)'},
+ {e:2,i:4,t:'Flexibilidad cognitiva: capacidad de cambiar de tarea, estrategia o solución ante demanda del entorno',r:'DSM-5-TR B2 · CIF d1641 · BRIEF (Gioia et al., 2000)'},
+ {e:2,i:5,t:'Regulación sensorial: reducción de reacciones desadaptativas ante estímulos del entorno grupal',r:'DSM-5-TR B4 · CIF b250 · Ayres (1979) · Marco et al. (2011)'},
+ {e:2,i:6,t:'Comprensión del sentido y propósito de las actividades; orientación hacia metas externas',r:'DSM-5-TR B2 · CIF d230 · TEACCH (Mesibov et al., 2004)'},
+ // E4 Simbolización
+ {e:3,i:1,t:'Emergencia o ampliación del juego funcional y simbólico: uso representacional de objetos, ficción',r:'DSM-5-TR A · CIF d8800 · Leslie (1987) · Jarrold et al. (1996)'},
+ {e:3,i:2,t:'Imitación intencional de acciones, gestos y secuencias demostradas por adultos y pares',r:'DSM-5-TR A1a · CIF d1550 · Meltzoff & Moore (1977) · Rogers et al. (2003)'},
+ {e:3,i:3,t:'Participación e integración en juegos sociales con pares: juegos grupales, roles y turnos',r:'DSM-5-TR A1c · CIF d8803 · Wolfberg (2009)'},
+ {e:3,i:4,t:'Construcción de narrativas: secuencias causales en el juego o el relato ajustadas al nivel evolutivo',r:'DSM-5-TR A · CIF d1660 · Schuler & Wolfberg (2000)'},
+ {e:3,i:5,t:'Generalización de conductas imitadas a nuevos contextos, materiales y personas',r:'CIF d1551 · Stahmer (1995) · Lovaas (1987)'},
+ {e:3,i:6,t:'Comprensión y creación de significantes: gestos, símbolos enactivos, ficción y metáfora según nivel',r:'CIF d1559 · Rivière dim. 12 (Suspensión) · Tomasello (1995)'}
+];
+
+const LIKERT_LBL = {1:'Regresión significativa',2:'Sin cambio observable',3:'Progreso leve / Emergente',4:'Progreso moderado / Consistente',5:'Progreso notable / Generalizado'};
+
+/* ============ HELPERS DE CÁLCULO ============ */
+
+function ideaTotales(p){ // p = array de 12 (número 0–8 o 'NS' o null)
+  const esc=[0,0,0,0]; let comp=true;
+  IDEA_DIMS.forEach((dm,ix)=>{const v=p[ix]; if(typeof v==='number') esc[dm.e]+=v; else comp=false;});
+  return {esc, total:esc.reduce((a,b)=>a+b,0), completo:comp};
+}
+function ideaInterpreta(t){
+  // Lecturas orientativas neutras: aluden a las escalas del IDEA sin prescribir
+  // técnicas ni métodos. La elección del abordaje corresponde al equipo técnico.
+  if(t<=15) return {perfil:'Muy leve', ns:'Nivel 1', txt:'Sugerencia: priorizar los objetivos en las dimensiones del IDEA con mayor puntaje individual.'};
+  if(t<=30) return {perfil:'Leve', ns:'Nivel 1', txt:'Sugerencia: revisar el perfil por escala del IDEA para focalizar los apoyos donde la afectación relativa es mayor.'};
+  if(t<=55) return {perfil:'Leve a moderado', ns:'Nivel 1–2', txt:'Sugerencia: atender especialmente las Escalas 1 y 2 del IDEA (Relación Social y Comunicación) al definir objetivos del semestre.'};
+  if(t<=75) return {perfil:'Moderado', ns:'Nivel 2', txt:'Sugerencia: el perfil por escala del IDEA orienta la priorización de apoyos; valorar en equipo la necesidad de apoyos a la comunicación (Escala 2).'};
+  if(t<=90) return {perfil:'Moderado a severo (alta necesidad de apoyo)', ns:'Nivel 2–3', txt:'Sugerencia: perfil de alta necesidad de apoyo; leer las cuatro escalas del IDEA en conjunto para estructurar los apoyos del entorno grupal.'};
+  return {perfil:'Severo a muy severo (necesidad de apoyo muy sustancial)', ns:'Nivel 3', txt:'Sugerencia: apoyo muy sustancial en todas las áreas; los objetivos se anclan en las dimensiones del IDEA de mayor puntaje.'};
+}
+function protTotales(p){ // array de 24 (1–5 o null)
+  const esc=[0,0,0,0]; let comp=true;
+  IPPU_ITEMS.forEach((it,ix)=>{const v=p[ix]; if(typeof v==='number') esc[it.e]+=v; else comp=false;});
+  return {esc, total:esc.reduce((a,b)=>a+b,0), completo:comp};
+}
+function deltaInterpreta(d){
+  if(d>=13) return {t:'Progreso muy significativo', a:'Documentar y analizar qué estrategias lo produjeron para replicarlas.', c:'d-pos'};
+  if(d>=7)  return {t:'Progreso significativo', a:'Documentar; mantener la línea de intervención.', c:'d-pos'};
+  if(d>=1)  return {t:'Progreso leve', a:'Revisar si los objetivos de esa escala son suficientemente ambiciosos.', c:'d-pos'};
+  if(d===0) return {t:'Sin cambio', a:'Analizar si el área está consolidada o requiere mayor intensidad.', c:'d-zero'};
+  if(d>=-6) return {t:'Regresión leve', a:'Identificar factores contextuales; revisar estrategias.', c:'d-neg'};
+  return {t:'Regresión significativa', a:'Reunión técnica urgente; contacto con familia; posible revisión del plan.', c:'d-neg'};
+}
+function fmtDelta(d){const s=d>0?'+':''; return s+d;}
+function esign(v){return v>0?'d-pos':(v<0?'d-neg':'d-zero');}
+
+/* ============ DATOS DEMO (ficticios) ============ */
+// Estados de módulo: 'bloqueado' | 'borrador' | 'firmado'
+function nuevoPaciente(o){
+  return Object.assign({
+    id:'', nombre:'', hc:'', grupo:'', anio:'2026', fnac:'', ci:'', sexo:'',
+    diag:'', cie11:'Pendiente diagnóstico', nivel:'No determinado',
+    psicologa:'', maestra:'',
+    anamnesis:{motivo:'',antPerinatales:'',antMedicos:'',desarrollo:'',familia:'',escolaridad:'',medicacion:'',otros:''},
+    ci_firmado:false, ci_fecha:'', ci_firmante:'',
+    docs:[], fotos:[], fotoConsent:false,
+    vf:{estado:'No iniciado', fecha:'', organismo:'', pct:'', vigencia:'', rnpcd:'',
+        dominios:{comunicacion:'', autocuidado:'', movilidad:'', aprendizaje:'', interacciones:'', comunidad:''},
+        capacidades:'', barreras:'', apoyos:'', obs:'', sintesisFuncional:''},
+    inau:{sipi:'', convenio:'Proyecto 3749 — Convenio INAU', referente:'', ingreso:'', obs:'', envios:[]},
+    bps:{prestacion:'', tramite:'', estado:'', vencimiento:'', obs:'', gestiones:[]},
+    idea:{estado:'bloqueado', fecha:'', sesiones:'', punt:Array(12).fill(null), obs:Array(12).fill(''), sintesis:'', objetivos:''},
+    protA:{estado:'bloqueado', fecha:'', semanas:'', punt:Array(24).fill(null), obs:Array(24).fill(''), sintPsi:'', sintMtra:'', otros:''},
+    protB:{estado:'bloqueado', fecha:'', semanas:'', punt:Array(24).fill(null), obs:Array(24).fill(''), sintPsi:'', sintMtra:'', otros:'', ajustes:''},
+    cierre:{estado:'bloqueado', fecha:'', sintE:['','','',''], sintPsi:'', sintMtra:'', recomendaciones:'', orientaciones:'', recibi:false}
+  }, o);
+}
+
+const DB = { pacientes: [] };
+
+// Caso 1 — ciclo 2025 completo (demuestra el Informe de Cierre)
+(function(){
+  const p = nuevoPaciente({id:'U-0001', nombre:'Usuario demo 1 (M., 9 años)', hc:'HC-2025-014', grupo:'Grupo Celeste', anio:'2025',
+    fnac:'2016-04-12', ci:'5.XXX.XXX-1', sexo:'M', diag:'TEA — diagnóstico médico confirmado', cie11:'6A02.1', nivel:'Nivel 2',
+    psicologa:'Lic. A. Fernández', maestra:'Mtra. C. Rodríguez'});
+  p.ci_firmado=true; p.ci_fecha='2025-03-05'; p.ci_firmante='Madre — R.P.';
+  p.anamnesis={motivo:'Derivación de INAU. Dificultades de comunicación y conducta en contexto escolar.',
+    antPerinatales:'Embarazo a término, sin complicaciones relevantes.', antMedicos:'Sin patologías médicas asociadas. Audición y visión evaluadas: normales.',
+    desarrollo:'Retraso en la adquisición del lenguaje (primeras palabras ~30 meses). Marcha a los 14 meses.',
+    familia:'Convive con madre y hermana mayor. Red de apoyo familiar activa.', escolaridad:'Escuela pública con acompañante terapéutico 3 veces por semana.',
+    medicacion:'Risperidona 0,5 mg/día (indicación psiquiátrica).', otros:'—'};
+  p.idea={estado:'firmado', fecha:'2025-03-20', sesiones:6,
+    punt:[6,6,6, 6,4,4, 4,6,4, 4,4,4], obs:Array(12).fill(''), 
+    sintesis:'Evaluación realizada tras 6 sesiones de observación en contexto grupal. Mayor afectación en Relación Social (18/24) y Comunicación (14/24). Perfil orientativo Nivel 2 DSM-5-TR. Conductas de referencia conjunta muy limitadas; lenguaje expresivo reducido a palabras sueltas con ecolalia frecuente.',
+    objetivos:'1) Incrementar atención conjunta con apoyo gestual. 2) Introducir un sistema aumentativo de comunicación acorde al perfil de la Escala 2. 3) Anticipación visual de rutinas del grupo.'};
+  p.idea.obs[1]='Diferencia inicial entre evaluadores (6 vs 4); consenso en 6 por observaciones de sesión grupal.';
+  p.protA={estado:'firmado', fecha:'2025-07-07', semanas:16,
+    punt:[3,3,3,2,3,2, 3,3,2,3,2,2, 3,2,3,2,3,3, 2,3,2,2,2,2], obs:Array(24).fill(''),
+    sintPsi:'Emergencia clara de atención conjunta con apoyo. El sistema aumentativo de comunicación se consolidó en el contexto de sesión. Persisten dificultades en interacción con pares sin mediación adulta.',
+    sintMtra:'Mayor permanencia en actividades estructuradas. Barreras: transiciones entre actividades y trabajo en pequeño grupo.', otros:'Fonoaudiología: buena respuesta al apoyo gestual (ítems E2-4 y E2-6).'};
+  p.protA.obs[0]='Contacto visual emergente en saludo y pedido, solo con apoyo verbal del adulto.';
+  p.protB={estado:'firmado', fecha:'2025-12-11', semanas:17,
+    punt:[4,3,4,3,3,3, 4,4,3,4,3,3, 3,3,3,3,4,4, 3,4,3,3,3,2], obs:Array(24).fill(''),
+    sintPsi:'Generalización parcial de la comunicación por intercambio de imágenes al hogar. Atención conjunta consistente en sesión. Interacción con pares aún dependiente de mediación.',
+    sintMtra:'Participa de rutinas grupales completas. Ajustes curriculares: apoyos visuales en todas las consignas.', otros:'Psicomotricidad: mejora en regulación ante estímulos sonoros.',
+    ajustes:'Se incorporó agenda visual individual (agosto) y se aumentó la frecuencia de trabajo de a dos con un par tolerado (octubre).'};
+  p.protB.obs[19]='Imitación de secuencias de 2–3 pasos observada también en el hogar (reporte familiar).';
+  p.cierre={estado:'firmado', fecha:'2025-12-19',
+    sintE:['Progreso moderado y sostenido en la relación social (Δ +4). La atención conjunta pasó de emergente a consistente en contextos estructurados. La interacción espontánea con pares sigue siendo el principal desafío para 2026.',
+      'Área de mayor progreso del año (Δ +6). El sistema aumentativo de comunicación se consolidó y comienza a generalizarse al hogar (ítems 1 y 4 de la Escala E2). Se recomienda ampliar su alcance funcional el próximo año.',
+      'Progreso moderado (Δ +4). La agenda visual individual redujo significativamente las conductas de oposición ante transiciones.',
+      'Progreso leve (Δ +5 sobre una base muy descendida). La imitación mejoró de forma notable; el juego simbólico permanece incipiente.'],
+    sintPsi:'Año de progreso clínicamente significativo, concentrado en comunicación funcional y anticipación. Se recomienda continuidad en el mismo grupo de referencia con intensificación del trabajo entre pares.',
+    sintMtra:'La incorporación de apoyos visuales sistemáticos fue el ajuste de mayor impacto pedagógico. Se sugiere sostenerlos y comenzar retiro gradual en rutinas dominadas.',
+    recomendaciones:'1) Profundizar el uso funcional del sistema aumentativo de comunicación (Escala 2 del IDEA / E2). 2) Ampliar las oportunidades de juego compartido con pares (Escala 4 / E4). 3) Retiro gradual de apoyos en rutinas consolidadas (Escala 3 / E3). 4) Mantener coordinación con escuela y acompañante.',
+    orientaciones:'Sostener la agenda visual en el hogar. Ofrecer oportunidades de pedido con el sistema de comunicación que utiliza en situaciones cotidianas (merienda, juego). Anticipar verbal y visualmente los cambios de rutina del fin de semana.',
+    recibi:true};
+  DB.pacientes.push(p);
+})();
+
+// Caso 2 — ciclo 2026 en curso: IDEA firmado, Protocolo A en borrador (julio 2026)
+(function(){
+  const p = nuevoPaciente({id:'U-0002', nombre:'Usuario demo 2 (F., 12 años)', hc:'HC-2026-003', grupo:'Grupo Naranja', anio:'2026',
+    fnac:'2014-08-02', ci:'5.XXX.XXX-2', sexo:'F', diag:'TEA — diagnóstico médico confirmado', cie11:'6A02.0', nivel:'Nivel 1',
+    psicologa:'Lic. M. Suárez', maestra:'Mtra. L. Pereira'});
+  p.ci_firmado=true; p.ci_fecha='2026-03-02'; p.ci_firmante='Padre — J.D.';
+  p.anamnesis={motivo:'Consulta espontánea de la familia por dificultades de integración con pares.',antPerinatales:'Sin datos relevantes.',antMedicos:'Sin comorbilidades.',desarrollo:'Lenguaje estructuralmente conservado; dificultades pragmáticas desde edad preescolar.',familia:'Convive con ambos padres.',escolaridad:'Liceo público, 1.er año. Sin apoyos formales.',medicacion:'No recibe.',otros:'—'};
+  p.idea={estado:'firmado', fecha:'2026-03-18', sesiones:5,
+    punt:[4,2,4, 2,2,2, 4,4,2, 2,1,2], obs:Array(12).fill(''),
+    sintesis:'Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y relación social con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: Nivel 1.',
+    objetivos:'1) Habilidades conversacionales con pares (inicio y cierre). 2) Tolerancia a cambios de plan. 3) Identificación y expresión de emociones propias.'};
+  p.protA={estado:'borrador', fecha:'', semanas:16,
+    punt:[3,4,3,3,3,4, 4,4,3,3,3,3, 3,3,3,4,3,3, 4,3,3,4,3,3], obs:Array(24).fill(''),
+    sintPsi:'', sintMtra:'', otros:''};
+  DB.pacientes.push(p);
+})();
+
+// Caso 3 — ingreso reciente: consentimiento firmado, IDEA en borrador
+(function(){
+  const p = nuevoPaciente({id:'U-0003', nombre:'Usuario demo 3 (M., 6 años)', hc:'HC-2026-021', grupo:'Grupo Verde', anio:'2026',
+    fnac:'2020-01-15', ci:'6.XXX.XXX-3', sexo:'M', diag:'En proceso diagnóstico (derivado a neuropediatría)', cie11:'Pendiente diagnóstico', nivel:'No determinado',
+    psicologa:'Lic. A. Fernández', maestra:'Mtra. P. González'});
+  p.ci_firmado=true; p.ci_fecha='2026-06-10'; p.ci_firmante='Madre — S.L.';
+  p.anamnesis={motivo:'Derivación desde CAIF por ausencia de lenguaje oral y aislamiento.',antPerinatales:'Prematurez leve (36 semanas).',antMedicos:'Evaluación auditiva pendiente.',desarrollo:'Ausencia de lenguaje oral funcional a los 6 años. No control de esfínteres nocturno.',familia:'Convive con madre y abuela materna.',escolaridad:'Educación inicial, asistencia irregular.',medicacion:'No recibe.',otros:'Se coordina interconsulta con MSP.'};
+  p.idea={estado:'borrador', fecha:'', sesiones:5, punt:[8,8,'NS', 8,8,6, 6,6,8, 8,6,'NS'], obs:Array(12).fill(''), sintesis:'', objetivos:''};
+  p.idea.obs[2]='NS: se requiere más observación en situaciones de juego compartido antes de puntuar D3.';
+  DB.pacientes.push(p);
+})();
+
+// Caso 4 — ingreso sin consentimiento firmado (todo bloqueado)
+DB.pacientes.push(nuevoPaciente({id:'U-0004', nombre:'Usuario demo 4 (F., 15 años)', hc:'HC-2026-027', grupo:'Grupo Azul', anio:'2026',
+  fnac:'2011-05-30', ci:'5.XXX.XXX-4', sexo:'F', diag:'TEA — diagnóstico previo externo', cie11:'6A02.3', nivel:'Nivel 3',
+  psicologa:'Lic. M. Suárez', maestra:'Mtra. C. Rodríguez'}));
+
+// Datos demo de organismos y documentos (ficticios)
+(function(){
+  const p1=getPd('U-0001');
+  p1.inau={sipi:'SIPI-XXXXXX-1', convenio:'Proyecto 3749 — Convenio INAU', referente:'Supervisora territorial — Región Oeste', ingreso:'2025-03-01',
+    obs:'Cupo convenio Atención Diurna. Situación familiar estable, sin medidas de protección vigentes.',
+    envios:[{fecha:'2025-07-20', txt:'Informe semestral enviado (síntesis Protocolo A)'},{fecha:'2025-12-22', txt:'Informe de Cierre Anual 2025 enviado (documento único HCE-IC)'}]};
+  p1.bps={prestacion:'Ayuda Extraordinaria (AYEX) — instituto habilitado', tramite:'AYEX-2025-XXXX', estado:'Vigente', vencimiento:'2026-12-31',
+    obs:'Renovación anual con constancia de asistencia y diagnóstico. Recordar gestionar renovación en noviembre.',
+    gestiones:[{fecha:'2025-02-10', txt:'Alta de AYEX aprobada por BPS'},{fecha:'2026-02-15', txt:'Renovación 2026 presentada y aprobada'}]};
+  p1.vf={estado:'Valorado', fecha:'2025-05-14', organismo:'Equipo valorador BPS (BUND)', pct:'58', vigencia:'2028-05-14', rnpcd:'RNPcD-XXXX',
+    dominios:{comunicacion:'Apoyo frecuente', autocuidado:'Apoyo ocasional', movilidad:'Autónomo', aprendizaje:'Apoyo frecuente', interacciones:'Apoyo frecuente', comunidad:'Apoyo permanente'},
+    capacidades:'Buena memoria visual; disfruta de la música y de las actividades con agua; vínculo afectivo sólido con su familia y con los técnicos de su grupo; usa con intención su sistema de comunicación en contextos conocidos.',
+    barreras:'Entornos ruidosos y poco predecibles; consignas exclusivamente verbales; transporte público en horas pico; escasa disponibilidad de acompañante en la escuela.',
+    apoyos:'Agenda visual en el hogar y en IPPU; acompañante terapéutico escolar 3 veces por semana; red familiar activa (madre y hermana); AYEX vigente.',
+    obs:'La familia consulta por el trámite de asistente personal (Sistema de Cuidados); se orienta y se registra en HCE-ORG.'};
+  p1.docs=[{nombre:'Informe neuropediátrico 2024 (externo).pdf', cat:'Informe médico externo', fecha:'2025-03-05', url:''},
+    {nombre:'Informe escolar 2025 — Escuela N.º XX.pdf', cat:'Informe escolar', fecha:'2025-11-30', url:''},
+    {nombre:'Autorización de uso de imagen — firmada.pdf', cat:'Autorización / consentimiento', fecha:'2025-03-05', url:''}];
+  p1.fotoConsent=true;
+  const p2=getPd('U-0002');
+  p2.bps={prestacion:'Ayuda Extraordinaria (AYEX)', tramite:'AYEX-2026-XXXX', estado:'En trámite', vencimiento:'',
+    obs:'Documentación presentada; a la espera de resolución.', gestiones:[{fecha:'2026-04-03', txt:'Solicitud AYEX presentada en BPS'}]};
+  const p3=getPd('U-0003');
+  p3.inau={sipi:'SIPI-XXXXXX-3', convenio:'Proyecto 3749 — Convenio INAU', referente:'Supervisora territorial — Región Oeste', ingreso:'2026-06-01',
+    obs:'Derivación CAIF. Coordinar informe de ingreso con referente INAU.', envios:[]};
+  function getPd(id){return DB.pacientes.find(x=>x.id===id);}
+})();
+
+// Fotos grupales (por grupo de referencia) — en memoria
+const GRUPOS_FOTOS = {};
+
+// Equipo técnico autorizado por grupo: los técnicos responsables surgen de la asignación del grupo;
+// aquí se registran además los otros técnicos habilitados y su alcance de acceso
+const GRUPOS_EQUIPO = {
+ 'Grupo Celeste': {otros:[
+   {n:'Lic. Fga. (demo)', d:'Fonoaudiología', a:'Aportes en campos de texto libre de PA, PB e IC'},
+   {n:'Lic. T.O. (demo)', d:'Terapia Ocupacional', a:'Aportes en campos de texto libre de PA, PB e IC'}]},
+ 'Grupo Naranja': {otros:[{n:'Lic. Psicomot. (demo)', d:'Psicomotricidad', a:'Aportes en campos de texto libre de PA, PB e IC'}]}
+};
+function equipoDe(g){ return (GRUPOS_EQUIPO[g]=GRUPOS_EQUIPO[g]||{otros:[]}); }
+
+/* ============ ESTADO DE UI ============ */
+const UI = { paciente:null, modulo:'resumen', mfiltro:'', psearch:'' };
+
+function estadoCI(p){ return p.ci_firmado?'firmado':'borrador'; }
+function pipeline(p){
+  return [
+    {code:'HCE-CI', name:'Consentimiento', st:estadoCI(p), key:'ci'},
+    {code:'HCE-LB', name:'IDEA (línea base)', st:p.idea.estado, key:'idea'},
+    {code:'HCE-PA', name:'Protocolo A', st:p.protA.estado, key:'protA'},
+    {code:'HCE-PB', name:'Protocolo B', st:p.protB.estado, key:'protB'},
+    {code:'HCE-IC', name:'Informe de cierre', st:p.cierre.estado, key:'cierre'}
+  ];
+}
+
+/* ============ RADAR SVG (sin librerías) ============ */
+// series: [{label,color,vals:[4], max}] — cada serie normalizada a su propio máximo
+function radarSVG(series, size){
+  size = size||300; const cx=size/2, cy=size/2, R=size/2-46;
+  const axes = ESCALAS.length;
+  function pt(i, frac){const a=-Math.PI/2 + i*2*Math.PI/axes; return [cx+R*frac*Math.cos(a), cy+R*frac*Math.sin(a)];}
+  let s = '<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" role="img" style="max-width:100%">';
+  for(let g=1; g<=4; g++){
+    const pts = Array.from({length:axes},(_,i)=>pt(i,g/4).join(',')).join(' ');
+    s += '<polygon points="'+pts+'" fill="none" stroke="#d9e2e0" stroke-width="1"/>';
+  }
+  for(let i=0;i<axes;i++){
+    const [x,y]=pt(i,1); s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="#d9e2e0"/>';
+    const [lx,ly]=pt(i,1.22);
+    const short=['Relación\nSocial','Comunicación\ny Lenguaje','Anticipación\ny Flexibilidad','Simbolización'][i].split('\n');
+    s+='<text x="'+lx+'" y="'+(ly-5)+'" font-size="10.5" font-weight="600" fill="#1b2a33" text-anchor="middle">'+short[0]+'</text>';
+    if(short[1]) s+='<text x="'+lx+'" y="'+(ly+7)+'" font-size="10.5" font-weight="600" fill="#1b2a33" text-anchor="middle">'+short[1]+'</text>';
+  }
+  series.forEach(se=>{
+    const pts = se.vals.map((v,i)=>pt(i, Math.max(0.02, v/se.max)).join(',')).join(' ');
+    s += '<polygon points="'+pts+'" fill="'+se.color+'22" stroke="'+se.color+'" stroke-width="2"/>';
+    se.vals.forEach((v,i)=>{const [x,y]=pt(i, Math.max(0.02, v/se.max)); s+='<circle cx="'+x+'" cy="'+y+'" r="3" fill="'+se.color+'"/>';});
+  });
+  return s+'</svg>';
+}
+
+/* ============ ROUTER ============ */
+function route(){
+  const h = location.hash || '#/inicio';
+  const seg = h.replace('#/','').split('/');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active', a.dataset.route===seg[0]));
+  const M = document.getElementById('main');
+  if(seg[0]==='inicio') M.innerHTML = vInicio();
+  else if(seg[0]==='pacientes' && seg[1]) { UI.paciente=seg[1]; M.innerHTML = vFicha(seg[1]); }
+  else if(seg[0]==='pacientes') M.innerHTML = vPacientes();
+  else if(seg[0]==='grupos') M.innerHTML = vGrupos(seg[1]?decodeURIComponent(seg[1]):'');
+  else if(seg[0]==='reportes' && seg[1]==='vf' && seg[2]){ const p=getP(seg[2]); M.innerHTML = p? vReporteVF(p) : '<p>Usuario no encontrado.</p>'; }
+  else if(seg[0]==='reportes') M.innerHTML = vReportes(seg[1]||'');
+  else if(seg[0]==='taller') M.innerHTML = vPlaceholder('Taller Terapéutico');
+  else if(seg[0]==='clinica') M.innerHTML = vPlaceholder('Clínica');
+  else if(seg[0]==='manual') M.innerHTML = vManual();
+  else if(seg[0]==='specs') M.innerHTML = vSpecs();
+  else M.innerHTML = vInicio();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', route);
+function getP(id){ return DB.pacientes.find(x=>x.id===id); }
+function badge(st){
+  const m={firmado:['b-firmado','Firmado'],borrador:['b-borrador','Borrador'],bloqueado:['b-bloqueado','Bloqueado']};
+  const [c,t]=m[st]||['b-bloqueado',st]; return '<span class="badge '+c+'">'+t+'</span>';
+}
+
+/* ============ VISTA: PANEL INSTITUCIONAL ============ */
+function vInicio(){
+  const n = DB.pacientes.length;
+  const firmCierre = DB.pacientes.filter(p=>p.cierre.estado==='firmado').length;
+  const enCurso = DB.pacientes.filter(p=>p.idea.estado==='firmado' && p.cierre.estado!=='firmado').length;
+  const pendCI = DB.pacientes.filter(p=>!p.ci_firmado).length;
+  const alertas = [];
+  DB.pacientes.forEach(p=>{
+    if(!p.ci_firmado) alertas.push({p, t:'Consentimiento informado sin firmar — la HCE no puede habilitarse (Manual, §19.1).', c:'n-danger'});
+    if(p.idea.estado==='borrador') alertas.push({p, t:'IDEA en borrador — recordatorio: completar consenso y firma cuando el equipo lo considere oportuno.', c:'n-warn'});
+    if(p.protA.estado==='borrador') alertas.push({p, t:'Protocolo A en borrador — período sugerido: receso de julio (recordatorio configurable, adaptable a la situación de cada NNA).', c:'n-warn'});
+    if(p.protB.estado==='firmado' && p.cierre.estado!=='firmado') alertas.push({p, t:'Informe de Cierre pendiente — sugerido: elaborarlo próximo al cierre del Protocolo B para no perder información del período.', c:'n-warn'});
+  });
+  let rows = DB.pacientes.map(p=>{
+    const pl = pipeline(p).map(s=>'<span class="badge '+({firmado:'b-firmado',borrador:'b-borrador',bloqueado:'b-bloqueado'})[s.st]+'" title="'+s.name+'">'+s.code.replace('HCE-','')+'</span>').join(' ');
+    return '<tr><td><a href="#/pacientes/'+p.id+'">'+p.nombre+'</a><div class="hint">'+p.hc+' · '+p.grupo+' · '+p.anio+'</div></td><td>'+pl+'</td></tr>';
+  }).join('');
+  return `
+  <div class="crumb">Fundación IPPU · Servicio de Atención Diurna</div>
+  <div class="pagehead"><div><h2>Panel institucional</h2>
+  <p>Estado del ciclo de evaluación TEA (IDEA → Protocolo A → Protocolo B → Informe de Cierre). Hoy: 12 de julio de 2026 — período de aplicación del <b>Protocolo A</b> (receso de julio).</p></div></div>
+  <div class="grid4">
+    <div class="kpi"><div class="v">${n}</div><div class="l">Usuarios activos</div></div>
+    <div class="kpi"><div class="v">${enCurso}</div><div class="l">Ciclos en curso</div></div>
+    <div class="kpi"><div class="v">${firmCierre}</div><div class="l">Cierres anuales firmados</div></div>
+    <div class="kpi"><div class="v" style="color:${pendCI? 'var(--danger)':'var(--ok)'}">${pendCI}</div><div class="l">Consentimientos pendientes</div></div>
+  </div>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h3>Estado por usuario (flujo secuencial HCE)</h3>
+      <table><thead><tr><th>Usuario</th><th>CI · LB · PA · PB · IC</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>
+    <div class="card"><h3>Recordatorios (configurables, no bloqueantes)</h3>
+      ${alertas.length? alertas.map(a=>'<div class="notice '+a.c+'"><b><a href="#/pacientes/'+a.p.id+'">'+a.p.nombre+'</a></b><br>'+a.t+'</div>').join('') : '<div class="notice n-ok">Sin alertas pendientes.</div>'}
+    </div>
+  </div>`;
+}
+
+/* ============ VISTA: LISTA DE USUARIOS ============ */
+function vPacientes(){
+  const q = UI.psearch.trim().toLowerCase();
+  const lista = q? DB.pacientes.filter(p=> (p.ci||'').toLowerCase().includes(q) || (p.hc||'').toLowerCase().includes(q) || (p.grupo||'').toLowerCase().includes(q) || (p.nombre||'').toLowerCase().includes(q) || (p.id||'').toLowerCase().includes(q)) : DB.pacientes;
+  const rows = lista.map(p=>{
+    const tot = p.idea.estado==='firmado'? ideaTotales(p.idea.punt).total+' / 96' : '—';
+    return `<tr>
+      <td><a href="#/pacientes/${p.id}"><b>${p.nombre}</b></a><div class="hint">${p.id} · ${p.hc} · CI ${p.ci||'—'}</div></td>
+      <td>${p.grupo}<div class="hint">${p.anio}</div></td>
+      <td>${p.cie11}<div class="hint">${p.nivel}</div></td>
+      <td class="num">${tot}</td>
+      <td>${badge(estadoCI(p))} ${badge(p.idea.estado)} ${badge(p.protA.estado)} ${badge(p.protB.estado)} ${badge(p.cierre.estado)}</td>
+      <td><a class="btn ghost" style="padding:5px 12px" href="#/pacientes/${p.id}">Abrir HCE</a></td>
+    </tr>`;
+  }).join('');
+  return `
+  <div class="crumb">Servicio de Atención Diurna</div>
+  <div class="pagehead"><div><h2>Usuarios y Historias Clínicas</h2>
+  <p>Cada usuario tiene una HCE individual con módulos de habilitación secuencial. Un módulo solo se desbloquea cuando el anterior está firmado (Manual, §19.1).</p></div>
+  <button class="btn" onclick="nuevoIngreso()">+ Nuevo ingreso</button></div>
+  <div class="card no-print"><label>Buscar usuario</label>
+  <input type="text" placeholder="Cédula de identidad, N.º de HCE, grupo de referencia o nombre…" value="${UI.psearch}" oninput="UI.psearch=this.value; document.getElementById('main').innerHTML=vPacientes(); const i=document.querySelector('#main input'); i.focus(); i.setSelectionRange(i.value.length,i.value.length)">
+  <div class="hint">La HCE se puede localizar por cualquiera de las tres vías institucionales: CI, N.º de HCE o grupo. También se puede navegar por grupo desde la sección «Grupos de referencia».</div></div>
+  <div class="card"><table><thead><tr><th>Usuario</th><th>Grupo · Año</th><th>CIE-11 · Soporte</th><th class="num">IDEA total</th><th>CI · LB · PA · PB · IC</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan=6><div class="notice n-info" style="margin:6px 0">Sin resultados para «'+UI.psearch+'». Verifique CI, N.º de HCE o grupo.</div></td></tr>'}</tbody></table></div>
+  <div class="notice n-info">Los usuarios de este prototipo son <b>ficticios</b> y sirven para demostrar los distintos estados del flujo: ciclo anual completo (demo 1), ciclo en curso (demo 2), ingreso reciente (demo 3) y consentimiento pendiente (demo 4).</div>`;
+}
+function nuevoIngreso(){
+  const nom = prompt('Nombre del usuario (iniciales y edad para el prototipo):');
+  if(!nom) return;
+  const id = 'U-'+String(DB.pacientes.length+1).padStart(4,'0');
+  DB.pacientes.push(nuevoPaciente({id, nombre:nom, hc:'HC-2026-0'+(DB.pacientes.length+30), grupo:'(asignar)', anio:'2026'}));
+  location.hash = '#/pacientes/'+id;
+}
+
+/* ============ VISTA: FICHA / HCE INDIVIDUAL ============ */
+function vFicha(id){
+  const p = getP(id); if(!p) return '<p>Usuario no encontrado.</p>';
+  const steps = pipeline(p).map(s=>{
+    return `<div class="step s-${s.st} ${UI.modulo===s.key?'active':''}" onclick="setMod('${s.key}')">
+      <div class="code">${s.code}</div><div class="name">${s.name}</div>${badge(s.st)}</div>`;
+  }).join('');
+  const tabs = [['resumen','Resumen'],['anamnesis','HCE-00 Anamnesis'],['ci','HCE-CI Consentimiento'],['idea','HCE-LB · IDEA'],['protA','HCE-PA · Protocolo A'],['protB','HCE-PB · Protocolo B'],['cierre','HCE-IC · Cierre anual'],['docs','HCE-DOC · Documentos y fotos'],['org','HCE-ORG · INAU / BPS'],['vf','HCE-VF · Valoración funcional'],['log','HCE-LOG']]
+    .map(([k,t])=>`<button class="${UI.modulo===k?'active':''}" onclick="setMod('${k}')">${t}</button>`).join('');
+  return `
+  <div class="crumb"><a href="#/pacientes">Usuarios</a> / ${p.hc}</div>
+  <div class="pagehead"><div><h2>${p.nombre}</h2>
+  <p>${p.grupo} · Año lectivo ${p.anio} · ${p.diag||'Sin diagnóstico registrado'} · CIE-11: ${p.cie11} · Soporte orientativo: ${p.nivel}<br>
+  Técnicos responsables: ${p.psicologa||'—'} · ${p.maestra||'—'}</p></div></div>
+  <div class="stepper">${steps}</div>
+  <div class="tabs">${tabs}</div>
+  <div id="modbody">${renderModulo(p)}</div>`;
+}
+function setMod(k){ UI.modulo=k; const p=getP(UI.paciente); if(!p) return;
+  document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active', ['resumen','anamnesis','ci','idea','protA','protB','cierre','docs','org','vf','log'][i]===k));
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('modbody').innerHTML = renderModulo(p);
+}
+function renderModulo(p){
+  switch(UI.modulo){
+    case 'anamnesis': return mAnamnesis(p);
+    case 'ci': return mCI(p);
+    case 'idea': return mIDEA(p);
+    case 'protA': return mProt(p,'protA');
+    case 'protB': return mProt(p,'protB');
+    case 'cierre': return mCierre(p);
+    case 'docs': return mDocs(p);
+    case 'org': return mOrg(p);
+    case 'vf': return mVF(p);
+    case 'log': return mLog(p);
+    default: return mResumen(p);
+  }
+}
+
+/* ---- Resumen del usuario ---- */
+function mResumen(p){
+  let html = '<div class="grid2">';
+  if(p.idea.estado==='firmado'){
+    const t = ideaTotales(p.idea.punt); const int = ideaInterpreta(t.total);
+    html += `<div class="card"><h3>Perfil IDEA — línea base (severidad)</h3>
+      <div class="radarwrap"><div>${radarSVG([{label:'IDEA',color:'#0e5a63',vals:t.esc,max:24}],290)}</div>
+      <div><table><tr><td>Escala 1 · Relación Social</td><td class="num"><b>${t.esc[0]} / 24</b></td></tr>
+      <tr><td>Escala 2 · Comunicación</td><td class="num"><b>${t.esc[1]} / 24</b></td></tr>
+      <tr><td>Escala 3 · Anticipación</td><td class="num"><b>${t.esc[2]} / 24</b></td></tr>
+      <tr><td>Escala 4 · Simbolización</td><td class="num"><b>${t.esc[3]} / 24</b></td></tr>
+      <tr><td><b>Total IDEA</b></td><td class="num"><b>${t.total} / 96</b></td></tr></table>
+      <div class="notice n-info" style="margin-top:10px">Perfil orientativo: <b>${int.perfil}</b> · Soporte DSM-5-TR: <b>${int.ns}</b><br><span class="hint">Orientativo — no diagnóstico (Manual, §9.1).</span></div></div></div></div>`;
+  } else html += '<div class="card"><h3>Perfil IDEA</h3><div class="notice n-warn">La línea base IDEA aún no está firmada.</div></div>';
+  if(p.protA.estado==='firmado'){
+    const a = protTotales(p.protA.punt);
+    const series=[{label:'Protocolo A',color:'#b35c00',vals:a.esc,max:30}];
+    let tabla = ESCALAS.map((e,i)=>{
+      let row = `<tr><td>${e}</td><td class="num">${a.esc[i]} / 30</td>`;
+      if(p.protB.estado==='firmado'){const b=protTotales(p.protB.punt); const d=b.esc[i]-a.esc[i];
+        row += `<td class="num">${b.esc[i]} / 30</td><td class="num"><span class="delta ${esign(d)}">${fmtDelta(d)}</span></td>`;}
+      return row+'</tr>';
+    }).join('');
+    if(p.protB.estado==='firmado'){const b=protTotales(p.protB.punt); series.push({label:'Protocolo B',color:'#2e7d4f',vals:b.esc,max:30});
+      const dT=b.total-a.total;
+      tabla += `<tr><td><b>Total</b></td><td class="num"><b>${a.total}</b></td><td class="num"><b>${b.total}</b></td><td class="num"><span class="delta ${esign(dT)}">${fmtDelta(dT)}</span></td></tr>`;}
+    else tabla += `<tr><td><b>Total</b></td><td class="num"><b>${a.total} / 120</b></td></tr>`;
+    html += `<div class="card"><h3>Progreso IPPU-TEA (Protocolos A${p.protB.estado==='firmado'?' y B':''})</h3>
+      <div class="radarwrap"><div>${radarSVG(series,290)}</div>
+      <div><table><thead><tr><th>Escala</th><th class="num">Prot. A</th>${p.protB.estado==='firmado'?'<th class="num">Prot. B</th><th class="num">Δ</th>':''}</tr></thead><tbody>${tabla}</tbody></table>
+      <div class="hint" style="margin-top:8px">Los puntajes IPPU-TEA (progreso, 1–5) no son homologables con los puntajes IDEA (severidad, 0–8). El radar IDEA y el radar IPPU-TEA se presentan por separado (Manual, §10 y §15.2, Error 1).</div></div></div></div>`;
+  } else html += '<div class="card"><h3>Progreso IPPU-TEA</h3><div class="notice n-warn">Aún no hay protocolos semestrales firmados.</div></div>';
+  html += '</div>';
+  if(p.cierre.estado==='firmado') html += `<div class="notice n-ok">Informe de Cierre Anual firmado (${p.cierre.fecha}). <a href="#/reportes/${p.id}">Ver informe completo →</a></div>`;
+  // Equipo autorizado para esta HCE (según grupo de referencia)
+  const eq = equipoDe(p.grupo);
+  html += `<div class="card"><h3>Equipo técnico autorizado para esta HCE</h3>
+  <table><thead><tr><th>Profesional</th><th>Rol / disciplina</th><th>Alcance de acceso</th></tr></thead><tbody>
+  <tr><td>${p.psicologa||'—'}</td><td>Técnico/a responsable 1</td><td>HCE completa · lectura y escritura en módulos habilitados · firma</td></tr>
+  <tr><td>${p.maestra||'—'}</td><td>Técnico/a responsable 2</td><td>HCE completa · lectura y escritura en módulos habilitados · firma</td></tr>
+  ${eq.otros.map(o=>`<tr><td>${o.n}</td><td>${o.d}</td><td>${o.a}</td></tr>`).join('')}
+  <tr><td colspan="2" class="hint">Coordinación institucional</td><td class="hint">Lectura de módulos firmados · escritura en datos generales (HCE-00)</td></tr>
+  <tr><td colspan="2" class="hint">Dirección / administración</td><td class="hint">Solo datos agregados sin identificación</td></tr>
+  </tbody></table>
+  <div class="hint" style="margin-top:8px">La nómina de otros técnicos se administra en la ficha del grupo (<a href="#/grupos/${encodeURIComponent(p.grupo)}">${p.grupo}</a>). En el sistema definitivo, este panel refleja los permisos efectivos gestionados por coordinación.</div></div>`;
+  return html;
+}
+
+/* ---- HCE-00 Anamnesis ---- */
+function mAnamnesis(p){
+  const A=p.anamnesis;
+  const f=(k,lbl,ta)=> ta? `<div style="grid-column:1/-1"><label>${lbl}</label><textarea onchange="getP('${p.id}').anamnesis.${k}=this.value">${A[k]||''}</textarea></div>`
+    : `<div><label>${lbl}</label><input type="text" value="${A[k]||''}" onchange="getP('${p.id}').anamnesis.${k}=this.value"></div>`;
+  return `<div class="card"><h3>HCE-00 · Información general y anamnesis</h3>
+  <div class="hint" style="margin-bottom:12px">Módulo abierto y actualizable durante todo el ciclo. Escritura: coordinación (datos generales) y técnicos responsables (anamnesis clínica). Los roles «Técnico/a responsable 1 y 2» son genéricos: cada institución los instancia según su modelo de trabajo (en IPPU: Psicólogo/a y Maestro/a del grupo).</div>
+  <div class="frow">
+    <div><label class="req">Nombre completo</label><input type="text" value="${p.nombre}" onchange="getP('${p.id}').nombre=this.value"></div>
+    <div><label class="req">N.º de Historia Clínica</label><input type="text" value="${p.hc}" onchange="getP('${p.id}').hc=this.value"></div>
+    <div><label class="req">Fecha de nacimiento</label><input type="date" value="${p.fnac}" onchange="getP('${p.id}').fnac=this.value"></div>
+    <div><label>Cédula de identidad</label><input type="text" value="${p.ci}" onchange="getP('${p.id}').ci=this.value"></div>
+    <div><label class="req">Grupo de referencia</label><input type="text" value="${p.grupo}" onchange="getP('${p.id}').grupo=this.value"></div>
+    <div><label class="req">Año lectivo</label><input type="text" value="${p.anio}" onchange="getP('${p.id}').anio=this.value"></div>
+    <div><label class="req">Técnico/a responsable 1 (nombre y rol)</label><input type="text" value="${p.psicologa}" onchange="getP('${p.id}').psicologa=this.value" placeholder="Ej. IPPU: Psicólogo/a del grupo"></div>
+    <div><label class="req">Técnico/a responsable 2 (nombre y rol)</label><input type="text" value="${p.maestra}" onchange="getP('${p.id}').maestra=this.value" placeholder="Ej. IPPU: Maestro/a del grupo"></div>
+    <div><label>Diagnóstico médico</label><input type="text" value="${p.diag}" onchange="getP('${p.id}').diag=this.value"></div>
+    <div><label>Código CIE-11</label><select onchange="getP('${p.id}').cie11=this.value">${['Pendiente diagnóstico','6A02.0','6A02.1','6A02.2','6A02.3','6A02.5'].map(c=>'<option '+(p.cie11===c?'selected':'')+'>'+c+'</option>').join('')}</select></div>
+    <div><label>Nivel de soporte DSM-5-TR (orientativo)</label><select onchange="getP('${p.id}').nivel=this.value">${['No determinado','Nivel 1','Nivel 2','Nivel 3'].map(c=>'<option '+(p.nivel===c?'selected':'')+'>'+c+'</option>').join('')}</select></div>
+  </div>
+  <h3 style="margin-top:8px">Anamnesis</h3>
+  <div class="frow">
+    ${f('motivo','Motivo de consulta / derivación',1)}
+    ${f('antPerinatales','Antecedentes perinatales',1)}
+    ${f('antMedicos','Antecedentes médicos y comorbilidades',1)}
+    ${f('desarrollo','Hitos del desarrollo',1)}
+    ${f('familia','Composición y dinámica familiar',1)}
+    ${f('escolaridad','Trayectoria educativa y apoyos',1)}
+    ${f('medicacion','Medicación actual',1)}
+    ${f('otros','Otras observaciones',1)}
+  </div></div>`;
+}
+
+/* ---- HCE-CI Consentimiento ---- */
+function mCI(p){
+  if(p.ci_firmado) return `<div class="card"><h3>HCE-CI · Consentimiento informado</h3>
+    <div class="notice n-ok">Consentimiento <b>firmado</b> el ${p.ci_fecha} por ${p.ci_firmante}. La línea base IDEA (HCE-LB) está habilitada.</div>
+    ${textoCI(p)}</div>`;
+  return `<div class="card"><h3>HCE-CI · Consentimiento informado</h3>
+    <div class="notice n-danger">Sin consentimiento firmado, <b>ningún módulo de evaluación puede habilitarse</b> (Ley N.º 18.331/2008; Manual, §19.1 y Anexo C).</div>
+    ${textoCI(p)}
+    <div class="frow">
+      <div><label class="req">Nombre del padre/madre/tutor</label><input type="text" id="ci_nom"></div>
+      <div><label class="req">Fecha</label><input type="date" id="ci_fec" value="2026-07-12"></div>
+    </div>
+    <button class="btn ok" onclick="firmarCI('${p.id}')">Registrar firma del consentimiento</button>
+    <div class="hint" style="margin-top:8px">En el sistema definitivo, este paso debe capturar firma manuscrita digitalizada o firma electrónica y adjuntar el documento escaneado en HCE-DOC.</div></div>`;
+}
+function textoCI(p){
+  return `<div class="notice n-info" style="line-height:1.6">La familia autoriza a la Fundación IPPU a: (1) aplicar el IDEA (Rivière, 2001) al ingreso; (2) aplicar la Escala IPPU-TEA al cierre de cada semestre; (3) elaborar el Informe de Cierre Anual; (4) registrar los datos en la HCE bajo la Ley N.º 18.331/2008; (5) compartir el Informe de Cierre con INAU, BPS y MSP cuando sea requerido en auditorías. La familia conserva el derecho de acceso a la HCE (Ley N.º 18.335/2008) y puede revocar el consentimiento en cualquier momento.</div>`;
+}
+function firmarCI(id){
+  const nom=document.getElementById('ci_nom').value, fec=document.getElementById('ci_fec').value;
+  if(!nom||!fec){alert('Complete nombre y fecha del firmante.');return;}
+  const p=getP(id); p.ci_firmado=true; p.ci_firmante=nom; p.ci_fecha=fec;
+  if(p.idea.estado==='bloqueado') p.idea.estado='borrador';
+  route(); UI.modulo='ci'; setMod('ci');
+}
+
+/* ---- HCE-LB IDEA ---- */
+function mIDEA(p){
+  if(!p.ci_firmado) return bloqueadoMsg('El IDEA requiere el consentimiento informado firmado (HCE-CI). Este requisito es legal (Ley N.º 18.331/2008) y no admite excepción.');
+  const ed = p.idea.estado==='borrador';
+  const t = ideaTotales(p.idea.punt);
+  const opciones=[0,1,2,3,4,5,6,7,8];
+  let porEscala='';
+  for(let e=0;e<4;e++){
+    const dims = IDEA_DIMS.filter(d=>d.e===e);
+    porEscala += `<div class="card"><h3>Escala ${e+1} · ${ESCALAS[e]}</h3>` + dims.map(dm=>{
+      const ix=dm.d-1, v=p.idea.punt[ix];
+      const btns = opciones.map(o=>`<button ${ed?'':'disabled'} class="${v===o?'sel':''} ${o%2?'':''}" title="${o%2?'Valor intermedio':''}" onclick="setIdea('${p.id}',${ix},${o})">${o}</button>`).join('')
+        + `<button ${ed?'':'disabled'} class="ns ${v==='NS'?'sel':''}" title="No suficiente observación" onclick="setIdea('${p.id}',${ix},'NS')">NS</button>`;
+      const dsc = IDEA_DESC[ix];
+      return `<div class="itemrow"><div><div class="txt"><b>D${dm.d}.</b> ${dm.n}</div><div class="ref">Puntuación 0–8 (impares = intermedios) · regla: ante la duda, el valor menor · conducta habitual, sin apoyo, en contexto grupal</div>
+        <details class="crit"><summary>Qué evalúa · criterios 0–8</summary><div class="critbody">
+          <div class="que"><b>Qué evalúa:</b> ${dsc.que}</div>
+          <table><tbody>
+            <tr><td class="lv">8</td><td>${dsc.n8}</td></tr>
+            <tr><td class="lv">6</td><td>${dsc.n6}</td></tr>
+            <tr><td class="lv">4</td><td>${dsc.n4}</td></tr>
+            <tr><td class="lv">2</td><td>${dsc.n2}</td></tr>
+            <tr><td class="lv">0</td><td>${dsc.n0}</td></tr>
+          </tbody></table>
+          <div class="hint" style="margin-top:6px">Impares (1, 3, 5, 7): la conducta está claramente entre dos niveles pares. NS: observación insuficiente. Síntesis adaptada del IDEA (Rivière, 2001); el texto completo del instrumento debe consultarse en HCE-DOC institucional.</div>
+        </div></details>
+        <textarea ${ed?'':'disabled'} placeholder="Observación / fundamentación (obligatoria si hubo diferencia entre evaluadores)" onchange="getP('${p.id}').idea.obs[${ix}]=this.value">${p.idea.obs[ix]||''}</textarea></div>
+        <div class="likert">${btns}</div></div>`;
+    }).join('') + `<div class="subtotal">Total Escala ${e+1}: <b>${t.esc[e]} / 24</b></div></div>`;
+  }
+  const int = ideaInterpreta(t.total);
+  return `
+  ${ed? '<div class="notice n-warn"><b>Módulo en borrador.</b> Puntuación por consenso de los técnicos responsables tras evaluación independiente de cada uno (Manual, §6). Mínimo 5 sesiones de observación previas.</div>'
+      : '<div class="notice n-ok"><b>Módulo firmado y bloqueado</b> ('+p.idea.fecha+'). Correcciones posteriores solo por addenda (Manual, §6, paso 6).</div>'}
+  <div class="card"><div class="frow">
+    <div><label class="req">Fecha de consenso</label><input type="date" ${ed?'':'disabled'} value="${p.idea.fecha}" onchange="getP('${p.id}').idea.fecha=this.value"></div>
+    <div><label>Sesiones de observación previas (recomendado: 5)</label><input type="number" min="0" ${ed?'':'disabled'} value="${p.idea.sesiones}" onchange="getP('${p.id}').idea.sesiones=this.value"></div>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-weight:400;font-size:.86rem;cursor:pointer">
+    <input type="checkbox" style="width:auto" ${p.idea.migrado?'checked':''} ${ed?'':'disabled'} onchange="getP('${p.id}').idea.migrado=this.checked">
+    <span>Este IDEA proviene de la <b>HCE anterior de IPPU</b> (migración estructurada, verificada contra el registro original). El documento fuente debe adjuntarse en HCE-DOC.</span></label>
+  </div>
+  ${porEscala}
+  <div class="card"><h3>Resultado</h3>
+    <div class="grid4">
+      ${t.esc.map((v,i)=>`<div class="kpi"><div class="v">${v}<span style="font-size:.9rem;color:var(--ink-soft)"> / 24</span></div><div class="l">Escala ${i+1}</div></div>`).join('')}
+    </div>
+    <div class="notice ${t.completo?'n-info':'n-warn'}" style="margin-top:12px">
+    ${t.completo? `<b>Total IDEA: ${t.total} / 96</b> — Perfil orientativo: <b>${int.perfil}</b> · Soporte DSM-5-TR orientativo: <b>${int.ns}</b>. ${int.txt} <span class="hint">Orientativo, no diagnóstico. El nivel definitivo lo asigna el equipo médico.</span>`
+      : 'Hay dimensiones sin puntuar o marcadas <b>NS</b> (observación insuficiente). El módulo no puede firmarse hasta completar las 12 dimensiones (Manual, §6, paso 2).'}</div>
+    <div class="frow" style="margin-top:10px">
+      <div style="grid-column:1/-1"><label class="req">Síntesis clínica narrativa (mín. 200 palabras)</label><textarea ${ed?'':'disabled'} style="min-height:110px" onchange="getP('${p.id}').idea.sintesis=this.value">${p.idea.sintesis||''}</textarea></div>
+      <div style="grid-column:1/-1"><label class="req">Objetivos de intervención — 1.er semestre (mín. 3)</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').idea.objetivos=this.value">${p.idea.objetivos||''}</textarea></div>
+    </div>
+    ${ed? `<div class="toolbar"><button class="btn ok" onclick="firmarIDEA('${p.id}')">Firmar módulo (técnicos responsables)</button>
+    <span class="hint">La firma bloquea la edición y habilita el Protocolo A.</span></div>`:''}
+  </div>`;
+}
+function setIdea(id,ix,v){ const p=getP(id); p.idea.punt[ix] = (p.idea.punt[ix]===v? null : v); setMod('idea'); }
+function firmarIDEA(id){
+  const p=getP(id); const t=ideaTotales(p.idea.punt);
+  // Requisitos de integridad (duros): sin ellos el registro no tiene sentido clínico
+  const err=[];
+  if(!p.idea.fecha) err.push('fecha de consenso');
+  if(!t.completo) err.push('las 12 dimensiones puntuadas (sin NS ni vacíos)');
+  if(!(p.idea.sintesis||'').trim()) err.push('síntesis clínica');
+  if(!(p.idea.objetivos||'').trim()) err.push('objetivos del período');
+  if(err.length){alert('Para firmar se requiere completar:\n• '+err.join('\n• '));return;}
+  // Recomendaciones (flexibles): se puede firmar dejando constancia del motivo
+  const avisos=[];
+  if(!p.idea.sesiones || +p.idea.sesiones<5) avisos.push('menos de 5 sesiones de observación previas (recomendado por el Manual)');
+  if(!excepcionFlexible(p,'HCE-LB',avisos)) return;
+  p.idea.estado='firmado';
+  if(p.protA.estado==='bloqueado') p.protA.estado='borrador';
+  setMod('idea'); route();
+}
+// Manejo de recomendaciones flexibles: nunca bloquean; piden dejar constancia
+function excepcionFlexible(p,mod,avisos){
+  if(!avisos.length) return true;
+  const just = prompt('Este módulo se aparta de recomendaciones del Manual:\n• '+avisos.join('\n• ')+'\n\nPuede firmarse igualmente. Escriba una breve constancia del motivo (quedará registrada en HCE-LOG):');
+  if(just===null) return false; // el equipo decide volver atrás
+  (p.excepciones=p.excepciones||[]).push({fecha:new Date().toISOString().slice(0,10), mod, motivo:(just||'Sin detalle')+' — Recomendaciones: '+avisos.join('; ')});
+  return true;
+}
+// Habilitación excepcional de un módulo bloqueado por secuencia
+function habilitarExcepcional(id,key,nombre){
+  const p=getP(id);
+  const just=prompt('El flujo sugerido indica completar y firmar el módulo anterior antes de abrir '+nombre+'.\n\nPuede habilitarse igualmente si la situación del NNA lo requiere. Escriba una breve constancia del motivo (quedará registrada en HCE-LOG):');
+  if(just===null) return;
+  (p.excepciones=p.excepciones||[]).push({fecha:new Date().toISOString().slice(0,10), mod:nombre, motivo:'Habilitación fuera de secuencia: '+(just||'Sin detalle')});
+  if(key==='idea') p.idea.estado='borrador'; else p[key].estado='borrador';
+  setMod(key); route();
+}
+function bloqueadoMsg(txt){return '<div class="notice n-warn"><b>Módulo no habilitado aún.</b> '+txt+'</div>';}
+function habilitarBtn(id,key,nombre){return '<div class="toolbar"><button class="btn warn" onclick="habilitarExcepcional(\''+id+'\',\''+key+'\',\''+nombre+'\')">Habilitar excepcionalmente (con constancia en HCE-LOG)</button></div><div class="hint">El sistema orienta el orden de aplicación pero no lo impone: circunstancias como ingresos tardíos, reingresos, licencias del equipo o situaciones familiares pueden requerir apartarse de la secuencia. La constancia protege la trazabilidad clínica.</div>';}
+
+/* ---- HCE-PA / HCE-PB (Escala IPPU-TEA) ---- */
+function mProt(p,key){
+  const esB = key==='protB';
+  const M = p[key];
+  if(M.estado==='bloqueado') return bloqueadoMsg((esB? 'El flujo sugerido indica firmar el Protocolo A antes de abrir el Protocolo B (Manual, §12).' : 'El flujo sugerido indica firmar la línea base IDEA antes de abrir el Protocolo A (Manual, §11).'))
+    + habilitarBtn(p.id, key, esB?'el Protocolo B':'el Protocolo A');
+  const ed = M.estado==='borrador';
+  const t = protTotales(M.punt);
+  let porEscala='';
+  for(let e=0;e<4;e++){
+    const its = IPPU_ITEMS.map((it,ix)=>({it,ix})).filter(x=>x.it.e===e);
+    porEscala += `<div class="card"><h3>Escala E${e+1} · ${ESCALAS[e]}</h3>`+ its.map(({it,ix})=>{
+      const v=M.punt[ix];
+      const btns=[1,2,3,4,5].map(o=>`<button ${ed?'':'disabled'} class="${v===o?('sel v'+o):''}" title="${LIKERT_LBL[o]}" onclick="setProt('${p.id}','${key}',${ix},${o})">${o}</button>`).join('');
+      const obsReq = (v===1||v===5);
+      return `<div class="itemrow"><div><div class="txt"><b>${e+1}.${it.i}</b> ${it.t}</div><div class="ref">${it.r}</div>
+        <textarea ${ed?'':'disabled'} placeholder="Observación del equipo técnico${obsReq?' — OBLIGATORIA para valores 1 y 5':''}" onchange="getP('${p.id}').${key}.obs[${ix}]=this.value">${M.obs[ix]||''}</textarea>
+        ${obsReq && !(M.obs[ix]||'').trim() ? '<div class="hint" style="color:var(--danger)">Valor '+v+' ('+LIKERT_LBL[v]+'): requiere observación obligatoria (Manual, §13).</div>':''}</div>
+        <div class="likert">${btns}</div></div>`;
+    }).join('') + `<div class="subtotal">Total E${e+1}: <b>${t.esc[e]} / 30</b>${esB && p.protA.estado==='firmado'? deltaChip(t.esc[e]-protTotales(p.protA.punt).esc[e]):''}</div></div>`;
+  }
+  let deltaCard='';
+  if(esB && p.protA.estado==='firmado' && t.completo){
+    const a=protTotales(p.protA.punt); const dT=t.total-a.total;
+    deltaCard = `<div class="card"><h3>Delta anual (Δ = Protocolo B − Protocolo A)</h3>
+    <table><thead><tr><th>Escala</th><th class="num">Prot. A</th><th class="num">Prot. B</th><th class="num">Δ</th><th>Interpretación</th><th>Acción recomendada</th></tr></thead><tbody>
+    ${ESCALAS.map((e,i)=>{const d=t.esc[i]-a.esc[i]; const di=deltaInterpreta(d);
+      return `<tr><td>${e}</td><td class="num">${a.esc[i]}</td><td class="num">${t.esc[i]}</td><td class="num"><span class="delta ${di.c}">${fmtDelta(d)}</span></td><td>${di.t}</td><td class="hint">${di.a}</td></tr>`;}).join('')}
+    <tr><td><b>Total</b></td><td class="num"><b>${a.total}</b></td><td class="num"><b>${t.total}</b></td><td class="num"><span class="delta ${esign(dT)}"><b>${fmtDelta(dT)}</b></span></td><td colspan="2">${deltaInterpreta(dT).t} (evolución global del año)</td></tr>
+    </tbody></table>
+    <div class="hint" style="margin-top:8px">El Δ solo es válido entre Protocolos A y B. Nunca calcular delta contra el IDEA: son escalas distintas, 0–96 vs. 24–120 (Manual, §12, paso 4).</div></div>`;
+  }
+  const semLbl = esB? 'Segundo semestre — última semana del año lectivo' : 'Primer semestre — semanas 1–2 del receso de julio';
+  return `
+  ${ed? `<div class="notice n-warn"><b>Módulo en borrador.</b> ${semLbl}. Puntuación independiente de cada evaluador y consenso posterior; el puntaje refleja el semestre completo, no las últimas semanas (Manual, §11–12).</div>`
+      : `<div class="notice n-ok"><b>Módulo firmado y bloqueado</b> (${M.fecha}).</div>`}
+  <div class="card"><div class="frow">
+    <div><label class="req">Fecha de cierre del protocolo</label><input type="date" ${ed?'':'disabled'} value="${M.fecha}" onchange="getP('${p.id}').${key}.fecha=this.value"></div>
+    <div><label class="req">Semanas de asistencia efectiva (mín. 15)</label><input type="number" min="0" ${ed?'':'disabled'} value="${M.semanas}" onchange="getP('${p.id}').${key}.semanas=this.value"></div>
+  </div>
+  <div class="notice n-info">Escala Likert de progreso: <b>1</b> Regresión significativa · <b>2</b> Sin cambio · <b>3</b> Emergente · <b>4</b> Consistente · <b>5</b> Generalizado. Mide <b>progreso</b>, no severidad — lógica inversa al IDEA.</div></div>
+  ${porEscala}
+  <div class="card"><h3>Resultado ${esB?'Protocolo B':'Protocolo A'}</h3>
+    <div class="grid4">${t.esc.map((v,i)=>`<div class="kpi"><div class="v">${v}<span style="font-size:.9rem;color:var(--ink-soft)"> / 30</span></div><div class="l">Escala E${i+1}</div></div>`).join('')}</div>
+    <div class="notice ${t.completo?'n-info':'n-warn'}" style="margin-top:12px">${t.completo? `<b>Total IPPU-TEA: ${t.total} / 120</b>` : 'Hay ítems sin puntuar. Se requieren los 24 ítems para firmar.'}</div>
+    <div class="frow" style="margin-top:10px">
+      <div style="grid-column:1/-1"><label class="req">Síntesis del Técnico/a responsable 1 (mín. 150 palabras)</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').${key}.sintPsi=this.value">${M.sintPsi||''}</textarea></div>
+      <div style="grid-column:1/-1"><label class="req">Síntesis del Técnico/a responsable 2 (mín. 150 palabras)</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').${key}.sintMtra=this.value">${M.sintMtra||''}</textarea></div>
+      <div style="grid-column:1/-1"><label>Observaciones de otros técnicos (especificar disciplina)</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').${key}.otros=this.value">${M.otros||''}</textarea></div>
+      ${esB? `<div style="grid-column:1/-1"><label>Ajustes metodológicos realizados durante el período</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').protB.ajustes=this.value">${M.ajustes||''}</textarea></div>`:''}
+    </div>
+    ${ed? `<div class="toolbar"><button class="btn ok" onclick="firmarProt('${p.id}','${key}')">Firmar módulo (técnicos responsables)</button>
+    <span class="hint">La firma bloquea la edición y habilita ${esB?'el Informe de Cierre Anual':'el Protocolo B'}.</span></div>`:''}
+  </div>
+  ${deltaCard}`;
+}
+function deltaChip(d){return ` <span class="delta ${esign(d)}" style="margin-left:10px">Δ ${fmtDelta(d)}</span>`;}
+function setProt(id,key,ix,v){ const p=getP(id); p[key].punt[ix] = (p[key].punt[ix]===v? null : v); setMod(key); }
+function firmarProt(id,key){
+  const p=getP(id); const M=p[key]; const t=protTotales(M.punt);
+  // Integridad (duros)
+  const err=[];
+  if(!M.fecha) err.push('fecha de cierre');
+  if(!t.completo) err.push('los 24 ítems puntuados');
+  M.punt.forEach((v,ix)=>{ if((v===1||v===5) && !(M.obs[ix]||'').trim()) err.push('observación en el ítem '+(IPPU_ITEMS[ix].e+1)+'.'+IPPU_ITEMS[ix].i+' (los valores 1 y 5 requieren fundamentación)'); });
+  if(!(M.sintPsi||'').trim()) err.push('síntesis del Técnico/a responsable 1');
+  if(!(M.sintMtra||'').trim()) err.push('síntesis del Técnico/a responsable 2');
+  if(err.length){alert('Para firmar se requiere completar:\n• '+err.join('\n• '));return;}
+  // Recomendaciones (flexibles)
+  const avisos=[];
+  if(!M.semanas || +M.semanas<15) avisos.push('menos de 15 semanas de asistencia efectiva en el período (recomendado por el Manual)');
+  if(!excepcionFlexible(p, key==='protA'?'HCE-PA':'HCE-PB', avisos)) return;
+  M.estado='firmado';
+  if(key==='protA' && p.protB.estado==='bloqueado') p.protB.estado='borrador';
+  if(key==='protB' && p.cierre.estado==='bloqueado') p.cierre.estado='borrador';
+  setMod(key); route();
+}
+
+/* ---- HCE-IC Informe de Cierre ---- */
+function mCierre(p){
+  if(p.cierre.estado==='bloqueado'){
+    if(!(p.idea.estado==='firmado' && p.protA.estado==='firmado' && p.protB.estado==='firmado'))
+      return bloqueadoMsg('El flujo sugerido indica tener IDEA, Protocolo A y Protocolo B firmados antes del Informe de Cierre (Manual, §16). Nota: la tabla comparativa y los deltas solo pueden calcularse con los instrumentos completos.') + habilitarBtn(p.id,'cierre','el Informe de Cierre');
+    p.cierre.estado='borrador';
+  }
+  if(p.cierre.estado!=='borrador' && p.cierre.estado!=='firmado') return '';
+  const ed = p.cierre.estado==='borrador';
+  const ti = ideaTotales(p.idea.punt), ta = protTotales(p.protA.punt), tb = protTotales(p.protB.punt);
+  const comp = ESCALAS.map((e,i)=>{
+    const d = tb.esc[i]-ta.esc[i]; const di=deltaInterpreta(d);
+    return `<tr><td>${e}</td><td class="num">${ti.esc[i]} / 24</td><td class="num">${ta.esc[i]} / 30</td><td class="num">${tb.esc[i]} / 30</td><td class="num"><span class="delta ${di.c}">${fmtDelta(d)}</span></td><td>${di.t}</td></tr>`;
+  }).join('');
+  const dT = tb.total-ta.total;
+  return `
+  ${ed? '<div class="notice n-warn"><b>Informe en borrador.</b> Plazo: 10 días hábiles tras el cierre del Protocolo B. Se comunica a la familia en entrevista presencial antes del cierre del año (Manual, §16 y §18).</div>'
+      : '<div class="notice n-ok"><b>Informe firmado</b> ('+p.cierre.fecha+'). '+(p.cierre.recibi?'La familia firmó el "Recibí de informe".':'<b>Pendiente:</b> firma "Recibí" de la familia.')+' <a href="#/reportes/'+p.id+'">Ver versión imprimible →</a></div>'}
+  <div class="card"><h3>Parte cuantitativa · Tabla comparativa anual</h3>
+  <table><thead><tr><th>Escala</th><th class="num">IDEA (severidad)</th><th class="num">Prot. A (progreso)</th><th class="num">Prot. B (progreso)</th><th class="num">Δ B−A</th><th>Lectura</th></tr></thead>
+  <tbody>${comp}
+  <tr><td><b>Total</b></td><td class="num"><b>${ti.total} / 96</b></td><td class="num"><b>${ta.total} / 120</b></td><td class="num"><b>${tb.total} / 120</b></td><td class="num"><span class="delta ${esign(dT)}"><b>${fmtDelta(dT)}</b></span></td><td>${deltaInterpreta(dT).t}</td></tr></tbody></table>
+  <div class="hint" style="margin-top:8px">Los puntajes IDEA e IPPU-TEA no son homologables entre sí; la comparación longitudinal es orientativa y se explicita en este informe (nota metodológica de los protocolos).</div>
+  <div class="radarwrap" style="margin-top:14px">
+    <div><div class="hint" style="text-align:center;font-weight:600">Perfil IDEA (severidad, línea base)</div>${radarSVG([{color:'#0e5a63',vals:ti.esc,max:24}],270)}</div>
+    <div><div class="hint" style="text-align:center;font-weight:600">Progreso IPPU-TEA (A vs B)</div>${radarSVG([{color:'#b35c00',vals:ta.esc,max:30},{color:'#2e7d4f',vals:tb.esc,max:30}],270)}
+    <div class="legend" style="text-align:center"><span><i style="background:#b35c00"></i>Protocolo A</span><span><i style="background:#2e7d4f"></i>Protocolo B</span></div></div>
+  </div></div>
+  <div class="card"><h3>Parte cualitativa · Síntesis por escala (mín. 100 palabras c/u)</h3>
+  ${ESCALAS.map((e,i)=>`<div style="margin-bottom:10px"><label class="req">${e}</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').cierre.sintE[${i}]=this.value">${p.cierre.sintE[i]||''}</textarea></div>`).join('')}
+  </div>
+  <div class="card"><h3>Síntesis interdisciplinaria, recomendaciones y orientaciones</h3>
+  <div class="frow">
+    <div style="grid-column:1/-1"><label class="req">Valoración anual — Técnico/a responsable 1</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').cierre.sintPsi=this.value">${p.cierre.sintPsi||''}</textarea></div>
+    <div style="grid-column:1/-1"><label class="req">Valoración anual — Técnico/a responsable 2</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').cierre.sintMtra=this.value">${p.cierre.sintMtra||''}</textarea></div>
+    <div style="grid-column:1/-1"><label class="req">Recomendaciones y ajustes de tratamiento (mín. 3 objetivos por área)</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').cierre.recomendaciones=this.value">${p.cierre.recomendaciones||''}</textarea></div>
+    <div style="grid-column:1/-1"><label class="req">Orientaciones concretas a la familia</label><textarea ${ed?'':'disabled'} onchange="getP('${p.id}').cierre.orientaciones=this.value">${p.cierre.orientaciones||''}</textarea></div>
+    <div><label class="req">Fecha del informe</label><input type="date" ${ed?'':'disabled'} value="${p.cierre.fecha}" onchange="getP('${p.id}').cierre.fecha=this.value"></div>
+  </div>
+  ${ed? `<div class="toolbar"><button class="btn ok" onclick="firmarCierre('${p.id}')">Firmar Informe de Cierre</button></div>`
+      : (!p.cierre.recibi? `<div class="toolbar"><button class="btn" onclick="getP('${p.id}').cierre.recibi=true; setMod('cierre')">Registrar "Recibí" de la familia (entrevista realizada)</button></div>`:'')}
+  </div>`;
+}
+function firmarCierre(id){
+  const p=getP(id); const c=p.cierre; const err=[];
+  if(!c.fecha) err.push('fecha del informe');
+  c.sintE.forEach((s,i)=>{if(!(s||'').trim()) err.push('síntesis de la escala '+ESCALAS[i]);});
+  if(!(c.sintPsi||'').trim()) err.push('valoración anual del Técnico/a responsable 1');
+  if(!(c.sintMtra||'').trim()) err.push('valoración anual del Técnico/a responsable 2');
+  if(!(c.recomendaciones||'').trim()) err.push('recomendaciones');
+  if(!(c.orientaciones||'').trim()) err.push('orientaciones a la familia');
+  if(err.length){alert('No se puede firmar. Falta:\n• '+err.join('\n• '));return;}
+  c.estado='firmado'; setMod('cierre'); route();
+}
+
+/* ---- HCE-LOG (mock) ---- */
+function mLog(p){
+  const evs=[];
+  if(p.ci_firmado) evs.push([p.ci_fecha,'HCE-CI','Consentimiento firmado por '+p.ci_firmante]);
+  if(p.idea.estado==='firmado') evs.push([p.idea.fecha,'HCE-LB','IDEA firmado — total '+ideaTotales(p.idea.punt).total+'/96 — '+p.psicologa+' y '+p.maestra]);
+  if(p.protA.estado==='firmado') evs.push([p.protA.fecha,'HCE-PA','Protocolo A firmado — total '+protTotales(p.protA.punt).total+'/120']);
+  if(p.protB.estado==='firmado') evs.push([p.protB.fecha,'HCE-PB','Protocolo B firmado — total '+protTotales(p.protB.punt).total+'/120 — deltas calculados']);
+  if(p.cierre.estado==='firmado') evs.push([p.cierre.fecha,'HCE-IC','Informe de Cierre firmado'+(p.cierre.recibi?' · Recibí de familia registrado':'')]);
+  (p.excepciones||[]).forEach(e=>evs.push([e.fecha, e.mod, 'CONSTANCIA DE EXCEPCIÓN: '+e.motivo]));
+  evs.sort((a,b)=> (a[0]||'').localeCompare(b[0]||''));
+  return `<div class="card"><h3>HCE-LOG · Historial de cambios (solo lectura)</h3>
+  <div class="hint" style="margin-bottom:10px">En el sistema definitivo este registro es automático e inalterable: quién, cuándo, qué campo, valor anterior y nuevo (Manual, §19). En el prototipo se muestran los hitos de firma.</div>
+  ${evs.length? '<table><thead><tr><th>Fecha</th><th>Módulo</th><th>Evento</th></tr></thead><tbody>'+evs.map(e=>'<tr><td>'+e[0]+'</td><td>'+e[1]+'</td><td>'+e[2]+'</td></tr>').join('')+'</tbody></table>' : '<div class="notice n-info">Sin eventos registrados aún.</div>'}</div>`;
+}
+
+/* ============ VISTA: REPORTES ============ */
+function vReportes(pid){
+  const conCierre = DB.pacientes.filter(p=>p.cierre.estado==='firmado');
+  if(pid){ const p=getP(pid); if(p && p.cierre.estado==='firmado') return vInformeIndividual(p); }
+  // --- Reporte general institucional ---
+  const conB = DB.pacientes.filter(p=>p.protB.estado==='firmado');
+  let promDeltas=[0,0,0,0], dTot=0;
+  conB.forEach(p=>{const a=protTotales(p.protA.punt).esc, b=protTotales(p.protB.punt).esc;
+    for(let i=0;i<4;i++) promDeltas[i]+= b[i]-a[i]; dTot += protTotales(p.protB.punt).total-protTotales(p.protA.punt).total;});
+  if(conB.length){promDeltas=promDeltas.map(v=>+(v/conB.length).toFixed(1)); dTot=+(dTot/conB.length).toFixed(1);}
+  const maxAbs = Math.max(3, ...promDeltas.map(Math.abs));
+  const barras = ESCALAS.map((e,i)=>{
+    const v=promDeltas[i]; const w=Math.abs(v)/maxAbs*100;
+    return `<tr><td style="width:220px">${e}</td>
+    <td><div style="background:#eef2f1;border-radius:5px;height:20px;position:relative">
+      <div style="position:absolute;left:${v>=0?50:50-w/2}%;width:${w/2}%;height:100%;border-radius:4px;background:${v>=0?'var(--ok)':'var(--danger)'}"></div>
+      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#9fb0ad"></div></div></td>
+    <td class="num" style="width:70px"><span class="delta ${esign(v)}">${fmtDelta(v)}</span></td></tr>`;
+  }).join('');
+  const cumpl = DB.pacientes.map(p=>{
+    const pl=pipeline(p);
+    const done=pl.filter(s=>s.st==='firmado').length;
+    return `<tr><td><a href="#/pacientes/${p.id}">${p.nombre}</a></td><td>${p.grupo}</td>
+    <td>${pl.map(s=>'<span class="badge '+({firmado:'b-firmado',borrador:'b-borrador',bloqueado:'b-bloqueado'})[s.st]+'">'+s.code.replace('HCE-','')+'</span>').join(' ')}</td>
+    <td class="num">${done}/5</td>
+    <td>${p.cierre.estado==='firmado'? '<a href="#/reportes/'+p.id+'">Informe anual →</a>':'<span class="hint">—</span>'}</td></tr>`;
+  }).join('');
+  return `
+  <div class="crumb">Servicio de Atención Diurna</div>
+  <div class="pagehead"><div><h2>Reportes</h2>
+  <p>Reportes individuales (Informe de Cierre Anual imprimible) y visión general institucional: progreso promedio por escala, cumplimiento del flujo y disponibilidad de informes para INAU, BPS y MSP.</p></div></div>
+  <div class="card"><h3>Progreso institucional — Δ promedio por escala (ciclos con Protocolo B firmado: ${conB.length})</h3>
+  ${conB.length? `<table><tbody>${barras}<tr><td><b>Δ total promedio</b></td><td></td><td class="num"><span class="delta ${esign(dTot)}"><b>${fmtDelta(dTot)}</b></span></td></tr></tbody></table>
+  <div class="hint" style="margin-top:8px">El sistema mide el progreso, no su causa: el avance puede deberse a la intervención, la maduración, cambios de medicación u otros factores (Manual, §15.2, Error 2).</div>`
+  : '<div class="notice n-info">Aún no hay ciclos con Protocolo B firmado en el período seleccionado.</div>'}
+  </div>
+  <div class="card"><h3>Cumplimiento del flujo por usuario</h3>
+  <table><thead><tr><th>Usuario</th><th>Grupo</th><th>Módulos</th><th class="num">Firmados</th><th>Informe</th></tr></thead><tbody>${cumpl}</tbody></table></div>
+  <div class="card"><h3>Reportes de Valoración Funcional para la familia (descriptivos, generables en cualquier momento)</h3>
+  ${DB.pacientes.filter(p=>p.idea.estado==='firmado' || (p.vf && ((p.vf.capacidades||'').trim() || (p.vf.sintesisFuncional||'').trim()))).map(p=>`<div class="notice n-info" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span><b>${p.nombre}</b> · ${p.grupo}</span><a class="btn ghost" style="padding:6px 14px" href="#/reportes/vf/${p.id}">Abrir / imprimir</a></div>`).join('') || '<div class="notice n-info">Se habilita al contar con la línea base IDEA firmada o con contenido en HCE-VF.</div>'}
+  <div class="hint">Documento autónomo y de carácter descriptivo, pensado para la familia: se genera a demanda desde HCE-VF sin depender del cierre del año ni de trámite alguno.</div></div>
+
+  <div class="card"><h3>Informes de Cierre disponibles (documento clínico legal — versión única)</h3>
+  ${conCierre.length? conCierre.map(p=>`<div class="notice n-ok" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span><b>${p.nombre}</b> · ${p.anio} · firmado ${p.cierre.fecha}</span><a class="btn ghost" style="padding:6px 14px" href="#/reportes/${p.id}">Abrir / imprimir</a></div>`).join('')
+  : '<div class="notice n-info">No hay informes de cierre firmados.</div>'}
+  <div class="hint">Nunca se elaboran versiones alternativas del informe para organismos supervisores: el informe oficial es único (Manual, §18.2).</div></div>`;
+}
+
+function vInformeIndividual(p){
+  const ti=ideaTotales(p.idea.punt), ta=protTotales(p.protA.punt), tb=protTotales(p.protB.punt);
+  const dT=tb.total-ta.total;
+  return `
+  <div class="crumb no-print"><a href="#/reportes">Reportes</a> / Informe individual</div>
+  <div class="toolbar no-print"><button class="btn" onclick="window.print()">Imprimir / guardar PDF</button>
+  <a class="btn ghost" href="#/pacientes/${p.id}">Abrir HCE del usuario</a></div>
+  <div class="card">
+    <div style="border-bottom:3px solid var(--brand); padding-bottom:12px; margin-bottom:14px">
+      <h2 style="font-size:1.3rem">FUNDACIÓN IPPU · Instituto Psico Pedagógico Uruguayo</h2>
+      <div class="hint">INAU · MSP · BPS · ECOSOC/ONU · Montevideo, Uruguay</div>
+      <h3 style="margin-top:10px">Informe de Evolución y Cierre Anual · Año lectivo ${p.anio}</h3>
+    </div>
+    <div class="frow">
+      <div><label>Usuario</label><div>${p.nombre}</div></div>
+      <div><label>Historia Clínica</label><div>${p.hc}</div></div>
+      <div><label>Grupo de referencia</label><div>${p.grupo}</div></div>
+      <div><label>CIE-11 / Soporte</label><div>${p.cie11} · ${p.nivel}</div></div>
+      <div><label>Técnico/a responsable 1</label><div>${p.psicologa}</div></div>
+      <div><label>Técnico/a responsable 2</label><div>${p.maestra}</div></div>
+    </div>
+  </div>
+  <div class="card"><h3>1. Análisis cuantitativo</h3>
+  <table><thead><tr><th>Escala</th><th class="num">IDEA (0–24)</th><th class="num">Prot. A (6–30)</th><th class="num">Prot. B (6–30)</th><th class="num">Δ B−A</th></tr></thead><tbody>
+  ${ESCALAS.map((e,i)=>{const d=tb.esc[i]-ta.esc[i]; return `<tr><td>${e}</td><td class="num">${ti.esc[i]}</td><td class="num">${ta.esc[i]}</td><td class="num">${tb.esc[i]}</td><td class="num"><span class="delta ${esign(d)}">${fmtDelta(d)}</span></td></tr>`;}).join('')}
+  <tr><td><b>Total</b></td><td class="num"><b>${ti.total} / 96</b></td><td class="num"><b>${ta.total} / 120</b></td><td class="num"><b>${tb.total} / 120</b></td><td class="num"><span class="delta ${esign(dT)}"><b>${fmtDelta(dT)}</b></span></td></tr></tbody></table>
+  <div class="hint" style="margin:8px 0">Nota metodológica: la Escala IPPU-TEA es un instrumento propio de IPPU basado en las escalas conceptuales del IDEA (Rivière, 2001); sus puntajes no son homologables con los puntajes IDEA. El Δ es válido únicamente entre Protocolos A y B.</div>
+  <div class="radarwrap">
+    <div><div class="hint" style="text-align:center;font-weight:600">Perfil IDEA — línea base (severidad)</div>${radarSVG([{color:'#0e5a63',vals:ti.esc,max:24}],260)}</div>
+    <div><div class="hint" style="text-align:center;font-weight:600">Progreso semestral IPPU-TEA</div>${radarSVG([{color:'#b35c00',vals:ta.esc,max:30},{color:'#2e7d4f',vals:tb.esc,max:30}],260)}
+    <div class="legend" style="text-align:center"><span><i style="background:#b35c00"></i>Protocolo A</span><span><i style="background:#2e7d4f"></i>Protocolo B</span></div></div>
+  </div></div>
+  <div class="card"><h3>2. Análisis cualitativo por escala</h3>
+  ${ESCALAS.map((e,i)=>`<p style="margin-bottom:10px"><b>${e}.</b> ${p.cierre.sintE[i]||'—'}</p>`).join('')}</div>
+  <div class="card"><h3>3. Síntesis interdisciplinaria</h3>
+  <p><b>Valoración anual — Técnico/a responsable 1:</b> ${p.cierre.sintPsi||'—'}</p>
+  <p style="margin-top:8px"><b>Valoración anual — Técnico/a responsable 2:</b> ${p.cierre.sintMtra||'—'}</p></div>
+  <div class="card"><h3>4. Recomendaciones y ajustes de tratamiento</h3><p>${p.cierre.recomendaciones||'—'}</p></div>
+  <div class="card"><h3>5. Orientaciones a la familia</h3><p>${p.cierre.orientaciones||'—'}</p></div>
+  <div class="card">
+    <div class="grid3">
+      <div><label>Firma Técnico/a responsable 1</label><div style="border-bottom:1px solid var(--ink);height:34px"></div><div class="hint">${p.psicologa}</div></div>
+      <div><label>Firma Técnico/a responsable 2</label><div style="border-bottom:1px solid var(--ink);height:34px"></div><div class="hint">${p.maestra}</div></div>
+      <div><label>Recibí de la familia</label><div style="border-bottom:1px solid var(--ink);height:34px"></div><div class="hint">${p.cierre.recibi?'Registrado en HCE el '+p.cierre.fecha:'Pendiente'}</div></div>
+    </div>
+    <div class="hint" style="margin-top:12px">Documento generado desde la HCE de IPPU · Firmado digitalmente el ${p.cierre.fecha} · Uso profesional exclusivo · Ley N.º 18.331/2008 y Ley N.º 18.335/2008</div>
+  </div>`;
+}
+
+/* ============ VISTA: PLACEHOLDERS TALLER / CLÍNICA ============ */
+function vPlaceholder(nombre){
+  const desc = nombre==='Taller Terapéutico'
+    ? 'Historias clínicas de las personas que asisten al Taller Terapéutico. Este servicio tendrá su propia estructura de registro (asistencia, objetivos por taller, evaluación de proceso grupal) — distinta de los protocolos del Servicio de Atención Diurna.'
+    : 'Historias clínicas del servicio de Clínica (consultas individuales, evoluciones por sesión, indicaciones e interconsultas). Estructura y protocolos propios, a definir con el equipo técnico.';
+  return `
+  <div class="crumb">Otros servicios de la Fundación</div>
+  <div class="pagehead"><div><h2>${nombre}</h2><p>${desc}</p></div></div>
+  <div class="card"><h3>Sección reservada — Fase 2 del proyecto</h3>
+  <div class="notice n-info">Esta sección está prevista en la arquitectura general de la HCE pero <b>no se desarrolla en esta instancia</b>. Se deja reservado el espacio de navegación, el modelo de permisos y la identificación de usuarios compartida (una misma persona puede tener registros en más de un servicio, siempre bajo una única identidad institucional).</div>
+  <h3 style="margin-top:16px">Definiciones que la Fase 2 deberá acordar con el equipo técnico</h3>
+  <ul style="padding-left:20px; font-size:.9rem; line-height:1.9">
+    <li>Estructura de módulos propia del servicio (no aplica el flujo IDEA → A → B → Cierre).</li>
+    <li>Instrumentos de registro y evaluación específicos del servicio.</li>
+    <li>Perfiles de acceso: qué profesionales ven qué registros, y si comparten HCE-00 (datos generales) con Atención Diurna.</li>
+    <li>Reportes propios y su relación con los reportes institucionales generales.</li>
+  </ul></div>`;
+}
+
+/* ============ VISTA: ESPECIFICACIONES PARA UTEC ============ */
+function vSpecs(){
+  return `
+  <div class="crumb">Documentación técnica</div>
+  <div class="pagehead"><div><h2>Especificaciones técnicas para el equipo UTEC-LIDIA</h2>
+  <p>Resumen de reglas de negocio, modelo de datos y validaciones que este prototipo implementa y que el sistema definitivo debe respetar. Fuente normativa: Manual de Procedimientos v1.0 (consultable en la sección Manual).</p></div></div>
+
+  <div class="card"><h3>1. Arquitectura general</h3>
+  <ul style="padding-left:20px;font-size:.9rem;line-height:1.9">
+    <li><b>Tres servicios, una identidad:</b> Atención Diurna (este prototipo), Taller Terapéutico y Clínica (fase 2). Cada persona tiene una identidad única institucional y puede tener registros en varios servicios.</li>
+    <li><b>Módulos por HCE (Atención Diurna):</b> HCE-00 (datos generales/anamnesis, siempre actualizable), HCE-CI, HCE-LB (IDEA), HCE-PA, HCE-PB, HCE-IC, HCE-DOC (documentos adjuntos y fotografías individuales), HCE-ORG (áreas INAU y BPS por NNA), HCE-VF (valoración funcional BUND/CIF y guía de prestaciones), HCE-LOG (auditoría automática, solo lectura).</li>
+    <li><b>HCE-VF — principios de diseño:</b> (a) IPPU registra la valoración oficial (BUND — Ley N.º 20.378, Decreto 72/025), no certifica; (b) el perfil funcional CIF es una síntesis breve de capacidades/autonomía/barreras/apoyos que sirve al equipo y como insumo del IBMF/IRSA cuando la familia lo gestiona — no duplica los instrumentos clínicos; (c) la guía de prestaciones es contenido informativo estático mantenido por coordinación, sin flujos de expedientes; (d) <u>prohibido</u> autocalcular la categoría del baremo desde puntajes IDEA/IPPU-TEA — constructos no equivalentes; (e) los rangos de categorización se implementan como tabla configurable, a validar contra la reglamentación vigente del Consejo Asesor; (f) alerta única: vencimiento/revisión de la valoración (90/30 días); (g) <b>autogeneración descriptiva:</b> el módulo construye un borrador de síntesis funcional en lenguaje natural a partir del perfil IDEA por escala y de la evolución cualitativa de los protocolos (nunca números crudos ni porcentajes), y sugiere niveles de autonomía editables solo en los tres dominios con correlato clínico (comunicación ← E2, interacciones ← E1, aprendizaje ← E4); el borrador siempre exige revisión de los técnicos responsables antes de compartirse; (h) <b>Reporte de Valoración Funcional autónomo:</b> documento imprimible para la familia, generable a demanda desde la HCE, de carácter descriptivo (capacidades, autonomía en palabras, evolución cualitativa del año, barreras y apoyos, estado de la valoración oficial y orientación de prestaciones), con la aclaración expresa de que no es certificado ni informe clínico.</li>
+    <li><b>Búsqueda de HCE por tres vías:</b> cédula de identidad, N.º de HCE o grupo de referencia (también por nombre). Índices de base de datos sobre esos tres campos.</li>
+    <li><b>El grupo como unidad de atención:</b> entidad «grupo de referencia» con técnicos responsables asignados, integrantes, y registro fotográfico grupal propio. Navegación grupo → NNA → HCE.</li>
+    <li><b>Portabilidad institucional (criterio transversal):</b> la herramienta no presupone el modelo de trabajo de IPPU. Los roles se implementan de forma genérica como «Técnico/a responsable 1 y 2» con etiqueta de rol configurable por institución. El único requisito metodológico invariante es que sean <u>dos evaluadores que puntúan de forma independiente y luego consensúan</u> — base del control de confiabilidad interjueces (kappa). IPPU los instancia como Psicólogo/a + Maestro/a del grupo; otra institución podría instanciarlos como Psiquiatra + Terapeuta Ocupacional, Fonoaudiólogo/a + Educador/a, etc., sin tocar el sistema.</li>
+    <li><b>Fotografías:</b> individuales (en HCE-DOC) y grupales (en la entidad grupo). Regla dura: la carga individual requiere autorización de uso de imagen registrada; la carga grupal requiere autorización de <u>todas</u> las familias del grupo (art. 11, CNA — Ley N.º 17.823). Almacenamiento cifrado y marca de agua institucional recomendada en exportaciones.</li>
+    <li><b>HCE-ORG:</b> por NNA, área INAU (N.º SIPI, convenio, referente territorial, registro de informes enviados) y área BPS (prestación, N.º de trámite, estado, vencimiento, registro de gestiones). Alertas de vencimiento de AYEX (60/30 días) y de informes semestrales pendientes de envío.</li>
+    <li><b>Flujo secuencial guiado, no impuesto:</b> el orden CI → LB → PA → PB → IC es el camino por defecto, pero todo módulo puede habilitarse fuera de secuencia mediante <b>habilitación excepcional con constancia obligatoria</b> registrada en HCE-LOG (ingresos tardíos, reingresos, licencias, situaciones familiares). Única excepción sin salvedad: el consentimiento informado, que es requisito legal.</li>
+    <li><b>Plazos como recordatorios, nunca como bloqueos:</b> las ventanas del Manual (receso de julio, cierre lectivo, días posteriores al Protocolo B) se implementan como recordatorios configurables por coordinación. Los mínimos recomendados (5 sesiones de observación, 15 semanas de asistencia) generan una advertencia y piden constancia del motivo, pero no impiden firmar.</li>
+    <li><b>Terminología cuidada hacia las familias (regla transversal de UI y de informes):</b> en pantallas, informes PDF y textos generados se emplea siempre «severo / muy severo» o «alta necesidad de apoyo»; nunca «grave / muy grave». Aplicar como constante de vocabulario del sistema para que ningún módulo futuro la contradiga.</li>
+    <li><b>Neutralidad metodológica:</b> el sistema no prescribe técnicas ni métodos de intervención. Las lecturas orientativas aluden exclusivamente a las escalas y dimensiones del IDEA; la elección del abordaje corresponde a cada profesional según su formación. Las citas bibliográficas de los ítems de la Escala IPPU-TEA se mantienen como referencia documental, no como indicación.</li>
+    <li><b>Firma digital = bloqueo:</b> un módulo firmado no se edita; correcciones solo por addenda con fecha, profesional y justificación.</li>
+  </ul></div>
+
+  <div class="card"><h3>2. Reglas de validación por módulo</h3>
+  <table><thead><tr><th>Módulo</th><th>Validaciones para permitir la firma</th></tr></thead><tbody>
+  <tr><td><b>HCE-LB (IDEA)</b></td><td><u>Integridad (requeridos):</u> 12 dimensiones puntuadas (0–8, impares permitidos; sin NS pendientes) · fecha · síntesis clínica · objetivos · totales automáticos (por escala 0–24, total 0–96). <u>Recomendados (advierten y piden constancia, no bloquean):</u> ≥5 sesiones de observación · extensión sugerida de la síntesis. Campo «migrado del sistema anterior» disponible.</td></tr>
+  <tr><td><b>HCE-PA / HCE-PB</b></td><td><u>Integridad:</u> 24 ítems puntuados (Likert 1–5) · fecha · <b>fundamentación en todo ítem con valor 1 o 5</b> · síntesis de ambos técnicos responsables · totales por escala 6–30, total 24–120. <u>Recomendados:</u> ≥15 semanas de asistencia efectiva · extensión sugerida de las síntesis.</td></tr>
+  <tr><td><b>HCE-PB (adicional)</b></td><td>Cálculo automático de Δ por escala (B−A, rango −24 a +24) y Δ total (−96 a +96). El Δ jamás se calcula contra el IDEA. Δ ≤ −7 en una escala debe disparar alerta institucional.</td></tr>
+  <tr><td><b>HCE-IC</b></td><td>Requiere LB, PA y PB firmados · tabla comparativa y radar autogenerados · síntesis por escala ≥100 palabras c/u · valoraciones interdisciplinarias · recomendaciones y orientaciones · firma de ambos técnicos responsables + registro de "Recibí" de la familia · exportación PDF con membrete = documento clínico legal, versión única.</td></tr>
+  </tbody></table></div>
+
+  <div class="card"><h3>3. Modelo de datos (esquema sugerido)</h3>
+  <pre style="background:#f2f5f4;border:1px solid var(--line);border-radius:8px;padding:14px;font-size:.78rem;overflow-x:auto">persona { id, nombre, fnac, ci, sexo, servicio[s] }
+hce_diurna { persona_id, hc, grupo_id, anio,
+             tecnico1_id, tecnico1_rol, tecnico2_id, tecnico2_rol,
+             diag, cie11, nivel_soporte, anamnesis{...} }
+-- roles genéricos: cada institución define las etiquetas de rol
+-- (IPPU: tecnico1_rol='Psicólogo/a', tecnico2_rol='Maestro/a')
+consentimiento { hce_id, firmante, fecha, adjunto_id, estado }
+idea { hce_id, fecha, sesiones_obs, dim[12]{valor 0-8|NS, obs},
+       totales calculados, sintesis, objetivos, firmas[2], estado }
+protocolo { hce_id, tipo A|B, fecha, semanas, item[24]{valor 1-5, obs},
+            totales, sint_psi, sint_mtra, otros_tecnicos, ajustes(B),
+            deltas(B, calculados), firmas[2], estado }
+informe_cierre { hce_id, fecha, sint_escala[4], sint_psi, sint_mtra,
+                 recomendaciones, orientaciones, recibi_familia,
+                 pdf_generado_id, firmas[2], estado }
+auditoria { hce_id, usuario, timestamp, modulo, campo, valor_ant, valor_nuevo }</pre></div>
+
+  <div class="card"><h3>4. Permisos (Manual, §21.1)</h3>
+  <table><thead><tr><th>Perfil</th><th>Permitido</th><th>Denegado</th></tr></thead><tbody>
+  <tr><td>Técnicos responsables del grupo</td><td>HCE completa de su grupo; escritura en módulos habilitados</td><td>HCE de otros grupos; historial de cambios</td></tr>
+  <tr><td>Otros técnicos</td><td>Campos de texto libre de PA, PB e IC donde participan</td><td>Puntajes Likert; síntesis clínica; identificación</td></tr>
+  <tr><td>Coordinación</td><td>Lectura de módulos firmados de todos los grupos; escritura en HCE-00</td><td>Modificar módulos firmados</td></tr>
+  <tr><td>Dirección / administración</td><td>Estadísticos agregados sin identificación; cumplimiento de plazos</td><td>HCE individuales</td></tr>
+  </tbody></table></div>
+
+  <div class="card"><h3>5. Migración desde la HCE actual de IPPU</h3>
+  <div class="hint" style="margin-bottom:10px">La Fundación ya cuenta con una HCE en uso. El único componente semánticamente equivalente entre ambos sistemas es el IDEA; los demás registros (Evaluación por áreas, Evaluación General, Observaciones) tienen formatos distintos y no deben forzarse a los campos del sistema nuevo.</div>
+  <table><thead><tr><th>Componente del sistema actual</th><th>Estrategia de migración</th></tr></thead><tbody>
+  <tr><td><b>IDEA (línea base)</b></td><td><b>Migración estructurada:</b> los 12 puntajes dimensionales se cargan al módulo HCE-LB con marca de origen «migrado del sistema anterior», fecha original de aplicación y verificación contra el registro fuente (doble control por muestreo). El documento original se adjunta en HCE-DOC.</td></tr>
+  <tr><td><b>Evaluación por áreas · Evaluación General · Observaciones</b></td><td><b>Archivo histórico de solo lectura (legacy archive):</b> se exportan del sistema actual como documentos (PDF con firma o exportación certificada), se cargan en HCE-DOC con categorías específicas de «Registro histórico — HCE anterior» y fecha original. Quedan consultables desde la HCE del NNA pero nunca editables ni mapeados a campos estructurados. La no equivalencia entre sistemas queda declarada de forma explícita.</td></tr>
+  <tr><td><b>Datos identificatorios (HCE-00)</b></td><td>Migración estructurada con validación de duplicados por CI y N.º de HCE. Se preserva el N.º de HCE histórico como identificador secundario.</td></tr>
+  </tbody></table>
+  <h3 style="margin-top:14px">Procedimiento estándar de cambio de sistema en instituciones de salud</h3>
+  <ol style="padding-left:20px;font-size:.9rem;line-height:1.8">
+    <li><b>Inventario y clasificación</b> de los registros del sistema actual: qué migra estructurado, qué se archiva como histórico, qué se descarta (nada clínico se descarta).</li>
+    <li><b>Fecha de corte definida:</b> a partir de ella, todo registro nuevo se hace en el sistema nuevo. El sistema anterior pasa a modo de solo lectura.</li>
+    <li><b>Período de coexistencia acotado</b> (habitualmente semanas, no meses) con el sistema anterior consultable, para resolver dudas y verificar la migración.</li>
+    <li><b>Verificación por muestreo:</b> un porcentaje de historias migradas se coteja campo a campo contra el original, con acta de verificación firmada.</li>
+    <li><b>Acta de cierre del sistema anterior:</b> documento institucional que deja constancia de qué se migró, cómo, quién lo verificó, y dónde queda resguardado el respaldo íntegro del sistema anterior.</li>
+    <li><b>Conservación del respaldo completo</b> del sistema anterior (base de datos + documentos) durante los plazos que exige la normativa vigente sobre historias clínicas, aunque ya no se use operativamente.</li>
+    <li><b>Trazabilidad:</b> cada registro migrado conserva metadatos de origen (sistema, fecha original, fecha de migración, responsable).</li>
+  </ol>
+  <div class="notice n-info"><b>Contexto normativo uruguayo:</b> el Decreto N.º 242/017 y sus ordenanzas reglamentarias (MSP/AGESIC, programa Salud.uy) establecen la Historia Clínica Electrónica Nacional (HCEN) y sus principios: finalidad, veracidad, completitud, reserva, información y accesibilidad. Aunque el alcance de IPPU respecto de la HCEN debe confirmarse con el MSP según su naturaleza institucional, conviene que el sistema nuevo se diseñe alineado a esos principios y a los estándares de documento clínico electrónico, lo que además facilitaría una eventual integración futura.</div></div>
+
+  <div class="card"><h3>6. Requisitos no funcionales</h3>
+  <ul style="padding-left:20px;font-size:.9rem;line-height:1.9">
+    <li>Cumplimiento Ley N.º 18.331/2008 (datos sensibles: cifrado en reposo y en tránsito, consentimiento explícito) y Ley N.º 18.335/2008 (derecho de acceso de la familia por solicitud formal).</li>
+    <li>Autenticación con roles; sesión con expiración; registro de auditoría inalterable (HCE-LOG).</li>
+    <li>Cálculo automático de totales y deltas con verificación visible por el evaluador antes de firmar (Anexo A del Manual).</li>
+    <li>Generación de PDF del Informe de Cierre con membrete y firma digital.</li>
+    <li>Módulo de confiabilidad interjueces (fase piloto): captura de puntuaciones independientes por evaluador y cálculo de kappa de Cohen por ítem; alertas con κ &lt; 0,61 (Manual, §23).</li>
+    <li>Alertas de plazos: IDEA en semanas 2–3 del ingreso; PA en receso de julio; PB en última semana lectiva; IC dentro de 10 días hábiles.</li>
+  </ul>
+  <div class="notice n-warn"><b>Diferencias deliberadas del prototipo respecto del sistema definitivo:</b> sin persistencia (los datos viven en memoria del navegador), sin autenticación, firma simulada con un botón, umbrales de extensión reducidos para poder demostrar el flujo, kappa interjueces no implementado (solo especificado), y documentos/fotos disponibles solo durante la sesión del navegador (sin almacenamiento). Las habilitaciones excepcionales y las constancias de excepción están implementadas y pueden probarse en cualquier módulo no habilitado.</div></div>`;
+}
+
+/* ============ VISTA: MANUAL DE PROCEDIMIENTOS ============ */
+const MANUAL = [
+ {g:'Parte I — Marco general', id:'m1', t:'1. Propósito y alcance', h:`
+  <p>El Manual establece las normas, pasos operativos y criterios de calidad para aplicar, registrar, analizar e interpretar los instrumentos del Sistema Integrado de Evaluación y Seguimiento TEA. Propósito triple: <b>estandarización</b> (todos aplican igual), <b>trazabilidad</b> (datos completos y comparables en la HCE) y <b>rendición de cuentas</b> (respaldo ante auditorías de INAU, BPS y MSP).</p>
+  <p><b>Ámbito:</b> todos los grupos de referencia activos, todas las personas que ingresen desde la vigencia del manual, todo el personal técnico habilitado, y la HCE como único repositorio oficial.</p>
+  <p class="notice n-info">El manual no reemplaza el criterio clínico: los puntajes apoyan la decisión clínica, nunca la sustituyen.</p>`},
+ {g:'Parte I — Marco general', id:'m2', t:'2. Glosario clave', h:`
+  <table><tbody>
+  <tr><td><b>IDEA</b></td><td>Inventario del Espectro Autista (Rivière, 2001). 12 dimensiones, escala 0/2/4/6/8, total 0–96. Se aplica íntegro como línea base al ingreso.</td></tr>
+  <tr><td><b>Escala IPPU-TEA</b></td><td>Instrumento propio de IPPU (no es el IDEA). 4 escalas × 6 ítems, Likert 1–5 de progreso, total 24–120. No homologable con puntajes IDEA.</td></tr>
+  <tr><td><b>Protocolo A / B</b></td><td>Aplicaciones semestrales de la Escala IPPU-TEA (cierre de 1.er y 2.º semestre).</td></tr>
+  <tr><td><b>Delta (Δ)</b></td><td>Protocolo B − Protocolo A por escala. Positivo = progreso; negativo = regresión. Solo válido entre A y B.</td></tr>
+  <tr><td><b>Técnicos responsables</b></td><td>Los dos evaluadores principales de cada grupo, que puntúan de forma independiente y consensúan. Denominación genérica: cada institución instancia los roles según su modelo (en IPPU: Psicólogo/a + Maestro/a del grupo, la «dupla técnica»).</td></tr>
+  <tr><td><b>Confiabilidad interjueces</b></td><td>Acuerdo entre evaluadores independientes; kappa de Cohen, umbral aceptable κ ≥ 0,61.</td></tr>
+  <tr><td><b>Puntaje orientativo</b></td><td>Sugiere una hipótesis clínica; requiere confirmación interdisciplinaria. Nunca es diagnóstico.</td></tr>
+  </tbody></table>`},
+ {g:'Parte I — Marco general', id:'m3', t:'3. Secuencia longitudinal', h:`
+  <table><thead><tr><th>Momento</th><th>Instrumento</th><th>Cuándo</th><th>Duración</th></tr></thead><tbody>
+  <tr><td>0</td><td>IDEA (línea base)</td><td>Ingreso — primeras 2 semanas (tras ≥5 sesiones de observación)</td><td>60–90 min</td></tr>
+  <tr><td>1</td><td>Protocolo A</td><td>Semanas 1–2 del receso de julio</td><td>45–60 min</td></tr>
+  <tr><td>2</td><td>Protocolo B</td><td>Última semana del año lectivo</td><td>45–60 min</td></tr>
+  <tr><td>3</td><td>Informe de Cierre</td><td>10 días hábiles tras Protocolo B</td><td>90–120 min</td></tr>
+  </tbody></table>
+  <p class="notice n-warn">El IDEA solo se aplica al ingreso; no se repite anualmente. Si la persona reingresa tras más de 12 meses de ausencia, se aplica un nuevo IDEA. Ningún instrumento puede aplicarse sin que el anterior esté completo y firmado.</p>`},
+ {g:'Parte II — IDEA', id:'m5', t:'5. Qué es y qué no es el IDEA', h:`
+  <p>El IDEA evalúa el <b>perfil de severidad</b> del espectro en 12 dimensiones; <b>no es diagnóstico</b> (competencia exclusiva del equipo médico). Condiciones previas: consentimiento firmado, ≥5 sesiones de asistencia, ambos evaluadores con ≥3 sesiones de observación, y dominio del instrumento original.</p>
+  <p>Evaluaciones previas externas (incluido un IDEA de otra institución) se archivan en HCE-DOC pero <b>no reemplazan</b> la línea base propia de IPPU.</p>`},
+ {g:'Parte II — IDEA', id:'m6', t:'6–7. Aplicación y puntuación', h:`
+  <ol>
+  <li><b>Reunión previa</b> de los técnicos responsables; no discutir puntajes antes de puntuar de forma independiente.</li>
+  <li><b>Puntuación independiente</b> de las 12 dimensiones. Regla de Rivière: ante la duda, siempre el valor menor. Impares (1,3,5,7) solo para casos claramente intermedios. "NS" si falta observación.</li>
+  <li><b>Consenso:</b> igual → registrar; diferencia de 1 → discusión breve; diferencia ≥2 → ambigüedad clínica: documentar y observación adicional; NS → ampliar observación.</li>
+  <li><b>Registro en HCE</b> del puntaje consensuado; totales automáticos verificados.</li>
+  <li><b>Síntesis clínica</b> (contexto, perfil por escala, soporte orientativo, CIE-11, objetivos del semestre).</li>
+  <li><b>Firma digital</b> de ambos: bloquea el módulo; correcciones solo por addenda.</li>
+  </ol>
+  <p><b>Criterios:</b> valorar la conducta habitual (no la puntual), sin apoyo, en contexto grupal. Un 0 significa ausencia de <i>trastorno cualitativo</i>, no ausencia de la conducta.</p>`},
+ {g:'Parte II — IDEA', id:'m9', t:'9. Interpretación del perfil', h:`
+  <table><thead><tr><th>Total IDEA</th><th>Perfil orientativo</th><th>Soporte DSM-5-TR</th></tr></thead><tbody>
+  <tr><td>0–15</td><td>Muy leve</td><td>Nivel 1</td></tr><tr><td>16–30</td><td>Leve</td><td>Nivel 1</td></tr>
+  <tr><td>31–55</td><td>Leve a moderado</td><td>Nivel 1–2</td></tr><tr><td>56–75</td><td>Moderado</td><td>Nivel 2</td></tr>
+  <tr><td>76–90</td><td>Moderado a severo</td><td>Nivel 2–3</td></tr><tr><td>91–96</td><td>Severo a muy severo</td><td>Nivel 3</td></tr></tbody></table>
+  <p class="notice n-info"><b>Nota de terminología institucional:</b> en toda la HCE, los informes y la comunicación con las familias se emplea «severo / muy severo» (o «alta necesidad de apoyo»), nunca «grave / muy grave». La terminología alude a la entidad del perfil sin resultar innecesariamente impactante, y es coherente con el enfoque de niveles de apoyo del DSM-5-TR.</p>
+  <p>El total es un resumen insuficiente: dos perfiles con igual total pueden requerir estrategias opuestas. La lectura por escala orienta las prioridades de intervención y la asignación al grupo de referencia (junto con la edad).</p>`},
+ {g:'Parte III — Escala IPPU-TEA', id:'m10', t:'10. Declaración metodológica', h:`
+  <p class="notice n-danger"><b>La Escala IPPU-TEA no es el IDEA</b> ni una versión modificada. Sus puntajes no son homologables. Mide <b>progreso</b> (1 = regresión … 5 = generalizado), lógica inversa al IDEA (8 = mayor severidad).</p>
+  <table><tbody>
+  <tr><td><b>1</b> Regresión significativa</td><td>Pérdida de habilidades adquiridas; implica contactar a la familia.</td></tr>
+  <tr><td><b>2</b> Sin cambio</td><td>Mismo nivel que al inicio del período.</td></tr>
+  <tr><td><b>3</b> Emergente</td><td>Aparece de forma inconsistente, con apoyo intenso, en contextos muy estructurados.</td></tr>
+  <tr><td><b>4</b> Consistente</td><td>Consistente en contextos estructurados; el apoyo puede reducirse.</td></tr>
+  <tr><td><b>5</b> Generalizado</td><td>Consistente en múltiples contextos y personas — aprendizaje robusto.</td></tr></tbody></table>`},
+ {g:'Parte III — Escala IPPU-TEA', id:'m11', t:'11–13. Protocolos A y B: procedimiento', h:`
+  <ol>
+  <li><b>Condiciones:</b> módulo anterior firmado + ≥15 semanas de asistencia efectiva.</li>
+  <li><b>Revisión previa</b> de la línea base (A) o del Protocolo A y sus objetivos (B), para anclar la evaluación y evitar memoria selectiva.</li>
+  <li><b>Puntuación independiente</b> de los 24 ítems pensando en la conducta típica del semestre completo. Observación cualitativa obligatoria para valores 1 y 5.</li>
+  <li><b>Consenso:</b> igual → registrar; 1 punto → discusión breve; ≥2 → discusión extendida documentada.</li>
+  <li><b>Registro y síntesis:</b> síntesis de cada técnico responsable (≥150 palabras), aportes de otros técnicos, firma de ambos.</li>
+  </ol>`},
+ {g:'Parte III — Escala IPPU-TEA', id:'m14', t:'14–15. Delta e interpretación', h:`
+  <table><thead><tr><th>Δ por escala</th><th>Interpretación</th><th>Acción</th></tr></thead><tbody>
+  <tr><td>+13 a +24</td><td>Progreso muy significativo</td><td>Analizar qué estrategias lo produjeron para replicarlas</td></tr>
+  <tr><td>+7 a +12</td><td>Progreso significativo</td><td>Mantener la línea de intervención</td></tr>
+  <tr><td>+1 a +6</td><td>Progreso leve</td><td>Revisar la ambición de los objetivos</td></tr>
+  <tr><td>0</td><td>Sin cambio</td><td>¿Área consolidada o falta intensidad?</td></tr>
+  <tr><td>−1 a −6</td><td>Regresión leve</td><td>Identificar factores contextuales</td></tr>
+  <tr><td>−7 a −24</td><td>Regresión significativa</td><td>Reunión técnica urgente; contacto con la familia</td></tr></tbody></table>
+  <p><b>Errores críticos a evitar:</b> (1) comparar IDEA con IPPU-TEA como si fueran la misma escala; (2) atribuir todo el progreso a la intervención; (3) leer un 2 como fracaso — mantener el nivel puede ser un logro en perfiles Nivel 3; (4) puntuar el mejor desempeño en lugar del típico; (5) no documentar regresiones; (6) cerrar módulos sin observaciones.</p>`},
+ {g:'Parte IV — Informe de Cierre', id:'m16', t:'16–18. Informe de Cierre y comunicación', h:`
+  <p>Integra IDEA + Protocolo A + Protocolo B con la síntesis cualitativa. Prerrequisito: los tres módulos firmados. Contiene tabla comparativa autogenerada, síntesis cualitativa por escala (≥100 palabras c/u), síntesis interdisciplinaria, recomendaciones (≥3 objetivos por área), orientaciones a la familia y gráfico de radar.</p>
+  <p><b>Comunicación a la familia:</b> siempre en entrevista presencial antes del cierre del año (nunca solo por correo o WhatsApp), con traducción de los datos a lenguaje accesible y firma del "Recibí" en la HCE.</p>
+  <p class="notice n-danger"><b>Nunca elaborar informes paralelos</b> para organismos supervisores: el informe oficial descargado de la HCE con firma digital es único y tiene valor de documento clínico legal.</p>`},
+ {g:'Parte V — HCE', id:'m19', t:'19–22. Estructura, flujo y seguridad', h:`
+  <p><b>Flujo secuencial obligatorio (no salteable):</b> CI firmado → habilita LB · LB firmado → habilita PA (≥15 semanas) · PA firmado → habilita PB (≥15 semanas) · PB firmado → habilita IC (10 días hábiles).</p>
+  <p><b>Niveles de acceso:</b> técnicos responsables (HCE completa de su grupo), otros técnicos (solo campos de texto libre donde participan), coordinación (lectura de módulos firmados; escritura en datos generales), dirección (solo agregados sin identificación).</p>
+  <p><b>Marco legal:</b> Ley N.º 18.331/2008 (datos sensibles, consentimiento explícito), Ley N.º 18.335/2008 (derecho de acceso de la familia), Ley N.º 18.418/2008 (no discriminación), Código de Ética del Psicólogo (secreto profesional).</p>`},
+ {g:'Parte VI — Calidad', id:'m23', t:'23–25. Confiabilidad, errores y revisión', h:`
+  <p><b>Kappa de Cohen:</b> κ = (Po − Pe) / (1 − Pe). Umbrales: ≥0,81 muy bueno · 0,61–0,80 aceptable · 0,41–0,60 alerta (sesión de calibración) · &lt;0,41 resultados no confiables (repetir con capacitación).</p>
+  <p><b>Sesgos a vigilar:</b> efecto de halo, sesgo de recencia, tendencia central, lenidad/severidad sistemática, contaminación del criterio, omisión de observaciones, retraso en el registro (regla: ingresar a la HCE dentro de las 48 h del consenso).</p>
+  <p><b>Revisión del sistema:</b> anual (kappas e ítems problemáticos), ante nuevas versiones de DSM/CIE, ante cambios del modelo de atención, y revisión bibliográfica cada dos años.</p>`}
+];
+
+function vManual(){
+  const filtro = UI.mfiltro.toLowerCase();
+  const secs = MANUAL.filter(s=>!filtro || (s.t+' '+s.h).toLowerCase().includes(filtro));
+  let toc='', lastG='';
+  MANUAL.forEach(s=>{ if(s.g!==lastG){toc+='<div class="g">'+s.g+'</div>'; lastG=s.g;} toc+='<a href="#/manual" onclick="setTimeout(()=>document.getElementById(\''+s.id+'\')?.scrollIntoView({behavior:\'smooth\'}),50)">'+s.t+'</a>'; });
+  return `
+  <div class="crumb">Documentación</div>
+  <div class="pagehead"><div><h2>Manual de Procedimientos — consulta rápida</h2>
+  <p>Versión de consulta del Manual de Procedimientos v1.0 (Sistema Integrado de Evaluación y Seguimiento TEA). El documento normativo completo en PDF se adjunta en HCE-DOC institucional. Nota: en esta herramienta se utiliza la denominación genérica «técnicos responsables»; cada institución que adopte el sistema instancia los roles según su propio modelo de trabajo.</p></div></div>
+  <div class="card no-print"><input type="text" placeholder="Buscar en el manual (ej.: kappa, delta, consentimiento, plazos)…" value="${UI.mfiltro}" oninput="UI.mfiltro=this.value; document.getElementById('main').innerHTML=vManual()"></div>
+  <div class="manual">
+    <div class="mtoc card" style="padding:10px">${toc}</div>
+    <div class="mbody">${secs.length? secs.map(s=>'<div class="card" id="'+s.id+'"><h3 style="margin-top:0;border:none;padding-top:0">'+s.t+'</h3><div class="hint" style="margin-bottom:8px">'+s.g+'</div>'+s.h+'</div>').join('') : '<div class="notice n-info">No se encontraron secciones para «'+UI.mfiltro+'».</div>'}</div>
+  </div>`;
+}
+
+/* ============ HCE-DOC: DOCUMENTOS Y FOTOS ============ */
+function mDocs(p){
+  const cats=['Informe médico externo','Informe escolar','Evaluación externa (otra institución)','Documento INAU','Documento BPS','Autorización / consentimiento','Estudio complementario',
+    'Registro histórico — HCE anterior (Evaluación por áreas)','Registro histórico — HCE anterior (Evaluación General)','Registro histórico — HCE anterior (Observaciones)','Registro histórico — HCE anterior (otro)','Otro'];
+  const rows = p.docs.length? p.docs.map((d,i)=>`<tr><td>${d.url? '<a href="'+d.url+'" target="_blank">'+d.nombre+'</a>' : d.nombre}</td><td>${d.cat}</td><td>${d.fecha}</td><td>${d.url? '<a href="'+d.url+'" target="_blank">Ver</a>' : '<span class="hint">demo</span>'} · <a href="javascript:void(0)" onclick="quitarDoc('${p.id}',${i})" style="color:var(--danger)">Quitar</a></td></tr>`).join('')
+    : '<tr><td colspan="4"><div class="notice n-info" style="margin:6px 0">Aún no hay documentos adjuntos en esta HCE.</div></td></tr>';
+  const fotos = p.fotos.length? p.fotos.map((ft,i)=>`<div class="thumb"><img src="${ft.url}" alt=""><div class="cap">${ft.desc||'Sin descripción'} · ${ft.fecha}<br><a href="javascript:void(0)" onclick="quitarFoto('${p.id}',${i})" style="color:var(--danger)">Quitar</a></div></div>`).join('')
+    : '<div class="notice n-info" style="margin-top:10px">Sin fotografías individuales registradas.</div>';
+  return `
+  <div class="card"><h3>HCE-DOC · Documentos adjuntos</h3>
+  <div class="hint" style="margin-bottom:10px">Repositorio de copias digitalizadas: informes externos (médicos, escolares, de otras instituciones), documentación de organismos, autorizaciones y estudios. Los documentos externos contextualizan pero <b>no reemplazan</b> la línea base propia de IPPU (Manual, §5.2).</div>
+  <div class="notice n-info"><b>Registros de la HCE anterior de IPPU:</b> los registros del sistema previo (Evaluación por áreas, Evaluación General, Observaciones) se incorporan aquí como <b>archivo histórico de solo lectura</b>, con su categoría específica y fecha original. No se traducen a los campos estructurados del nuevo sistema porque sus formatos no son equivalentes. La única excepción es el IDEA, que por ser el mismo instrumento migra de forma estructurada al módulo HCE-LB (ver Especificaciones técnicas, §6).</div>
+  <table><thead><tr><th>Documento</th><th>Categoría</th><th>Fecha de carga</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="uprow no-print">
+    <div><label>Archivo (PDF, imagen, Word)</label><input type="file" id="doc_file" accept=".pdf,.doc,.docx,image/*"></div>
+    <div><label>Categoría</label><select id="doc_cat">${cats.map(c=>'<option>'+c+'</option>').join('')}</select></div>
+    <div style="flex:0"><button class="btn" onclick="subirDoc('${p.id}')">Adjuntar</button></div>
+  </div>
+  <div class="hint" style="margin-top:6px">En el sistema definitivo: almacenamiento cifrado, control de versiones y registro en HCE-LOG de cada carga y descarga. En el prototipo el archivo queda disponible solo durante la sesión del navegador.</div></div>
+
+  <div class="card"><h3>Fotografías individuales</h3>
+  <div class="notice ${p.fotoConsent?'n-ok':'n-warn'}">
+    <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:.86rem;font-weight:400;cursor:pointer">
+    <input type="checkbox" style="width:auto" ${p.fotoConsent?'checked':''} onchange="getP('${p.id}').fotoConsent=this.checked; setMod('docs')">
+    <span><b>Autorización de uso de imagen registrada.</b> La familia firmó la autorización escrita (adjuntar copia en Documentos, categoría «Autorización / consentimiento»). Sin este registro no se pueden cargar fotografías — protección de la imagen de NNA (art. 11, Código de la Niñez y la Adolescencia, Ley N.º 17.823; Ley N.º 18.331/2008).</span></label></div>
+  ${p.fotoConsent? `<div class="uprow no-print">
+    <div><label>Fotografía</label><input type="file" id="foto_file" accept="image/*"></div>
+    <div><label>Descripción / contexto</label><input type="text" id="foto_desc" placeholder="Ej.: actividad de juego estructurado, taller de cocina…"></div>
+    <div style="flex:0"><button class="btn" onclick="subirFoto('${p.id}')">Cargar foto</button></div>
+  </div>` : '<div class="hint">La carga de fotografías está deshabilitada hasta registrar la autorización.</div>'}
+  <div class="thumbs">${fotos}</div></div>`;
+}
+function subirDoc(id){
+  const inp=document.getElementById('doc_file'), cat=document.getElementById('doc_cat').value;
+  if(!inp.files.length){alert('Seleccione un archivo.');return;}
+  const f=inp.files[0];
+  getP(id).docs.push({nombre:f.name, cat, fecha:new Date().toISOString().slice(0,10), url:URL.createObjectURL(f)});
+  setMod('docs');
+}
+function quitarDoc(id,i){ if(confirm('¿Quitar este documento de la HCE? (En el sistema definitivo esta acción queda registrada en HCE-LOG.)')){ getP(id).docs.splice(i,1); setMod('docs'); } }
+function subirFoto(id){
+  const inp=document.getElementById('foto_file'), desc=document.getElementById('foto_desc').value;
+  if(!inp.files.length){alert('Seleccione una imagen.');return;}
+  const f=inp.files[0];
+  getP(id).fotos.push({url:URL.createObjectURL(f), desc, fecha:new Date().toISOString().slice(0,10)});
+  setMod('docs');
+}
+function quitarFoto(id,i){ if(confirm('¿Quitar esta fotografía?')){ getP(id).fotos.splice(i,1); setMod('docs'); } }
+
+/* ============ HCE-ORG: ÁREAS INAU Y BPS ============ */
+function mOrg(p){
+  const I=p.inau, B=p.bps;
+  const envios = I.envios.length? I.envios.map((e,i)=>`<tr><td>${e.fecha}</td><td>${e.txt}</td><td><a href="javascript:void(0)" onclick="getP('${p.id}').inau.envios.splice(${i},1); setMod('org')" style="color:var(--danger)">Quitar</a></td></tr>`).join('') : '<tr><td colspan="3" class="hint">Sin registros.</td></tr>';
+  const gest = B.gestiones.length? B.gestiones.map((e,i)=>`<tr><td>${e.fecha}</td><td>${e.txt}</td><td><a href="javascript:void(0)" onclick="getP('${p.id}').bps.gestiones.splice(${i},1); setMod('org')" style="color:var(--danger)">Quitar</a></td></tr>`).join('') : '<tr><td colspan="3" class="hint">Sin registros.</td></tr>';
+  return `
+  <div class="notice n-info">Área de vinculación con los organismos con los que IPPU tiene convenio. Concentra los datos administrativos y el registro de comunicaciones por NNA. El Informe de Cierre que se comparte con organismos supervisores es siempre el documento clínico único de la HCE (Manual, §18.2).</div>
+  <div class="grid2">
+  <div class="card"><h3>INAU · Convenio de atención</h3>
+    <div class="frow">
+      <div><label>N.º SIPI</label><input type="text" value="${I.sipi}" onchange="getP('${p.id}').inau.sipi=this.value"></div>
+      <div><label>Convenio / proyecto</label><input type="text" value="${I.convenio}" onchange="getP('${p.id}').inau.convenio=this.value"></div>
+      <div><label>Referente territorial INAU</label><input type="text" value="${I.referente}" onchange="getP('${p.id}').inau.referente=this.value"></div>
+      <div><label>Fecha de ingreso al convenio</label><input type="date" value="${I.ingreso}" onchange="getP('${p.id}').inau.ingreso=this.value"></div>
+      <div style="grid-column:1/-1"><label>Observaciones (situación, medidas, coordinaciones)</label><textarea onchange="getP('${p.id}').inau.obs=this.value">${I.obs}</textarea></div>
+    </div>
+    <h3 style="font-size:.95rem">Informes y comunicaciones enviadas a INAU</h3>
+    <table><thead><tr><th style="width:110px">Fecha</th><th>Detalle</th><th></th></tr></thead><tbody>${envios}</tbody></table>
+    <div class="uprow no-print">
+      <div style="flex:0;min-width:150px"><label>Fecha</label><input type="date" id="inau_f" value="2026-07-12"></div>
+      <div><label>Detalle</label><input type="text" id="inau_t" placeholder="Ej.: informe semestral enviado, visita de supervisión…"></div>
+      <div style="flex:0"><button class="btn" onclick="agregarReg('${p.id}','inau')">Registrar</button></div>
+    </div></div>
+  <div class="card"><h3>BPS · Prestaciones</h3>
+    <div class="frow">
+      <div><label>Prestación</label><select onchange="getP('${p.id}').bps.prestacion=this.value">${['','Ayuda Extraordinaria (AYEX) — instituto habilitado','Ayuda Extraordinaria (AYEX)','Asignación Familiar por discapacidad','Pensión por invalidez (del hogar)','Otra'].map(c=>'<option '+(B.prestacion===c?'selected':'')+'>'+c+'</option>').join('')}</select></div>
+      <div><label>N.º de trámite / expediente</label><input type="text" value="${B.tramite}" onchange="getP('${p.id}').bps.tramite=this.value"></div>
+      <div><label>Estado</label><select onchange="getP('${p.id}').bps.estado=this.value">${['','Vigente','En trámite','Observada','Vencida','Denegada','No corresponde'].map(c=>'<option '+(B.estado===c?'selected':'')+'>'+c+'</option>').join('')}</select></div>
+      <div><label>Vencimiento / renovación</label><input type="date" value="${B.vencimiento}" onchange="getP('${p.id}').bps.vencimiento=this.value"></div>
+      <div style="grid-column:1/-1"><label>Observaciones (documentación, constancias, recordatorios)</label><textarea onchange="getP('${p.id}').bps.obs=this.value">${B.obs}</textarea></div>
+    </div>
+    <h3 style="font-size:.95rem">Gestiones realizadas ante BPS</h3>
+    <table><thead><tr><th style="width:110px">Fecha</th><th>Detalle</th><th></th></tr></thead><tbody>${gest}</tbody></table>
+    <div class="uprow no-print">
+      <div style="flex:0;min-width:150px"><label>Fecha</label><input type="date" id="bps_f" value="2026-07-12"></div>
+      <div><label>Detalle</label><input type="text" id="bps_t" placeholder="Ej.: constancia de asistencia emitida, renovación presentada…"></div>
+      <div style="flex:0"><button class="btn" onclick="agregarReg('${p.id}','bps')">Registrar</button></div>
+    </div></div>
+  </div>
+  <div class="notice n-warn"><b>Alertas sugeridas para el sistema definitivo:</b> vencimiento de AYEX a 60 y 30 días; informes semestrales a INAU pendientes de envío tras la firma de cada protocolo; y panel de coordinación con el estado de prestaciones de todo el grupo.</div>`;
+}
+function agregarReg(id,org){
+  const f=document.getElementById(org+'_f').value, t=document.getElementById(org+'_t').value;
+  if(!f||!t){alert('Complete fecha y detalle.');return;}
+  const p=getP(id);
+  if(org==='inau') p.inau.envios.push({fecha:f, txt:t}); else p.bps.gestiones.push({fecha:f, txt:t});
+  setMod('org');
+}
+
+/* ============ VISTA: GRUPOS DE REFERENCIA ============ */
+function vGrupos(sel){
+  const nombres=[...new Set(DB.pacientes.map(p=>p.grupo).filter(g=>g && g!=='(asignar)'))];
+  if(sel && nombres.includes(sel)) return vGrupoDetalle(sel);
+  const cards = nombres.map(g=>{
+    const miembros=DB.pacientes.filter(p=>p.grupo===g);
+    const dupla=miembros.find(p=>p.psicologa)||{};
+    const nf=(GRUPOS_FOTOS[g]||[]).length;
+    return `<div class="card"><h3><a href="#/grupos/${encodeURIComponent(g)}">${g}</a></h3>
+    <div class="hint">Técnicos responsables: ${dupla.psicologa||'—'} · ${dupla.maestra||'—'}</div>
+    <table style="margin-top:8px"><tbody>${miembros.map(p=>`<tr><td><a href="#/pacientes/${p.id}">${p.nombre}</a></td><td class="num">${pipeline(p).filter(s=>s.st==='firmado').length}/5</td></tr>`).join('')}</tbody></table>
+    <div class="hint" style="margin-top:6px">${miembros.length} integrante(s) · ${nf} foto(s) grupal(es)</div>
+    <a class="btn ghost" style="padding:6px 14px;margin-top:8px" href="#/grupos/${encodeURIComponent(g)}">Abrir grupo</a></div>`;
+  }).join('');
+  return `
+  <div class="crumb">Servicio de Atención Diurna</div>
+  <div class="pagehead"><div><h2>Grupos de referencia</h2>
+  <p>La atención del Servicio de Atención Diurna se organiza en grupos: el grupo es la unidad de intervención y de planificación (Manual, §2). Desde aquí se accede a la HCE de cada integrante y al registro fotográfico grupal.</p></div></div>
+  <div class="grid2">${cards || '<div class="notice n-info">No hay grupos con integrantes asignados.</div>'}</div>`;
+}
+function vGrupoDetalle(g){
+  const miembros=DB.pacientes.filter(p=>p.grupo===g);
+  const dupla=miembros.find(p=>p.psicologa)||{};
+  const fotos=(GRUPOS_FOTOS[g]||[]);
+  const todosAutorizan = miembros.length>0 && miembros.every(p=>p.fotoConsent);
+  const rows=miembros.map(p=>{
+    const pl=pipeline(p).map(s=>'<span class="badge '+({firmado:'b-firmado',borrador:'b-borrador',bloqueado:'b-bloqueado'})[s.st]+'">'+s.code.replace('HCE-','')+'</span>').join(' ');
+    return `<tr><td><a href="#/pacientes/${p.id}"><b>${p.nombre}</b></a><div class="hint">${p.hc} · CI ${p.ci||'—'}</div></td><td>${p.cie11}<div class="hint">${p.nivel}</div></td><td>${pl}</td><td>${p.fotoConsent?'<span class="badge b-firmado">Imagen: sí</span>':'<span class="badge b-alerta">Imagen: no</span>'}</td></tr>`;
+  }).join('');
+  return `
+  <div class="crumb"><a href="#/grupos">Grupos de referencia</a> / ${g}</div>
+  <div class="pagehead"><div><h2>${g}</h2>
+  <p>Técnicos responsables: ${dupla.psicologa||'—'} · ${dupla.maestra||'—'} · ${miembros.length} integrante(s)</p></div></div>
+  <div class="card"><h3>Integrantes y estado del ciclo</h3>
+  <table><thead><tr><th>NNA</th><th>CIE-11 · Soporte</th><th>CI · LB · PA · PB · IC</th><th>Uso de imagen</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="card"><h3>Técnicos autorizados del grupo</h3>
+  <div class="hint" style="margin-bottom:8px">Los técnicos responsables acceden a la HCE completa de los integrantes del grupo. Los demás técnicos habilitados acceden únicamente a los campos de texto libre donde participan (Manual, §21.1). Esta nómina la administra coordinación.</div>
+  <table><thead><tr><th>Profesional</th><th>Rol / disciplina</th><th>Alcance</th><th></th></tr></thead><tbody>
+  <tr><td>${dupla.psicologa||'—'}</td><td>Técnico/a responsable 1</td><td>HCE completa del grupo · firma</td><td></td></tr>
+  <tr><td>${dupla.maestra||'—'}</td><td>Técnico/a responsable 2</td><td>HCE completa del grupo · firma</td><td></td></tr>
+  ${equipoDe(g).otros.map((o,i)=>`<tr><td>${o.n}</td><td>${o.d}</td><td>${o.a}</td><td><a href="javascript:void(0)" onclick="quitarTecnico('${g.replace(/'/g,"\\'")}',${i})" style="color:var(--danger)">Quitar</a></td></tr>`).join('')}
+  </tbody></table>
+  <div class="uprow no-print">
+    <div><label>Nombre del profesional</label><input type="text" id="eq_n"></div>
+    <div><label>Disciplina</label><input type="text" id="eq_d" placeholder="Fonoaudiología, T.O., Psicomotricidad…"></div>
+    <div style="flex:0"><button class="btn" onclick="agregarTecnico('${g.replace(/'/g,"\\'")}')">Autorizar</button></div>
+  </div></div>
+  <div class="card"><h3>Registro fotográfico grupal</h3>
+  ${todosAutorizan? `<div class="notice n-ok">Todas las familias del grupo registran autorización de uso de imagen. Se habilita la carga de fotografías grupales.</div>
+  <div class="uprow no-print">
+    <div><label>Fotografía grupal</label><input type="file" id="gf_file" accept="image/*"></div>
+    <div><label>Descripción / actividad</label><input type="text" id="gf_desc" placeholder="Ej.: salida didáctica, taller de música…"></div>
+    <div style="flex:0"><button class="btn" onclick="subirFotoGrupo('${g.replace(/'/g,"\\'")}')">Cargar</button></div>
+  </div>`
+  : `<div class="notice n-warn"><b>Carga deshabilitada:</b> para publicar fotografías grupales, <u>todas</u> las familias de los NNA que aparecen en la imagen deben tener registrada la autorización de uso de imagen en su HCE (art. 11, CNA — Ley N.º 17.823). Integrantes sin autorización: ${miembros.filter(p=>!p.fotoConsent).map(p=>p.nombre).join('; ')||'—'}.</div>`}
+  <div class="thumbs">${fotos.length? fotos.map((ft,i)=>`<div class="thumb"><img src="${ft.url}" alt=""><div class="cap">${ft.desc||'Sin descripción'} · ${ft.fecha}<br><a href="javascript:void(0)" onclick="quitarFotoGrupo('${g.replace(/'/g,"\\'")}',${i})" style="color:var(--danger)">Quitar</a></div></div>`).join('') : '<div class="notice n-info" style="margin-top:10px">Sin fotografías grupales registradas.</div>'}</div></div>`;
+}
+function subirFotoGrupo(g){
+  const inp=document.getElementById('gf_file'), desc=document.getElementById('gf_desc').value;
+  if(!inp.files.length){alert('Seleccione una imagen.');return;}
+  (GRUPOS_FOTOS[g]=GRUPOS_FOTOS[g]||[]).push({url:URL.createObjectURL(inp.files[0]), desc, fecha:new Date().toISOString().slice(0,10)});
+  location.hash='#/grupos/'+encodeURIComponent(g); route();
+}
+function quitarFotoGrupo(g,i){ if(confirm('¿Quitar esta fotografía grupal?')){ GRUPOS_FOTOS[g].splice(i,1); route(); } }
+function agregarTecnico(g){
+  const n=document.getElementById('eq_n').value, d=document.getElementById('eq_d').value;
+  if(!n||!d){alert('Complete nombre y disciplina.');return;}
+  equipoDe(g).otros.push({n, d, a:'Aportes en campos de texto libre de PA, PB e IC'});
+  route();
+}
+function quitarTecnico(g,i){ if(confirm('¿Retirar la autorización de este técnico? (En el sistema definitivo queda registrado en la auditoría.)')){ equipoDe(g).otros.splice(i,1); route(); } }
+
+/* ============ HCE-VF: VALORACIÓN FUNCIONAL (BUND / CIF) ============ */
+// Categorización según los rangos del baremo (escala de calificadores universales
+// de la CIF sobre la que se construye el BUND). Verificar contra la reglamentación
+// vigente del Consejo Asesor al momento de implementar (Ley 20.378 · Decreto 72/025).
+const BUND_CATS = [
+ {min:0,  max:4,   cat:'Sin discapacidad', rango:'0% a 4%',   imp:'Observación preventiva.'},
+ {min:5,  max:24,  cat:'Leve',             rango:'5% a 24%',  imp:'Requiere adaptaciones menores.'},
+ {min:25, max:49,  cat:'Moderado',         rango:'25% a 49%', imp:'Habilita acceso a prestaciones y amparo en cuota laboral.'},
+ {min:50, max:95,  cat:'Severo',           rango:'50% a 95%', imp:'Requiere apoyos significativos y permanentes.'},
+ {min:96, max:100, cat:'Muy severo',       rango:'96% a 100%',imp:'Configura situación de dependencia; apoyo integral.'}
+];
+function bundCat(pct){
+  const n=parseFloat(pct); if(isNaN(n)) return null;
+  return BUND_CATS.find(c=>n>=c.min && n<=c.max) || null;
+}
+const VF_DOMINIOS = [
+ ['comunicacion','Comunicación (comprender y expresarse, con o sin apoyos)','CIF d310–d360'],
+ ['autocuidado','Autocuidado (alimentación, higiene, vestido)','CIF d510–d570'],
+ ['movilidad','Movilidad y desplazamientos','CIF d450–d470'],
+ ['aprendizaje','Aprendizaje y aplicación del conocimiento','CIF d110–d179'],
+ ['interacciones','Interacciones y relaciones interpersonales','CIF d710–d799'],
+ ['comunidad','Vida doméstica, comunitaria y uso de servicios','CIF d610–d699 · d910–d999']
+];
+const VF_NIVELES = ['','Autónomo','Apoyo ocasional','Apoyo frecuente','Apoyo permanente'];
+// Guía orientativa de prestaciones — informativa, no vinculante
+const PRESTACIONES = [
+ {n:'Registro Nacional de Personas con Discapacidad (RNPcD)', o:'MIDES', d:'Inscripción voluntaria a partir de la valoración con el BUND. Puerta de entrada a prestaciones y programas.'},
+ {n:'Ayuda Extraordinaria (AYEX)', o:'BPS', d:'Contribución para la concurrencia a institutos habilitados (como IPPU). Se gestiona y se sigue desde HCE-ORG.'},
+ {n:'Asignación Familiar por discapacidad', o:'BPS', d:'Prestación económica; puede corresponder duplicación según la situación. Requiere valoración vigente.'},
+ {n:'Pensión por invalidez', o:'BPS', d:'Para situaciones de discapacidad severa según baremo y condiciones del hogar. Resolución exclusiva de BPS.'},
+ {n:'Asistentes personales', o:'Sistema Nacional Integrado de Cuidados (MIDES)', d:'Para situaciones de dependencia severa, según valoración del Sistema de Cuidados.'},
+ {n:'Transporte accesible / boleto', o:'Intendencias · MTOP', d:'Beneficios de transporte según normativa departamental y nacional.'},
+ {n:'Cuota laboral (4% en el Estado · Ley 19.691 en el sector privado)', o:'ONSC · MTSS', d:'Relevante para adolescentes y jóvenes en transición a la vida adulta; requiere inscripción en el RNPcD.'},
+ {n:'Apoyos a la inclusión educativa', o:'ANEP · MEC', d:'Adaptaciones curriculares, acompañamiento y protocolos de inclusión según normativa educativa vigente.'}
+];
+function mVF(p){
+  const V=p.vf; const cat=bundCat(V.pct);
+  const catBadge = cat? `<span class="badge ${cat.cat==='Sin discapacidad'?'b-firmado':(cat.cat==='Leve'||cat.cat==='Moderado'?'b-borrador':'b-alerta')}" style="font-size:.85rem">${cat.cat} · ${cat.rango}</span>` : '<span class="hint">Ingrese el porcentaje de la valoración oficial</span>';
+  const menor2 = false; // en el sistema real: calcular desde fecha de nacimiento
+  return `
+  <div class="notice n-info"><b>Enfoque de este módulo:</b> la valoración oficial de la discapacidad la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el Baremo Único Nacional de Discapacidad — BUND (Ley N.º 20.378 · Decreto 72/025), sobre la base de tres instrumentos: Informe Biomédico Funcional (IBMF), Informe de Redes Sociales y Apoyos (IRSA) y el propio BUND. <b>IPPU no certifica discapacidad:</b> aquí se registra la valoración oficial, se sintetiza el perfil funcional en clave CIF (capacidades, autonomía, barreras y apoyos) y se orienta a la familia sobre las prestaciones existentes.</div>
+
+  <div class="card"><h3>Valoración oficial (BUND) — registro</h3>
+  <div class="frow">
+    <div><label>Estado de la valoración</label><select onchange="getP('${p.id}').vf.estado=this.value; setMod('vf')">${['No iniciado','En trámite','Valorado','A revalorar'].map(c=>'<option '+(V.estado===c?'selected':'')+'>'+c+'</option>').join('')}</select></div>
+    <div><label>Fecha de valoración</label><input type="date" value="${V.fecha}" onchange="getP('${p.id}').vf.fecha=this.value"></div>
+    <div><label>Organismo / equipo valorador</label><input type="text" value="${V.organismo}" onchange="getP('${p.id}').vf.organismo=this.value"></div>
+    <div><label>Porcentaje de discapacidad (%)</label><input type="number" min="0" max="100" value="${V.pct}" onchange="getP('${p.id}').vf.pct=this.value; setMod('vf')"></div>
+    <div><label>Vigencia / próxima revisión</label><input type="date" value="${V.vigencia}" onchange="getP('${p.id}').vf.vigencia=this.value"></div>
+    <div><label>N.º RNPcD (si está inscripto)</label><input type="text" value="${V.rnpcd}" onchange="getP('${p.id}').vf.rnpcd=this.value"></div>
+  </div>
+  <div style="margin:8px 0">Categoría según baremo: ${catBadge}${cat? '<div class="hint" style="margin-top:4px">Implicancia práctica orientativa: '+cat.imp+'</div>':''}</div>
+  <div class="hint">La constancia de valoración se adjunta en HCE-DOC (categoría «Autorización / consentimiento» u «Otro»). En menores de 2 años no se aplica el BUND: la constancia se emite en base a IBMF e IRSA. Terminología institucional: «severo / muy severo» — la nomenclatura oficial del instrumento puede diferir; en pantallas e informes de IPPU se usa siempre la institucional.</div>
+  <div class="notice n-warn" style="margin-top:10px"><b>Salvaguarda metodológica:</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al porcentaje del baremo. Miden constructos distintos (perfil del espectro y progreso clínico vs. porcentaje de discapacidad con factores contextuales). Este módulo nunca autocalcula la categoría desde los instrumentos clínicos.</div></div>
+
+  <div class="card"><h3>Perfil funcional en clave CIF — capacidades, autonomía, barreras y apoyos</h3>
+  <div class="hint" style="margin-bottom:10px">Síntesis breve y en lenguaje de capacidades, coherente con el modelo social de la discapacidad (Convención — Ley N.º 18.418). Sirve a la planificación del equipo y como insumo cuando la familia gestiona el IBMF y el IRSA: evita empezar de cero ante cada organismo. No duplica los instrumentos clínicos.</div>
+  <table><thead><tr><th>Dominio de la vida diaria</th><th>Referencia CIF</th><th style="width:200px">Nivel de autonomía actual</th></tr></thead><tbody>
+  ${VF_DOMINIOS.map(([k,n,ref])=>`<tr><td>${n}</td><td class="hint">${ref}</td><td><select onchange="getP('${p.id}').vf.dominios.${k}=this.value">${VF_NIVELES.map(x=>'<option '+(V.dominios[k]===x?'selected':'')+'>'+(x||'— sin registrar —')+'</option>').join('')}</select></td></tr>`).join('')}
+  </tbody></table>
+  <div class="frow" style="margin-top:12px">
+    <div style="grid-column:1/-1"><label>Capacidades y fortalezas (qué puede, qué disfruta, qué lo motiva)</label><textarea onchange="getP('${p.id}').vf.capacidades=this.value">${V.capacidades}</textarea></div>
+    <div style="grid-column:1/-1"><label>Barreras del entorno (físicas, comunicacionales, actitudinales, de servicios)</label><textarea onchange="getP('${p.id}').vf.barreras=this.value">${V.barreras}</textarea></div>
+    <div style="grid-column:1/-1"><label>Apoyos y facilitadores existentes (personas, productos de apoyo, servicios, prestaciones)</label><textarea onchange="getP('${p.id}').vf.apoyos=this.value">${V.apoyos}</textarea></div>
+    <div style="grid-column:1/-1"><label>Observaciones (consultas de la familia, gestiones en curso)</label><textarea onchange="getP('${p.id}').vf.obs=this.value">${V.obs}</textarea></div>
+    <div style="grid-column:1/-1"><label>Síntesis funcional descriptiva (base del reporte a la familia — editable)</label><textarea style="min-height:120px" onchange="getP('${p.id}').vf.sintesisFuncional=this.value">${V.sintesisFuncional||''}</textarea></div>
+  </div>
+  <div class="toolbar">
+    <button class="btn ghost" onclick="genVFBorrador('${p.id}')">Autogenerar borrador desde IDEA y protocolos</button>
+    <a class="btn" href="#/reportes/vf/${p.id}">Ver / imprimir reporte para la familia</a>
+  </div>
+  <div class="hint">El borrador se construye <b>solo con lenguaje descriptivo</b> a partir de los instrumentos ya firmados (perfil IDEA por escala y evolución de los protocolos), y sugiere niveles de autonomía únicamente en los tres dominios con correlato clínico directo (comunicación, interacciones, aprendizaje) — siempre como propuesta editable que el equipo revisa. Los dominios sin correlato instrumental (autocuidado, movilidad, vida comunitaria) quedan a criterio del equipo. Nada de esto genera porcentajes ni categorías del baremo.</div></div>
+
+  <div class="card"><h3>Guía orientativa para la familia — prestaciones y beneficios en Uruguay</h3>
+  <div class="hint" style="margin-bottom:10px">Información de orientación general para acompañar a la familia. El otorgamiento de cada prestación es resolución exclusiva del organismo competente y depende de la valoración vigente y de los requisitos de cada trámite. Las gestiones concretas de INAU y BPS se registran en HCE-ORG.</div>
+  <table><thead><tr><th>Categoría del baremo</th><th>Rango</th><th>Implicancia práctica orientativa</th></tr></thead><tbody>
+  ${BUND_CATS.map(c=>`<tr ${cat && cat.cat===c.cat? 'style="background:var(--brand-tint)"':''}><td><b>${c.cat}</b></td><td class="num">${c.rango}</td><td>${c.imp}</td></tr>`).join('')}
+  </tbody></table>
+  <table style="margin-top:14px"><thead><tr><th>Prestación / beneficio</th><th>Organismo</th><th>Orientación</th></tr></thead><tbody>
+  ${PRESTACIONES.map(x=>`<tr><td><b>${x.n}</b></td><td>${x.o}</td><td class="hint">${x.d}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="hint" style="margin-top:8px">Esta guía es contenido informativo estático mantenido por coordinación (revisión anual sugerida, junto con la revisión del sistema). No genera trámites ni expedientes dentro de la HCE: la HCE orienta, los organismos resuelven.</div></div>`;
+}
+
+/* ============ HCE-VF: AUTOGENERACIÓN DESCRIPTIVA Y REPORTE FAMILIAR ============ */
+// Lecturas descriptivas neutras por escala del IDEA (severidad relativa 0–24)
+function descAfect(v){
+  if(v>=16) return 'es actualmente el área donde más apoyo necesita';
+  if(v>=8)  return 'requiere apoyos de manera habitual';
+  return 'se encuentra relativamente preservada, con apoyos puntuales';
+}
+function sugiereNivel(v){ // sugerencia editable de autonomía a partir de la severidad relativa
+  if(v>=16) return 'Apoyo frecuente';
+  if(v>=8)  return 'Apoyo ocasional';
+  return 'Autónomo';
+}
+function descDelta(d){
+  if(d>=7)  return 'mostró avances claros y sostenidos durante el año';
+  if(d>=1)  return 'mostró avances, todavía en consolidación';
+  if(d===0) return 'se mantuvo estable, lo que en varias situaciones constituye en sí mismo un logro';
+  if(d>=-6) return 'presentó algunas dificultades que el equipo está acompañando de cerca';
+  return 'presentó un retroceso que motivó una revisión del plan de trabajo junto a la familia';
+}
+const VF_NOMBRE_ESC = ['la relación con otras personas','la comunicación','el manejo de los cambios y las rutinas','el juego, la imitación y la imaginación'];
+function deArea(n){ return n.startsWith('el ')? 'del '+n.slice(3) : 'de '+n; }
+function genVFBorrador(id){
+  const p=getP(id); const V=p.vf;
+  if(p.idea.estado!=='firmado'){ alert('Para autogenerar el borrador se necesita al menos la línea base IDEA firmada.'); return; }
+  if((V.sintesisFuncional||'').trim() && !confirm('Ya existe una síntesis funcional. ¿Reemplazarla por un nuevo borrador autogenerado? (La versión actual se perderá.)')) return;
+  const ti=ideaTotales(p.idea.punt);
+  // Orden descriptivo: de mayor fortaleza relativa a mayor necesidad de apoyo
+  const orden=[0,1,2,3].sort((a,b)=>ti.esc[a]-ti.esc[b]);
+  let txt='PERFIL ACTUAL. ';
+  txt+='En la evaluación inicial del equipo, '+VF_NOMBRE_ESC[orden[0]]+' aparece como el área de mayor fortaleza relativa, mientras que '+VF_NOMBRE_ESC[orden[3]]+' '+descAfect(ti.esc[orden[3]])+'. ';
+  txt+=[1,2].map(i=>'El área '+deArea(VF_NOMBRE_ESC[orden[i]])+' '+descAfect(ti.esc[orden[i]])+'.').join(' ');
+  if(p.protA.estado==='firmado' && p.protB.estado==='firmado'){
+    const ta=protTotales(p.protA.punt), tb=protTotales(p.protB.punt);
+    txt+='\n\nEVOLUCIÓN DEL AÑO. ';
+    txt+= [0,1,2,3].map(i=>'En '+VF_NOMBRE_ESC[i]+' '+descDelta(tb.esc[i]-ta.esc[i])+'.').join(' ');
+  } else if(p.protA.estado==='firmado'){
+    txt+='\n\nEVOLUCIÓN DEL PRIMER SEMESTRE. El equipo registró el primer seguimiento semestral; la evolución completa del año se describirá al cierre del segundo semestre.';
+  }
+  txt+='\n\n(Nota del equipo: este texto fue generado como borrador descriptivo a partir de los instrumentos clínicos firmados y debe ser revisado, ajustado y completado por los técnicos responsables antes de compartirse.)';
+  V.sintesisFuncional=txt;
+  // Sugerencias de autonomía solo en dominios con correlato clínico y solo si están vacíos
+  if(!V.dominios.comunicacion) V.dominios.comunicacion=sugiereNivel(ti.esc[1]);
+  if(!V.dominios.interacciones) V.dominios.interacciones=sugiereNivel(ti.esc[0]);
+  if(!V.dominios.aprendizaje) V.dominios.aprendizaje=sugiereNivel(ti.esc[3]);
+  setMod('vf');
+}
+
+function vReporteVF(p){
+  const V=p.vf; const cat=bundCat(V.pct);
+  const doms = VF_DOMINIOS.filter(([k])=>V.dominios[k]).map(([k,n])=>`<tr><td>${n.split(' (')[0]}</td><td><b>${V.dominios[k]}</b></td></tr>`).join('');
+  let evol='';
+  if(p.protA.estado==='firmado' && p.protB.estado==='firmado'){
+    const ta=protTotales(p.protA.punt), tb=protTotales(p.protB.punt);
+    evol = [0,1,2,3].map(i=>`<p style="margin-bottom:6px"><b>${VF_NOMBRE_ESC[i].charAt(0).toUpperCase()+VF_NOMBRE_ESC[i].slice(1)}:</b> ${descDelta(tb.esc[i]-ta.esc[i])}.</p>`).join('');
+  }
+  return `
+  <div class="crumb no-print"><a href="#/reportes">Reportes</a> / Reporte de Valoración Funcional</div>
+  <div class="toolbar no-print"><button class="btn" onclick="window.print()">Imprimir / guardar PDF</button>
+  <a class="btn ghost" href="#/pacientes/${p.id}">Volver a la HCE</a></div>
+  <div class="card">
+    <div style="border-bottom:3px solid var(--brand); padding-bottom:12px; margin-bottom:14px">
+      <h2 style="font-size:1.3rem">FUNDACIÓN IPPU · Instituto Psico Pedagógico Uruguayo</h2>
+      <div class="hint">INAU · MSP · BPS · ECOSOC/ONU · Montevideo, Uruguay</div>
+      <h3 style="margin-top:10px">Reporte de Valoración Funcional — documento descriptivo y orientativo</h3>
+    </div>
+    <div class="frow">
+      <div><label>Nombre</label><div>${p.nombre}</div></div>
+      <div><label>Historia Clínica</label><div>${p.hc}</div></div>
+      <div><label>Grupo de referencia</label><div>${p.grupo}</div></div>
+      <div><label>Fecha del reporte</label><div>${new Date().toISOString().slice(0,10)}</div></div>
+    </div>
+    <div class="notice n-info">Este reporte describe capacidades, autonomía, barreras y apoyos con el fin de acompañar a la familia en la planificación cotidiana y en la gestión de prestaciones. <b>No es un certificado de discapacidad ni un informe clínico:</b> la valoración oficial corresponde a los equipos habilitados mediante el Baremo Único Nacional (Ley N.º 20.378), y el documento clínico anual es el Informe de Cierre de la HCE.</div>
+  </div>
+  ${(V.capacidades||'').trim()? `<div class="card"><h3>Capacidades y fortalezas</h3><p>${V.capacidades}</p></div>`:''}
+  ${(V.sintesisFuncional||'').trim()? `<div class="card"><h3>Perfil funcional descriptivo</h3>${V.sintesisFuncional.split('\n').filter(x=>x.trim()).map(x=>'<p style="margin-bottom:8px">'+x+'</p>').join('')}</div>`:''}
+  ${evol? `<div class="card"><h3>Evolución del año en palabras</h3>${evol}<div class="hint">Descripción cualitativa elaborada a partir del seguimiento semestral del equipo técnico. Los detalles clínicos completos están en el Informe de Cierre Anual.</div></div>`:''}
+  ${doms? `<div class="card"><h3>Autonomía en la vida diaria</h3><table><tbody>${doms}</tbody></table><div class="hint" style="margin-top:6px">«Apoyo» refiere a la ayuda de otra persona, de una adaptación o de un producto de apoyo para realizar la actividad.</div></div>`:''}
+  ${(V.barreras||'').trim()||(V.apoyos||'').trim()? `<div class="card"><h3>Barreras del entorno y apoyos con los que cuenta</h3>
+    ${(V.barreras||'').trim()? '<p style="margin-bottom:8px"><b>Barreras identificadas:</b> '+V.barreras+'</p>':''}
+    ${(V.apoyos||'').trim()? '<p><b>Apoyos y facilitadores:</b> '+V.apoyos+'</p>':''}</div>`:''}
+  <div class="card"><h3>Situación de la valoración oficial y orientación sobre prestaciones</h3>
+    <p style="margin-bottom:8px"><b>Estado:</b> ${V.estado}${V.fecha? ' · valorado el '+V.fecha:''}${V.organismo? ' por '+V.organismo:''}${V.vigencia? ' · vigencia hasta '+V.vigencia:''}${V.rnpcd? ' · inscripto en el RNPcD ('+V.rnpcd+')':''}.</p>
+    ${cat? '<p style="margin-bottom:8px"><b>Categoría según el baremo:</b> '+cat.cat+' ('+cat.rango+'). '+cat.imp+'</p>':''}
+    <p class="hint">La familia puede consultar al equipo de IPPU por la gestión de prestaciones (BPS, MIDES, Sistema de Cuidados, transporte, apoyos educativos). El otorgamiento de cada prestación es resolución del organismo competente.</p>
+  </div>
+  <div class="card"><div class="grid2">
+    <div><label>Por el equipo técnico</label><div style="border-bottom:1px solid var(--ink);height:34px"></div><div class="hint">${p.psicologa||''} · ${p.maestra||''}</div></div>
+    <div><label>Recibido por la familia</label><div style="border-bottom:1px solid var(--ink);height:34px"></div></div>
+  </div>
+  <div class="hint" style="margin-top:12px">Documento descriptivo generado desde la HCE de IPPU · Uso familiar y de orientación · Ley N.º 18.331/2008</div></div>`;
+}
+
+/* ============ INICIO ============ */
+route();
+</script>
+</body>
+</html>
