@@ -339,6 +339,49 @@
   .data-row:last-child{border-bottom:none}
   .data-row dt{color:var(--ink-2)}
   .data-row dd{color:var(--ink);font-weight:500}
+
+  /* ============ M1 · MOTOR DE FLUJO (estado · firma · secuencia CI→LB→PA→PB→IC) ============ */
+  .flujo-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+  .flujo-card>h3{font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);
+    padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .flujo-card>h3 .ic{color:var(--orange)}
+  .flujo-card>h3 .spacer{flex:1}
+  .flujo-body{padding:16px 18px}
+  .flujo-stepper{display:flex;gap:0;margin-bottom:16px}
+  .fstep{flex:1;text-align:center;position:relative;font-size:.66rem;color:var(--ink-2);padding-top:26px}
+  .fstep .fdot{position:absolute;top:0;left:50%;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;
+    background:#E2E8F0;color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:800;border:2px solid #E2E8F0;z-index:2}
+  .fstep::after{content:"";position:absolute;top:10px;left:50%;width:100%;height:2px;background:#E2E8F0;z-index:1}
+  .fstep:last-child::after{display:none}
+  .fstep .fname{display:block;font-weight:700}
+  .fstep.s-firmado .fdot{background:var(--ok);border-color:var(--ok);color:#fff}
+  .fstep.s-firmado::after{background:var(--ok)}
+  .fstep.s-borrador .fdot{background:var(--warn);border-color:var(--warn);color:#fff}
+  .fstep.s-borrador .fname{color:var(--ink)}
+  .fstep.s-bloqueado .fdot{background:#EEF1F1;border-color:#E2E8F0;color:var(--ink-2)}
+  .fstep.exc .fdot{box-shadow:0 0 0 3px rgba(199,119,0,.28)}
+  .fstep .fexc{display:block;color:var(--warn);font-weight:700;font-size:.6rem}
+  .flujo-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#FBFDFE}
+  .flujo-row .fr-code{font-weight:800;font-size:.7rem;color:var(--ink-2);width:30px;flex:0 0 auto}
+  .flujo-row .fr-name{flex:1;font-size:.85rem;color:var(--ink);font-weight:500}
+  .flujo-row .fr-meta{font-size:.7rem;color:var(--ink-2);margin-top:3px;font-weight:400}
+  .flujo-row .fr-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .mbadge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.66rem;font-weight:700;white-space:nowrap;vertical-align:middle}
+  .mb-firmado{background:rgba(27,138,76,.14);color:var(--ok)}
+  .mb-borrador{background:rgba(199,119,0,.16);color:var(--warn)}
+  .mb-bloqueado{background:#EEF1F1;color:var(--ink-2)}
+  .fr-exc-tag{font-size:.66rem;color:var(--warn);font-weight:700}
+  .btn-mini{padding:5px 10px;font-size:.72rem}
+  .btn-mini[disabled]{opacity:.5;cursor:not-allowed}
+  .log-table{width:100%;border-collapse:collapse;font-size:.76rem}
+  .log-table th{text-align:left;color:var(--ink-2);font-weight:700;padding:7px 10px;border-bottom:2px solid var(--line)}
+  .log-table td{padding:7px 10px;border-bottom:1px solid #F0F4F8;color:var(--ink);vertical-align:top}
+  .log-tipo{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.66rem;font-weight:700}
+  .lt-firma{background:rgba(27,138,76,.14);color:var(--ok)}
+  .lt-excepcion{background:rgba(199,119,0,.16);color:var(--warn)}
+  .lt-addenda{background:rgba(14,143,126,.14);color:var(--teal)}
+  .lt-edicion{background:#EEF1F1;color:var(--ink-2)}
+
   .tline{position:relative;padding-left:24px}
   .tline::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
   .tevent{position:relative;padding-bottom:18px}
@@ -482,7 +525,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.3 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.6 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -496,7 +539,7 @@
 
       <div class="kpirow">
         <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div><div class="sub">Convenio INAU</div></div>
-        <div class="kpi"><div class="lab">Con IDEA 2026</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Evaluación anual registrada</div></div>
+        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Línea base (HCE-LB) firmada</div></div>
         <div class="kpi" onclick="go('pendientes')" style="cursor:pointer" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
         <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
       </div>
@@ -536,30 +579,43 @@
     <!-- ============ VISTA: EVALUACIÓN IDEA ============ -->
     <section class="view" id="view-idea">
       <div class="crumbs">Inicio › Evaluación IDEA › <b>Nueva evaluación</b></div>
-      <h1 class="pagetitle">Evaluación IDEA — Inventario del Espectro Autista</h1>
-      <p class="pagedesc">Protocolo de Ángel Rivière (1997): 4 escalas, 12 dimensiones, puntuación 0 – 96. Cada dimensión puntúa de 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b></p>
+      <h1 class="pagetitle">HCE-LB · Línea base — IDEA (Inventario del Espectro Autista)</h1>
+      <p class="pagedesc">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. Cada dimensión 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b> Se aplica <b>una sola vez, al ingreso</b>; el progreso del año se mide con la Escala IPPU-TEA (PA/PB), no repitiendo el IDEA.</p>
 
       <div class="selector">
         <label for="selNNA"><b>NNA evaluado:</b></label>
-        <select id="selNNA"></select>
-        <label for="selPeriodo" style="margin-left:8px"><b>Año (evaluación anual):</b></label>
-        <select id="selPeriodo">
-          <option value="2026" selected>2026</option>
-          <option value="2027">2027</option>
-          <option value="2025">2025</option>
-        </select>
-        <span style="color:var(--ink-2)">Evaluador: Dr. González</span>
+        <select id="selNNA" onchange="cargarIDEA(parseInt(this.value))"></select>
+        <span id="ideaEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
       </div>
 
       <div id="ideaForm"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Datos de la línea base (HCE-LB)</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid">
+            <div class="field"><label>Fecha de consenso <span class="req">*</span></label><input id="lb_fecha" type="date"></div>
+            <div class="field"><label>Sesiones de observación previas</label><input id="lb_sesiones" type="number" min="0" placeholder="Recomendado ≥ 5"></div>
+          </div>
+          <div class="form-grid full">
+            <div class="field"><label>Síntesis clínica <span class="req">*</span></label><textarea id="lb_sintesis" placeholder="Perfil, escalas más afectadas, nivel de soporte orientativo… (sugerido ≈200 palabras)"></textarea></div>
+            <div class="field"><label>Objetivos del período <span class="req">*</span></label><textarea id="lb_objetivos" placeholder="Objetivos de trabajo derivados de la línea base."></textarea></div>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:.8rem;margin-top:6px"><input type="checkbox" id="lb_migrado"> Migrado del sistema anterior</label>
+        </div>
+      </div>
 
       <div class="idea-summary">
         <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IDEA</div>
         <div class="tot"><span id="ideaTotal">0</span><small> / 96</small></div></div>
         <div class="nivel" id="ideaNivel">Sin puntuar</div>
         <div class="spacer"></div>
-        <div class="nota">Banda orientativa de severidad para uso interno del equipo técnico. El juicio clínico del profesional prevalece siempre sobre el puntaje.</div>
-        <button class="btn btn-primary" onclick="guardarIDEA()">Guardar en expediente</button>
+        <div class="nota">Banda orientativa para el equipo. El juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda). Para firmar: 12 dimensiones sin NS + fecha + síntesis + objetivos.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarIDEA()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarLB()">✓ Firmar línea base</button>
+        </div>
       </div>
     </section>
 
@@ -622,7 +678,7 @@
     <section class="view" id="view-pendientes">
       <div class="crumbs">Inicio › <b>Pendientes</b></div>
       <h1 class="pagetitle">Pendientes de evaluación</h1>
-      <p class="pagedesc">NNA activos que aún no tienen registrada su <b>evaluación IDEA anual</b> del año en curso. La IDEA se aplica una vez al año; este listado ayuda a planificar el cierre del ciclo.</p>
+      <p class="pagedesc">NNA activos que aún no tienen <b>firmada su línea base IDEA (HCE-LB)</b>. La IDEA se aplica una sola vez, al ingreso; este listado ayuda a planificar las líneas base pendientes.</p>
       <div class="kpirow" id="pendKpi"></div>
       <div class="card">
         <div class="cardhead"><h2>NNA sin IDEA del año en curso</h2></div>
@@ -792,6 +848,8 @@
               <option>TEA — en proceso diagnóstico</option>
               <option>Trastorno del desarrollo (a especificar)</option>
             </select></div>
+          <div class="field"><label>Código CIE-11</label>
+            <input id="f_cie11" placeholder="Ej. 6A02.0"></div>
           <div class="field"><label>Fecha de diagnóstico</label>
             <input id="f_dxfecha" type="date"></div>
           <div class="field"><label>Profesional / centro derivante</label>
@@ -803,12 +861,14 @@
           <div class="field"><label>Alertas clínicas</label>
             <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales"></div>
         </div>
-        <div class="section-label">Asignación institucional</div>
+        <div class="section-label">Asignación institucional · técnicos responsables (§3.1)</div>
         <div class="form-grid">
           <div class="field"><label>Grupo <span class="req">*</span></label>
             <select id="f_grupo"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
-          <div class="field"><label>Técnico de referencia</label>
+          <div class="field"><label>Técnico/a responsable 1 (Psicólogo/a)</label>
             <select id="f_tecnico"><option>Dr. González — Psicología</option><option>Lic. Torres — Psicopedagogía</option><option>Lic. Pereira — Fonoaudiología</option><option>Dra. Silva — Neuropediatría</option></select></div>
+          <div class="field"><label>Técnico/a responsable 2 (Maestro/a)</label>
+            <select id="f_tecnico2"><option>Mtra. Torres</option><option>Mtra. Fernández</option><option>Mtro. Álvarez</option></select></div>
         </div>
         <div class="section-label">Talleres asignados (Plan Anual)</div>
         <div class="chips-pick" id="tallerPicker">
@@ -864,6 +924,18 @@
         <button class="btn btn-primary" id="btnCreate" onclick="crearNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ M1 · MODAL DE FLUJO (firma / addenda / habilitación excepcional / HCE-LOG) ============ -->
+<div class="modal-bg" id="modalFlujo">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2 id="mfTitle">—</h2><p id="mfSub">—</p></div>
+      <button class="x" onclick="closeFlujoModal()" title="Cerrar">×</button>
+    </div>
+    <div class="modal-body" id="mfBody"></div>
+    <div class="modal-foot" id="mfFoot"></div>
   </div>
 </div>
 
@@ -1031,6 +1103,382 @@ const NNA = [
 /* Estado de actividad: por defecto activo si el expediente no lo especifica */
 NNA.forEach(n=>{ if(n.activo===undefined) n.activo = true; });
 
+/* =================================================================
+   M1 · MOTOR DE FLUJO (estado · firma · bloqueo · addenda · excepción)
+   Documento Técnico IPPU §3.2 (HCE-LOG) y §4 (flujo guiado, no impuesto).
+   Secuencia: CI → LB → PA → PB → IC. Estados derivados: bloqueado | borrador | firmado.
+   Todo en memoria (demo, no persistente). Infraestructura que poblarán M2–M6.
+   ================================================================= */
+const USUARIO_ACTUAL = "Dr. González — Psicología";  // sesión demo (login pre-cargado)
+const HOY = "2026-07-15";
+
+/* Módulos de la secuencia (el orden ES la habilitación secuencial). */
+const MODULOS_FLUJO = [
+  {key:"ci", code:"CI", name:"Consentimiento informado", full:"HCE-CI"},
+  {key:"lb", code:"LB", name:"Línea base — IDEA",        full:"HCE-LB"},
+  {key:"pa", code:"PA", name:"Protocolo A — IPPU-TEA",   full:"HCE-PA"},
+  {key:"pb", code:"PB", name:"Protocolo B — IPPU-TEA",   full:"HCE-PB"},
+  {key:"ic", code:"IC", name:"Informe de Cierre Anual",  full:"HCE-IC"},
+];
+const SECUENCIA = MODULOS_FLUJO.map(m=>m.key);          // ['ci','lb','pa','pb','ic']
+const modInfo = key => MODULOS_FLUJO.find(m=>m.key===key);
+const MOD_LABEL = {hce00:"HCE-00"};                     // módulos fuera de la secuencia (para HCE-LOG)
+const moduloLabel = key => { const m=modInfo(key); return m ? m.full : (MOD_LABEL[key]||key||"—"); };
+
+/* Técnicos responsables — roles fijos (decisión §0.5). Genéricos/configurables en el futuro. */
+const TECNICOS = [
+  {profesional:"Dr. González", rol:"Psicólogo/a"},
+  {profesional:"Mtra. Torres", rol:"Maestro/a"},
+];
+
+/* Objeto de flujo por defecto: CI editable (borrador), el resto bloqueado. */
+function initFlujo(){
+  const mk = () => ({firmado:false, firmas:[], addendas:[], excepcion:null});
+  const f = {ci:mk(), lb:mk(), pa:mk(), pb:mk(), ic:mk()};
+  f.ci.autorizaciones = {evaluacion:false, registro:false, comunicacion:false};  // HCE-CI (M3)
+  f.ci.adjunto = "";
+  Object.assign(f.lb, { dim:Array(12).fill(null), obs:Array(12).fill(""),      // HCE-LB / IDEA (M4)
+    fecha:"", sesiones:"", sintesis:"", objetivos:"", migrado:{es:false, fechaOrigen:""} });
+  return f;
+}
+
+/* --- Reglas de secuencia (§4.1 / §4.2) -------------------------------
+   ¿El módulo está habilitado para editar/firmar? (independiente de si ya está firmado)
+   Devuelve {habilitado, exceptuable, motivoBloqueo}.
+   Regla dura: sin CI firmado nada se habilita, y eso NO es exceptuable (§4.2). */
+function moduloHabilitado(nna, key){
+  if(key==="ci") return {habilitado:true, exceptuable:false, motivoBloqueo:""};
+  if(!nna.flujo.ci.firmado){
+    return {habilitado:false, exceptuable:false,
+      motivoBloqueo:"Requiere Consentimiento Informado firmado — único requisito no exceptuable (§4.2)."};
+  }
+  const prev = SECUENCIA[SECUENCIA.indexOf(key)-1];
+  const habilitado = nna.flujo[prev].firmado || !!nna.flujo[key].excepcion;
+  return {habilitado, exceptuable:true,
+    motivoBloqueo: habilitado ? "" : `Requiere ${modInfo(prev).full} firmado o habilitación excepcional.`};
+}
+
+/* Estado visible DERIVADO (nunca se almacena 'borrador'/'bloqueado' → sin drift). */
+function estadoModulo(nna, key){
+  if(nna.flujo[key].firmado) return "firmado";
+  return moduloHabilitado(nna, key).habilitado ? "borrador" : "bloqueado";
+}
+
+/* HOOK de validación de integridad (§4.3). Vacío en M1; M4–M6 lo completan por módulo. */
+function validarIntegridad(nna, key){
+  if(key==="lb"){                                   // HCE-LB / IDEA (M4, §4.3)
+    const lb = nna.flujo.lb; const t = lbTotales(lb.dim);
+    if(t.count < 12 || t.hayNS) return {ok:false, msg:"Para firmar la línea base: las 12 dimensiones deben estar puntuadas y sin NS."};
+    if(!lb.fecha)     return {ok:false, msg:"Falta la fecha de consenso de la línea base."};
+    if(!lb.sintesis)  return {ok:false, msg:"Falta la síntesis clínica de la línea base."};
+    if(!lb.objetivos) return {ok:false, msg:"Faltan los objetivos del período."};
+  }
+  return {ok:true, msg:""};
+}
+
+/* HCE-LOG: registro de solo inserción (§3.2). */
+function nowStr(){ const d=new Date(); const hh=String(d.getHours()).padStart(2,"0"), mm=String(d.getMinutes()).padStart(2,"0"); return fmtFecha(HOY)+" · "+hh+":"+mm; }
+function logEvento(nna, {modulo, tipo, detalle, ts, usuario}){
+  nna.hceLog.push({ts: ts||nowStr(), usuario: usuario||USUARIO_ACTUAL, modulo, tipo, detalle});
+}
+
+/* --- Acciones (mutan estado y registran en HCE-LOG) ------------------ */
+function firmarModulo(id, key){
+  const nna = NNA.find(n=>n.id===id); if(!nna) return;
+  if(nna.flujo[key].firmado){ toast("El módulo ya está firmado."); return; }
+  const h = moduloHabilitado(nna, key);
+  if(!h.habilitado){ toast(h.motivoBloqueo); return; }
+  const v = validarIntegridad(nna, key);          // hook (no-op en M1)
+  if(!v.ok){ toast(v.msg); return; }
+  openFirmaModal(id, key);
+}
+function confirmarFirma(id, key){
+  const nna = NNA.find(n=>n.id===id); const f = nna.flujo[key];
+  const fecha = (document.getElementById("mfFecha")||{}).value || HOY;
+  if(key==="ci"){
+    const firmante = (document.getElementById("mfFirmante").value||"").trim() || nna.referente || "Familia";
+    const chk = id => { const el=document.getElementById(id); return el?el.checked:true; };
+    f.autorizaciones = {evaluacion:chk("mfAutEval"), registro:chk("mfAutReg"), comunicacion:chk("mfAutCom")};
+    f.adjunto = ((document.getElementById("mfAdjunto")||{}).value||"").trim();
+    f.firmas = [{profesional:firmante, rol:"Familia/referente", fecha}];
+    const aut = [f.autorizaciones.evaluacion&&"evaluación", f.autorizaciones.registro&&"registro", f.autorizaciones.comunicacion&&"comunicación"].filter(Boolean).join(", ");
+    logEvento(nna, {modulo:key, tipo:"firma", detalle:`Consentimiento informado firmado por ${firmante}. Autoriza: ${aut||"—"}.`});
+  } else {
+    f.firmas = TECNICOS.map(t=>({...t, fecha}));
+    logEvento(nna, {modulo:key, tipo:"firma", detalle:`Firma doble — ${TECNICOS.map(t=>t.profesional+" ("+t.rol+")").join(" · ")}.`});
+  }
+  f.firmado = true;
+  closeFlujoModal(); renderFlujo(id);
+  if(key==="lb" && document.getElementById("view-idea") && document.getElementById("view-idea").classList.contains("active")) cargarIDEA(nna.id);
+  if(typeof renderNNA==="function") renderNNA();
+  toast(`${modInfo(key).full} firmado. Bloqueado para edición (corrección por addenda).`);
+}
+function habilitarExcepcional(id, key){
+  const nna = NNA.find(n=>n.id===id); if(!nna) return;
+  const h = moduloHabilitado(nna, key);
+  if(!h.exceptuable){ toast(h.motivoBloqueo); return; }
+  if(h.habilitado){ toast("El módulo ya está habilitado."); return; }
+  openExcepcionModal(id, key);
+}
+function confirmarExcepcion(id, key){
+  const nna = NNA.find(n=>n.id===id);
+  const motivo = document.getElementById("mfMotivo").value;
+  const texto = (document.getElementById("mfTexto").value||"").trim();
+  if(!texto){ toast("La constancia del motivo es obligatoria."); return; }
+  nna.flujo[key].excepcion = {motivo, texto, profesional:USUARIO_ACTUAL, fecha:HOY};
+  logEvento(nna, {modulo:key, tipo:"excepcion", detalle:`Habilitación excepcional — ${motivo}: ${texto}`});
+  closeFlujoModal(); renderFlujo(id);
+  toast(`${modInfo(key).full} habilitado excepcionalmente. Registrado en HCE-LOG.`);
+}
+function addendaModulo(id, key){
+  const nna = NNA.find(n=>n.id===id); if(!nna) return;
+  if(!nna.flujo[key].firmado){ toast("Solo se agregan addendas a módulos firmados."); return; }
+  openAddendaModal(id, key);
+}
+function confirmarAddenda(id, key){
+  const nna = NNA.find(n=>n.id===id);
+  const texto = (document.getElementById("mfTexto").value||"").trim();
+  if(!texto){ toast("Escribí la corrección/justificación de la addenda."); return; }
+  nna.flujo[key].addendas.push({fecha:HOY, profesional:USUARIO_ACTUAL, texto});
+  logEvento(nna, {modulo:key, tipo:"addenda", detalle:texto});
+  closeFlujoModal(); renderFlujo(id);
+  toast("Addenda registrada (el módulo firmado no se modifica).");
+}
+
+/* --- Modales de flujo (reusan #modalFlujo) --------------------------- */
+function openFlujoModal(title, sub, bodyHtml, footHtml){
+  document.getElementById("mfTitle").textContent = title;
+  document.getElementById("mfSub").textContent = sub;
+  document.getElementById("mfBody").innerHTML = bodyHtml;
+  document.getElementById("mfFoot").innerHTML = footHtml;
+  document.getElementById("modalFlujo").classList.add("open");
+}
+function closeFlujoModal(){ document.getElementById("modalFlujo").classList.remove("open"); }
+function openFirmaModal(id, key){
+  const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
+  const body = key==="ci"
+    ? `<div class="section-label">Consentimiento informado (HCE-CI)</div>
+       <div class="field"><label>Firmante (familia / referente)</label><input id="mfFirmante" value="${nna.referente||""}"></div>
+       <div class="field"><label>Fecha</label><input id="mfFecha" type="date" value="${HOY}"></div>
+       <div class="section-label">Autorizaciones de la familia</div>
+       <label style="display:flex;gap:8px;align-items:center;font-size:.83rem;margin-bottom:7px"><input type="checkbox" id="mfAutEval" checked> Autoriza la evaluación</label>
+       <label style="display:flex;gap:8px;align-items:center;font-size:.83rem;margin-bottom:7px"><input type="checkbox" id="mfAutReg" checked> Autoriza el registro en la HCE</label>
+       <label style="display:flex;gap:8px;align-items:center;font-size:.83rem;margin-bottom:12px"><input type="checkbox" id="mfAutCom" checked> Autoriza la comunicación a organismos (INAU / BPS)</label>
+       <div class="field"><label>Adjunto (documento firmado)</label><input id="mfAdjunto" value="consentimiento_2026.pdf"><div class="hint">Demo: no se sube un archivo real.</div></div>
+       <div class="review-note">⚠ Único bloqueo sin excepción posible (§4.2): sin CI firmado no se habilita ningún módulo de evaluación.</div>`
+    : `<div class="section-label">Firma doble de técnicos responsables (§3.1)</div>
+       ${TECNICOS.map(t=>`<div class="data-row"><dt>${t.rol}</dt><dd>${t.profesional}</dd></div>`).join("")}
+       <div class="field" style="margin-top:12px"><label>Fecha de consenso</label><input id="mfFecha" type="date" value="${HOY}"></div>
+       <div class="review-note">⚠ La firma bloquea el módulo. En M1 la validación de integridad (§4.3) es un hook vacío; cada módulo (M4–M6) la completa.</div>`;
+  const foot = `<span class="left">${m.full} · ${m.name}</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--ok)" onclick="confirmarFirma(${id},'${key}')">✓ Firmar y bloquear</button>
+    </div>`;
+  openFlujoModal(`Firmar ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+function openExcepcionModal(id, key){
+  const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
+  const motivos = ["Ingreso tardío","Reingreso","Licencia del equipo","Situación familiar","Otro"];
+  const body = `<div class="section-label">Habilitación excepcional (§4.2)</div>
+    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">Este módulo está bloqueado por la secuencia. Podés habilitarlo dejando una constancia del motivo — <b>queda registrada en HCE-LOG y no se oculta</b>.</p>
+    <div class="field"><label>Motivo</label><select id="mfMotivo">${motivos.map(o=>`<option>${o}</option>`).join("")}</select></div>
+    <div class="field"><label>Constancia (obligatoria)</label><textarea id="mfTexto" placeholder="Breve descripción del motivo de la habilitación excepcional."></textarea></div>`;
+  const foot = `<span class="left">${m.full} · ${m.name}</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--warn)" onclick="confirmarExcepcion(${id},'${key}')">⚠ Habilitar excepcionalmente</button>
+    </div>`;
+  openFlujoModal(`Habilitar ${m.full} excepcionalmente`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+function openAddendaModal(id, key){
+  const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
+  const body = `<div class="section-label">Addenda a módulo firmado (§4.1)</div>
+    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">El módulo firmado no se edita. La corrección se agrega como addenda con fecha y profesional.</p>
+    <div class="field"><label>Corrección / justificación</label><textarea id="mfTexto" placeholder="Texto de la addenda."></textarea></div>`;
+  const foot = `<span class="left">${m.full} · ${nna.flujo[key].addendas.length} addenda(s) previa(s)</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarAddenda(${id},'${key}')">+ Agregar addenda</button>
+    </div>`;
+  openFlujoModal(`Addenda · ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+function verHceLog(id){
+  const nna = NNA.find(n=>n.id===id);
+  const evs = [...nna.hceLog].reverse();          // más reciente primero (orden de inserción)
+  const tag = {firma:["lt-firma","Firma"], excepcion:["lt-excepcion","Excepción"], addenda:["lt-addenda","Addenda"], edicion:["lt-edicion","Edición"]};
+  const body = evs.length
+    ? `<table class="log-table"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Módulo</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>
+        ${evs.map(e=>{ const [c,t]=tag[e.tipo]||["lt-edicion",e.tipo]; const mod=moduloLabel(e.modulo);
+          return `<tr><td style="white-space:nowrap">${e.ts}</td><td>${e.usuario}</td><td><b>${mod}</b></td><td><span class="log-tipo ${c}">${t}</span></td><td>${e.detalle}</td></tr>`;}).join("")}
+       </tbody></table>`
+    : `<p style="color:var(--ink-2);font-size:.85rem;padding:8px 0">Sin eventos de auditoría todavía.</p>`;
+  const foot = `<span class="left">HCE-LOG · registro de solo lectura e inalterable (§3.2 · demo, no persistente)</span>
+    <button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
+  openFlujoModal(`HCE-LOG — ${nna.nombre} ${nna.apellido}`, "Auditoría: firmas, habilitaciones excepcionales y addendas", body, foot);
+}
+
+/* HCE-CI · vista de detalle del consentimiento firmado (M3). */
+function verCI(id){
+  const nna = NNA.find(n=>n.id===id); const c = nna.flujo.ci; const a = c.autorizaciones||{};
+  const si = b => b ? '<span style="color:var(--ok);font-weight:700">Sí</span>' : '<span style="color:var(--bad)">No</span>';
+  const body = `<div class="section-label">Consentimiento informado — firmado</div>
+    <div class="data-row"><dt>Firmante</dt><dd>${c.firmas[0]?c.firmas[0].profesional:"—"}</dd></div>
+    <div class="data-row"><dt>Fecha</dt><dd>${c.firmas[0]?fmtFecha(c.firmas[0].fecha):"—"}</dd></div>
+    <div class="data-row"><dt>Autoriza evaluación</dt><dd>${si(a.evaluacion)}</dd></div>
+    <div class="data-row"><dt>Autoriza registro en la HCE</dt><dd>${si(a.registro)}</dd></div>
+    <div class="data-row"><dt>Autoriza comunicación a organismos</dt><dd>${si(a.comunicacion)}</dd></div>
+    <div class="data-row"><dt>Adjunto</dt><dd>${c.adjunto||"—"}</dd></div>
+    ${c.addendas.length?`<div class="section-label">Addendas</div>${c.addendas.map(x=>`<div class="data-row"><dt>${fmtFecha(x.fecha)}</dt><dd style="text-align:left">${x.texto}</dd></div>`).join("")}`:""}`;
+  const foot = `<span class="left">HCE-CI · único bloqueo sin excepción (§4.2)</span><button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
+  openFlujoModal("HCE-CI — Consentimiento informado", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+
+/* HCE-LB · vista de detalle de la línea base IDEA firmada (M4). */
+function verLB(id){
+  const nna = NNA.find(n=>n.id===id); const lb = nna.flujo.lb; const t = lbTotales(lb.dim);
+  const escNames = ["Relación Social","Comunicación y Lenguaje","Anticipación y Flexibilidad","Simbolización"];
+  const filas = escNames.map((n,i)=>`<div class="data-row"><dt>${n}</dt><dd>${t.esc[i]} / 24</dd></div>`).join("");
+  const body = `<div class="section-label">Línea base IDEA — firmada</div>
+    <div class="data-row"><dt>Fecha de consenso</dt><dd>${fmtFecha(lb.fecha)}</dd></div>
+    <div class="data-row"><dt>Sesiones de observación</dt><dd>${lb.sesiones||"—"}</dd></div>
+    ${filas}
+    <div class="data-row"><dt><b>Total IDEA</b></dt><dd><b>${t.total} / 96</b> · <span style="color:${colorBanda(t.total)};font-weight:700">${bandaIdea(t.total)}</span></dd></div>
+    <div class="section-label">Síntesis clínica</div><p style="font-size:.83rem;color:var(--ink)">${lb.sintesis||"—"}</p>
+    <div class="section-label">Objetivos del período</div><p style="font-size:.83rem;color:var(--ink)">${lb.objetivos||"—"}</p>
+    ${lb.migrado&&lb.migrado.es?`<div class="review-note">Migrado del sistema anterior.</div>`:""}
+    ${lb.addendas.length?`<div class="section-label">Addendas</div>${lb.addendas.map(x=>`<div class="data-row"><dt>${fmtFecha(x.fecha)}</dt><dd style="text-align:left">${x.texto}</dd></div>`).join("")}`:""}`;
+  const foot = `<span class="left">HCE-LB · firmas: ${lb.firmas.map(x=>x.profesional).join(" · ")||"—"}</span><button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
+  openFlujoModal("HCE-LB — Línea base IDEA", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+
+/* --- Render del panel de flujo (se inyecta en el expediente) --------- */
+function estadoBadgeM(st){
+  const m = {firmado:["mb-firmado","Firmado"], borrador:["mb-borrador","Borrador"], bloqueado:["mb-bloqueado","Bloqueado"]};
+  const [c,t] = m[st]||["mb-bloqueado",st]; return `<span class="mbadge ${c}">${t}</span>`;
+}
+function stepperHtml(nna){
+  return `<div class="flujo-stepper">${MODULOS_FLUJO.map(m=>{
+    const st = estadoModulo(nna, m.key);
+    const exc = !!nna.flujo[m.key].excepcion;
+    const dot = st==="firmado" ? "✓" : (st==="borrador" ? "●" : "🔒");
+    return `<div class="fstep s-${st}${exc?" exc":""}"><span class="fdot">${dot}</span><span class="fname">${m.code}</span>${exc?'<span class="fexc">⚠ excep.</span>':""}</div>`;
+  }).join("")}</div>`;
+}
+function flujoBodyHtml(nna){
+  const rows = MODULOS_FLUJO.map(m=>{
+    const f = nna.flujo[m.key];
+    const st = estadoModulo(nna, m.key);
+    const h = moduloHabilitado(nna, m.key);
+    let meta, actions;
+    if(st==="firmado"){
+      const fecha = f.firmas[0] ? f.firmas[0].fecha : "";
+      meta = `Firmado ${fmtFecha(fecha)} · ${f.firmas.map(x=>x.profesional).join(" · ")}${f.addendas.length?` · ${f.addendas.length} addenda(s)`:""}`;
+      const verBtn = m.key==="ci" ? `<button class="btn btn-ghost btn-mini" onclick="verCI(${nna.id})">Ver</button>`
+                   : m.key==="lb" ? `<button class="btn btn-ghost btn-mini" onclick="verLB(${nna.id})">Ver</button>` : "";
+      actions = `${verBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
+    } else if(st==="borrador"){
+      meta = f.excepcion ? `Habilitado excepcionalmente — ${f.excepcion.motivo}` : "En borrador · editable";
+      const editar = m.key==="lb"
+        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('idea', ${nna.id})">✎ Editar IDEA</button>`
+        : `<button class="btn btn-ghost btn-mini" disabled title="Editor real del módulo: M5–M6">✎ Editar</button>`;
+      actions = `${editar}<button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`;
+    } else {
+      meta = h.motivoBloqueo;
+      actions = h.exceptuable
+        ? `<button class="btn btn-ghost btn-mini" style="color:var(--warn)" onclick="habilitarExcepcional(${nna.id},'${m.key}')">⚠ Habilitar excep.</button>`
+        : `<button class="btn btn-ghost btn-mini" disabled title="${h.motivoBloqueo}">🔒 Bloqueado</button>`;
+    }
+    const excTag = f.excepcion ? `<span class="fr-exc-tag" title="${f.excepcion.texto}"> · ⚠ excepción</span>` : "";
+    return `<div class="flujo-row">
+      <span class="fr-code">${m.code}</span>
+      <div class="fr-name">${m.name} ${estadoBadgeM(st)}${excTag}<div class="fr-meta">${meta}</div></div>
+      <div class="fr-actions">${actions}</div>
+    </div>`;
+  }).join("");
+  return stepperHtml(nna) + rows;
+}
+function flujoPanelHtml(nna){
+  return `<div class="flujo-card">
+    <h3><span class="ic">⚑</span> Flujo de módulos (HCE) · CI → LB → PA → PB → IC
+      <span class="spacer"></span>
+      <button class="btn btn-ghost btn-mini" onclick="verHceLog(${nna.id})">☰ Ver auditoría (HCE-LOG)</button>
+    </h3>
+    <div class="flujo-body" id="flujoPanelBody">${flujoBodyHtml(nna)}</div>
+  </div>`;
+}
+function renderFlujo(id){
+  const nna = NNA.find(n=>n.id===id);
+  const el = document.getElementById("flujoPanelBody");
+  if(nna && el) el.innerHTML = flujoBodyHtml(nna);
+}
+
+/* --- Inicialización + seed de los 4 arquetipos del §11 --------------- */
+/* Backfill de campos HCE-00 (M2): CIE-11 y dos técnicos responsables con rol fijo (§0.5). */
+const CIE_SEED = {101:"6A02.0",102:"6A02.1",103:"6A02.2",104:"6A02.Z",105:"6A02.0",106:"6A02.3",107:"6A02.Z",108:"6A02.0"};
+NNA.forEach(n=>{
+  n.flujo = initFlujo(); n.hceLog = [];
+  if(!n.cie11) n.cie11 = (CIE_SEED[n.id]||"6A02.Z") + " — Trastorno del espectro del autismo";
+  if(!n.tecnico1){ n.tecnico1 = (n.tecnico||"Dr. González — Psicología").split("—")[0].trim(); n.tecnico1_rol = "Psicólogo/a"; }
+  if(!n.tecnico2){ n.tecnico2 = "Mtra. Torres"; n.tecnico2_rol = "Maestro/a"; }
+});
+(function seedFlujo(){
+  const byId = id => NNA.find(n=>n.id===id);
+  const dobles = fecha => TECNICOS.map(t=>({...t, fecha}));
+  function seedFirma(nna, key, fecha, firmas, detalle){
+    if(!nna) return;
+    nna.flujo[key].firmado = true;
+    nna.flujo[key].firmas = firmas;
+    nna.hceLog.push({ts:fmtFecha(fecha)+" · 10:00", usuario:firmas[0].profesional, modulo:key, tipo:"firma", detalle});
+  }
+  const fam = (nna,fecha) => [{profesional:nna.referente||"Familia", rol:"Familia/referente", fecha}];
+  function seedCI(nna, fecha){                     // CI firmado + autorizaciones + adjunto (M3)
+    if(!nna) return;
+    seedFirma(nna,"ci",fecha,fam(nna,fecha),"Consentimiento informado firmado por la familia.");
+    nna.flujo.ci.autorizaciones = {evaluacion:true, registro:true, comunicacion:true};
+    nna.flujo.ci.adjunto = "consentimiento_"+fecha.slice(0,4)+".pdf";
+  }
+  function setLB(nna, o){ if(nna) Object.assign(nna.flujo.lb, o); }   // payload IDEA / línea base (M4)
+
+  // Arquetipo 1 — Martín (102): ciclo completo firmado. IDEA = usuario demo 1 del prototipo (total 58/96).
+  const a1 = byId(102);
+  if(a1){
+    seedCI(a1,"2026-03-02");
+    setLB(a1, {dim:[6,6,6, 6,4,4, 4,6,4, 4,4,4], fecha:"2026-03-18", sesiones:6,
+      sintesis:"Evaluación realizada tras 6 sesiones de observación en contexto grupal. Mayor afectación en Relación Social (18/24) y Comunicación (14/24). Perfil orientativo de nivel de soporte 2 (DSM-5-TR). Referencia conjunta muy limitada; lenguaje expresivo reducido a palabras sueltas con ecolalia frecuente.",
+      objetivos:"1) Incrementar la atención conjunta con apoyo gestual. 2) Introducir un sistema aumentativo de comunicación acorde a la Escala de Comunicación. 3) Anticipación visual de las rutinas del grupo."});
+    a1.flujo.lb.obs[1] = "Diferencia inicial entre evaluadores (6 vs 4); consenso en 6 por observaciones de la sesión grupal.";
+    seedFirma(a1,"lb","2026-03-18",dobles("2026-03-18"),"Línea base IDEA firmada (firma doble) — total 58/96.");
+    seedFirma(a1,"pa","2026-07-07",dobles("2026-07-07"),"Protocolo A firmado (firma doble).");
+    seedFirma(a1,"pb","2026-12-11",dobles("2026-12-11"),"Protocolo B firmado (firma doble).");
+    seedFirma(a1,"ic","2026-12-19",dobles("2026-12-19"),"Informe de Cierre Anual firmado (firma doble) + Recibí de la familia.");
+  }
+  // Arquetipo 2 — Sofía (101): CI y LB firmados; Protocolo A en borrador. IDEA = usuario demo 2 (total 31/96).
+  const a2 = byId(101);
+  if(a2){
+    seedCI(a2,"2026-03-05");
+    setLB(a2, {dim:[4,2,4, 2,2,2, 4,4,2, 2,1,2], fecha:"2026-03-20", sesiones:5,
+      sintesis:"Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
+      objetivos:"1) Habilidades conversacionales con pares (inicio y cierre). 2) Tolerancia a cambios de plan. 3) Identificación y expresión de emociones propias."});
+    seedFirma(a2,"lb","2026-03-20",dobles("2026-03-20"),"Línea base IDEA firmada (firma doble) — total 31/96.");
+  }
+  // Arquetipo 3 — Joaquín (104): CI firmado; LB (IDEA) en BORRADOR con dimensiones NS. = usuario demo 3.
+  seedCI(byId(104),"2026-06-10");
+  setLB(byId(104), {dim:[8,8,"NS", 8,8,6, 6,6,8, 8,6,"NS"], fecha:"", sesiones:5, sintesis:"", objetivos:""});
+  if(byId(104)) byId(104).flujo.lb.obs[2] = "NS: se requiere más observación en juego compartido antes de puntuar D3.";
+  // Arquetipo 4 — Bruno (107): consentimiento pendiente → todo bloqueado (estado por defecto de initFlujo).
+
+  // Otros NNA: CI + LB firmados, con IDEA generado consistente con su total previo, para dar variedad.
+  const LB_OTROS = {103:[6,4,6, 4,6,4, 4,6,4, 4,4,3], 105:[4,4,4, 4,4,4, 4,4,4, 4,4,3], 108:[4,4,4, 4,4,4, 4,4,4, 2,4,2]};
+  [103,105,108].forEach(id=>{
+    const p = byId(id); if(!p) return;
+    seedCI(p,"2026-03-10");
+    setLB(p, {dim:LB_OTROS[id], fecha:"2026-03-25", sesiones:5,
+      sintesis:"Línea base IDEA de referencia (datos de demostración).", objetivos:"Objetivos del período a definir con el equipo."});
+    seedFirma(p,"lb","2026-03-25",dobles("2026-03-25"),"Línea base IDEA firmada (firma doble).");
+  });
+})();
+
 /* Helpers de historial → derivan el estado de evaluaciones desde el historial */
 function getEval(nna, periodoKey){
   // periodoKey: "inicial" | "lik" | "final"
@@ -1052,9 +1500,20 @@ const anioDe = fecha => parseInt(String(fecha).slice(0,4));
 function ideaEvals(nna){ return nna.historial.filter(h=>h.tipo==="idea").sort((a,b)=> a.fecha < b.fecha ? -1 : 1); }
 function ultimaIdea(nna){ const e = ideaEvals(nna); return e.length ? e[e.length-1] : null; }
 function tieneIdeaAnio(nna, anio){ return ideaEvals(nna).some(e => anioDe(e.fecha) === anio); }
-function pendienteIdea(nna){ return nna.activo && !tieneIdeaAnio(nna, ANIO_ACTUAL); }
+/* M4: "pendiente" deja de ser anual — es no tener la línea base IDEA (HCE-LB) firmada. */
+function tieneLBFirmada(nna){ return !!(nna.flujo && nna.flujo.lb.firmado); }
+function pendienteIdea(nna){ return nna.activo && !tieneLBFirmada(nna); }
 const bandaIdea  = s => s>=65 ? "Severo" : s>=33 ? "Moderado" : "Leve";
 const colorBanda = s => s>=65 ? "var(--bad)" : s>=33 ? "var(--warn)" : "var(--ok)";
+/* Totales de la línea base IDEA desde flujo.lb.dim (0–8 | 'NS' | null). */
+function lbTotales(dim){
+  const esc=[0,0,0,0]; let total=0, hayNS=false, count=0;
+  (dim||[]).forEach((v,i)=>{
+    if(v==="NS"){ hayNS=true; count++; }
+    else if(typeof v==="number"){ esc[Math.floor(i/3)]+=v; total+=v; count++; }
+  });
+  return {esc, total, hayNS, count};
+}
 
 /* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997 ===============
    Cada dimensión: array de [puntuación, descriptor_oficial]
@@ -1319,7 +1778,7 @@ function renderNNA(){
     `<option value="${p.id}">#${p.id} · ${p.nombre} ${p.apellido} · Grupo ${p.grupo}</option>`).join("");
   // KPIs dinámicos (frecuencia IDEA anual)
   const activos    = NNA.filter(p=>p.activo).length;
-  const conIdea    = NNA.filter(p=>p.activo && tieneIdeaAnio(p, ANIO_ACTUAL)).length;
+  const conIdea    = NNA.filter(p=>p.activo && tieneLBFirmada(p)).length;
   const pend       = NNA.filter(pendienteIdea).length;
   const totalEvals = NNA.reduce((a,p)=>a+p.historial.filter(h=>h.tipo==="idea"||h.tipo==="lik").length,0);
   setKpi("kpiTotal", activos);
@@ -1341,28 +1800,28 @@ function renderPendientes(){
   if(kpi){
     const cobertura = activos ? Math.round((activos-pend.length)/activos*100) : 0;
     kpi.innerHTML = `
-      <div class="kpi"><div class="lab">Pendientes de IDEA ${ANIO_ACTUAL}</div><div class="val orange">${pend.length}</div><div class="sub">NNA activos sin evaluación anual</div></div>
-      <div class="kpi"><div class="lab">Cobertura IDEA ${ANIO_ACTUAL}</div><div class="val ok">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
-      <div class="kpi"><div class="lab">Nunca evaluados</div><div class="val purple">${pend.filter(p=>!ultimaIdea(p)).length}</div><div class="sub">Sin ninguna IDEA registrada</div></div>`;
+      <div class="kpi"><div class="lab">Sin línea base IDEA</div><div class="val orange">${pend.length}</div><div class="sub">NNA activos sin HCE-LB firmada</div></div>
+      <div class="kpi"><div class="lab">Cobertura línea base</div><div class="val ok">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
+      <div class="kpi"><div class="lab">Sin iniciar</div><div class="val purple">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
   }
   tb2.innerHTML = pend.length ? pend.map(p=>{
-    const u = ultimaIdea(p);
-    const ultimaTxt = u ? `${anioDe(u.fecha)} · ${u.score}/96` : `<span style="color:var(--warn);font-weight:600">nunca</span>`;
+    const est = estadoModulo(p,"lb");
+    const estadoTxt = est==="borrador" ? `<span style="color:var(--warn);font-weight:600">borrador</span>`
+      : est==="bloqueado" ? `<span style="color:var(--ink-2)">requiere CI</span>` : `<span style="color:var(--ink-2)">sin iniciar</span>`;
     return `<tr>
       <td><b>#${p.id}</b></td><td>${p.ci}</td>
       <td class="nna-name">${p.nombre}</td><td class="nna-name">${p.apellido}</td>
-      <td>Grupo ${p.grupo}</td><td>${ultimaTxt}</td>
+      <td>Grupo ${p.grupo}</td><td>${estadoTxt}</td>
       <td><button class="btn btn-link" onclick="irAEval('idea', ${p.id})">Cargar IDEA →</button></td>
     </tr>`;
-  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>No hay NNA pendientes de IDEA anual. ¡Ciclo al día!</div></td></tr>`;
+  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
 }
 
 /* --- Navegación a una evaluación preseleccionando el NNA --- */
 function irAEval(view, id){
   if(view==="idea"){
     go("idea");
-    const s=document.getElementById("selNNA"); if(s) s.value=String(id);
-    resetIDEA();
+    cargarIDEA(id);
   } else if(view==="areas"){
     go("areas"); populateEvalSelects();
     const s=document.getElementById("selNNAArea"); if(s) s.value=String(id);
@@ -1374,7 +1833,7 @@ function irAEval(view, id){
   } else if(view==="intermedia"){
     go("intermedia");
   } else if(view==="anamnesis"){
-    openEditar(id, 3);
+    openEditar(id, 1);
   }
 }
 
@@ -1415,7 +1874,8 @@ DIMENSIONES.forEach((escala, ei)=>{
         <span class="inter-label">¿El caso se sitúa claramente entre dos niveles?</span>
         ${[1,3,5,7].map(v=>`<button class="inter-btn" data-dim="${dimKey}" data-inter="${v}" type="button">
           Puntaje ${v}</button>`).join("")}
-        <span style="font-size:.68rem;color:var(--ink-2)">Puntuaciones intermedias según criterio de Rivière</span>
+        <button class="inter-btn" data-dim="${dimKey}" data-ns="1" type="button" style="border-color:var(--warn);color:var(--warn)">NS</button>
+        <span style="font-size:.68rem;color:var(--ink-2)">Intermedias (Rivière) · NS = observación insuficiente (impide firmar)</span>
       </div>
       <div id="sel-${dimKey}" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;background:#EEF3FA;font-size:.76rem;color:var(--ink-2)">
         Puntaje seleccionado: <b id="sval-${dimKey}">—</b>
@@ -1440,11 +1900,11 @@ function updateScore(dimKey, val){
   const dimNum = parseInt(dimKey.split("-")[0])*3 + parseInt(dimKey.split("-")[1]) + 1;
   const pd = document.getElementById(`prog-d${dimNum}`);
   if(pd){ pd.classList.add("filled"); }
-  // recalcular subtotales y total
-  let total = 0;
+  // recalcular subtotales y total (NS no suma y bloquea la firma)
+  let total = 0, hayNS = false;
   DIMENSIONES.forEach((e,ei)=>{
     let sub = 0;
-    e.dims.forEach((_,di)=>{ sub += ideaScores[`${ei}-${di}`] ?? 0; });
+    e.dims.forEach((_,di)=>{ const v = ideaScores[`${ei}-${di}`]; if(v==="NS") hayNS=true; else if(typeof v==="number") sub += v; });
     document.getElementById("sub"+ei).textContent = `${sub} / 24`;
     total += sub;
   });
@@ -1455,6 +1915,9 @@ function updateScore(dimKey, val){
   if(answered < 12){
     nivel.textContent = `${answered} / 12 dimensiones puntuadas`;
     nivel.style.background="#2C4A66";
+  } else if(hayNS){
+    nivel.textContent = `Incluye NS — no se puede firmar (falta observación)`;
+    nivel.style.background="var(--warn)";
   } else if(total >= 65){
     nivel.textContent=`Espectro severo — ${total} pts (${pct}%)`;
     nivel.style.background="var(--bad)";
@@ -1478,14 +1941,14 @@ form.addEventListener("click", ev=>{
     updateScore(dim, +opcion.dataset.v);
     return;
   }
-  // Puntuaciones intermedias (1,3,5,7)
+  // NS (observación insuficiente) o puntuaciones intermedias (1,3,5,7)
   const interBtn = ev.target.closest(".inter-btn[data-dim]");
   if(interBtn){
     const dim = interBtn.dataset.dim;
     document.querySelectorAll(`.opcion[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
     document.querySelectorAll(`.inter-btn[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
     interBtn.classList.add("sel");
-    updateScore(dim, +interBtn.dataset.inter);
+    updateScore(dim, interBtn.dataset.ns ? "NS" : +interBtn.dataset.inter);
   }
 });
 
@@ -1579,7 +2042,7 @@ let wizStep = 1;
 let editId = null;              // null = alta; id = edición del expediente
 const wizTalleres = new Set();
 const CAMPOS_TXT = ["f_nombre","f_apellido","f_nac","f_ci","f_ref","f_tel","f_dxfecha","f_deriv",
-                    "f_antec","f_med","f_alerta","f_motivo","f_perinatal","f_desarrollo","f_famhist"];
+                    "f_antec","f_med","f_alerta","f_motivo","f_perinatal","f_desarrollo","f_famhist","f_cie11"];
 
 function openAlta(){
   editId = null;
@@ -1587,7 +2050,7 @@ function openAlta(){
   wizTalleres.clear();
   CAMPOS_TXT.forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
   document.getElementById("f_loc").value = "Montevideo";
-  ["f_sexo","f_dx","f_grupo","f_tecnico"].forEach(id=>{const el=document.getElementById(id); if(el) el.selectedIndex=0;});
+  ["f_sexo","f_dx","f_grupo","f_tecnico","f_tecnico2"].forEach(id=>{const el=document.getElementById(id); if(el) el.selectedIndex=0;});
   document.getElementById("f_apoyo").value = "Grado 2 — Requiere apoyo sustancial";
   document.querySelectorAll(".chip-pick").forEach(c=>c.classList.remove("sel"));
   document.querySelectorAll(".field").forEach(f=>f.classList.remove("invalid"));
@@ -1614,6 +2077,8 @@ function openEditar(id, step){
   set("f_med", p.med); set("f_alerta", p.alerta);
   document.getElementById("f_grupo").value   = p.grupo;
   document.getElementById("f_tecnico").value = p.tecnico;
+  set("f_cie11", p.cie11);
+  { const t2=document.getElementById("f_tecnico2"); if(t2) t2.value = p.tecnico2 || "Mtra. Torres"; }
   const an = p.anamnesis || {};
   set("f_motivo",an.motivo); set("f_perinatal",an.perinatal);
   set("f_desarrollo",an.desarrollo); set("f_famhist",an.familiares);
@@ -1709,6 +2174,9 @@ function crearNNA(){
     grupo: g("f_grupo"), tecnico: g("f_tecnico"),
     dx: g("f_dx"), dxFecha: g("f_dxfecha")||"—", deriv: g("f_deriv")||"—",
     apoyo: g("f_apoyo"),
+    cie11: g("f_cie11")||"—",
+    tecnico1: g("f_tecnico"), tecnico1_rol: "Psicólogo/a",
+    tecnico2: g("f_tecnico2"), tecnico2_rol: "Maestro/a",
     antec: g("f_antec")||"Sin antecedentes registrados.",
     med: g("f_med")||"Ninguna", alerta: g("f_alerta")||"—",
     talleres: [...wizTalleres],
@@ -1723,7 +2191,15 @@ function crearNNA(){
   if(modoEdit){
     const p = NNA.find(n=>n.id===modoEdit);
     if(p){
+      const antes = {dx:p.dx, cie11:p.cie11, apoyo:p.apoyo, t1:p.tecnico1, t2:p.tecnico2, motivo:(p.anamnesis||{}).motivo};
       Object.assign(p, datos);
+      const cambios = [];
+      if(antes.dx!==p.dx) cambios.push("diagnóstico");
+      if(antes.cie11!==p.cie11) cambios.push("CIE-11");
+      if(antes.apoyo!==p.apoyo) cambios.push("nivel de soporte");
+      if(antes.t1!==p.tecnico1 || antes.t2!==p.tecnico2) cambios.push("técnicos responsables");
+      if(antes.motivo!==(p.anamnesis||{}).motivo) cambios.push("anamnesis");
+      if(p.hceLog) logEvento(p, {modulo:"hce00", tipo:"edicion", detalle:`HCE-00 actualizado${cambios.length?": "+cambios.join(", "):""} · siempre editable, aun con módulos firmados (§3.2).`});
       p.historial.push({tipo:"note", fecha:hoy, titulo:"Edición de datos", desc:"Se actualizaron datos del expediente (demo)."});
     }
     renderNNA();
@@ -1731,7 +2207,7 @@ function crearNNA(){
     toast(`Datos de ${g("f_nombre")} ${g("f_apellido")} actualizados`);
     setTimeout(()=>abrirExpediente(modoEdit), 300);
   } else {
-    const nuevo = Object.assign({ id: ++nnaSeq, activo:true }, datos, {
+    const nuevo = Object.assign({ id: ++nnaSeq, activo:true, flujo: initFlujo(), hceLog: [] }, datos, {
       historial: [
         {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
          desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA anual.`}
@@ -1813,30 +2289,40 @@ function abrirExpediente(id){
       </div>
     </div>
 
+    ${flujoPanelHtml(p)}
+
     <div class="eval-bar">
       <span class="eval-bar-lbl">Cargar evaluación:</span>
-      <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Anamnesis</button>
+      <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Editar HCE-00</button>
       <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
       <button class="btn btn-ghost" onclick="irAEval('intermedia', ${p.id})">Eval. intermedia</button>
-      <button class="btn btn-ghost" onclick="irAEval('areas', ${p.id})">Eval. por áreas</button>
-      <button class="btn btn-ghost" onclick="irAEval('general', ${p.id})">Eval. general</button>
+      <!-- M0 (2026-07-15): "Eval. por áreas" y "Eval. general" descartadas como módulos activos
+           (decisión §0.2 del plan / §10 Documento Técnico IPPU). Código y vistas conservados,
+           solo se dejan de exponer; se resuelven como archivo histórico de solo lectura en M7 (HCE-DOC). -->
     </div>
 
     <div class="exp-grid">
       <div>
         <div class="info-card">
-          <h3><span class="ic">▤</span> Datos clínicos</h3>
+          <h3><span class="ic">▤</span> HCE-00 · Identificación y datos clínicos
+            <span class="mbadge mb-borrador" style="margin-left:8px" title="Módulo siempre editable (§3.2): nunca se bloquea, aun con otros módulos firmados">Siempre abierto</span>
+            <span style="flex:1"></span>
+            <button class="btn btn-ghost btn-mini" onclick="openEditar(${p.id},1)">✎ Editar</button>
+          </h3>
           <div class="ib">
             <div class="data-row"><dt>Diagnóstico</dt><dd>${p.dx}</dd></div>
+            <div class="data-row"><dt>CIE-11</dt><dd>${p.cie11||"—"}</dd></div>
             <div class="data-row"><dt>Fecha dx.</dt><dd>${fmtFecha(p.dxFecha)}</dd></div>
             <div class="data-row"><dt>Derivación</dt><dd>${p.deriv}</dd></div>
-            <div class="data-row"><dt>Nivel de apoyo</dt><dd>${p.apoyo}</dd></div>
+            <div class="data-row"><dt>Nivel de soporte</dt><dd>${p.apoyo}</dd></div>
+            <div class="data-row"><dt>Téc. resp. 1</dt><dd>${p.tecnico1||"—"} · <span style="color:var(--ink-2)">${p.tecnico1_rol||"Psicólogo/a"}</span></dd></div>
+            <div class="data-row"><dt>Téc. resp. 2</dt><dd>${p.tecnico2||"—"} · <span style="color:var(--ink-2)">${p.tecnico2_rol||"Maestro/a"}</span></dd></div>
             <div class="data-row"><dt>Medicación</dt><dd>${p.med}</dd></div>
             <div class="data-row"><dt>Alertas</dt><dd style="${p.alerta!=="—"?"color:var(--bad);font-weight:600":""}">${p.alerta}</dd></div>
           </div>
         </div>
         <div class="info-card">
-          <h3><span class="ic">❏</span> Anamnesis — Historia del desarrollo</h3>
+          <h3><span class="ic">❏</span> HCE-00 · Anamnesis — Historia del desarrollo</h3>
           <div class="ib">${anamnesisHtml}</div>
         </div>
         <div class="info-card">
@@ -1855,14 +2341,16 @@ function abrirExpediente(id){
 
       <div>
         <div class="info-card">
-          <h3><span class="ic">◐</span> Seguimiento IDEA (anual)</h3>
+          <h3><span class="ic">◐</span> Línea base — IDEA (HCE-LB)</h3>
           <div class="ib">
-            ${ideaEvs.length
-              ? ideaEvs.map(e=>`<div class="data-row"><dt>IDEA ${anioDe(e.fecha)}</dt><dd>${e.score} / 96 · <b style="color:${colorBanda(e.score)}">${bandaIdea(e.score)}</b></dd></div>`).join("")
-              : `<div class="data-row"><dt>IDEA anual</dt><dd><span style='color:var(--warn)'>sin evaluación registrada</span></dd></div>`}
-            ${likEvs.length ? `<div class="data-row"><dt>Intermedia (opcional)</dt><dd>${likEvs[likEvs.length-1].score} / 96 (equiv.)</dd></div>` : ""}
-            <div style="margin-top:12px;padding:10px 12px;background:#F0F6F4;border-radius:8px;font-size:.8rem;color:var(--teal);font-weight:600">${tendencia}</div>
-            ${pendienteIdea(p) ? `<div style="margin-top:8px;font-size:.76rem;color:var(--warn);font-weight:700">● Pendiente de IDEA ${ANIO_ACTUAL}</div>` : ""}
+            ${(()=>{ const lb=p.flujo.lb; const t=lbTotales(lb.dim); const est=estadoModulo(p,"lb");
+              if(est==="firmado") return `<div class="data-row"><dt>Total IDEA</dt><dd>${t.total} / 96 · <b style="color:${colorBanda(t.total)}">${bandaIdea(t.total)}</b></dd></div>
+                <div class="data-row"><dt>Fecha de consenso</dt><dd>${fmtFecha(lb.fecha)}</dd></div>
+                <div class="data-row"><dt>Estado</dt><dd>${estadoBadgeM(est)}</dd></div>`;
+              if(est==="borrador") return `<div class="data-row"><dt>Línea base</dt><dd>${estadoBadgeM(est)} · ${t.count}/12 dim.${t.hayNS?" (incluye NS)":""}</dd></div>`;
+              return `<div class="data-row"><dt>Línea base</dt><dd>${estadoBadgeM(est)}</dd></div>`;
+            })()}
+            ${pendienteIdea(p) ? `<div style="margin-top:8px;font-size:.76rem;color:var(--warn);font-weight:700">● Sin línea base IDEA firmada</div>` : ""}
             <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="generarInforme(${p.id})">🖨 Generar informe descargable</button>
           </div>
         </div>
@@ -1900,8 +2388,9 @@ function evaluarDesdeExp(id){
 function generarInforme(id){
   const p = NNA.find(n=>n.id===id); if(!p) return;
   const cont = document.getElementById("informeContent");
-  const eventos = [...p.historial].sort((a,b)=> a.fecha < b.fecha ? -1 : 1);
-  const scored = eventos.filter(e=>e.score!=null);
+  const lb = p.flujo.lb; const tLB = lbTotales(lb.dim);
+  const lbFirmada = lb.firmado && !tLB.hayNS && tLB.count===12;
+  const scored = lbFirmada ? [{score:tLB.total, total:96, fecha:lb.fecha, tipo:"idea"}] : [];
   const hoy = new Date();
   const fechaGen = `${String(hoy.getDate()).padStart(2,"0")}/${String(hoy.getMonth()+1).padStart(2,"0")}/${hoy.getFullYear()}`;
 
@@ -1993,35 +2482,69 @@ function resetIDEA(){
   document.getElementById("ideaTotal").textContent="0";
   const nivel=document.getElementById("ideaNivel");
   nivel.textContent="0 / 12 dimensiones puntuadas"; nivel.style.background="#2C4A66";
+  ["lb_fecha","lb_sesiones","lb_sintesis","lb_objetivos"].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.value=""; });
+  const mig=document.getElementById("lb_migrado"); if(mig) mig.checked=false;
+  const badge=document.getElementById("ideaEstadoBadge"); if(badge) badge.innerHTML="";
+  if(typeof ideaSetReadonly==="function") ideaSetReadonly(false);
 }
 
+/* M4: la LB (IDEA) vive en flujo.lb. El form guarda borrador o firma vía el motor de M1. */
+function guardarLBDesdeForm(p){
+  const lb = p.flujo.lb;
+  const dim = Array(12).fill(null);
+  for(let i=0;i<12;i++){ const v = ideaScores[`${Math.floor(i/3)}-${i%3}`]; dim[i] = (v===undefined)?null:v; }
+  lb.dim = dim;
+  lb.fecha = document.getElementById("lb_fecha").value || "";
+  lb.sesiones = document.getElementById("lb_sesiones").value || "";
+  lb.sintesis = document.getElementById("lb_sintesis").value.trim();
+  lb.objetivos = document.getElementById("lb_objetivos").value.trim();
+  lb.migrado = {es: document.getElementById("lb_migrado").checked, fechaOrigen: (lb.migrado&&lb.migrado.fechaOrigen)||""};
+}
 function guardarIDEA(){
-  const answered = Object.keys(ideaScores).length;
-  if(answered < 12){
-    toast(`Faltan ${12-answered} dimensiones por puntuar`);
-    return;
-  }
   const id = parseInt(document.getElementById("selNNA").value);
   const p = NNA.find(n=>n.id===id);
   if(!p){ toast("Seleccioná un NNA"); return; }
-  let total = 0;
-  for(const k in ideaScores) total += ideaScores[k];
-  const anio = document.getElementById("selPeriodo").value;
-  const hoy = new Date();
-  const mmdd = `${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
-  const fecha = `${anio}-${mmdd}`;
-
-  p.historial.push({
-    tipo:"idea", fecha,
-    titulo:`Evaluación IDEA anual`,
-    desc:`Período ${anio} · Evaluador: Dr. González`,
-    score: total, total: 96
-  });
-
+  if(p.flujo.lb.firmado){ toast("La línea base está firmada — corrección por addenda."); return; }
+  guardarLBDesdeForm(p);
   renderNNA();
-  toast(`Evaluación IDEA ${anio} guardada en el expediente de ${p.nombre} (${total}/96)`);
+  const badge=document.getElementById("ideaEstadoBadge"); if(badge) badge.innerHTML = estadoBadgeM(estadoModulo(p,"lb"));
+  toast(`Línea base IDEA guardada (borrador) — ${p.nombre}`);
+}
+function firmarLB(){
+  const id = parseInt(document.getElementById("selNNA").value);
+  const p = NNA.find(n=>n.id===id);
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  if(p.flujo.lb.firmado){ toast("La línea base ya está firmada."); return; }
+  guardarLBDesdeForm(p);        // persistir el form antes de validar/firmar
+  firmarModulo(id, "lb");       // el motor (M1) valida integridad y abre el modal de firma doble
+}
+function cargarIDEA(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const s=document.getElementById("selNNA"); if(s) s.value=String(id);
   resetIDEA();
-  setTimeout(()=>abrirExpediente(id), 500);
+  const lb = p.flujo.lb;
+  (lb.dim||[]).forEach((v,i)=>{
+    if(v==null) return;
+    const dimKey = `${Math.floor(i/3)}-${i%3}`;
+    let btn;
+    if(v==="NS") btn = document.querySelector(`.inter-btn[data-ns][data-dim="${dimKey}"]`);
+    else if([1,3,5,7].includes(v)) btn = document.querySelector(`.inter-btn[data-inter="${v}"][data-dim="${dimKey}"]`);
+    else btn = document.querySelector(`.opcion[data-v="${v}"][data-dim="${dimKey}"]`);
+    if(btn){ btn.classList.add("sel"); updateScore(dimKey, v); }
+  });
+  const set=(fid,val)=>{ const el=document.getElementById(fid); if(el) el.value=(val==null)?"":val; };
+  set("lb_fecha", lb.fecha); set("lb_sesiones", lb.sesiones); set("lb_sintesis", lb.sintesis); set("lb_objetivos", lb.objetivos);
+  const mig=document.getElementById("lb_migrado"); if(mig) mig.checked=!!(lb.migrado&&lb.migrado.es);
+  const badge=document.getElementById("ideaEstadoBadge"); if(badge) badge.innerHTML = estadoBadgeM(estadoModulo(p,"lb"));
+  ideaSetReadonly(lb.firmado);
+}
+function ideaSetReadonly(ro){
+  document.querySelectorAll("#ideaForm button").forEach(b=>{ b.disabled = ro; });
+  ["lb_fecha","lb_sesiones","lb_sintesis","lb_objetivos","lb_migrado"].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.disabled = ro; });
+  const g=document.querySelector('.idea-summary button[onclick*="guardarIDEA"]');
+  const f=document.querySelector('.idea-summary button[onclick*="firmarLB"]');
+  if(g) g.style.display = ro?"none":"";
+  if(f) f.style.display = ro?"none":"";
 }
 
 // cerrar modal al hacer clic en el fondo
