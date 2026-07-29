@@ -191,6 +191,11 @@
   }
   .lik-opts button:hover{border-color:var(--teal)}
   .lik-opts button.sel{background:var(--teal);border-color:var(--teal);color:#fff}
+  /* Escala IPPU-TEA · tabs A|B del editor PA/PB (M5.2; el resto del CSS del editor está en el bloque "M5 · Escala IPPU-TEA") */
+  .prot-tab{padding:7px 16px;border:1.5px solid var(--line);border-radius:999px;background:#fff;
+    font-size:.78rem;font-weight:700;color:var(--ink-2);cursor:pointer}
+  .prot-tab:hover{border-color:var(--teal)}
+  .prot-tab.active{background:var(--teal);border-color:var(--teal);color:#fff}
   .formula{
     margin:14px 18px 18px;padding:12px 16px;border:1px dashed var(--teal);border-radius:8px;
     background:var(--teal-soft);font-size:.83rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center
@@ -381,6 +386,27 @@
   .lt-excepcion{background:rgba(199,119,0,.16);color:var(--warn)}
   .lt-addenda{background:rgba(14,143,126,.14);color:var(--teal)}
   .lt-edicion{background:#EEF1F1;color:var(--ink-2)}
+  .lt-alerta{background:rgba(197,48,48,.14);color:var(--bad)}
+
+  /* M5 · Escala IPPU-TEA (PA/PB) */
+  .prot-esc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .prot-esc>header{padding:12px 16px;background:#F7FAFD;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;font-size:.86rem;color:var(--ink)}
+  .prot-esc>header .sub{font-size:.72rem;color:var(--ink-2);font-weight:600;white-space:nowrap}
+  .prot-item{padding:12px 16px;border-bottom:1px solid #F0F4F8}
+  .prot-item:last-child{border-bottom:none}
+  .prot-item .pit-t{font-size:.83rem;color:var(--ink);margin-bottom:8px}
+  .prot-item .pit-r{font-size:.66rem;color:var(--ink-2);margin-top:3px}
+  .lik-row{display:flex;gap:6px;flex-wrap:wrap}
+  .lik-btn{padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:.78rem;cursor:pointer;color:var(--ink-2);min-width:36px;text-align:center;font-weight:600}
+  .lik-btn:hover{border-color:var(--orange)}
+  .lik-btn.sel{background:var(--orange-soft);border-color:var(--orange);color:#9B5500;font-weight:800}
+  .lik-btn[disabled]{opacity:.45;cursor:not-allowed}
+  .prot-obs{margin-top:9px;display:none}
+  .prot-obs.show{display:block}
+  .prot-obs .lbl{font-size:.68rem;color:var(--warn);font-weight:700;margin-bottom:4px}
+  .prot-obs textarea{width:100%;font-family:inherit;font-size:.8rem;padding:8px 10px;border:1.5px solid var(--warn);border-radius:8px;background:#FFFBF0;min-height:44px}
+  .prot-obs textarea.obs-req{border-color:var(--bad);background:rgba(197,48,48,.06)}
+  .prot-sub{padding:10px 16px;background:#F7FAFD;font-size:.8rem;text-align:right;font-weight:600;color:var(--ink)}
 
   .tline{position:relative;padding-left:24px}
   .tline::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
@@ -525,7 +551,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.6 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.7 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -615,6 +641,53 @@
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-ghost" onclick="guardarIDEA()">Guardar borrador</button>
           <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarLB()">✓ Firmar línea base</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: ESCALA IPPU-TEA (HCE-PA / HCE-PB) — M5 ============ -->
+    <section class="view" id="view-prot">
+      <div class="crumbs">Inicio › Escala IPPU-TEA › <b id="protCrumb">HCE-PA</b></div>
+      <h1 class="pagetitle" id="protTitle">HCE-PA · Protocolo A — Escala IPPU-TEA</h1>
+      <p class="pagedesc">Instrumento propio de IPPU para medir <b>progreso</b>: 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable/generalizado). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA (§5.2): nunca se comparan puntajes entre ambos instrumentos.</p>
+
+      <div class="selector">
+        <label for="selNNAProt"><b>NNA evaluado:</b></label>
+        <select id="selNNAProt" onchange="protSwitch(protKey)"></select>
+        <button class="prot-tab active" id="protTabPa" type="button" onclick="protSwitch('pa')">Protocolo A · julio</button>
+        <button class="prot-tab" id="protTabPb" type="button" onclick="protSwitch('pb')">Protocolo B · fin de año</button>
+        <span id="protEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
+      </div>
+      <div id="protAviso"></div>
+
+      <div id="protForm"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)" id="protDatosTitle">Datos del protocolo</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid">
+            <div class="field"><label>Fecha de aplicación <span class="req">*</span></label><input id="prot_fecha" type="date"></div>
+            <div class="field"><label>Semanas de asistencia efectiva</label><input id="prot_semanas" type="number" min="0" placeholder="Recomendado ≥ 15"><div class="hint">Recomendación §4.3: ≥ 15 semanas (advierte, no bloquea la firma).</div></div>
+          </div>
+          <div class="form-grid full">
+            <div class="field"><label>Síntesis — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="prot_sint1" placeholder="Síntesis cualitativa del período (técnico 1)."></textarea></div>
+            <div class="field"><label>Síntesis — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="prot_sint2" placeholder="Síntesis cualitativa del período (técnico 2)."></textarea></div>
+            <div class="field"><label>Otras valoraciones profesionales</label><textarea id="prot_otros" placeholder="Fonoaudiología, psicomotricidad u otras valoraciones (opcional)."></textarea></div>
+            <div class="field" id="protAjustesWrap" style="display:none"><label>Ajustes introducidos durante el año</label><textarea id="prot_ajustes" placeholder="Sólo Protocolo B: ajustes al plan de trabajo entre A y B."></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-summary">
+        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IPPU-TEA</div>
+        <div class="tot"><span id="protTotal">0</span><small> / 120</small></div></div>
+        <div class="nivel" id="protNivel">0 / 24 ítems</div>
+        <div class="spacer"></div>
+        <div class="nota">Escala de progreso (mayor = más progreso), <b>no comparable con el IDEA</b>. Para firmar: 24 ítems puntuados + fecha + observación en todo ítem 1/5 + síntesis de ambos técnicos. La firma bloquea el protocolo (corrección por addenda).</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarProt()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarProt()">✓ Firmar protocolo</button>
         </div>
       </div>
     </section>
@@ -1139,6 +1212,10 @@ function initFlujo(){
   f.ci.adjunto = "";
   Object.assign(f.lb, { dim:Array(12).fill(null), obs:Array(12).fill(""),      // HCE-LB / IDEA (M4)
     fecha:"", sesiones:"", sintesis:"", objetivos:"", migrado:{es:false, fechaOrigen:""} });
+  f.lb.kind = "idea";                                                          // guard de no-homologabilidad (M5)
+  [f.pa, f.pb].forEach(pr => Object.assign(pr, { kind:"protocolo",            // HCE-PA/PB · Escala IPPU-TEA (M5)
+    item:Array(24).fill(null), obs:Array(24).fill(""), fecha:"", semanas:"", sintTec1:"", sintTec2:"", otros:"" }));
+  f.pb.ajustes = ""; f.pb.deltas = null;                                       // deltas B−A, solo al firmar B
   return f;
 }
 
@@ -1172,6 +1249,15 @@ function validarIntegridad(nna, key){
     if(!lb.fecha)     return {ok:false, msg:"Falta la fecha de consenso de la línea base."};
     if(!lb.sintesis)  return {ok:false, msg:"Falta la síntesis clínica de la línea base."};
     if(!lb.objetivos) return {ok:false, msg:"Faltan los objetivos del período."};
+  }
+  if(key==="pa" || key==="pb"){                     // HCE-PA/PB · Escala IPPU-TEA (M5, §4.3)
+    const pr = nna.flujo[key]; const t = protTotales(pr.item);
+    const code = key==="pa" ? "Protocolo A" : "Protocolo B";
+    if(!t.completo) return {ok:false, msg:`Para firmar el ${code}: los 24 ítems deben estar puntuados (van ${t.count}).`};
+    const sinObs = pr.item.map((v,ix)=>((v===1||v===5) && !(pr.obs[ix]||"").trim()) ? ix+1 : null).filter(x=>x!=null);
+    if(sinObs.length) return {ok:false, msg:`Observación cualitativa obligatoria en todo ítem puntuado 1 o 5 — falta en: ítem ${sinObs.join(", ítem ")}.`};
+    if(!pr.fecha) return {ok:false, msg:`Falta la fecha de aplicación del ${code}.`};
+    if(!pr.sintTec1 || !pr.sintTec2) return {ok:false, msg:`Faltan las síntesis de ambos técnicos (${code}).`};
   }
   return {ok:true, msg:""};
 }
@@ -1208,8 +1294,10 @@ function confirmarFirma(id, key){
     logEvento(nna, {modulo:key, tipo:"firma", detalle:`Firma doble — ${TECNICOS.map(t=>t.profesional+" ("+t.rol+")").join(" · ")}.`});
   }
   f.firmado = true;
+  if(key==="pb") calcularDeltasPB(nna);   // M5.3: delta B−A automático al firmar B (§5.2)
   closeFlujoModal(); renderFlujo(id);
   if(key==="lb" && document.getElementById("view-idea") && document.getElementById("view-idea").classList.contains("active")) cargarIDEA(nna.id);
+  if((key==="pa"||key==="pb") && document.getElementById("view-prot") && document.getElementById("view-prot").classList.contains("active")) cargarProt(nna.id, key);
   if(typeof renderNNA==="function") renderNNA();
   toast(`${modInfo(key).full} firmado. Bloqueado para edición (corrección por addenda).`);
 }
@@ -1306,7 +1394,7 @@ function openAddendaModal(id, key){
 function verHceLog(id){
   const nna = NNA.find(n=>n.id===id);
   const evs = [...nna.hceLog].reverse();          // más reciente primero (orden de inserción)
-  const tag = {firma:["lt-firma","Firma"], excepcion:["lt-excepcion","Excepción"], addenda:["lt-addenda","Addenda"], edicion:["lt-edicion","Edición"]};
+  const tag = {firma:["lt-firma","Firma"], excepcion:["lt-excepcion","Excepción"], addenda:["lt-addenda","Addenda"], edicion:["lt-edicion","Edición"], alerta:["lt-alerta","Alerta"]};
   const body = evs.length
     ? `<table class="log-table"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Módulo</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>
         ${evs.map(e=>{ const [c,t]=tag[e.tipo]||["lt-edicion",e.tipo]; const mod=moduloLabel(e.modulo);
@@ -1352,6 +1440,39 @@ function verLB(id){
   openFlujoModal("HCE-LB — Línea base IDEA", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
 
+/* HCE-PA/PB · vista de detalle del protocolo IPPU-TEA firmado (M5.3). */
+function verProt(id, key){
+  const nna = NNA.find(n=>n.id===id); const pr = nna.flujo[key]; const t = protTotales(pr.item);
+  const inf = {pa:{code:"HCE-PA", tit:"Protocolo A (julio)"}, pb:{code:"HCE-PB", tit:"Protocolo B (fin de año)"}}[key];
+  const filas = IPPU_ESCALAS.map((n,i)=>`<div class="data-row"><dt>E${i+1} · ${n}</dt><dd>${t.esc[i]} / 30</dd></div>`).join("");
+  let deltasHtml = "";
+  if(key==="pb"){
+    if(pr.deltas){
+      const itT = deltaInterpreta(pr.deltas.total);
+      deltasHtml = `<div class="section-label">Delta B − A por escala (§5.2 · sólo entre protocolos IPPU-TEA)</div>` +
+        IPPU_ESCALAS.map((n,i)=>{ const d = pr.deltas.esc[i]; const it = deltaInterpreta(d);
+          return `<div class="data-row"><dt>E${i+1} · ${n}</dt><dd style="color:${it.c};font-weight:700">${fmtDelta(d)} · ${it.t}${d<=ALERTA_DELTA?" ⚠ alerta":""}</dd></div>`; }).join("") +
+        `<div class="data-row"><dt><b>Δ total</b></dt><dd style="color:${itT.c};font-weight:800">${fmtDelta(pr.deltas.total)} · ${itT.t}</dd></div>`;
+    } else {
+      deltasHtml = `<div class="review-note">Delta B−A no calculado: el Protocolo A no estaba firmado al firmar el B (constancia en HCE-LOG).</div>`;
+    }
+  }
+  const body = `<div class="section-label">${inf.tit} — Escala IPPU-TEA (firmado)</div>
+    <div class="data-row"><dt>Fecha de aplicación</dt><dd>${pr.fecha?fmtFecha(pr.fecha):"—"}</dd></div>
+    <div class="data-row"><dt>Semanas de asistencia</dt><dd>${pr.semanas||"—"}</dd></div>
+    ${filas}
+    <div class="data-row"><dt><b>Total IPPU-TEA</b></dt><dd><b>${t.total} / 120</b></dd></div>
+    ${deltasHtml}
+    <div class="section-label">Síntesis — Técnico 1 (Psicólogo/a)</div><p style="font-size:.83rem;color:var(--ink)">${pr.sintTec1||"—"}</p>
+    <div class="section-label">Síntesis — Técnico 2 (Maestro/a)</div><p style="font-size:.83rem;color:var(--ink)">${pr.sintTec2||"—"}</p>
+    ${pr.otros?`<div class="section-label">Otras valoraciones profesionales</div><p style="font-size:.83rem;color:var(--ink)">${pr.otros}</p>`:""}
+    ${key==="pb"&&pr.ajustes?`<div class="section-label">Ajustes introducidos durante el año</div><p style="font-size:.83rem;color:var(--ink)">${pr.ajustes}</p>`:""}
+    <div class="review-note">Escala de progreso propia de IPPU — <b>no homologable con el IDEA</b>: nunca se comparan puntajes ni se superponen perfiles entre ambos instrumentos (§5.2).</div>
+    ${pr.addendas.length?`<div class="section-label">Addendas</div>${pr.addendas.map(x=>`<div class="data-row"><dt>${fmtFecha(x.fecha)}</dt><dd style="text-align:left">${x.texto}</dd></div>`).join("")}`:""}`;
+  const foot = `<span class="left">${inf.code} · firmas: ${pr.firmas.map(x=>x.profesional).join(" · ")||"—"}</span><button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
+  openFlujoModal(`${inf.code} — Escala IPPU-TEA`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+
 /* --- Render del panel de flujo (se inyecta en el expediente) --------- */
 function estadoBadgeM(st){
   const m = {firmado:["mb-firmado","Firmado"], borrador:["mb-borrador","Borrador"], bloqueado:["mb-bloqueado","Bloqueado"]};
@@ -1375,13 +1496,16 @@ function flujoBodyHtml(nna){
       const fecha = f.firmas[0] ? f.firmas[0].fecha : "";
       meta = `Firmado ${fmtFecha(fecha)} · ${f.firmas.map(x=>x.profesional).join(" · ")}${f.addendas.length?` · ${f.addendas.length} addenda(s)`:""}`;
       const verBtn = m.key==="ci" ? `<button class="btn btn-ghost btn-mini" onclick="verCI(${nna.id})">Ver</button>`
-                   : m.key==="lb" ? `<button class="btn btn-ghost btn-mini" onclick="verLB(${nna.id})">Ver</button>` : "";
+                   : m.key==="lb" ? `<button class="btn btn-ghost btn-mini" onclick="verLB(${nna.id})">Ver</button>`
+                   : (m.key==="pa"||m.key==="pb") ? `<button class="btn btn-ghost btn-mini" onclick="verProt(${nna.id},'${m.key}')">Ver</button>` : "";
       actions = `${verBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
     } else if(st==="borrador"){
       meta = f.excepcion ? `Habilitado excepcionalmente — ${f.excepcion.motivo}` : "En borrador · editable";
       const editar = m.key==="lb"
         ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('idea', ${nna.id})">✎ Editar IDEA</button>`
-        : `<button class="btn btn-ghost btn-mini" disabled title="Editor real del módulo: M5–M6">✎ Editar</button>`;
+        : (m.key==="pa"||m.key==="pb")
+        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('${m.key}', ${nna.id})">✎ Editar Protocolo ${m.key==="pa"?"A":"B"}</button>`
+        : `<button class="btn btn-ghost btn-mini" disabled title="Editor del informe de cierre: M6">✎ Editar</button>`;
       actions = `${editar}<button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`;
     } else {
       meta = h.motivoBloqueo;
@@ -1439,6 +1563,7 @@ NNA.forEach(n=>{
     nna.flujo.ci.adjunto = "consentimiento_"+fecha.slice(0,4)+".pdf";
   }
   function setLB(nna, o){ if(nna) Object.assign(nna.flujo.lb, o); }   // payload IDEA / línea base (M4)
+  function setProt(nna, key, o){ if(nna) Object.assign(nna.flujo[key], o); }   // payload PA/PB · IPPU-TEA (M5)
 
   // Arquetipo 1 — Martín (102): ciclo completo firmado. IDEA = usuario demo 1 del prototipo (total 58/96).
   const a1 = byId(102);
@@ -1449,8 +1574,19 @@ NNA.forEach(n=>{
       objetivos:"1) Incrementar la atención conjunta con apoyo gestual. 2) Introducir un sistema aumentativo de comunicación acorde a la Escala de Comunicación. 3) Anticipación visual de las rutinas del grupo."});
     a1.flujo.lb.obs[1] = "Diferencia inicial entre evaluadores (6 vs 4); consenso en 6 por observaciones de la sesión grupal.";
     seedFirma(a1,"lb","2026-03-18",dobles("2026-03-18"),"Línea base IDEA firmada (firma doble) — total 58/96.");
-    seedFirma(a1,"pa","2026-07-07",dobles("2026-07-07"),"Protocolo A firmado (firma doble).");
-    seedFirma(a1,"pb","2026-12-11",dobles("2026-12-11"),"Protocolo B firmado (firma doble).");
+    setProt(a1,"pa",{item:[3,3,3,2,3,2, 3,3,2,3,2,2, 3,2,3,2,3,3, 2,3,2,2,2,2], fecha:"2026-07-07", semanas:16,
+      sintTec1:"Emergencia clara de atención conjunta con apoyo. El sistema aumentativo de comunicación se consolidó en sesión.",
+      sintTec2:"Mayor permanencia en actividades estructuradas. Barreras: transiciones y trabajo en pequeño grupo.",
+      otros:"Fonoaudiología: buena respuesta al apoyo gestual (ítems E2-4 y E2-6)."});
+    a1.flujo.pa.obs[0]="Contacto visual emergente en saludo y pedido, sólo con apoyo verbal del adulto.";
+    seedFirma(a1,"pa","2026-07-07",dobles("2026-07-07"),"Protocolo A firmado (firma doble) — total 60/120.");
+    setProt(a1,"pb",{item:[4,3,4,3,3,3, 4,4,3,4,3,3, 3,3,3,3,4,4, 3,4,3,3,3,2], fecha:"2026-12-11", semanas:17,
+      sintTec1:"Generalización parcial de la comunicación al hogar. Atención conjunta consistente en sesión.",
+      sintTec2:"Participa de rutinas grupales completas. Ajustes: apoyos visuales en todas las consignas.",
+      otros:"Psicomotricidad: mejora en regulación ante estímulos sonoros.",
+      ajustes:"Agenda visual individual (agosto); trabajo de a dos con un par tolerado (octubre).",
+      deltas:{esc:[4,6,4,5], total:19}});
+    seedFirma(a1,"pb","2026-12-11",dobles("2026-12-11"),"Protocolo B firmado (firma doble) — total 79/120, Δ total +19.");
     seedFirma(a1,"ic","2026-12-19",dobles("2026-12-19"),"Informe de Cierre Anual firmado (firma doble) + Recibí de la familia.");
   }
   // Arquetipo 2 — Sofía (101): CI y LB firmados; Protocolo A en borrador. IDEA = usuario demo 2 (total 31/96).
@@ -1461,6 +1597,7 @@ NNA.forEach(n=>{
       sintesis:"Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
       objetivos:"1) Habilidades conversacionales con pares (inicio y cierre). 2) Tolerancia a cambios de plan. 3) Identificación y expresión de emociones propias."});
     seedFirma(a2,"lb","2026-03-20",dobles("2026-03-20"),"Línea base IDEA firmada (firma doble) — total 31/96.");
+    setProt(a2,"pa",{item:[3,4,3,3,3,4, 4,4,3,3,3,3, 3,3,3,4,3,3, 4,3,3,4,3,3], fecha:"", semanas:16, sintTec1:"", sintTec2:"", otros:""});
   }
   // Arquetipo 3 — Joaquín (104): CI firmado; LB (IDEA) en BORRADOR con dimensiones NS. = usuario demo 3.
   seedCI(byId(104),"2026-06-10");
@@ -1513,6 +1650,82 @@ function lbTotales(dim){
     else if(typeof v==="number"){ esc[Math.floor(i/3)]+=v; total+=v; count++; }
   });
   return {esc, total, hayNS, count};
+}
+
+/* =============== ESCALA IPPU-TEA — Instrumento propio de IPPU (M5) ===============
+   4 escalas × 6 ítems = 24, Likert 1–5 de PROGRESO (lógica inversa al IDEA).
+   Citas: referencia documental, NO verificadas (bajo riesgo, §Precauciones del plan). */
+const IPPU_ESCALAS = ["Relación Social","Comunicación y Lenguaje","Anticipación y Flexibilidad","Simbolización"];
+const IPPU_ITEMS = [
+  {e:0,t:"Calidad y frecuencia del contacto visual intencional en intercambios con adultos y pares",r:"DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)"},
+  {e:0,t:"Iniciativa e interés espontáneo hacia otras personas; respuesta a la presencia social",r:"DSM-5-TR A1b · CIF d720 · Wing & Gould (1979)"},
+  {e:0,t:"Atención conjunta: seguimiento de la mirada y el gesto; señalización para compartir interés",r:"DSM-5-TR A1a · CIF d7105 · Mundy & Newell (2007)"},
+  {e:0,t:"Comprensión de emociones y estados mentales ajenos; tareas mentalistas según nivel evolutivo",r:"DSM-5-TR A1 · CIF d710 · Baron-Cohen et al. (1985)"},
+  {e:0,t:"Reciprocidad emocional: adecuación de la respuesta afectiva al contexto y al interlocutor",r:"DSM-5-TR A1b · CIF d7200 · ADOS-2 (Lord et al., 2012)"},
+  {e:0,t:"Iniciación y mantenimiento de intercambios sociales con pares en contexto grupal",r:"DSM-5-TR A1c · CIF d750 · PEERS (Laugeson, 2014)"},
+  {e:1,t:"Uso funcional del lenguaje oral o del sistema AAC (PECS, pictogramas) como comunicación intencional",r:"DSM-5-TR A1a · CIF d330 · Mirenda (2009)"},
+  {e:1,t:"Comprensión de consignas verbales simples y complejas en contexto natural y estructurado",r:"DSM-5-TR A1 · CIF d310 · Wetherby & Prizant (2002)"},
+  {e:1,t:"Reducción de patrones de lenguaje atípico (ecolalia, inversión pronominal) o incremento del uso funcional",r:"DSM-5-TR A1a · CIF d330 · Prizant & Duchan (1981)"},
+  {e:1,t:"Repertorio y uso funcional de gestos comunicativos: señalar, mostrar, dar, saludar con propósito social",r:"DSM-5-TR A1a · CIF d3350 · Capone & McGregor (2004)"},
+  {e:1,t:"Habilidades pragmáticas: ajuste al contexto, turno comunicativo, inicio y cierre de intercambios",r:"DSM-5-TR A1c · CIF d350 · Bishop (2011)"},
+  {e:1,t:"Integración de la comunicación no verbal (expresión facial, tono, postura) en el intercambio",r:"DSM-5-TR A1a · CIF d3350 · Wetherby & Prizant (2002)"},
+  {e:2,t:"Tolerancia a cambios en rutinas, horarios y entorno físico; adaptación ante imprevistos",r:"DSM-5-TR B2 · CIF d2303 · TEACCH (Mesibov et al., 2004)"},
+  {e:2,t:"Frecuencia e intensidad de comportamientos repetitivos que interfieren con el funcionamiento grupal",r:"DSM-5-TR B1 · CIF d230 · Y-BOCS adaptado (Scahill et al., 2006)"},
+  {e:2,t:"Flexibilización de rituales y estereotipias; posibilidad de interrupción con apoyo",r:"DSM-5-TR B1 · CIF d2303 · Turner (1999)"},
+  {e:2,t:"Flexibilidad cognitiva: cambiar de tarea, estrategia o solución ante demanda del entorno",r:"DSM-5-TR B2 · CIF d1641 · BRIEF (Gioia et al., 2000)"},
+  {e:2,t:"Regulación sensorial: reducción de reacciones desadaptativas ante estímulos del entorno grupal",r:"DSM-5-TR B4 · CIF b250 · Ayres (1979) · Marco et al. (2011)"},
+  {e:2,t:"Comprensión del sentido y propósito de las actividades; orientación hacia metas externas",r:"DSM-5-TR B2 · CIF d230 · TEACCH (Mesibov et al., 2004)"},
+  {e:3,t:"Emergencia o ampliación del juego funcional y simbólico: uso representacional de objetos, ficción",r:"DSM-5-TR A · CIF d8800 · Leslie (1987) · Jarrold et al. (1996)"},
+  {e:3,t:"Imitación intencional de acciones, gestos y secuencias demostradas por adultos y pares",r:"DSM-5-TR A1a · CIF d1550 · Meltzoff & Moore (1977)"},
+  {e:3,t:"Participación e integración en juegos sociales con pares: juegos grupales, roles y turnos",r:"DSM-5-TR A1c · CIF d8803 · Wolfberg (2009)"},
+  {e:3,t:"Construcción de narrativas: secuencias causales en el juego o el relato según nivel evolutivo",r:"DSM-5-TR A · CIF d1660 · Schuler & Wolfberg (2000)"},
+  {e:3,t:"Generalización de conductas imitadas a nuevos contextos, materiales y personas",r:"CIF d1551 · Stahmer (1995) · Lovaas (1987)"},
+  {e:3,t:"Comprensión y creación de significantes: gestos, símbolos, ficción y metáfora según nivel",r:"CIF d1559 · Rivière dim. 12 (Suspensión) · Tomasello (1995)"},
+];
+const LIKERT_LBL = {1:"Regresión significativa",2:"Sin cambio observable",3:"Progreso leve / Emergente",4:"Progreso moderado / Consistente",5:"Progreso notable / Generalizado"};
+
+/* Totales por escala (6–30) y total (24–120) desde item[24] (1–5 | null). */
+function protTotales(item){
+  const esc=[0,0,0,0]; let total=0, count=0;
+  (item||[]).forEach((v,ix)=>{ if(typeof v==="number"){ esc[IPPU_ITEMS[ix].e]+=v; total+=v; count++; } });
+  return {esc, total, count, completo: count===24};
+}
+/* REGLA DURA de no-homologabilidad (§5.2): sólo compara dos protocolos IPPU-TEA.
+   Si se le pasa la LB (IDEA, kind:'idea') o cualquier cosa que no sea protocolo, lanza error. */
+function calcularDelta(protoA, protoB){
+  if(!protoA || !protoB || protoA.kind!=="protocolo" || protoB.kind!=="protocolo")
+    throw new Error("calcularDelta: constructos no homologables — sólo compara dos protocolos IPPU-TEA (A y B), nunca contra el IDEA.");
+  const a=protTotales(protoA.item), b=protTotales(protoB.item);
+  return {esc:[0,1,2,3].map(i=>b.esc[i]-a.esc[i]), total:b.total-a.total};
+}
+/* Interpretación del delta por rango (§5.2). d ≤ −7 en una escala ⇒ alerta institucional. */
+function deltaInterpreta(d){
+  if(d>=13) return {t:"Progreso muy significativo", c:"var(--ok)"};
+  if(d>=7)  return {t:"Progreso significativo", c:"var(--ok)"};
+  if(d>=1)  return {t:"Progreso leve", c:"var(--ok)"};
+  if(d===0) return {t:"Sin cambio", c:"var(--ink-2)"};
+  if(d>=-6) return {t:"Regresión leve", c:"var(--warn)"};
+  return {t:"Regresión significativa", c:"var(--bad)"};
+}
+const fmtDelta = d => (d>0?"+":"")+d;
+const ALERTA_DELTA = -7;   // umbral de alerta institucional por escala
+
+/* M5.3 · Al firmar el Protocolo B: delta B−A automático + alerta institucional (§5.2).
+   Si el PA no está firmado (habilitación excepcional de PB), no hay delta — queda constancia. */
+function calcularDeltasPB(nna){
+  const fl = nna.flujo;
+  if(!fl.pa.firmado || !protTotales(fl.pa.item).completo){
+    fl.pb.deltas = null;
+    logEvento(nna, {modulo:"pb", tipo:"edicion", detalle:"Protocolo B firmado sin Protocolo A firmado — delta B−A no calculable."});
+    return;
+  }
+  fl.pb.deltas = calcularDelta(fl.pa, fl.pb);
+  const alertas = fl.pb.deltas.esc.map((d,i)=> d<=ALERTA_DELTA ? i : null).filter(x=>x!=null);
+  if(alertas.length){
+    const det = alertas.map(i=>`E${i+1} ${IPPU_ESCALAS[i]} (Δ ${fmtDelta(fl.pb.deltas.esc[i])})`).join(" · ");
+    logEvento(nna, {modulo:"pb", tipo:"alerta", detalle:`Alerta institucional (§5.2): regresión significativa — ${det}. Requiere revisión del equipo técnico.`});
+    setTimeout(()=>toast(`⚠ Alerta institucional: Δ ≤ ${ALERTA_DELTA} en ${alertas.map(i=>"E"+(i+1)).join(", ")} — registrada en HCE-LOG.`), 3400);
+  }
 }
 
 /* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997 ===============
@@ -1773,9 +1986,12 @@ function toggleActivo(id){
 }
 
 function renderNNA(){
-  // Dropdown de NNA (todos) para las evaluaciones IDEA
-  selNNA.innerHTML = NNA.map(p=>
+  // Dropdown de NNA (todos) para las evaluaciones IDEA e IPPU-TEA (PA/PB)
+  const optsNNA = NNA.map(p=>
     `<option value="${p.id}">#${p.id} · ${p.nombre} ${p.apellido} · Grupo ${p.grupo}</option>`).join("");
+  selNNA.innerHTML = optsNNA;
+  const selProt = document.getElementById("selNNAProt");
+  if(selProt){ const prev = selProt.value; selProt.innerHTML = optsNNA; if(prev) selProt.value = prev; }
   // KPIs dinámicos (frecuencia IDEA anual)
   const activos    = NNA.filter(p=>p.activo).length;
   const conIdea    = NNA.filter(p=>p.activo && tieneLBFirmada(p)).length;
@@ -1822,6 +2038,9 @@ function irAEval(view, id){
   if(view==="idea"){
     go("idea");
     cargarIDEA(id);
+  } else if(view==="pa" || view==="pb"){
+    go("prot");
+    cargarProt(id, view);
   } else if(view==="areas"){
     go("areas"); populateEvalSelects();
     const s=document.getElementById("selNNAArea"); if(s) s.value=String(id);
@@ -2295,7 +2514,10 @@ function abrirExpediente(id){
       <span class="eval-bar-lbl">Cargar evaluación:</span>
       <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Editar HCE-00</button>
       <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
-      <button class="btn btn-ghost" onclick="irAEval('intermedia', ${p.id})">Eval. intermedia</button>
+      <button class="btn btn-ghost" onclick="irAEval('pa', ${p.id})">Protocolo A (IPPU-TEA)</button>
+      <button class="btn btn-ghost" onclick="irAEval('pb', ${p.id})">Protocolo B (IPPU-TEA)</button>
+      <!-- M5.3: "Eval. intermedia" (Likert 3 ítems/dim) reemplazada por la Escala IPPU-TEA (PA/PB);
+           el código de la vista se conserva sin exponer, como áreas/general. -->
       <!-- M0 (2026-07-15): "Eval. por áreas" y "Eval. general" descartadas como módulos activos
            (decisión §0.2 del plan / §10 Documento Técnico IPPU). Código y vistas conservados,
            solo se dejan de exponer; se resuelven como archivo histórico de solo lectura en M7 (HCE-DOC). -->
@@ -2545,6 +2767,174 @@ function ideaSetReadonly(ro){
   const f=document.querySelector('.idea-summary button[onclick*="firmarLB"]');
   if(g) g.style.display = ro?"none":"";
   if(f) f.style.display = ro?"none":"";
+}
+
+/* ===================== EDITOR ESCALA IPPU-TEA · HCE-PA/PB (M5.2) =====================
+   Vista única parametrizada por protocolo (protKey: 'pa' | 'pb'), mismo patrón que el
+   editor IDEA: estado de trabajo en memoria + guardar/firmar vía el motor de flujo (M1). */
+let protKey = "pa";
+const protScores = Array(24).fill(null);
+const PROT_INFO = {
+  pa:{code:"HCE-PA", tit:"Protocolo A — aplicación de julio"},
+  pb:{code:"HCE-PB", tit:"Protocolo B — fin de año"}
+};
+
+(function buildProtForm(){
+  const cont = document.getElementById("protForm");
+  cont.innerHTML = IPPU_ESCALAS.map((nom,e)=>{
+    const items = IPPU_ITEMS.map((it,ix)=>({...it,ix})).filter(it=>it.e===e);
+    return `<div class="prot-esc">
+      <header><span>E${e+1} · ${nom}</span><span class="sub" id="protSub${e}">Ítems ${e*6+1}–${e*6+6} — 0 / 30</span></header>
+      ${items.map(it=>`
+        <div class="prot-item">
+          <div class="pit-t"><b>Ítem ${it.ix+1}.</b> ${it.t}</div>
+          <div class="lik-row" data-ix="${it.ix}">
+            ${[1,2,3,4,5].map(v=>`<button type="button" class="lik-btn" data-v="${v}" title="${LIKERT_LBL[v]}">${v}${(v===1||v===5)?" — "+LIKERT_LBL[v]:""}</button>`).join("")}
+          </div>
+          <div class="prot-obs" id="protObsWrap${it.ix}">
+            <div class="lbl" id="protObsLbl${it.ix}">Observación cualitativa</div>
+            <textarea id="protObs${it.ix}" placeholder="Fundamentación de la puntuación (obligatoria si el ítem vale 1 o 5)."></textarea>
+          </div>
+          <div class="pit-r">Ref.: ${it.r} · <i>cita documental no verificada</i></div>
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+})();
+
+/* Observación cualitativa (§5.2): visible si el ítem vale 1/5 (obligatoria) o si ya tiene texto. */
+function marcarObsProt(ix){
+  const wrap = document.getElementById("protObsWrap"+ix);
+  const ta = document.getElementById("protObs"+ix);
+  const lbl = document.getElementById("protObsLbl"+ix);
+  if(!wrap || !ta || !lbl) return;
+  const req = protScores[ix]===1 || protScores[ix]===5;
+  wrap.classList.toggle("show", req || !!ta.value.trim());
+  const falta = req && !ta.value.trim();
+  ta.classList.toggle("obs-req", falta);
+  lbl.textContent = req ? `Observación cualitativa OBLIGATORIA (ítem puntuado ${protScores[ix]})` : "Observación cualitativa (opcional)";
+  lbl.style.color = falta ? "var(--bad)" : "";
+}
+function updateProtTotales(){
+  const t = protTotales(protScores);
+  IPPU_ESCALAS.forEach((_,e)=>{
+    const s = document.getElementById("protSub"+e);
+    if(s) s.textContent = `Ítems ${e*6+1}–${e*6+6} — ${t.esc[e]} / 30`;
+  });
+  document.getElementById("protTotal").textContent = t.total;
+  document.getElementById("protNivel").textContent = `${t.count} / 24 ítems${t.completo?" ✓":""}`;
+}
+
+document.getElementById("protForm").addEventListener("click", ev=>{
+  const b = ev.target.closest(".lik-row .lik-btn"); if(!b || b.disabled) return;
+  const grp = b.parentElement, ix = +grp.dataset.ix;
+  grp.querySelectorAll(".lik-btn").forEach(x=>x.classList.remove("sel"));
+  b.classList.add("sel");
+  protScores[ix] = +b.dataset.v;
+  marcarObsProt(ix);
+  updateProtTotales();
+});
+document.getElementById("protForm").addEventListener("input", ev=>{
+  const t = ev.target.closest(".prot-obs textarea"); if(!t) return;
+  marcarObsProt(+t.id.replace("protObs",""));
+});
+
+function resetProt(){
+  protScores.fill(null);
+  document.querySelectorAll("#protForm .lik-btn").forEach(b=>b.classList.remove("sel"));
+  document.querySelectorAll("#protForm .prot-obs").forEach(w=>w.classList.remove("show"));
+  document.querySelectorAll("#protForm .prot-obs textarea").forEach(t=>{ t.value=""; t.classList.remove("obs-req"); });
+  ["prot_fecha","prot_semanas","prot_sint1","prot_sint2","prot_otros","prot_ajustes"].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.value=""; });
+  document.getElementById("protAviso").innerHTML = "";
+  const badge = document.getElementById("protEstadoBadge"); if(badge) badge.innerHTML = "";
+  updateProtTotales();
+}
+
+/* Cambia de protocolo (tabs A|B) manteniendo el NNA seleccionado. */
+function protSwitch(key){
+  const id = parseInt(document.getElementById("selNNAProt").value);
+  if(!isNaN(id)) cargarProt(id, key);
+}
+
+function cargarProt(id, key){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  protKey = key || "pa";
+  const s = document.getElementById("selNNAProt"); if(s) s.value = String(id);
+  document.getElementById("protTabPa").classList.toggle("active", protKey==="pa");
+  document.getElementById("protTabPb").classList.toggle("active", protKey==="pb");
+  const inf = PROT_INFO[protKey];
+  document.getElementById("protCrumb").textContent = inf.code;
+  document.getElementById("protTitle").textContent = `${inf.code} · ${inf.tit} — Escala IPPU-TEA`;
+  document.getElementById("protDatosTitle").textContent = `Datos del ${protKey==="pa"?"Protocolo A":"Protocolo B"} (${inf.code})`;
+  document.getElementById("protAjustesWrap").style.display = protKey==="pb" ? "" : "none";
+  resetProt();
+  const pr = p.flujo[protKey];
+  (pr.item||[]).forEach((v,ix)=>{
+    if(typeof v!=="number") return;
+    const btn = document.querySelector(`#protForm .lik-row[data-ix="${ix}"] .lik-btn[data-v="${v}"]`);
+    if(btn) btn.classList.add("sel");
+    protScores[ix] = v;
+  });
+  (pr.obs||[]).forEach((o,ix)=>{ const el=document.getElementById("protObs"+ix); if(el) el.value = o||""; });
+  const set = (fid,val)=>{ const el=document.getElementById(fid); if(el) el.value = (val==null)?"":val; };
+  set("prot_fecha", pr.fecha); set("prot_semanas", pr.semanas);
+  set("prot_sint1", pr.sintTec1); set("prot_sint2", pr.sintTec2); set("prot_otros", pr.otros);
+  if(protKey==="pb") set("prot_ajustes", pr.ajustes);
+  protScores.forEach((_,ix)=>marcarObsProt(ix));
+  updateProtTotales();
+  const st = estadoModulo(p, protKey);
+  const badge = document.getElementById("protEstadoBadge"); if(badge) badge.innerHTML = estadoBadgeM(st);
+  if(st==="bloqueado"){
+    const h = moduloHabilitado(p, protKey);
+    document.getElementById("protAviso").innerHTML =
+      `<div class="review-note" style="margin-bottom:14px">🔒 <b>${inf.code} bloqueado:</b> ${h.motivoBloqueo}${h.exceptuable?' La habilitación excepcional se gestiona desde el panel "Flujo de módulos" del expediente.':""}</div>`;
+  }
+  protSetReadonly(st!=="borrador");
+}
+
+function protSetReadonly(ro){
+  document.querySelectorAll("#protForm button").forEach(b=>{ b.disabled = ro; });
+  document.querySelectorAll("#protForm .prot-obs textarea").forEach(t=>{ t.disabled = ro; });
+  ["prot_fecha","prot_semanas","prot_sint1","prot_sint2","prot_otros","prot_ajustes"].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.disabled = ro; });
+  const g = document.querySelector('#view-prot .idea-summary button[onclick*="guardarProt"]');
+  const f = document.querySelector('#view-prot .idea-summary button[onclick*="firmarProt"]');
+  if(g) g.style.display = ro?"none":"";
+  if(f) f.style.display = ro?"none":"";
+}
+
+/* El form escribe en flujo.pa / flujo.pb (borrador o previo a firmar). */
+function guardarProtDesdeForm(p){
+  const pr = p.flujo[protKey];
+  pr.item = protScores.slice();
+  pr.obs = protScores.map((_,ix)=>{ const el=document.getElementById("protObs"+ix); return el?el.value.trim():""; });
+  pr.fecha = document.getElementById("prot_fecha").value || "";
+  pr.semanas = document.getElementById("prot_semanas").value || "";
+  pr.sintTec1 = document.getElementById("prot_sint1").value.trim();
+  pr.sintTec2 = document.getElementById("prot_sint2").value.trim();
+  pr.otros = document.getElementById("prot_otros").value.trim();
+  if(protKey==="pb") pr.ajustes = document.getElementById("prot_ajustes").value.trim();
+}
+function guardarProt(){
+  const id = parseInt(document.getElementById("selNNAProt").value);
+  const p = NNA.find(n=>n.id===id);
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  const st = estadoModulo(p, protKey);
+  if(st==="firmado"){ toast("El protocolo está firmado — corrección por addenda."); return; }
+  if(st==="bloqueado"){ toast(moduloHabilitado(p, protKey).motivoBloqueo); return; }
+  guardarProtDesdeForm(p);
+  const badge = document.getElementById("protEstadoBadge"); if(badge) badge.innerHTML = estadoBadgeM(estadoModulo(p, protKey));
+  toast(`${PROT_INFO[protKey].code} guardado (borrador) — ${p.nombre}`);
+}
+function firmarProt(){
+  const id = parseInt(document.getElementById("selNNAProt").value);
+  const p = NNA.find(n=>n.id===id);
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  if(p.flujo[protKey].firmado){ toast("El protocolo ya está firmado."); return; }
+  const st = estadoModulo(p, protKey);
+  if(st==="bloqueado"){ toast(moduloHabilitado(p, protKey).motivoBloqueo); return; }
+  guardarProtDesdeForm(p);          // persistir el form antes de validar/firmar
+  const sem = parseInt(p.flujo[protKey].semanas);
+  if(!(sem>=15)) toast("Advertencia (§4.3): se recomiendan ≥ 15 semanas de asistencia efectiva — no bloquea la firma.");
+  firmarModulo(id, protKey);        // el motor (M1) valida integridad §4.3 y abre el modal de firma doble
 }
 
 // cerrar modal al hacer clic en el fondo
