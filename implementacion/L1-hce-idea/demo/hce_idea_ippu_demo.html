@@ -488,6 +488,25 @@
   .eval-bar .btn-ghost{border:1px solid var(--line)}
 
   /* ============ IMPRESIÓN (informe → PDF) ============ */
+  /* M6 · HCE-IC — Informe de Cierre Anual: tabla comparativa, radares y membrete */
+  .comp-table{width:100%;border-collapse:collapse;font-size:.83rem}
+  .comp-table th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+  .comp-table td{padding:8px 10px;border-bottom:1px solid var(--line)}
+  .comp-table th.num,.comp-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .comp-table tr:last-child td{border-bottom:none}
+  .ic-radars{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:10px 0 4px}
+  .ic-radars .rwrap{text-align:center}
+  .ic-radars .rcap{font-size:.74rem;font-weight:700;color:var(--ink-2);margin-bottom:2px}
+  .ic-legend{display:flex;gap:14px;justify-content:center;font-size:.72rem;color:var(--ink-2);margin-top:2px}
+  .ic-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .membrete{border-bottom:3px solid var(--teal);padding:2px 0 12px;margin-bottom:14px}
+  .membrete h2{font-size:1.1rem}
+  .membrete .sub{font-size:.74rem;color:var(--ink-2)}
+  .membrete h3{margin-top:8px;font-size:.95rem}
+  .firmas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .firmas-grid .flin{border-bottom:1.5px solid var(--ink);height:38px}
+  .firmas-grid label{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)}
+  .firmas-grid .fnom{font-size:.76rem;color:var(--ink-2);margin-top:4px}
   @media print{
     .topbar,.sidebar,.demo-tag,.toast,.no-print,.login-screen,.crumbs,.eval-bar{display:none!important}
     .layout{display:block}
@@ -551,7 +570,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.7 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.8 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -688,6 +707,54 @@
         <div style="display:flex;flex-direction:column;gap:8px">
           <button class="btn btn-ghost" onclick="guardarProt()">Guardar borrador</button>
           <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarProt()">✓ Firmar protocolo</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: HCE-IC · INFORME DE CIERRE ANUAL (M6) ============ -->
+    <section class="view" id="view-ic">
+      <div class="crumbs">Inicio › Informe de Cierre Anual › <b>HCE-IC</b></div>
+      <h1 class="pagetitle">HCE-IC · Informe de Cierre Anual</h1>
+      <p class="pagedesc">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. La tabla comparativa y los radares se <b>autogeneran desde los datos firmados</b>. El PDF exportado con membrete es <b>el único informe válido</b>: no se elaboran versiones alternativas para organismos supervisores (§5.3).</p>
+
+      <div class="selector">
+        <label for="selNNAIC"><b>NNA:</b></label>
+        <select id="selNNAIC" onchange="cargarIC(parseInt(this.value))"></select>
+        <span id="icEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Elaboración sugerida: en los días posteriores al cierre del Protocolo B</span>
+      </div>
+      <div id="icAviso"></div>
+
+      <div id="icAuto"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Síntesis cualitativa por escala (extensión sugerida: ≈100 palabras por escala)</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid full" id="icEscFields"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoraciones anuales, recomendaciones y orientaciones</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid full">
+            <div class="field"><label>Valoración anual — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="ic_val1" placeholder="Valoración anual del técnico responsable 1."></textarea></div>
+            <div class="field"><label>Valoración anual — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="ic_val2" placeholder="Valoración anual del técnico responsable 2."></textarea></div>
+            <div class="field"><label>Recomendaciones y ajustes de tratamiento <span class="req">*</span></label><textarea id="ic_recom" placeholder="Recomendaciones para el próximo período."></textarea></div>
+            <div class="field"><label>Orientaciones concretas a la familia <span class="req">*</span></label><textarea id="ic_orient" placeholder="Orientaciones prácticas para el hogar."></textarea></div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Fecha del informe <span class="req">*</span></label><input id="ic_fecha" type="date"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-summary">
+        <div class="nota">Requiere LB, PA y PB firmados (o habilitación excepcional). Para firmar: síntesis de las 4 escalas + valoraciones de ambos técnicos + recomendaciones + orientaciones + fecha (§4.3). La firma (doble) bloquea el informe; luego se registra el «Recibí» de la familia y se exporta el PDF con membrete.</div>
+        <div class="spacer"></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarIC()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarIC()">✓ Firmar Informe de Cierre</button>
         </div>
       </div>
     </section>
@@ -1216,6 +1283,8 @@ function initFlujo(){
   [f.pa, f.pb].forEach(pr => Object.assign(pr, { kind:"protocolo",            // HCE-PA/PB · Escala IPPU-TEA (M5)
     item:Array(24).fill(null), obs:Array(24).fill(""), fecha:"", semanas:"", sintTec1:"", sintTec2:"", otros:"" }));
   f.pb.ajustes = ""; f.pb.deltas = null;                                       // deltas B−A, solo al firmar B
+  Object.assign(f.ic, { fecha:"", sintEsc:["","","",""], valTec1:"", valTec2:"", // HCE-IC · Informe de Cierre Anual (M6)
+    recomendaciones:"", orientaciones:"", recibi:null });                        // recibi = {firmante, fecha} tras la firma
   return f;
 }
 
@@ -1259,6 +1328,15 @@ function validarIntegridad(nna, key){
     if(!pr.fecha) return {ok:false, msg:`Falta la fecha de aplicación del ${code}.`};
     if(!pr.sintTec1 || !pr.sintTec2) return {ok:false, msg:`Faltan las síntesis de ambos técnicos (${code}).`};
   }
+  if(key==="ic"){                                   // HCE-IC · Informe de Cierre Anual (M6, §4.3)
+    const ic = nna.flujo.ic;
+    const faltan = ic.sintEsc.map((t,i)=>(t||"").trim()?null:`E${i+1}`).filter(x=>x);
+    if(faltan.length)       return {ok:false, msg:`Falta la síntesis cualitativa por escala: ${faltan.join(", ")}.`};
+    if(!ic.valTec1 || !ic.valTec2) return {ok:false, msg:"Faltan las valoraciones anuales de ambos técnicos."};
+    if(!ic.recomendaciones) return {ok:false, msg:"Faltan las recomendaciones y ajustes de tratamiento."};
+    if(!ic.orientaciones)   return {ok:false, msg:"Faltan las orientaciones concretas a la familia."};
+    if(!ic.fecha)           return {ok:false, msg:"Falta la fecha del informe."};
+  }
   return {ok:true, msg:""};
 }
 
@@ -1298,6 +1376,7 @@ function confirmarFirma(id, key){
   closeFlujoModal(); renderFlujo(id);
   if(key==="lb" && document.getElementById("view-idea") && document.getElementById("view-idea").classList.contains("active")) cargarIDEA(nna.id);
   if((key==="pa"||key==="pb") && document.getElementById("view-prot") && document.getElementById("view-prot").classList.contains("active")) cargarProt(nna.id, key);
+  if(key==="ic" && document.getElementById("view-ic") && document.getElementById("view-ic").classList.contains("active")) cargarIC(nna.id);
   if(typeof renderNNA==="function") renderNNA();
   toast(`${modInfo(key).full} firmado. Bloqueado para edición (corrección por addenda).`);
 }
@@ -1495,17 +1574,22 @@ function flujoBodyHtml(nna){
     if(st==="firmado"){
       const fecha = f.firmas[0] ? f.firmas[0].fecha : "";
       meta = `Firmado ${fmtFecha(fecha)} · ${f.firmas.map(x=>x.profesional).join(" · ")}${f.addendas.length?` · ${f.addendas.length} addenda(s)`:""}`;
+      if(m.key==="ic") meta += f.recibi ? ` · Recibí de la familia: ${fmtFecha(f.recibi.fecha)}` : ` · Recibí de la familia PENDIENTE`;
       const verBtn = m.key==="ci" ? `<button class="btn btn-ghost btn-mini" onclick="verCI(${nna.id})">Ver</button>`
                    : m.key==="lb" ? `<button class="btn btn-ghost btn-mini" onclick="verLB(${nna.id})">Ver</button>`
-                   : (m.key==="pa"||m.key==="pb") ? `<button class="btn btn-ghost btn-mini" onclick="verProt(${nna.id},'${m.key}')">Ver</button>` : "";
-      actions = `${verBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
+                   : (m.key==="pa"||m.key==="pb") ? `<button class="btn btn-ghost btn-mini" onclick="verProt(${nna.id},'${m.key}')">Ver</button>`
+                   : m.key==="ic" ? `<button class="btn btn-ghost btn-mini" onclick="generarInforme(${nna.id})">Ver informe</button>` : "";
+      const recibiBtn = (m.key==="ic" && !f.recibi) ? `<button class="btn btn-ghost btn-mini" style="color:var(--warn)" onclick="openRecibiModal(${nna.id})">✍ Recibí</button>` : "";
+      actions = `${verBtn}${recibiBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
     } else if(st==="borrador"){
       meta = f.excepcion ? `Habilitado excepcionalmente — ${f.excepcion.motivo}` : "En borrador · editable";
       const editar = m.key==="lb"
         ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('idea', ${nna.id})">✎ Editar IDEA</button>`
         : (m.key==="pa"||m.key==="pb")
         ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('${m.key}', ${nna.id})">✎ Editar Protocolo ${m.key==="pa"?"A":"B"}</button>`
-        : `<button class="btn btn-ghost btn-mini" disabled title="Editor del informe de cierre: M6">✎ Editar</button>`;
+        : m.key==="ic"
+        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('ic', ${nna.id})">✎ Editar Informe</button>`
+        : `<button class="btn btn-ghost btn-mini" disabled title="El CI se completa al firmar">✎ Editar</button>`;
       actions = `${editar}<button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`;
     } else {
       meta = h.motivoBloqueo;
@@ -1564,6 +1648,7 @@ NNA.forEach(n=>{
   }
   function setLB(nna, o){ if(nna) Object.assign(nna.flujo.lb, o); }   // payload IDEA / línea base (M4)
   function setProt(nna, key, o){ if(nna) Object.assign(nna.flujo[key], o); }   // payload PA/PB · IPPU-TEA (M5)
+  function setIC(nna, o){ if(nna) Object.assign(nna.flujo.ic, o); }            // payload IC · Informe de Cierre (M6)
 
   // Arquetipo 1 — Martín (102): ciclo completo firmado. IDEA = usuario demo 1 del prototipo (total 58/96).
   const a1 = byId(102);
@@ -1587,6 +1672,17 @@ NNA.forEach(n=>{
       ajustes:"Agenda visual individual (agosto); trabajo de a dos con un par tolerado (octubre).",
       deltas:{esc:[4,6,4,5], total:19}});
     seedFirma(a1,"pb","2026-12-11",dobles("2026-12-11"),"Protocolo B firmado (firma doble) — total 79/120, Δ total +19.");
+    setIC(a1, {fecha:"2026-12-19",
+      sintEsc:[
+        "Progreso moderado y sostenido en la relación social (Δ +4). La atención conjunta pasó de emergente a consistente en contextos estructurados. La interacción espontánea con pares sigue siendo el principal desafío para el próximo año.",
+        "Área de mayor progreso del año (Δ +6). El sistema aumentativo de comunicación se consolidó y comienza a generalizarse al hogar (ítems 7 y 10). Se recomienda ampliar su alcance funcional el próximo año.",
+        "Progreso moderado (Δ +4). La agenda visual individual redujo significativamente las conductas de oposición ante las transiciones.",
+        "Progreso leve (Δ +5 sobre una base muy descendida). La imitación mejoró de forma notable; el juego simbólico permanece incipiente."],
+      valTec1:"Año de progreso clínicamente significativo, concentrado en comunicación funcional y anticipación. Se recomienda continuidad en el mismo grupo de referencia con intensificación del trabajo entre pares.",
+      valTec2:"La incorporación de apoyos visuales sistemáticos fue el ajuste de mayor impacto pedagógico. Se sugiere sostenerlos y comenzar un retiro gradual en las rutinas dominadas.",
+      recomendaciones:"1) Profundizar el uso funcional del sistema aumentativo de comunicación (E2). 2) Ampliar las oportunidades de juego compartido con pares (E4). 3) Retiro gradual de apoyos en rutinas consolidadas (E3). 4) Mantener la coordinación con la escuela y el acompañante.",
+      orientaciones:"Sostener la agenda visual en el hogar. Ofrecer oportunidades de pedido con el sistema de comunicación que utiliza, en situaciones cotidianas (merienda, juego). Anticipar verbal y visualmente los cambios de rutina del fin de semana.",
+      recibi:{firmante:a1.referente||"Familia", fecha:"2026-12-19"}});
     seedFirma(a1,"ic","2026-12-19",dobles("2026-12-19"),"Informe de Cierre Anual firmado (firma doble) + Recibí de la familia.");
   }
   // Arquetipo 2 — Sofía (101): CI y LB firmados; Protocolo A en borrador. IDEA = usuario demo 2 (total 31/96).
@@ -1992,6 +2088,8 @@ function renderNNA(){
   selNNA.innerHTML = optsNNA;
   const selProt = document.getElementById("selNNAProt");
   if(selProt){ const prev = selProt.value; selProt.innerHTML = optsNNA; if(prev) selProt.value = prev; }
+  const selIC = document.getElementById("selNNAIC");
+  if(selIC){ const prev = selIC.value; selIC.innerHTML = optsNNA; if(prev) selIC.value = prev; }
   // KPIs dinámicos (frecuencia IDEA anual)
   const activos    = NNA.filter(p=>p.activo).length;
   const conIdea    = NNA.filter(p=>p.activo && tieneLBFirmada(p)).length;
@@ -2041,6 +2139,9 @@ function irAEval(view, id){
   } else if(view==="pa" || view==="pb"){
     go("prot");
     cargarProt(id, view);
+  } else if(view==="ic"){
+    go("ic");
+    cargarIC(id);
   } else if(view==="areas"){
     go("areas"); populateEvalSelects();
     const s=document.getElementById("selNNAArea"); if(s) s.value=String(id);
@@ -2502,7 +2603,7 @@ function abrirExpediente(id){
       <div class="spacer"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-primary" onclick="openEditar(${p.id})">✎ Editar datos</button>
-        <button class="btn btn-ghost" onclick="generarInforme(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">🖨 Generar informe</button>
+        <button class="btn btn-ghost" onclick="generarInforme(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">🖨 Informe de Cierre Anual</button>
         <button class="btn btn-ghost" onclick="toggleActivo(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
         <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
       </div>
@@ -2516,6 +2617,7 @@ function abrirExpediente(id){
       <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
       <button class="btn btn-ghost" onclick="irAEval('pa', ${p.id})">Protocolo A (IPPU-TEA)</button>
       <button class="btn btn-ghost" onclick="irAEval('pb', ${p.id})">Protocolo B (IPPU-TEA)</button>
+      <button class="btn btn-ghost" onclick="irAEval('ic', ${p.id})">Informe de Cierre (IC)</button>
       <!-- M5.3: "Eval. intermedia" (Likert 3 ítems/dim) reemplazada por la Escala IPPU-TEA (PA/PB);
            el código de la vista se conserva sin exponer, como áreas/general. -->
       <!-- M0 (2026-07-15): "Eval. por áreas" y "Eval. general" descartadas como módulos activos
@@ -2573,7 +2675,7 @@ function abrirExpediente(id){
               return `<div class="data-row"><dt>Línea base</dt><dd>${estadoBadgeM(est)}</dd></div>`;
             })()}
             ${pendienteIdea(p) ? `<div style="margin-top:8px;font-size:.76rem;color:var(--warn);font-weight:700">● Sin línea base IDEA firmada</div>` : ""}
-            <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="generarInforme(${p.id})">🖨 Generar informe descargable</button>
+            <button class="btn btn-ghost" style="margin-top:12px;width:100%" onclick="generarInforme(${p.id})">🖨 Informe de Cierre Anual (HCE-IC)</button>
           </div>
         </div>
         <div class="info-card">
@@ -2606,91 +2708,99 @@ function evaluarDesdeExp(id){
   resetIDEA();
 }
 
-/* ===================== INFORME AUTOMÁTICO POR NNA (descargable) ===================== */
+/* ============ HCE-IC · INFORME DE CIERRE ANUAL — imprimible (M6) ============
+   "El único informe válido" (§5.3): el PDF con membrete se genera EXCLUSIVAMENTE
+   desde el HCE-IC firmado. Sin IC firmado no se elaboran versiones alternativas —
+   se muestra el estado del flujo y el camino para completarlo. */
 function generarInforme(id){
   const p = NNA.find(n=>n.id===id); if(!p) return;
   const cont = document.getElementById("informeContent");
-  const lb = p.flujo.lb; const tLB = lbTotales(lb.dim);
-  const lbFirmada = lb.firmado && !tLB.hayNS && tLB.count===12;
-  const scored = lbFirmada ? [{score:tLB.total, total:96, fecha:lb.fecha, tipo:"idea"}] : [];
+  const ic = p.flujo.ic;
   const hoy = new Date();
   const fechaGen = `${String(hoy.getDate()).padStart(2,"0")}/${String(hoy.getMonth()+1).padStart(2,"0")}/${hoy.getFullYear()}`;
 
-  const guia = `
-    <div class="card" style="margin-top:18px">
-      <div class="cardhead"><h2>Cómo interpretar el puntaje IDEA</h2></div>
-      <div class="cardbody">
-        <p style="font-size:.85rem;margin-bottom:12px">El Inventario del Espectro Autista (IDEA, Á. Rivière, 1997) evalúa <b>12 dimensiones</b> agrupadas en <b>4 escalas</b>. Cada dimensión puntúa de <b>0</b> (sin trastorno) a <b>8</b> (afectación severa); el total va de <b>0 a 96</b>. <b>Un puntaje más bajo indica menor afectación</b> (mejor evolución).</p>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-low">0 – 32</span> Espectro <b>leve</b> — menor afectación</div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-mid">33 – 64</span> Espectro <b>moderado</b></div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:.84rem"><span class="score-chip s-high">65 – 96</span> Espectro <b>severo</b> — mayor afectación</div>
-        </div>
-        <p style="font-size:.78rem;color:var(--ink-2)">Escalas: <b>A</b> Relación social · <b>B</b> Comunicación y lenguaje · <b>C</b> Anticipación / flexibilidad · <b>D</b> Simbolización. La banda es orientativa para el equipo técnico; <b>el juicio clínico del profesional prevalece siempre sobre el puntaje</b>.</p>
-      </div>
-    </div>`;
-
-  if(!scored.length){
+  if(!ic.firmado){
+    const st = estadoModulo(p,"ic");
     cont.innerHTML = `
       <div class="inf-banner">
-        <div><h2>Informe de evaluación — ${p.nombre} ${p.apellido}</h2>
-          <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo} · Generado el ${fechaGen}</p></div>
+        <div><h2>Informe de Cierre Anual — ${p.nombre} ${p.apellido}</h2>
+          <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo}</p></div>
         <div class="no-print" style="display:flex;gap:8px">
-          <button class="btn-print" onclick="window.print()">🖨 Descargar PDF</button>
           <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
         </div>
       </div>
-      <div class="card"><div class="cardbody"><div class="empty-state"><div class="big">▤</div>Este NNA aún no tiene evaluaciones IDEA registradas.<br>Cargá una evaluación para poder generar el informe.</div></div></div>
-      ${guia}`;
+      <div class="card"><div class="cardbody">
+        <div class="empty-state"><div class="big">▤</div>
+          No hay Informe de Cierre Anual firmado para este NNA.<br>
+          El informe imprimible se genera <b>únicamente desde el HCE-IC firmado</b> — no se elaboran versiones alternativas (§5.3).</div>
+        <div style="display:flex;justify-content:center;margin-top:6px">${stepperHtml(p)}</div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:14px" class="no-print">
+          ${st==="borrador"
+            ? `<button class="btn btn-primary" onclick="irAEval('ic', ${p.id})">✎ Completar HCE-IC</button>`
+            : `<button class="btn btn-ghost" onclick="abrirExpediente(${p.id})">Ver flujo de módulos</button>`}
+        </div>
+      </div></div>`;
     go("informe");
     return;
   }
 
-  const first = scored[0], last = scored[scored.length-1];
-  const delta = first.score - last.score;
-  const mejora = delta > 0;
-  const bars = scored.slice(-5).map(e=>{
-    const h = Math.max(6, Math.round(e.score/96*100));
-    const lbl = e.tipo==="lik" ? `${anioDe(e.fecha)} interm.` : String(anioDe(e.fecha));
-    return `<div class="bar" style="height:${h}%;background:${colorBanda(e.score)}"><span>${e.score}</span><i>${lbl}</i></div>`;
-  }).join("");
-
+  const firmas = ic.firmas;
   cont.innerHTML = `
-    <div class="inf-banner">
-      <div><h2>Informe de evaluación — ${p.nombre} ${p.apellido}</h2>
-        <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo} · ${p.tecnico.split("—")[0].trim()} · Generado automáticamente el ${fechaGen}</p></div>
-      <div class="no-print" style="display:flex;gap:8px">
+    <div class="inf-banner no-print">
+      <div><h2>Informe de Cierre Anual — ${p.nombre} ${p.apellido}</h2>
+        <p>HCE-IC firmado el ${fmtFecha(firmas[0]?firmas[0].fecha:ic.fecha)} · documento clínico legal, versión única · vista previa generada el ${fechaGen}</p></div>
+      <div style="display:flex;gap:8px">
         <button class="btn-print" onclick="window.print()">🖨 Descargar PDF</button>
+        ${!ic.recibi ? `<button class="btn-print" style="background:#FDEBD3;color:#8A5A16" onclick="openRecibiModal(${p.id})">✍ Registrar Recibí</button>` : ""}
         <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
       </div>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <div class="cardhead"><h2>Evolución del puntaje total IDEA (0 – 96)</h2></div>
-        <div class="cardbody chart-wrap">
-          <div class="barchart">${bars}</div>
-        </div>
+    <div class="card"><div class="cardbody">
+      <div class="membrete">
+        <h2>FUNDACIÓN IPPU · Instituto Psico Pedagógico Uruguayo</h2>
+        <div class="sub">INAU · MSP · BPS · ECOSOC/ONU · Montevideo, Uruguay</div>
+        <h3>Informe de Evolución y Cierre Anual · Año lectivo ${anioDe(ic.fecha)||ANIO_ACTUAL}</h3>
       </div>
-      <div class="card resumen">
-        <div class="cardhead"><h2>Resumen</h2></div>
-        <div class="cardbody">
-          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)">Puntaje ${scored.length>1?"inicial → actual":"actual"}</div>
-          <div class="big">${scored.length>1?`${first.score} → ${last.score}`:`${last.score}`} <small style="font-size:.9rem;color:var(--ink-2)">/ 96</small></div>
-          ${scored.length>1?`<div class="delta" style="color:${mejora?'var(--ok)':'var(--bad)'}">${mejora?'▼':'▲'} ${mejora?'−':'+'}${Math.abs(delta)} puntos ${mejora?`(${Math.round(Math.abs(delta)/first.score*100)} % de mejora)`:'(requiere revisión del plan)'}</div>`:''}
-          <dl>
-            <dt>Banda actual</dt>
-            <dd style="color:${colorBanda(last.score)}">${bandaIdea(last.score)} — ${last.score} / 96</dd>
-            <dt>Evaluaciones registradas</dt>
-            <dd>${scored.length} (última: ${fmtFecha(last.fecha)})</dd>
-            <dt>Diagnóstico</dt>
-            <dd style="text-align:left">${p.dx}</dd>
-          </dl>
-        </div>
+      <div class="ib">
+        <div class="data-row"><dt>Usuario</dt><dd>${p.nombre} ${p.apellido} · ${p.edad} años</dd></div>
+        <div class="data-row"><dt>Expediente / C.I.</dt><dd>#${p.id} · ${p.ci}</dd></div>
+        <div class="data-row"><dt>Grupo de referencia</dt><dd>Grupo ${p.grupo}</dd></div>
+        <div class="data-row"><dt>CIE-11 / Soporte</dt><dd>${p.cie11||"—"} · ${p.apoyo.split("—")[0].trim()}</dd></div>
+        <div class="data-row"><dt>Técnico/a responsable 1</dt><dd>${p.tecnico1||"—"} · ${p.tecnico1_rol||"Psicólogo/a"}</dd></div>
+        <div class="data-row"><dt>Técnico/a responsable 2</dt><dd>${p.tecnico2||"—"} · ${p.tecnico2_rol||"Maestro/a"}</dd></div>
       </div>
-    </div>
-    ${guia}
-    <div class="note" style="margin:16px 2px">Informe generado automáticamente a partir de los datos del expediente (demo · datos simulados). En producción se generaría en el backend con los puntajes por dimensión y quedaría versionado en la HCE.</div>`;
+    </div></div>
+
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>1. Análisis cuantitativo — autogenerado desde los módulos firmados</h2></div>
+      <div class="cardbody">${icTablaHtml(p)}${icRadaresHtml(p)}</div></div>
+
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>2. Análisis cualitativo por escala</h2></div>
+      <div class="cardbody">${IPPU_ESCALAS.map((n,i)=>`<p style="font-size:.85rem;margin-bottom:10px"><b>E${i+1} · ${n}.</b> ${ic.sintEsc[i]||"—"}</p>`).join("")}</div></div>
+
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>3. Síntesis interdisciplinaria</h2></div>
+      <div class="cardbody">
+        <p style="font-size:.85rem"><b>Valoración anual — Técnico/a responsable 1 (${p.tecnico1_rol||"Psicólogo/a"}):</b> ${ic.valTec1||"—"}</p>
+        <p style="font-size:.85rem;margin-top:8px"><b>Valoración anual — Técnico/a responsable 2 (${p.tecnico2_rol||"Maestro/a"}):</b> ${ic.valTec2||"—"}</p>
+      </div></div>
+
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>4. Recomendaciones y ajustes de tratamiento</h2></div>
+      <div class="cardbody"><p style="font-size:.85rem">${ic.recomendaciones||"—"}</p></div></div>
+
+    <div class="card" style="margin-top:16px"><div class="cardhead"><h2>5. Orientaciones a la familia</h2></div>
+      <div class="cardbody"><p style="font-size:.85rem">${ic.orientaciones||"—"}</p></div></div>
+
+    ${ic.addendas.length ? `<div class="card" style="margin-top:16px"><div class="cardhead"><h2>Addendas</h2></div>
+      <div class="cardbody">${ic.addendas.map(a=>`<p style="font-size:.83rem;margin-bottom:8px"><b>${fmtFecha(a.fecha)} · ${a.profesional}:</b> ${a.texto}</p>`).join("")}</div></div>` : ""}
+
+    <div class="card" style="margin-top:16px"><div class="cardbody">
+      <div class="firmas-grid">
+        <div><label>Firma Técnico/a responsable 1</label><div class="flin"></div><div class="fnom">${firmas[0]?firmas[0].profesional+" · "+firmas[0].rol:"—"}</div></div>
+        <div><label>Firma Técnico/a responsable 2</label><div class="flin"></div><div class="fnom">${firmas[1]?firmas[1].profesional+" · "+firmas[1].rol:"—"}</div></div>
+        <div><label>Recibí de la familia</label><div class="flin"></div><div class="fnom">${ic.recibi?`${ic.recibi.firmante} · registrado en HCE el ${fmtFecha(ic.recibi.fecha)}`:"Pendiente de registro"}</div></div>
+      </div>
+      <div style="font-size:.72rem;color:var(--ink-2);margin-top:14px">Documento generado desde la HCE de IPPU · Firmado digitalmente el ${fmtFecha(firmas[0]?firmas[0].fecha:ic.fecha)} · Documento clínico legal, versión única (§5.3) · Uso profesional exclusivo · Ley N.º 18.331/2008 y Ley N.º 18.335/2008 · Demo — datos simulados</div>
+    </div></div>`;
   go("informe");
 }
 
@@ -2935,6 +3045,174 @@ function firmarProt(){
   const sem = parseInt(p.flujo[protKey].semanas);
   if(!(sem>=15)) toast("Advertencia (§4.3): se recomiendan ≥ 15 semanas de asistencia efectiva — no bloquea la firma.");
   firmarModulo(id, protKey);        // el motor (M1) valida integridad §4.3 y abre el modal de firma doble
+}
+
+/* ===================== HCE-IC · INFORME DE CIERRE ANUAL (M6) =====================
+   Integra los tres instrumentos (§5.3). Tabla comparativa y radares AUTOGENERADOS
+   sólo desde los módulos firmados. Regla dura (§5.2): IDEA e IPPU-TEA nunca se
+   superponen en un mismo gráfico ni generan deltas cruzados. */
+
+/* Radar SVG propio (4 ejes = escalas). Dibuja UN instrumento por llamada:
+   la no homologabilidad (§5.2) prohíbe mezclar series IDEA e IPPU-TEA. */
+function radarSVG(series, size){
+  size = size || 280;
+  const cx=size/2, cy=size/2, R=size/2-50, N=IPPU_ESCALAS.length;
+  const pt=(i,fr)=>{ const a=-Math.PI/2 + i*2*Math.PI/N; return [cx+R*fr*Math.cos(a), cy+R*fr*Math.sin(a)]; };
+  let s = `<svg viewBox="0 0 ${size} ${size}" width="${size}" style="max-width:100%" role="img">`;
+  for(let g=1; g<=4; g++)
+    s += `<polygon points="${Array.from({length:N},(_,i)=>pt(i,g/4).join(",")).join(" ")}" fill="none" stroke="#D8E2EC" stroke-width="1"/>`;
+  const cortas=[["Relación","Social"],["Comunicación","y Lenguaje"],["Anticipación","y Flexib."],["Simbolización"]];
+  for(let i=0;i<N;i++){
+    const [x,y]=pt(i,1); s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#D8E2EC"/>`;
+    const [lx0,ly]=pt(i,1.28);
+    const lx = Math.min(Math.max(lx0, 38), size-38);   // que las etiquetas no se recorten en el borde
+    cortas[i].forEach((t,li)=> s+=`<text x="${lx}" y="${ly-4+li*11}" font-size="9.5" font-weight="600" fill="#43596E" text-anchor="middle">${t}</text>`);
+  }
+  series.forEach(se=>{
+    const pts = se.vals.map((v,i)=>pt(i, Math.max(.03, v/se.max)).join(",")).join(" ");
+    s += `<polygon points="${pts}" fill="${se.color}22" stroke="${se.color}" stroke-width="2"/>`;
+    se.vals.forEach((v,i)=>{ const [x,y]=pt(i, Math.max(.03, v/se.max)); s+=`<circle cx="${x}" cy="${y}" r="3" fill="${se.color}"/>`; });
+  });
+  return s+"</svg>";
+}
+
+/* Datos para tabla/radar: SOLO módulos firmados; el delta es el que calculó el motor al firmar B (M5). */
+function icDatosFirmados(p){
+  const fl = p.flujo;
+  return {
+    lb: fl.lb.firmado ? lbTotales(fl.lb.dim)    : null,
+    pa: fl.pa.firmado ? protTotales(fl.pa.item) : null,
+    pb: fl.pb.firmado ? protTotales(fl.pb.item) : null,
+    deltas: fl.pb.firmado ? fl.pb.deltas : null,
+  };
+}
+function icTablaHtml(p){
+  const d = icDatosFirmados(p);
+  const filas = IPPU_ESCALAS.map((n,i)=>{
+    const dd = d.deltas ? d.deltas.esc[i] : null;
+    const it = dd==null ? null : deltaInterpreta(dd);
+    return `<tr><td>E${i+1} · ${n}</td>
+      <td class="num">${d.lb ? d.lb.esc[i]+" / 24" : "—"}</td>
+      <td class="num">${d.pa ? d.pa.esc[i]+" / 30" : "—"}</td>
+      <td class="num">${d.pb ? d.pb.esc[i]+" / 30" : "—"}</td>
+      <td class="num">${dd==null ? "—" : `<span style="color:${it.c};font-weight:700">${fmtDelta(dd)}${dd<=ALERTA_DELTA?" ⚠":""}</span>`}</td></tr>`;
+  }).join("");
+  const dT = d.deltas ? d.deltas.total : null;
+  const itT = dT==null ? null : deltaInterpreta(dT);
+  return `<table class="comp-table"><thead><tr><th>Escala</th><th class="num">IDEA — línea base (0–24)</th><th class="num">Protocolo A (6–30)</th><th class="num">Protocolo B (6–30)</th><th class="num">Δ B−A</th></tr></thead><tbody>
+    ${filas}
+    <tr><td><b>Total</b></td>
+      <td class="num"><b>${d.lb ? d.lb.total+" / 96" : "—"}</b></td>
+      <td class="num"><b>${d.pa ? d.pa.total+" / 120" : "—"}</b></td>
+      <td class="num"><b>${d.pb ? d.pb.total+" / 120" : "—"}</b></td>
+      <td class="num">${dT==null ? "—" : `<b style="color:${itT.c}">${fmtDelta(dT)} · ${itT.t}</b>`}</td></tr>
+  </tbody></table>
+  <div style="font-size:.74rem;color:var(--ink-2);margin-top:8px">Nota metodológica: los puntajes IDEA (severidad, 0–96) y los IPPU-TEA (progreso, 24–120) <b>no son homologables</b>; el Δ es válido únicamente entre los Protocolos A y B (§5.2). El sistema mide el progreso, no su causa.</div>`;
+}
+function icRadaresHtml(p){
+  const d = icDatosFirmados(p);
+  const bloques = [];
+  if(d.lb) bloques.push(`<div class="rwrap"><div class="rcap">Perfil IDEA — línea base (severidad)</div>${radarSVG([{color:"#1B7F8C",vals:d.lb.esc,max:24}],260)}</div>`);
+  const serieProt = [];
+  if(d.pa) serieProt.push({color:"#C05621",vals:d.pa.esc,max:30});
+  if(d.pb) serieProt.push({color:"#1B8A4C",vals:d.pb.esc,max:30});
+  if(serieProt.length) bloques.push(`<div class="rwrap"><div class="rcap">Progreso IPPU-TEA (A vs. B)</div>${radarSVG(serieProt,260)}
+    <div class="ic-legend">${d.pa?'<span><i style="background:#C05621"></i>Protocolo A</span>':""}${d.pb?'<span><i style="background:#1B8A4C"></i>Protocolo B</span>':""}</div></div>`);
+  if(!bloques.length) return "";
+  return `<div class="ic-radars">${bloques.join("")}</div>
+  <div style="font-size:.72rem;color:var(--ink-2);text-align:center">Los radares se presentan por separado: los perfiles IDEA e IPPU-TEA nunca se superponen (§5.2).</div>`;
+}
+
+/* --- Editor HCE-IC (view-ic): mismo patrón que el editor PA/PB --------- */
+(function buildICForm(){
+  const cont = document.getElementById("icEscFields");
+  if(cont) cont.innerHTML = IPPU_ESCALAS.map((n,i)=>
+    `<div class="field"><label>E${i+1} · ${n} <span class="req">*</span></label><textarea id="ic_esc${i}" placeholder="Síntesis cualitativa del año en ${n} (integra la línea base IDEA y el progreso A→B)."></textarea></div>`).join("");
+})();
+
+function cargarIC(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const s = document.getElementById("selNNAIC"); if(s) s.value = String(id);
+  const ic = p.flujo.ic;
+  const st = estadoModulo(p, "ic");
+  document.getElementById("icEstadoBadge").innerHTML = estadoBadgeM(st);
+  document.getElementById("icAuto").innerHTML = `
+    <div class="card"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Análisis cuantitativo — autogenerado desde los módulos firmados</h2></div>
+    <div style="padding:16px 18px">${icTablaHtml(p)}${icRadaresHtml(p)}</div></div>`;
+  const h = moduloHabilitado(p, "ic");
+  document.getElementById("icAviso").innerHTML =
+    st==="bloqueado" ? `<div class="review-note" style="margin-bottom:14px">🔒 <b>HCE-IC bloqueado:</b> ${h.motivoBloqueo}${h.exceptuable?' La habilitación excepcional se gestiona desde el panel «Flujo de módulos» del expediente.':""}</div>`
+    : (ic.excepcion && !ic.firmado ? `<div class="review-note" style="margin-bottom:14px">⚠ Habilitado excepcionalmente (${ic.excepcion.motivo}) — los módulos no firmados aparecen como «—» en la tabla y el radar.</div>` : "");
+  ic.sintEsc.forEach((t,i)=>{ const el=document.getElementById("ic_esc"+i); if(el) el.value = t||""; });
+  const set=(fid,val)=>{ const el=document.getElementById(fid); if(el) el.value=(val==null)?"":val; };
+  set("ic_val1", ic.valTec1); set("ic_val2", ic.valTec2);
+  set("ic_recom", ic.recomendaciones); set("ic_orient", ic.orientaciones); set("ic_fecha", ic.fecha);
+  icSetReadonly(st!=="borrador");
+}
+function icSetReadonly(ro){
+  ["ic_val1","ic_val2","ic_recom","ic_orient","ic_fecha","ic_esc0","ic_esc1","ic_esc2","ic_esc3"]
+    .forEach(fid=>{ const el=document.getElementById(fid); if(el) el.disabled = ro; });
+  const g = document.querySelector('#view-ic .idea-summary button[onclick*="guardarIC"]');
+  const f = document.querySelector('#view-ic .idea-summary button[onclick*="firmarIC"]');
+  if(g) g.style.display = ro?"none":"";
+  if(f) f.style.display = ro?"none":"";
+}
+function guardarICDesdeForm(p){
+  const ic = p.flujo.ic;
+  ic.sintEsc = [0,1,2,3].map(i=>{ const el=document.getElementById("ic_esc"+i); return el?el.value.trim():""; });
+  ic.valTec1 = document.getElementById("ic_val1").value.trim();
+  ic.valTec2 = document.getElementById("ic_val2").value.trim();
+  ic.recomendaciones = document.getElementById("ic_recom").value.trim();
+  ic.orientaciones = document.getElementById("ic_orient").value.trim();
+  ic.fecha = document.getElementById("ic_fecha").value || "";
+}
+function guardarIC(){
+  const p = NNA.find(n=>n.id===parseInt(document.getElementById("selNNAIC").value));
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  const st = estadoModulo(p, "ic");
+  if(st==="firmado"){ toast("El informe está firmado — corrección por addenda."); return; }
+  if(st==="bloqueado"){ toast(moduloHabilitado(p,"ic").motivoBloqueo); return; }
+  guardarICDesdeForm(p);
+  document.getElementById("icEstadoBadge").innerHTML = estadoBadgeM(estadoModulo(p,"ic"));
+  toast(`HCE-IC guardado (borrador) — ${p.nombre}`);
+}
+function firmarIC(){
+  const p = NNA.find(n=>n.id===parseInt(document.getElementById("selNNAIC").value));
+  if(!p){ toast("Seleccioná un NNA"); return; }
+  if(p.flujo.ic.firmado){ toast("El informe ya está firmado."); return; }
+  const st = estadoModulo(p, "ic");
+  if(st==="bloqueado"){ toast(moduloHabilitado(p,"ic").motivoBloqueo); return; }
+  guardarICDesdeForm(p);            // persistir el form antes de validar/firmar
+  const cortas = p.flujo.ic.sintEsc.filter(t=>t && t.split(/\s+/).length < 40).length;
+  if(cortas) toast("Sugerencia (§4.3): extensión aproximada de 100 palabras por escala — no bloquea la firma.");
+  firmarModulo(p.id, "ic");         // el motor (M1) valida integridad §4.3 y abre el modal de firma doble
+}
+
+/* «Recibí» de la familia: se registra después de la firma, con constancia en HCE-LOG. */
+function openRecibiModal(id){
+  const nna = NNA.find(n=>n.id===id);
+  if(!nna || !nna.flujo.ic.firmado){ toast("El Recibí se registra con el informe firmado."); return; }
+  if(nna.flujo.ic.recibi){ toast("El Recibí ya está registrado."); return; }
+  const body = `<div class="section-label">Recibí del Informe de Cierre Anual</div>
+    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">Constancia de que la familia recibió el informe en entrevista presencial. Queda registrada en HCE-LOG.</p>
+    <div class="field"><label>Firmante (familia / referente)</label><input id="mfFirmante" value="${nna.referente||""}"></div>
+    <div class="field"><label>Fecha</label><input id="mfFecha" type="date" value="${HOY}"></div>`;
+  const foot = `<span class="left">HCE-IC · Informe de Cierre Anual</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarRecibi(${id})">✍ Registrar Recibí</button>
+    </div>`;
+  openFlujoModal("Registrar «Recibí» de la familia", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+function confirmarRecibi(id){
+  const nna = NNA.find(n=>n.id===id);
+  const firmante = (document.getElementById("mfFirmante").value||"").trim() || nna.referente || "Familia";
+  const fecha = (document.getElementById("mfFecha")||{}).value || HOY;
+  nna.flujo.ic.recibi = {firmante, fecha};
+  logEvento(nna, {modulo:"ic", tipo:"firma", detalle:`Recibí del Informe de Cierre Anual registrado — ${firmante} (entrevista presencial).`});
+  closeFlujoModal(); renderFlujo(id);
+  if(document.getElementById("view-informe").classList.contains("active")) generarInforme(id);
+  toast("Recibí de la familia registrado en HCE-LOG.");
 }
 
 // cerrar modal al hacer clic en el fondo
