@@ -488,6 +488,16 @@
   .eval-bar .btn-ghost{border:1px solid var(--line)}
 
   /* ============ IMPRESIÓN (informe → PDF) ============ */
+  /* M7 · HCE-DOC — documentos adjuntos y fotos */
+  .doc-uprow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
+  .doc-uprow .field{margin:0;flex:1;min-width:160px}
+  .foto-thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .foto-thumb{width:150px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .foto-thumb .ph{height:92px;display:flex;align-items:center;justify-content:center;font-size:1.9rem;background:linear-gradient(135deg,#E8F0F7,#DDE9F2)}
+  .foto-thumb .cap{padding:8px 10px;font-size:.7rem;color:var(--ink-2);line-height:1.35}
+  .aut-ok{border-left:4px solid var(--ok);background:#F0FAF4;padding:10px 14px;border-radius:8px;font-size:.8rem;margin-bottom:10px}
+  .aut-no{border-left:4px solid var(--warn);background:#FDF6EA;padding:10px 14px;border-radius:8px;font-size:.8rem;margin-bottom:10px}
+  .doc-hist{color:var(--ink-2);font-size:.72rem}
   /* M6 · HCE-IC — Informe de Cierre Anual: tabla comparativa, radares y membrete */
   .comp-table{width:100%;border-collapse:collapse;font-size:.83rem}
   .comp-table th{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--line)}
@@ -570,7 +580,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.8 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.9 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -885,31 +895,10 @@
       </div>
     </section>
 
-    <!-- ============ VISTA: EVALUACIÓN POR ÁREAS ============ -->
-    <section class="view" id="view-areas">
-      <div class="crumbs">Inicio › Evaluación › <b>Por áreas / talleres</b></div>
-      <h1 class="pagetitle">Evaluación por áreas — Talleres IPPU</h1>
-      <p class="pagedesc">Seguimiento del progreso del NNA en cada taller/área en que participa, con escala Likert 1–5 por indicador. <b style="color:var(--warn)">Estructura provisional</b>: IPPU señaló que el protocolo de evaluación por áreas está en revisión, así que los indicadores son genéricos y deberán redefinirse con el equipo clínico.</p>
-      <div class="selector">
-        <label for="selNNAArea"><b>NNA evaluado:</b></label>
-        <select id="selNNAArea"></select>
-        <span style="color:var(--ink-2)">Período: Junio 2026 · Evaluador: Dr. González</span>
-      </div>
-      <div id="areasForm"></div>
-    </section>
-
-    <!-- ============ VISTA: EVALUACIÓN GENERAL ============ -->
-    <section class="view" id="view-general">
-      <div class="crumbs">Inicio › Evaluación › <b>General</b></div>
-      <h1 class="pagetitle">Evaluación general — Perfil global del NNA</h1>
-      <p class="pagedesc">Valoración global y observación clínica integradora, complementaria al IDEA y a la evaluación por áreas. <b style="color:var(--warn)">Estructura provisional</b>: el protocolo de evaluación general también está en revisión con IPPU.</p>
-      <div class="selector">
-        <label for="selNNAGen"><b>NNA evaluado:</b></label>
-        <select id="selNNAGen"></select>
-        <span style="color:var(--ink-2)">Período: Junio 2026</span>
-      </div>
-      <div id="generalForm"></div>
-    </section>
+    <!-- M7 (2026-07-30): las vistas "Evaluación por áreas" y "Evaluación general" (provisionales,
+         ocultas desde M0 por decisión §0.2) se ELIMINARON. Sus registros del sistema anterior
+         entran ahora a HCE-DOC como archivo histórico de solo lectura, con categoría específica
+         "Registro histórico — HCE anterior (…)" y fecha original (§10 Documento Técnico). -->
 
     <!-- ============ VISTA: GRUPOS ============ -->
     <section class="view" id="view-grupos">
@@ -1262,7 +1251,7 @@ const MODULOS_FLUJO = [
 ];
 const SECUENCIA = MODULOS_FLUJO.map(m=>m.key);          // ['ci','lb','pa','pb','ic']
 const modInfo = key => MODULOS_FLUJO.find(m=>m.key===key);
-const MOD_LABEL = {hce00:"HCE-00"};                     // módulos fuera de la secuencia (para HCE-LOG)
+const MOD_LABEL = {hce00:"HCE-00", doc:"HCE-DOC"};      // módulos fuera de la secuencia (para HCE-LOG)
 const moduloLabel = key => { const m=modInfo(key); return m ? m.full : (MOD_LABEL[key]||key||"—"); };
 
 /* Técnicos responsables — roles fijos (decisión §0.5). Genéricos/configurables en el futuro. */
@@ -1626,6 +1615,7 @@ function renderFlujo(id){
 const CIE_SEED = {101:"6A02.0",102:"6A02.1",103:"6A02.2",104:"6A02.Z",105:"6A02.0",106:"6A02.3",107:"6A02.Z",108:"6A02.0"};
 NNA.forEach(n=>{
   n.flujo = initFlujo(); n.hceLog = [];
+  n.docs = []; n.fotos = []; n.autImagen = {registrada:false, fecha:"", adjunto:""};   // HCE-DOC (M7)
   if(!n.cie11) n.cie11 = (CIE_SEED[n.id]||"6A02.Z") + " — Trastorno del espectro del autismo";
   if(!n.tecnico1){ n.tecnico1 = (n.tecnico||"Dr. González — Psicología").split("—")[0].trim(); n.tecnico1_rol = "Psicólogo/a"; }
   if(!n.tecnico2){ n.tecnico2 = "Mtra. Torres"; n.tecnico2_rol = "Maestro/a"; }
@@ -1710,6 +1700,31 @@ NNA.forEach(n=>{
       sintesis:"Línea base IDEA de referencia (datos de demostración).", objetivos:"Objetivos del período a definir con el equipo."});
     seedFirma(p,"lb","2026-03-25",dobles("2026-03-25"),"Línea base IDEA firmada (firma doble).");
   });
+
+  /* --- M7 · HCE-DOC: autorización de imagen + documentos seed. -------------
+     Resolución formal del descarte de M0 (decisión §0.2): los registros de
+     "Eval. por áreas" y "Eval. General" del sistema anterior entran como
+     ARCHIVO HISTÓRICO de solo lectura, con categoría específica y fecha
+     original (§10 Documento Técnico) — nunca mapeados a campos estructurados. */
+  const HIST = (nombre, sub, fechaOrig) =>
+    ({nombre, cat:`Registro histórico — HCE anterior (${sub})`, fechaOrig, fechaCarga:"2026-07-20", historico:true});
+  function setAutImagen(id, fecha){
+    const p = byId(id); if(!p) return;
+    p.autImagen = {registrada:true, fecha, adjunto:"autorizacion_imagen_"+fecha.slice(0,4)+".pdf"};
+    p.docs.push({nombre:p.autImagen.adjunto, cat:"Autorización / consentimiento", fechaOrig:fecha, fechaCarga:fecha, historico:false});
+  }
+  setAutImagen(102,"2026-03-05");                       // Martín: fotos habilitadas
+  if(byId(102)){
+    byId(102).docs.push(
+      {nombre:"Informe neuropediátrico 2025 (externo).pdf", cat:"Informe médico externo", fechaOrig:"2025-11-03", fechaCarga:"2026-03-10", historico:false},
+      HIST("Evaluación por áreas 2025 — export certificada.pdf","Evaluación por áreas","2025-11-20"),
+      HIST("Evaluación General 2025 — export certificada.pdf","Evaluación General","2025-11-27"));
+    byId(102).fotos.push({desc:"Actividad de juego estructurado (taller)", fecha:"2026-05-12"});
+  }
+  // Sofía (101): SIN autorización de imagen registrada — caso negativo de §8.4.
+  if(byId(101)) byId(101).docs.push(HIST("Evaluación General 2025 — export certificada.pdf","Evaluación General","2025-11-25"));
+  if(byId(103)) byId(103).docs.push(HIST("Observaciones 2024–2025 — export certificada.pdf","Observaciones","2025-12-01"));
+  setAutImagen(103,"2026-03-12");
 })();
 
 /* Helpers de historial → derivan el estado de evaluaciones desde el historial */
@@ -2142,14 +2157,6 @@ function irAEval(view, id){
   } else if(view==="ic"){
     go("ic");
     cargarIC(id);
-  } else if(view==="areas"){
-    go("areas"); populateEvalSelects();
-    const s=document.getElementById("selNNAArea"); if(s) s.value=String(id);
-    renderAreas();
-  } else if(view==="general"){
-    go("general"); populateEvalSelects();
-    const s=document.getElementById("selNNAGen"); if(s) s.value=String(id);
-    renderGeneral();
   } else if(view==="intermedia"){
     go("intermedia");
   } else if(view==="anamnesis"){
@@ -2527,7 +2534,8 @@ function crearNNA(){
     toast(`Datos de ${g("f_nombre")} ${g("f_apellido")} actualizados`);
     setTimeout(()=>abrirExpediente(modoEdit), 300);
   } else {
-    const nuevo = Object.assign({ id: ++nnaSeq, activo:true, flujo: initFlujo(), hceLog: [] }, datos, {
+    const nuevo = Object.assign({ id: ++nnaSeq, activo:true, flujo: initFlujo(), hceLog: [],
+      docs: [], fotos: [], autImagen: {registrada:false, fecha:"", adjunto:""} }, datos, {
       historial: [
         {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
          desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA anual.`}
@@ -2687,6 +2695,8 @@ function abrirExpediente(id){
         </div>
       </div>
     </div>
+
+    ${docPanelHtml(p)}
   `;
   go("expediente");
 }
@@ -3215,6 +3225,160 @@ function confirmarRecibi(id){
   toast("Recibí de la familia registrado en HCE-LOG.");
 }
 
+/* ===================== HCE-DOC · DOCUMENTOS Y FOTOS (M7) =====================
+   Adjuntos categorizados + fotos individuales condicionadas a la autorización
+   de uso de imagen (§8.4, regla a nivel de LÓGICA, no solo de UI). Los registros
+   del sistema anterior son archivo histórico de solo lectura (§10). Demo: sin
+   archivos reales — se registran nombre/categoría/fechas. */
+const DOC_CATS = ["Informe médico externo","Informe escolar","Evaluación externa (otra institución)",
+  "Documento INAU","Documento BPS","Autorización / consentimiento","Estudio complementario",
+  "Registro histórico — HCE anterior (Evaluación por áreas)","Registro histórico — HCE anterior (Evaluación General)",
+  "Registro histórico — HCE anterior (Observaciones)","Registro histórico — HCE anterior (otro)","Otro"];
+
+function docBodyHtml(p){
+  const rows = p.docs.length ? p.docs.map((d,i)=>`
+    <tr>
+      <td>${d.historico?"🔒 ":""}${d.nombre}</td>
+      <td>${d.cat}</td>
+      <td class="num">${fmtFecha(d.fechaOrig)}</td>
+      <td class="num">${fmtFecha(d.fechaCarga)}</td>
+      <td style="text-align:right">${d.historico
+        ? `<span class="doc-hist" title="Archivo histórico del sistema anterior (§10): consultable, nunca editable">solo lectura</span>`
+        : `<button class="btn btn-ghost btn-mini" onclick="quitarDoc(${p.id},${i})">Quitar</button>`}</td>
+    </tr>`).join("")
+    : `<tr><td colspan="5" style="color:var(--ink-2);font-size:.8rem;padding:10px">Sin documentos adjuntos en esta HCE.</td></tr>`;
+  const a = p.autImagen||{};
+  const fotosHtml = p.fotos.length ? p.fotos.map((f,i)=>`
+    <div class="foto-thumb"><div class="ph">📷</div><div class="cap">${f.desc||"Sin descripción"} · ${fmtFecha(f.fecha)}<br><a href="javascript:void(0)" style="color:var(--bad)" onclick="quitarFoto(${p.id},${i})">Quitar</a></div></div>`).join("")
+    : `<span style="font-size:.78rem;color:var(--ink-2)">Sin fotografías individuales registradas.</span>`;
+  return `
+    <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:10px">Repositorio de copias digitalizadas: informes externos, documentación de organismos, autorizaciones y estudios — contextualizan pero <b>no reemplazan</b> los instrumentos propios de IPPU. Los registros del sistema anterior (Eval. por áreas, Eval. General, Observaciones) viven acá como <b>archivo histórico de solo lectura</b> con su fecha original (§10); no se traducen a campos estructurados.</div>
+    <table class="comp-table"><thead><tr><th>Documento</th><th>Categoría</th><th class="num">Fecha original</th><th class="num">Cargado</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="doc-uprow">
+      <div class="field"><label>Documento (demo: solo nombre)</label><input id="doc_nombre" placeholder="Ej. informe_medico_2026.pdf"></div>
+      <div class="field"><label>Categoría</label><select id="doc_cat">${DOC_CATS.map(c=>`<option>${c}</option>`).join("")}</select></div>
+      <div class="field"><label>Fecha original</label><input id="doc_fecha" type="date" value="${HOY}"></div>
+      <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="subirDoc(${p.id})">+ Adjuntar</button></div>
+    </div>
+    <div class="section-label" style="margin-top:16px">Fotografías individuales — protección de imagen de NNA (§8.4)</div>
+    ${a.registrada
+      ? `<div class="aut-ok">✓ <b>Autorización de uso de imagen registrada</b> (${fmtFecha(a.fecha)} · copia en documentos: ${a.adjunto||"—"}). Carga de fotografías individuales habilitada.</div>
+         <div class="doc-uprow">
+           <div class="field"><label>Descripción / contexto</label><input id="foto_desc" placeholder="Ej. actividad de juego estructurado, taller de cocina…"></div>
+           <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="subirFoto(${p.id})">+ Cargar foto</button></div>
+         </div>`
+      : `<div class="aut-no">🚫 <b>Carga de fotografías bloqueada:</b> no hay autorización de uso de imagen registrada — protección de la imagen de NNA (art. 11, Código de la Niñez y la Adolescencia, Ley N.º 17.823; Ley N.º 18.331/2008).
+         <div style="margin-top:8px"><button class="btn btn-ghost btn-mini" onclick="openAutImagenModal(${p.id})">✍ Registrar autorización de imagen</button></div></div>`}
+    <div class="foto-thumbs">${fotosHtml}</div>`;
+}
+function docPanelHtml(p){
+  return `<div class="flujo-card">
+    <h3><span class="ic">🗂</span> HCE-DOC · Documentos y fotos
+      <span class="spacer"></span>
+      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${p.docs.length} documento(s) · ${p.fotos.length} foto(s)</span>
+    </h3>
+    <div class="flujo-body" id="docPanelBody">${docBodyHtml(p)}</div>
+  </div>`;
+}
+function renderDoc(id){
+  const p = NNA.find(n=>n.id===id);
+  const el = document.getElementById("docPanelBody");
+  if(p && el) el.innerHTML = docBodyHtml(p);
+}
+
+function subirDoc(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const nombre = (document.getElementById("doc_nombre").value||"").trim();
+  if(!nombre){ toast("Ingresá el nombre del documento."); return; }
+  const cat = document.getElementById("doc_cat").value;
+  const fechaOrig = document.getElementById("doc_fecha").value || HOY;
+  const historico = cat.startsWith("Registro histórico");
+  p.docs.push({nombre, cat, fechaOrig, fechaCarga:HOY, historico});
+  logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Documento adjuntado — «${nombre}» (${cat}${historico?" · archivo histórico de solo lectura":""}).`});
+  renderDoc(id);
+  toast(historico ? "Documento histórico cargado — solo lectura (§10)." : "Documento adjuntado a la HCE.");
+}
+function quitarDoc(id, ix){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const d = p.docs[ix]; if(!d) return;
+  if(d.historico){ toast("Los registros históricos del sistema anterior son de solo lectura (§10) — no se pueden quitar."); return; }
+  p.docs.splice(ix,1);
+  logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Documento quitado — «${d.nombre}» (${d.cat}).`});
+  renderDoc(id);
+  toast("Documento quitado (constancia en HCE-LOG).");
+}
+
+/* Autorización de uso de imagen: registro con copia adjunta + constancia en HCE-LOG. */
+function openAutImagenModal(id){
+  const nna = NNA.find(n=>n.id===id); if(!nna) return;
+  if(nna.autImagen && nna.autImagen.registrada){ toast("La autorización de imagen ya está registrada."); return; }
+  const body = `<div class="section-label">Autorización de uso de imagen (§8.4)</div>
+    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">La familia firmó la autorización escrita. La copia queda adjunta en HCE-DOC (categoría «Autorización / consentimiento») y la constancia en HCE-LOG. Sin este registro no se cargan fotografías (art. 11, CNA — Ley N.º 17.823).</p>
+    <div class="field"><label>Firmante (familia / referente)</label><input id="mfFirmante" value="${nna.referente||""}"></div>
+    <div class="field"><label>Fecha</label><input id="mfFecha" type="date" value="${HOY}"></div>
+    <div class="field"><label>Adjunto (documento firmado)</label><input id="mfAdjunto" value="autorizacion_imagen_2026.pdf"><div class="hint">Demo: no se sube un archivo real.</div></div>`;
+  const foot = `<span class="left">HCE-DOC · protección de imagen de NNA</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarAutImagen(${id})">✍ Registrar autorización</button>
+    </div>`;
+  openFlujoModal("Registrar autorización de imagen", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
+}
+function confirmarAutImagen(id){
+  const nna = NNA.find(n=>n.id===id);
+  const firmante = (document.getElementById("mfFirmante").value||"").trim() || nna.referente || "Familia";
+  const fecha = (document.getElementById("mfFecha")||{}).value || HOY;
+  const adjunto = ((document.getElementById("mfAdjunto")||{}).value||"").trim() || "autorizacion_imagen.pdf";
+  nna.autImagen = {registrada:true, fecha, adjunto};
+  nna.docs.push({nombre:adjunto, cat:"Autorización / consentimiento", fechaOrig:fecha, fechaCarga:HOY, historico:false});
+  logEvento(nna, {modulo:"doc", tipo:"firma", detalle:`Autorización de uso de imagen registrada — ${firmante}. Copia adjunta en HCE-DOC.`});
+  closeFlujoModal(); renderDoc(id);
+  if(typeof renderGrupos==="function") renderGrupos();
+  toast("Autorización de imagen registrada. Fotos individuales habilitadas.");
+}
+
+/* REGLA DURA (§8.4): la verificación vive acá, no en la UI — llamar subirFoto
+   sin autorización registrada se bloquea aunque el botón no exista en pantalla. */
+function subirFoto(id){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  if(!(p.autImagen && p.autImagen.registrada)){
+    toast("🚫 Carga bloqueada: falta la autorización de uso de imagen registrada (art. 11, CNA — Ley N.º 17.823). Registrala en HCE-DOC.");
+    return;
+  }
+  const descEl = document.getElementById("foto_desc");
+  const desc = descEl ? descEl.value.trim() : "";
+  p.fotos.push({desc: desc||"Sin descripción", fecha:HOY});
+  logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Fotografía individual cargada — ${desc||"sin descripción"}.`});
+  renderDoc(id);
+  toast("Fotografía cargada (demo: sin archivo real).");
+}
+function quitarFoto(id, ix){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const f = p.fotos[ix]; if(!f) return;
+  p.fotos.splice(ix,1);
+  logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Fotografía individual quitada — ${f.desc||"sin descripción"}.`});
+  renderDoc(id);
+  toast("Fotografía quitada (constancia en HCE-LOG).");
+}
+
+/* Fotos grupales (§8.4): requieren autorización de TODAS las familias del grupo. */
+const GRUPOS_FOTOS = {};   // grupo -> [{desc, fecha}] (en memoria, demo)
+function grupoAutImagen(gid){
+  const miembros = NNA.filter(n=>n.grupo===gid && n.activo);
+  const faltan = miembros.filter(n=>!(n.autImagen && n.autImagen.registrada));
+  return {miembros, faltan, ok: miembros.length>0 && faltan.length===0};
+}
+function subirFotoGrupo(gid){
+  const g = grupoAutImagen(gid);
+  if(!g.ok){
+    toast(`🚫 Foto grupal bloqueada (§8.4): falta autorización de uso de imagen de ${g.faltan.map(n=>n.nombre+" "+n.apellido).join(", ")||"(grupo sin integrantes activos)"}.`);
+    return;
+  }
+  (GRUPOS_FOTOS[gid] = GRUPOS_FOTOS[gid]||[]).push({desc:"Registro grupal", fecha:HOY});
+  renderGrupos();
+  toast("Fotografía grupal cargada (demo).");
+}
+
 // cerrar modal al hacer clic en el fondo
 document.getElementById("modalAlta").addEventListener("click", e=>{
   if(e.target.id==="modalAlta") closeAlta();
@@ -3223,145 +3387,12 @@ document.getElementById("modalAlta").addEventListener("click", e=>{
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeAlta(); });
 
 /* =====================================================================
-   MÓDULOS AÑADIDOS (v3.1): Eval. por áreas, Eval. general, Grupos, Usuario
-   Datos simulados. Las evaluaciones por áreas/general son ESTRUCTURA
-   PROVISIONAL — el protocolo definitivo se define con IPPU.
+   MÓDULOS AÑADIDOS (v3.1): Grupos, Usuario.
+   M7 (2026-07-30): el código de "Eval. por áreas" y "Eval. general"
+   (provisionales, ocultas desde M0) se ELIMINÓ — decisión §0.2 del plan:
+   sus registros del sistema anterior viven ahora en HCE-DOC como archivo
+   histórico de solo lectura ("Registro histórico — HCE anterior", §10).
    ===================================================================== */
-
-/* ---------- Selects de NNA para las evaluaciones nuevas ---------- */
-function populateEvalSelects(){
-  ["selNNAArea","selNNAGen"].forEach(selId=>{
-    const sel = document.getElementById(selId);
-    if(!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = NNA.map(p=>
-      `<option value="${p.id}">${p.nombre} ${p.apellido} · ${p.edad} años · Grupo ${p.grupo}</option>`).join("");
-    if(prev) sel.value = prev;
-  });
-}
-
-/* ---------- EVALUACIÓN POR ÁREAS (provisional) ---------- */
-const AREA_ITEMS = [
-  "Participación e implicación en el taller",
-  "Logro de los objetivos del taller",
-  "Autonomía en las actividades"
-];
-const areaScores = {}; // `${ti}-${ii}` -> 1..5
-
-function renderAreas(){
-  const sel = document.getElementById("selNNAArea");
-  const cont = document.getElementById("areasForm");
-  if(!sel || !cont) return;
-  for(const k in areaScores) delete areaScores[k];
-  const p = NNA.find(n=>n.id===parseInt(sel.value));
-  if(!p){ cont.innerHTML = ""; return; }
-  if(!p.talleres.length){
-    cont.innerHTML = `<div class="card"><div class="cardbody"><div class="empty-state">Este NNA no tiene talleres asignados.</div></div></div>`;
-    return;
-  }
-  cont.innerHTML = p.talleres.map((t,ti)=>`
-    <div class="card" style="margin-bottom:18px">
-      <div class="lik-head"><h2>${t}</h2><span class="prog" id="areaAvg-${ti}">— / 5</span></div>
-      ${AREA_ITEMS.map((it,ii)=>`
-        <div class="lik-item" ${ii===AREA_ITEMS.length-1?'style="border-bottom:none"':''}>
-          <div class="iname">${it}</div>
-          <div class="lik-opts" data-taller="${ti}" data-item="${ii}">
-            <button data-v="1">1 — Inicial</button><button data-v="2">2</button>
-            <button data-v="3">3 — En proceso</button><button data-v="4">4</button>
-            <button data-v="5">5 — Logrado</button>
-          </div>
-        </div>`).join("")}
-    </div>`).join("") +
-    `<div class="idea-summary">
-      <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Promedio global por áreas</div>
-      <div class="tot"><span id="areaGlobal">—</span><small> / 5</small></div></div>
-      <div class="nota">Promedio orientativo de los talleres del NNA. El protocolo definitivo de evaluación por áreas se define con IPPU.</div>
-      <div class="spacer"></div>
-      <button class="btn btn-primary" onclick="guardarAreas()">Guardar evaluación</button>
-    </div>`;
-}
-
-document.getElementById("areasForm").addEventListener("click", ev=>{
-  const b = ev.target.closest(".lik-opts button"); if(!b) return;
-  const grp = b.parentElement;
-  grp.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
-  b.classList.add("sel");
-  areaScores[`${grp.dataset.taller}-${grp.dataset.item}`] = +b.dataset.v;
-  const tvals = AREA_ITEMS.map((_,i)=>areaScores[`${grp.dataset.taller}-${i}`]).filter(v=>v!=null);
-  if(tvals.length){
-    document.getElementById(`areaAvg-${grp.dataset.taller}`).textContent =
-      (tvals.reduce((a,c)=>a+c,0)/tvals.length).toFixed(1)+" / 5";
-  }
-  const all = Object.values(areaScores);
-  if(all.length){
-    document.getElementById("areaGlobal").textContent = (all.reduce((a,c)=>a+c,0)/all.length).toFixed(1);
-  }
-});
-function guardarAreas(){
-  const n = Object.keys(areaScores).length;
-  toast(n ? `Evaluación por áreas guardada (demo · ${n} indicadores)` : "Seleccioná al menos un indicador");
-}
-
-/* ---------- EVALUACIÓN GENERAL (provisional) ---------- */
-const GENERAL_DIMS = [
-  ["Autonomía / Vida diaria (AVD)","Desempeño en actividades cotidianas y autocuidado."],
-  ["Comunicación funcional","Uso comunicativo (verbal, gestual o aumentativo) en contexto."],
-  ["Integración y vínculo social","Relación con pares y adultos, participación grupal."],
-  ["Regulación emocional y conductual","Manejo de la frustración, anticipación y autorregulación."],
-  ["Participación en talleres","Implicación general en las actividades institucionales."]
-];
-const genScores = {};
-
-function renderGeneral(){
-  const sel = document.getElementById("selNNAGen");
-  const cont = document.getElementById("generalForm");
-  if(!sel || !cont) return;
-  for(const k in genScores) delete genScores[k];
-  const p = NNA.find(n=>n.id===parseInt(sel.value));
-  if(!p){ cont.innerHTML = ""; return; }
-  cont.innerHTML = `
-    <div class="card" style="margin-bottom:18px">
-      <div class="lik-head"><h2>Valoración global — ${p.nombre} ${p.apellido}</h2><span class="prog" id="genAvg">— / 5</span></div>
-      ${GENERAL_DIMS.map((d,i)=>`
-        <div class="lik-item" ${i===GENERAL_DIMS.length-1?'style="border-bottom:none"':''}>
-          <div class="iname">${d[0]}</div><div class="iq">${d[1]}</div>
-          <div class="lik-opts" data-dim="${i}">
-            <button data-v="1">1 — Inicial</button><button data-v="2">2</button>
-            <button data-v="3">3 — En proceso</button><button data-v="4">4</button>
-            <button data-v="5">5 — Consolidado</button>
-          </div>
-        </div>`).join("")}
-    </div>
-    <div class="card" style="margin-bottom:18px">
-      <div class="cardhead"><h2>Observación clínica general</h2></div>
-      <div class="cardbody">
-        <textarea id="genObs" style="width:100%;min-height:96px;font-family:inherit;font-size:.85rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink)" placeholder="Síntesis cualitativa del período: avances, áreas a reforzar, recomendaciones…"></textarea>
-      </div>
-    </div>
-    <div class="idea-summary">
-      <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Promedio global</div>
-      <div class="tot"><span id="genGlobal">—</span><small> / 5</small></div></div>
-      <div class="nota">Valoración global orientativa. El protocolo definitivo de evaluación general se define con IPPU.</div>
-      <div class="spacer"></div>
-      <button class="btn btn-primary" onclick="guardarGeneral()">Guardar evaluación general</button>
-    </div>`;
-}
-
-document.getElementById("generalForm").addEventListener("click", ev=>{
-  const b = ev.target.closest(".lik-opts button"); if(!b) return;
-  const grp = b.parentElement;
-  grp.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
-  b.classList.add("sel");
-  genScores[grp.dataset.dim] = +b.dataset.v;
-  const vals = Object.values(genScores);
-  const avg = (vals.reduce((a,c)=>a+c,0)/vals.length).toFixed(1);
-  document.getElementById("genAvg").textContent = avg+" / 5";
-  document.getElementById("genGlobal").textContent = avg;
-});
-function guardarGeneral(){
-  const n = Object.keys(genScores).length;
-  toast(n ? `Evaluación general guardada (demo · ${n}/${GENERAL_DIMS.length} dimensiones)` : "Puntuá al menos una dimensión");
-}
 
 /* ---------- GRUPOS DE REFERENCIA ---------- */
 const GRUPOS = [
@@ -3410,6 +3441,11 @@ function renderGrupos(){
         <div class="data-row"><dt>Talleres</dt><dd><div class="talleres-list">${g.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")}</div></dd></div>
         <div class="data-row"><dt>Observaciones</dt><dd>${g.obs}</dd></div>
         <div class="data-row"><dt>Integrantes</dt><dd>${intHtml}</dd></div>
+        ${(()=>{ const gi = grupoAutImagen(g.id); const nf = (GRUPOS_FOTOS[g.id]||[]).length;   // M7 · §8.4
+          return `<div class="data-row"><dt>Fotos grupales</dt><dd>${gi.ok
+            ? `<span style="color:var(--ok);font-weight:700">✓ Habilitadas</span> — todas las familias del grupo autorizan uso de imagen · ${nf} foto(s) <button class="btn btn-ghost btn-mini" onclick="subirFotoGrupo('${g.id}')">+ Foto grupal</button>`
+            : `<span style="color:var(--warn);font-weight:700">🚫 Bloqueadas</span> — sin autorización de imagen: <b>${gi.faltan.map(n=>n.nombre+" "+n.apellido).join(", ")||"(sin integrantes activos)"}</b> <button class="btn btn-ghost btn-mini" onclick="subirFotoGrupo('${g.id}')">Intentar cargar</button>`}</dd></div>`;
+        })()}
       </div>
     </div>`;
   }).join("");
@@ -3464,16 +3500,9 @@ function renderUsuario(){
 }
 
 /* ---------- Wiring + render inicial de los módulos nuevos ---------- */
-document.getElementById("selNNAArea").addEventListener("change", renderAreas);
-document.getElementById("selNNAGen").addEventListener("change", renderGeneral);
-document.querySelectorAll('.navitem[data-view="areas"]').forEach(b=>b.addEventListener("click",()=>{ populateEvalSelects(); renderAreas(); }));
-document.querySelectorAll('.navitem[data-view="general"]').forEach(b=>b.addEventListener("click",()=>{ populateEvalSelects(); renderGeneral(); }));
 document.querySelectorAll('.navitem[data-view="grupos"]').forEach(b=>b.addEventListener("click", renderGrupos));
 document.querySelectorAll('.navitem[data-view="usuarios"]').forEach(b=>b.addEventListener("click", renderUsuario));
 
-populateEvalSelects();
-renderAreas();
-renderGeneral();
 renderGrupos();
 renderUsuario();
 
