@@ -618,7 +618,7 @@
         <div class="nna-toolbar">
           <div class="search-wrap">
             <span class="search-ico">⌕</span>
-            <input id="searchNNA" type="search" placeholder="Buscar por nombre, apellido, N.º de HCE o cédula…" oninput="applyNNAFilter()" autocomplete="off">
+            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HCE, cédula o grupo…" oninput="applyNNAFilter()" autocomplete="off">
           </div>
           <div class="estado-chips">
             <button class="chip-estado active" data-estado="activos" onclick="setEstadoFiltro('activos')">Activos</button>
@@ -856,6 +856,12 @@
       <div class="crumbs">Institucional › <b>Analítica institucional</b></div>
       <h1 class="pagetitle">Analítica institucional — Dirección y equipo técnico</h1>
       <p class="pagedesc">Indicadores agregados y anonimizados de la base de datos institucional: evolución poblacional de los puntajes IDEA, eficacia de los 18 talleres IPPU y cobertura de evaluaciones. Insumo para el Plan Anual y el reporte a INAU.</p>
+
+      <!-- M10 · Recordatorios de períodos del Manual (§4): configurables, nunca bloqueantes -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="cardhead"><h2>Recordatorios — períodos del Manual (configurables por coordinación)</h2></div>
+        <div class="cardbody" id="recordatoriosBody"></div>
+      </div>
 
       <div class="kpirow">
         <div class="kpi"><div class="lab">Mejora promedio anual</div><div class="val ok">−9,4 pts</div><div class="sub">Puntaje IDEA · población 2026</div></div>
@@ -2099,7 +2105,8 @@ function coincideBusqueda(p, q){
       || deburr(`${p.apellido} ${p.nombre}`).includes(ql)
       || (qn.length>0 && norm(p.ci).includes(qn))                        // cédula (tolerante a puntos/guiones)
       || (qn.length>0 && String(p.id).includes(qn))                      // N.º de HCE / expediente
-      || deburr(`exp #${p.id}`).includes(ql) || deburr(`hce ${p.id}`).includes(ql);
+      || deburr(`exp #${p.id}`).includes(ql) || deburr(`hce ${p.id}`).includes(ql)
+      || deburr(`grupo ${p.grupo}`) === ql || deburr(p.grupo) === ql;    // grupo — 3.ª vía (M10): "grupo a" o "a" exacto
 }
 
 function filaNNA(p){
@@ -3756,6 +3763,40 @@ function generarReporteVF(id){
   go("informe");
 }
 
+/* ============ RECORDATORIOS · PERÍODOS DEL MANUAL (M10, §4) ============
+   Avisos en el panel institucional, configurables por coordinación (demo: en
+   memoria). NUNCA fechas límite bloqueantes: informan, no impiden firmar. */
+const RECORDATORIOS = [
+  {key:"lb", txt:"Aplicación del IDEA (HCE-LB) en las primeras semanas del ingreso", periodo:"Al ingreso", activo:true},
+  {key:"pa", txt:"Protocolo A (HCE-PA) durante el receso de julio",                  periodo:"Julio",      activo:true},
+  {key:"pb", txt:"Protocolo B (HCE-PB) en la última semana lectiva",                 periodo:"Diciembre",  activo:true},
+  {key:"ic", txt:"Informe de Cierre (HCE-IC) en los días posteriores al Protocolo B",periodo:"Días post-PB", activo:true},
+];
+/* Pendientes de un recordatorio: NNA activos con el módulo previo firmado y éste sin firmar. */
+function recordatorioPendientes(key){
+  const prev = {lb:"ci", pa:"lb", pb:"pa", ic:"pb"}[key];
+  return NNA.filter(n=>n.activo && n.flujo[prev].firmado && !n.flujo[key].firmado);
+}
+function renderRecordatorios(){
+  const el = document.getElementById("recordatoriosBody"); if(!el) return;
+  el.innerHTML = `<table class="comp-table"><thead><tr><th style="width:60px">Activo</th><th>Recordatorio</th><th style="width:150px">Período (editable)</th><th>Pendientes</th></tr></thead><tbody>
+    ${RECORDATORIOS.map((r,i)=>{
+      const pend = r.activo ? recordatorioPendientes(r.key) : [];
+      const pendHtml = !r.activo ? `<span style="color:var(--ink-2);font-size:.76rem">— desactivado —</span>`
+        : pend.length ? pend.map(n=>`<button class="btn btn-link" onclick="abrirExpediente(${n.id})">${n.nombre} ${n.apellido} →</button>`).join(" ")
+        : `<span style="color:var(--ok);font-size:.78rem;font-weight:700">✓ al día</span>`;
+      return `<tr style="${r.activo?"":"opacity:.55"}">
+        <td><input type="checkbox" ${r.activo?"checked":""} onchange="recToggle(${i},this.checked)"></td>
+        <td style="font-size:.82rem">${r.txt}</td>
+        <td><input value="${r.periodo}" onchange="recPeriodo(${i},this.value)" style="width:100%"></td>
+        <td>${pendHtml}</td></tr>`;
+    }).join("")}
+  </tbody></table>
+  <div style="font-size:.72rem;color:var(--ink-2);margin-top:8px">Recordatorios configurables por coordinación (demo: en memoria). <b>Nunca son fechas límite bloqueantes</b> (§4): informan al equipo, no impiden registrar ni firmar módulos. Las alertas de organismos (AYEX 60/30) y de valoración funcional (90/30, §7.8) viven en HCE-ORG y HCE-VF.</div>`;
+}
+function recToggle(i,v){ RECORDATORIOS[i].activo = v; renderRecordatorios(); }
+function recPeriodo(i,v){ RECORDATORIOS[i].periodo = v; }
+
 /* Fotos grupales (§8.4): requieren autorización de TODAS las familias del grupo. */
 const GRUPOS_FOTOS = {};   // grupo -> [{desc, fecha}] (en memoria, demo)
 function grupoAutImagen(gid){
@@ -3897,9 +3938,11 @@ function renderUsuario(){
 /* ---------- Wiring + render inicial de los módulos nuevos ---------- */
 document.querySelectorAll('.navitem[data-view="grupos"]').forEach(b=>b.addEventListener("click", renderGrupos));
 document.querySelectorAll('.navitem[data-view="usuarios"]').forEach(b=>b.addEventListener("click", renderUsuario));
+document.querySelectorAll('.navitem[data-view="analitica"]').forEach(b=>b.addEventListener("click", renderRecordatorios));
 
 renderGrupos();
 renderUsuario();
+renderRecordatorios();
 
 </script>
 </body>

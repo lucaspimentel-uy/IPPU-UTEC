@@ -20,16 +20,30 @@ IPPU/
 ├── handoff.md      ← Estado del proyecto entre sesiones (empezar por acá)
 ├── CLAUDE.md       ← Guía de contexto para Claude
 ├── README.md       ← Este archivo
+├── PLAN-modular-adaptacion-HCE-2026-07.md  ← Plan de la ronda M0–M11 (adaptación al Doc. Técnico)
 ├── docs/
 │   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
 │   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
 │   └── notas/      ← Notas y síntesis propias del equipo
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
-│       └── demo/hce_idea_ippu_demo.html   ← Demo navegable (datos simulados)
+│       ├── demo/hce_idea_ippu_demo.html   ← Demo navegable (datos simulados, sin backend)
+│       └── backend/                       ← API FastAPI + SQLAlchemy + Alembic (ver su README)
 └── herramientas/
     └── conversor_docling.py   ← Conversor de documentos a Markdown
 ```
+
+## 📌 Estado de la Línea 1 (jul-2026)
+- **Demo v4.0 — ronda M0–M10 completa**, adaptada al **Documento Técnico IPPU v1.0**: motor de flujo con
+  firma/bloqueo/addendas/habilitación excepcional y auditoría (HCE-LOG), módulos **HCE-00** (identificación
+  y anamnesis), **HCE-CI** (consentimiento), **HCE-LB** (IDEA como línea base única), **HCE-PA/PB** (Escala
+  IPPU-TEA con delta B−A y alerta institucional), **HCE-IC** (Informe de Cierre Anual con radar y PDF, único
+  informe válido), **HCE-DOC** (documentos, archivo histórico y protección de imagen), **HCE-ORG** (INAU/BPS)
+  y **HCE-VF** (valoración funcional BUND/CIF con salvaguarda anti-conversión), + búsqueda por 3 vías y
+  recordatorios configurables. Reglas duras verificadas con Playwright (E2E punta a punta).
+- **Backend Fases 0–2** (FastAPI + SQLAlchemy + Alembic, 21 tablas, 20 endpoints, tests): construido sobre el
+  modelo *previo* al Documento Técnico → el rediseño de esquema es la próxima ronda (**M11**, backend v2),
+  a arrancar tras validar la demo con IPPU.
 
 ## 🚀 Cómo retomar el trabajo
 ```bash
