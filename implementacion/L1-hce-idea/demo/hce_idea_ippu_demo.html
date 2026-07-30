@@ -488,6 +488,11 @@
   .eval-bar .btn-ghost{border:1px solid var(--line)}
 
   /* ============ IMPRESIÓN (informe → PDF) ============ */
+  /* M8 · HCE-ORG — áreas INAU y BPS */
+  .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:1100px){.org-grid{grid-template-columns:1fr}}
+  .org-col h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:14px 0 8px}
+  .org-col .form-grid{margin-bottom:0}
   /* M7 · HCE-DOC — documentos adjuntos y fotos */
   .doc-uprow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px}
   .doc-uprow .field{margin:0;flex:1;min-width:160px}
@@ -580,7 +585,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
-    <div class="foot">v3.9 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+    <div class="foot">v3.10 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
   <!-- ===================== MAIN ===================== -->
@@ -1251,7 +1256,7 @@ const MODULOS_FLUJO = [
 ];
 const SECUENCIA = MODULOS_FLUJO.map(m=>m.key);          // ['ci','lb','pa','pb','ic']
 const modInfo = key => MODULOS_FLUJO.find(m=>m.key===key);
-const MOD_LABEL = {hce00:"HCE-00", doc:"HCE-DOC"};      // módulos fuera de la secuencia (para HCE-LOG)
+const MOD_LABEL = {hce00:"HCE-00", doc:"HCE-DOC", org:"HCE-ORG"};   // módulos fuera de la secuencia (para HCE-LOG)
 const moduloLabel = key => { const m=modInfo(key); return m ? m.full : (MOD_LABEL[key]||key||"—"); };
 
 /* Técnicos responsables — roles fijos (decisión §0.5). Genéricos/configurables en el futuro. */
@@ -1616,6 +1621,8 @@ const CIE_SEED = {101:"6A02.0",102:"6A02.1",103:"6A02.2",104:"6A02.Z",105:"6A02.
 NNA.forEach(n=>{
   n.flujo = initFlujo(); n.hceLog = [];
   n.docs = []; n.fotos = []; n.autImagen = {registrada:false, fecha:"", adjunto:""};   // HCE-DOC (M7)
+  n.inau = {sipi:"", convenio:"", referente:"", ingreso:"", obs:"", envios:[]};        // HCE-ORG (M8)
+  n.bps  = {prestacion:"", tramite:"", estado:"", vencimiento:"", obs:"", gestiones:[]};
   if(!n.cie11) n.cie11 = (CIE_SEED[n.id]||"6A02.Z") + " — Trastorno del espectro del autismo";
   if(!n.tecnico1){ n.tecnico1 = (n.tecnico||"Dr. González — Psicología").split("—")[0].trim(); n.tecnico1_rol = "Psicólogo/a"; }
   if(!n.tecnico2){ n.tecnico2 = "Mtra. Torres"; n.tecnico2_rol = "Maestro/a"; }
@@ -1725,6 +1732,26 @@ NNA.forEach(n=>{
   if(byId(101)) byId(101).docs.push(HIST("Evaluación General 2025 — export certificada.pdf","Evaluación General","2025-11-25"));
   if(byId(103)) byId(103).docs.push(HIST("Observaciones 2024–2025 — export certificada.pdf","Observaciones","2025-12-01"));
   setAutImagen(103,"2026-03-12");
+
+  /* --- M8 · HCE-ORG: áreas INAU y BPS seed. ------------------------------- */
+  if(byId(102)){
+    Object.assign(byId(102).inau, {sipi:"SIPI 123.456", convenio:"Convenio INAU — Atención Diurna TEA",
+      referente:"Lic. R. Martínez (INAU Este)", ingreso:"2023-03-01",
+      obs:"Situación estable. Coordinaciones semestrales con el referente territorial.",
+      envios:[{fecha:"2026-07-20", txt:"Informe semestral enviado (síntesis del Protocolo A)"},
+              {fecha:"2026-12-22", txt:"Informe de Cierre Anual 2026 enviado (documento único HCE-IC)"}]});
+    Object.assign(byId(102).bps, {prestacion:"Ayuda Extraordinaria (AYEX) — instituto habilitado",
+      tramite:"EXP-2026-0412", estado:"Vigente", vencimiento:"2027-03-31",
+      obs:"Renovación anual. Constancia de asistencia emitida en abril.",
+      gestiones:[{fecha:"2026-04-10", txt:"Constancia de asistencia emitida para renovación de AYEX"}]});
+  }
+  if(byId(101)) Object.assign(byId(101).bps, {prestacion:"Ayuda Extraordinaria (AYEX)",
+    tramite:"EXP-2026-1188", estado:"En trámite", vencimiento:"",
+    obs:"Documentación presentada; a la espera de resolución.", gestiones:[
+      {fecha:"2026-06-02", txt:"Presentación de solicitud AYEX con informe de ingreso"}]});
+  if(byId(104)) Object.assign(byId(104).inau, {sipi:"SIPI 987.654", convenio:"Derivación CAIF → Convenio INAU",
+    referente:"Lic. P. Suárez (INAU Oeste)", ingreso:"2026-06-10",
+    obs:"Ingreso reciente. Coordinar informe de ingreso con el referente.", envios:[]});
 })();
 
 /* Helpers de historial → derivan el estado de evaluaciones desde el historial */
@@ -2535,7 +2562,9 @@ function crearNNA(){
     setTimeout(()=>abrirExpediente(modoEdit), 300);
   } else {
     const nuevo = Object.assign({ id: ++nnaSeq, activo:true, flujo: initFlujo(), hceLog: [],
-      docs: [], fotos: [], autImagen: {registrada:false, fecha:"", adjunto:""} }, datos, {
+      docs: [], fotos: [], autImagen: {registrada:false, fecha:"", adjunto:""},
+      inau: {sipi:"", convenio:"", referente:"", ingreso:"", obs:"", envios:[]},
+      bps:  {prestacion:"", tramite:"", estado:"", vencimiento:"", obs:"", gestiones:[]} }, datos, {
       historial: [
         {tipo:"alta", fecha:hoy, titulo:"Alta en HCE",
          desc:`Expediente creado por ${g("f_tecnico").split("—")[0].trim()}. Pendiente de primera evaluación IDEA anual.`}
@@ -2697,6 +2726,8 @@ function abrirExpediente(id){
     </div>
 
     ${docPanelHtml(p)}
+
+    ${orgPanelHtml(p)}
   `;
   go("expediente");
 }
@@ -3359,6 +3390,104 @@ function quitarFoto(id, ix){
   logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Fotografía individual quitada — ${f.desc||"sin descripción"}.`});
   renderDoc(id);
   toast("Fotografía quitada (constancia en HCE-LOG).");
+}
+
+/* ===================== HCE-ORG · ÁREAS INAU Y BPS (M8) =====================
+   Datos administrativos y registro de comunicaciones por NNA con los organismos
+   de convenio (Doc. Técnico §3, tabla de módulos). El informe que se comparte con
+   organismos supervisores es SIEMPRE el documento único HCE-IC (§5.3). */
+const BPS_PRESTACIONES = ["","Ayuda Extraordinaria (AYEX) — instituto habilitado","Ayuda Extraordinaria (AYEX)",
+  "Asignación Familiar por discapacidad","Pensión por invalidez (del hogar)","Otra"];
+const BPS_ESTADOS = ["","Vigente","En trámite","Observada","Vencida","Denegada","No corresponde"];
+
+function orgRegRows(p, org){
+  const regs = org==="inau" ? p.inau.envios : p.bps.gestiones;
+  return regs.length ? regs.map((r,i)=>`
+    <tr><td class="num" style="white-space:nowrap;text-align:left">${fmtFecha(r.fecha)}</td><td>${r.txt}</td>
+    <td style="text-align:right"><button class="btn btn-ghost btn-mini" onclick="quitarRegOrg(${p.id},'${org}',${i})">Quitar</button></td></tr>`).join("")
+    : `<tr><td colspan="3" style="color:var(--ink-2);font-size:.8rem;padding:8px">Sin registros.</td></tr>`;
+}
+function orgBodyHtml(p){
+  const I=p.inau, B=p.bps;
+  const set = (org,campo) => `onchange="orgSet(${p.id},'${org}','${campo}',this.value)"`;
+  const estadoColor = {Vigente:"var(--ok)", "En trámite":"var(--warn)", Observada:"var(--warn)", Vencida:"var(--bad)", Denegada:"var(--bad)"};
+  return `
+    <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:12px">Vinculación con los organismos de convenio: datos administrativos y registro de comunicaciones por NNA. La documentación respaldatoria se adjunta en HCE-DOC (categorías «Documento INAU» / «Documento BPS»). El informe que se comparte con organismos supervisores es siempre el <b>documento único HCE-IC</b> (§5.3) — nunca versiones alternativas.</div>
+    <div class="org-grid">
+      <div class="org-col">
+        <div class="section-label">INAU · Convenio de atención</div>
+        <div class="form-grid">
+          <div class="field"><label>N.º SIPI</label><input value="${I.sipi}" ${set("inau","sipi")}></div>
+          <div class="field"><label>Convenio / proyecto</label><input value="${I.convenio}" ${set("inau","convenio")}></div>
+          <div class="field"><label>Referente territorial INAU</label><input value="${I.referente}" ${set("inau","referente")}></div>
+          <div class="field"><label>Ingreso al convenio</label><input type="date" value="${I.ingreso}" ${set("inau","ingreso")}></div>
+        </div>
+        <div class="field"><label>Observaciones (situación, medidas, coordinaciones)</label><textarea ${set("inau","obs")}>${I.obs}</textarea></div>
+        <h4>Informes y comunicaciones enviadas a INAU</h4>
+        <table class="comp-table"><thead><tr><th>Fecha</th><th>Detalle</th><th></th></tr></thead><tbody>${orgRegRows(p,"inau")}</tbody></table>
+        <div class="doc-uprow">
+          <div class="field" style="flex:0;min-width:150px"><label>Fecha</label><input type="date" id="inau_f" value="${HOY}"></div>
+          <div class="field"><label>Detalle</label><input id="inau_t" placeholder="Ej. informe semestral enviado, visita de supervisión…"></div>
+          <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="agregarRegOrg(${p.id},'inau')">+ Registrar envío</button></div>
+        </div>
+      </div>
+      <div class="org-col">
+        <div class="section-label">BPS · Prestaciones</div>
+        <div class="form-grid">
+          <div class="field"><label>Prestación</label><select ${set("bps","prestacion")}>${BPS_PRESTACIONES.map(c=>`<option ${B.prestacion===c?"selected":""}>${c}</option>`).join("")}</select></div>
+          <div class="field"><label>N.º de trámite / expediente</label><input value="${B.tramite}" ${set("bps","tramite")}></div>
+          <div class="field"><label>Estado</label><select ${set("bps","estado")}>${BPS_ESTADOS.map(c=>`<option ${B.estado===c?"selected":""}>${c}</option>`).join("")}</select></div>
+          <div class="field"><label>Vencimiento / renovación</label><input type="date" value="${B.vencimiento}" ${set("bps","vencimiento")}></div>
+        </div>
+        ${B.estado ? `<div style="font-size:.78rem;margin-bottom:10px">Estado actual: <b style="color:${estadoColor[B.estado]||"var(--ink)"}">${B.estado}</b>${B.vencimiento?` · vence ${fmtFecha(B.vencimiento)}`:""}</div>` : ""}
+        <div class="field"><label>Observaciones (documentación, constancias, recordatorios)</label><textarea ${set("bps","obs")}>${B.obs}</textarea></div>
+        <h4>Gestiones realizadas ante BPS</h4>
+        <table class="comp-table"><thead><tr><th>Fecha</th><th>Detalle</th><th></th></tr></thead><tbody>${orgRegRows(p,"bps")}</tbody></table>
+        <div class="doc-uprow">
+          <div class="field" style="flex:0;min-width:150px"><label>Fecha</label><input type="date" id="bps_f" value="${HOY}"></div>
+          <div class="field"><label>Detalle</label><input id="bps_t" placeholder="Ej. constancia de asistencia emitida, renovación presentada…"></div>
+          <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="agregarRegOrg(${p.id},'bps')">+ Registrar gestión</button></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:.72rem;color:var(--ink-2);margin-top:12px">Alertas para el sistema definitivo (M10/recordatorios): vencimiento de AYEX a 60 y 30 días · informes semestrales a INAU pendientes tras la firma de cada protocolo.</div>`;
+}
+function orgPanelHtml(p){
+  return `<div class="flujo-card">
+    <h3><span class="ic">🏛</span> HCE-ORG · Áreas INAU y BPS
+      <span class="spacer"></span>
+      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${p.inau.envios.length} envío(s) INAU · ${p.bps.gestiones.length} gestión(es) BPS</span>
+    </h3>
+    <div class="flujo-body" id="orgPanelBody">${orgBodyHtml(p)}</div>
+  </div>`;
+}
+function renderOrg(id){
+  const p = NNA.find(n=>n.id===id);
+  const el = document.getElementById("orgPanelBody");
+  if(p && el) el.innerHTML = orgBodyHtml(p);
+}
+function orgSet(id, org, campo, valor){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  p[org][campo] = valor;
+}
+function agregarRegOrg(id, org){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const fecha = document.getElementById(org+"_f").value;
+  const txt = (document.getElementById(org+"_t").value||"").trim();
+  if(!fecha || !txt){ toast("Completá fecha y detalle del registro."); return; }
+  (org==="inau" ? p.inau.envios : p.bps.gestiones).push({fecha, txt});
+  logEvento(p, {modulo:"org", tipo:"edicion", detalle:`${org==="inau"?"Envío a INAU registrado":"Gestión ante BPS registrada"} — ${txt} (${fmtFecha(fecha)}).`});
+  renderOrg(id);
+  toast(org==="inau" ? "Envío a INAU registrado (constancia en HCE-LOG)." : "Gestión ante BPS registrada (constancia en HCE-LOG).");
+}
+function quitarRegOrg(id, org, ix){
+  const p = NNA.find(n=>n.id===id); if(!p) return;
+  const regs = org==="inau" ? p.inau.envios : p.bps.gestiones;
+  const r = regs[ix]; if(!r) return;
+  regs.splice(ix,1);
+  logEvento(p, {modulo:"org", tipo:"edicion", detalle:`Registro ${org==="inau"?"de envío a INAU":"de gestión BPS"} quitado — ${r.txt}.`});
+  renderOrg(id);
+  toast("Registro quitado (constancia en HCE-LOG).");
 }
 
 /* Fotos grupales (§8.4): requieren autorización de TODAS las familias del grupo. */
