@@ -25,6 +25,8 @@ Desktop.ini
 ~$*            # archivos temporales de Office (Word/Excel/PowerPoint abiertos)
 
 # Archivos de trabajo local — NO publicar en el repo
-/handoff.md
-/CLAUDE.md
 /herramientas/conversor_docling.py
+
+# NOTA (2026-08-03): handoff.md y CLAUDE.md salieron de esta lista a propósito.
+# Son el contexto compartido del equipo: si no están versionados, cada integrante
+# trabaja sin conocer el estado ni las decisiones ya tomadas (ver handoff.md §13).

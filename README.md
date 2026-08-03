@@ -17,8 +17,8 @@ Electrónica + protocolo IDEA + analítica institucional**.
 ## 📂 Estructura del repositorio
 ```
 IPPU/
-├── handoff.md      ← Estado del proyecto entre sesiones (empezar por acá)
-├── CLAUDE.md       ← Guía de contexto para Claude
+├── handoff.md      ← Estado del proyecto + decisiones + flujo de trabajo (EMPEZAR POR ACÁ)
+├── CLAUDE.md       ← Guía de contexto para las sesiones de Claude
 ├── README.md       ← Este archivo
 ├── PLAN-modular-adaptacion-HCE-2026-07.md  ← Plan de la ronda M0–M11 (adaptación al Doc. Técnico)
 ├── docs/
@@ -42,16 +42,23 @@ IPPU/
   y **HCE-VF** (valoración funcional BUND/CIF con salvaguarda anti-conversión), + búsqueda por 3 vías y
   recordatorios configurables. Reglas duras verificadas con Playwright (E2E punta a punta).
 - **Backend Fases 0–2** (FastAPI + SQLAlchemy + Alembic, 21 tablas, 20 endpoints, tests): construido sobre el
-  modelo *previo* al Documento Técnico → el rediseño de esquema es la próxima ronda (**M11**, backend v2),
-  a arrancar tras validar la demo con IPPU.
+  modelo *previo* al Documento Técnico → el rediseño de esquema es la ronda **en curso** (**M11**, backend v2,
+  responsable **Victor**), sobre la propuesta `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md`.
 
 ## 🚀 Cómo retomar el trabajo
 ```bash
-cd "C:\Proyectos\IPPU"
+git pull
+cd <carpeta del repo>
 claude
 ```
-Luego leer `handoff.md` (estado vivo) y `CLAUDE.md` (contexto). La documentación lista para leer está
-en `docs/markdown/`; la demo de la L1 se abre en el navegador desde `implementacion/L1-hce-idea/demo/`.
+1. Leer **`handoff.md`** — es el estado vivo del proyecto: **§5** decisiones ya tomadas, **§6** pendientes y
+   quién los tiene, **§12 el flujo de trabajo del equipo** (cómo trabajamos los tres en paralelo sin pisarnos).
+2. Leer `CLAUDE.md` (contexto y reglas para las sesiones de Claude).
+3. La documentación lista para leer está en `docs/markdown/`; la demo de la L1 se abre en el navegador desde
+   `implementacion/L1-hce-idea/demo/`.
+
+> ⚠️ **Antes de tocar código:** confirmá en `handoff.md` §6 que nadie más tomó ese módulo, y avisá en el grupo.
+> La demo es **un solo archivo de ~3.700 líneas** → una sola persona a la vez.
 
 ## 🛠️ Convertir nuevos documentos a Markdown
 ```bash
