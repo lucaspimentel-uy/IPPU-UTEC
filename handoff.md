@@ -160,7 +160,7 @@ No fue un error de nadie: **esa rama se hizo sin acceso a `handoff.md` ni `CLAUD
 ## 8. Equipo y contactos
 - **UTEC-LIDIA — equipo actual (3):** **Lucas Pimentel** · **Samuel (Boris) Furtado** · **Victor Uria**.
   (Bruno Delvalle y Rafael Quintanilla figuraban en el equipo inicial; hoy no están activos en L1.)
-- **UTEC (docentes/referentes):** Matías López (`matias.lopez@utec.edu.uy`), Mikaela/Ruth Pivani (`ruth.pivani@utec.edu.uy`).
+- **UTEC (docentes/referentes):** Matías López (`matias.lopez@utec.edu.uy`), Vitalio Alfonso Reguera (agregado por Victor, 2026-08-03), Mikaela/Ruth Pivani (`ruth.pivani@utec.edu.uy`).
 - **IPPU:** Fernando Sierra — Director.
 
 ## 9. Datos clave (cifras)
