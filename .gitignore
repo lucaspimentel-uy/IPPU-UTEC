@@ -27,6 +27,11 @@ Desktop.ini
 # Archivos de trabajo local — NO publicar en el repo
 /herramientas/conversor_docling.py
 
+# graphify: cache local y marcadores de ruta de máquina (no portables entre integrantes)
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+
 # NOTA (2026-08-03): handoff.md y CLAUDE.md salieron de esta lista a propósito.
 # Son el contexto compartido del equipo: si no están versionados, cada integrante
 # trabaja sin conocer el estado ni las decisiones ya tomadas (ver handoff.md §13).

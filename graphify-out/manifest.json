@@ -1,0 +1,312 @@
+{
+  "implementacion/L1-hce-idea/backend/alembic/env.py": {
+    "mtime": 1785932080.618809,
+    "ast_hash": "cd95327624a46cd052c296ea5f66c93b",
+    "semantic_hash": "cd95327624a46cd052c296ea5f66c93b"
+  },
+  "implementacion/L1-hce-idea/backend/alembic/versions/08b229097cae_core_schema_catalogo_personas_nna_.py": {
+    "mtime": 1785932080.6208084,
+    "ast_hash": "c228458efe99f7d30c7e7e553823ac54",
+    "semantic_hash": "c228458efe99f7d30c7e7e553823ac54"
+  },
+  "implementacion/L1-hce-idea/backend/alembic/versions/66b4b3fa7499_areas_y_general_provisional.py": {
+    "mtime": 1785932080.6218374,
+    "ast_hash": "0f73530700135b5b2839616c5210dd43",
+    "semantic_hash": "0f73530700135b5b2839616c5210dd43"
+  },
+  "implementacion/L1-hce-idea/backend/alembic/versions/b757927624aa_observacion_seguimiento_clinico.py": {
+    "mtime": 1785932080.6228116,
+    "ast_hash": "92625c76e0918f2171d270e4bc703242",
+    "semantic_hash": "92625c76e0918f2171d270e4bc703242"
+  },
+  "implementacion/L1-hce-idea/backend/app/__init__.py": {
+    "mtime": 1785932080.6238103,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "implementacion/L1-hce-idea/backend/app/core/__init__.py": {
+    "mtime": 1785932080.6248116,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "implementacion/L1-hce-idea/backend/app/core/config.py": {
+    "mtime": 1785932080.6248116,
+    "ast_hash": "36f806e9fd4788197c719dc4a61f8fa7",
+    "semantic_hash": "36f806e9fd4788197c719dc4a61f8fa7"
+  },
+  "implementacion/L1-hce-idea/backend/app/core/database.py": {
+    "mtime": 1785932080.6258075,
+    "ast_hash": "e2f55bad0a2d8f37a282643d733c4cb9",
+    "semantic_hash": "e2f55bad0a2d8f37a282643d733c4cb9"
+  },
+  "implementacion/L1-hce-idea/backend/app/main.py": {
+    "mtime": 1785932080.6268132,
+    "ast_hash": "892dfc1119b763b0748bc68bdf129dd2",
+    "semantic_hash": "892dfc1119b763b0748bc68bdf129dd2"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/__init__.py": {
+    "mtime": 1785932080.6278076,
+    "ast_hash": "30b5b329823ea052abd57cdc6afaa9a6",
+    "semantic_hash": "30b5b329823ea052abd57cdc6afaa9a6"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/areas_general.py": {
+    "mtime": 1785932080.6288092,
+    "ast_hash": "74c7107b8c8b355ccecefc5768673865",
+    "semantic_hash": "74c7107b8c8b355ccecefc5768673865"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/associations.py": {
+    "mtime": 1785932080.6298068,
+    "ast_hash": "28adf90b4aa3ca439fda3727f5db3ba1",
+    "semantic_hash": "28adf90b4aa3ca439fda3727f5db3ba1"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/catalogo.py": {
+    "mtime": 1785932080.6308076,
+    "ast_hash": "cdaa0291c1a5f8cd2a6d6bbb3e003341",
+    "semantic_hash": "cdaa0291c1a5f8cd2a6d6bbb3e003341"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/evaluaciones.py": {
+    "mtime": 1785932080.631807,
+    "ast_hash": "ce7b1bf0af65c7675e655a45daf17334",
+    "semantic_hash": "ce7b1bf0af65c7675e655a45daf17334"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/nna.py": {
+    "mtime": 1785932080.6328075,
+    "ast_hash": "e76f6763f589c8ea57ffa4defc9dafa5",
+    "semantic_hash": "e76f6763f589c8ea57ffa4defc9dafa5"
+  },
+  "implementacion/L1-hce-idea/backend/app/models/personas.py": {
+    "mtime": 1785932080.6338074,
+    "ast_hash": "35b678be895b4789a8e09d4133eed260",
+    "semantic_hash": "35b678be895b4789a8e09d4133eed260"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/__init__.py": {
+    "mtime": 1785932080.6348083,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/catalogo.py": {
+    "mtime": 1785932080.6348083,
+    "ast_hash": "a89875adc4b614746649b9d44738bfbe",
+    "semantic_hash": "a89875adc4b614746649b9d44738bfbe"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/clinica.py": {
+    "mtime": 1785932080.6358073,
+    "ast_hash": "567356e0219948a259e787bbc525e6d9",
+    "semantic_hash": "567356e0219948a259e787bbc525e6d9"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/deps.py": {
+    "mtime": 1785932080.636808,
+    "ast_hash": "2c6323e8f745a131225e7919563eda38",
+    "semantic_hash": "2c6323e8f745a131225e7919563eda38"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/evaluaciones.py": {
+    "mtime": 1785932080.636808,
+    "ast_hash": "80c2d4b511ec92feb3c3e96196a0e4d2",
+    "semantic_hash": "80c2d4b511ec92feb3c3e96196a0e4d2"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/nna.py": {
+    "mtime": 1785932080.637807,
+    "ast_hash": "e66550269e8c701c2d5834702893a89a",
+    "semantic_hash": "e66550269e8c701c2d5834702893a89a"
+  },
+  "implementacion/L1-hce-idea/backend/app/routers/personas.py": {
+    "mtime": 1785932080.638807,
+    "ast_hash": "a467b4b12e6452c07c04bfbc224ed33a",
+    "semantic_hash": "a467b4b12e6452c07c04bfbc224ed33a"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/__init__.py": {
+    "mtime": 1785932080.6398082,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/base.py": {
+    "mtime": 1785932080.6398082,
+    "ast_hash": "5fd128cf852059e6fdd8295fa997c423",
+    "semantic_hash": "5fd128cf852059e6fdd8295fa997c423"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/catalogo.py": {
+    "mtime": 1785932080.640807,
+    "ast_hash": "9c36f80c8f5c4ef64f444fa638802260",
+    "semantic_hash": "9c36f80c8f5c4ef64f444fa638802260"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/clinica.py": {
+    "mtime": 1785932080.6418064,
+    "ast_hash": "3dfb354694d90660bb5cd7c4c3534c1f",
+    "semantic_hash": "3dfb354694d90660bb5cd7c4c3534c1f"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/evaluaciones.py": {
+    "mtime": 1785932080.6418064,
+    "ast_hash": "8dd15f7a19c3eba6e3246b479d0048f6",
+    "semantic_hash": "8dd15f7a19c3eba6e3246b479d0048f6"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/nna.py": {
+    "mtime": 1785932080.6428063,
+    "ast_hash": "c5501e890e32381f570aa8d270c7ffe2",
+    "semantic_hash": "c5501e890e32381f570aa8d270c7ffe2"
+  },
+  "implementacion/L1-hce-idea/backend/app/schemas/personas.py": {
+    "mtime": 1785932080.643807,
+    "ast_hash": "6d89805a3311f14e953d92a14c5abdd9",
+    "semantic_hash": "6d89805a3311f14e953d92a14c5abdd9"
+  },
+  "implementacion/L1-hce-idea/backend/app/seed.py": {
+    "mtime": 1785932080.6448114,
+    "ast_hash": "69906bb537965cca781fbcf60aac5866",
+    "semantic_hash": "69906bb537965cca781fbcf60aac5866"
+  },
+  "implementacion/L1-hce-idea/backend/tests/conftest.py": {
+    "mtime": 1785932080.6498072,
+    "ast_hash": "72c28652f5f9d08b2fd5168a15969345",
+    "semantic_hash": "72c28652f5f9d08b2fd5168a15969345"
+  },
+  "implementacion/L1-hce-idea/backend/tests/test_api.py": {
+    "mtime": 1785932080.6498072,
+    "ast_hash": "73e5c0e1438eade32814a7acd44681c9",
+    "semantic_hash": "73e5c0e1438eade32814a7acd44681c9"
+  },
+  "CLAUDE.md": {
+    "mtime": 1785932718.9146297,
+    "ast_hash": "3bd5672a968977a07690f9966a76ce22",
+    "semantic_hash": "3bd5672a968977a07690f9966a76ce22"
+  },
+  "PLAN-modular-adaptacion-HCE-2026-07.md": {
+    "mtime": 1785932718.9156556,
+    "ast_hash": "73d8f96b8e1cac3c2d875050d0099f0e",
+    "semantic_hash": "73d8f96b8e1cac3c2d875050d0099f0e"
+  },
+  "README.md": {
+    "mtime": 1785932718.9166281,
+    "ast_hash": "2a1b14a51f792d58970be5fff4f56f99",
+    "semantic_hash": "2a1b14a51f792d58970be5fff4f56f99"
+  },
+  "docs/fuentes/HCE_IPPU_Prototipo_v1.html": {
+    "mtime": 1785932718.919628,
+    "ast_hash": "6645e7ff3e65d1f4e0c10c23f5994528",
+    "semantic_hash": "6645e7ff3e65d1f4e0c10c23f5994528"
+  },
+  "docs/markdown/1_documento-tecnico-utec-lidia.md": {
+    "mtime": 1785932718.9206305,
+    "ast_hash": "c9c30dec0ad4f13d5a3d1a8242bd5064",
+    "semantic_hash": "c9c30dec0ad4f13d5a3d1a8242bd5064"
+  },
+  "docs/markdown/Cuestionario IPPU UTEC, respuestas.md": {
+    "mtime": 1785932080.6008093,
+    "ast_hash": "9694dd60c28d6b0aeb212fc4acc19d45",
+    "semantic_hash": "9694dd60c28d6b0aeb212fc4acc19d45"
+  },
+  "docs/markdown/Documento de trabajo.md": {
+    "mtime": 1785932080.6028063,
+    "ast_hash": "49cd857d77828c25cbcc249bd70f0a4b",
+    "semantic_hash": "49cd857d77828c25cbcc249bd70f0a4b"
+  },
+  "docs/markdown/Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.md": {
+    "mtime": 1785932080.6028063,
+    "ast_hash": "b6f0108421f7a612ce4785c936a7307f",
+    "semantic_hash": "b6f0108421f7a612ce4785c936a7307f"
+  },
+  "docs/markdown/Guia_Relevamiento.md": {
+    "mtime": 1785932080.6038074,
+    "ast_hash": "f80bab14fa890d1b09cad034223c9745",
+    "semantic_hash": "f80bab14fa890d1b09cad034223c9745"
+  },
+  "docs/markdown/IPPU.md": {
+    "mtime": 1785932080.604806,
+    "ast_hash": "9ab0d5c6888cbd297a21364946c63f3a",
+    "semantic_hash": "9ab0d5c6888cbd297a21364946c63f3a"
+  },
+  "docs/markdown/IPPU_UTEC_Presentacion_13.05.2026.md": {
+    "mtime": 1785932080.6058073,
+    "ast_hash": "55b0781d9320b35d5df98314fd7dee90",
+    "semantic_hash": "55b0781d9320b35d5df98314fd7dee90"
+  },
+  "docs/markdown/Proyectos, Investigaciones y Oportunidades de Desarrollo.md": {
+    "mtime": 1785932080.6068118,
+    "ast_hash": "c2428b2cc7afdf8a47f2692b91970ef8",
+    "semantic_hash": "c2428b2cc7afdf8a47f2692b91970ef8"
+  },
+  "docs/markdown/Reuni\u00f3n IPPU_UTEC - 2026_05_13 14_50 GMT-03_00 - Asistencia.md": {
+    "mtime": 1785932080.6078112,
+    "ast_hash": "f812c6b6d09550aab9f41edd68b72154",
+    "semantic_hash": "f812c6b6d09550aab9f41edd68b72154"
+  },
+  "docs/markdown/Reuni\u00f3n Proyecto IPPU - 2026_05_20 15_59 GMT-03_00 - Asistencia.md": {
+    "mtime": 1785932080.6088064,
+    "ast_hash": "3a272b3eeb49e1a87f7ded9a899d4dfb",
+    "semantic_hash": "3a272b3eeb49e1a87f7ded9a899d4dfb"
+  },
+  "docs/markdown/Reuni\u00f3n Proyecto IPPU - 2026_05_27 15_54 GMT-03_00 - Asistencia.md": {
+    "mtime": 1785932080.6088064,
+    "ast_hash": "1e9761f693ed9d59af9b3ab899e3b135",
+    "semantic_hash": "1e9761f693ed9d59af9b3ab899e3b135"
+  },
+  "docs/markdown/escala-del-inventario-del-espectro-autista-idea.md": {
+    "mtime": 1785932080.60981,
+    "ast_hash": "800870cbc480a28fc6e20e91f2edf4d0",
+    "semantic_hash": "800870cbc480a28fc6e20e91f2edf4d0"
+  },
+  "docs/markdown/hce_idea_ippu_demo.md": {
+    "mtime": 1785932080.6108117,
+    "ast_hash": "c96a56842f38c527525a1d61b4fbf906",
+    "semantic_hash": "c96a56842f38c527525a1d61b4fbf906"
+  },
+  "docs/markdown/modelo-datos.md": {
+    "mtime": 1785932718.9216287,
+    "ast_hash": "cee5464e267a97ecf4790729caaf627b",
+    "semantic_hash": "cee5464e267a97ecf4790729caaf627b"
+  },
+  "handoff.md": {
+    "mtime": 1785932718.9226289,
+    "ast_hash": "b58f2351807f09bbf8e8ae54dfa09268",
+    "semantic_hash": "b58f2351807f09bbf8e8ae54dfa09268"
+  },
+  "implementacion/L1-hce-idea/backend/README.md": {
+    "mtime": 1785932080.615808,
+    "ast_hash": "1c77cfa7c1a708b8fad0cdd0f6daf31a",
+    "semantic_hash": "1c77cfa7c1a708b8fad0cdd0f6daf31a"
+  },
+  "implementacion/L1-hce-idea/backend/docs/ejemplos-endpoints.md": {
+    "mtime": 1785932080.645809,
+    "ast_hash": "8c42e70c1fd0b87313a3efe37eb93e46",
+    "semantic_hash": "8c42e70c1fd0b87313a3efe37eb93e46"
+  },
+  "implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md": {
+    "mtime": 1785932718.9246266,
+    "ast_hash": "7036820b20b013cd5906c84afe5c2211",
+    "semantic_hash": "7036820b20b013cd5906c84afe5c2211"
+  },
+  "implementacion/L1-hce-idea/backend/docs/esquema-datos.md": {
+    "mtime": 1785932080.6478136,
+    "ast_hash": "3bf29e59f64e3751a1b47c1fd6a41862",
+    "semantic_hash": "3bf29e59f64e3751a1b47c1fd6a41862"
+  },
+  "implementacion/L1-hce-idea/backend/requirements.txt": {
+    "mtime": 1785932080.6478136,
+    "ast_hash": "bfc9b92b5b6d7aecaa3b6cc18401c779",
+    "semantic_hash": "bfc9b92b5b6d7aecaa3b6cc18401c779"
+  },
+  "implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html": {
+    "mtime": 1785932718.927627,
+    "ast_hash": "4e75c2cd43d28e79beb266094f0e850a",
+    "semantic_hash": "4e75c2cd43d28e79beb266094f0e850a"
+  },
+  "docs/fuentes/Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.pdf": {
+    "mtime": 1785932080.5221558,
+    "ast_hash": "3d1b7758a233279ee01a3d948960680f",
+    "semantic_hash": "3d1b7758a233279ee01a3d948960680f"
+  },
+  "docs/fuentes/IPPU.pdf": {
+    "mtime": 1785932080.5612054,
+    "ast_hash": "a1c0c46023abd3bd2996b2cc773797c8",
+    "semantic_hash": "a1c0c46023abd3bd2996b2cc773797c8"
+  },
+  "docs/fuentes/Proyectos, Investigaciones y Oportunidades de Desarrollo.pdf": {
+    "mtime": 1785932080.5891953,
+    "ast_hash": "f30397a44bc34ad783b352bf3283cbda",
+    "semantic_hash": "f30397a44bc34ad783b352bf3283cbda"
+  },
+  "docs/fuentes/escala-del-inventario-del-espectro-autista-idea.pdf": {
+    "mtime": 1785932080.5921571,
+    "ast_hash": "f6fb094c668e7aa7918488c43608dced",
+    "semantic_hash": "f6fb094c668e7aa7918488c43608dced"
+  }
+}
