@@ -154,10 +154,18 @@ La demo dejó de ser `hce_idea_ippu_demo.html` (3.949 líneas en un archivo) y p
    `fmtFecha()` declarada 1.000 líneas más abajo. Al partir, el hoisting es **por archivo**: esa llamada
    se rompió. Si aparece otro helper con el mismo patrón, va a `utils.js` — no se reordenan los módulos.
 3. **Verificación:** se capturó un *fingerprint* de comportamiento (Playwright) del monolito **antes** de
-   partir y se comparó contra el resultado: idénticos en errores de consola, catálogos, las 174 funciones
-   globales, el estado del motor de flujo M1 de los 8 NNA, las 5 vistas y los 8 expedientes. Además se
-   verificó línea por línea que no se perdió ni alteró código (2.719 líneas de JS, 510 de CSS, 499 de markup).
+   partir y se comparó contra el resultado: **40 comparaciones, todas idénticas, 0 errores.** Cubre carga,
+   catálogos, las 174 funciones globales, el motor de flujo M1 de los 8 NNA, las 5 vistas, los 8 expedientes,
+   **las reglas duras** (`calcularDelta` lanza contra el IDEA §5.2 · `categoriaBaremo` lanza desde puntaje
+   clínico §7.5, con bordes del baremo), y **los caminos interactivos**: firma de CI con autorizaciones,
+   firma PA+PB con delta B−A y alerta institucional (M5.3), addenda sobre firmado y su rechazo sobre no
+   firmado, habilitación excepcional, modales, vistas dinámicas y el volcado final del modelo.
+   Además se verificó línea por línea que no se perdió ni alteró código (2.719 de JS, 510 de CSS, 499 de markup).
    **Cero cambios de lógica: es un refactor puro.**
+4. **El fingerprint quedó versionado** en `demo/verificacion/` (script + comparador + README), no en la
+   máquina de quien lo corrió — si no, §5.5.3 sería una afirmación que nadie puede reproducir (§12.1).
+   Reusarlo ante cualquier cambio que *no debería* alterar el comportamiento. Playwright se instala suelto
+   y a demanda; no es dependencia del repo.
 
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.

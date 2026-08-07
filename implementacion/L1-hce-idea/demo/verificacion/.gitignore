@@ -1,0 +1,6 @@
+# Playwright se instala suelto y a demanda (ver README.md), no se versiona.
+node_modules/
+package-lock.json
+
+# Fingerprints capturados: son artefactos locales de cada comparación.
+*.json
