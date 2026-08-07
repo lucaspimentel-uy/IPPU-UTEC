@@ -20,7 +20,8 @@
 2. Leer este `handoff.md` y luego `CLAUDE.md` (ambos versionados: los tenés al clonar).
 3. Toda la documentación del proyecto está convertida a Markdown (legible y citable) en **`docs/markdown/`**.
    Los originales (PDF/PPTX/DOCX/XLSX) están en **`docs/fuentes/`**.
-4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html`** (abrir en navegador).
+4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/index.html`** (abrir en navegador, sin servidor).
+   Desde 2026-08-07 está **modularizada**: `index.html` + `css/estilos.css` + `js/*.js` (12 módulos, ver §5.5).
 5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q`.
 6. **Diagrama ER interactivo** del esquema **v1** (Artifact, 18 tablas): https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2 — ⚠️ es privado de la cuenta de Lucas, **Samuel y Victor no pueden abrirlo**; la versión citable para todos es `backend/docs/esquema-datos.md`. El esquema **v2** (el que se implementa en M11) está en `backend/docs/esquema-datos-v2.md`. Fuente HTML del Artifact: no quedó en el repo; si hace falta, se regenera.
 
@@ -75,8 +76,9 @@ con consolidación histórica, análisis automático y reportes automáticos.
 - **Integración con la HCE existente:** vía **iframe** (mínimo viable) **o** módulo nativo con API propia.
 - **DevOps:** Docker + NGINX · CI/CD GitHub.
 
-### Estado de la demo L1 (`implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html`)
-- Prototipo HTML/CSS/JS de un solo archivo, **datos simulados, "no funcional"** (sin backend).
+### Estado de la demo L1 (`implementacion/L1-hce-idea/demo/index.html`)
+- Prototipo HTML/CSS/JS, **datos simulados, "no funcional"** (sin backend). **Modularizado el 2026-08-07**
+  (§5.5): dejó de ser un archivo único de 3.949 líneas → `index.html` + `css/estilos.css` + `js/*.js`.
 - **v4.0 (2026-07-30, ronda M0–M10 completa, adaptada al Doc. Técnico IPPU v1.0):** motor de flujo CI→LB→PA→PB→IC (estado derivado, firma doble=bloqueo, addendas, habilitación excepcional, HCE-LOG), HCE-00 siempre abierto, HCE-CI (único bloqueo sin excepción), HCE-LB (IDEA línea base única con NS), HCE-PA/PB (Escala IPPU-TEA 24 ítems, delta B−A automático, alerta Δ≤−7, guard de no-homologabilidad), HCE-IC (informe único con tabla+radares y PDF, Recibí de la familia), HCE-DOC (adjuntos categorizados, archivo histórico §10 de solo lectura, protección de imagen §8.4 individual y grupal), HCE-ORG (INAU/BPS con registros), HCE-VF (BUND/CIF, tabla parametrizable, salvaguarda §7.5, autogeneración descriptiva, Reporte VF), búsqueda por 3 vías (nombre/CI/HCE/grupo), recordatorios configurables §4, Grupos y Usuario. "Eval. por áreas/general" **eliminadas** (archivo histórico en HCE-DOC).
 - Las vistas heredadas pre-Doc. Técnico que siguen en el archivo sin exponerse: "Eval. intermedia" (reemplazada por PA/PB). El heatmap de talleres de Analítica no se tocó (decisión §0.3).
 
@@ -135,6 +137,27 @@ No fue un error de nadie: **esa rama se hizo sin acceso a `handoff.md` ni `CLAUD
    y, al no tener contenido, git nunca la trackeó — Samuel y Victor no la tenían al clonar pese a que la
    documentación decía que existía. Se elimina la referencia en vez de crear el placeholder; si surge
    contenido real de notas de equipo, se crea entonces.
+
+### 5.5 Modularización de la demo (2026-08-07, Lucas)
+La demo dejó de ser `hce_idea_ippu_demo.html` (3.949 líneas en un archivo) y pasó a
+`demo/index.html` + `demo/css/estilos.css` + `demo/js/*.js` (12 archivos). El archivo viejo se
+**eliminó** (queda en la historia de git). Motivo: era el único recurso del repo que obligaba a la regla
+"una sola persona a la vez" (§12.3) y bloqueaba el trabajo en paralelo.
+
+1. **Scripts planos, sin `defer` ni `type="module"`.** Dos razones, las dos duras:
+   (a) el orden de carga de `index.html` **es** el orden de ejecución del monolito original, y hay
+   código de seed que corre en tiempo de carga y muta `NNA` — reordenar cambia el comportamiento;
+   (b) `type="module"` lo bloquearía CORS al abrir por `file://`, y la demo se abre con doble clic,
+   sin servidor. **No convertir a ES modules sin resolver antes las dos cosas.**
+2. **`js/utils.js` carga primero** y contiene los helpers puros compartidos. En el monolito, un único
+   `<script>` hoisteaba todas las declaraciones de función, así que el seed de `flujo.js` podía llamar a
+   `fmtFecha()` declarada 1.000 líneas más abajo. Al partir, el hoisting es **por archivo**: esa llamada
+   se rompió. Si aparece otro helper con el mismo patrón, va a `utils.js` — no se reordenan los módulos.
+3. **Verificación:** se capturó un *fingerprint* de comportamiento (Playwright) del monolito **antes** de
+   partir y se comparó contra el resultado: idénticos en errores de consola, catálogos, las 174 funciones
+   globales, el estado del motor de flujo M1 de los 8 NNA, las 5 vistas y los 8 expedientes. Además se
+   verificó línea por línea que no se perdió ni alteró código (2.719 líneas de JS, 510 de CSS, 499 de markup).
+   **Cero cambios de lógica: es un refactor puro.**
 
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
@@ -217,7 +240,8 @@ y anotarlo como responsable en el pendiente correspondiente de §6.
 
 | Zona | Archivo/carpeta | Regla |
 |---|---|---|
-| **Demo** | `implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html` | **Un solo archivo de ~3.700 líneas → una sola persona a la vez.** Editarlo en paralelo garantiza conflictos irresolubles. |
+| **Demo** | `implementacion/L1-hce-idea/demo/js/*.js` | **Se puede en paralelo desde la modularización (§5.5)**, siempre que cada uno tome **archivos distintos**. Avisar cuál tomás. |
+| **Demo — compartidos** | `demo/index.html`, `demo/js/utils.js` | Los tocan todos → **coordinar antes**. `index.html` define el **orden de carga**, que es la semántica del programa (ver §5.5). |
 | **Backend v2 (M11)** | `implementacion/L1-hce-idea/backend/` | Se reparte por sub-módulo (M11.1 … M11.6), que son secuenciales. **Responsable actual: Victor.** |
 | **Documentación** | `docs/`, `README.md` | Libre, poco riesgo de conflicto. |
 | **`handoff.md`** | raíz | Todos escriben, pero **sólo agregando** (bitácora al final, pendientes en §6). Si dos editan a la vez, el conflicto es trivial de resolver. |
@@ -359,3 +383,10 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Decisiones (§5.4):** `gitlab` ratificado como remoto principal, `origin` como espejo · `docs/notas/` sale de `README.md`/`CLAUDE.md` (estaba vacía y sin trackear — Samuel y Victor no la tenían al clonar).
   - **Cambios:** `README.md` y `CLAUDE.md` (quitada la línea `docs/notas/` del árbol) · carpeta local `docs/notas/` eliminada (no versionada, sin efecto en git) · `handoff.md` (nueva §5.4, §6 con el pendiente de remoto principal cerrado, §12.2 pasa de propuesta a decisión confirmada, esta entrada de bitácora).
   - **Próximo:** push de este commit a los dos remotos (`gitlab` primero, luego `origin`) y arrancar el trabajo que Lucas defina para esta sesión. (Lucas + Claude)
+- **2026-08-07** — **Modularización de la demo L1 (§5.5).** Rama `feat/demo-modular`. Refactor puro, sin cambios de lógica.
+  - **Qué se hizo:** `hce_idea_ippu_demo.html` (3.949 líneas) → `demo/index.html` (575) + `demo/css/estilos.css` (532) + `demo/js/` (12 módulos, 2.847 líneas). El corte se hizo **por rangos de línea con un script**, no retipeando código, para que el contenido se moviera byte a byte. El monolito se eliminó del repo (sigue en la historia de git).
+  - **Reparto de los módulos JS:** `utils.js` (helpers, carga 1º) · `datos.js` (seed NNA) · `flujo.js` (M1 motor de flujo, 554 líneas) · `catalogos.js` (IDEA anual, Escala IPPU-TEA, IDEA oficial) · `ui-core.js` (navegación, tabla, form IDEA, Likert, gráficos, toast, sesión) · `wizard-nna.js` · `expediente.js` · `evaluaciones.js` (M5.2) · `informe-cierre.js` (M6) · `hce-doc-org-vf.js` (M7/M8/M9, 468 líneas) · `recordatorios.js` (M10) · `grupos-usuario.js`.
+  - **Un problema real encontrado y resuelto:** al partir, el hoisting de funciones dejó de ser global y el seed de `flujo.js` reventó llamando a `fmtFecha()` (declarada en lo que hoy es `expediente.js`) — `ReferenceError` en carga. Se resolvió creando `js/utils.js`, que carga primero. **Lo detectó el fingerprint, no la vista**: la demo se veía bien igual, porque el error abortaba el seed en silencio. Detalle y regla para el futuro en §5.5.2.
+  - **Verificación:** fingerprint Playwright del monolito capturado **antes** del refactor y comparado después → **idénticos** en los 24 campos (0 errores de consola, 8 NNA, 24 ítems IPPU, 174 funciones globales, estado del motor M1 de los 8 expedientes, 5 vistas y 8 expedientes renderizados). Integridad del contenido: multiset de líneas idéntico (2.719 JS), orden relativo intacto en 2.712, CSS 510 y markup 499 idénticos línea por línea.
+  - **Efecto en el flujo de equipo:** §12.3 cambia — la demo **deja de ser recurso exclusivo**; se puede trabajar en paralelo tomando archivos distintos de `demo/js/`. `index.html` y `js/utils.js` quedan como compartidos (coordinar antes). Con esto Samuel puede entrar a la demo sin esperar.
+  - **Próximo:** code review de diffs de este módulo antes de mergear a `main`. (Lucas + Claude)

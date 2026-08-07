@@ -26,7 +26,10 @@ IPPU/
 │   └── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
-│       ├── demo/hce_idea_ippu_demo.html   ← Demo navegable (datos simulados, sin backend)
+│       ├── demo/           ← Demo navegable (datos simulados, sin backend)
+│       │   ├── index.html  ← abrir en el navegador (doble clic, no necesita servidor)
+│       │   ├── css/estilos.css
+│       │   └── js/         ← 12 módulos; se cargan en orden y ese orden ES la semántica
 │       └── backend/                       ← API FastAPI + SQLAlchemy + Alembic (ver su README)
 └── herramientas/
     └── conversor_docling.py   ← Conversor de documentos a Markdown

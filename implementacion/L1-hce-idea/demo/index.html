@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundación IPPU — HCE · Protocolo IDEA · Analítica institucional</title>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN (usuario pre-creado) ===================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">IP</div>
+    <h1>Fundación IPPU</h1>
+    <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
+    <form id="loginForm" onsubmit="return doLogin(event)">
+      <div class="login-field">
+        <label>Usuario / Email</label>
+        <input id="loginUser" value="gonzalez@fundacionippu.uy" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>Contraseña</label>
+        <input id="loginPass" type="password" value="demo1234" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary login-btn" type="submit">Ingresar</button>
+      <div class="login-hint">Usuario de demostración pre-cargado · <b>Dr. González</b> (Técnico · Psicología). Tocá «Ingresar».</div>
+    </form>
+    <div class="login-foot">Demo L1 · IPPU × UTEC-LIDIA · Datos simulados</div>
+  </div>
+</div>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="logo">IP</div>
+  <div class="title">
+    <b>Fundación IPPU</b>
+    <span>Historia Clínica Electrónica · Protocolo IDEA</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="userchip">
+    <div class="avatar">DG</div>
+    <div>Dr. González<br><span style="font-size:.7rem;color:#8FA9C0">Técnico · Psicología</span></div>
+  </div>
+  <button class="btn-exit" onclick="logout()">Salir</button>
+</header>
+
+<div class="layout">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <nav class="sidebar">
+    <div class="sec">Historia clínica</div>
+    <button class="navitem active" data-view="inicio"><span class="ico">⌂</span> Inicio / NNA</button>
+    <button class="navitem" onclick="openAlta()"><span class="ico">+</span> Registrar NNA</button>
+    <button class="navitem" data-view="pendientes"><span class="ico">◔</span> Pendientes</button>
+    <div class="sec">Institucional</div>
+    <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
+    <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
+    <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
+    <div class="foot">v4.0 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
+  </nav>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+
+    <!-- ============ VISTA: INICIO / NNA ============ -->
+    <section class="view active" id="view-inicio">
+      <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
+      <h1 class="pagetitle">Niños, niñas y adolescentes en seguimiento</h1>
+      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico, cargar evaluaciones y generar el informe.</p>
+
+      <div class="kpirow">
+        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div><div class="sub">Convenio INAU</div></div>
+        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Línea base (HCE-LB) firmada</div></div>
+        <div class="kpi" onclick="go('pendientes')" style="cursor:pointer" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
+        <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
+      </div>
+
+      <div class="card">
+        <div class="cardhead">
+          <h2>Listado de NNA</h2>
+          <div style="flex:1"></div>
+          <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
+        </div>
+        <div class="nna-toolbar">
+          <div class="search-wrap">
+            <span class="search-ico">⌕</span>
+            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HCE, cédula o grupo…" oninput="applyNNAFilter()" autocomplete="off">
+          </div>
+          <div class="estado-chips">
+            <button class="chip-estado active" data-estado="activos" onclick="setEstadoFiltro('activos')">Activos</button>
+            <button class="chip-estado" data-estado="inactivos" onclick="setEstadoFiltro('inactivos')">Inactivos</button>
+            <button class="chip-estado" data-estado="todos" onclick="setEstadoFiltro('todos')">Todos</button>
+          </div>
+        </div>
+        <table class="lista">
+          <thead>
+            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="tbodyNNA"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: EXPEDIENTE (HCE) ============ -->
+    <section class="view" id="view-expediente">
+      <div class="crumbs">Inicio › <b id="expCrumb">Expediente</b></div>
+      <div id="expedienteContent"></div>
+    </section>
+
+    <!-- ============ VISTA: EVALUACIÓN IDEA ============ -->
+    <section class="view" id="view-idea">
+      <div class="crumbs">Inicio › Evaluación IDEA › <b>Nueva evaluación</b></div>
+      <h1 class="pagetitle">HCE-LB · Línea base — IDEA (Inventario del Espectro Autista)</h1>
+      <p class="pagedesc">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. Cada dimensión 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b> Se aplica <b>una sola vez, al ingreso</b>; el progreso del año se mide con la Escala IPPU-TEA (PA/PB), no repitiendo el IDEA.</p>
+
+      <div class="selector">
+        <label for="selNNA"><b>NNA evaluado:</b></label>
+        <select id="selNNA" onchange="cargarIDEA(parseInt(this.value))"></select>
+        <span id="ideaEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
+      </div>
+
+      <div id="ideaForm"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Datos de la línea base (HCE-LB)</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid">
+            <div class="field"><label>Fecha de consenso <span class="req">*</span></label><input id="lb_fecha" type="date"></div>
+            <div class="field"><label>Sesiones de observación previas</label><input id="lb_sesiones" type="number" min="0" placeholder="Recomendado ≥ 5"></div>
+          </div>
+          <div class="form-grid full">
+            <div class="field"><label>Síntesis clínica <span class="req">*</span></label><textarea id="lb_sintesis" placeholder="Perfil, escalas más afectadas, nivel de soporte orientativo… (sugerido ≈200 palabras)"></textarea></div>
+            <div class="field"><label>Objetivos del período <span class="req">*</span></label><textarea id="lb_objetivos" placeholder="Objetivos de trabajo derivados de la línea base."></textarea></div>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:.8rem;margin-top:6px"><input type="checkbox" id="lb_migrado"> Migrado del sistema anterior</label>
+        </div>
+      </div>
+
+      <div class="idea-summary">
+        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IDEA</div>
+        <div class="tot"><span id="ideaTotal">0</span><small> / 96</small></div></div>
+        <div class="nivel" id="ideaNivel">Sin puntuar</div>
+        <div class="spacer"></div>
+        <div class="nota">Banda orientativa para el equipo. El juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda). Para firmar: 12 dimensiones sin NS + fecha + síntesis + objetivos.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarIDEA()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarLB()">✓ Firmar línea base</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: ESCALA IPPU-TEA (HCE-PA / HCE-PB) — M5 ============ -->
+    <section class="view" id="view-prot">
+      <div class="crumbs">Inicio › Escala IPPU-TEA › <b id="protCrumb">HCE-PA</b></div>
+      <h1 class="pagetitle" id="protTitle">HCE-PA · Protocolo A — Escala IPPU-TEA</h1>
+      <p class="pagedesc">Instrumento propio de IPPU para medir <b>progreso</b>: 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable/generalizado). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA (§5.2): nunca se comparan puntajes entre ambos instrumentos.</p>
+
+      <div class="selector">
+        <label for="selNNAProt"><b>NNA evaluado:</b></label>
+        <select id="selNNAProt" onchange="protSwitch(protKey)"></select>
+        <button class="prot-tab active" id="protTabPa" type="button" onclick="protSwitch('pa')">Protocolo A · julio</button>
+        <button class="prot-tab" id="protTabPb" type="button" onclick="protSwitch('pb')">Protocolo B · fin de año</button>
+        <span id="protEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
+      </div>
+      <div id="protAviso"></div>
+
+      <div id="protForm"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)" id="protDatosTitle">Datos del protocolo</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid">
+            <div class="field"><label>Fecha de aplicación <span class="req">*</span></label><input id="prot_fecha" type="date"></div>
+            <div class="field"><label>Semanas de asistencia efectiva</label><input id="prot_semanas" type="number" min="0" placeholder="Recomendado ≥ 15"><div class="hint">Recomendación §4.3: ≥ 15 semanas (advierte, no bloquea la firma).</div></div>
+          </div>
+          <div class="form-grid full">
+            <div class="field"><label>Síntesis — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="prot_sint1" placeholder="Síntesis cualitativa del período (técnico 1)."></textarea></div>
+            <div class="field"><label>Síntesis — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="prot_sint2" placeholder="Síntesis cualitativa del período (técnico 2)."></textarea></div>
+            <div class="field"><label>Otras valoraciones profesionales</label><textarea id="prot_otros" placeholder="Fonoaudiología, psicomotricidad u otras valoraciones (opcional)."></textarea></div>
+            <div class="field" id="protAjustesWrap" style="display:none"><label>Ajustes introducidos durante el año</label><textarea id="prot_ajustes" placeholder="Sólo Protocolo B: ajustes al plan de trabajo entre A y B."></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-summary">
+        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IPPU-TEA</div>
+        <div class="tot"><span id="protTotal">0</span><small> / 120</small></div></div>
+        <div class="nivel" id="protNivel">0 / 24 ítems</div>
+        <div class="spacer"></div>
+        <div class="nota">Escala de progreso (mayor = más progreso), <b>no comparable con el IDEA</b>. Para firmar: 24 ítems puntuados + fecha + observación en todo ítem 1/5 + síntesis de ambos técnicos. La firma bloquea el protocolo (corrección por addenda).</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarProt()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarProt()">✓ Firmar protocolo</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: HCE-IC · INFORME DE CIERRE ANUAL (M6) ============ -->
+    <section class="view" id="view-ic">
+      <div class="crumbs">Inicio › Informe de Cierre Anual › <b>HCE-IC</b></div>
+      <h1 class="pagetitle">HCE-IC · Informe de Cierre Anual</h1>
+      <p class="pagedesc">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. La tabla comparativa y los radares se <b>autogeneran desde los datos firmados</b>. El PDF exportado con membrete es <b>el único informe válido</b>: no se elaboran versiones alternativas para organismos supervisores (§5.3).</p>
+
+      <div class="selector">
+        <label for="selNNAIC"><b>NNA:</b></label>
+        <select id="selNNAIC" onchange="cargarIC(parseInt(this.value))"></select>
+        <span id="icEstadoBadge"></span>
+        <span style="color:var(--ink-2)">Elaboración sugerida: en los días posteriores al cierre del Protocolo B</span>
+      </div>
+      <div id="icAviso"></div>
+
+      <div id="icAuto"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Síntesis cualitativa por escala (extensión sugerida: ≈100 palabras por escala)</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid full" id="icEscFields"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoraciones anuales, recomendaciones y orientaciones</h2></div>
+        <div style="padding:16px 18px">
+          <div class="form-grid full">
+            <div class="field"><label>Valoración anual — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="ic_val1" placeholder="Valoración anual del técnico responsable 1."></textarea></div>
+            <div class="field"><label>Valoración anual — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="ic_val2" placeholder="Valoración anual del técnico responsable 2."></textarea></div>
+            <div class="field"><label>Recomendaciones y ajustes de tratamiento <span class="req">*</span></label><textarea id="ic_recom" placeholder="Recomendaciones para el próximo período."></textarea></div>
+            <div class="field"><label>Orientaciones concretas a la familia <span class="req">*</span></label><textarea id="ic_orient" placeholder="Orientaciones prácticas para el hogar."></textarea></div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Fecha del informe <span class="req">*</span></label><input id="ic_fecha" type="date"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-summary">
+        <div class="nota">Requiere LB, PA y PB firmados (o habilitación excepcional). Para firmar: síntesis de las 4 escalas + valoraciones de ambos técnicos + recomendaciones + orientaciones + fecha (§4.3). La firma (doble) bloquea el informe; luego se registra el «Recibí» de la familia y se exporta el PDF con membrete.</div>
+        <div class="spacer"></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="guardarIC()">Guardar borrador</button>
+          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarIC()">✓ Firmar Informe de Cierre</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: EVAL INTERMEDIA ============ -->
+    <section class="view" id="view-intermedia">
+      <div class="crumbs">Inicio › Sofía R. › <b>Evaluación intermedia — Junio 2026</b></div>
+      <h1 class="pagetitle">Evaluación intermedia — Escala Likert 1 – 5</h1>
+      <p class="pagedesc">Seguimiento semestral abreviado: 3 ítems por dimensión en escala Likert. El sistema convierte el promedio a un <b>equivalente IDEA</b> para mantener la comparabilidad longitudinal con las evaluaciones completas.</p>
+
+      <div class="card">
+        <div class="lik-head">
+          <h2>Dimensión 3 — Teoría de la Mente <span style="font-weight:400;font-size:.74rem;opacity:.85">· Escala: Relación Social (D1 · D2 · D3)</span></h2>
+          <span class="prog">Dimensión 3 / 12</span>
+        </div>
+
+        <div class="lik-item">
+          <div class="iname">Ítem 1 — Presencia base</div>
+          <div class="iq">¿La niña muestra comprensión básica de estados mentales ajenos (deseos, emociones simples)?</div>
+          <div class="lik-opts" data-item="1">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2</button>
+            <button data-v="3">3 — Con apoyo</button><button data-v="4">4</button>
+            <button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+        <div class="lik-item">
+          <div class="iname">Ítem 2 — Funcionalidad</div>
+          <div class="iq">¿Realiza inferencias sobre intenciones o creencias de otros en situaciones cotidianas?</div>
+          <div class="lik-opts" data-item="2">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2 — Con mucha ayuda</button>
+            <button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+        <div class="lik-item" style="border-bottom:none">
+          <div class="iname">Ítem 3 — Autonomía</div>
+          <div class="iq">¿Comprende y utiliza la perspectiva del otro de manera espontánea en interacciones sociales?</div>
+          <div class="lik-opts" data-item="3">
+            <button data-v="1">1 — No se observa</button><button data-v="2">2</button>
+            <button data-v="3">3 — Con apoyo</button><button data-v="4">4</button><button data-v="5">5 — Consolidado</button>
+          </div>
+        </div>
+
+        <div class="formula" id="likFormula">
+          <b>Conversión automática:</b> seleccioná los 3 ítems para calcular el promedio y su equivalente IDEA = (5 − promedio) × 2.
+        </div>
+
+        <div style="display:flex;justify-content:space-between;padding:0 18px 18px">
+          <button class="btn btn-ghost">‹ Anterior</button>
+          <button class="btn btn-primary" style="background:var(--teal)">Siguiente ›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: INFORME (por NNA · generado automáticamente) ============ -->
+    <section class="view" id="view-informe">
+      <div class="crumbs">Inicio › Expediente › <b>Informe automático</b></div>
+      <div id="informeContent"></div>
+    </section>
+
+    <!-- ============ VISTA: PENDIENTES ============ -->
+    <section class="view" id="view-pendientes">
+      <div class="crumbs">Inicio › <b>Pendientes</b></div>
+      <h1 class="pagetitle">Pendientes de evaluación</h1>
+      <p class="pagedesc">NNA activos que aún no tienen <b>firmada su línea base IDEA (HCE-LB)</b>. La IDEA se aplica una sola vez, al ingreso; este listado ayuda a planificar las líneas base pendientes.</p>
+      <div class="kpirow" id="pendKpi"></div>
+      <div class="card">
+        <div class="cardhead"><h2>NNA sin IDEA del año en curso</h2></div>
+        <table class="lista">
+          <thead>
+            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Grupo</th><th>Última IDEA</th><th></th></tr>
+          </thead>
+          <tbody id="tbodyPend"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ VISTA: ANALÍTICA INSTITUCIONAL ============ -->
+    <section class="view" id="view-analitica">
+      <div class="crumbs">Institucional › <b>Analítica institucional</b></div>
+      <h1 class="pagetitle">Analítica institucional — Dirección y equipo técnico</h1>
+      <p class="pagedesc">Indicadores agregados y anonimizados de la base de datos institucional: evolución poblacional de los puntajes IDEA, eficacia de los 18 talleres IPPU y cobertura de evaluaciones. Insumo para el Plan Anual y el reporte a INAU.</p>
+
+      <!-- M10 · Recordatorios de períodos del Manual (§4): configurables, nunca bloqueantes -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="cardhead"><h2>Recordatorios — períodos del Manual (configurables por coordinación)</h2></div>
+        <div class="cardbody" id="recordatoriosBody"></div>
+      </div>
+
+      <div class="kpirow">
+        <div class="kpi"><div class="lab">Mejora promedio anual</div><div class="val ok">−9,4 pts</div><div class="sub">Puntaje IDEA · población 2026</div></div>
+        <div class="kpi"><div class="lab">Cobertura de evaluación</div><div class="val">93 %</div><div class="sub">28 de 30 NNA con ciclo completo</div></div>
+        <div class="kpi"><div class="lab">Taller de mayor eficacia</div><div class="val orange">H. Sociales</div><div class="sub">−2,1 pts prom. en escala A</div></div>
+        <div class="kpi"><div class="lab">Sesiones registradas</div><div class="val purple">1.842</div><div class="sub">Ciclo 2026 · 18 talleres</div></div>
+      </div>
+
+      <div class="grid3">
+        <div class="card">
+          <div class="cardhead"><h2>Puntaje promedio por escala IDEA — Enero vs Noviembre</h2></div>
+          <div class="cardbody" id="escalasChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Heatmap — Talleres × mejora promedio por escala</h2></div>
+          <div class="cardbody">
+            <table class="heat" id="heatTable"></table>
+            <div class="legend">
+              <span><i style="background:#0E8F7E"></i>Mejora alta (≥ 1,5 pts)</span>
+              <span><i style="background:#6FBF9E"></i>Mejora media</span>
+              <span><i style="background:#D9C26B"></i>Mejora leve</span>
+              <span><i style="background:#C9CFD8"></i>Sin cambio</span>
+            </div>
+            <div class="note">Cruce de una muestra de los 18 talleres IPPU con la reducción promedio del puntaje IDEA por escala. Permite priorizar talleres en el Plan Anual.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Distribución de NNA por banda de severidad</h2></div>
+          <div class="cardbody" id="distChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardhead"><h2>Pipeline de datos institucional</h2></div>
+          <div class="cardbody">
+            <ol style="font-size:.82rem;line-height:1.7;padding-left:20px;color:var(--ink-2)">
+              <li><b style="color:var(--ink)">Fuentes:</b> HCE, evaluaciones IDEA, talleres, notas clínicas.</li>
+              <li><b style="color:var(--ink)">Ingesta:</b> extracción, validación de integridad, anonimización.</li>
+              <li><b style="color:var(--ink)">Análisis:</b> agregados poblacionales y comparativas entre períodos.</li>
+              <li><b style="color:var(--ink)">Visualización:</b> este panel, con corte por grupo, taller y escala.</li>
+              <li><b style="color:var(--ink)">Informe:</b> reporte automático para dirección, equipo e INAU.</li>
+            </ol>
+            <div class="note">Los datos individuales solo son visibles para el equipo técnico autorizado (roles y JWT por terapeuta). Este panel opera únicamente con datos agregados y anonimizados.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- M7 (2026-07-30): las vistas "Evaluación por áreas" y "Evaluación general" (provisionales,
+         ocultas desde M0 por decisión §0.2) se ELIMINARON. Sus registros del sistema anterior
+         entran ahora a HCE-DOC como archivo histórico de solo lectura, con categoría específica
+         "Registro histórico — HCE anterior (…)" y fecha original (§10 Documento Técnico). -->
+
+    <!-- ============ VISTA: GRUPOS ============ -->
+    <section class="view" id="view-grupos">
+      <div class="crumbs">Institucional › <b>Grupos de referencia</b></div>
+      <h1 class="pagetitle">Grupos de referencia</h1>
+      <p class="pagedesc">Los NNA se organizan en grupos de referencia por edad y modalidad de funcionamiento. Cada grupo tiene técnicos encargados, días/horarios y talleres asignados. (Datos simulados.)</p>
+      <div class="kpirow" id="gruposKpi"></div>
+      <div id="gruposList"></div>
+    </section>
+
+    <!-- ============ VISTA: USUARIO / PERFIL ============ -->
+    <section class="view" id="view-usuarios">
+      <div class="crumbs">Institucional › <b>Mi usuario</b></div>
+      <h1 class="pagetitle">Mi perfil</h1>
+      <p class="pagedesc">Información de la cuenta del profesional con sesión iniciada y equipo técnico de la institución.</p>
+      <div id="usuarioContent"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL: ALTA NUEVO NNA ===================== -->
+<div class="modal-bg" id="modalAlta">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalTitle">Registrar nuevo NNA en la HCE</h2>
+        <p id="modalSub">Alta de expediente clínico · Convenio INAU — Fundación IPPU</p>
+      </div>
+      <button class="x" onclick="closeAlta()" title="Cerrar">×</button>
+    </div>
+
+    <div class="stepper">
+      <div class="step active" id="stp1"><div class="dot">1</div>Datos del NNA</div>
+      <div class="step" id="stp2"><div class="dot">2</div>Datos clínicos</div>
+      <div class="step" id="stp3"><div class="dot">3</div>Anamnesis</div>
+      <div class="step" id="stp4"><div class="dot">4</div>Confirmar</div>
+    </div>
+
+    <div class="modal-body">
+      <!-- PASO 1: datos personales -->
+      <div class="wizard-step active" data-step="1">
+        <div class="section-label">Identificación</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre <span class="req">*</span></label>
+            <input id="f_nombre" placeholder="Ej. Lucas"><div class="err">Ingresá el nombre.</div></div>
+          <div class="field"><label>Apellido <span class="req">*</span></label>
+            <input id="f_apellido" placeholder="Ej. Méndez"><div class="err">Ingresá el apellido.</div></div>
+          <div class="field"><label>Fecha de nacimiento <span class="req">*</span></label>
+            <input id="f_nac" type="date"><div class="err">Ingresá la fecha.</div>
+            <div class="hint">La edad se calcula automáticamente.</div></div>
+          <div class="field"><label>Documento (C.I.)</label>
+            <input id="f_ci" placeholder="Ej. 5.123.456-7"></div>
+          <div class="field"><label>Sexo</label>
+            <select id="f_sexo"><option>Femenino</option><option>Masculino</option><option>Otro / no especifica</option></select></div>
+          <div class="field"><label>Localidad</label>
+            <input id="f_loc" placeholder="Ej. Montevideo" value="Montevideo"></div>
+        </div>
+        <div class="section-label">Referente familiar</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre del referente</label>
+            <input id="f_ref" placeholder="Ej. Ana Méndez (madre)"></div>
+          <div class="field"><label>Teléfono de contacto</label>
+            <input id="f_tel" placeholder="Ej. 099 123 456"></div>
+        </div>
+      </div>
+
+      <!-- PASO 2: datos clínicos + asignación institucional -->
+      <div class="wizard-step" data-step="2">
+        <div class="section-label">Diagnóstico</div>
+        <div class="form-grid">
+          <div class="field"><label>Diagnóstico principal <span class="req">*</span></label>
+            <select id="f_dx">
+              <option>TEA — Trastorno del Espectro Autista</option>
+              <option>TEA con discapacidad intelectual asociada</option>
+              <option>TEA — en proceso diagnóstico</option>
+              <option>Trastorno del desarrollo (a especificar)</option>
+            </select></div>
+          <div class="field"><label>Código CIE-11</label>
+            <input id="f_cie11" placeholder="Ej. 6A02.0"></div>
+          <div class="field"><label>Fecha de diagnóstico</label>
+            <input id="f_dxfecha" type="date"></div>
+          <div class="field"><label>Profesional / centro derivante</label>
+            <input id="f_deriv" placeholder="Ej. Neuropediatría — Hospital Pereira Rossell"></div>
+          <div class="field"><label>Nivel de apoyo (DSM-5)</label>
+            <select id="f_apoyo"><option>Grado 1 — Requiere apoyo</option><option selected>Grado 2 — Requiere apoyo sustancial</option><option>Grado 3 — Requiere apoyo muy sustancial</option></select></div>
+          <div class="field"><label>Medicación actual</label>
+            <input id="f_med" placeholder="Ej. Ninguna / Risperidona 0,5 mg"></div>
+          <div class="field"><label>Alertas clínicas</label>
+            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales"></div>
+        </div>
+        <div class="section-label">Asignación institucional · técnicos responsables (§3.1)</div>
+        <div class="form-grid">
+          <div class="field"><label>Grupo <span class="req">*</span></label>
+            <select id="f_grupo"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
+          <div class="field"><label>Técnico/a responsable 1 (Psicólogo/a)</label>
+            <select id="f_tecnico"><option>Dr. González — Psicología</option><option>Lic. Torres — Psicopedagogía</option><option>Lic. Pereira — Fonoaudiología</option><option>Dra. Silva — Neuropediatría</option></select></div>
+          <div class="field"><label>Técnico/a responsable 2 (Maestro/a)</label>
+            <select id="f_tecnico2"><option>Mtra. Torres</option><option>Mtra. Fernández</option><option>Mtro. Álvarez</option></select></div>
+        </div>
+        <div class="section-label">Talleres asignados (Plan Anual)</div>
+        <div class="chips-pick" id="tallerPicker">
+          <span class="chip-pick" data-t="Habilidades sociales">Habilidades sociales</span>
+          <span class="chip-pick" data-t="Lenguaje y comunicación">Lenguaje y comunicación</span>
+          <span class="chip-pick" data-t="Motricidad">Motricidad</span>
+          <span class="chip-pick" data-t="Juego simbólico">Juego simbólico</span>
+          <span class="chip-pick" data-t="Música y expresión">Música y expresión</span>
+          <span class="chip-pick" data-t="Vida diaria (AVD)">Vida diaria (AVD)</span>
+          <span class="chip-pick" data-t="Arte y plástica">Arte y plástica</span>
+          <span class="chip-pick" data-t="Psicomotricidad">Psicomotricidad</span>
+        </div>
+        <div class="hint" style="margin-top:8px">Tocá los talleres en los que participará. Podés ajustarlos luego desde el expediente.</div>
+      </div>
+
+      <!-- PASO 3: anamnesis / historia del desarrollo -->
+      <div class="wizard-step" data-step="3">
+        <div class="section-label">Anamnesis — Historia clínica del desarrollo</div>
+        <div class="form-grid full">
+          <div class="field"><label>Motivo de ingreso / consulta</label>
+            <textarea id="f_motivo" placeholder="Motivo por el que ingresa al programa IPPU y objetivos iniciales…"></textarea></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Antecedentes perinatales</label>
+            <textarea id="f_perinatal" placeholder="Embarazo, parto, período neonatal…"></textarea></div>
+          <div class="field"><label>Desarrollo evolutivo</label>
+            <textarea id="f_desarrollo" placeholder="Marcha, lenguaje, control de esfínteres, hitos madurativos…"></textarea></div>
+        </div>
+        <div class="form-grid full">
+          <div class="field"><label>Antecedentes familiares</label>
+            <textarea id="f_famhist" placeholder="Antecedentes familiares relevantes (TEA, neurológicos, psiquiátricos…)"></textarea></div>
+          <div class="field"><label>Antecedentes y observaciones generales</label>
+            <textarea id="f_antec" placeholder="Antecedentes médicos, tratamientos previos, otras observaciones…"></textarea></div>
+        </div>
+      </div>
+
+      <!-- PASO 4: revisión -->
+      <div class="wizard-step" data-step="4">
+        <div class="section-label">Revisá los datos antes de crear el expediente</div>
+        <div class="review-box"><dl id="reviewDl"></dl></div>
+        <div class="review-note">
+          <span style="color:var(--orange)">●</span>
+          <span>Al confirmar se crea el expediente en la HCE y el NNA queda disponible para su primera evaluación IDEA. En producción esto sería un <b>POST /api/nna</b> (FastAPI + JWT del terapeuta) con validación Pydantic y registro en PostgreSQL.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <span class="left" id="stepInfo">Paso 1 de 4</span>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="btnPrev" onclick="wizPrev()" style="display:none">‹ Atrás</button>
+        <button class="btn btn-primary" id="btnNext" onclick="wizNext()">Siguiente ›</button>
+        <button class="btn btn-primary" id="btnCreate" onclick="crearNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ M1 · MODAL DE FLUJO (firma / addenda / habilitación excepcional / HCE-LOG) ============ -->
+<div class="modal-bg" id="modalFlujo">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2 id="mfTitle">—</h2><p id="mfSub">—</p></div>
+      <button class="x" onclick="closeFlujoModal()" title="Cerrar">×</button>
+    </div>
+    <div class="modal-body" id="mfBody"></div>
+    <div class="modal-foot" id="mfFoot"></div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+
+<div class="demo-tag">Demo no funcional · Proyecto L1 — IPPU × UTEC 2026 · Datos simulados</div>
+
+<!-- Scripts sin defer ni type=module: el orden de carga ES el orden de ejecucion
+     del monolito original, y asi la demo sigue abriendo por file:// sin servidor. -->
+<script src="js/utils.js"></script>
+<script src="js/datos.js"></script>
+<script src="js/flujo.js"></script>
+<script src="js/catalogos.js"></script>
+<script src="js/ui-core.js"></script>
+<script src="js/wizard-nna.js"></script>
+<script src="js/expediente.js"></script>
+<script src="js/evaluaciones.js"></script>
+<script src="js/informe-cierre.js"></script>
+<script src="js/hce-doc-org-vf.js"></script>
+<script src="js/recordatorios.js"></script>
+<script src="js/grupos-usuario.js"></script>
+</body>
+</html>

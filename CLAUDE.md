@@ -10,8 +10,9 @@
 1. `git pull` y leer **`handoff.md`** — cabecera, **§5** (decisiones tomadas), **§6** (pendientes y sus
    responsables) y **§12** (flujo de trabajo del equipo).
 2. Confirmar que el módulo que se va a tocar **no lo tiene otro integrante** (§6) y trabajar en rama corta.
-3. **La demo (`hce_idea_ippu_demo.html`, ~3.700 líneas) es de una sola persona a la vez** — nunca editarla
-   en paralelo.
+3. **La demo está modularizada** (`demo/index.html` + `demo/css/` + `demo/js/*.js`, 2026-08-07): se puede
+   trabajar en paralelo **siempre que cada uno tome archivos distintos** de `demo/js/`. Avisar qué archivo
+   se toma (§12.3). `index.html` y `js/utils.js` los tocan todos → coordinar antes.
 4. Al terminar: verificar (pytest / Playwright), **actualizar `handoff.md`** (§5 si hubo decisión, §6, §13
    bitácora) y commit + push **a los dos remotos** (`gitlab` y `origin`).
 
@@ -41,7 +42,8 @@ IPPU/
 │   └── markdown/              # Conversiones .md de las fuentes (legibles/citables)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
-│       ├── demo/hce_idea_ippu_demo.html   # Prototipo front (datos simulados, sin backend)
+│       ├── demo/            # Prototipo front (datos simulados, sin backend)
+│       │   ├── index.html   # markup · css/estilos.css · js/*.js (12 módulos, orden de carga = semántica)
 │       └── backend/          # API FastAPI + SQLAlchemy + Alembic (ver backend/README.md)
 │           ├── app/          # main, core (config/db), models, schemas, routers
 │           ├── alembic/      # migraciones · docs/ (esquema-datos.md, ejemplos-endpoints.md)
