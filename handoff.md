@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-03
+> - **Última actualización:** 2026-08-07
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.0).** En curso: **M11 · backend v2** (rediseño de esquema al modelo del Doc. Técnico) — **responsable: Victor**, arranca por **M11.1** (infra Postgres-only) sobre la propuesta ya escrita en `backend/docs/esquema-datos-v2.md`. Las 3 decisiones de arquitectura del Anexo A **ya están cerradas** (§5.2). En paralelo, pendiente con IPPU: **validar la demo v4.0** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente:** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) + plan `PLAN-modular-adaptacion-HCE-2026-07.md` (módulos M0–M11). Referencia de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`. **En conflicto con el diseño previo, gana el Documento Técnico.** El backend (Fases 0–2) **no se toca** en esta ronda (rediseño de esquema = M11).

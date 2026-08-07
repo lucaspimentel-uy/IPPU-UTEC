@@ -60,7 +60,9 @@ claude
    `implementacion/L1-hce-idea/demo/`.
 
 > ⚠️ **Antes de tocar código:** confirmá en `handoff.md` §6 que nadie más tomó ese módulo, y avisá en el grupo.
-> La demo es **un solo archivo de ~3.700 líneas** → una sola persona a la vez.
+> Desde la modularización (2026-08-07, `handoff.md` §5.5) **la demo se puede trabajar en paralelo**, siempre
+> que cada uno tome **archivos distintos** de `demo/js/`; avisá cuál tomás. `demo/index.html` y
+> `demo/js/utils.js` los tocan todos → **coordinar antes** (§12.3).
 
 ## 🛠️ Convertir nuevos documentos a Markdown
 ```bash
