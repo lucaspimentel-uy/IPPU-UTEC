@@ -23,8 +23,7 @@ IPPU/
 ├── PLAN-modular-adaptacion-HCE-2026-07.md  ← Plan de la ronda M0–M11 (adaptación al Doc. Técnico)
 ├── docs/
 │   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
-│   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
-│   └── notas/      ← Notas y síntesis propias del equipo
+│   └── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
 │       ├── demo/hce_idea_ippu_demo.html   ← Demo navegable (datos simulados, sin backend)

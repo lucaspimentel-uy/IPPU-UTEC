@@ -38,8 +38,7 @@ IPPU/
 ├── README.md                  # Overview para humanos
 ├── docs/
 │   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
-│   ├── markdown/              # Conversiones .md de las fuentes (legibles/citables)
-│   └── notas/                 # Notas y síntesis propias del equipo
+│   └── markdown/              # Conversiones .md de las fuentes (legibles/citables)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/hce_idea_ippu_demo.html   # Prototipo front (datos simulados, sin backend)
