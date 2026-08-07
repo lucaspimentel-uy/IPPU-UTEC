@@ -240,6 +240,31 @@ const norm = (s) => (s == null ? s : String(s)
     errorVF: window.__vfErr || null,
   }));
 
+  /* D3 · La analitica institucional es DERIVADA del modelo, no constantes.
+     Se captura DESPUES de las mutaciones de la parte C: si alguien vuelve a hardcodear un
+     indicador, sus numeros se quedan quietos mientras el modelo se movio, y este paso lo
+     delata al comparar contra la referencia.
+     Ademas `derivadoOk` es una asercion que no depende de la comparacion: contrasta lo que
+     muestra el panel contra un recalculo hecho en el momento. Si da false, el DOM quedo
+     desincronizado del modelo (panel sin re-render, o valor fijo en el markup). */
+  await cap('D3_analitica_derivada', () => {
+    const a = analiticaAgregados();
+    const panel = document.getElementById('anKpi').textContent.replace(/\s+/g, ' ');
+    return {
+      kpis: [...document.querySelectorAll('#anKpi .kpi')].map(k => [
+        k.querySelector('.lab').textContent.trim(),
+        k.querySelector('.val').textContent.replace(/\s+/g, ' ').trim(),
+      ]),
+      agregados: {
+        activos: a.activos.length, conLB: a.conLB.length, lbs: a.lbs.length,
+        ideaTot: a.ideaTot, ideaEsc: a.ideaEsc, banda: a.banda,
+        conAB: a.conAB.length, deltaTot: a.deltaTot, ciclos: a.ciclos.length,
+      },
+      derivadoOk: panel.includes(`${a.conLB.length} de ${a.activos.length} NNA activos`)
+               && panel.includes(`${a.ciclos.length} / ${a.activos.length}`),
+    };
+  });
+
   F.errors = errors;
   fs.writeFileSync(outPath, JSON.stringify(F, null, 2), 'utf8');
   console.log(`fingerprint -> ${outPath}`);

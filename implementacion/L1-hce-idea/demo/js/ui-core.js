@@ -121,6 +121,7 @@ function renderNNA(){
   setKpi("kpiInf", totalEvals);
   applyNNAFilter();
   renderPendientes();
+  renderAnalitica();   // la analítica institucional se deriva del mismo modelo: se recalcula con cada cambio
 }
 function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 
@@ -305,20 +306,122 @@ document.querySelectorAll(".lik-opts").forEach(g=>{
   });
 });
 
-/* ================= ANALÍTICA: GRÁFICOS ================= */
-// Barras horizontales por escala (enero vs noviembre, promedio poblacional /24)
-const escalas = [
-  ["Relación Social", 13.2, 8.1, "var(--teal)"],
-  ["Comunicación y Lenguaje", 11.8, 7.9, "var(--escB)"],
-  ["Anticipación / Flexibilidad", 9.6, 7.2, "var(--purple)"],
-  ["Simbolización", 7.4, 5.3, "var(--magenta)"]
-];
-document.getElementById("escalasChart").innerHTML = escalas.map(e=>`
-  <div class="hbarrow"><div class="lab">${e[0]}</div>
-    <div class="track"><div class="fill" style="width:${e[1]/24*100}%;background:#B9C6D6">${e[1]}</div></div></div>
-  <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:.68rem">→ Noviembre</div>
-    <div class="track"><div class="fill" style="width:${e[2]/24*100}%;background:${e[3]}">${e[2]}</div></div></div>
-`).join("") + `<div class="note">Promedio poblacional por escala (máx. 24 pts). Barra gris = enero · barra de color = noviembre. La reducción del puntaje indica mejora.</div>`;
+/* ================= ANALÍTICA INSTITUCIONAL — INDICADORES CALCULADOS =================
+   Esta vista se calcula desde el modelo (array NNA + motor de flujo de M1). Antes eran
+   constantes: los KPIs vivían en el markup y las series, acá. Dos reglas duras la acotan:
+
+   §5.2 (no-homologabilidad) — IDEA y Escala IPPU-TEA miden constructos distintos y con
+     lógica de puntaje inversa (el IDEA BAJA cuando hay mejora; la IPPU-TEA SUBE). No se
+     suman, no se promedian juntas y no comparten eje: van en dos tarjetas separadas.
+   §5.1.3 — el heatmap de talleres queda fuera de alcance: sigue con datos de muestra,
+     no se calcula, y el markup lo rotula como tal.
+
+   Lo que ya NO se puede calcular, y por qué: esta vista mostraba "IDEA enero vs noviembre".
+   Desde M4 el IDEA es línea base ÚNICA (se quitó la lógica anual), así que ese segundo
+   punto temporal no existe en el modelo. La única lectura de evolución legítima es el
+   delta B−A de la IPPU-TEA, que ya calculó el motor al firmar el Protocolo B
+   (flujo.pb.deltas): acá se promedia, nunca se recalcula.
+
+   Declaradas como `function` a propósito: renderNNA() —que corre antes en este archivo—
+   llama a renderAnalitica(), y un `const` de sección quedaría en zona muerta temporal.
+   Misma familia de trampa que la del hoisting descrita en handoff §5.5.2. */
+
+function promedio(xs){ return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; }
+function fmt1(v){ return v==null ? "—" : v.toFixed(1).replace(".", ","); }
+
+/* Agregados poblacionales. Sólo NNA ACTIVOS: un expediente dado de baja no cuenta ni
+   para la cobertura ni para los promedios del padrón. */
+function analiticaAgregados(){
+  const activos = NNA.filter(n=>n.activo);
+  const conLB   = activos.filter(tieneLBFirmada);
+
+  /* IDEA — sólo líneas base firmadas y completas. Una dimensión en 'NS' haría que el total
+     no sea comparable con el del resto; validarIntegridad ya impide firmar así, este filtro
+     es la red por si el dato llegara de otro lado. */
+  const lbs     = conLB.map(n=>lbTotales(n.flujo.lb.dim)).filter(t=>!t.hayNS && t.count===12);
+  const ideaEsc = [0,1,2,3].map(i=>promedio(lbs.map(t=>t.esc[i])));
+  const ideaTot = promedio(lbs.map(t=>t.total));
+  const banda   = {Leve:0, Moderado:0, Severo:0};
+  lbs.forEach(t=>banda[bandaIdea(t.total)]++);
+
+  /* IPPU-TEA — sólo NNA con Protocolo A y B firmados y con el delta ya registrado por el
+     motor (M5.3). Si el B se firmó por habilitación excepcional sin A, `deltas` es null y
+     el NNA queda fuera del promedio: no hay evolución que medir. */
+  const conAB    = activos.filter(n=>n.flujo.pa.firmado && n.flujo.pb.firmado && n.flujo.pb.deltas);
+  const paEsc    = [0,1,2,3].map(i=>promedio(conAB.map(n=>protTotales(n.flujo.pa.item).esc[i])));
+  const pbEsc    = [0,1,2,3].map(i=>promedio(conAB.map(n=>protTotales(n.flujo.pb.item).esc[i])));
+  const deltaTot = promedio(conAB.map(n=>n.flujo.pb.deltas.total));
+
+  const ciclos = activos.filter(n=>SECUENCIA.every(k=>n.flujo[k].firmado));
+  return {activos, conLB, lbs, ideaEsc, ideaTot, banda, conAB, paEsc, pbEsc, deltaTot, ciclos};
+}
+
+function renderAnalitica(){
+  const a    = analiticaAgregados();
+  const nAct = a.activos.length;
+  const ESCALAS_IDEA = ["Relación Social","Comunicación y Lenguaje","Anticipación / Flexibilidad","Simbolización"];
+  const COLOR_ESC    = ["var(--teal)","var(--escB)","var(--purple)","var(--magenta)"];
+  const MAX_IDEA_ESC = 24;   // 3 dimensiones × 8 puntos
+  const MAX_PROT_ESC = 30;   // 6 ítems × 5 puntos
+  const ancho = (v,max) => v==null ? 0 : Math.max(0, Math.min(100, v/max*100));
+  const plural = (n,s,p) => n===1 ? s : p;
+
+  /* --- KPIs --- */
+  const cobertura = nAct ? Math.round(a.conLB.length/nAct*100) : 0;
+  // deltaInterpreta clasifica un delta entero; el promedio se redondea sólo para elegir
+  // la etiqueta/color, nunca para mostrar el número.
+  const dInt = a.deltaTot==null ? null : deltaInterpreta(Math.round(a.deltaTot));
+  const dTxt = a.deltaTot==null ? "—" : (a.deltaTot>0?"+":"") + fmt1(a.deltaTot);
+  const kpis = [
+    {lab:"Cobertura de línea base", val:`${cobertura} %`,
+     sub:`${a.conLB.length} de ${nAct} NNA activos con HCE-LB firmada`},
+    {lab:"IDEA promedio — línea base", val:`${fmt1(a.ideaTot)}<span class="kpi-den"> / 96</span>`,
+     sub: a.ideaTot==null ? "Sin líneas base firmadas todavía"
+        : `Banda ${bandaIdea(a.ideaTot)} · promedio de ${a.lbs.length} ${plural(a.lbs.length,"línea base","líneas base")}`},
+    {lab:"Δ B−A · Escala IPPU-TEA", val:dTxt, color: dInt ? dInt.c : null,
+     sub: a.conAB.length ? `${dInt.t} · ${a.conAB.length} de ${nAct} con ciclo A → B cerrado`
+                         : "Ningún NNA con Protocolo A y B firmados"},
+    {lab:"Ciclos completos", val:`${a.ciclos.length}<span class="kpi-den"> / ${nAct}</span>`, cls:"purple",
+     sub:"CI → LB → PA → PB → IC firmados"}
+  ];
+  document.getElementById("anKpi").innerHTML = kpis.map(k=>`
+    <div class="kpi"><div class="lab">${k.lab}</div>
+      <div class="val ${k.cls||""}"${k.color?` style="color:${k.color}"`:""}>${k.val}</div>
+      <div class="sub">${k.sub}</div></div>`).join("");
+
+  /* --- Perfil poblacional por escala: línea base IDEA (máx. 24 por escala) --- */
+  document.getElementById("escalasChart").innerHTML = a.lbs.length
+    ? a.ideaEsc.map((v,i)=>`
+        <div class="hbarrow"><div class="lab">${ESCALAS_IDEA[i]}</div>
+          <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(v)}</div></div></div>
+      `).join("") +
+      `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto de la línea base, no una evolución: desde el Documento Técnico el IDEA se toma una sola vez por NNA (§5.1.1).</div>`
+    : `<div class="empty-state"><div class="big">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
+
+  /* --- Evolución Protocolo A → B: Escala IPPU-TEA (máx. 30 por escala) --- */
+  document.getElementById("protChart").innerHTML = a.conAB.length
+    ? a.paEsc.map((v,i)=>`
+        <div class="hbarrow"><div class="lab">${IPPU_ESCALAS[i]}</div>
+          <div class="track"><div class="fill" style="width:${ancho(v,MAX_PROT_ESC)}%;background:#B9C6D6">${fmt1(v)}</div></div></div>
+        <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:.68rem">→ Protocolo B</div>
+          <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(a.pbEsc[i])}</div></div></div>
+      `).join("") +
+      `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`
+    : `<div class="empty-state"><div class="big">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
+
+  /* --- Distribución por banda de severidad (sobre las líneas base firmadas) --- */
+  const BANDAS = [["Leve (0 – 32)","Leve","var(--ok)"],
+                  ["Moderada (33 – 64)","Moderado","var(--warn)"],
+                  ["Severa (65 – 96)","Severo","var(--bad)"]];
+  const nLb = a.lbs.length, sinLB = nAct - a.conLB.length;
+  document.getElementById("distChart").innerHTML = BANDAS.map(b=>`
+    <div class="hbarrow"><div class="lab">${b[0]}</div>
+      <div class="track" style="height:24px"><div class="fill" style="width:${nLb ? a.banda[b[1]]/nLb*100 : 0}%;background:${b[2]}">${a.banda[b[1]]} NNA</div></div></div>
+  `).join("") +
+    `<div class="note">Distribución de ${nLb} ${plural(nLb,"línea base IDEA firmada","líneas base IDEA firmadas")} según la banda orientativa del puntaje total. ` +
+    (sinLB ? `Quedan fuera ${sinLB} ${plural(sinLB,"NNA activo sin línea base firmada","NNA activos sin línea base firmada")}.`
+           : `Todos los NNA activos tienen su línea base firmada.`) + `</div>`;
+}
 
 // Heatmap talleres × escalas
 const talleres = [
@@ -334,16 +437,8 @@ document.getElementById("heatTable").innerHTML =
   `<tr><th class="row">Taller</th><th>Rel. Soc.</th><th>Comun.</th><th>Anticip.</th><th>Simbol.</th></tr>` +
   talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td style="background:${heatColor(v)}">${v.toFixed(1)}</td>`).join("")}</tr>`).join("");
 
-// Distribución por banda de severidad
-const dist = [
-  ["Leve (0 – 32)", 11, "var(--ok)"],
-  ["Moderada (33 – 64)", 15, "var(--warn)"],
-  ["Severa (65 – 96)", 4, "var(--bad)"]
-];
-document.getElementById("distChart").innerHTML = dist.map(d=>`
-  <div class="hbarrow"><div class="lab">${d[0]}</div>
-    <div class="track" style="height:24px"><div class="fill" style="width:${d[1]/30*100}%;background:${d[2]}">${d[1]} NNA</div></div></div>
-`).join("") + `<div class="note">Distribución del padrón 2026 según banda orientativa del puntaje IDEA de noviembre. En enero la banda severa incluía 9 NNA: 5 pasaron a moderada durante el ciclo.</div>`;
+// La distribución por banda de severidad se calcula en renderAnalitica() (más arriba),
+// junto con los KPIs y los dos gráficos por escala.
 /* ===================== TOAST ===================== */
 function toast(msg){
   const t = document.getElementById("toast");
