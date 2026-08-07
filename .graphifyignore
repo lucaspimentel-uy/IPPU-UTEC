@@ -1,0 +1,17 @@
+# Exclusiones del grafo de conocimiento (`/graphify`) — NO del repositorio.
+# Sintaxis gitignore. Se combina con `.gitignore`; esta lista gana sobre él.
+
+# docs/fuentes/ son los ORIGINALES (PDF · DOCX · PPTX · XLSX · HTML) tal como los
+# envió IPPU. Su contenido ya está en docs/markdown/: la misma información en un
+# formato mucho más barato de indexar. Indexar las dos copias duplica el costo en
+# tokens sin agregar información al grafo, así que al grafo entra sólo el markdown.
+#
+# Los originales se conservan igual en el repo: son el respaldo verificable de lo
+# que IPPU entregó y la única fuente para rehacer una conversión (p. ej. IPPU.pdf
+# está escaneado y su markdown salió de OCR).
+#
+# Excepción conocida — `HCE_IPPU_Prototipo_v1.html` no tiene conversión markdown y
+# es a propósito: es una app JS y Docling rinde sólo el shell estático vacío
+# (handoff.md §13, M0 · 2026-07-15). Se cita como referencia de UX/reglas desde su
+# ruta original, no desde docs/markdown/.
+docs/fuentes/
