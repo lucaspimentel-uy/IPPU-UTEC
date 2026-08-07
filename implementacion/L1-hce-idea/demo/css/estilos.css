@@ -111,6 +111,7 @@
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
   .kpi .lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
   .kpi .val{font-size:1.55rem;font-weight:800;margin-top:4px}
+  .kpi .val .kpi-den{font-size:.9rem;font-weight:600;color:var(--ink-2)}   /* denominador: "/ 96", "/ 7" */
   .kpi .sub{font-size:.72rem;color:var(--ink-2);margin-top:2px}
   .kpi .val.ok{color:var(--ok)} .kpi .val.orange{color:var(--orange)} .kpi .val.purple{color:var(--purple)}
 

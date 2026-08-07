@@ -65,7 +65,7 @@ divergen, con contexto alrededor).
 | **A — Estado inicial** | Carga sin errores · catálogos y constantes · **lista de funciones globales** (delata una función perdida al mover código) · motor de flujo M1 de los 8 NNA · las 5 vistas · los 8 expedientes |
 | **B — Reglas duras** | **No-homologabilidad (§5.2):** `calcularDelta` debe *lanzar* si se le pasa el IDEA en vez de un protocolo. **Baremo (§7.5):** `categoriaBaremo` debe *lanzar* si se le pasa un puntaje clínico en vez del % oficial. Más bordes del baremo y cálculo puro |
 | **C — Interacciones** | Firma de CI (con autorizaciones y adjunto) · firma PA + PB con **delta B−A y alerta institucional** (M5.3) · addenda sobre módulo firmado y rechazo sobre no firmado · habilitación excepcional · modales de alta/edición/recibí · vistas armadas por JS (IDEA, protocolos, informe de cierre, HCE-VF) |
-| **D — Modelo final** | Volcado JSON completo de los 8 expedientes tras todas las mutaciones |
+| **D — Modelo final** | Volcado JSON completo de los 8 expedientes tras todas las mutaciones · **analítica institucional derivada** (`D3`): agregados y KPIs recalculados al final, más una aserción `derivadoOk` que contrasta el panel contra un recálculo hecho en el momento |
 
 ## Cosas a tener en cuenta
 
@@ -78,6 +78,13 @@ divergen, con contexto alrededor).
 - **Los escenarios son deterministas, no clínicamente realistas.** Por ejemplo se firma un
   Protocolo B vacío para forzar el camino de la alerta institucional (Δ ≤ −7). Está bien: lo
   que importa es que el mismo escenario dé el mismo resultado antes y después.
+- **Ojo con leer `D3` como dato clínico.** Por lo anterior, el Δ promedio que reporta el paso
+  D3 es negativo (≈ −30): es consecuencia de ese Protocolo B vacío, no del seed. Los números
+  reales del seed se ven en `A3_vista_analitica`, antes de cualquier mutación.
+- **`D3` sirve para detectar un indicador re-hardcodeado.** Se captura después de las
+  mutaciones: si un KPI vuelve a ser una constante, sus números se quedan quietos mientras el
+  modelo se movió. `derivadoOk: false` significa que el panel quedó desincronizado del modelo
+  (falta un re-render, o hay un valor fijo en el markup).
 
 ## Historia
 
