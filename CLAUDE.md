@@ -9,7 +9,8 @@
 ## Arranque de sesión (obligatorio)
 1. `git pull` y leer **`handoff.md`** — cabecera, **§5** (decisiones tomadas), **§6** (pendientes y sus
    responsables) y **§12** (flujo de trabajo del equipo).
-2. Confirmar que el módulo que se va a tocar **no lo tiene otro integrante** (§6) y trabajar en rama corta.
+2. Mirar en §6 si alguien ya está en eso y trabajar en rama corta. **Desde el 2026-08-07 ningún módulo
+   tiene dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma, no se pide permiso.
 3. **La demo está modularizada** (`demo/index.html` + `demo/css/` + `demo/js/*.js`, 2026-08-07): se puede
    trabajar en paralelo **siempre que cada uno tome archivos distintos** de `demo/js/`. Avisar qué archivo
    se toma (§12.3). `index.html` y `js/utils.js` los tocan todos → coordinar antes.
@@ -38,8 +39,8 @@ IPPU/
 ├── CLAUDE.md                  # Este archivo
 ├── README.md                  # Overview para humanos
 ├── docs/
-│   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
-│   └── markdown/              # Conversiones .md de las fuentes (legibles/citables)
+│   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
+│   └── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
@@ -63,6 +64,12 @@ python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
 Por defecto omite los `.md` ya existentes. Si no se pasa `-o`, escribe en `./markdown_convertido`.
 Nota: `IPPU.pdf` es escaneado → Docling aplica OCR (la primera corrida descarga modelos y tarda).
 
+**Regla: una vez convertido, se trabaja con el `.md`.** Los originales quedan sólo como respaldo, y por eso
+`docs/fuentes/` está excluido del grafo de conocimiento vía `.graphifyignore` (`handoff.md` §5.7): indexar
+las dos copias duplica el costo en tokens sin agregar información. **Excepción:** `HCE_IPPU_Prototipo_v1.html`
+no tiene conversión a propósito (es una app JS y Docling rinde sólo el shell vacío) y se cita desde su ruta
+original en `docs/fuentes/`.
+
 ## Dominio mínimo (IDEA)
 4 escalas → **12 dimensiones (D1–D12)**, cada una **0–8**, total **0–96** (menor = mejor).
 Ciclo: IDEA completa enero/noviembre + intermedia Likert en junio (`equiv. IDEA = (5 − promedio)×2`).
@@ -73,7 +80,7 @@ React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · P
 
 **Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic**. Correr: `cd` al backend → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q`.
 
-**Ronda en curso — M11 (backend v2), responsable Victor.** Las Fases 0–2 (21 tablas, 20 endpoints, 12 tests) están construidas sobre el modelo *previo* al Documento Técnico y se **rediseñan** en M11 según `backend/docs/esquema-datos-v2.md`. Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** (docker-compose; se abandona SQLite en dev) · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**. Secuencia: M11.1 infra → M11.2 modelos/catálogos → M11.3 servicios y guards → M11.4 routers → M11.5 seed + pytest → M11.6 docs. Después: Fase 3 (conectar la demo a la API), Fase 4 (JWT), Fase 6 (Docker completo).
+**Ronda en curso — M11 (backend v2).** Lo venía llevando Victor; desde `handoff.md` §5.6 **no es exclusivo suyo**. Las Fases 0–2 (21 tablas, 20 endpoints, 12 tests) están construidas sobre el modelo *previo* al Documento Técnico y se **rediseñan** en M11 según `backend/docs/esquema-datos-v2.md`. Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** (docker-compose; se abandona SQLite en dev) · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**. Secuencia: M11.1 infra → M11.2 modelos/catálogos → M11.3 servicios y guards → M11.4 routers → M11.5 seed + pytest → M11.6 docs. Después: Fase 3 (conectar la demo a la API), Fase 4 (JWT), Fase 6 (Docker completo).
 
 ## Reglas importantes
 - **Solo datos simulados/anonimizados** hasta que exista acuerdo de confidencialidad firmado con IPPU.

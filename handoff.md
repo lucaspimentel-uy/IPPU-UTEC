@@ -9,7 +9,7 @@
 >
 > - **Última actualización:** 2026-08-07
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.0).** En curso: **M11 · backend v2** (rediseño de esquema al modelo del Doc. Técnico) — **responsable: Victor**, arranca por **M11.1** (infra Postgres-only) sobre la propuesta ya escrita en `backend/docs/esquema-datos-v2.md`. Las 3 decisiones de arquitectura del Anexo A **ya están cerradas** (§5.2). En paralelo, pendiente con IPPU: **validar la demo v4.0** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1).** En curso: **M11 · backend v2** (rediseño de esquema al modelo del Doc. Técnico), que arranca por **M11.1** (infra Postgres-only) sobre la propuesta ya escrita en `backend/docs/esquema-datos-v2.md`. Las 3 decisiones de arquitectura del Anexo A **ya están cerradas** (§5.2). **Desde el 2026-08-07 ningún módulo tiene dueño exclusivo (§5.6):** se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente:** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) + plan `PLAN-modular-adaptacion-HCE-2026-07.md` (módulos M0–M11). Referencia de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`. **En conflicto con el diseño previo, gana el Documento Técnico.** El backend (Fases 0–2) **no se toca** en esta ronda (rediseño de esquema = M11).
 
 ---
@@ -80,7 +80,8 @@ con consolidación histórica, análisis automático y reportes automáticos.
 - Prototipo HTML/CSS/JS, **datos simulados, "no funcional"** (sin backend). **Modularizado el 2026-08-07**
   (§5.5): dejó de ser un archivo único de 3.949 líneas → `index.html` + `css/estilos.css` + `js/*.js`.
 - **v4.0 (2026-07-30, ronda M0–M10 completa, adaptada al Doc. Técnico IPPU v1.0):** motor de flujo CI→LB→PA→PB→IC (estado derivado, firma doble=bloqueo, addendas, habilitación excepcional, HCE-LOG), HCE-00 siempre abierto, HCE-CI (único bloqueo sin excepción), HCE-LB (IDEA línea base única con NS), HCE-PA/PB (Escala IPPU-TEA 24 ítems, delta B−A automático, alerta Δ≤−7, guard de no-homologabilidad), HCE-IC (informe único con tabla+radares y PDF, Recibí de la familia), HCE-DOC (adjuntos categorizados, archivo histórico §10 de solo lectura, protección de imagen §8.4 individual y grupal), HCE-ORG (INAU/BPS con registros), HCE-VF (BUND/CIF, tabla parametrizable, salvaguarda §7.5, autogeneración descriptiva, Reporte VF), búsqueda por 3 vías (nombre/CI/HCE/grupo), recordatorios configurables §4, Grupos y Usuario. "Eval. por áreas/general" **eliminadas** (archivo histórico en HCE-DOC).
-- Las vistas heredadas pre-Doc. Técnico que siguen en el archivo sin exponerse: "Eval. intermedia" (reemplazada por PA/PB). El heatmap de talleres de Analítica no se tocó (decisión §0.3).
+- **v4.1 (2026-08-07): la Analítica institucional se calcula.** Era la única vista con los indicadores fijos (4 KPIs en el markup + 2 series en `ui-core.js`). Ahora `renderAnalitica()` los deriva del array `NNA` y del motor de flujo, y se recalculan con cada cambio (se llama desde `renderNNA()`). Quedan: cobertura de línea base · IDEA promedio de la LB con su banda · **Δ B−A de la Escala IPPU-TEA** (promediando el delta que registró el motor al firmar el PB, nunca recalculándolo) · ciclos de flujo completos; más el perfil poblacional por escala IDEA y una **tarjeta nueva y separada** de evolución Protocolo A → B. Al abrirla se vio que **"IDEA enero vs noviembre" y "mejora promedio anual" eran incalculables por diseño**: desde M4 el IDEA es línea base única y §5.2 prohíbe homologarlo con la IPPU-TEA — por eso el delta va en otra tarjeta y con la advertencia de que ahí el puntaje sube cuando hay progreso. Se retiró el KPI "Taller de mayor eficacia" (cruzar taller × escala es el heatmap, fuera de alcance por §5.1.3).
+- Las vistas heredadas pre-Doc. Técnico que siguen en el archivo sin exponerse: "Eval. intermedia" (reemplazada por PA/PB). El heatmap de talleres de Analítica no se tocó (decisión §0.3) y desde v4.1 está **rotulado "datos ilustrativos"**, para que no quede un gráfico simulado sin marcar entre tres calculados.
 
 ## 4. Qué se hizo en esta sesión (2026-06-30)
 1. **Conversor mejorado** (`herramientas/conversor_docling.py`): ahora acepta archivos/carpetas por CLI (modo batch), `-o` carpeta de salida, `-r` recursivo, `--overwrite`; salida UTF-8 (arregla crash con emojis en consola Windows); mantiene modo interactivo si se ejecuta sin argumentos.
@@ -167,12 +168,45 @@ La demo dejó de ser `hce_idea_ippu_demo.html` (3.949 líneas en un archivo) y p
    Reusarlo ante cualquier cambio que *no debería* alterar el comportamiento. Playwright se instala suelto
    y a demanda; no es dependencia del repo.
 
+### 5.6 Reparto del trabajo: no hay módulos exclusivos (2026-08-07, Lucas)
+Se levanta la asignación por dueño. Cualquiera de los tres puede tomar cualquier módulo —incluido
+**M11 (backend v2)**, que §5.3.4 había asignado a Victor—. Lo que se mantiene es **avisar en el grupo qué
+se toma** antes de empezar y anotarlo en §6.
+
+- **Qué cambia:** §5.3.4 ("M11 lo toma Victor") deja de ser una asignación exclusiva. §12.3 pasa de "nos
+  repartimos por módulo" a "se avisa qué se toma": la columna *Regla* de esa tabla se lee como coordinación,
+  no como propiedad. §12.4 paso 2 ya no exige *confirmar que nadie tomó tu módulo*, alcanza con avisar.
+- **Qué NO cambia:** el resto de §12 sigue igual — contexto versionado (§12.1), push a los dos remotos
+  (§12.2), vida máxima de una rama ~1 semana (§12.4) y, sobre todo, la **regla anti-contradicción (§12.6)**.
+  Que no haya dueños no habilita a contradecir una decisión de §5: eso se sigue frenando y se resuelve por
+  escrito.
+- **Por qué:** con la demo ya modularizada (§5.5) desapareció el único recurso que forzaba exclusividad, y el
+  cuello de botella pasó a ser la espera. El riesgo que atacaba §5.3 nunca fue que dos tomaran el mismo
+  módulo, sino que trabajaran **sin ver las decisiones del otro** — y eso lo resuelve el contexto versionado,
+  no el reparto.
+
+### 5.7 Los originales no entran al grafo de conocimiento (2026-08-07, Lucas)
+`docs/fuentes/` (PDF · DOCX · PPTX · XLSX · HTML) queda **excluido del indexado de `/graphify`** con un
+`.graphifyignore` en la raíz. Al grafo entra sólo `docs/markdown/`: la misma información a una fracción de
+los tokens. Medido con `graphify detect`: el corpus pasó de **77 a 72 archivos** y de **99.608 a 78.110
+palabras (−21 %)**, y salió del lote el `IPPU.pdf` escaneado de 2,2 MB, el más caro de extraer.
+
+**Se excluyen del grafo, no se borran del repo.** Se evaluó eliminar la carpeta y se descartó por dos
+motivos concretos: los originales son el respaldo verificable de lo que entregó IPPU y la única fuente para
+rehacer una conversión lossy (`IPPU.md` salió de OCR), y `HCE_IPPU_Prototipo_v1.html` **no tiene** conversión
+markdown a propósito (es una app JS; Docling rinde sólo el shell estático vacío — §13, M0), así que borrar la
+carpeta dejaba sin equivalente a un archivo que la cabecera cita como referencia de UX/reglas.
+
+> La regla "trabajar sólo con las conversiones markdown" es una **preferencia general de trabajo de Lucas**,
+> no una particularidad de este proyecto: aplica igual en cualquier repo.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
-- [ ] **M11 · Backend v2 — EN CURSO · responsable: Victor** (asignado 2026-08-03). Las 3 decisiones de arquitectura ya están cerradas (§5.2) y la propuesta de esquema v2 escrita (`backend/docs/esquema-datos-v2.md`). Secuencia: **M11.1** infra Postgres-only (docker-compose + config + Alembic re-init) → **M11.2** modelos + catálogos → **M11.3** servicios/motor de flujo con guards → **M11.4** routers → **M11.5** seed espejo de la demo + pytest contra Postgres (criterio §12-A: usuario demo 1 por API = IDEA 58 · PA 60 · PB 79 · Δ +19) → **M11.6** docs. Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo).
+- [ ] **M11 · Backend v2 — EN CURSO.** Lo venía llevando Victor (asignado 2026-08-03); desde §5.6 **ya no es exclusivo suyo** — quien lo tome, avisa. Las 3 decisiones de arquitectura ya están cerradas (§5.2) y la propuesta de esquema v2 escrita (`backend/docs/esquema-datos-v2.md`). Secuencia: **M11.1** infra Postgres-only (docker-compose + config + Alembic re-init) → **M11.2** modelos + catálogos → **M11.3** servicios/motor de flujo con guards → **M11.4** routers → **M11.5** seed espejo de la demo + pytest contra Postgres (criterio §12-A: usuario demo 1 por API = IDEA 58 · PA 60 · PB 79 · Δ +19) → **M11.6** docs. Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo).
 - [x] ~~**Modularizar la demo**~~ → **HECHO** (2026-08-07, §5.5). La demo dejó de ser recurso exclusivo: **se puede trabajar en paralelo** tomando archivos distintos de `demo/js/`.
-- [ ] **Demo — módulo libre y sugerido para quien la tome (¿Samuel?): analítica institucional real.** La vista *Analítica institucional* (`demo/js/ui-core.js`, sección "ANALÍTICA: GRÁFICOS", + el markup en `index.html`) tiene los **KPIs hardcodeados** en el HTML (`−9,4 pts`, `93 %`, `1.842 sesiones`, "H. Sociales"): no se calculan del array `NNA` como sí hace todo el resto de la demo. Es la pata menos desarrollada de L1 (HCE + IDEA + **analítica**) y no depende del backend. Antes de tocarla: capturar fingerprint (`demo/verificacion/`), porque ahí sí el comportamiento **debe** cambiar y conviene ver exactamente en qué.
+- [x] ~~**Demo — analítica institucional real**~~ → **HECHO** (2026-08-07, demo **v4.1**, ver §3 y bitácora). Los 4 KPIs y los gráficos por escala se calculan del modelo; se agregó la tarjeta de evolución Protocolo A → B. Hallazgo del camino: dos de los indicadores viejos no estaban hardcodeados por comodidad sino que eran **incalculables por diseño** desde M4. **Lo que queda abierto ahí:** el heatmap de talleres sigue con datos de muestra (§5.1.3) y el cruce taller × escala no va a tener sustento hasta que haya varios NNA con el ciclo A → B cerrado — hoy hay **1 de 7**.
+- [ ] **Re-indexar el grafo de conocimiento (`graphify-out/`).** El grafo versionado lo generó Victor el 2026-08-05, **antes** de la modularización: indexa `demo/hce_idea_ippu_demo.html` (archivo ya eliminado) y no contiene ninguno de los 12 módulos de `demo/js/`. La exclusión de `docs/fuentes/` ya está hecha (§5.7). Falta correr el pipeline completo: la parte de código sale gratis (AST, sin LLM), la de docs son ~25 archivos con extracción semántica. Ojo: graphify **rechaza achicar** `graph.json` sin `--force`, así que una corrida sólo-AST no se puede escribir encima.
 - [ ] **Rama `gitlab/feature/base-datos-hce` (Victor):** aparcada, **no** descartada (§5.3). Decidir en reunión de equipo qué se hace con ella al terminar M11 (mergear lo reutilizable como referencia SQL en `docs/`, o cerrarla dejando constancia). Ver §12.5.
 - [x] ~~Elegir un remoto principal~~ → **decidido 2026-08-07: `gitlab` principal, `origin` espejo** (§5.4, ver §12.2).
 - [ ] **Mirar el video demo de la HCE actual:** https://youtube.com/watch?v=dMWfc0JKCC0
@@ -245,21 +279,23 @@ git push gitlab main && git push origin main
 ```
 
 ### 12.3 Reparto: quién toca qué
-Nos repartimos **por módulo**, no por archivo. Antes de empezar: avisar en el grupo **qué módulo tomás**
-y anotarlo como responsable en el pendiente correspondiente de §6.
+> **Actualizado por §5.6 (2026-08-07): ya no hay módulos con dueño exclusivo.** Antes de empezar: avisar en
+> el grupo **qué tomás** y anotarlo en el pendiente correspondiente de §6. La tabla de abajo dice **dónde hay
+> riesgo de pisarse**, no quién es dueño de qué.
 
 | Zona | Archivo/carpeta | Regla |
 |---|---|---|
 | **Demo** | `implementacion/L1-hce-idea/demo/js/*.js` | **Se puede en paralelo desde la modularización (§5.5)**, siempre que cada uno tome **archivos distintos**. Avisar cuál tomás. |
 | **Demo — compartidos** | `demo/index.html`, `demo/js/utils.js` | Los tocan todos → **coordinar antes**. `index.html` define el **orden de carga**, que es la semántica del programa (ver §5.5). |
-| **Backend v2 (M11)** | `implementacion/L1-hce-idea/backend/` | Se reparte por sub-módulo (M11.1 … M11.6), que son secuenciales. **Responsable actual: Victor.** |
+| **Backend v2 (M11)** | `implementacion/L1-hce-idea/backend/` | Se reparte por sub-módulo (M11.1 … M11.6), que son **secuenciales**: acá el riesgo no es el archivo sino el orden. Coordinar quién sigue. |
 | **Documentación** | `docs/`, `README.md` | Libre, poco riesgo de conflicto. |
 | **`handoff.md`** | raíz | Todos escriben, pero **sólo agregando** (bitácora al final, pendientes en §6). Si dos editan a la vez, el conflicto es trivial de resolver. |
 
 ### 12.4 Ciclo de una sesión de trabajo (checklist)
 **Al empezar:**
 1. `git pull` (de los dos remotos si hiciste push a ambos).
-2. Leer `handoff.md` — cabecera, §5 (decisiones) y §6 (pendientes). Confirmar que nadie tomó tu módulo.
+2. Leer `handoff.md` — cabecera, §5 (decisiones) y §6 (pendientes). Mirar en §6 si alguien ya está en eso
+   (§5.6: no hay dueños, pero sí conviene no duplicar).
 3. Avisar en el grupo qué tomás.
 4. Rama corta con nombre del módulo: `git checkout -b feat/M11.1-infra-postgres`.
 
@@ -402,3 +438,14 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Code review (cloud, multi-agente):** **2 hallazgos, ambos `nit`, ambos de documentación** — ninguno en el refactor, ni en los 12 módulos, ni en el orden de carga, ni en el harness. (a) la cabecera de este archivo seguía fechada 2026-08-03; (b) `README.md` seguía diciendo "un solo archivo → una sola persona a la vez", contradiciéndose con su propio árbol de estructura. Los dos corregidos antes del merge.
   - **Nota operativa:** las dos primeras corridas del review fallaron. La causa real fue que `feat/demo-modular` y `review-base` **existían sólo en local**: el review corre en un contenedor que clona del remoto y no pudo resolver la base. **Si se usa review en la nube, pushear la rama primero.**
   - **Mergeado a `main`** y pusheado a los dos remotos. Ramas auxiliares (`review-base`, `backup-demo-modular`) eliminadas: su contenido está en `main`. (Lucas + Claude)
+
+- **2026-08-07** — **Analítica institucional calculada (demo v4.1) + exclusión de las fuentes del grafo.** Rama `feat/demo-analitica-real`, mergeada a `main`. Era el último pendiente libre de la demo y la pata menos desarrollada de L1 ("HCE + IDEA + **analítica**").
+  - **Hallazgo que cambió el alcance.** La vista seguía anclada a la arquitectura **previa** al Documento Técnico: mostraba *"Puntaje por escala IDEA — Enero vs Noviembre"* y *"Mejora promedio anual · IDEA"*. Desde **M4** el IDEA es **línea base única** (§5.1.1): ese segundo punto temporal no existe en el modelo, y §5.2 prohíbe suplirlo homologando con la Escala IPPU-TEA. O sea que esos dos indicadores **no estaban hardcodeados por comodidad — eran incalculables por diseño**. Se rediseñó la vista antes de programarla, con Lucas aprobando las dos decisiones abiertas.
+  - **Qué se hizo** (`renderAnalitica()` + `analiticaAgregados()` en `demo/js/ui-core.js`, markup en `index.html`): KPIs derivados en un `#anKpi` — cobertura de línea base **71 %** (5 de 7 activos) · IDEA promedio **47,0/96** banda Moderado · **Δ B−A IPPU-TEA +19,0** sobre **1 de 7** con ciclo A → B cerrado · ciclos completos **1 de 7**. El gráfico de escalas pasó a **perfil poblacional de la línea base** (/24) y se agregó una **tarjeta nueva y separada** de **evolución Protocolo A → B** (/30), con la advertencia de que ahí el puntaje **sube** cuando hay progreso — dos instrumentos, dos tarjetas, nunca el mismo eje (§5.2). Distribución por banda sobre las LB firmadas, con nota de cuántos activos quedan fuera. Estados vacíos reales en ambos gráficos.
+  - **Reglas respetadas:** el **delta no se recalcula** — se promedia el que registró el motor al firmar el PB (M5.3); los NNA con PB firmado por habilitación excepcional (`deltas=null`) quedan fuera. Se **retiró** el KPI "Taller de mayor eficacia": cruzar taller × escala es el heatmap, fuera de alcance por §5.1.3. El heatmap quedó **intacto** y rotulado *"datos ilustrativos"*.
+  - **Verificación** (fingerprint versionado): **38 de 40 pasos idénticos**; los 2 distintos son los esperados — la vista analítica y la lista de globales (**+4**, ninguna perdida). **`D1_modelo_final` OK: la analítica sólo lee, no muta.** Guards §5.2 y §7.5 en verde, los 8 expedientes y los caminos interactivos sin cambios, 0 errores de consola. Criterio **§12-A intacto y ahora visible en el panel** (PA 60 · PB 79 · Δ +19). Reactividad probada: baja del NNA 103 → cobertura 71→67 %, promedio 47,0→45,0, banda Moderada 4→3; al reactivarlo vuelve exacto.
+  - **Harness ampliado:** paso **`D3_analitica_derivada`** — captura los agregados *después* de las mutaciones y afirma `derivadoOk` contrastando el panel contra un recálculo hecho en el momento. Si alguien vuelve a hardcodear un indicador, D3 lo delata. Documentado en `demo/verificacion/README.md` (incluida la advertencia de no leer el Δ de D3 como dato clínico: es artefacto del Protocolo B vacío que el harness firma para forzar la alerta).
+  - **Code review (cloud, multi-agente): 0 hallazgos.** La rama se pusheó **antes** de lanzarlo, siguiendo la nota operativa de la sesión anterior.
+  - **`.graphifyignore`** (commit aparte, `2eb128a`): `docs/fuentes/` sale del corpus del grafo (§5.7). Verificado: 77→72 archivos, 99.608→78.110 palabras (−21 %).
+  - **Decisiones nuevas:** **§5.6** (no hay módulos exclusivos — deroga la asignación de §5.3.4 y reencuadra §12.3/§12.4) y **§5.7** (los originales no entran al grafo, pero no se borran).
+  - **Próximo:** **re-indexar `graphify-out/`** (§6) — sigue reflejando el monolito pre-modularización. Después, M11.1 (infra Postgres-only), que ya no tiene dueño asignado. (Lucas + Claude)

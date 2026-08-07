@@ -35,17 +35,23 @@ IPPU/
     └── conversor_docling.py   ← Conversor de documentos a Markdown
 ```
 
-## 📌 Estado de la Línea 1 (jul-2026)
-- **Demo v4.0 — ronda M0–M10 completa**, adaptada al **Documento Técnico IPPU v1.0**: motor de flujo con
+## 📌 Estado de la Línea 1 (ago-2026)
+- **Demo v4.1 — ronda M0–M10 completa**, adaptada al **Documento Técnico IPPU v1.0**: motor de flujo con
   firma/bloqueo/addendas/habilitación excepcional y auditoría (HCE-LOG), módulos **HCE-00** (identificación
   y anamnesis), **HCE-CI** (consentimiento), **HCE-LB** (IDEA como línea base única), **HCE-PA/PB** (Escala
   IPPU-TEA con delta B−A y alerta institucional), **HCE-IC** (Informe de Cierre Anual con radar y PDF, único
   informe válido), **HCE-DOC** (documentos, archivo histórico y protección de imagen), **HCE-ORG** (INAU/BPS)
   y **HCE-VF** (valoración funcional BUND/CIF con salvaguarda anti-conversión), + búsqueda por 3 vías y
   recordatorios configurables. Reglas duras verificadas con Playwright (E2E punta a punta).
+- **Analítica institucional calculada (v4.1):** los KPIs y gráficos de esa vista se derivan del modelo —
+  cobertura de línea base, perfil poblacional por escala IDEA, evolución Protocolo A → B (Escala IPPU-TEA,
+  en tarjeta aparte porque los dos instrumentos no son homologables), distribución por banda y ciclos de
+  flujo completos— en lugar de constantes. El heatmap de talleres sigue con datos de muestra por decisión
+  de alcance y está rotulado como tal.
 - **Backend Fases 0–2** (FastAPI + SQLAlchemy + Alembic, 21 tablas, 20 endpoints, tests): construido sobre el
-  modelo *previo* al Documento Técnico → el rediseño de esquema es la ronda **en curso** (**M11**, backend v2,
-  responsable **Victor**), sobre la propuesta `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md`.
+  modelo *previo* al Documento Técnico → el rediseño de esquema es la ronda **en curso** (**M11**, backend v2),
+  sobre la propuesta `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md`. Lo venía llevando Victor;
+  desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 
 ## 🚀 Cómo retomar el trabajo
 ```bash
