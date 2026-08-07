@@ -5,6 +5,13 @@
       "input_tokens": 526740,
       "output_tokens": 0,
       "files": 62
+    },
+    {
+      "date": "2026-08-07T17:00:19.841357+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 72,
+      "note": "corrida 2026-08-07: los subagentes murieron por limite de sesion tras escribir su salida; no se pudo leer su uso real de tokens, quedan en 0 (subregistro conocido)"
     }
   ],
   "total_input_tokens": 526740,
