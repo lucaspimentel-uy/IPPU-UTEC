@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-03
+> - **Última actualización:** 2026-08-07
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.0).** En curso: **M11 · backend v2** (rediseño de esquema al modelo del Doc. Técnico) — **responsable: Victor**, arranca por **M11.1** (infra Postgres-only) sobre la propuesta ya escrita en `backend/docs/esquema-datos-v2.md`. Las 3 decisiones de arquitectura del Anexo A **ya están cerradas** (§5.2). En paralelo, pendiente con IPPU: **validar la demo v4.0** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente:** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) + plan `PLAN-modular-adaptacion-HCE-2026-07.md` (módulos M0–M11). Referencia de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`. **En conflicto con el diseño previo, gana el Documento Técnico.** El backend (Fases 0–2) **no se toca** en esta ronda (rediseño de esquema = M11).
@@ -20,7 +20,8 @@
 2. Leer este `handoff.md` y luego `CLAUDE.md` (ambos versionados: los tenés al clonar).
 3. Toda la documentación del proyecto está convertida a Markdown (legible y citable) en **`docs/markdown/`**.
    Los originales (PDF/PPTX/DOCX/XLSX) están en **`docs/fuentes/`**.
-4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html`** (abrir en navegador).
+4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/index.html`** (abrir en navegador, sin servidor).
+   Desde 2026-08-07 está **modularizada**: `index.html` + `css/estilos.css` + `js/*.js` (12 módulos, ver §5.5).
 5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q`.
 6. **Diagrama ER interactivo** del esquema **v1** (Artifact, 18 tablas): https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2 — ⚠️ es privado de la cuenta de Lucas, **Samuel y Victor no pueden abrirlo**; la versión citable para todos es `backend/docs/esquema-datos.md`. El esquema **v2** (el que se implementa en M11) está en `backend/docs/esquema-datos-v2.md`. Fuente HTML del Artifact: no quedó en el repo; si hace falta, se regenera.
 
@@ -75,8 +76,9 @@ con consolidación histórica, análisis automático y reportes automáticos.
 - **Integración con la HCE existente:** vía **iframe** (mínimo viable) **o** módulo nativo con API propia.
 - **DevOps:** Docker + NGINX · CI/CD GitHub.
 
-### Estado de la demo L1 (`implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html`)
-- Prototipo HTML/CSS/JS de un solo archivo, **datos simulados, "no funcional"** (sin backend).
+### Estado de la demo L1 (`implementacion/L1-hce-idea/demo/index.html`)
+- Prototipo HTML/CSS/JS, **datos simulados, "no funcional"** (sin backend). **Modularizado el 2026-08-07**
+  (§5.5): dejó de ser un archivo único de 3.949 líneas → `index.html` + `css/estilos.css` + `js/*.js`.
 - **v4.0 (2026-07-30, ronda M0–M10 completa, adaptada al Doc. Técnico IPPU v1.0):** motor de flujo CI→LB→PA→PB→IC (estado derivado, firma doble=bloqueo, addendas, habilitación excepcional, HCE-LOG), HCE-00 siempre abierto, HCE-CI (único bloqueo sin excepción), HCE-LB (IDEA línea base única con NS), HCE-PA/PB (Escala IPPU-TEA 24 ítems, delta B−A automático, alerta Δ≤−7, guard de no-homologabilidad), HCE-IC (informe único con tabla+radares y PDF, Recibí de la familia), HCE-DOC (adjuntos categorizados, archivo histórico §10 de solo lectura, protección de imagen §8.4 individual y grupal), HCE-ORG (INAU/BPS con registros), HCE-VF (BUND/CIF, tabla parametrizable, salvaguarda §7.5, autogeneración descriptiva, Reporte VF), búsqueda por 3 vías (nombre/CI/HCE/grupo), recordatorios configurables §4, Grupos y Usuario. "Eval. por áreas/general" **eliminadas** (archivo histórico en HCE-DOC).
 - Las vistas heredadas pre-Doc. Técnico que siguen en el archivo sin exponerse: "Eval. intermedia" (reemplazada por PA/PB). El heatmap de talleres de Analítica no se tocó (decisión §0.3).
 
@@ -136,10 +138,41 @@ No fue un error de nadie: **esa rama se hizo sin acceso a `handoff.md` ni `CLAUD
    documentación decía que existía. Se elimina la referencia en vez de crear el placeholder; si surge
    contenido real de notas de equipo, se crea entonces.
 
+### 5.5 Modularización de la demo (2026-08-07, Lucas)
+La demo dejó de ser `hce_idea_ippu_demo.html` (3.949 líneas en un archivo) y pasó a
+`demo/index.html` + `demo/css/estilos.css` + `demo/js/*.js` (12 archivos). El archivo viejo se
+**eliminó** (queda en la historia de git). Motivo: era el único recurso del repo que obligaba a la regla
+"una sola persona a la vez" (§12.3) y bloqueaba el trabajo en paralelo.
+
+1. **Scripts planos, sin `defer` ni `type="module"`.** Dos razones, las dos duras:
+   (a) el orden de carga de `index.html` **es** el orden de ejecución del monolito original, y hay
+   código de seed que corre en tiempo de carga y muta `NNA` — reordenar cambia el comportamiento;
+   (b) `type="module"` lo bloquearía CORS al abrir por `file://`, y la demo se abre con doble clic,
+   sin servidor. **No convertir a ES modules sin resolver antes las dos cosas.**
+2. **`js/utils.js` carga primero** y contiene los helpers puros compartidos. En el monolito, un único
+   `<script>` hoisteaba todas las declaraciones de función, así que el seed de `flujo.js` podía llamar a
+   `fmtFecha()` declarada 1.000 líneas más abajo. Al partir, el hoisting es **por archivo**: esa llamada
+   se rompió. Si aparece otro helper con el mismo patrón, va a `utils.js` — no se reordenan los módulos.
+3. **Verificación:** se capturó un *fingerprint* de comportamiento (Playwright) del monolito **antes** de
+   partir y se comparó contra el resultado: **40 comparaciones, todas idénticas, 0 errores.** Cubre carga,
+   catálogos, las 174 funciones globales, el motor de flujo M1 de los 8 NNA, las 5 vistas, los 8 expedientes,
+   **las reglas duras** (`calcularDelta` lanza contra el IDEA §5.2 · `categoriaBaremo` lanza desde puntaje
+   clínico §7.5, con bordes del baremo), y **los caminos interactivos**: firma de CI con autorizaciones,
+   firma PA+PB con delta B−A y alerta institucional (M5.3), addenda sobre firmado y su rechazo sobre no
+   firmado, habilitación excepcional, modales, vistas dinámicas y el volcado final del modelo.
+   Además se verificó línea por línea que no se perdió ni alteró código (2.719 de JS, 510 de CSS, 499 de markup).
+   **Cero cambios de lógica: es un refactor puro.**
+4. **El fingerprint quedó versionado** en `demo/verificacion/` (script + comparador + README), no en la
+   máquina de quien lo corrió — si no, §5.5.3 sería una afirmación que nadie puede reproducir (§12.1).
+   Reusarlo ante cualquier cambio que *no debería* alterar el comportamiento. Playwright se instala suelto
+   y a demanda; no es dependencia del repo.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
 - [ ] **M11 · Backend v2 — EN CURSO · responsable: Victor** (asignado 2026-08-03). Las 3 decisiones de arquitectura ya están cerradas (§5.2) y la propuesta de esquema v2 escrita (`backend/docs/esquema-datos-v2.md`). Secuencia: **M11.1** infra Postgres-only (docker-compose + config + Alembic re-init) → **M11.2** modelos + catálogos → **M11.3** servicios/motor de flujo con guards → **M11.4** routers → **M11.5** seed espejo de la demo + pytest contra Postgres (criterio §12-A: usuario demo 1 por API = IDEA 58 · PA 60 · PB 79 · Δ +19) → **M11.6** docs. Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo).
+- [x] ~~**Modularizar la demo**~~ → **HECHO** (2026-08-07, §5.5). La demo dejó de ser recurso exclusivo: **se puede trabajar en paralelo** tomando archivos distintos de `demo/js/`.
+- [ ] **Demo — módulo libre y sugerido para quien la tome (¿Samuel?): analítica institucional real.** La vista *Analítica institucional* (`demo/js/ui-core.js`, sección "ANALÍTICA: GRÁFICOS", + el markup en `index.html`) tiene los **KPIs hardcodeados** en el HTML (`−9,4 pts`, `93 %`, `1.842 sesiones`, "H. Sociales"): no se calculan del array `NNA` como sí hace todo el resto de la demo. Es la pata menos desarrollada de L1 (HCE + IDEA + **analítica**) y no depende del backend. Antes de tocarla: capturar fingerprint (`demo/verificacion/`), porque ahí sí el comportamiento **debe** cambiar y conviene ver exactamente en qué.
 - [ ] **Rama `gitlab/feature/base-datos-hce` (Victor):** aparcada, **no** descartada (§5.3). Decidir en reunión de equipo qué se hace con ella al terminar M11 (mergear lo reutilizable como referencia SQL en `docs/`, o cerrarla dejando constancia). Ver §12.5.
 - [x] ~~Elegir un remoto principal~~ → **decidido 2026-08-07: `gitlab` principal, `origin` espejo** (§5.4, ver §12.2).
 - [ ] **Mirar el video demo de la HCE actual:** https://youtube.com/watch?v=dMWfc0JKCC0
@@ -217,7 +250,8 @@ y anotarlo como responsable en el pendiente correspondiente de §6.
 
 | Zona | Archivo/carpeta | Regla |
 |---|---|---|
-| **Demo** | `implementacion/L1-hce-idea/demo/hce_idea_ippu_demo.html` | **Un solo archivo de ~3.700 líneas → una sola persona a la vez.** Editarlo en paralelo garantiza conflictos irresolubles. |
+| **Demo** | `implementacion/L1-hce-idea/demo/js/*.js` | **Se puede en paralelo desde la modularización (§5.5)**, siempre que cada uno tome **archivos distintos**. Avisar cuál tomás. |
+| **Demo — compartidos** | `demo/index.html`, `demo/js/utils.js` | Los tocan todos → **coordinar antes**. `index.html` define el **orden de carga**, que es la semántica del programa (ver §5.5). |
 | **Backend v2 (M11)** | `implementacion/L1-hce-idea/backend/` | Se reparte por sub-módulo (M11.1 … M11.6), que son secuenciales. **Responsable actual: Victor.** |
 | **Documentación** | `docs/`, `README.md` | Libre, poco riesgo de conflicto. |
 | **`handoff.md`** | raíz | Todos escriben, pero **sólo agregando** (bitácora al final, pendientes en §6). Si dos editan a la vez, el conflicto es trivial de resolver. |
@@ -359,3 +393,12 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Decisiones (§5.4):** `gitlab` ratificado como remoto principal, `origin` como espejo · `docs/notas/` sale de `README.md`/`CLAUDE.md` (estaba vacía y sin trackear — Samuel y Victor no la tenían al clonar).
   - **Cambios:** `README.md` y `CLAUDE.md` (quitada la línea `docs/notas/` del árbol) · carpeta local `docs/notas/` eliminada (no versionada, sin efecto en git) · `handoff.md` (nueva §5.4, §6 con el pendiente de remoto principal cerrado, §12.2 pasa de propuesta a decisión confirmada, esta entrada de bitácora).
   - **Próximo:** push de este commit a los dos remotos (`gitlab` primero, luego `origin`) y arrancar el trabajo que Lucas defina para esta sesión. (Lucas + Claude)
+- **2026-08-07** — **Modularización de la demo L1 (§5.5).** Rama `feat/demo-modular`. Refactor puro, sin cambios de lógica.
+  - **Qué se hizo:** `hce_idea_ippu_demo.html` (3.949 líneas) → `demo/index.html` (575) + `demo/css/estilos.css` (532) + `demo/js/` (12 módulos, 2.847 líneas). El corte se hizo **por rangos de línea con un script**, no retipeando código, para que el contenido se moviera byte a byte. El monolito se eliminó del repo (sigue en la historia de git).
+  - **Reparto de los módulos JS:** `utils.js` (helpers, carga 1º) · `datos.js` (seed NNA) · `flujo.js` (M1 motor de flujo, 554 líneas) · `catalogos.js` (IDEA anual, Escala IPPU-TEA, IDEA oficial) · `ui-core.js` (navegación, tabla, form IDEA, Likert, gráficos, toast, sesión) · `wizard-nna.js` · `expediente.js` · `evaluaciones.js` (M5.2) · `informe-cierre.js` (M6) · `hce-doc-org-vf.js` (M7/M8/M9, 468 líneas) · `recordatorios.js` (M10) · `grupos-usuario.js`.
+  - **Un problema real encontrado y resuelto:** al partir, el hoisting de funciones dejó de ser global y el seed de `flujo.js` reventó llamando a `fmtFecha()` (declarada en lo que hoy es `expediente.js`) — `ReferenceError` en carga. Se resolvió creando `js/utils.js`, que carga primero. **Lo detectó el fingerprint, no la vista**: la demo se veía bien igual, porque el error abortaba el seed en silencio. Detalle y regla para el futuro en §5.5.2.
+  - **Verificación:** fingerprint Playwright del monolito capturado **antes** del refactor y comparado después → **40 comparaciones, todas idénticas, 0 errores**. Cubre carga, catálogos, las 174 funciones globales, el motor M1 de los 8 NNA, 5 vistas, 8 expedientes, las **reglas duras** (§5.2 y §7.5) y los **caminos interactivos** (firma CI/PA/PB con delta y alerta, addenda, excepción, modales, vistas dinámicas). Integridad del contenido: multiset de líneas idéntico (2.719 JS), orden relativo intacto en 2.712, CSS 510 y markup 499 idénticos línea por línea. El fingerprint quedó **versionado** en `demo/verificacion/` (§5.5.4).
+  - **Efecto en el flujo de equipo:** §12.3 cambia — la demo **deja de ser recurso exclusivo**; se puede trabajar en paralelo tomando archivos distintos de `demo/js/`. `index.html` y `js/utils.js` quedan como compartidos (coordinar antes). Con esto Samuel puede entrar a la demo sin esperar.
+  - **Code review (cloud, multi-agente):** **2 hallazgos, ambos `nit`, ambos de documentación** — ninguno en el refactor, ni en los 12 módulos, ni en el orden de carga, ni en el harness. (a) la cabecera de este archivo seguía fechada 2026-08-03; (b) `README.md` seguía diciendo "un solo archivo → una sola persona a la vez", contradiciéndose con su propio árbol de estructura. Los dos corregidos antes del merge.
+  - **Nota operativa:** las dos primeras corridas del review fallaron. La causa real fue que `feat/demo-modular` y `review-base` **existían sólo en local**: el review corre en un contenedor que clona del remoto y no pudo resolver la base. **Si se usa review en la nube, pushear la rama primero.**
+  - **Mergeado a `main`** y pusheado a los dos remotos. Ramas auxiliares (`review-base`, `backup-demo-modular`) eliminadas: su contenido está en `main`. (Lucas + Claude)
