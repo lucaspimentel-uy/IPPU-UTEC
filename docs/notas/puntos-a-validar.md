@@ -150,7 +150,23 @@ qué permite ese hosting.
 **Qué bloquea.** Nada ahora — Docker se usa **sólo para desarrollo** y el código no depende de
 él (habla con la base por un `DATABASE_URL`). Se decide en Fase 6, con la respuesta al punto 1.5.
 
-### 2.6 Quién sigue con M11.3
+### 2.6 La tabla `grupo` no soporta más de un año — decisión técnica pendiente
+**Qué es.** `esquema-datos-v2.md` §2.1 define `grupo` con clave primaria `id (A..E)` y además una
+columna `anio`. Como la clave es sólo la letra, **el grupo A puede existir para un solo año en toda
+la historia**.
+
+**Por qué importa.** En 2027, crear el grupo A obliga a sobrescribir la fila de 2026 — se pierde el
+registro de quiénes fueron sus técnicos ese año, y los expedientes viejos (`hce_diurna.grupo_id`)
+pasan a apuntar silenciosamente al grupo del año nuevo. Contradice cómo el propio documento maneja
+los ciclos anuales en `protocolo` e `informe_cierre`, que usan `(hce_id, …, anio)` justamente para
+esto.
+
+**Qué se pide.** Decidir entre: (a) clave primaria compuesta `(id, anio)`, (b) id propio con
+`UNIQUE(letra, anio)`, o (c) dejarlo así porque los grupos no se reconfiguran año a año — que es
+posible, y en ese caso sobra la columna `anio`. **No se cambió por cuenta propia** porque modifica el
+documento de esquema. Detectado revisando M11.2; no bloquea M11.3.
+
+### 2.7 Quién sigue con M11.3
 **Qué es.** M11.3 son los servicios con las reglas duras: secuencia del flujo, firma = bloqueo,
 Δ sólo B−A, categoría del baremo sólo desde el porcentaje oficial.
 

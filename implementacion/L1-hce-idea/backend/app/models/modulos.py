@@ -16,6 +16,7 @@ Tres cosas que hay que entender de este archivo:
    JSONB, pero las escribe el servidor al guardar/firmar.
 """
 from datetime import date
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Date, ForeignKey, Integer, String, Text, UniqueConstraint,
@@ -24,6 +25,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:  # sólo para los tipos: evita el import circular en runtime
+    from app.models.identidad import HceDiurna
 
 
 class FirmaMixin:
@@ -57,10 +61,10 @@ class Consentimiento(FirmaMixin, Base):
     fecha: Mapped[date | None] = mapped_column(Date)
     # {evaluacion, registro, comunicacion} — las 3 autorizaciones del CI.
     autorizaciones: Mapped[dict | None] = mapped_column(JSONB)
-    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"))
+    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"), index=True)
 
 
-class Idea(Base, FirmaMixin):
+class Idea(FirmaMixin, Base):
     """HCE-LB — el IDEA como **línea base única**, no como evaluación anual.
 
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
@@ -77,7 +81,9 @@ class Idea(Base, FirmaMixin):
     __tablename__ = "idea"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     dim: Mapped[dict | None] = mapped_column(JSONB)
     fecha_consenso: Mapped[date | None] = mapped_column(Date)
     sesiones: Mapped[int | None] = mapped_column(Integer)
@@ -93,14 +99,14 @@ class Idea(Base, FirmaMixin):
     esc_c: Mapped[int | None] = mapped_column(Integer)
     esc_d: Mapped[int | None] = mapped_column(Integer)
 
-    hce: Mapped["object"] = relationship("HceDiurna")
+    hce: Mapped["HceDiurna"] = relationship()
 
     __table_args__ = (
         CheckConstraint("total IS NULL OR total BETWEEN 0 AND 96", name="rango_total"),
     )
 
 
-class Protocolo(Base, FirmaMixin):
+class Protocolo(FirmaMixin, Base):
     """HCE-PA / HCE-PB — Escala IPPU-TEA: 24 ítems Likert 1–5, por año.
 
     A = mitad de año, B = fin de año. `UNIQUE(hce_id, tipo, anio)` impide dos
@@ -116,7 +122,9 @@ class Protocolo(Base, FirmaMixin):
     __tablename__ = "protocolo"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     tipo: Mapped[str] = mapped_column(String(1))
     anio: Mapped[int] = mapped_column(Integer)
     fecha: Mapped[date | None] = mapped_column(Date)
@@ -137,7 +145,7 @@ class Protocolo(Base, FirmaMixin):
     esc_3: Mapped[int | None] = mapped_column(Integer)
     esc_4: Mapped[int | None] = mapped_column(Integer)
 
-    hce: Mapped["object"] = relationship("HceDiurna")
+    hce: Mapped["HceDiurna"] = relationship()
 
     __table_args__ = (
         UniqueConstraint("hce_id", "tipo", "anio", name="uq_protocolo_hce_tipo_anio"),
@@ -147,7 +155,7 @@ class Protocolo(Base, FirmaMixin):
     )
 
 
-class InformeCierre(Base, FirmaMixin):
+class InformeCierre(FirmaMixin, Base):
     """HCE-IC — Informe de Cierre Anual. «El único informe válido» (§5.3).
 
     Bug A de `modelo-datos.md` corregido: era 0..1 por expediente (uno en toda la
@@ -160,7 +168,9 @@ class InformeCierre(Base, FirmaMixin):
     __tablename__ = "informe_cierre"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     anio: Mapped[int] = mapped_column(Integer)
     fecha: Mapped[date | None] = mapped_column(Date)
     sint_escala: Mapped[dict | None] = mapped_column(JSONB)     # 4 síntesis, una por escala
@@ -171,7 +181,7 @@ class InformeCierre(Base, FirmaMixin):
     # {firmante, fecha} — la familia acusa recibo DESPUÉS de la firma técnica.
     recibi: Mapped[dict | None] = mapped_column(JSONB)
 
-    hce: Mapped["object"] = relationship("HceDiurna")
+    hce: Mapped["HceDiurna"] = relationship()
 
     __table_args__ = (
         UniqueConstraint("hce_id", "anio", name="uq_informe_cierre_hce_anio"),

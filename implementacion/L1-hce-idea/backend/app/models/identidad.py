@@ -67,7 +67,7 @@ class PersonaServicio(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id", ondelete="CASCADE"))
-    servicio_id: Mapped[int] = mapped_column(ForeignKey("servicio.id"))
+    servicio_id: Mapped[int] = mapped_column(ForeignKey("servicio.id"), index=True)
     fecha_alta: Mapped[date] = mapped_column(Date)
     fecha_baja: Mapped[date | None] = mapped_column(Date)
 
@@ -92,9 +92,9 @@ class Grupo(Base):
     dias: Mapped[str | None] = mapped_column(String(60))
     horario: Mapped[str | None] = mapped_column(String(60))
     anio: Mapped[int] = mapped_column(Integer)
-    tecnico1_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    tecnico1_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     tecnico1_rol: Mapped[str | None] = mapped_column(String(60))
-    tecnico2_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    tecnico2_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     tecnico2_rol: Mapped[str | None] = mapped_column(String(60))
     obs: Mapped[str | None] = mapped_column(Text)
 
@@ -120,7 +120,7 @@ class HceDiurna(Base):
     # Número de historia de la HCE anterior. Identificador secundario (§10):
     # sirve para cruzar con el archivo histórico, no como clave.
     hc_historico: Mapped[str | None] = mapped_column(String(30))
-    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"))
+    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"), index=True)
 
     diagnostico: Mapped[str | None] = mapped_column(String(200))
     cie11: Mapped[str | None] = mapped_column(String(20))
@@ -151,7 +151,7 @@ class HceTaller(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
-    taller_id: Mapped[int] = mapped_column(ForeignKey("taller.id"))
+    taller_id: Mapped[int] = mapped_column(ForeignKey("taller.id"), index=True)
 
     hce: Mapped["HceDiurna"] = relationship(back_populates="talleres")
 

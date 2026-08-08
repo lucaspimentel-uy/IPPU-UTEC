@@ -205,3 +205,110 @@ def test_catalogos_del_json_tienen_la_forma_esperada():
     assert tramos[0][0] == 0 and tramos[-1][1] == 100
     for (_, fin), (ini, _) in zip(tramos, tramos[1:]):
         assert ini == fin + 1, f"hueco o solapamiento entre {fin} y {ini}"
+
+
+# --------------------------------------------------------------------------
+# Seed — lo que la institución configura no se pisa al re-correrlo
+# --------------------------------------------------------------------------
+def test_seed_no_pisa_lo_que_configura_la_institucion(db):
+    """El seed corre en cada arranque; ajustar el baremo no puede perderse.
+
+    Los cortes del baremo y qué recordatorios están activos son datos que IPPU
+    define (§0.4 y §4). Se hicieron tabla justamente para que se puedan cambiar
+    sin migración — si el seed los revirtiera, esa parametrización no serviría
+    de nada. Regresión de un bug real: la primera versión los pisaba.
+    """
+    from app.models import BaremoCategoria, Recordatorio
+    from app.seed_catalogos import _sincronizar
+
+    db.add(BaremoCategoria(
+        pct_min=5, pct_max=24, categoria="Leve", rango="5 % a 24 %",
+        implicancia="…", orden=2,
+    ))
+    db.add(Recordatorio(clave="pa", texto="Protocolo A", periodo="Julio", activo=True))
+    db.flush()
+
+    # IPPU corrige el corte y coordinación desactiva un recordatorio.
+    db.query(BaremoCategoria).filter_by(categoria="Leve").one().pct_min = 6
+    rec = db.query(Recordatorio).filter_by(clave="pa").one()
+    rec.activo = False
+    rec.periodo = "Agosto"
+    db.flush()
+
+    # Vuelve a correr el seed con los valores originales del JSON.
+    _sincronizar(
+        db, BaremoCategoria,
+        [{"pct_min": 5, "pct_max": 24, "categoria": "Leve", "rango": "5 % a 24 %",
+          "implicancia": "…", "orden": 2}],
+        "categoria", ("pct_min", "pct_max"),
+    )
+    _sincronizar(
+        db, Recordatorio,
+        [{"clave": "pa", "texto": "Protocolo A", "periodo": "Julio", "activo": True}],
+        "clave", ("activo", "periodo"),
+    )
+    db.flush()
+
+    assert db.query(BaremoCategoria).filter_by(categoria="Leve").one().pct_min == 6
+    rec = db.query(Recordatorio).filter_by(clave="pa").one()
+    assert rec.activo is False
+    assert rec.periodo == "Agosto"
+
+
+def test_seed_si_actualiza_el_texto_de_los_instrumentos(db):
+    """La contracara: el contenido del instrumento sí lo manda el JSON.
+
+    Si IPPU reescribe un ítem de la escala, el cambio va en la demo y el seed
+    tiene que propagarlo. Sin este test, «no pisar nada» sería un arreglo tan
+    malo como el bug.
+    """
+    from app.models import IppuItem
+    from app.seed_catalogos import _sincronizar
+
+    db.add(IppuItem(id=1, escala=1, escala_nombre="Relación Social",
+                    orden_en_escala=1, texto="texto viejo", referencia="ref"))
+    db.flush()
+
+    _sincronizar(
+        db, IppuItem,
+        [{"id": 1, "escala": 1, "escala_nombre": "Relación Social",
+          "orden_en_escala": 1, "texto": "texto corregido", "referencia": "ref"}],
+        "id",
+    )
+    db.flush()
+
+    assert db.query(IppuItem).filter_by(id=1).one().texto == "texto corregido"
+
+
+# --------------------------------------------------------------------------
+# Migración
+# --------------------------------------------------------------------------
+def test_la_migracion_coincide_con_los_modelos():
+    """Detecta el desfasaje modelos ↔ migración.
+
+    Los tests crean las tablas desde los modelos (`create_all`), no aplicando la
+    migración. Sin este chequeo, alguien puede editar un modelo y olvidarse de
+    generar la migración: los tests pasarían igual y el desfasaje aparecería
+    recién al desplegar.
+    """
+    from alembic.autogenerate import compare_metadata
+    from alembic.migration import MigrationContext
+    from sqlalchemy import create_engine
+
+    from app.core.config import settings
+    from app.core.database import Base
+
+    eng = create_engine(settings.database_url)
+    try:
+        with eng.connect() as conn:
+            diff = compare_metadata(MigrationContext.configure(conn), Base.metadata)
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Base de desarrollo no disponible ({exc})")
+    finally:
+        eng.dispose()
+
+    assert not diff, (
+        "Los modelos y el esquema aplicado difieren. Correr:\n"
+        "  alembic revision --autogenerate -m '<qué cambió>'\n"
+        f"Diferencias: {diff}"
+    )

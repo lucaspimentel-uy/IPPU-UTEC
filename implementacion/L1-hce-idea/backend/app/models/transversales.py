@@ -4,6 +4,8 @@ A diferencia de los módulos del flujo, nada de acá se firma ni bloquea: son
 registros que acompañan al expediente durante todo el año.
 """
 from datetime import date, datetime
+from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, Numeric, String,
@@ -13,6 +15,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:  # sólo para los tipos: evita el import circular en runtime
+    from app.models.catalogos import BaremoCategoria, CategoriaDocumento
 
 
 class Documento(Base):
@@ -28,15 +33,19 @@ class Documento(Base):
     __tablename__ = "documento"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
-    categoria_id: Mapped[int] = mapped_column(ForeignKey("categoria_documento.id"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
+    categoria_id: Mapped[int] = mapped_column(
+        ForeignKey("categoria_documento.id"), index=True
+    )
     nombre: Mapped[str] = mapped_column(String(200))
     fecha_original: Mapped[date | None] = mapped_column(Date)
     fecha_carga: Mapped[date] = mapped_column(Date)
     es_registro_historico: Mapped[bool] = mapped_column(Boolean, default=False)
     archivo_ref: Mapped[str | None] = mapped_column(String(400))
 
-    categoria: Mapped["object"] = relationship("CategoriaDocumento")
+    categoria: Mapped["CategoriaDocumento"] = relationship()
 
 
 class AutorizacionImagen(Base):
@@ -51,7 +60,7 @@ class AutorizacionImagen(Base):
     )
     registrada: Mapped[bool] = mapped_column(Boolean, default=False)
     fecha: Mapped[date | None] = mapped_column(Date)
-    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"))
+    documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"), index=True)
 
 
 class Foto(Base):
@@ -68,8 +77,10 @@ class Foto(Base):
     __tablename__ = "foto"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int | None] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
-    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"))
+    hce_id: Mapped[int | None] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
+    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"), index=True)
     descripcion: Mapped[str | None] = mapped_column(Text)
     fecha: Mapped[date | None] = mapped_column(Date)
     archivo_ref: Mapped[str | None] = mapped_column(String(400))
@@ -118,11 +129,13 @@ class RegistroOrganismo(Base):
     __tablename__ = "registro_organismo"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     organismo: Mapped[str] = mapped_column(String(10))
     fecha: Mapped[date] = mapped_column(Date)
     detalle: Mapped[str | None] = mapped_column(Text)
-    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
 
     __table_args__ = (
         CheckConstraint("organismo IN ('inau','bps')", name="organismo_valido"),
@@ -147,8 +160,13 @@ class ValoracionFuncional(Base):
     estado: Mapped[str | None] = mapped_column(String(60))
     fecha: Mapped[date | None] = mapped_column(Date)
     organismo: Mapped[str | None] = mapped_column(String(120))
-    pct: Mapped[float | None] = mapped_column(Numeric(5, 2))
-    categoria_id: Mapped[int | None] = mapped_column(ForeignKey("baremo_categoria.id"))
+    # Decimal, NO float: `Numeric` devuelve `Decimal` y mezclarlo con float en
+    # una operación aritmética levanta TypeError. Importa para M11.3, donde
+    # `categoria_baremo(pct)` compara este valor contra los cortes del baremo.
+    pct: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    categoria_id: Mapped[int | None] = mapped_column(
+        ForeignKey("baremo_categoria.id"), index=True
+    )
     vigencia: Mapped[date | None] = mapped_column(Date)
     rnpcd: Mapped[str | None] = mapped_column(String(60))
     dominios: Mapped[dict | None] = mapped_column(JSONB)      # 6 dominios CIF
@@ -158,7 +176,7 @@ class ValoracionFuncional(Base):
     obs: Mapped[str | None] = mapped_column(Text)
     sintesis_funcional: Mapped[str | None] = mapped_column(Text)
 
-    categoria: Mapped["object"] = relationship("BaremoCategoria")
+    categoria: Mapped["BaremoCategoria | None"] = relationship()
 
     __table_args__ = (
         CheckConstraint("pct IS NULL OR (pct >= 0 AND pct <= 100)", name="rango_pct"),
@@ -176,9 +194,11 @@ class Auditoria(Base):
     __tablename__ = "auditoria"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     modulo: Mapped[str | None] = mapped_column(String(20))
     tipo: Mapped[str] = mapped_column(String(20))
     detalle: Mapped[str | None] = mapped_column(Text)
@@ -196,9 +216,11 @@ class Observacion(Base):
     __tablename__ = "observacion"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     fecha: Mapped[date] = mapped_column(Date)
-    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     texto: Mapped[str] = mapped_column(Text)
 
 
@@ -207,12 +229,14 @@ class Evento(Base):
     __tablename__ = "evento"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
+    hce_id: Mapped[int] = mapped_column(
+        ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
     tipo: Mapped[str] = mapped_column(String(10))
     fecha: Mapped[date] = mapped_column(Date)
     titulo: Mapped[str | None] = mapped_column(String(200))
     descripcion: Mapped[str | None] = mapped_column(Text)
-    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"))
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
 
     __table_args__ = (
         CheckConstraint("tipo IN ('alta','baja')", name="tipo_valido"),

@@ -1,8 +1,8 @@
 """esquema v2 inicial (M11.2)
 
-Revision ID: 46975d29552c
+Revision ID: f6ca521bcc6a
 Revises: 
-Create Date: 2026-08-07 20:56:18.586541
+Create Date: 2026-08-07 21:28:07.781220
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '46975d29552c'
+revision: str = 'f6ca521bcc6a'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -131,6 +131,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['tecnico2_id'], ['profesional.id'], name=op.f('fk_grupo_tecnico2_id_profesional')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_grupo'))
     )
+    op.create_index(op.f('ix_grupo_tecnico1_id'), 'grupo', ['tecnico1_id'], unique=False)
+    op.create_index(op.f('ix_grupo_tecnico2_id'), 'grupo', ['tecnico2_id'], unique=False)
     op.create_table('idea_nivel',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('dimension_id', sa.Integer(), nullable=False),
@@ -152,6 +154,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_persona_servicio')),
     sa.UniqueConstraint('persona_id', 'servicio_id', name='uq_persona_servicio')
     )
+    op.create_index(op.f('ix_persona_servicio_servicio_id'), 'persona_servicio', ['servicio_id'], unique=False)
     op.create_table('hce_diurna',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('persona_id', sa.Integer(), nullable=False),
@@ -174,6 +177,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_hce_diurna')),
     sa.UniqueConstraint('persona_id', name=op.f('uq_hce_diurna_persona_id'))
     )
+    op.create_index(op.f('ix_hce_diurna_grupo_id'), 'hce_diurna', ['grupo_id'], unique=False)
     op.create_table('auditoria',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -187,6 +191,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['usuario_id'], ['profesional.id'], name=op.f('fk_auditoria_usuario_id_profesional')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_auditoria'))
     )
+    op.create_index(op.f('ix_auditoria_hce_id'), 'auditoria', ['hce_id'], unique=False)
+    op.create_index(op.f('ix_auditoria_usuario_id'), 'auditoria', ['usuario_id'], unique=False)
     op.create_table('documento',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -200,6 +206,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_documento_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_documento'))
     )
+    op.create_index(op.f('ix_documento_categoria_id'), 'documento', ['categoria_id'], unique=False)
+    op.create_index(op.f('ix_documento_hce_id'), 'documento', ['hce_id'], unique=False)
     op.create_table('evento',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -213,6 +221,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_evento_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_evento'))
     )
+    op.create_index(op.f('ix_evento_autor_id'), 'evento', ['autor_id'], unique=False)
+    op.create_index(op.f('ix_evento_hce_id'), 'evento', ['hce_id'], unique=False)
     op.create_table('foto',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=True),
@@ -225,6 +235,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_foto_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_foto'))
     )
+    op.create_index(op.f('ix_foto_grupo_id'), 'foto', ['grupo_id'], unique=False)
+    op.create_index(op.f('ix_foto_hce_id'), 'foto', ['hce_id'], unique=False)
     op.create_table('hce_taller',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -234,6 +246,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_hce_taller')),
     sa.UniqueConstraint('hce_id', 'taller_id', name='uq_hce_taller')
     )
+    op.create_index(op.f('ix_hce_taller_taller_id'), 'hce_taller', ['taller_id'], unique=False)
     op.create_table('idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -256,6 +269,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_idea_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_idea'))
     )
+    op.create_index(op.f('ix_idea_hce_id'), 'idea', ['hce_id'], unique=False)
     op.create_table('informe_cierre',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -275,6 +289,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_informe_cierre')),
     sa.UniqueConstraint('hce_id', 'anio', name='uq_informe_cierre_hce_anio')
     )
+    op.create_index(op.f('ix_informe_cierre_hce_id'), 'informe_cierre', ['hce_id'], unique=False)
     op.create_table('observacion',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -285,6 +300,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_observacion_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_observacion'))
     )
+    op.create_index(op.f('ix_observacion_autor_id'), 'observacion', ['autor_id'], unique=False)
+    op.create_index(op.f('ix_observacion_hce_id'), 'observacion', ['hce_id'], unique=False)
     op.create_table('organismo_bps',
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('prestacion', sa.String(length=120), nullable=True),
@@ -334,6 +351,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_protocolo')),
     sa.UniqueConstraint('hce_id', 'tipo', 'anio', name='uq_protocolo_hce_tipo_anio')
     )
+    op.create_index(op.f('ix_protocolo_hce_id'), 'protocolo', ['hce_id'], unique=False)
     op.create_table('registro_organismo',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -346,6 +364,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_registro_organismo_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_registro_organismo'))
     )
+    op.create_index(op.f('ix_registro_organismo_autor_id'), 'registro_organismo', ['autor_id'], unique=False)
+    op.create_index(op.f('ix_registro_organismo_hce_id'), 'registro_organismo', ['hce_id'], unique=False)
     op.create_table('valoracion_funcional',
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('estado', sa.String(length=60), nullable=True),
@@ -366,6 +386,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_valoracion_funcional_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_valoracion_funcional'))
     )
+    op.create_index(op.f('ix_valoracion_funcional_categoria_id'), 'valoracion_funcional', ['categoria_id'], unique=False)
     op.create_table('autorizacion_imagen',
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('registrada', sa.Boolean(), nullable=False),
@@ -375,6 +396,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_autorizacion_imagen_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_autorizacion_imagen'))
     )
+    op.create_index(op.f('ix_autorizacion_imagen_documento_id'), 'autorizacion_imagen', ['documento_id'], unique=False)
     op.create_table('consentimiento',
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('firmante', sa.String(length=120), nullable=True),
@@ -389,29 +411,53 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_consentimiento_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_consentimiento'))
     )
+    op.create_index(op.f('ix_consentimiento_documento_id'), 'consentimiento', ['documento_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_consentimiento_documento_id'), table_name='consentimiento')
     op.drop_table('consentimiento')
+    op.drop_index(op.f('ix_autorizacion_imagen_documento_id'), table_name='autorizacion_imagen')
     op.drop_table('autorizacion_imagen')
+    op.drop_index(op.f('ix_valoracion_funcional_categoria_id'), table_name='valoracion_funcional')
     op.drop_table('valoracion_funcional')
+    op.drop_index(op.f('ix_registro_organismo_hce_id'), table_name='registro_organismo')
+    op.drop_index(op.f('ix_registro_organismo_autor_id'), table_name='registro_organismo')
     op.drop_table('registro_organismo')
+    op.drop_index(op.f('ix_protocolo_hce_id'), table_name='protocolo')
     op.drop_table('protocolo')
     op.drop_table('organismo_inau')
     op.drop_table('organismo_bps')
+    op.drop_index(op.f('ix_observacion_hce_id'), table_name='observacion')
+    op.drop_index(op.f('ix_observacion_autor_id'), table_name='observacion')
     op.drop_table('observacion')
+    op.drop_index(op.f('ix_informe_cierre_hce_id'), table_name='informe_cierre')
     op.drop_table('informe_cierre')
+    op.drop_index(op.f('ix_idea_hce_id'), table_name='idea')
     op.drop_table('idea')
+    op.drop_index(op.f('ix_hce_taller_taller_id'), table_name='hce_taller')
     op.drop_table('hce_taller')
+    op.drop_index(op.f('ix_foto_hce_id'), table_name='foto')
+    op.drop_index(op.f('ix_foto_grupo_id'), table_name='foto')
     op.drop_table('foto')
+    op.drop_index(op.f('ix_evento_hce_id'), table_name='evento')
+    op.drop_index(op.f('ix_evento_autor_id'), table_name='evento')
     op.drop_table('evento')
+    op.drop_index(op.f('ix_documento_hce_id'), table_name='documento')
+    op.drop_index(op.f('ix_documento_categoria_id'), table_name='documento')
     op.drop_table('documento')
+    op.drop_index(op.f('ix_auditoria_usuario_id'), table_name='auditoria')
+    op.drop_index(op.f('ix_auditoria_hce_id'), table_name='auditoria')
     op.drop_table('auditoria')
+    op.drop_index(op.f('ix_hce_diurna_grupo_id'), table_name='hce_diurna')
     op.drop_table('hce_diurna')
+    op.drop_index(op.f('ix_persona_servicio_servicio_id'), table_name='persona_servicio')
     op.drop_table('persona_servicio')
     op.drop_table('idea_nivel')
+    op.drop_index(op.f('ix_grupo_tecnico2_id'), table_name='grupo')
+    op.drop_index(op.f('ix_grupo_tecnico1_id'), table_name='grupo')
     op.drop_table('grupo')
     op.drop_table('taller')
     op.drop_table('servicio')
