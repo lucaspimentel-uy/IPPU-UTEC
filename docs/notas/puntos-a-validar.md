@@ -6,6 +6,11 @@
 >
 > Cada punto dice **qué bloquea**: si algo no bloquea nada hoy, se puede resolver sin apuro.
 > Las decisiones ya tomadas están en `handoff.md` §5 y no se reabren acá.
+>
+> **Este documento es interno.** Lo que se le manda a IPPU es
+> [`consulta-a-ippu.md`](consulta-a-ippu.md) — mismo contenido en la parte que les toca, pero sin
+> tecnicismos y en formato de preguntas que un funcionario puede responder. Si acá se agrega o cambia
+> un punto que IPPU tiene que definir, actualizar también el otro.
 
 ---
 

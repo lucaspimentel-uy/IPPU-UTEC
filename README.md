@@ -59,7 +59,8 @@ IPPU/
   `implementacion/L1-hce-idea/backend/README.md`; esquema en `backend/docs/esquema-datos-v2.md`.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 - **Qué falta definir con IPPU** (validar la demo, cortes del baremo, acceso a la HCE actual…) está en
-  `docs/notas/puntos-a-validar.md`, con lo que bloquea cada punto.
+  `docs/notas/puntos-a-validar.md` — versión interna, con lo que bloquea cada punto. La versión **no
+  técnica para mandarle a IPPU**, en formato de cuestionario, es `docs/notas/consulta-a-ippu.md`.
 
 ## 🚀 Cómo retomar el trabajo
 ```bash

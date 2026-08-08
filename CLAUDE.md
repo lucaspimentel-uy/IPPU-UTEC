@@ -41,7 +41,7 @@ IPPU/
 ├── docs/
 │   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
 │   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
-│   └── notas/                 # Notas de equipo · puntos-a-validar.md (pendientes con IPPU)
+│   └── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (para enviar)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
