@@ -5,9 +5,9 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # --- Base de datos / ORM ---
+# Postgres-only desde M11.1 (handoff.md §5.2.1): psycopg no es opcional.
 SQLAlchemy==2.0.36
 alembic==1.14.0
-# Postgres (Fase 6). Para SQLite no hace falta driver externo.
 psycopg[binary]==3.2.3
 
 # --- Autenticación (Fase 4) ---
@@ -15,6 +15,6 @@ passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.20
 
-# --- Dev / tests (Fase 5) ---
+# --- Dev / tests ---
 pytest==8.3.4
 httpx==0.28.1

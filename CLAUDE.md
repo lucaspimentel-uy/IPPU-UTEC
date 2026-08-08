@@ -40,7 +40,8 @@ IPPU/
 ├── README.md                  # Overview para humanos
 ├── docs/
 │   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
-│   └── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
+│   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
+│   └── notas/                 # Notas de equipo · puntos-a-validar.md (pendientes con IPPU)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
@@ -78,9 +79,13 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic**. Correr: `cd` al backend → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q`.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres.
 
-**Ronda en curso — M11 (backend v2).** Lo venía llevando Victor; desde `handoff.md` §5.6 **no es exclusivo suyo**. Las Fases 0–2 (21 tablas, 20 endpoints, 12 tests) están construidas sobre el modelo *previo* al Documento Técnico y se **rediseñan** en M11 según `backend/docs/esquema-datos-v2.md`. Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** (docker-compose; se abandona SQLite en dev) · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**. Secuencia: M11.1 infra → M11.2 modelos/catálogos → M11.3 servicios y guards → M11.4 routers → M11.5 seed + pytest → M11.6 docs. Después: Fase 3 (conectar la demo a la API), Fase 4 (JWT), Fase 6 (Docker completo).
+**Ronda en curso — M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
+- **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: 18 tests estructurales.
+- **FALTA:** **M11.3** servicios y guards (§4 del esquema: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4) → **M11.4** routers → **M11.5** seed espejo de la demo + pytest → **M11.6** docs. Después: Fase 3 (demo↔API), Fase 4 (JWT), Fase 6 (Docker completo).
+- **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan desde la demo**, no se editan a mano.
+- **Antes de dar algo por definido, mirar `docs/notas/puntos-a-validar.md`**: hay supuestos tomados por nosotros que IPPU todavía no confirmó.
 
 ## Reglas importantes
 - **Solo datos simulados/anonimizados** hasta que exista acuerdo de confidencialidad firmado con IPPU.

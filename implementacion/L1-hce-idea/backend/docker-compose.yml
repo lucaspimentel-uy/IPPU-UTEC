@@ -1,0 +1,49 @@
+# Infra de desarrollo — M11.1 (decisión handoff.md §5.2.1: Postgres-only).
+#
+# Levanta SOLO la base de datos. La API se corre desde el host con uvicorn
+# (recarga en caliente); el resto de Docker — app + NGINX — es Fase 6.
+#
+#   docker compose up -d          # arranca Postgres
+#   docker compose ps             # estado + healthcheck
+#   docker compose down           # apaga (conserva el volumen)
+#   docker compose down -v        # apaga y BORRA los datos
+#
+# Dos bases en el mismo contenedor: `ippu` (desarrollo) e `ippu_test` (pytest,
+# la crea 00-crear-base-test.sql). Así los tests no pisan los datos de trabajo.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ippu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ippu
+      POSTGRES_PASSWORD: ippu
+      POSTGRES_DB: ippu
+      # Español de Uruguay para ordenamientos; UTF-8 explícito.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      # 127.0.0.1 explícito por dos razones:
+      #  1) No expone la base al resto de la red — son datos de NNA.
+      #  2) Sin el bind explícito, Docker sólo toma IPv6 si otro proceso ya
+      #     ocupó el IPv4 del puerto, y `localhost` termina conectando al
+      #     Postgres equivocado sin ningún error visible (pasó al montar esto:
+      #     había un PostgreSQL local en 5433).
+      # Puerto 5440: verificado libre. Si a alguien le choca, se cambia acá y
+      # en su .env — nada del código depende del número.
+      - "127.0.0.1:5440:5432"
+    volumes:
+      - ippu_pgdata:/var/lib/postgresql/data
+      # Los .sql de este directorio corren UNA sola vez, al crear el volumen.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # `pg_isready` sin -h usa el socket local: no depende del mapeo de puertos.
+      test: ["CMD-SHELL", "pg_isready -U ippu -d ippu"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  ippu_pgdata:
+    name: ippu_pgdata

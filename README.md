@@ -23,7 +23,8 @@ IPPU/
 ├── PLAN-modular-adaptacion-HCE-2026-07.md  ← Plan de la ronda M0–M11 (adaptación al Doc. Técnico)
 ├── docs/
 │   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
-│   └── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
+│   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
+│   └── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
 │       ├── demo/           ← Demo navegable (datos simulados, sin backend)
@@ -48,10 +49,17 @@ IPPU/
   en tarjeta aparte porque los dos instrumentos no son homologables), distribución por banda y ciclos de
   flujo completos— en lugar de constantes. El heatmap de talleres sigue con datos de muestra por decisión
   de alcance y está rotulado como tal.
-- **Backend Fases 0–2** (FastAPI + SQLAlchemy + Alembic, 21 tablas, 20 endpoints, tests): construido sobre el
-  modelo *previo* al Documento Técnico → el rediseño de esquema es la ronda **en curso** (**M11**, backend v2),
-  sobre la propuesta `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md`. Lo venía llevando Victor;
-  desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
+- **Backend v2 — ronda M11 en curso.** Las Fases 0–2 (21 tablas, 20 endpoints) estaban construidas sobre el
+  modelo *previo* al Documento Técnico y **se retiraron**: entre ese modelo y el actual no hay migración
+  incremental posible. Hecho el 2026-08-07: **M11.1** (infra Postgres-only con docker-compose) y **M11.2**
+  (28 tablas del esquema v2, migración inicial única y catálogos cargados — 12 dimensiones IDEA con sus 60
+  descriptores, 24 ítems IPPU-TEA, baremo, categorías documentales, recordatorios, talleres y servicios).
+  Verificado con 18 tests estructurales contra Postgres. **Falta M11.3** (los servicios con las reglas
+  clínicas), M11.4 (routers), M11.5 (seed + tests) y M11.6 (docs). Arranque en
+  `implementacion/L1-hce-idea/backend/README.md`; esquema en `backend/docs/esquema-datos-v2.md`.
+  Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
+- **Qué falta definir con IPPU** (validar la demo, cortes del baremo, acceso a la HCE actual…) está en
+  `docs/notas/puntos-a-validar.md`, con lo que bloquea cada punto.
 
 ## 🚀 Cómo retomar el trabajo
 ```bash
