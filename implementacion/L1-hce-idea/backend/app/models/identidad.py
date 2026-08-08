@@ -84,6 +84,15 @@ class Grupo(Base):
     `tecnicoN_rol` es **texto libre** y no un enum: decisión §5.2.3 de
     portabilidad. Hoy IPPU usa "Psicólogo/a" y "Maestro/a", pero otra
     institución podría tener otros y no queremos una migración para eso.
+
+    ⚠️ **LIMITACIÓN CONOCIDA, SIN RESOLVER.** La PK es sólo la letra pero la
+    tabla lleva `anio`: el grupo A existe para **un único año en toda la
+    historia**. Crear el A de 2027 obliga a sobrescribir el de 2026 —se pierde
+    quiénes fueron sus técnicos— y los expedientes viejos, que en `grupo_id`
+    guardan sólo la letra, pasan a apuntar al grupo nuevo sin aviso.
+    Está así porque así lo especifica `docs/esquema-datos-v2.md` §2.1; cambiarlo
+    modifica ese documento y se decide por escrito. Ver la nota en el esquema y
+    `docs/notas/puntos-a-validar.md` §2.6 antes de tocar esta tabla.
     """
     __tablename__ = "grupo"
 
