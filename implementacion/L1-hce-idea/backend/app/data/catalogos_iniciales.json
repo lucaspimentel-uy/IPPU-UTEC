@@ -1,0 +1,766 @@
+{
+  "_origen": "Generado desde demo/js/{catalogos,hce-doc-org-vf,recordatorios}.js + index.html (demo v4.1). No editar a mano sin actualizar la demo.",
+  "idea_dimension": [
+    {
+      "id": 1,
+      "codigo": "D1",
+      "escala": "A",
+      "escala_nombre": "Relación Social",
+      "nombre": "Relaciones Sociales"
+    },
+    {
+      "id": 2,
+      "codigo": "D2",
+      "escala": "A",
+      "escala_nombre": "Relación Social",
+      "nombre": "Capacidades de Referencia Conjunta"
+    },
+    {
+      "id": 3,
+      "codigo": "D3",
+      "escala": "A",
+      "escala_nombre": "Relación Social",
+      "nombre": "Capacidades Intersubjetivas y Mentalistas"
+    },
+    {
+      "id": 4,
+      "codigo": "D4",
+      "escala": "B",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "nombre": "Funciones Comunicativas"
+    },
+    {
+      "id": 5,
+      "codigo": "D5",
+      "escala": "B",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "nombre": "Lenguaje Expresivo"
+    },
+    {
+      "id": 6,
+      "codigo": "D6",
+      "escala": "B",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "nombre": "Lenguaje Receptivo"
+    },
+    {
+      "id": 7,
+      "codigo": "D7",
+      "escala": "C",
+      "escala_nombre": "Anticipación / Flexibilidad",
+      "nombre": "Anticipación"
+    },
+    {
+      "id": 8,
+      "codigo": "D8",
+      "escala": "C",
+      "escala_nombre": "Anticipación / Flexibilidad",
+      "nombre": "Flexibilidad"
+    },
+    {
+      "id": 9,
+      "codigo": "D9",
+      "escala": "C",
+      "escala_nombre": "Anticipación / Flexibilidad",
+      "nombre": "Sentido de la Actividad"
+    },
+    {
+      "id": 10,
+      "codigo": "D10",
+      "escala": "D",
+      "escala_nombre": "Simbolización",
+      "nombre": "Ficción e Imaginación"
+    },
+    {
+      "id": 11,
+      "codigo": "D11",
+      "escala": "D",
+      "escala_nombre": "Simbolización",
+      "nombre": "Imitación"
+    },
+    {
+      "id": 12,
+      "codigo": "D12",
+      "escala": "D",
+      "escala_nombre": "Simbolización",
+      "nombre": "Suspensión (capacidad de crear significantes)"
+    }
+  ],
+  "idea_nivel": [
+    {
+      "dimension_id": 1,
+      "valor": 8,
+      "descriptor": "Aislamiento completo. No apego a personas específicas. No relación con adultos o iguales."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 6,
+      "descriptor": "Incapacidad de relación. Vínculo con adultos. No relación con iguales."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 4,
+      "descriptor": "Relaciones infrecuentes, inducidas, externas con iguales. Las relaciones más como respuesta que a iniciativa propia."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 2,
+      "descriptor": "Motivación de relación con iguales, pero falta de relaciones por dificultad para comprender sutilezas sociales y escasa empatía. Conciencia de soledad."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de la relación social."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 8,
+      "descriptor": "Ausencia completa de acciones conjuntas o interés por las otras personas y sus acciones."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 6,
+      "descriptor": "Acciones conjuntas simples, sin miradas significativas de referencia conjunta."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 4,
+      "descriptor": "Empleo de miradas de referencia conjunta en situaciones dirigidas, pero no abiertas."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 2,
+      "descriptor": "Pautas establecidas de atención y acción conjunta, pero no de preocupación conjunta."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de las capacidades de referencia conjunta."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 8,
+      "descriptor": "Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria). Falta de interés por las personas."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 6,
+      "descriptor": "Respuestas intersubjetivas primarias, pero ningún indicio de que se vive al otro como sujeto."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 4,
+      "descriptor": "Indicios de intersubjetividad secundaria, sin atribución explícita de estados mentales. No se resuelven tareas de Teoría de la Mente."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 2,
+      "descriptor": "Conciencia explícita de que las otras personas tienen mente (resolución de Teoría de la Mente de 1.er orden). En situaciones reales, el mentalismo es lento, simple y limitado."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de capacidades intersubjetivas y mentalistas."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 8,
+      "descriptor": "Ausencia de comunicación (relación intencionada, intencional y significante) y de conductas instrumentales con personas."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 6,
+      "descriptor": "Conductas instrumentales con personas para lograr cambios en el mundo físico (pedir), sin otras pautas de comunicación."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 4,
+      "descriptor": "Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencias o cambiar el mundo mental."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 2,
+      "descriptor": "Conductas comunicativas de declarar, comentar, etc., con escasas cualificaciones subjetivas de la experiencia y declaraciones sobre el mundo interno."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de las funciones comunicativas."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 8,
+      "descriptor": "Mutismo total o funcional. Puede haber verbalizaciones que no son propiamente lingüísticas."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 6,
+      "descriptor": "Lenguaje compuesto de palabras sueltas o ecolalias. No hay creación formal de sintagmas y oraciones."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 4,
+      "descriptor": "Lenguaje oracional. Hay oraciones que no son ecolalálicas, pero no configuran discurso o conversación."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 2,
+      "descriptor": "Discurso y conversación, con limitaciones de adaptación flexible y de selección de temas relevantes. Frecuentemente hay anomalías prosódicas."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo del lenguaje expresivo."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 8,
+      "descriptor": "'Sordera central'. Tendencia a ignorar el lenguaje. No hay respuesta a órdenes, llamadas o indicaciones."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 6,
+      "descriptor": "Asociación de enunciados verbales con conductas propias, sin indicios de que los enunciados se asimilen a un código."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 4,
+      "descriptor": "Comprensión literal y poco flexible de enunciados, con algún análisis estructural. No se comprende discurso."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 2,
+      "descriptor": "Se comprende discurso y conversación, pero se diferencia con gran dificultad el significado literal del intencional."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de las capacidades de comprensión."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 8,
+      "descriptor": "Adherencia inflexible a estímulos que se repiten de forma idéntica (p. ej. películas de vídeo). Resistencia intensa a cambios. Falta de conductas anticipatorias."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 6,
+      "descriptor": "Conductas anticipatorias simples en rutinas cotidianas. Con frecuencia, oposición a cambios y empeoramiento en situaciones que implican cambios."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 4,
+      "descriptor": "Incorporadas estructuras temporales amplias (p. ej. Curso vs. Vacaciones). Puede haber reacciones catastróficas ante cambios no previstos."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 2,
+      "descriptor": "Alguna capacidad de regular el propio ambiente y de manejar los cambios. Se prefiere un orden claro y un ambiente predecible."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de capacidades de anticipación."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 8,
+      "descriptor": "Predominan las estereotipias motoras simples."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 6,
+      "descriptor": "Predominan los rituales simples. Resistencia a cambios mínimos."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 4,
+      "descriptor": "Rituales complejos. Apego excesivo a objetos. Preguntas obsesivas."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 2,
+      "descriptor": "Contenidos obsesivos y limitados de pensamiento. Intereses poco funcionales y flexibles. Rígido perfeccionismo."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de la flexibilidad."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 8,
+      "descriptor": "Predominio masivo de conductas sin meta. Inaccesibilidad a consignas externas que dirijan la actividad."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 6,
+      "descriptor": "Sólo se realizan actividades funcionales breves con consignas externas. Cuando no las hay, se pasa al nivel anterior."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 4,
+      "descriptor": "Actividades autónomas de ciclo largo, que no se viven como partes de proyectos coherentes, y cuya motivación es externa."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 2,
+      "descriptor": "Actividades complejas de ciclo muy largo, cuya meta se conoce y desea, pero sin una estructura jerárquica de previsiones biográficas en que se inserten."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo del sentido de la actividad."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 8,
+      "descriptor": "Ausencia completa de juego funcional o simbólico y de otras competencias de ficción."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 6,
+      "descriptor": "Juegos funcionales poco flexibles, poco espontáneos y de contenidos limitados."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 4,
+      "descriptor": "Juego simbólico, en general poco espontáneo y obsesivo. Dificultades importantes para diferenciar ficción y realidad."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 2,
+      "descriptor": "Capacidades complejas de ficción, que se emplean como recursos de aislamiento. Ficciones poco flexibles."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 0,
+      "descriptor": "No hay trastorno de competencias de ficción e imaginación."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 8,
+      "descriptor": "Ausencia completa de conductas de imitación."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 6,
+      "descriptor": "Imitaciones motoras simples, evocadas. No espontáneas."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 4,
+      "descriptor": "Imitación espontánea esporádica, poco versátil e intersubjetiva."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 2,
+      "descriptor": "Imitación establecida. Ausencia de modelos internos."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 0,
+      "descriptor": "No hay trastorno de las capacidades de imitación."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 8,
+      "descriptor": "No se suspenden pre-acciones para crear gestos comunicativos. Comunicación ausente o por gestos instrumentales con personas."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 6,
+      "descriptor": "No se suspenden acciones instrumentales para crear símbolos enactivos. No hay juego funcional."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 4,
+      "descriptor": "No se suspenden propiedades reales de cosas o situaciones para crear ficciones y juego de ficción."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 2,
+      "descriptor": "No se dejan en suspenso representaciones para crear o comprender metáforas, o para comprender que los estados mentales no se corresponden necesariamente con las situaciones."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 0,
+      "descriptor": "No hay trastorno cualitativo de las capacidades de suspensión."
+    }
+  ],
+  "ippu_item": [
+    {
+      "id": 1,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 1,
+      "texto": "Calidad y frecuencia del contacto visual intencional en intercambios con adultos y pares",
+      "referencia": "DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)"
+    },
+    {
+      "id": 2,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 2,
+      "texto": "Iniciativa e interés espontáneo hacia otras personas; respuesta a la presencia social",
+      "referencia": "DSM-5-TR A1b · CIF d720 · Wing & Gould (1979)"
+    },
+    {
+      "id": 3,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 3,
+      "texto": "Atención conjunta: seguimiento de la mirada y el gesto; señalización para compartir interés",
+      "referencia": "DSM-5-TR A1a · CIF d7105 · Mundy & Newell (2007)"
+    },
+    {
+      "id": 4,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 4,
+      "texto": "Comprensión de emociones y estados mentales ajenos; tareas mentalistas según nivel evolutivo",
+      "referencia": "DSM-5-TR A1 · CIF d710 · Baron-Cohen et al. (1985)"
+    },
+    {
+      "id": 5,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 5,
+      "texto": "Reciprocidad emocional: adecuación de la respuesta afectiva al contexto y al interlocutor",
+      "referencia": "DSM-5-TR A1b · CIF d7200 · ADOS-2 (Lord et al., 2012)"
+    },
+    {
+      "id": 6,
+      "escala": 1,
+      "escala_nombre": "Relación Social",
+      "orden_en_escala": 6,
+      "texto": "Iniciación y mantenimiento de intercambios sociales con pares en contexto grupal",
+      "referencia": "DSM-5-TR A1c · CIF d750 · PEERS (Laugeson, 2014)"
+    },
+    {
+      "id": 7,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 1,
+      "texto": "Uso funcional del lenguaje oral o del sistema AAC (PECS, pictogramas) como comunicación intencional",
+      "referencia": "DSM-5-TR A1a · CIF d330 · Mirenda (2009)"
+    },
+    {
+      "id": 8,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 2,
+      "texto": "Comprensión de consignas verbales simples y complejas en contexto natural y estructurado",
+      "referencia": "DSM-5-TR A1 · CIF d310 · Wetherby & Prizant (2002)"
+    },
+    {
+      "id": 9,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 3,
+      "texto": "Reducción de patrones de lenguaje atípico (ecolalia, inversión pronominal) o incremento del uso funcional",
+      "referencia": "DSM-5-TR A1a · CIF d330 · Prizant & Duchan (1981)"
+    },
+    {
+      "id": 10,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 4,
+      "texto": "Repertorio y uso funcional de gestos comunicativos: señalar, mostrar, dar, saludar con propósito social",
+      "referencia": "DSM-5-TR A1a · CIF d3350 · Capone & McGregor (2004)"
+    },
+    {
+      "id": 11,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 5,
+      "texto": "Habilidades pragmáticas: ajuste al contexto, turno comunicativo, inicio y cierre de intercambios",
+      "referencia": "DSM-5-TR A1c · CIF d350 · Bishop (2011)"
+    },
+    {
+      "id": 12,
+      "escala": 2,
+      "escala_nombre": "Comunicación y Lenguaje",
+      "orden_en_escala": 6,
+      "texto": "Integración de la comunicación no verbal (expresión facial, tono, postura) en el intercambio",
+      "referencia": "DSM-5-TR A1a · CIF d3350 · Wetherby & Prizant (2002)"
+    },
+    {
+      "id": 13,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 1,
+      "texto": "Tolerancia a cambios en rutinas, horarios y entorno físico; adaptación ante imprevistos",
+      "referencia": "DSM-5-TR B2 · CIF d2303 · TEACCH (Mesibov et al., 2004)"
+    },
+    {
+      "id": 14,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 2,
+      "texto": "Frecuencia e intensidad de comportamientos repetitivos que interfieren con el funcionamiento grupal",
+      "referencia": "DSM-5-TR B1 · CIF d230 · Y-BOCS adaptado (Scahill et al., 2006)"
+    },
+    {
+      "id": 15,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 3,
+      "texto": "Flexibilización de rituales y estereotipias; posibilidad de interrupción con apoyo",
+      "referencia": "DSM-5-TR B1 · CIF d2303 · Turner (1999)"
+    },
+    {
+      "id": 16,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 4,
+      "texto": "Flexibilidad cognitiva: cambiar de tarea, estrategia o solución ante demanda del entorno",
+      "referencia": "DSM-5-TR B2 · CIF d1641 · BRIEF (Gioia et al., 2000)"
+    },
+    {
+      "id": 17,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 5,
+      "texto": "Regulación sensorial: reducción de reacciones desadaptativas ante estímulos del entorno grupal",
+      "referencia": "DSM-5-TR B4 · CIF b250 · Ayres (1979) · Marco et al. (2011)"
+    },
+    {
+      "id": 18,
+      "escala": 3,
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "orden_en_escala": 6,
+      "texto": "Comprensión del sentido y propósito de las actividades; orientación hacia metas externas",
+      "referencia": "DSM-5-TR B2 · CIF d230 · TEACCH (Mesibov et al., 2004)"
+    },
+    {
+      "id": 19,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 1,
+      "texto": "Emergencia o ampliación del juego funcional y simbólico: uso representacional de objetos, ficción",
+      "referencia": "DSM-5-TR A · CIF d8800 · Leslie (1987) · Jarrold et al. (1996)"
+    },
+    {
+      "id": 20,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 2,
+      "texto": "Imitación intencional de acciones, gestos y secuencias demostradas por adultos y pares",
+      "referencia": "DSM-5-TR A1a · CIF d1550 · Meltzoff & Moore (1977)"
+    },
+    {
+      "id": 21,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 3,
+      "texto": "Participación e integración en juegos sociales con pares: juegos grupales, roles y turnos",
+      "referencia": "DSM-5-TR A1c · CIF d8803 · Wolfberg (2009)"
+    },
+    {
+      "id": 22,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 4,
+      "texto": "Construcción de narrativas: secuencias causales en el juego o el relato según nivel evolutivo",
+      "referencia": "DSM-5-TR A · CIF d1660 · Schuler & Wolfberg (2000)"
+    },
+    {
+      "id": 23,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 5,
+      "texto": "Generalización de conductas imitadas a nuevos contextos, materiales y personas",
+      "referencia": "CIF d1551 · Stahmer (1995) · Lovaas (1987)"
+    },
+    {
+      "id": 24,
+      "escala": 4,
+      "escala_nombre": "Simbolización",
+      "orden_en_escala": 6,
+      "texto": "Comprensión y creación de significantes: gestos, símbolos, ficción y metáfora según nivel",
+      "referencia": "CIF d1559 · Rivière dim. 12 (Suspensión) · Tomasello (1995)"
+    }
+  ],
+  "baremo_categoria": [
+    {
+      "pct_min": 0,
+      "pct_max": 4,
+      "categoria": "Sin discapacidad",
+      "rango": "0 % a 4 %",
+      "implicancia": "Observación preventiva.",
+      "orden": 1
+    },
+    {
+      "pct_min": 5,
+      "pct_max": 24,
+      "categoria": "Leve",
+      "rango": "5 % a 24 %",
+      "implicancia": "Requiere adaptaciones menores.",
+      "orden": 2
+    },
+    {
+      "pct_min": 25,
+      "pct_max": 49,
+      "categoria": "Moderado",
+      "rango": "25 % a 49 %",
+      "implicancia": "Habilita acceso a prestaciones y amparo en cuota laboral.",
+      "orden": 3
+    },
+    {
+      "pct_min": 50,
+      "pct_max": 95,
+      "categoria": "Severo",
+      "rango": "50 % a 95 %",
+      "implicancia": "Requiere apoyos significativos y permanentes.",
+      "orden": 4
+    },
+    {
+      "pct_min": 96,
+      "pct_max": 100,
+      "categoria": "Muy severo",
+      "rango": "96 % a 100 %",
+      "implicancia": "Configura situación de dependencia; apoyo integral.",
+      "orden": 5
+    }
+  ],
+  "categoria_documento": [
+    {
+      "nombre": "Informe médico externo",
+      "es_registro_historico": false,
+      "orden": 1
+    },
+    {
+      "nombre": "Informe escolar",
+      "es_registro_historico": false,
+      "orden": 2
+    },
+    {
+      "nombre": "Evaluación externa (otra institución)",
+      "es_registro_historico": false,
+      "orden": 3
+    },
+    {
+      "nombre": "Documento INAU",
+      "es_registro_historico": false,
+      "orden": 4
+    },
+    {
+      "nombre": "Documento BPS",
+      "es_registro_historico": false,
+      "orden": 5
+    },
+    {
+      "nombre": "Autorización / consentimiento",
+      "es_registro_historico": false,
+      "orden": 6
+    },
+    {
+      "nombre": "Estudio complementario",
+      "es_registro_historico": false,
+      "orden": 7
+    },
+    {
+      "nombre": "Registro histórico — HCE anterior (Evaluación por áreas)",
+      "es_registro_historico": true,
+      "orden": 8
+    },
+    {
+      "nombre": "Registro histórico — HCE anterior (Evaluación General)",
+      "es_registro_historico": true,
+      "orden": 9
+    },
+    {
+      "nombre": "Registro histórico — HCE anterior (Observaciones)",
+      "es_registro_historico": true,
+      "orden": 10
+    },
+    {
+      "nombre": "Registro histórico — HCE anterior (otro)",
+      "es_registro_historico": true,
+      "orden": 11
+    },
+    {
+      "nombre": "Otro",
+      "es_registro_historico": false,
+      "orden": 12
+    }
+  ],
+  "recordatorio": [
+    {
+      "clave": "lb",
+      "texto": "Aplicación del IDEA (HCE-LB) en las primeras semanas del ingreso",
+      "periodo": "Al ingreso",
+      "activo": true
+    },
+    {
+      "clave": "pa",
+      "texto": "Protocolo A (HCE-PA) durante el receso de julio",
+      "periodo": "Julio",
+      "activo": true
+    },
+    {
+      "clave": "pb",
+      "texto": "Protocolo B (HCE-PB) en la última semana lectiva",
+      "periodo": "Diciembre",
+      "activo": true
+    },
+    {
+      "clave": "ic",
+      "texto": "Informe de Cierre (HCE-IC) en los días posteriores al Protocolo B",
+      "periodo": "Días post-PB",
+      "activo": true
+    }
+  ],
+  "taller": [
+    {
+      "nombre": "Habilidades sociales",
+      "activo": true
+    },
+    {
+      "nombre": "Lenguaje y comunicación",
+      "activo": true
+    },
+    {
+      "nombre": "Motricidad",
+      "activo": true
+    },
+    {
+      "nombre": "Juego simbólico",
+      "activo": true
+    },
+    {
+      "nombre": "Música y expresión",
+      "activo": true
+    },
+    {
+      "nombre": "Vida diaria (AVD)",
+      "activo": true
+    },
+    {
+      "nombre": "Arte y plástica",
+      "activo": true
+    },
+    {
+      "nombre": "Psicomotricidad",
+      "activo": true
+    }
+  ],
+  "servicio": [
+    {
+      "clave": "atencion_diurna",
+      "nombre": "Atención Diurna",
+      "activo": true
+    },
+    {
+      "clave": "taller_terapeutico",
+      "nombre": "Taller Terapéutico",
+      "activo": false
+    },
+    {
+      "clave": "clinica",
+      "nombre": "Clínica",
+      "activo": false
+    }
+  ]
+}

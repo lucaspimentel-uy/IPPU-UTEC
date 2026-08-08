@@ -64,7 +64,21 @@ erDiagram
 | `persona` | id, nombre, apellido, ci **UK**, fecha_nac, sexo, localidad, referente, telefono | Identidad única transversal (§3.1). La edad se calcula. |
 | `servicio` | id, clave (`atencion_diurna\|taller_terapeutico\|clinica`), activo | Los dos últimos reservados para Fase 2 (§0.3). |
 | `persona_servicio` | persona_id FK, servicio_id FK, fecha_alta, fecha_baja | **UK**(persona, servicio). |
-| `grupo` | id (`A..E`), franja, dias, horario, anio, tecnico1_id FK, **tecnico1_rol** (texto), tecnico2_id FK, **tecnico2_rol**, obs | Roles = etiqueta configurable como dato (decisión 3 / §0.5). |
+| `grupo` | id (`A..E`), franja, dias, horario, anio, tecnico1_id FK, **tecnico1_rol** (texto), tecnico2_id FK, **tecnico2_rol**, obs | Roles = etiqueta configurable como dato (decisión 3 / §0.5). ⚠️ **Ver la nota de abajo: la PK por letra no admite más de un año.** |
+
+> ⚠️ **Limitación conocida de `grupo` (detectada 2026-08-07 al implementar M11.2, sin resolver).**
+> La PK es sólo la letra, pero la tabla lleva `anio`: **el grupo A puede existir para un único año en
+> toda la historia**. En 2027, crear el grupo A obliga a sobrescribir la fila de 2026 — se pierde el
+> registro de quiénes fueron sus técnicos ese año, y los expedientes viejos (`hce_diurna.grupo_id`,
+> que guarda sólo la letra) pasan a apuntar al grupo del año nuevo **sin aviso**. Contradice cómo este
+> mismo documento resuelve los ciclos anuales en `protocolo` e `informe_cierre`, que usan
+> `(hce_id, …, anio)` justamente para esto.
+>
+> **Se implementó tal cual está especificado acá**, sin corregirlo por cuenta propia: cambiarlo
+> modifica este documento y eso se decide por escrito. Opciones sobre la mesa: (a) PK compuesta
+> `(id, anio)` · (b) id propio con `UNIQUE(letra, anio)` · (c) dejarlo así porque los grupos no se
+> reconfiguran año a año — en cuyo caso **sobra la columna `anio`**. Anotado en
+> `docs/notas/puntos-a-validar.md` §2.6. No bloquea M11.3.
 | `hce_diurna` | id, persona_id FK **UK** (0..1), **hc_historico** (identificador secundario, §10), grupo_id FK, diagnostico, cie11, nivel_soporte, dx_fecha, derivacion, medicacion, alerta, **anamnesis JSONB**, activo, fecha_baja, timestamps | HCE-00 siempre editable (sin firma). Un expediente por persona; los ciclos anuales viven en `protocolo.anio` / `informe_cierre.anio` (decisión abierta de `modelo-datos.md`, resuelta así). |
 | `hce_taller` | hce_id FK, taller_id FK | Plan IPPU (N:M). |
 

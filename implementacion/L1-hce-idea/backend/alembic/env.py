@@ -22,8 +22,8 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# batch mode: necesario para que SQLite soporte ALTER TABLE en futuras migraciones.
-IS_SQLITE = settings.database_url.startswith("sqlite")
+# Nota: se quitó `render_as_batch` (era para que SQLite soportara ALTER TABLE).
+# Desde M11.1 el proyecto es Postgres-only y Postgres hace ALTER nativo.
 
 
 def run_migrations_offline() -> None:
@@ -32,7 +32,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=IS_SQLITE,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -48,7 +47,11 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            render_as_batch=IS_SQLITE,
+            # Postgres distingue tipos que el autogenerate por defecto ignora
+            # (p. ej. VARCHAR(50) -> VARCHAR(80)); con esto las migraciones
+            # siguientes detectan cambios de tipo y de server_default.
+            compare_type=True,
+            compare_server_default=True,
         )
         with context.begin_transaction():
             context.run_migrations()

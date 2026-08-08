@@ -1,8 +1,11 @@
 """Configuración de la aplicación (variables de entorno).
 
-Se lee de un archivo `.env` (ver `.env.example`). Por defecto usa SQLite
-para el spike local; en la Fase 6 se cambia `DATABASE_URL` a PostgreSQL.
+Se lee de un archivo `.env` (ver `.env.example`). Desde M11.1 el proyecto es
+**Postgres-only** en dev y en prod (decisión `handoff.md` §5.2.1): se abandonó
+SQLite porque el esquema v2 usa JSONB y CHECKs que SQLite acepta sin aplicar,
+lo que dejaba pasar en los tests errores que sí explotan contra Postgres.
 """
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,9 +16,13 @@ class Settings(BaseSettings):
     app_name: str = "HCE IDEA IPPU — API"
     environment: str = "dev"
 
-    # Base de datos. SQLite por defecto (un archivo local, cero instalación).
-    # Para Postgres (Fase 6): "postgresql+psycopg://user:pass@localhost:5432/ippu"
-    database_url: str = "sqlite:///./ippu.db"
+    # Base de datos. El puerto 5440 es el que publica docker-compose.yml.
+    # No es 5432 ni 5433 porque ambos suelen estar tomados por un PostgreSQL
+    # instalado localmente (en esta máquina lo estaba el 5433).
+    database_url: str = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu"
+
+    # Base separada para pytest (M11.5); la crea docker/initdb/00-crear-base-test.sql.
+    test_database_url: str = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_test"
 
     # Auth (Fase 4)
     secret_key: str = "cambiar-en-produccion"
@@ -23,6 +30,23 @@ class Settings(BaseSettings):
 
     # CORS — orígenes permitidos del frontend (la demo)
     cors_origins: list[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
+    @field_validator("database_url", "test_database_url")
+    @classmethod
+    def _exigir_postgres(cls, v: str) -> str:
+        """Falla temprano y con un mensaje claro si alguien apunta a otro motor.
+
+        Sin este guard, un `.env` heredado con la URL de SQLite arranca igual y
+        el problema recién aparece cuando una migración con JSONB falla — lejos
+        de la causa. Mejor no levantar.
+        """
+        if not v.startswith("postgresql"):
+            raise ValueError(
+                f"El proyecto es Postgres-only desde M11.1 (handoff.md §5.2.1). "
+                f"URL recibida: {v!r}. Usar postgresql+psycopg://... "
+                f"y levantar la base con `docker compose up -d`."
+            )
+        return v
 
 
 settings = Settings()

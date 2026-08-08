@@ -3,10 +3,10 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
 
 # Entorno / secretos
 .env
 
-# Base de datos local (SQLite)
-*.db
-*.sqlite3
+# Archivos subidos (Fase 6: storage real)
+uploads/
