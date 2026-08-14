@@ -45,8 +45,9 @@ docs/
 │   ├── IPPU_UTEC_Presentacion_13.05.2026.pptx
 │   ├── Proyectos, Investigaciones y Oportunidades de Desarrollo.pdf
 │   ├── escala-del-inventario-del-espectro-autista-idea.pdf
-│   ├── prototipo-v4/
-│   │   └── prototipo-v4-catalogos.json
+│   ├── prototipo-v4/            # Prototipo v4 de IPPU (ago-2026) — fuente normativa de la ronda M12
+│   │   ├── HCE_IPPU_Prototipo_v4.html    # original bajado de la URL publicada (406 KB, app JS)
+│   │   └── prototipo-v4-catalogos.json   # 32 constantes extraídas del HTML (sin los 2 base64, D3)
 │   └── reuniones/               # actas de reunión (XLSX)
 ├── markdown/                    # conversiones .md de docs/fuentes/ — fuente de lectura y cita
 │   ├── 1_documento-tecnico-utec-lidia.md   # Documento Técnico IPPU v1.0 (fuente normativa vigente)
@@ -63,21 +64,29 @@ docs/
 │   ├── escala-del-inventario-del-espectro-autista-idea.md
 │   ├── hce_idea_ippu_demo.md
 │   ├── modelo-datos.md          # propuesta Postgres+JSONB de un integrante — registrada, no adoptada
-│   └── prototipo-v4-referencia.md
+│   └── prototipo-v4-referencia.md   # versión legible y citable del Prototipo v4 (extraída por script)
 ├── notas/
 │   ├── consulta-a-ippu.md       # cuestionario no técnico, versión para enviar a IPPU
 │   └── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
 └── planes/
-    ├── PLAN-modular-adaptacion-HCE-2026-07.md   # plan de la ronda M0–M11 (adaptación al Doc. Técnico)
-    └── PLAN-M12-absorcion-prototipo-v4-2026-08.md
+    ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
+    └── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
 ```
 
 Notas:
 - **Regla de conversión:** una vez que un original en `docs/fuentes/` tiene su `.md` en `docs/markdown/`,
   se trabaja siempre con el `.md`. Los originales quedan solo como respaldo verificable (por eso
   `docs/fuentes/` está en `.graphifyignore`: indexar las dos copias duplica costo sin agregar información).
-- **Excepción:** `HCE_IPPU_Prototipo_v1.html` no tiene conversión a propósito — es una app JS y Docling
-  solo rinde el shell vacío. Se cita desde su ruta original en `docs/fuentes/`.
+- **Excepción:** los prototipos de IPPU son apps JS y Docling solo rinde su shell vacío, así que **no se
+  convierten con Docling**.
+  - `HCE_IPPU_Prototipo_v1.html` no tiene conversión de ningún tipo: se cita desde su ruta original.
+  - `prototipo-v4/HCE_IPPU_Prototipo_v4.html` **sí tiene versión legible**, producida por script
+    (`herramientas/extraer_prototipo_v4.js`) en lugar de por Docling: `docs/markdown/prototipo-v4-referencia.md`
+    (narrativa) y `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` (los datos). La regla se cumple
+    igual: se lee y se cita desde `docs/markdown/`, y el HTML queda solo como respaldo.
+- **`docs/fuentes/prototipo-v4/`** es la única subcarpeta de `fuentes/` con original **y** datos extraídos
+  juntos. El JSON no incluye `CLINICA_HTML_B64` ni `TALLER_HTML_B64` (Clínica y Taller Terapéutico están
+  fuera de alcance — `handoff.md` §5.12 / D3); si el alcance cambia, se extraen del HTML.
 - **`docs/planes/`** agrupa los planes de ronda de trabajo (documentos de alcance/roadmap para una
   ronda concreta, distintos de la bitácora continua de `handoff.md`). Nuevos planes van acá.
 
@@ -154,9 +163,10 @@ backend/
 │   ├── esquema-datos.md        # esquema v1 (histórico, backend v1 retirado)
 │   ├── esquema-datos-v2.md      # esquema v2 vigente — leer antes de tocar app/models/
 │   └── ejemplos-endpoints.md
+├── pytest.ini                   # pythonpath=. → que `pytest -q` funcione tal como está documentado
 ├── tests/
 │   ├── conftest.py
-│   └── test_esquema_v2.py       # tests estructurales contra Postgres
+│   └── test_esquema_v2.py       # tests estructurales contra Postgres (21)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
@@ -174,7 +184,7 @@ Notas:
 | Ruta | Qué es |
 |---|---|
 | `herramientas/conversor_docling.py` | Convierte `docs/fuentes/*` → `docs/markdown/*.md` (Docling). Uso en `CLAUDE.md`. |
-| `herramientas/extraer_prototipo_v4.js` | Script relacionado con `docs/fuentes/prototipo-v4/`. |
+| `herramientas/extraer_prototipo_v4.js` | `node herramientas/extraer_prototipo_v4.js` → regenera `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` desde la URL publicada del Prototipo v4. Existe para **diffear** si IPPU publica una v5, no para correrlo de rutina. |
 
 ## `graphify-out/`
 

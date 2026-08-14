@@ -7,10 +7,10 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-07
+> - **Última actualización:** 2026-08-14
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1).** En curso: **M11 · backend v2** (rediseño de esquema al modelo del Doc. Técnico), que arranca por **M11.1** (infra Postgres-only) sobre la propuesta ya escrita en `backend/docs/esquema-datos-v2.md`. Las 3 decisiones de arquitectura del Anexo A **ya están cerradas** (§5.2). **Desde el 2026-08-07 ningún módulo tiene dueño exclusivo (§5.6):** se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
-> - **Fuente normativa vigente:** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) + plan `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (módulos M0–M11). Referencia de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`. **En conflicto con el diseño previo, gana el Documento Técnico.** El backend (Fases 0–2) **no se toca** en esta ronda (rediseño de esquema = M11).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
 
@@ -65,7 +65,21 @@ con consolidación histórica, análisis automático y reportes automáticos.
   - **Escala C — Anticipación/Flexibilidad:** D7 Anticipación · D8 Flexibilidad · D9 Sentido de la actividad.
   - **Escala D — Simbolización:** D10 Ficción e imaginación · D11 Imitación · D12 Suspensión.
   - (Los descriptores oficiales de cada nivel están en `docs/markdown/escala-del-inventario-del-espectro-autista-idea.md` y embebidos en la demo HTML.)
-- **Bandas orientativas:** Leve 0–32 · Moderada 33–64 · Severa 65–96.
+- **Bandas orientativas — 6 tramos con soporte DSM-5-TR** (§5.13 / D4, 2026-08-14; **deroga** las 3 bandas
+  anteriores «Leve 0–32 · Moderada 33–64 · Severa 65–96»):
+
+  | Total | Perfil | Soporte DSM-5-TR |
+  |---|---|---|
+  | 0–15 | Muy leve | Nivel 1 |
+  | 16–30 | Leve | Nivel 1 |
+  | 31–55 | Leve a moderado | Nivel 1–2 |
+  | 56–75 | Moderado | Nivel 2 |
+  | 76–90 | Moderado a severo (alta necesidad de apoyo) | Nivel 2–3 |
+  | 91–96 | Severo a muy severo (necesidad de apoyo muy sustancial) | Nivel 3 |
+
+  Vocabulario institucional: «severo / muy severo» o «alta necesidad de apoyo», **nunca** «grave / muy
+  grave». Cita del instrumento: «Rivière, **1997/2002**». Implementación pendiente en M12.1 (backend) y en
+  la demo (`js/catalogos.js`, `js/ui-core.js`).
 - **Ciclo de evaluación:** IDEA completa en **enero (inicial)** y **noviembre (final)**; **intermedia Likert en junio**
   (3 ítems/dimensión, escala 1–5). Conversión a equivalente IDEA: `(5 − promedio) × 2`.
 
@@ -223,17 +237,139 @@ IPv4; Docker tomó sólo el IPv6 y `localhost` conectaba **al Postgres equivocad
 problema y además no expone la base al resto de la red. Si a alguien le choca el 5440, se cambia en
 `docker-compose.yml` y en su `.env`: **nada del código depende del número**.
 
+---
+
+## 5.10 → 5.18 · Decisiones de la ronda M12 (2026-08-14, Lucas)
+
+> **Contexto.** IPPU publicó su **Prototipo v4** (`https://lovely-salmiakki-4db73d.netlify.app/`) junto con
+> el **Manual de Procedimientos v1.0** (ago-2026). Es la especificación más precisa que tenemos de cómo
+> trabaja la institución, y es más nueva que el Documento Técnico v1.0 de julio. Se abre la ronda **M12 —
+> Absorción del Prototipo v4**, intercalada **entre M11.2 (hecho) y M11.3 (sin arrancar)**: toca la misma
+> capa que M11.2 —modelos, migración inicial, catálogos—, y escribir los servicios de M11.3 contra un
+> modelo que está por cambiar es el trabajo que después hay que rehacer.
+> Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`.
+>
+> **Principio de la ronda.** El objetivo **no es replicar el prototipo de IPPU**: es trasladar a nuestro
+> sistema **la forma de trabajar de la institución**. Se toma lo vinculante (talleres, bandas,
+> descriptores, secciones del PAI, cortes del baremo, secuencia, reglas de firma y vocabulario) y se
+> descarta su implementación (nombres de campo, agrupación de tablas, paleta, tipografía, layout,
+> navegación, routing, iframes). **Donde el prototipo y el buen modelado no coincidan, gana el buen
+> modelado**, y queda anotado en el commit.
+>
+> **Cinco de estas nueve decisiones derogan cosas ya escritas.** Por eso se escriben acá **antes** de tocar
+> una línea de código: es exactamente el caso que cubre la regla anti-contradicción (§12.6).
+>
+> **Lo que estas decisiones NO habilitan:** reabrir Postgres-only, mover lógica de negocio a triggers, ni
+> construir la capa de configuración institucional completa. **§5.2 sigue entera en pie.**
+
+### 5.10 (D1) Precedencia normativa: Manual v1.0 + Prototipo v4 > Documento Técnico v1.0
+Orden de precedencia, de mayor a menor: **Manual de Procedimientos v1.0 + Prototipo v4 (ago-2026)** →
+**Documento Técnico IPPU v1.0 (jul-2026)** → presentación 13.05.2026. En conflicto, gana el de arriba.
+- **Deroga** la cabecera de este archivo (fuente normativa) y **actualiza §5.1.1**, que puso al Documento
+  Técnico por encima de la presentación: esa relación sigue valiendo, pero ahora hay un escalón más arriba.
+- **Por qué:** es material posterior, de la propia institución, y responde con precisión cosas que el
+  Documento Técnico dejaba abiertas (talleres reales, bandas, descriptores, secciones del PAI).
+
+### 5.11 (D2) Alcance: se cubre todo el modelo institucional del Servicio de Atención Diurna
+Se absorbe **todo** lo que el Prototipo v4 especifica para el Servicio de Atención Diurna. **No hay triage
+sobre *qué* se cubre**; sí hay criterio propio sobre *cómo* se implementa (ver el principio de la ronda).
+
+### 5.12 (D3) Clínica y Taller Terapéutico siguen fuera de alcance
+Los dos están embebidos en el prototipo (`CLINICA_HTML_B64`, `TALLER_HTML_B64`, 63 y 68 KB) y montados en
+`<iframe>`. **No se extraen esos base64.**
+- **Ratifica §5.1.3 con fundamento nuevo:** el propio prototipo declara esa integración como "de navegación
+  y presentación" y deja la identidad única "a resolver en el sistema definitivo". De esa parte resolvemos
+  **solo el modelo**, y ya está resuelto: `persona` + `persona_servicio` (§3.1 del esquema v2, bug B).
+- Si el alcance cambia, los base64 siguen disponibles dentro del HTML original.
+
+### 5.13 (D4) Bandas del IDEA: de 3 tramos a 6, con soporte DSM-5-TR, como catálogo paramétrico
+| Total | Perfil | Soporte DSM-5-TR |
+|---|---|---|
+| 0–15 | Muy leve | Nivel 1 |
+| 16–30 | Leve | Nivel 1 |
+| 31–55 | Leve a moderado | Nivel 1–2 |
+| 56–75 | Moderado | Nivel 2 |
+| 76–90 | Moderado a severo (alta necesidad de apoyo) | Nivel 2–3 |
+| 91–96 | Severo a muy severo (necesidad de apoyo muy sustancial) | Nivel 3 |
+
+- **Deroga §3** de este archivo ("Bandas orientativas: Leve 0–32 · Moderada 33–64 · Severa 65–96"), ya
+  actualizada más arriba. Alcanza a la demo (`js/catalogos.js`, `js/ui-core.js`) y al backend (`banda_idea`).
+- El **texto orientativo** de cada banda se copia tal cual del prototipo (`ideaInterpreta`): es
+  deliberadamente neutro —alude solo a escalas y dimensiones del IDEA, no prescribe abordajes— y
+  reescribirlo rompe esa propiedad.
+
+### 5.14 (D5) Talleres: catálogo dinámico, participación por nombre, y los 14 reales
+`taller` pasa a ser un **catálogo administrable por coordinación** (`activo`, `grupos_orientados`,
+`retirado_en`); la participación se registra **por nombre**, de modo que agregar, reordenar o desactivar un
+taller nunca altera lo ya registrado. Un taller retirado queda visible, marcado.
+- Se cargan **los 14 talleres reales** del prototipo y **se retiran los 8 nuestros**: no coincide ninguno.
+  Los nuestros salían de la demo, que los inventó — no venían de ninguna fuente de IPPU.
+- **Deroga la carga de talleres de M11.2c** y **cierra `puntos-a-validar.md` §1.3**: el "8 vs 18" era falso.
+
+### 5.15 (D6) Portabilidad: se amplía §5.2.3
+Suman como catálogos paramétricos: **bandas del IDEA · interpretación del Δ · catálogo de centros
+educativos · catálogo de talleres · recordatorios**.
+- **Amplía §5.2.3, no la deroga:** sigue **sin** capa `config_institucion` genérica, sin `vocabulario` y
+  **sin UI de configuración**. Sólo se parametriza lo que la institución efectivamente ajusta.
+
+### 5.16 (D7) Kappa: se modela ahora, se calcula después
+Se agregan `valor_t1` / `valor_t2` (nullable) junto al `valor` consensuado, con el evaluador identificado,
+por cada dimensión del IDEA y cada ítem de protocolo, más el registro del **procedimiento de consenso**
+(diferencia 0 → registrar · 1 → discusión breve · ≥2 → ambigüedad clínica, exige documentación).
+- ⚠️ **Esto es agregado nuestro, no del prototipo.** El prototipo guarda un **único array de consenso**
+  (`punt[12]`, `punt[24]`) y **no** tiene puntuación por evaluador; declara kappa como requisito y no lo
+  implementa. Lo agregamos porque el Manual lo llama "el único requisito metodológico invariante" y porque
+  hacerlo después de M11.3 cuesta migración **más** reescritura de servicios.
+- **No se calcula kappa en esta ronda**: sólo se guardan los datos que lo hacen posible. Una evaluación
+  **sin** puntuaciones independientes sigue siendo válida (hace falta para migrar históricos).
+
+### 5.17 (D8) Roles genéricos por defecto
+Se mantienen `tecnicoN` + `tecnicoN_rol` (texto). **No** se adoptan `psicologa`/`maestra` como nombres de
+campo.
+- **Amplía §5.1.5.** El prototipo **declara** portabilidad de roles ("Técnico/a responsable 1 y 2 con
+  etiqueta configurable") pero los tiene **hardcodeados en el modelo**. Implementamos lo declarado, no lo
+  implementado (contradicción interna del prototipo, Anexo B.2 del plan).
+
+### 5.18 (D9) La tabla `grupo` se corrige: id propio + `UNIQUE(nombre, anio)`
+- **Dos motivos, no uno.** (a) La PK por letra **no admite más de un año**: crear el grupo A de 2027 obliga
+  a sobrescribir el de 2026 y los expedientes viejos pasan a apuntar al nuevo sin aviso (limitación ya
+  registrada en §6 y en `esquema-datos-v2.md` §2.1). (b) **La PK `A..E` no representa el dominio real**:
+  los grupos de IPPU son **por color** — Azul, Celeste, Naranja, Verde.
+- **Cierra `puntos-a-validar.md` §2.6** eligiendo la opción (b) de las tres que estaban sobre la mesa.
+- **Confirmar con el equipo antes de implementarla** (M12.0 del plan): toca FKs y consultas del panel.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
 - [ ] **M11 · Backend v2 — EN CURSO.** Desde §5.6 no tiene dueño exclusivo — quien lo tome, avisa. Las 3 decisiones de arquitectura están cerradas (§5.2) y el esquema v2 escrito (`backend/docs/esquema-datos-v2.md`).
   - [x] ~~**M11.1** infra Postgres-only~~ → **HECHO** (2026-08-07, rama `feat/m11-backend-v2`). `docker-compose.yml` con Postgres 16 en `127.0.0.1:5440` (§5.9) + base `ippu_test` aparte para pytest; `config.py` **rechaza al arrancar** cualquier URL que no sea Postgres; Alembic sin el batch-mode de SQLite y con `compare_type`; convención de nombres de constraints para que el autogenerate sea reproducible entre las tres máquinas.
-  - [x] ~~**M11.2** modelos + migración + catálogos~~ → **HECHO** (2026-08-07). **28 tablas** en 4 módulos (`catalogos` · `identidad` · `modulos` · `transversales`), migración inicial única, y seed idempotente de catálogos **generado desde la demo v4.1** (12 dimensiones IDEA + 60 descriptores, 24 ítems IPPU-TEA, baremo, 12 categorías documentales, 4 recordatorios, 8 talleres, 3 servicios). Se retiró el backend v1 completo (modelos/schemas/routers/seed/tests + 3 migraciones): hablaba del modelo pre-Documento Técnico. **Verificado:** reconstrucción limpia (drop schema → `alembic upgrade head` → seed) + **18 tests estructurales en verde** + API levanta.
+  - [x] ~~**M11.2** modelos + migración + catálogos~~ → **HECHO** (2026-08-07). **28 tablas** en 4 módulos (`catalogos` · `identidad` · `modulos` · `transversales`), migración inicial única, y seed idempotente de catálogos **generado desde la demo v4.1** (12 dimensiones IDEA + 60 descriptores, 24 ítems IPPU-TEA, baremo, 12 categorías documentales, 4 recordatorios, 8 talleres, 3 servicios). Se retiró el backend v1 completo (modelos/schemas/routers/seed/tests + 3 migraciones): hablaba del modelo pre-Documento Técnico. **Verificado:** reconstrucción limpia (drop schema → `alembic upgrade head` → seed) + **21 tests estructurales en verde** + API levanta.
   - [ ] **M11.3** servicios/motor de flujo con guards (§4: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4, histórico inmutable) — **el sub-módulo con más contenido; sin tomar.**
   - [ ] **M11.4** routers · **M11.5** seed espejo de la demo + pytest (criterio §12-A: usuario demo 1 por API = IDEA 58 · PA 60 · PB 79 · Δ +19) · **M11.6** docs.
+  - ⚠️ **M11.3–M11.6 están en pausa hasta cerrar M12** (ver abajo): tocan la capa que M12 está por cambiar.
   - Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo: app + NGINX).
+- [ ] **M12 · Absorción del Prototipo v4 — EN CURSO** (arrancó 2026-08-14). Se intercala **entre M11.2 y
+  M11.3**. Decisiones D1–D9 escritas en **§5.10–§5.18**. Plan:
+  `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Sin dueño exclusivo (§5.6).
+  - [x] ~~**M12.0** decisiones al papel + verificación del punto de partida~~ → **HECHO** (2026-08-14, Lucas).
+        HTML del prototipo incorporado, mapas de estructura actualizados, repo verificado contra la realidad
+        y **diff de los 60 descriptores reportado** (ver bitácora §13). **Falta: que el equipo confirme D9.**
+  - [ ] **M12.1** correcciones al esquema existente (6 bandas · interpretación del Δ · `manual_version` y
+        metadatos de migración · fichas/ejemplos/reglas del IDEA · `grupo` D9 · recordatorios 4 → 8+ ·
+        vocabulario · cita Rivière 1997/2002). **Va primero y solo**, con los 21 tests corriendo.
+  - [ ] **M12.2** puntuación independiente y consenso (D7). El cambio de modelo más profundo.
+  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.3** catálogo de talleres ·
+        **M12.4** HCE-SEV · **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
+  - [ ] **M12.8** cierre: migración regenerada, seed desde el JSON del prototipo, tests y docs. **Una sola
+        persona.** Nadie corre `alembic revision --autogenerate` hasta acá.
 - [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). 8 puntos para IPPU (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**), 6 para el equipo (incl. **ratificar §5.8**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. la demo usa 8 talleres y el esquema dice 18, sin fuente que los liste; las referencias documentales de los 24 ítems no están verificadas).
-- [ ] **DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.** Su PK es sólo la letra (`A..E`) pero lleva columna `anio`, así que **el grupo A existe para un único año en toda la historia**: crear el de 2027 obliga a sobrescribir el de 2026 (se pierde quiénes fueron sus técnicos) y los expedientes viejos, que en `grupo_id` guardan sólo la letra, pasan a apuntar al grupo nuevo **sin aviso**. Contradice cómo `protocolo` e `informe_cierre` resuelven los ciclos anuales con `(hce_id, …, anio)`. Detectado al revisar M11.2; **se implementó tal cual lo especifica `esquema-datos-v2.md` §2.1, sin corregirlo por cuenta propia** (cambiarlo modifica ese documento). Opciones: (a) PK compuesta `(id, anio)` · (b) id propio con `UNIQUE(letra, anio)` · (c) dejarlo y **quitar la columna `anio`**, si los grupos no se reconfiguran año a año. Anotado en los 3 lugares donde se va a mirar: `esquema-datos-v2.md` §2.1, el docstring de `Grupo` y `docs/notas/puntos-a-validar.md` §2.6. **No bloquea M11.3.**
+- [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **DECIDIDA**
+  (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
+  **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. Se implementa en **M12.1**.
+  **Falta que el equipo la confirme.** El planteo original queda abajo como registro:
+- [ ] ~~**la tabla `grupo` no admite más de un año**~~ (contexto histórico): Su PK es sólo la letra (`A..E`) pero lleva columna `anio`, así que **el grupo A existe para un único año en toda la historia**: crear el de 2027 obliga a sobrescribir el de 2026 (se pierde quiénes fueron sus técnicos) y los expedientes viejos, que en `grupo_id` guardan sólo la letra, pasan a apuntar al grupo nuevo **sin aviso**. Contradice cómo `protocolo` e `informe_cierre` resuelven los ciclos anuales con `(hce_id, …, anio)`. Detectado al revisar M11.2; **se implementó tal cual lo especifica `esquema-datos-v2.md` §2.1, sin corregirlo por cuenta propia** (cambiarlo modifica ese documento). Opciones: (a) PK compuesta `(id, anio)` · (b) id propio con `UNIQUE(letra, anio)` · (c) dejarlo y **quitar la columna `anio`**, si los grupos no se reconfiguran año a año. Anotado en los 3 lugares donde se va a mirar: `esquema-datos-v2.md` §2.1, el docstring de `Grupo` y `docs/notas/puntos-a-validar.md` §2.6. **No bloquea M11.3.**
 - [ ] **ENVIAR A IPPU:** `docs/notas/consulta-a-ippu.md` (2026-08-07). Versión **no técnica** del anterior, en formato de cuestionario respondible por los funcionarios: **Parte 1** lo que entendimos de su trabajo (para que nos corrijan) · **Parte 2** los 10 supuestos que tomamos (para confirmar o desmentir) · **Parte 3** 10 dudas puntuales. Las 4 marcadas ⚠️ son las que destraban más: **2.1** (¿el IDEA se hace una vez o todos los años?), **3.1** (lista de talleres), **3.2** (citas bibliográficas de la escala) y **3.3** (acceso al sistema actual). Los dos documentos se mantienen sincronizados: si cambia uno, cambia el otro.
 - [x] ~~**Modularizar la demo**~~ → **HECHO** (2026-08-07, §5.5). La demo dejó de ser recurso exclusivo: **se puede trabajar en paralelo** tomando archivos distintos de `demo/js/`.
 - [x] ~~**Demo — analítica institucional real**~~ → **HECHO** (2026-08-07, demo **v4.1**, ver §3 y bitácora). Los 4 KPIs y los gráficos por escala se calculan del modelo; se agregó la tarjeta de evolución Protocolo A → B. Hallazgo del camino: dos de los indicadores viejos no estaban hardcodeados por comodidad sino que eran **incalculables por diseño** desde M4. **Lo que queda abierto ahí:** el heatmap de talleres sigue con datos de muestra (§5.1.3) y el cruce taller × escala no va a tener sustento hasta que haya varios NNA con el ciclo A → B cerrado — hoy hay **1 de 7**.
@@ -262,7 +398,26 @@ problema y además no expone la base al resto de la red. Si a alguien le choca e
 - **Cortes del baremo BUND:** que IPPU confirme los porcentajes exactos contra el anexo del Decreto 72/025 antes de un uso clínico real (decisión §5.1.4). No bloquea la demo (tabla parametrizable, M9).
 - **Para M11 (backend v2, no antes de validar M0–M6 con IPPU):** decisiones de arquitectura del Anexo A del plan — (a) SQLite vs. Postgres-only en dev, (b) dónde vive la lógica de negocio (Pydantic/servidor vs. triggers PL/pgSQL), (c) alcance de portabilidad institucional — y la nomenclatura de "fases" (hoy conviven 5 usos distintos del término).
 
-**Resueltas (movidas desde aquí):** stack backend = **FastAPI + SQLAlchemy + Alembic** (SQLite→Postgres); base = **PostgreSQL** (no MariaDB); alcance del MVP = ronda **M0–M10** sobre la demo + Fases A–D del Documento Técnico §12.
+### Abiertas por la ronda M12 (2026-08-14)
+- **Descriptores del IDEA — ¿qué pasa con las evaluaciones ya aplicadas?** El Prototipo v4 declara haber
+  corregido "un corrimiento de niveles detectado en materiales institucionales previos (Dimensiones 3, 4, 6
+  y 12 de la «Guía del aplicador», hoy desestimada)". **Ese documento no lo tenemos y nuestros descriptores
+  no vienen de ahí** (ver la bitácora del 2026-08-14: los 60 nuestros salen de la fuente oficial de Rivière
+  y están en los niveles correctos). Igual queda la pregunta clínica, que **no nos toca resolver**: si IPPU
+  aplicó evaluaciones con la Guía corrida, ¿qué se hace con esos puntajes históricos? Va a
+  `puntos-a-validar.md` y a la reunión.
+- **¿Los dos técnicos ya puntúan de forma independiente, o es práctica a introducir?** De la respuesta
+  depende si §5.16 (D7, kappa) sirve desde el día uno o queda latente.
+- **Catálogo de centros educativos:** ¿lo arma coordinación o sale de la planilla del área de inclusión?
+- **Contradicción del prototipo: secuencia dura vs. guiada.** Manual §3 ("ningún instrumento puede aplicarse
+  sin que el anterior esté completo y firmado") vs. Especificaciones §1 ("flujo guiado, **no impuesto**").
+  Su código implementa la guiada; nosotros también. Confirmar. (Anexo B del plan M12 tiene las otras cinco.)
+- **Sigue faltando material de IPPU:** el Anexo A del Manual, las secciones que el prototipo no muestra
+  (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25), la **matriz de 14 roles** (mencionada en sus
+  pendientes, ausente del prototipo), el **anexo del Decreto 72/025** y la verificación de las 24 citas
+  bibliográficas de la Escala IPPU-TEA.
+
+**Resueltas (movidas desde aquí):** stack backend = **FastAPI + SQLAlchemy + Alembic** (SQLite→Postgres); base = **PostgreSQL** (no MariaDB); alcance del MVP = ronda **M0–M10** sobre la demo + Fases A–D del Documento Técnico §12. **Cortes del baremo:** el prototipo usa exactamente los que asumimos (0–4 / 5–24 / 25–49 / 50–95 / 96–100) con su implicancia — confirma **qué usa IPPU**, no qué dice el decreto, así que el anexo del Decreto 72/025 sigue pendiente. **Talleres:** los 14 reales están en el prototipo (§5.14 / D5); el "8 vs 18" era falso.
 
 ## 8. Equipo y contactos
 - **UTEC-LIDIA — equipo actual (3):** **Lucas Pimentel** · **Samuel (Boris) Furtado** · **Victor Uria**.
@@ -505,3 +660,24 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     - Migración inicial **regenerada** en vez de apilar una segunda (nada está desplegado). Reverificado todo: reconstrucción limpia, seed idempotente, **21 tests en verde**.
   - **Nota para la próxima:** el `ultra` sigue pendiente. Esta revisión la hizo quien escribió el código, que es exactamente el revisor con más puntos ciegos. Cuando haya créditos, conviene correrlo igual sobre `a5fbfda`.
   - **Próximo: M11.3** — los servicios con las reglas duras de §4. Es el sub-módulo con más contenido de M11 y **está sin tomar** (§5.6). Conviene resolver antes el punto 1.1 (validación de la demo con IPPU): mientras nada esté construido encima, cambiar la tabla `idea` sigue siendo barato. (Lucas + Claude)
+- **2026-08-14** — **M12.0 · Decisiones al papel y verificación del punto de partida** (ronda **M12 — absorción del Prototipo v4**, plan `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`). **Sin código de modelo**: esta sesión es solo el paso 0.
+  - **Prototipo incorporado:** `curl` del HTML publicado → `docs/fuentes/prototipo-v4/HCE_IPPU_Prototipo_v4.html` (**406.266 bytes**, coincide con los 406 KB que describe la referencia; contiene `IDEA_MANUAL_V = 'Manual Unificado IDEA v1.0 (07/2026)'`). **No se extrajeron** `CLINICA_HTML_B64` ni `TALLER_HTML_B64` (§5.12 / D3) y **no se corrió Docling** (es una app JS; la versión legible es `docs/markdown/prototipo-v4-referencia.md`, producida por script).
+  - **Decisiones D1–D9 escritas en §5.10–§5.18** (Lucas, 2026-08-14), con la cabecera y **§3** actualizados: la fuente normativa pasa a ser Manual v1.0 + Prototipo v4, y las bandas del IDEA de **3 a 6 tramos** con soporte DSM-5-TR. Cinco de las nueve derogan cosas ya escritas — por eso van al papel antes del código (§12.6). **§5.2 sigue entera en pie.** **Pendiente: que el equipo confirme D9** (`grupo`) antes de implementarla en M12.1.
+  - **Mapas de estructura actualizados:** `docs/estructura-repositorio.md` (carpeta `prototipo-v4/` con los dos archivos, el `.md` nuevo, los dos planes, `extraer_prototipo_v4.js` con su uso real, y la excepción Docling reescrita para cubrir v1 **y** v4), más los mapas resumidos de `README.md` y `CLAUDE.md`.
+  - **Verificación del repo contra la realidad** (no contra el handoff): `alembic heads` = `f6ca521bcc6a`, **una sola cabeza**, y la base está en ella · **28 tablas** + `alembic_version` = 29 en `public` · catálogos cargados (12 dimensiones · 60 descriptores · 24 ítems · 5 baremo · 12 categorías · 4 recordatorios · 8 talleres · 3 servicios) · **21 tests en verde**.
+  - **Diferencias encontradas entre el handoff y el repo (todas menores, ninguna bloquea):**
+    1. **`pytest -q` no funcionaba tal como está documentado.** No había ningún archivo de configuración de pytest, así que `tests/conftest.py` moría con `ModuleNotFoundError: No module named 'app'` salvo que cada uno exportara `PYTHONPATH` a mano. Se agregó **`backend/pytest.ini`** (`pythonpath = .`, `testpaths = tests`) y ahora sí: `pytest -q` → **21 passed**. Es la única corrección de código de la sesión.
+    2. **§6 decía "18 tests estructurales"**; son **21** desde la revisión de M11.2 (la bitácora del 2026-08-07 ya decía 21). Corregido en §6, `README.md` y `CLAUDE.md`.
+    3. **El commit `a9f94c7` no tenía entrada de bitácora** (movió el plan a `docs/planes/`, agregó `estructura-repositorio.md`, `prototipo-v4-referencia.md`, la carpeta `prototipo-v4/` y `extraer_prototipo_v4.js`).
+  - **Sobre la sospecha de que M11.2c perdió cosas al generar los catálogos: no se confirmó.**
+    - **`baremo_categoria.implicancia` NO se perdió.** Está en el modelo (`app/models/catalogos.py:107`), en `app/data/catalogos_iniciales.json` y en la base, y su texto es **idéntico** al `imp` del prototipo en las 5 categorías, igual que los cortes. **El bullet correspondiente de M12.1 no tiene trabajo asociado** — solo verificar.
+    - Se comparó **todo lo generado** contra la demo: 60/60 descriptores idénticos, 24/24 ítems idénticos (texto y referencia), 12/12 categorías documentales idénticas con sus 4 marcas de registro histórico, 4/4 recordatorios idénticos. La única diferencia es que la escala pasó de índice 0–3 (demo) a 1–4 (JSON), que es normalización deliberada.
+    - `solo_al_crear` **ya está implementado** en `app/seed_catalogos.py` (con su docstring explicando el bug): el plan lo describe en M12.8 como "el bug grave de M11.2", pero se corrigió en la revisión del 2026-08-07. En M12.8 hay que **extenderlo** a los catálogos nuevos, no construirlo.
+    - **Lo que sí falta** no se "perdió": nunca entró. Seis catálogos viven como literales en la demo y no tienen tabla ni entrada en el JSON — **`VF_DOMINIOS`** (6, con código CIF), **`VF_NIVELES`** (5), **`PRESTACIONES`** (8), `BPS_PRESTACIONES`, `BPS_ESTADOS` y `LIKERT_LBL` (5 etiquetas). Hoy viven como JSONB dentro de `valoracion_funcional.dominios` o directamente en ningún lado. Decidir en M12.1/M12.8 cuáles merecen tabla.
+  - **Diff preliminar de los 60 descriptores del IDEA (solo reportado, NO aplicado):**
+    - **59 de 60 difieren textualmente** del `IDEA_DESC` del prototipo, pero **ninguno por corrimiento de niveles**. Se construyó la matriz de similitud de cada nivel nuestro contra los 5 del prototipo: en **58 de 60** el mejor calce es el **mismo nivel**, y los 2 restantes (D6 n2, D9 n2) son señal débil de reformulación, no intercambio — el texto de un nivel nuestro **nunca** aparece en otro nivel del prototipo.
+    - Los 60 nuestros son el **texto literal de la fuente oficial** (`docs/markdown/escala-del-inventario-del-espectro-autista-idea.md`, Rivière); los del prototipo son **paráfrasis condensadas** de los mismos niveles (ej. D4/8: "Ausencia de comunicación (relación intencionada, intencional y significante) y de conductas instrumentales con personas" vs. "Ausencia de comunicación entendida como relación intencionada mediante significantes").
+    - **El corrimiento que el prototipo dice haber corregido no es contra nosotros.** El literal del HTML lo dice explícito: *"corrimiento de niveles detectado en materiales institucionales previos (Dimensiones 3, 4, 6 y 12 de la «Guía del aplicador», hoy desestimada)"* — un documento interno de IPPU que **nunca tuvimos** y del que **nuestros descriptores no derivan**.
+    - **Recomendación (a decidir en M12.1, no tomada acá):** **no reemplazar** los 60 por los del prototipo — perderíamos fidelidad al instrumento original a cambio de nada. Si la versión corta les sirve en pantalla, entra como campo aparte (`descriptor_breve`), no encima del oficial. Lo que sí conviene tomar del prototipo son los catálogos que **no tenemos**: `IDEA_FICHAS` (12), `IDEA_EJ` (12) e `IDEA_REGLAS` (9).
+  - **Verificación de la sesión:** `pytest -q` **21 passed** · `alembic heads` una sola cabeza y la base al día · 28 tablas · catálogos con los conteos esperados. **Ningún cambio en modelos, migraciones ni catálogos.**
+  - **Próximo: M12.1** (correcciones al esquema existente) — va **primera y sola**, con los 21 tests corriendo después de cada cambio. **Antes:** confirmar **D9** con el equipo. (Lucas + Claude)

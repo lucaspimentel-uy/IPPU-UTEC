@@ -41,9 +41,11 @@ IPPU/
 ├── docs/
 │   ├── estructura-repositorio.md  # Mapa detallado de carpetas y rutas del repo
 │   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
+│   │   └── prototipo-v4/      # HTML del Prototipo v4 + prototipo-v4-catalogos.json (32 constantes)
 │   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
+│   │   └── prototipo-v4-referencia.md   # qué hay dentro del Prototipo v4 y dónde (fuente normativa M12)
 │   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (para enviar)
-│   └── planes/                # Planes de ronda (p. ej. PLAN-modular-adaptacion-HCE-2026-07.md)
+│   └── planes/                # Planes de ronda (M0–M11 · PLAN-M12-absorcion-prototipo-v4-2026-08.md)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
@@ -53,7 +55,8 @@ IPPU/
 │           ├── alembic/      # migraciones · docs/ (esquema-datos.md, ejemplos-endpoints.md)
 │           └── tests/        # pytest (base aislada)
 └── herramientas/
-    └── conversor_docling.py   # Conversor de documentos → Markdown (Docling)
+    ├── conversor_docling.py       # Conversor de documentos → Markdown (Docling)
+    └── extraer_prototipo_v4.js    # Regenera los catálogos del Prototipo v4 desde su URL (para diffear una v5)
 ```
 
 ## Convertir documentos a Markdown
@@ -83,8 +86,14 @@ React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · P
 
 **Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres.
 
-**Ronda en curso — M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
-- **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: 18 tests estructurales.
+**Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
+Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
+Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
+capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
+`docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
+
+**M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
+- **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: **21 tests estructurales**.
 - **FALTA:** **M11.3** servicios y guards (§4 del esquema: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4) → **M11.4** routers → **M11.5** seed espejo de la demo + pytest → **M11.6** docs. Después: Fase 3 (demo↔API), Fase 4 (JWT), Fase 6 (Docker completo).
 - **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan desde la demo**, no se editan a mano.
 - **Antes de dar algo por definido, mirar `docs/notas/puntos-a-validar.md`**: hay supuestos tomados por nosotros que IPPU todavía no confirmó.

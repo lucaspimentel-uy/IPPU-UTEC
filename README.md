@@ -23,9 +23,10 @@ IPPU/
 ├── docs/
 │   ├── estructura-repositorio.md  ← Mapa detallado de carpetas y rutas del repo
 │   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
+│   │   └── prototipo-v4/  ← Prototipo v4 de IPPU (HTML original + sus catálogos extraídos)
 │   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
 │   ├── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
-│   └── planes/     ← Planes de ronda (p. ej. PLAN-modular-adaptacion-HCE-2026-07.md, M0–M11)
+│   └── planes/     ← Planes de ronda (M0–M11 · M12 absorción del Prototipo v4 ← vigente)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
 │       ├── demo/           ← Demo navegable (datos simulados, sin backend)
@@ -34,7 +35,8 @@ IPPU/
 │       │   └── js/         ← 12 módulos; se cargan en orden y ese orden ES la semántica
 │       └── backend/                       ← API FastAPI + SQLAlchemy + Alembic (ver su README)
 └── herramientas/
-    └── conversor_docling.py   ← Conversor de documentos a Markdown
+    ├── conversor_docling.py       ← Conversor de documentos a Markdown
+    └── extraer_prototipo_v4.js    ← Regenera los catálogos del Prototipo v4 desde su URL
 ```
 
 ## 📌 Estado de la Línea 1 (ago-2026)
@@ -55,10 +57,16 @@ IPPU/
   incremental posible. Hecho el 2026-08-07: **M11.1** (infra Postgres-only con docker-compose) y **M11.2**
   (28 tablas del esquema v2, migración inicial única y catálogos cargados — 12 dimensiones IDEA con sus 60
   descriptores, 24 ítems IPPU-TEA, baremo, categorías documentales, recordatorios, talleres y servicios).
-  Verificado con 18 tests estructurales contra Postgres. **Falta M11.3** (los servicios con las reglas
+  Verificado con **21 tests estructurales** contra Postgres. **Falta M11.3** (los servicios con las reglas
   clínicas), M11.4 (routers), M11.5 (seed + tests) y M11.6 (docs). Arranque en
   `implementacion/L1-hce-idea/backend/README.md`; esquema en `backend/docs/esquema-datos-v2.md`.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
+- **Ronda M12 — absorción del Prototipo v4 (ago-2026), en curso.** IPPU publicó su **Prototipo v4** con el
+  Manual de Procedimientos v1.0, que pasa a ser la fuente normativa por encima del Documento Técnico
+  (`handoff.md` §5.10). Se intercala entre M11.2 y M11.3 porque toca la misma capa (modelos, migración,
+  catálogos): 6 bandas del IDEA, 14 talleres reales, y cuatro módulos nuevos — **HCE-SEV** (severidad
+  DSM-5-TR), **HCE-INC** (inclusión educativa), **HCE-PAI** (propuesta de atención individual de INAU) y
+  **ateneos/jornadas**. Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`.
 - **Qué falta definir con IPPU** (validar la demo, cortes del baremo, acceso a la HCE actual…) está en
   `docs/notas/puntos-a-validar.md` — versión interna, con lo que bloquea cada punto. La versión **no
   técnica para mandarle a IPPU**, en formato de cuestionario, es `docs/notas/consulta-a-ippu.md`.
