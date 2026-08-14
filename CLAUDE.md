@@ -39,9 +39,11 @@ IPPU/
 ├── CLAUDE.md                  # Este archivo
 ├── README.md                  # Overview para humanos
 ├── docs/
+│   ├── estructura-repositorio.md  # Mapa detallado de carpetas y rutas del repo
 │   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
 │   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
-│   └── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (para enviar)
+│   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (para enviar)
+│   └── planes/                # Planes de ronda (p. ej. PLAN-modular-adaptacion-HCE-2026-07.md)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)

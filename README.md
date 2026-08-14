@@ -20,11 +20,12 @@ IPPU/
 ├── handoff.md      ← Estado del proyecto + decisiones + flujo de trabajo (EMPEZAR POR ACÁ)
 ├── CLAUDE.md       ← Guía de contexto para las sesiones de Claude
 ├── README.md       ← Este archivo
-├── PLAN-modular-adaptacion-HCE-2026-07.md  ← Plan de la ronda M0–M11 (adaptación al Doc. Técnico)
 ├── docs/
+│   ├── estructura-repositorio.md  ← Mapa detallado de carpetas y rutas del repo
 │   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
 │   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
-│   └── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
+│   ├── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
+│   └── planes/     ← Planes de ronda (p. ej. PLAN-modular-adaptacion-HCE-2026-07.md, M0–M11)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
 │       ├── demo/           ← Demo navegable (datos simulados, sin backend)
