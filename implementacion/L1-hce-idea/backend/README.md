@@ -2,9 +2,14 @@
 
 API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL.**
 
-> **Estado: M11.2.** Esquema v2 completo (28 tablas) y catálogos cargados.
-> Los routers de dominio se construyen en M11.4 — hoy la API sólo expone `/health`.
-> El esquema está documentado en [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
+> **Estado: M12.1** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1:
+> **33 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
+> expone `/health`. El esquema está documentado en [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
+>
+> ⚠️ **Durante M12 la migración está congelada** (regla de la ronda): nadie corre
+> `alembic revision --autogenerate` hasta **M12.8**, donde se regenera la migración inicial única. O sea
+> que **los modelos van adelante del esquema aplicado** y `alembic upgrade head` todavía crea las 28
+> tablas de M11.2. Los tests no dependen de eso: crean las tablas desde los modelos.
 
 ## Arranque
 
@@ -66,9 +71,9 @@ backend/
 ├── docker/initdb/           # crea la base ippu_test al inicializar el volumen
 ├── alembic/                 # migración inicial única del esquema v2
 ├── app/
-│   ├── core/                # config (valida que sea Postgres) · database
-│   ├── models/              # catalogos · identidad · modulos · transversales
-│   ├── data/                # catalogos_iniciales.json (generado desde la demo)
+│   ├── core/                # config (valida que sea Postgres) · database · constantes
+│   ├── models/              # catalogos · identidad · modulos · transversales · mixins
+│   ├── data/                # catalogos_iniciales.json (generado, no editar a mano)
 │   ├── seed_catalogos.py    # carga idempotente de catálogos
 │   └── main.py              # /health (routers: M11.4)
 ├── tests/                   # tests estructurales del esquema
@@ -93,10 +98,25 @@ previsto está en [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md) §4.
 
 ## Catálogos
 
-`app/data/catalogos_iniciales.json` **se genera desde la demo v4.1**, que es la
-fuente de verdad del modelo clínico (es lo que se adaptó al Documento Técnico en
-la ronda M0–M10). Contiene 12 dimensiones IDEA con sus 60 descriptores, los 24
-ítems de la Escala IPPU-TEA, el baremo BUND, 12 categorías documentales, 4
-recordatorios, 8 talleres y 3 servicios.
+`app/data/catalogos_iniciales.json` **no se edita a mano**: lo genera
 
-No editarlo a mano: si cambia el instrumento, cambia primero en la demo.
+```bash
+python herramientas/generar_catalogos_backend.py          # regenera
+python herramientas/generar_catalogos_backend.py --check  # falla si el repo quedó desfasado
+```
+
+Contiene 12 dimensiones IDEA con sus 60 descriptores oficiales (**+ la versión
+corta del Prototipo v4 en `descriptor_breve`**), los 24 ítems de la Escala
+IPPU-TEA, el baremo BUND, 12 categorías documentales, **8 recordatorios**, 8
+talleres (los 14 reales entran en M12.3), 3 servicios y los catálogos que sumó
+M12.1: **6 bandas del IDEA**, **6 tramos de interpretación del Δ**, 12 fichas, 48
+ejemplos clínicos, 9 reglas y los **4 grupos por color**.
+
+Dos fuentes, y el script sabe cuál es cuál: los instrumentos vienen de la demo
+v4.1 (lo que se adaptó al Documento Técnico en M0–M10) y lo nuevo, del Prototipo
+v4 (`docs/fuentes/prototipo-v4/`). En **M12.8** todo pasa a salir del prototipo.
+
+**Lo que no es catálogo** —etiquetas Likert, dominios y niveles de HCE-VF, guía
+de prestaciones, opciones de BPS, vocabulario institucional— vive en
+`app/core/constantes.py`. El criterio para decidir tabla vs. constante está
+escrito en el docstring de ese archivo.

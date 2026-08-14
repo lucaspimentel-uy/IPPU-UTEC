@@ -25,6 +25,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.mixins import OrigenMigracionMixin
 
 if TYPE_CHECKING:  # sólo para los tipos: evita el import circular en runtime
     from app.models.identidad import HceDiurna
@@ -64,7 +65,7 @@ class Consentimiento(FirmaMixin, Base):
     documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"), index=True)
 
 
-class Idea(FirmaMixin, Base):
+class Idea(FirmaMixin, OrigenMigracionMixin, Base):
     """HCE-LB — el IDEA como **línea base única**, no como evaluación anual.
 
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
@@ -77,6 +78,12 @@ class Idea(FirmaMixin, Base):
 
     `dim` = 12 × `{valor: 0..8 | "NS", obs}`. "NS" (no sabe / no corresponde)
     excluye la dimensión del total y **bloquea la firma** — regla del servicio.
+
+    **M12.1:** se agrega `manual_version` y el `migrado_origen JSONB` de M11.2 se
+    reemplaza por los cuatro campos tipados de `OrigenMigracionMixin` (ver su
+    docstring). Es el único módulo del flujo que los lleva: la estrategia de
+    migración de IPPU trae **sólo el IDEA** estructurado, el resto entra como
+    documento legacy.
     """
     __tablename__ = "idea"
 
@@ -89,8 +96,12 @@ class Idea(FirmaMixin, Base):
     sesiones: Mapped[int | None] = mapped_column(Integer)
     sintesis: Mapped[str | None] = mapped_column(Text)
     objetivos: Mapped[str | None] = mapped_column(Text)
-    # Marca de dato traído de la HCE anterior, con su procedencia (§10).
-    migrado_origen: Mapped[dict | None] = mapped_column(JSONB)
+    # Versión del manual con la que se aplicó esta evaluación. El Prototipo v4
+    # lo pide explícitamente al backend: la escribe el servidor al firmar, con
+    # `IDEA_MANUAL_VERSION` de `core/constantes.py`. Sin esto, corregir un
+    # descriptor reescribiría el criterio de todas las evaluaciones pasadas.
+    # Nullable porque los históricos migrados no la tienen.
+    manual_version: Mapped[str | None] = mapped_column(String(60))
 
     # Materializados por el servidor. Menor = mejor (0 = sin trastorno).
     total: Mapped[int | None] = mapped_column(Integer)

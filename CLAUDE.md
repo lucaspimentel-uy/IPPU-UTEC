@@ -55,8 +55,9 @@ IPPU/
 │           ├── alembic/      # migraciones · docs/ (esquema-datos.md, ejemplos-endpoints.md)
 │           └── tests/        # pytest (base aislada)
 └── herramientas/
-    ├── conversor_docling.py       # Conversor de documentos → Markdown (Docling)
-    └── extraer_prototipo_v4.js    # Regenera los catálogos del Prototipo v4 desde su URL (para diffear una v5)
+    ├── conversor_docling.py            # Conversor de documentos → Markdown (Docling)
+    ├── extraer_prototipo_v4.js         # Regenera los catálogos del Prototipo v4 desde su URL (para diffear una v5)
+    └── generar_catalogos_backend.py    # Genera app/data/catalogos_iniciales.json (`--check` para validar)
 ```
 
 ## Convertir documentos a Markdown
@@ -91,11 +92,19 @@ Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa 
 Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
 capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
+- **M12.0 y M12.1 HECHOS** (2026-08-14): **33 tablas**, 5 catálogos nuevos, D9 (`grupo`) implementada,
+  **53 tests**. Sigue **M12.2** (puntuación independiente y consenso, D7).
+- ⚠️ **Regla de la ronda: nadie corre `alembic revision --autogenerate` hasta M12.8.** Se trabaja sobre
+  los modelos; la migración inicial única se regenera una sola vez al cierre. Por eso
+  `test_la_migracion_coincide_con_los_modelos` está **salteado a propósito** y M12.8 debe reactivarlo.
+- Los catálogos se regeneran con **`python herramientas/generar_catalogos_backend.py`** (`--check` valida
+  que el JSON del repo esté al día). Lo que **no** es catálogo —Likert, dominios de VF, prestaciones,
+  vocabulario— vive en `app/core/constantes.py`, con el criterio escrito en su docstring.
 
 **M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
 - **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: **21 tests estructurales**.
 - **FALTA:** **M11.3** servicios y guards (§4 del esquema: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4) → **M11.4** routers → **M11.5** seed espejo de la demo + pytest → **M11.6** docs. Después: Fase 3 (demo↔API), Fase 4 (JWT), Fase 6 (Docker completo).
-- **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan desde la demo**, no se editan a mano.
+- **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan** con `herramientas/generar_catalogos_backend.py`, no se editan a mano.
 - **Antes de dar algo por definido, mirar `docs/notas/puntos-a-validar.md`**: hay supuestos tomados por nosotros que IPPU todavía no confirmó.
 
 ## Reglas importantes

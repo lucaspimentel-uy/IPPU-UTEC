@@ -144,20 +144,23 @@ backend/
 │   ├── script.py.mako
 │   └── versions/
 │       └── f6ca521bcc6a_esquema_v2_inicial_m11_2.py   # migración única del esquema v2 (28 tablas)
+│           # ⚠️ congelada durante M12: se regenera una sola vez en M12.8 (33 tablas y las que sumen M12.3–M12.7)
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
 │   ├── core/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
+│   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 28 tablas del esquema v2
+│   ├── models/               # SQLAlchemy — 33 tablas del esquema v2 (28 de M11.2 + 5 de M12.1)
 │   │   ├── catalogos.py
 │   │   ├── identidad.py
+│   │   ├── mixins.py         # OrigenMigracionMixin (metadatos de dato migrado, §10)
 │   │   ├── modulos.py
 │   │   └── transversales.py
 │   ├── schemas/              # Pydantic (pendiente: M11.3/M11.4)
 │   ├── routers/               # endpoints REST (pendiente: M11.4)
 │   ├── data/
-│   │   └── catalogos_iniciales.json   # generado desde la demo — no editar a mano
+│   │   └── catalogos_iniciales.json   # generado por herramientas/generar_catalogos_backend.py
 │   └── seed_catalogos.py
 ├── docs/
 │   ├── esquema-datos.md        # esquema v1 (histórico, backend v1 retirado)
@@ -166,7 +169,8 @@ backend/
 ├── pytest.ini                   # pythonpath=. → que `pytest -q` funcione tal como está documentado
 ├── tests/
 │   ├── conftest.py
-│   └── test_esquema_v2.py       # tests estructurales contra Postgres (21)
+│   ├── test_esquema_v2.py       # tests estructurales de M11.2 (21; 1 salteado mientras dure M12)
+│   └── test_m12_catalogos.py    # tests de M12.1: grupo/D9, bandas, Δ, catálogos IDEA, seed (32)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
@@ -177,13 +181,19 @@ Notas:
   el arranque paso a paso en `CLAUDE.md` (sección "Stack objetivo de L1") y en `backend/README.md`.
 - **`app/schemas/` y `app/routers/`** existen como paquetes vacíos a la espera de M11.3 (servicios y
   guards) y M11.4 (routers) — ver `handoff.md` §6 para el estado exacto.
-- **Catálogos:** `app/data/catalogos_iniciales.json` se genera desde la demo, nunca se edita a mano.
+- **Catálogos:** `app/data/catalogos_iniciales.json` lo genera `herramientas/generar_catalogos_backend.py`
+  (`--check` valida que el del repo esté al día); nunca se edita a mano. Lo que **no** es catálogo va a
+  `app/core/constantes.py`, con el criterio tabla-vs-constante escrito en su docstring.
+- **Migraciones congeladas durante M12:** nadie corre `alembic revision --autogenerate` hasta M12.8. Los
+  modelos van adelante del esquema aplicado a propósito, y `test_la_migracion_coincide_con_los_modelos`
+  queda salteado (reporta el conteo de diferencias) hasta que M12.8 lo reactive.
 
 ## `herramientas/`
 
 | Ruta | Qué es |
 |---|---|
 | `herramientas/conversor_docling.py` | Convierte `docs/fuentes/*` → `docs/markdown/*.md` (Docling). Uso en `CLAUDE.md`. |
+| `herramientas/generar_catalogos_backend.py` | `python herramientas/generar_catalogos_backend.py` → genera `backend/app/data/catalogos_iniciales.json` desde la demo v4.1 y el Prototipo v4. Con `--check` no escribe: falla si el archivo del repo quedó desfasado (sirve para CI y para detectar ediciones a mano). |
 | `herramientas/extraer_prototipo_v4.js` | `node herramientas/extraer_prototipo_v4.js` → regenera `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` desde la URL publicada del Prototipo v4. Existe para **diffear** si IPPU publica una v5, no para correrlo de rutina. |
 
 ## `graphify-out/`

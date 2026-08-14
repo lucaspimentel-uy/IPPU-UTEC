@@ -149,11 +149,18 @@ Primero, solo, con los tests de M11.2 corriendo después de cada cambio.
   evaluación firmada — el prototipo lo pide explícitamente al backend) y los campos de migración:
   `sistema_origen`, `fecha_original`, `fecha_migracion`, `responsable_migracion`. Mismos campos de origen
   en `persona`/`hce_diurna`.
-- **`nivel_idea` — los 60 descriptores:** **diffear** los actuales contra `IDEA_DESC` del JSON extraído
-  (forma `{que, n8, n6, n4, n2, n0}` por dimensión). El prototipo declara haber corregido un corrimiento
-  de niveles en **D3, D4, D6 y D12**. **Reportar el diff antes de aplicarlo**: si el corrimiento es real,
-  hay una pregunta clínica que no nos toca resolver — qué pasa con las evaluaciones ya aplicadas con los
-  descriptores viejos — y va a `puntos-a-validar.md`.
+- **`nivel_idea` — los 60 descriptores: NO se reemplazan.** ✅ **Resuelto en M12.1** (el diff se hizo en
+  M12.0, ver bitácora del 2026-08-14). **Fundamento:** 59 de 60 difieren textualmente del `IDEA_DESC` del
+  prototipo pero **ninguno por corrimiento de niveles** — en 58 de 60 el mejor calce es el mismo nivel y
+  el texto de un nivel nuestro nunca aparece en otro nivel del prototipo. **El corrimiento que el
+  prototipo dice haber corregido no es contra nosotros**: su propio literal lo declara contra una «Guía
+  del aplicador» interna de IPPU, hoy desestimada, que nunca tuvimos y de la que nuestros descriptores no
+  derivan. Los nuestros son el **texto literal de la fuente oficial** (Rivière, 1997/2002); los suyos son
+  paráfrasis condensadas. Reemplazarlos sería perder fidelidad al instrumento a cambio de nada.
+  **Lo que sí se toma:** la versión corta entra **aparte** como `idea_nivel.descriptor_breve` (sirve en
+  pantalla, donde el oficial no entra) y el resumen de dimensión como `idea_dimension.que_evalua`.
+  La pregunta clínica sigue abierta pero **no nos toca resolverla**: si IPPU aplicó evaluaciones con la
+  Guía corrida, qué se hace con esos puntajes. Ya está en `handoff.md` §7 y va a la reunión.
 - **Catálogos IDEA nuevos, del JSON:** `IDEA_FICHAS` (12 fichas: `def, obj, ind, nc, err, pg, martos,
   evid`), `IDEA_EJ` (ejemplo clínico por nivel: `e8, e6, e4, e2`) y `IDEA_REGLAS` (9 reglas con fuente).
   Son la ayuda contextual en tres niveles que pide el changelog v2.
@@ -162,17 +169,35 @@ Primero, solo, con los tests de M11.2 corriendo después de cada cambio.
 - **`recordatorio`**: hoy 4. Cargar IDEA semanas 2–3 del ingreso · PA receso de julio · PB última semana
   lectiva · IC 10 días hábiles tras PB · AYEX 60/30 · valoración funcional 90/30 · HCE-INC sin gestiones
   >60 días · informes semestrales INAU pendientes. Configurables y **no bloqueantes**.
-- **`baremo_categoria`**: agregar el campo **`implicancia`**. Ojo: **la demo ya lo tiene** — las 5
-  categorías con su `imp` están en `demo/js/hce-doc-org-vf.js` (~línea 243), con el mismo texto que el
-  prototipo. O sea que M11.2c lo perdió al generar los catálogos. Verificar qué más se perdió en esa
-  generación antes de dar por buena la tabla. Los cortes sí coinciden exactamente.
+- ~~**`baremo_categoria`**: agregar el campo **`implicancia`**.~~ ❌ **Este bullet no tenía trabajo.**
+  Verificado en M12.0: `implicancia` **ya está** en el modelo (`app/models/catalogos.py`), en
+  `app/data/catalogos_iniciales.json` y en la base, con texto **idéntico** al `imp` del prototipo en las
+  5 categorías, igual que los cortes. La sospecha de que M11.2c había perdido cosas al generar los
+  catálogos **no se confirmó**: se comparó todo lo generado contra la demo y coincide (60/60
+  descriptores, 24/24 ítems, 12/12 categorías documentales, 4/4 recordatorios). Lo que falta no se
+  perdió: **nunca entró** (ver el bullet de abajo).
 - **`auditoria`**: verificar granularidad de campo (`modulo, campo, valor_ant, valor_nuevo`).
+- **Los 6 catálogos que viven sueltos en la demo** y no tienen tabla ni entrada en el JSON —
+  `VF_DOMINIOS`, `VF_NIVELES`, `PRESTACIONES`, `BPS_PRESTACIONES`, `BPS_ESTADOS`, `LIKERT_LBL`.
+  **Criterio:** tabla si se consulta, se filtra o la institución lo puede cambiar; constante si es texto
+  fijo de presentación. ✅ **Decidido en M12.1: los seis van a `app/core/constantes.py`**, ninguno a
+  tabla — acompañan a un valor que ya está guardado (un entero Likert 1–5, una clave de dominio dentro de
+  `valoracion_funcional.dominios`, texto libre de BPS), nadie los consulta por sí mismos y cambiarlos
+  tiene que pasar por revisión de código, no por `UPDATE`. Pasan a tabla el día que el panel necesite
+  filtrar por alguno.
 - **Vocabulario:** «severo / muy severo» o «alta necesidad de apoyo», **nunca** «grave / muy grave».
 - **Cita:** «Rivière, **1997/2002**» en todo el repo, docs incluidos.
 
 **Verificación:** los 21 tests de M11.2 en verde · test de que ningún registro de catálogo contiene
 "grave" · test de los 6 tramos con sus bordes (0, 15, 16, 90, 91, 96) · el diff de descriptores reportado
 por escrito, se aplique o no.
+
+> ⚠️ **Ajuste al criterio de verificación, hecho en M12.1.** El test
+> `test_la_migracion_coincide_con_los_modelos` **no puede estar en verde durante la ronda**: la regla de
+> §3 dice que la migración se regenera una sola vez en M12.8, así que los modelos van deliberadamente
+> adelante del esquema aplicado. Queda **salteado con el conteo de diferencias en el mensaje** (visible
+> con `pytest -rs`) en vez de borrado, y **M12.8 tiene que volver a poner el `assert`**. Los otros 20 de
+> M11.2 siguen en verde.
 
 ---
 
@@ -275,16 +300,22 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 Una sola persona.
 - **Regenerar la migración inicial única.** Reconstrucción limpia: drop schema → `alembic upgrade head` →
   `python -m app.seed_catalogos`.
-- **Seed:** regenerar `app/data/catalogos_iniciales.json` **desde
-  `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json`**, no desde la demo
-  — la fuente autoritativa cambió. **Respetar `solo_al_crear`**: cortes del baremo, recordatorios
-  desactivados, catálogo de talleres y catálogo de centros son campos de la institución; se escriben al
-  insertar y no se pisan al re-correr el seed. Es el bug grave de M11.2 y los catálogos nuevos son todos
-  de esa clase.
+- **Seed:** terminar de regenerar `app/data/catalogos_iniciales.json` desde
+  `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` — la fuente autoritativa cambió.
+  **M12.1 ya dejó el generador versionado:** `herramientas/generar_catalogos_backend.py` (con `--check`
+  para CI). Hoy produce las secciones nuevas y **preserva** las que vienen de la demo v4.1
+  (`DESDE_LA_DEMO`); M12.8 tiene que pasar esas también al prototipo y vaciar esa lista.
+  **Respetar `solo_al_crear`**: cortes del baremo y de las bandas del IDEA, recordatorios desactivados,
+  catálogo de talleres y catálogo de centros son campos de la institución; se escriben al insertar y no
+  se pisan al re-correr el seed. **Corrección al plan:** esto **no es un bug pendiente de M11.2** — ya
+  estaba implementado en `app/seed_catalogos.py` desde la revisión del 2026-08-07 (verificado en M12.0).
+  M12.1 lo **extendió** a bandas, Δ y grupos, y agregó el caso `solo_insertar` para `grupo`. Lo que queda
+  para M12.8 es extenderlo a los catálogos de M12.3–M12.7.
 - **Índices de FK** en cada tabla nueva: que la cuenta de FKs sin respaldo siga en **0**.
 - **Tipos:** columnas `Numeric` anotadas `Decimal`, no `float`.
-- **Tests:** los 21 de M11.2 + los nuevos de cada módulo + el test de desfasaje modelos ↔ migración. Cada
-  rechazo probado junto con su caso que sí debe pasar.
+- **Tests:** los 21 de M11.2 + los nuevos de cada módulo + **volver a activar** el test de desfasaje
+  modelos ↔ migración, que M12.1 dejó salteado a propósito mientras la migración está congelada (ver el
+  recuadro de M12.1). Cada rechazo probado junto con su caso que sí debe pasar.
 - **Docs:** `backend/docs/esquema-datos-v2.md` → **v3** · `backend/README.md` · `CLAUDE.md` (ronda en
   curso) · `handoff.md` §6 y §13 · `docs/estructura-repositorio.md` si aparecieron carpetas nuevas.
 - **Nomenclatura:** cerrar `puntos-a-validar.md` §2.3 — conviven cinco usos de "fase" y esta ronda agrega
@@ -405,11 +436,11 @@ demo. Dos cosas para decidir antes de M12.5:
 | 6 bandas IDEA con nivel DSM y texto neutro | 3 bandas | M12.1 · D4 |
 | Interpretación del Δ en 6 tramos con acción | Solo alerta Δ ≤ −7 | M12.1 |
 | `IDEA_MANUAL_V` persistido por evaluación | No existe | M12.1 |
-| 60 descriptores, corregidos en D3/D4/D6/D12 | 60 extraídos de la demo | M12.1 · **diffear** |
-| `IDEA_FICHAS` (12) · `IDEA_EJ` (12) · `IDEA_REGLAS` (9) | No existen | M12.1 |
+| 60 descriptores, «corregidos» en D3/D4/D6/D12 | 60 del texto oficial de Rivière | ✅ **Se mantienen los nuestros**; la versión corta entra como `descriptor_breve` (diff en M12.0) |
+| `IDEA_FICHAS` (12) · `IDEA_EJ` (12) · `IDEA_REGLAS` (9) | No existen | M12.1 ✅ (`idea_ficha` 12 · `idea_ejemplo` 48 · `idea_regla` 9) |
 | 14 talleres reales, catálogo dinámico, por nombre | 8 talleres inventados, catálogo cerrado | M12.3 · D5 |
 | Grupos por color | `grupo.id (A..E)` | M12.1 · D9 |
-| `baremo_categoria.implicancia` | Sin el campo | M12.1 |
+| `baremo_categoria.implicancia` | **Ya está** (verificado en M12.0) | Sin trabajo |
 | HCE-SEV | No existe | M12.4 |
 | HCE-INC + catálogo de centros + tablero | No existe | M12.5 |
 | HCE-PAI (15 secciones, ~46 campos, 4 tablas hijas) | No existe | M12.6 |

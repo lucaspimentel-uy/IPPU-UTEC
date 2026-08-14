@@ -8,13 +8,14 @@ existir (corrección del bug B de `modelo-datos.md`: era 1:1 obligatorio).
 from datetime import date, datetime
 
 from sqlalchemy import (
-    Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text,
-    UniqueConstraint, func,
+    Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, SmallInteger,
+    String, Text, UniqueConstraint, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.mixins import OrigenMigracionMixin
 
 
 class Profesional(Base):
@@ -35,11 +36,15 @@ class Profesional(Base):
     )
 
 
-class Persona(Base):
+class Persona(OrigenMigracionMixin, Base):
     """Identidad única, transversal a servicios (§3.1).
 
     La edad **no se guarda**: se calcula desde `fecha_nac`. Guardarla obliga a
     mantenerla al día y garantiza que en algún momento quede mal.
+
+    Lleva los metadatos de origen (M12.1) porque en la migración hay personas
+    que existen sólo en la HCE anterior: hay que poder decir cuáles y verificar
+    ese subconjunto por muestreo.
     """
     __tablename__ = "persona"
 
@@ -79,28 +84,45 @@ class PersonaServicio(Base):
 
 
 class Grupo(Base):
-    """Grupo de Atención Diurna (A..E), con hasta 2 técnicos a cargo.
+    """Grupo de Atención Diurna de **un año**, con hasta 2 técnicos a cargo.
+
+    **D9 (`handoff.md` §5.18), confirmada por el equipo el 2026-08-14.** El `id`
+    es un entero autoincremental **sin significado**: no es la letra ni el color.
+    La identidad real del grupo es `UNIQUE(nombre, anio)`.
+
+    Antes la PK era la letra (`A..E`), y eso hacía que un grupo existiera **una
+    sola vez en toda la historia**: crear el de 2027 obligaba a sobrescribir la
+    fila de 2026 —se perdía quiénes fueron sus técnicos ese año— y los
+    expedientes de 2026 (`hce_diurna.grupo_id`) pasaban a apuntar al grupo nuevo
+    sin aviso. Con id propio, "Azul 2026" y "Azul 2027" son dos filas distintas
+    y el vínculo de cada expediente no se mueve nunca; el `UNIQUE` impide el
+    problema opuesto, dos filas "Azul 2026" por error.
+
+    **`nombre` es el color** — Azul · Celeste · Naranja · Verde, que es el
+    dominio real de IPPU (Prototipo v4); `A..E` era invención nuestra. Va en la
+    fila y no en un catálogo aparte: si en 2028 dejan de usar "Naranja", la fila
+    de 2026 lo sigue diciendo.
+
+    **Granularidad anual, no por fecha**: con fecha completa volverían a existir
+    dos grupos Azul en el mismo año, y `anio` es además la granularidad que ya
+    usan `protocolo` e `informe_cierre`.
+
+    ⚠️ **Límite aceptado:** si un técnico cambia a mitad de año, la fila se
+    sobrescribe y sólo queda rastro en `auditoria`. Ver la nota de
+    `docs/esquema-datos-v2.md` §2.1 antes de tocar esto.
 
     `tecnicoN_rol` es **texto libre** y no un enum: decisión §5.2.3 de
     portabilidad. Hoy IPPU usa "Psicólogo/a" y "Maestro/a", pero otra
     institución podría tener otros y no queremos una migración para eso.
-
-    ⚠️ **LIMITACIÓN CONOCIDA, SIN RESOLVER.** La PK es sólo la letra pero la
-    tabla lleva `anio`: el grupo A existe para **un único año en toda la
-    historia**. Crear el A de 2027 obliga a sobrescribir el de 2026 —se pierde
-    quiénes fueron sus técnicos— y los expedientes viejos, que en `grupo_id`
-    guardan sólo la letra, pasan a apuntar al grupo nuevo sin aviso.
-    Está así porque así lo especifica `docs/esquema-datos-v2.md` §2.1; cambiarlo
-    modifica ese documento y se decide por escrito. Ver la nota en el esquema y
-    `docs/notas/puntos-a-validar.md` §2.6 antes de tocar esta tabla.
     """
     __tablename__ = "grupo"
 
-    id: Mapped[str] = mapped_column(String(2), primary_key=True)   # "A".."E"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(60))       # "Grupo Azul", "Grupo Celeste", …
+    anio: Mapped[int] = mapped_column(SmallInteger)
     franja: Mapped[str | None] = mapped_column(String(60))
     dias: Mapped[str | None] = mapped_column(String(60))
     horario: Mapped[str | None] = mapped_column(String(60))
-    anio: Mapped[int] = mapped_column(Integer)
     tecnico1_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     tecnico1_rol: Mapped[str | None] = mapped_column(String(60))
     tecnico2_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
@@ -110,8 +132,12 @@ class Grupo(Base):
     tecnico1: Mapped["Profesional | None"] = relationship(foreign_keys=[tecnico1_id])
     tecnico2: Mapped["Profesional | None"] = relationship(foreign_keys=[tecnico2_id])
 
+    __table_args__ = (
+        UniqueConstraint("nombre", "anio", name="uq_grupo_nombre_anio"),
+    )
 
-class HceDiurna(Base):
+
+class HceDiurna(OrigenMigracionMixin, Base):
     """El expediente en el Servicio de Atención Diurna. HCE-00.
 
     Este módulo **siempre está abierto**: no se firma y por lo tanto no se
@@ -129,7 +155,9 @@ class HceDiurna(Base):
     # Número de historia de la HCE anterior. Identificador secundario (§10):
     # sirve para cruzar con el archivo histórico, no como clave.
     hc_historico: Mapped[str | None] = mapped_column(String(30))
-    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"), index=True)
+    # D9: apunta a la fila del grupo **de ese año**, no a una letra. Para
+    # mostrarlo se usa `grupo.nombre`; el id no significa nada.
+    grupo_id: Mapped[int | None] = mapped_column(ForeignKey("grupo.id"), index=True)
 
     diagnostico: Mapped[str | None] = mapped_column(String(200))
     cie11: Mapped[str | None] = mapped_column(String(20))

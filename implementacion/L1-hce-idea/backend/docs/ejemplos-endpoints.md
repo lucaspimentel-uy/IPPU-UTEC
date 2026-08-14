@@ -1,5 +1,10 @@
 # Ejemplos de endpoints — API HCE + IDEA (Fase 2)
 
+> ⚠️ **DOCUMENTO HISTÓRICO (API v1).** Los endpoints de acá **ya no existen**: el backend v1 se retiró
+> entero en M11.2 (2026-08-07). Los routers v2 son **M11.4** y este archivo se regenera ahí. Se conserva
+> como registro del contrato anterior. Ojo con `"grupo_id": "A"`: desde M12.1 el grupo tiene id entero y
+> se muestra por su nombre (color) — D9, `handoff.md` §5.18.
+
 > Generado automáticamente ejercitando cada endpoint contra una base de prueba seedeada.
 > Request y response reales. Las listas largas se abrevian.
 

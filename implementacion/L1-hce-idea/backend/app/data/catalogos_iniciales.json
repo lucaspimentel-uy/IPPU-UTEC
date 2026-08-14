@@ -1,391 +1,463 @@
 {
-  "_origen": "Generado desde demo/js/{catalogos,hce-doc-org-vf,recordatorios}.js + index.html (demo v4.1). No editar a mano sin actualizar la demo.",
+  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas y descriptor_breve: Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
   "idea_dimension": [
     {
       "id": 1,
       "codigo": "D1",
       "escala": "A",
       "escala_nombre": "Relación Social",
-      "nombre": "Relaciones Sociales"
+      "nombre": "Relaciones Sociales",
+      "que_evalua": "Cualidad del vínculo y del interés por las personas: desde el aislamiento completo hasta la motivación de relación con iguales."
     },
     {
       "id": 2,
       "codigo": "D2",
       "escala": "A",
       "escala_nombre": "Relación Social",
-      "nombre": "Capacidades de Referencia Conjunta"
+      "nombre": "Capacidades de Referencia Conjunta",
+      "que_evalua": "Capacidad de compartir la acción, la atención y la preocupación con otra persona (mirada referencial, acción conjunta)."
     },
     {
       "id": 3,
       "codigo": "D3",
       "escala": "A",
       "escala_nombre": "Relación Social",
-      "nombre": "Capacidades Intersubjetivas y Mentalistas"
+      "nombre": "Capacidades Intersubjetivas y Mentalistas",
+      "que_evalua": "Sintonía emocional con las personas y comprensión de que los otros tienen mente (intersubjetividad, teoría de la mente)."
     },
     {
       "id": 4,
       "codigo": "D4",
       "escala": "B",
       "escala_nombre": "Comunicación y Lenguaje",
-      "nombre": "Funciones Comunicativas"
+      "nombre": "Funciones Comunicativas",
+      "que_evalua": "Para qué se comunica: desde la ausencia de comunicación intencional hasta la capacidad de declarar y compartir experiencia."
     },
     {
       "id": 5,
       "codigo": "D5",
       "escala": "B",
       "escala_nombre": "Comunicación y Lenguaje",
-      "nombre": "Lenguaje Expresivo"
+      "nombre": "Lenguaje Expresivo",
+      "que_evalua": "Producción del lenguaje: desde el mutismo hasta el discurso conversacional."
     },
     {
       "id": 6,
       "codigo": "D6",
       "escala": "B",
       "escala_nombre": "Comunicación y Lenguaje",
-      "nombre": "Lenguaje Receptivo"
+      "nombre": "Lenguaje Receptivo",
+      "que_evalua": "Comprensión del lenguaje: desde la desatención total al habla hasta la comprensión del discurso con dificultades sutiles."
     },
     {
       "id": 7,
       "codigo": "D7",
       "escala": "C",
       "escala_nombre": "Anticipación / Flexibilidad",
-      "nombre": "Anticipación"
+      "nombre": "Anticipación",
+      "que_evalua": "Capacidad de anticipar lo que va a suceder y de manejar los cambios del entorno."
     },
     {
       "id": 8,
       "codigo": "D8",
       "escala": "C",
       "escala_nombre": "Anticipación / Flexibilidad",
-      "nombre": "Flexibilidad"
+      "nombre": "Flexibilidad",
+      "que_evalua": "Rigidez conductual y mental: estereotipias, rituales, apegos y contenidos obsesivos."
     },
     {
       "id": 9,
       "codigo": "D9",
       "escala": "C",
       "escala_nombre": "Anticipación / Flexibilidad",
-      "nombre": "Sentido de la Actividad"
+      "nombre": "Sentido de la Actividad",
+      "que_evalua": "Grado en que la actividad propia tiene propósito y sentido para la persona."
     },
     {
       "id": 10,
       "codigo": "D10",
       "escala": "D",
       "escala_nombre": "Simbolización",
-      "nombre": "Ficción e Imaginación"
+      "nombre": "Ficción e Imaginación",
+      "que_evalua": "Juego funcional, juego simbólico y capacidad de crear ficciones."
     },
     {
       "id": 11,
       "codigo": "D11",
       "escala": "D",
       "escala_nombre": "Simbolización",
-      "nombre": "Imitación"
+      "nombre": "Imitación",
+      "que_evalua": "Capacidad de imitar acciones, gestos y modelos de otras personas."
     },
     {
       "id": 12,
       "codigo": "D12",
       "escala": "D",
       "escala_nombre": "Simbolización",
-      "nombre": "Suspensión (capacidad de crear significantes)"
+      "nombre": "Suspensión (capacidad de crear significantes)",
+      "que_evalua": "Capacidad de \"dejar en suspenso\" acciones y significados para crear significantes: señalar, simbolizar, comprender metáforas."
     }
   ],
   "idea_nivel": [
     {
       "dimension_id": 1,
       "valor": 8,
-      "descriptor": "Aislamiento completo. No apego a personas específicas. No relación con adultos o iguales."
+      "descriptor": "Aislamiento completo. No apego a personas específicas. No relación con adultos o iguales.",
+      "descriptor_breve": "Aislamiento completo; impermeabilidad a las personas y a sus iniciativas."
     },
     {
       "dimension_id": 1,
       "valor": 6,
-      "descriptor": "Incapacidad de relación. Vínculo con adultos. No relación con iguales."
+      "descriptor": "Incapacidad de relación. Vínculo con adultos. No relación con iguales.",
+      "descriptor_breve": "Incapacidad de relación con iguales, aunque hay vínculo establecido con algunos adultos."
     },
     {
       "dimension_id": 1,
       "valor": 4,
-      "descriptor": "Relaciones infrecuentes, inducidas, externas con iguales. Las relaciones más como respuesta que a iniciativa propia."
+      "descriptor": "Relaciones infrecuentes, inducidas, externas con iguales. Las relaciones más como respuesta que a iniciativa propia.",
+      "descriptor_breve": "Relaciones con iguales infrecuentes, inducidas desde fuera y de carácter externo."
     },
     {
       "dimension_id": 1,
       "valor": 2,
-      "descriptor": "Motivación de relación con iguales, pero falta de relaciones por dificultad para comprender sutilezas sociales y escasa empatía. Conciencia de soledad."
+      "descriptor": "Motivación de relación con iguales, pero falta de relaciones por dificultad para comprender sutilezas sociales y escasa empatía. Conciencia de soledad.",
+      "descriptor_breve": "Hay motivación por relacionarse con iguales, pero dificultad para establecer relaciones por falta de comprensión de las sutilezas sociales."
     },
     {
       "dimension_id": 1,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de la relación social."
+      "descriptor": "No hay trastorno cualitativo de la relación social.",
+      "descriptor_breve": "Sin trastorno cualitativo de la relación social."
     },
     {
       "dimension_id": 2,
       "valor": 8,
-      "descriptor": "Ausencia completa de acciones conjuntas o interés por las otras personas y sus acciones."
+      "descriptor": "Ausencia completa de acciones conjuntas o interés por las otras personas y sus acciones.",
+      "descriptor_breve": "Ausencia completa de acciones conjuntas o de interés por las acciones de otras personas."
     },
     {
       "dimension_id": 2,
       "valor": 6,
-      "descriptor": "Acciones conjuntas simples, sin miradas significativas de referencia conjunta."
+      "descriptor": "Acciones conjuntas simples, sin miradas significativas de referencia conjunta.",
+      "descriptor_breve": "Realiza acciones conjuntas simples, sin miradas significativas de referencia conjunta."
     },
     {
       "dimension_id": 2,
       "valor": 4,
-      "descriptor": "Empleo de miradas de referencia conjunta en situaciones dirigidas, pero no abiertas."
+      "descriptor": "Empleo de miradas de referencia conjunta en situaciones dirigidas, pero no abiertas.",
+      "descriptor_breve": "Emplea miradas de referencia conjunta en situaciones dirigidas, pero no en situaciones abiertas."
     },
     {
       "dimension_id": 2,
       "valor": 2,
-      "descriptor": "Pautas establecidas de atención y acción conjunta, pero no de preocupación conjunta."
+      "descriptor": "Pautas establecidas de atención y acción conjunta, pero no de preocupación conjunta.",
+      "descriptor_breve": "Pautas de atención y acción conjunta establecidas; pueden faltar la preocupación conjunta o los marcos comunes de referencia."
     },
     {
       "dimension_id": 2,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de las capacidades de referencia conjunta."
+      "descriptor": "No hay trastorno cualitativo de las capacidades de referencia conjunta.",
+      "descriptor_breve": "Sin trastorno cualitativo de la referencia conjunta."
     },
     {
       "dimension_id": 3,
       "valor": 8,
-      "descriptor": "Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria). Falta de interés por las personas."
+      "descriptor": "Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria). Falta de interés por las personas.",
+      "descriptor_breve": "Ausencia de pautas de expresión emocional correlativa (intersubjetividad primaria); falta de interés por las personas."
     },
     {
       "dimension_id": 3,
       "valor": 6,
-      "descriptor": "Respuestas intersubjetivas primarias, pero ningún indicio de que se vive al otro como sujeto."
+      "descriptor": "Respuestas intersubjetivas primarias, pero ningún indicio de que se vive al otro como sujeto.",
+      "descriptor_breve": "Respuestas intersubjetivas primarias ocasionales; sin indicios de intersubjetividad secundaria."
     },
     {
       "dimension_id": 3,
       "valor": 4,
-      "descriptor": "Indicios de intersubjetividad secundaria, sin atribución explícita de estados mentales. No se resuelven tareas de Teoría de la Mente."
+      "descriptor": "Indicios de intersubjetividad secundaria, sin atribución explícita de estados mentales. No se resuelven tareas de Teoría de la Mente.",
+      "descriptor_breve": "Indicios de intersubjetividad secundaria, sin atribución explícita de mente; no resuelve tareas mentalistas."
     },
     {
       "dimension_id": 3,
       "valor": 2,
-      "descriptor": "Conciencia explícita de que las otras personas tienen mente (resolución de Teoría de la Mente de 1.er orden). En situaciones reales, el mentalismo es lento, simple y limitado."
+      "descriptor": "Conciencia explícita de que las otras personas tienen mente (resolución de Teoría de la Mente de 1.er orden). En situaciones reales, el mentalismo es lento, simple y limitado.",
+      "descriptor_breve": "Conciencia explícita de que las otras personas tienen mente; resuelve tareas mentalistas simples pero con dificultades en situaciones naturales."
     },
     {
       "dimension_id": 3,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de capacidades intersubjetivas y mentalistas."
+      "descriptor": "No hay trastorno cualitativo de capacidades intersubjetivas y mentalistas.",
+      "descriptor_breve": "Sin trastorno cualitativo intersubjetivo o mentalista."
     },
     {
       "dimension_id": 4,
       "valor": 8,
-      "descriptor": "Ausencia de comunicación (relación intencionada, intencional y significante) y de conductas instrumentales con personas."
+      "descriptor": "Ausencia de comunicación (relación intencionada, intencional y significante) y de conductas instrumentales con personas.",
+      "descriptor_breve": "Ausencia de comunicación entendida como relación intencionada mediante significantes."
     },
     {
       "dimension_id": 4,
       "valor": 6,
-      "descriptor": "Conductas instrumentales con personas para lograr cambios en el mundo físico (pedir), sin otras pautas de comunicación."
+      "descriptor": "Conductas instrumentales con personas para lograr cambios en el mundo físico (pedir), sin otras pautas de comunicación.",
+      "descriptor_breve": "Conductas instrumentales con personas para pedir (p. ej., llevar de la mano), sin otras pautas comunicativas."
     },
     {
       "dimension_id": 4,
       "valor": 4,
-      "descriptor": "Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencias o cambiar el mundo mental."
+      "descriptor": "Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencias o cambiar el mundo mental.",
+      "descriptor_breve": "Conductas comunicativas para pedir (cambiar el mundo físico), pero no para compartir experiencia o cambiar el mundo mental."
     },
     {
       "dimension_id": 4,
       "valor": 2,
-      "descriptor": "Conductas comunicativas de declarar, comentar, etc., con escasas cualificaciones subjetivas de la experiencia y declaraciones sobre el mundo interno."
+      "descriptor": "Conductas comunicativas de declarar, comentar, etc., con escasas cualificaciones subjetivas de la experiencia y declaraciones sobre el mundo interno.",
+      "descriptor_breve": "Comunica para declarar y comentar, con escasez de declaraciones sobre el mundo interno propio."
     },
     {
       "dimension_id": 4,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de las funciones comunicativas."
+      "descriptor": "No hay trastorno cualitativo de las funciones comunicativas.",
+      "descriptor_breve": "Sin trastorno cualitativo de las funciones comunicativas."
     },
     {
       "dimension_id": 5,
       "valor": 8,
-      "descriptor": "Mutismo total o funcional. Puede haber verbalizaciones que no son propiamente lingüísticas."
+      "descriptor": "Mutismo total o funcional. Puede haber verbalizaciones que no son propiamente lingüísticas.",
+      "descriptor_breve": "Mutismo total o funcional (pueden existir verbalizaciones sin valor comunicativo)."
     },
     {
       "dimension_id": 5,
       "valor": 6,
-      "descriptor": "Lenguaje compuesto de palabras sueltas o ecolalias. No hay creación formal de sintagmas y oraciones."
+      "descriptor": "Lenguaje compuesto de palabras sueltas o ecolalias. No hay creación formal de sintagmas y oraciones.",
+      "descriptor_breve": "Palabras sueltas o ecolalias; no hay oraciones creativas."
     },
     {
       "dimension_id": 5,
       "valor": 4,
-      "descriptor": "Lenguaje oracional. Hay oraciones que no son ecolalálicas, pero no configuran discurso o conversación."
+      "descriptor": "Lenguaje oracional. Hay oraciones que no son ecolalálicas, pero no configuran discurso o conversación.",
+      "descriptor_breve": "Oraciones con algún grado de creación propia, que no llegan a configurar discurso ni conversación."
     },
     {
       "dimension_id": 5,
       "valor": 2,
-      "descriptor": "Discurso y conversación, con limitaciones de adaptación flexible y de selección de temas relevantes. Frecuentemente hay anomalías prosódicas."
+      "descriptor": "Discurso y conversación, con limitaciones de adaptación flexible y de selección de temas relevantes. Frecuentemente hay anomalías prosódicas.",
+      "descriptor_breve": "Lenguaje discursivo con dificultades: conversación limitada, poco recíproca o poco flexible."
     },
     {
       "dimension_id": 5,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo del lenguaje expresivo."
+      "descriptor": "No hay trastorno cualitativo del lenguaje expresivo.",
+      "descriptor_breve": "Sin trastorno cualitativo del lenguaje expresivo."
     },
     {
       "dimension_id": 6,
       "valor": 8,
-      "descriptor": "'Sordera central'. Tendencia a ignorar el lenguaje. No hay respuesta a órdenes, llamadas o indicaciones."
+      "descriptor": "'Sordera central'. Tendencia a ignorar el lenguaje. No hay respuesta a órdenes, llamadas o indicaciones.",
+      "descriptor_breve": "\"Sordera central\": ignora por completo el lenguaje; no responde a órdenes ni a su nombre."
     },
     {
       "dimension_id": 6,
       "valor": 6,
-      "descriptor": "Asociación de enunciados verbales con conductas propias, sin indicios de que los enunciados se asimilen a un código."
+      "descriptor": "Asociación de enunciados verbales con conductas propias, sin indicios de que los enunciados se asimilen a un código.",
+      "descriptor_breve": "Asocia enunciados verbales con conductas propias (comprende órdenes simples), sin comprender el lenguaje como sistema."
     },
     {
       "dimension_id": 6,
       "valor": 4,
-      "descriptor": "Comprensión literal y poco flexible de enunciados, con algún análisis estructural. No se comprende discurso."
+      "descriptor": "Comprensión literal y poco flexible de enunciados, con algún análisis estructural. No se comprende discurso.",
+      "descriptor_breve": "Comprensión literal, poco flexible y descontextualizada de enunciados; no comprende discurso."
     },
     {
       "dimension_id": 6,
       "valor": 2,
-      "descriptor": "Se comprende discurso y conversación, pero se diferencia con gran dificultad el significado literal del intencional."
+      "descriptor": "Se comprende discurso y conversación, pero se diferencia con gran dificultad el significado literal del intencional.",
+      "descriptor_breve": "Comprende discurso y participa en conversaciones, con dificultades para ironía, sarcasmo y doble sentido."
     },
     {
       "dimension_id": 6,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de las capacidades de comprensión."
+      "descriptor": "No hay trastorno cualitativo de las capacidades de comprensión.",
+      "descriptor_breve": "Sin trastorno cualitativo del lenguaje receptivo."
     },
     {
       "dimension_id": 7,
       "valor": 8,
-      "descriptor": "Adherencia inflexible a estímulos que se repiten de forma idéntica (p. ej. películas de vídeo). Resistencia intensa a cambios. Falta de conductas anticipatorias."
+      "descriptor": "Adherencia inflexible a estímulos que se repiten de forma idéntica (p. ej. películas de vídeo). Resistencia intensa a cambios. Falta de conductas anticipatorias.",
+      "descriptor_breve": "Adherencia inflexible a estímulos que se repiten de forma idéntica; resistencia intensa a cambios; sin conductas anticipatorias."
     },
     {
       "dimension_id": 7,
       "valor": 6,
-      "descriptor": "Conductas anticipatorias simples en rutinas cotidianas. Con frecuencia, oposición a cambios y empeoramiento en situaciones que implican cambios."
+      "descriptor": "Conductas anticipatorias simples en rutinas cotidianas. Con frecuencia, oposición a cambios y empeoramiento en situaciones que implican cambios.",
+      "descriptor_breve": "Conductas anticipatorias simples en rutinas cotidianas; oposición frecuente a los cambios."
     },
     {
       "dimension_id": 7,
       "valor": 4,
-      "descriptor": "Incorporadas estructuras temporales amplias (p. ej. Curso vs. Vacaciones). Puede haber reacciones catastróficas ante cambios no previstos."
+      "descriptor": "Incorporadas estructuras temporales amplias (p. ej. Curso vs. Vacaciones). Puede haber reacciones catastróficas ante cambios no previstos.",
+      "descriptor_breve": "Incorpora estructuras temporales amplias; puede haber reacciones catastróficas ante cambios no anticipados."
     },
     {
       "dimension_id": 7,
       "valor": 2,
-      "descriptor": "Alguna capacidad de regular el propio ambiente y de manejar los cambios. Se prefiere un orden claro y un ambiente predecible."
+      "descriptor": "Alguna capacidad de regular el propio ambiente y de manejar los cambios. Se prefiere un orden claro y un ambiente predecible.",
+      "descriptor_breve": "Alguna capacidad de regular el propio ambiente y de manejar cambios; prefiere un orden claro, con cierta flexibilidad."
     },
     {
       "dimension_id": 7,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de capacidades de anticipación."
+      "descriptor": "No hay trastorno cualitativo de capacidades de anticipación.",
+      "descriptor_breve": "Sin trastorno cualitativo de la anticipación."
     },
     {
       "dimension_id": 8,
       "valor": 8,
-      "descriptor": "Predominan las estereotipias motoras simples."
+      "descriptor": "Predominan las estereotipias motoras simples.",
+      "descriptor_breve": "Predominio de estereotipias motoras simples."
     },
     {
       "dimension_id": 8,
       "valor": 6,
-      "descriptor": "Predominan los rituales simples. Resistencia a cambios mínimos."
+      "descriptor": "Predominan los rituales simples. Resistencia a cambios mínimos.",
+      "descriptor_breve": "Rituales simples; resistencia a cambios mínimos del entorno."
     },
     {
       "dimension_id": 8,
       "valor": 4,
-      "descriptor": "Rituales complejos. Apego excesivo a objetos. Preguntas obsesivas."
+      "descriptor": "Rituales complejos. Apego excesivo a objetos. Preguntas obsesivas.",
+      "descriptor_breve": "Rituales complejos; apego excesivo a objetos; preguntas obsesivas."
     },
     {
       "dimension_id": 8,
       "valor": 2,
-      "descriptor": "Contenidos obsesivos y limitados de pensamiento. Intereses poco funcionales y flexibles. Rígido perfeccionismo."
+      "descriptor": "Contenidos obsesivos y limitados de pensamiento. Intereses poco funcionales y flexibles. Rígido perfeccionismo.",
+      "descriptor_breve": "Contenidos de pensamiento obsesivos y limitados; intereses poco funcionales y poco flexibles."
     },
     {
       "dimension_id": 8,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de la flexibilidad."
+      "descriptor": "No hay trastorno cualitativo de la flexibilidad.",
+      "descriptor_breve": "Sin trastorno cualitativo de la flexibilidad."
     },
     {
       "dimension_id": 9,
       "valor": 8,
-      "descriptor": "Predominio masivo de conductas sin meta. Inaccesibilidad a consignas externas que dirijan la actividad."
+      "descriptor": "Predominio masivo de conductas sin meta. Inaccesibilidad a consignas externas que dirijan la actividad.",
+      "descriptor_breve": "Predominio masivo de conductas sin propósito ni meta."
     },
     {
       "dimension_id": 9,
       "valor": 6,
-      "descriptor": "Sólo se realizan actividades funcionales breves con consignas externas. Cuando no las hay, se pasa al nivel anterior."
+      "descriptor": "Sólo se realizan actividades funcionales breves con consignas externas. Cuando no las hay, se pasa al nivel anterior.",
+      "descriptor_breve": "Actividades funcionales breves ante consignas externas; sin comprensión de la finalidad."
     },
     {
       "dimension_id": 9,
       "valor": 4,
-      "descriptor": "Actividades autónomas de ciclo largo, que no se viven como partes de proyectos coherentes, y cuya motivación es externa."
+      "descriptor": "Actividades autónomas de ciclo largo, que no se viven como partes de proyectos coherentes, y cuya motivación es externa.",
+      "descriptor_breve": "Actividades autónomas de ciclo largo que se realizan sin comprensión precisa de su sentido."
     },
     {
       "dimension_id": 9,
       "valor": 2,
-      "descriptor": "Actividades complejas de ciclo muy largo, cuya meta se conoce y desea, pero sin una estructura jerárquica de previsiones biográficas en que se inserten."
+      "descriptor": "Actividades complejas de ciclo muy largo, cuya meta se conoce y desea, pero sin una estructura jerárquica de previsiones biográficas en que se inserten.",
+      "descriptor_breve": "Presencia de motivos de logro; actividades complejas cuyo sentido se comprende de forma parcial; requiere motivación externa."
     },
     {
       "dimension_id": 9,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo del sentido de la actividad."
+      "descriptor": "No hay trastorno cualitativo del sentido de la actividad.",
+      "descriptor_breve": "Sin trastorno cualitativo del sentido de la actividad."
     },
     {
       "dimension_id": 10,
       "valor": 8,
-      "descriptor": "Ausencia completa de juego funcional o simbólico y de otras competencias de ficción."
+      "descriptor": "Ausencia completa de juego funcional o simbólico y de otras competencias de ficción.",
+      "descriptor_breve": "Ausencia completa de juego funcional y simbólico."
     },
     {
       "dimension_id": 10,
       "valor": 6,
-      "descriptor": "Juegos funcionales poco flexibles, poco espontáneos y de contenidos limitados."
+      "descriptor": "Juegos funcionales poco flexibles, poco espontáneos y de contenidos limitados.",
+      "descriptor_breve": "Juegos funcionales elementales, poco flexibles, inducidos desde fuera y repetitivos."
     },
     {
       "dimension_id": 10,
       "valor": 4,
-      "descriptor": "Juego simbólico, en general poco espontáneo y obsesivo. Dificultades importantes para diferenciar ficción y realidad."
+      "descriptor": "Juego simbólico, en general poco espontáneo y obsesivo. Dificultades importantes para diferenciar ficción y realidad.",
+      "descriptor_breve": "Juego simbólico evocado y poco espontáneo; ficciones escasas y poco flexibles."
     },
     {
       "dimension_id": 10,
       "valor": 2,
-      "descriptor": "Capacidades complejas de ficción, que se emplean como recursos de aislamiento. Ficciones poco flexibles."
+      "descriptor": "Capacidades complejas de ficción, que se emplean como recursos de aislamiento. Ficciones poco flexibles.",
+      "descriptor_breve": "Ficciones complejas, utilizadas a veces como recurso de aislamiento o con dificultades para diferenciar ficción y realidad."
     },
     {
       "dimension_id": 10,
       "valor": 0,
-      "descriptor": "No hay trastorno de competencias de ficción e imaginación."
+      "descriptor": "No hay trastorno de competencias de ficción e imaginación.",
+      "descriptor_breve": "Sin trastorno cualitativo de la ficción y la imaginación."
     },
     {
       "dimension_id": 11,
       "valor": 8,
-      "descriptor": "Ausencia completa de conductas de imitación."
+      "descriptor": "Ausencia completa de conductas de imitación.",
+      "descriptor_breve": "Ausencia completa de conductas de imitación."
     },
     {
       "dimension_id": 11,
       "valor": 6,
-      "descriptor": "Imitaciones motoras simples, evocadas. No espontáneas."
+      "descriptor": "Imitaciones motoras simples, evocadas. No espontáneas.",
+      "descriptor_breve": "Imitaciones motoras simples, evocadas desde fuera; no espontáneas."
     },
     {
       "dimension_id": 11,
       "valor": 4,
-      "descriptor": "Imitación espontánea esporádica, poco versátil e intersubjetiva."
+      "descriptor": "Imitación espontánea esporádica, poco versátil e intersubjetiva.",
+      "descriptor_breve": "Imitación espontánea esporádica, poco versátil y poco intersubjetiva."
     },
     {
       "dimension_id": 11,
       "valor": 2,
-      "descriptor": "Imitación establecida. Ausencia de modelos internos."
+      "descriptor": "Imitación establecida. Ausencia de modelos internos.",
+      "descriptor_breve": "Imitación establecida; ausencia de modelos internos de referencia; imitación poco flexible."
     },
     {
       "dimension_id": 11,
       "valor": 0,
-      "descriptor": "No hay trastorno de las capacidades de imitación."
+      "descriptor": "No hay trastorno de las capacidades de imitación.",
+      "descriptor_breve": "Sin trastorno cualitativo de la imitación."
     },
     {
       "dimension_id": 12,
       "valor": 8,
-      "descriptor": "No se suspenden pre-acciones para crear gestos comunicativos. Comunicación ausente o por gestos instrumentales con personas."
+      "descriptor": "No se suspenden pre-acciones para crear gestos comunicativos. Comunicación ausente o por gestos instrumentales con personas.",
+      "descriptor_breve": "No suspende preacciones para crear gestos comunicativos (p. ej., no señala)."
     },
     {
       "dimension_id": 12,
       "valor": 6,
-      "descriptor": "No se suspenden acciones instrumentales para crear símbolos enactivos. No hay juego funcional."
+      "descriptor": "No se suspenden acciones instrumentales para crear símbolos enactivos. No hay juego funcional.",
+      "descriptor_breve": "No suspende acciones instrumentales para crear símbolos enactivos (no hay juego funcional)."
     },
     {
       "dimension_id": 12,
       "valor": 4,
-      "descriptor": "No se suspenden propiedades reales de cosas o situaciones para crear ficciones y juego de ficción."
+      "descriptor": "No se suspenden propiedades reales de cosas o situaciones para crear ficciones y juego de ficción.",
+      "descriptor_breve": "No suspende las propiedades reales de los objetos para crear ficciones y juego simbólico."
     },
     {
       "dimension_id": 12,
       "valor": 2,
-      "descriptor": "No se dejan en suspenso representaciones para crear o comprender metáforas, o para comprender que los estados mentales no se corresponden necesariamente con las situaciones."
+      "descriptor": "No se dejan en suspenso representaciones para crear o comprender metáforas, o para comprender que los estados mentales no se corresponden necesariamente con las situaciones.",
+      "descriptor_breve": "No deja en suspenso representaciones para comprender metáforas, ironía o doble sentido."
     },
     {
       "dimension_id": 12,
       "valor": 0,
-      "descriptor": "No hay trastorno cualitativo de las capacidades de suspensión."
+      "descriptor": "No hay trastorno cualitativo de las capacidades de suspensión.",
+      "descriptor_breve": "Sin trastorno cualitativo de la suspensión."
     }
   ],
   "ippu_item": [
@@ -686,32 +758,6 @@
       "orden": 12
     }
   ],
-  "recordatorio": [
-    {
-      "clave": "lb",
-      "texto": "Aplicación del IDEA (HCE-LB) en las primeras semanas del ingreso",
-      "periodo": "Al ingreso",
-      "activo": true
-    },
-    {
-      "clave": "pa",
-      "texto": "Protocolo A (HCE-PA) durante el receso de julio",
-      "periodo": "Julio",
-      "activo": true
-    },
-    {
-      "clave": "pb",
-      "texto": "Protocolo B (HCE-PB) en la última semana lectiva",
-      "periodo": "Diciembre",
-      "activo": true
-    },
-    {
-      "clave": "ic",
-      "texto": "Informe de Cierre (HCE-IC) en los días posteriores al Protocolo B",
-      "periodo": "Días post-PB",
-      "activo": true
-    }
-  ],
   "taller": [
     {
       "nombre": "Habilidades sociales",
@@ -761,6 +807,656 @@
       "clave": "clinica",
       "nombre": "Clínica",
       "activo": false
+    }
+  ],
+  "idea_ficha": [
+    {
+      "dimension_id": 1,
+      "codigo": "IDEA-D01",
+      "titulo": "Trastorno de la Relación Social",
+      "escala_nombre": "Relación Social",
+      "definicion": "Evalúa la calidad de la relación social y la vinculación afectiva con otros: desde el aislamiento completo hasta la motivación de vínculo con dificultades sutiles de reciprocidad.",
+      "objetivo": "Valorar la reciprocidad social y la calidad del vínculo con adultos e iguales, no la mera cantidad de contacto.",
+      "indicadores": "Apego a personas específicas, iniciativa social con adultos e iguales, respuesta social, búsqueda de compañía, conciencia de soledad.",
+      "no_confundir": "Timidez, ansiedad social o escasez de contacto por contexto, cuando no existe alteración cualitativa de la relación.",
+      "errores_frecuentes": "Puntuar por cantidad de contacto y no por la calidad recíproca del vínculo; ignorar la relación con iguales por observar solo la relación con adultos.",
+      "preguntas_guia": "¿Busca a otros por iniciativa propia? ¿Mantiene relaciones con iguales? ¿Parece sentir soledad?",
+      "claves_martos": "Martos y Llorente (2017) sitúan la alteración temprana de la mirada social como uno de los indicadores más precoces y fiables: antes de puntuar esta dimensión, observar si el niño mira \"para relacionarse\" o solo \"para obtener\". En detección temprana, la ausencia de orientación preferente hacia rostros y de sonrisa social recíproca anticipa el compromiso de esta dimensión.",
+      "nota_evidencia": "La reciprocidad afectiva emerge como núcleo propio de la severidad autista en los modelos dimensionales (Tanguay, 1998); la clasificación automatizada de interacción social confirma su peso discriminativo (Koehler et al., 2022)."
+    },
+    {
+      "dimension_id": 2,
+      "codigo": "IDEA-D02",
+      "titulo": "Trastorno de la Referencia Conjunta",
+      "escala_nombre": "Relación Social",
+      "definicion": "Mide la capacidad de compartir atención, acción y preocupación sobre objetos o situaciones con otras personas, coordinando mirada, objeto y persona.",
+      "objetivo": "Valorar la atención y acción conjunta espontáneamente compartida, no la obediencia a consignas.",
+      "indicadores": "Alternancia mirada–objeto–persona, interés por acciones ajenas, seguimiento del foco atencional del otro, miradas de referencia conjunta, protodeclarativos.",
+      "no_confundir": "Obediencia a consignas o seguimiento dirigido sin verdadera compartición espontánea del interés.",
+      "errores_frecuentes": "Sobrevalorar respuestas correctas en tareas dirigidas; confundir mirar el objeto con compartir el interés por el objeto.",
+      "preguntas_guia": "¿Comparte espontáneamente la atención? ¿Alterna la mirada entre la persona y el objeto? ¿Solo lo hace si se le induce?",
+      "claves_martos": "Para Martos, la atención conjunta es el mejor predictor temprano del desarrollo comunicativo posterior y el primer objetivo de intervención en el niño pequeño (Rivière y Martos, 2000). Recomienda evaluar diferenciando protoimperativos (señalar para pedir) de protodeclarativos (señalar para compartir): solo los segundos indican verdadera referencia conjunta.",
+      "nota_evidencia": "La atención conjunta aparece consistentemente como dominio central en la clasificación dimensional del autismo y en la observación del juego temprano (Tanguay, 1998; Iltchenco y Ribas, 2022; Chen, 2026)."
+    },
+    {
+      "dimension_id": 3,
+      "codigo": "IDEA-D03",
+      "titulo": "Trastorno Intersubjetivo y Mentalista",
+      "escala_nombre": "Relación Social",
+      "definicion": "Evalúa la capacidad de vivir al otro como sujeto con mente: desde la ausencia de intersubjetividad primaria hasta un mentalismo lento y limitado en la vida cotidiana.",
+      "objetivo": "Valorar si la persona atribuye estados mentales a los demás y usa esa capacidad de manera funcional en situaciones reales.",
+      "indicadores": "Expresión emocional correlativa, interés por las personas como sujetos, indicios de intersubjetividad secundaria, resolución de tareas de falsa creencia, uso espontáneo del mentalismo.",
+      "no_confundir": "Resolución aislada de tareas formales de teoría de la mente sin traducción al funcionamiento cotidiano.",
+      "errores_frecuentes": "Puntuar por rendimiento en pruebas de teoría de la mente y no por el uso espontáneo del mentalismo en la vida real.",
+      "preguntas_guia": "¿Comprende que otros piensan o saben cosas distintas? ¿Anticipa intenciones? ¿Responde a emociones ajenas?",
+      "claves_martos": "Rivière hablaba de \"miopía mental\" más que de ceguera: la capacidad existe en grados. Martos y Llorente (2017) proponen observar el mentalismo \"en caliente\" —en interacción real, con demanda temporal— y no solo \"en frío\" (tareas de laboratorio), porque muchos perfiles de buen nivel cognitivo aprueban las pruebas formales y fracasan en la interacción espontánea.",
+      "nota_evidencia": "Las habilidades mentalistas predicen la competencia pragmática y comunicativa (Baixauli-Fortea et al., 2019); el técnico debe observar inferencia de intenciones y respuesta emocional al otro en contexto natural (Abayeva y Akhmetzyanova, 2024)."
+    },
+    {
+      "dimension_id": 4,
+      "codigo": "IDEA-D04",
+      "titulo": "Trastorno de las Funciones Comunicativas",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "definicion": "Valora para qué se usa la comunicación: desde la ausencia de intención comunicativa hasta la declaración y el comentario con escasa cualificación subjetiva.",
+      "objetivo": "Distinguir comunicación imperativa (pedir para cambiar el mundo físico) de comunicación declarativa (comentar para compartir el mundo mental), la más afectada en el espectro.",
+      "indicadores": "Pedir, rechazar, mostrar, declarar, comentar, compartir experiencia interna; direccionalidad del gesto, la mirada y el llanto.",
+      "no_confundir": "Uso instrumental del cuerpo del otro (llevar la mano) con comunicación social plena.",
+      "errores_frecuentes": "Contar emisiones o gestos sin analizar su intención comunicativa; asumir que quien habla mucho comunica funciones variadas.",
+      "preguntas_guia": "¿Solo pide? ¿También comenta o muestra? ¿Habla de deseos, emociones o experiencias internas?",
+      "claves_martos": "Martos y Ayuda subrayan que el objetivo de intervención no es \"que hable\" sino \"que comunique\": priorizar la instauración de funciones declarativas mediante sistemas aumentativos si es necesario, sin esperar al lenguaje oral (Rivière y Martos, 1997). La aparición del protodeclarativo es el hito que marca el pasaje del nivel 4 al 2.",
+      "nota_evidencia": "Las intervenciones basadas en juego mejoran específicamente las funciones comunicativas declarativas (O'Keeffe y McNally, 2021)."
+    },
+    {
+      "dimension_id": 5,
+      "codigo": "IDEA-D05",
+      "titulo": "Trastorno del Lenguaje Expresivo",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "definicion": "Mide la complejidad formal y el uso conversacional del habla: desde el mutismo total o funcional hasta el discurso con alteraciones sutiles de prosodia y adaptación temática.",
+      "objetivo": "Valorar el lenguaje como actividad conversacional recíproca, no la mera presencia de habla.",
+      "indicadores": "Mutismo, palabras sueltas, ecolalia inmediata y demorada, lenguaje oracional, discurso, conversación, flexibilidad temática, prosodia.",
+      "no_confundir": "Presencia de habla abundante con lenguaje expresivo funcional; la verborrea monotemática puede coexistir con severa limitación conversacional.",
+      "errores_frecuentes": "Equiparar vocabulario extenso con competencia expresiva; no registrar la ecolalia demorada por parecer lenguaje espontáneo.",
+      "preguntas_guia": "¿Construye oraciones? ¿Sostiene conversación? ¿Adapta tema y prosodia al contexto?",
+      "claves_martos": "El Equipo Deletrea (Martos, Llorente, Ayuda, González, Freire) describió con precisión el perfil expresivo del extremo \"leve\" del espectro: lenguaje formalmente rico pero pragmáticamente pobre, con pedantería, literalidad y prosodia peculiar. Esa descripción es la referencia clínica para distinguir el nivel 2 del 0 en perfiles verbales de buen nivel.",
+      "nota_evidencia": "Existen perfiles con alteración pragmática y prosódica que no cumplen criterios de autismo; el juicio debe integrarse con las demás dimensiones (Bishop y Norbury, 2002)."
+    },
+    {
+      "dimension_id": 6,
+      "codigo": "IDEA-D06",
+      "titulo": "Trastorno del Lenguaje Receptivo",
+      "escala_nombre": "Comunicación y Lenguaje",
+      "definicion": "Evalúa la comprensión del lenguaje y de las intenciones comunicativas: desde la \"sordera central\" hasta la comprensión del discurso con dificultad para diferenciar lo literal de lo intencional.",
+      "objetivo": "Valorar la comprensión del propósito comunicativo, no solo la comprensión literal de enunciados.",
+      "indicadores": "Respuesta al nombre y a llamadas, comprensión de órdenes en contexto y fuera de contexto, comprensión de enunciados, discurso, ironía, dobles sentidos.",
+      "no_confundir": "Hipoacusia o trastorno específico de la comprensión; descartar siempre causa auditiva ante una aparente \"sordera central\".",
+      "errores_frecuentes": "Valorar solo comprensión literal y no la comprensión del propósito comunicativo; sobreestimar la comprensión por respuestas apoyadas en claves contextuales.",
+      "preguntas_guia": "¿Responde a su nombre y a órdenes? ¿Entiende conversación? ¿Capta ironía, intención o indirectas?",
+      "claves_martos": "Martos insiste en evaluar la comprensión \"descontextualizada\": pedir sin gesto, sin mirada al objeto y fuera de la rutina habitual. Gran parte de las sobreestimaciones de comprensión provienen de niños que \"leen la situación\" (claves visuales y rutinarias) sin procesar el código lingüístico (Rivière y Martos, 2000).",
+      "nota_evidencia": "Las habilidades lingüísticas infantiles predicen el funcionamiento social posterior, con peso específico de la comprensión (Miranda et al., 2023)."
+    },
+    {
+      "dimension_id": 7,
+      "codigo": "IDEA-D07",
+      "titulo": "Trastorno de la Anticipación",
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "definicion": "Mide la capacidad de prever secuencias y tolerar cambios: desde la adherencia inflexible a la invarianza hasta la preferencia por ambientes predecibles con cierta autorregulación.",
+      "objetivo": "Valorar la capacidad de anticipar el futuro inmediato y regular la propia conducta ante los cambios del entorno.",
+      "indicadores": "Conductas anticipatorias, uso de claves temporales, reacción a cambios previstos e imprevistos, necesidad de ambientes previsibles.",
+      "no_confundir": "Preferencia normal por el orden y la rutina con un trastorno severo de anticipación.",
+      "errores_frecuentes": "Puntuar por la rabieta puntual y no por el patrón habitual; no diferenciar cambio anticipado (con apoyos) de cambio sorpresivo.",
+      "preguntas_guia": "¿Anticipa rutinas? ¿Qué ocurre si algo cambia sin aviso? ¿Necesita alta previsibilidad para funcionar?",
+      "claves_martos": "La respuesta educativa que Rivière y Martos sistematizaron —ambientes estructurados, agendas visuales, anticipación de cambios— convierte esta dimensión en la más sensible al tratamiento bien diseñado: una mejora rápida aquí suele reflejar calidad del entorno más que cambio estructural, y debe interpretarse así en el seguimiento longitudinal.",
+      "nota_evidencia": "La rigidez ante cambios se asocia directamente al funcionamiento diario y a la carga familiar (Abayeva y Akhmetzyanova, 2024; Miranda et al., 2023)."
+    },
+    {
+      "dimension_id": 8,
+      "codigo": "IDEA-D08",
+      "titulo": "Trastorno de la Flexibilidad",
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "definicion": "Valora la rigidez conductual y mental: estereotipias, rituales, apegos a objetos, preguntas obsesivas e intereses restringidos y poco funcionales.",
+      "objetivo": "Valorar tanto la rigidez motora (estereotipias) como la rigidez cognitiva y temática (obsesiones, perfeccionismo inflexible).",
+      "indicadores": "Estereotipias motoras, rituales simples y complejos, apego excesivo a objetos, preguntas obsesivas, intereses restringidos, perfeccionismo rígido.",
+      "no_confundir": "Intereses intensos pero funcionales y compartibles, propios del desarrollo típico, con contenidos obsesivos limitantes.",
+      "errores_frecuentes": "Puntuar solo por movimientos repetitivos e ignorar la rigidez cognitiva o temática, que predomina en perfiles de mayor nivel.",
+      "preguntas_guia": "¿Tolera variaciones pequeñas? ¿Muestra rituales o apegos intensos? ¿Sus intereses dominan la actividad?",
+      "claves_martos": "Martos y Paula (2011) vinculan esta dimensión con el funcionamiento ejecutivo (flexibilidad cognitiva, inhibición, planificación): recomiendan complementar la observación conductual con la exploración de la rigidez en tareas de cambio de criterio, porque la disfunción ejecutiva explica gran parte de la conducta inflexible y orienta la intervención.",
+      "nota_evidencia": "Los patrones restringidos y repetitivos muestran expresión diferencial por sexo y edad, con riesgo de subdetección en niñas (Burton et al., 2025)."
+    },
+    {
+      "dimension_id": 9,
+      "codigo": "IDEA-D09",
+      "titulo": "Trastorno del Sentido de la Actividad Propia",
+      "escala_nombre": "Anticipación y Flexibilidad",
+      "definicion": "Mide la capacidad de dar propósito y meta a las propias acciones e integrarlas en proyectos con sentido biográfico (\"yo futuro\").",
+      "objetivo": "Valorar actividad con propósito, no cantidad de actividad: desde conductas sin meta hasta metas complejas no integradas en un proyecto vital.",
+      "indicadores": "Actividad sin finalidad, dependencia de consignas externas, duración y autonomía de los ciclos de actividad, motivación interna vs. externa, coherencia de proyectos.",
+      "no_confundir": "Desmotivación puntual o falta de oportunidades del entorno con incapacidad estructural de dar sentido a la acción.",
+      "errores_frecuentes": "Sobrevalorar actividades largas que no forman parte de un proyecto coherente; confundir cumplimiento por refuerzo externo con sentido propio.",
+      "preguntas_guia": "¿Actúa con propósito propio? ¿Necesita dirección externa constante? ¿Integra actividades en planes más amplios?",
+      "claves_martos": "El \"sentido de la actividad\" es, para Martos y Paula (2011), la traducción vital de la función ejecutiva de planificación y de la memoria prospectiva. En adolescentes y jóvenes, recomiendan explorarlo mediante entrevista sobre proyectos, deseos y \"futuro imaginado\", no solo por observación: es la dimensión que mejor orienta los apoyos para la vida adulta y la autodeterminación.",
+      "nota_evidencia": "La menor complejidad y organización de las secuencias conductuales se asocia a peor respuesta a la intervención, lo que refuerza el valor pronóstico de esta dimensión (Chen, 2026)."
+    },
+    {
+      "dimension_id": 10,
+      "codigo": "IDEA-D10",
+      "titulo": "Trastorno de la Ficción e Imaginación",
+      "escala_nombre": "Simbolización",
+      "definicion": "Evalúa el desarrollo del juego funcional y simbólico y las competencias de ficción: desde su ausencia completa hasta ficciones complejas usadas como refugio.",
+      "objetivo": "Valorar la capacidad de \"hacer como si\" espontáneamente y de diferenciar ficción y realidad.",
+      "indicadores": "Uso funcional de objetos, juego simbólico espontáneo vs. evocado, flexibilidad de guiones, diferenciación ficción–realidad, uso de la ficción como aislamiento.",
+      "no_confundir": "Juego aprendido, guionado o muy dirigido con imaginación espontánea; la reproducción exacta de escenas no es creación simbólica.",
+      "errores_frecuentes": "Puntuar por juego aprendido en terapia como si reflejara imaginación espontánea; evaluar solo en situación estructurada, donde el déficit se expresa menos.",
+      "preguntas_guia": "¿Hace \"como si\" espontáneamente? ¿Usa objetos de modo representacional? ¿Puede variar el guion de juego?",
+      "claves_martos": "En la intervención temprana, Rivière y Martos (2000) proponen \"andamiar\" el juego: partir del interés del niño, introducir variaciones mínimas y ceder progresivamente la iniciativa. Para la evaluación, Martos recomienda registrar por separado el juego en situación libre y en situación estructurada, porque la brecha entre ambos es en sí misma un dato clínico.",
+      "nota_evidencia": "El déficit de juego simbólico se expresa más en juego libre que en situaciones estructuradas, incluso controlando la edad verbal (González-Sala et al., 2021; Stanley y Konstantareas, 2007)."
+    },
+    {
+      "dimension_id": 11,
+      "codigo": "IDEA-D11",
+      "titulo": "Trastorno de la Imitación",
+      "escala_nombre": "Simbolización",
+      "definicion": "Mide la capacidad de aprender observando y emulando modelos: desde la ausencia completa de imitación hasta una imitación establecida pero sin \"modelos internos\".",
+      "objetivo": "Valorar la imitación como puente intersubjetivo y de aprendizaje, no como copia mecánica.",
+      "indicadores": "Imitación motora evocada y espontánea, versatilidad, imitación de iguales, valor intersubjetivo de la copia, presencia de modelos internos que guíen el desarrollo.",
+      "no_confundir": "Ecopraxias o copias mecánicas aisladas con imitación social consolidada.",
+      "errores_frecuentes": "Contar imitaciones mecánicas aisladas como imitación social; no explorar la imitación diferida ni la imitación de iguales.",
+      "preguntas_guia": "¿Imita solo si se le pide? ¿Imita espontáneamente? ¿Usa la imitación para aprender y compartir?",
+      "claves_martos": "Martos destaca la imitación como vía regia de la intervención temprana: los programas que él y Rivière difundieron parten de \"ser imitado antes de imitar\" (el adulto imita al niño para instaurar la reciprocidad). Un aumento de imitación espontánea de iguales suele preceder a los avances en la Dimensión 1 y debe registrarse como indicador de progreso.",
+      "nota_evidencia": "La imitación atípica figura entre las alteraciones más visibles de comunicación y juego en preescolares con TEA (Druc, 2025)."
+    },
+    {
+      "dimension_id": 12,
+      "codigo": "IDEA-D12",
+      "titulo": "Trastorno de la Suspensión (Capacidad de Crear Significantes)",
+      "escala_nombre": "Simbolización",
+      "definicion": "Valora la capacidad de \"dejar en suspenso\" acciones, propiedades o representaciones para crear gestos, símbolos, ficciones y metáforas.",
+      "objetivo": "Valorar la creación de significantes no literales en todos sus niveles: gesto comunicativo, símbolo enactivo, ficción y metáfora.",
+      "indicadores": "Gestos comunicativos (suspensión de pre-acciones), juego funcional simulado (suspensión de acciones instrumentales), juego de ficción (suspensión de propiedades reales), comprensión de metáforas y de estados mentales no coincidentes con la realidad (suspensión de representaciones).",
+      "no_confundir": "Reducir esta dimensión al lenguaje verbal: la suspensión se observa primero en el gesto y el juego, antes que en la metáfora.",
+      "errores_frecuentes": "No observar gesto, juego y representación; evaluar la metáfora en niños que aún no alcanzaron los niveles previos de suspensión.",
+      "preguntas_guia": "¿Usa gestos con valor representacional? ¿Juega \"como si\"? ¿Comprende que alguien puede creer algo falso?",
+      "claves_martos": "La suspensión es el aporte teórico más original de Rivière, desarrollado en sus últimos trabajos junto al equipo que luego continuó Martos. Deletrea la operacionaliza como escalera evolutiva: gesto → símbolo enactivo → ficción → metáfora. El evaluador debe identificar el peldaño alcanzado y el inmediato siguiente, que se convierte en objetivo de intervención.",
+      "nota_evidencia": "La suspensión articula conceptualmente juego simbólico, mentalismo y comprensión figurada, dominios convergentes en la evaluación dimensional (Tanguay, 1998; González-Sala et al., 2021)."
+    }
+  ],
+  "idea_ejemplo": [
+    {
+      "dimension_id": 1,
+      "valor": 8,
+      "ejemplo": "Un niño de 4 años que corretea aleteando, ignorando a sus padres cuando entran a la habitación."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 6,
+      "ejemplo": "Un adolescente que abraza a su madre para pedir comida pero ignora a sus compañeros durante el recreo."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 4,
+      "ejemplo": "Un niño que juega a la pelota con otro solo si el terapeuta le indica paso a paso qué hacer."
+    },
+    {
+      "dimension_id": 1,
+      "valor": 2,
+      "ejemplo": "Un adolescente que quiere hacer amigos pero les grita al oído por no manejar las distancias sociales."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 8,
+      "ejemplo": "Un niño que manipula un objeto sin mirar jamás qué está haciendo el adulto a su lado."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 6,
+      "ejemplo": "Un adolescente que devuelve la pelota cuando se la lanzan pero mantiene la mirada perdida en el suelo."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 4,
+      "ejemplo": "Un niño que mira a su padre solo cuando este detiene bruscamente un juego de cosquillas que le gusta."
+    },
+    {
+      "dimension_id": 2,
+      "valor": 2,
+      "ejemplo": "Un joven que habla de su interés por los trenes pero no nota si su interlocutor está aburrido o cansado."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 8,
+      "ejemplo": "Un bebé que no devuelve la sonrisa ni muestra placer ante el rostro de su madre."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 6,
+      "ejemplo": "Un niño que ríe si le hacen cosquillas pero no busca la complicidad visual del adulto al terminar."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 4,
+      "ejemplo": "Un adolescente que no entiende que alguien buscará un objeto donde cree que está, aunque él sepa que lo cambiaron de sitio."
+    },
+    {
+      "dimension_id": 3,
+      "valor": 2,
+      "ejemplo": "Un joven que aprueba un test sobre emociones pero no detecta un sarcasmo o una mentira piadosa en una charla real."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 8,
+      "ejemplo": "Un niño que llora por hambre pero sin dirigir el llanto ni la mirada a nadie en particular."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 6,
+      "ejemplo": "Un niño que toma la mano de su padre y la pone sobre el picaporte para que abra la puerta."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 4,
+      "ejemplo": "Un niño que dice \"agua\" para recibir el vaso, pero nunca señala un avión en el cielo para que su madre lo vea."
+    },
+    {
+      "dimension_id": 4,
+      "valor": 2,
+      "ejemplo": "Un adolescente que describe en detalle su videojuego favorito sin dar espacio a que el otro opine."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 8,
+      "ejemplo": "Un adolescente que emite sonidos musicales o canturreos constantes sin emitir palabras."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 6,
+      "ejemplo": "Un niño que, al preguntarle \"¿Querés pan?\", responde repitiendo exactamente \"¿Querés pan?\"."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 4,
+      "ejemplo": "Un niño que dice \"Mamá, quiero el auto rojo de la estantería\" pero no puede contar qué hizo en la escuela."
+    },
+    {
+      "dimension_id": 5,
+      "valor": 2,
+      "ejemplo": "Un adolescente que habla de forma \"pedante\" y monótona exclusivamente sobre las banderas del mundo."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 8,
+      "ejemplo": "Un niño que parece no oír cuando lo llaman a comer, aunque oye perfectamente el ruido de un caramelo."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 6,
+      "ejemplo": "Un niño que se sienta solo si el adulto señala la silla y dice \"sentate\"."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 4,
+      "ejemplo": "Un adolescente que se queda quieto si le dicen \"esperá un segundo\", contando mentalmente hasta uno y moviéndose después."
+    },
+    {
+      "dimension_id": 6,
+      "valor": 2,
+      "ejemplo": "Si alguien dice \"¡Qué bien dibujás!\" con sarcasmo ante un garabato, el joven cree genuinamente que lo felicitan."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 8,
+      "ejemplo": "Un niño que entra en una rabieta violenta si se cambia de lugar un mueble de su habitación."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 6,
+      "ejemplo": "Un adolescente que solo acepta ir a la piscina si ve su mochila preparada desde la mañana."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 4,
+      "ejemplo": "Un niño que usa agenda visual semanal pero llora desconsoladamente si la maestra falta a clase."
+    },
+    {
+      "dimension_id": 7,
+      "valor": 2,
+      "ejemplo": "Un joven que organiza su propio calendario y se molesta, pero no colapsa, si cambia la hora de una tutoría."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 8,
+      "ejemplo": "Un niño que se balancea o aletea las manos durante horas frente a una ventana."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 6,
+      "ejemplo": "Un adolescente que debe caminar siempre por la misma vereda para ir al liceo y se niega a cruzar por otro lado."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 4,
+      "ejemplo": "Un niño que colecciona tapitas y las alinea por color cada tarde, impidiendo cualquier otra actividad."
+    },
+    {
+      "dimension_id": 8,
+      "valor": 2,
+      "ejemplo": "Un joven que memoriza todos los resultados del fútbol desde 1980 y solo habla de esos datos."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 8,
+      "ejemplo": "Un niño que corre de un lado a otro de la sala sin jugar con nada ni interactuar."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 6,
+      "ejemplo": "Un niño que solo guarda sus juguetes si el adulto le entrega cada uno en la mano y señala la caja."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 4,
+      "ejemplo": "Un adolescente que completa un puzzle de 500 piezas solo para recibir el tiempo de tablet prometido."
+    },
+    {
+      "dimension_id": 9,
+      "valor": 2,
+      "ejemplo": "Un joven que termina el bachillerato con buenas notas pero no tiene deseos ni planes sobre qué hacer después."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 8,
+      "ejemplo": "Un niño que solo golpea un autito de madera contra el suelo para oír el ruido."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 6,
+      "ejemplo": "Un niño que hace rodar el auto siempre por la misma línea de la alfombra, sin imaginar choques ni carreras."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 4,
+      "ejemplo": "Un adolescente que representa exactamente el diálogo de una película con sus muñecos, sin variar una palabra."
+    },
+    {
+      "dimension_id": 10,
+      "valor": 2,
+      "ejemplo": "Un joven que escribe historias detalladas sobre un planeta imaginario y prefiere quedarse escribiendo antes que salir con su familia."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 8,
+      "ejemplo": "Un niño que no devuelve el saludo con la mano aunque el adulto lo haga frente a él repetidamente."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 6,
+      "ejemplo": "Un niño que solo aplaude si el terapeuta dice \"hacé esto\" y realiza la acción."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 4,
+      "ejemplo": "Un adolescente que se pone la gorra hacia atrás porque ve que todos la llevan así, sin comprender la moda."
+    },
+    {
+      "dimension_id": 11,
+      "valor": 2,
+      "ejemplo": "Un joven que imita la forma de hablar de su profesor con exactitud extraña, sin integrarla a su propia identidad."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 8,
+      "ejemplo": "Un niño que no puede hacer el gesto de \"pedir\" con la mano: tiene que agarrar físicamente el objeto."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 6,
+      "ejemplo": "Un niño que no puede simular que bebe de una taza de juguete porque la taza está vacía."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 4,
+      "ejemplo": "Un adolescente que no puede imaginar que un palo de escoba es un caballo porque \"es un palo de madera\"."
+    },
+    {
+      "dimension_id": 12,
+      "valor": 2,
+      "ejemplo": "Un joven que se asusta si le dicen \"me muero de hambre\", pensando que el interlocutor agoniza realmente."
+    }
+  ],
+  "idea_regla": [
+    {
+      "regla": "Unidad de análisis",
+      "descripcion": "Puntuar la conducta habitual de la persona, no episodios aislados ni el desempeño de un día atípico.",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 1
+    },
+    {
+      "regla": "Una respuesta por dimensión",
+      "descripcion": "Elegir solo la opción que mejor describa el funcionamiento actual.",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 2
+    },
+    {
+      "regla": "Puntuación mínima",
+      "descripcion": "Ante la duda entre dos niveles, asignar siempre la puntuación más baja compatible con la observación.",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 3
+    },
+    {
+      "regla": "Valor 0",
+      "descripcion": "Reservarlo exclusivamente para ausencia de alteración cualitativa; no usarlo si persiste una 'rareza' cualitativa.",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 4
+    },
+    {
+      "regla": "Valores impares (1, 3, 5, 7)",
+      "descripcion": "Usarlos solo cuando el perfil cae claramente entre dos niveles pares.",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 5
+    },
+    {
+      "regla": "Contexto de observación",
+      "descripcion": "Integrar observación directa en contextos naturales, entrevista a la familia y registro en situación libre y estructurada.",
+      "fuente": "Rivière (1997/2002); González-Sala et al. (2021)",
+      "orden": 6
+    },
+    {
+      "regla": "Contextualización del juicio",
+      "descripcion": "Ajustar la lectura por edad, nivel de lenguaje, discapacidad intelectual, modalidad comunicativa y sexo, que modifican la expresión observable.",
+      "fuente": "Holzinger et al. (2021); Burton et al. (2025)",
+      "orden": 7
+    },
+    {
+      "regla": "Uso complementario",
+      "descripcion": "Integrar el IDEA con otras fuentes e instrumentos; no sustituye el juicio clínico ni el diagnóstico.",
+      "fuente": "García-Gómez (2021); Abayeva y Akhmetzyanova (2024)",
+      "orden": 8
+    },
+    {
+      "regla": "Lectura por escalas",
+      "descripcion": "Sumar dimensiones 1–3, 4–6, 7–9 y 10–12 para obtener el perfil por escala (máximo 24 puntos por escala; 96 el total).",
+      "fuente": "Rivière (1997/2002)",
+      "orden": 9
+    }
+  ],
+  "banda_idea": [
+    {
+      "total_min": 0,
+      "total_max": 15,
+      "perfil": "Muy leve",
+      "nivel_dsm": "Nivel 1",
+      "texto": "Sugerencia: priorizar los objetivos en las dimensiones del IDEA con mayor puntaje individual.",
+      "orden": 1
+    },
+    {
+      "total_min": 16,
+      "total_max": 30,
+      "perfil": "Leve",
+      "nivel_dsm": "Nivel 1",
+      "texto": "Sugerencia: revisar el perfil por escala del IDEA para focalizar los apoyos donde la afectación relativa es mayor.",
+      "orden": 2
+    },
+    {
+      "total_min": 31,
+      "total_max": 55,
+      "perfil": "Leve a moderado",
+      "nivel_dsm": "Nivel 1–2",
+      "texto": "Sugerencia: atender especialmente las Escalas 1 y 2 del IDEA (Relación Social y Comunicación) al definir objetivos del semestre.",
+      "orden": 3
+    },
+    {
+      "total_min": 56,
+      "total_max": 75,
+      "perfil": "Moderado",
+      "nivel_dsm": "Nivel 2",
+      "texto": "Sugerencia: el perfil por escala del IDEA orienta la priorización de apoyos; valorar en equipo la necesidad de apoyos a la comunicación (Escala 2).",
+      "orden": 4
+    },
+    {
+      "total_min": 76,
+      "total_max": 90,
+      "perfil": "Moderado a severo (alta necesidad de apoyo)",
+      "nivel_dsm": "Nivel 2–3",
+      "texto": "Sugerencia: perfil de alta necesidad de apoyo; leer las cuatro escalas del IDEA en conjunto para estructurar los apoyos del entorno grupal.",
+      "orden": 5
+    },
+    {
+      "total_min": 91,
+      "total_max": 96,
+      "perfil": "Severo a muy severo (necesidad de apoyo muy sustancial)",
+      "nivel_dsm": "Nivel 3",
+      "texto": "Sugerencia: apoyo muy sustancial en todas las áreas; los objetivos se anclan en las dimensiones del IDEA de mayor puntaje.",
+      "orden": 6
+    }
+  ],
+  "delta_interpretacion": [
+    {
+      "delta_min": 13,
+      "delta_max": null,
+      "etiqueta": "Progreso muy significativo",
+      "accion": "Documentar y analizar qué estrategias lo produjeron para replicarlas.",
+      "signo": "positivo",
+      "alerta": false,
+      "orden": 1
+    },
+    {
+      "delta_min": 7,
+      "delta_max": 12,
+      "etiqueta": "Progreso significativo",
+      "accion": "Documentar; mantener la línea de intervención.",
+      "signo": "positivo",
+      "alerta": false,
+      "orden": 2
+    },
+    {
+      "delta_min": 1,
+      "delta_max": 6,
+      "etiqueta": "Progreso leve",
+      "accion": "Revisar si los objetivos de esa escala son suficientemente ambiciosos.",
+      "signo": "positivo",
+      "alerta": false,
+      "orden": 3
+    },
+    {
+      "delta_min": 0,
+      "delta_max": 0,
+      "etiqueta": "Sin cambio",
+      "accion": "Analizar si el área está consolidada o requiere mayor intensidad.",
+      "signo": "neutro",
+      "alerta": false,
+      "orden": 4
+    },
+    {
+      "delta_min": -6,
+      "delta_max": -1,
+      "etiqueta": "Regresión leve",
+      "accion": "Identificar factores contextuales; revisar estrategias.",
+      "signo": "negativo",
+      "alerta": false,
+      "orden": 5
+    },
+    {
+      "delta_min": null,
+      "delta_max": -7,
+      "etiqueta": "Regresión significativa",
+      "accion": "Reunión técnica urgente; contacto con familia; posible revisión del plan.",
+      "signo": "negativo",
+      "alerta": true,
+      "orden": 6
+    }
+  ],
+  "recordatorio": [
+    {
+      "clave": "lb",
+      "texto": "Aplicación del IDEA (HCE-LB) en las semanas 2–3 del ingreso",
+      "periodo": "Semanas 2–3 del ingreso",
+      "activo": true,
+      "orden": 1
+    },
+    {
+      "clave": "pa",
+      "texto": "Protocolo A (HCE-PA) durante el receso de julio",
+      "periodo": "Julio",
+      "activo": true,
+      "orden": 2
+    },
+    {
+      "clave": "pb",
+      "texto": "Protocolo B (HCE-PB) en la última semana lectiva",
+      "periodo": "Diciembre",
+      "activo": true,
+      "orden": 3
+    },
+    {
+      "clave": "ic",
+      "texto": "Informe de Cierre (HCE-IC) dentro de los 10 días hábiles posteriores al Protocolo B",
+      "periodo": "10 días hábiles post-PB",
+      "activo": true,
+      "orden": 4
+    },
+    {
+      "clave": "ayex",
+      "texto": "Vencimiento de la Ayuda Extraordinaria (AYEX): avisar 60 y 30 días antes",
+      "periodo": "60/30 días antes del vencimiento",
+      "activo": true,
+      "orden": 5
+    },
+    {
+      "clave": "vf",
+      "texto": "Vencimiento de la valoración funcional (HCE-VF): avisar 90 y 30 días antes",
+      "periodo": "90/30 días antes del vencimiento",
+      "activo": true,
+      "orden": 6
+    },
+    {
+      "clave": "inc",
+      "texto": "Inclusión educativa (HCE-INC) sin gestiones registradas por más de 60 días",
+      "periodo": "60 días sin gestiones",
+      "activo": true,
+      "orden": 7
+    },
+    {
+      "clave": "inau",
+      "texto": "Informes semestrales de INAU pendientes de envío",
+      "periodo": "Semestral",
+      "activo": true,
+      "orden": 8
+    }
+  ],
+  "grupo": [
+    {
+      "nombre": "Grupo Azul",
+      "anio": 2026
+    },
+    {
+      "nombre": "Grupo Celeste",
+      "anio": 2026
+    },
+    {
+      "nombre": "Grupo Naranja",
+      "anio": 2026
+    },
+    {
+      "nombre": "Grupo Verde",
+      "anio": 2026
     }
   ]
 }

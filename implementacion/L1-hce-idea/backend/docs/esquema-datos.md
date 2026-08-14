@@ -1,5 +1,10 @@
 # Esquema de datos — HCE + IDEA (L1)
 
+> ⚠️ **DOCUMENTO HISTÓRICO (esquema v1).** Describe el backend **retirado entero en M11.2**
+> (2026-08-07): hablaba del modelo pre-Documento Técnico. El esquema vigente es
+> **`esquema-datos-v2.md`**. Se conserva sólo como registro. Entre otras cosas, acá `grupo_id` es la
+> letra del grupo; desde M12.1 es un entero y el nombre del grupo es el color (D9, `handoff.md` §5.18).
+
 > **Estado:** propuesta para revisión (Fase 1). Derivada del modelo de dominio de la demo
 > (`demo/hce_idea_ippu_demo.html`) y del protocolo IDEA (`docs/markdown/escala-del-inventario-del-espectro-autista-idea.md`).
 > Motor: SQLite en dev → PostgreSQL en prod. Migraciones con Alembic.

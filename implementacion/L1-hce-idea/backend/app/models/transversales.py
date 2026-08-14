@@ -80,7 +80,7 @@ class Foto(Base):
     hce_id: Mapped[int | None] = mapped_column(
         ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
     )
-    grupo_id: Mapped[str | None] = mapped_column(ForeignKey("grupo.id"), index=True)
+    grupo_id: Mapped[int | None] = mapped_column(ForeignKey("grupo.id"), index=True)  # D9: entero
     descripcion: Mapped[str | None] = mapped_column(Text)
     fecha: Mapped[date | None] = mapped_column(Date)
     archivo_ref: Mapped[str | None] = mapped_column(String(400))
@@ -190,17 +190,37 @@ class Auditoria(Base):
     recomienda además `REVOKE UPDATE, DELETE ON auditoria FROM rol_app`. Eso es
     un permiso, no lógica de negocio, así que no contradice la decisión §5.2.2
     de no poner reglas en la BD.
+
+    **M12.1 — granularidad de campo.** M11.2 tenía `modulo` + `tipo` + `detalle`
+    (texto libre): alcanzaba para «alguien editó HCE-LB», no para «qué cambió y
+    de qué a qué». Se agregan `campo`, `valor_ant` y `valor_nuevo`. Importa
+    concretamente para D9: con granularidad anual del grupo, **un cambio de
+    técnico a mitad de año sobrescribe la fila y el único rastro de quién estaba
+    antes es esta tabla** — si el valor anterior no queda guardado acá, se
+    pierde.
+
+    Los tres son nullable: un evento de acceso o de firma no cambia un campo.
+    `valor_*` son texto porque la tabla es transversal a todos los módulos y
+    guardar la representación es suficiente para leer el historial; el tipado
+    real vive en la tabla de origen.
     """
     __tablename__ = "auditoria"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(
+    # Nullable desde M12.1: hay eventos que no son de un expediente sino de la
+    # institución —cambiar los técnicos de un grupo, retirar un taller del
+    # catálogo— y antes no había forma de registrarlos. `modulo` dice de qué se
+    # trata y `detalle` a qué fila apunta.
+    hce_id: Mapped[int | None] = mapped_column(
         ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
     )
     ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     usuario_id: Mapped[int | None] = mapped_column(ForeignKey("profesional.id"), index=True)
     modulo: Mapped[str | None] = mapped_column(String(20))
     tipo: Mapped[str] = mapped_column(String(20))
+    campo: Mapped[str | None] = mapped_column(String(60))
+    valor_ant: Mapped[str | None] = mapped_column(Text)
+    valor_nuevo: Mapped[str | None] = mapped_column(Text)
     detalle: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (

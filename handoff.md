@@ -9,7 +9,7 @@
 >
 > - **Última actualización:** 2026-08-14
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 y M12.1 hechos** (2026-08-14): **33 tablas**, 53 tests. **Sigue M12.2** (puntuación independiente y consenso, D7). ⚠️ **Durante M12 nadie corre `alembic revision --autogenerate`**: la migración inicial única se regenera una sola vez en **M12.8**, así que los modelos van adelante del esquema aplicado a propósito. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -58,7 +58,7 @@ con consolidación histórica, análisis automático y reportes automáticos.
 
 **Rol UTEC:** construir el **módulo de evaluación IDEA dentro del sistema HCE** (o como módulo nativo con API propia).
 
-### Protocolo IDEA (Inventario de Espectro Autista — Ángel Rivière, 1997)
+### Protocolo IDEA (Inventario de Espectro Autista — Ángel Rivière, 1997/2002)
 - **4 escalas → 12 dimensiones (D1–D12); cada dimensión 0–8; total 0–96.** Menor puntaje = mejor (0 = sin trastorno, 8 = afectación severa). Criterio: asignar siempre el valor más bajo posible. Puntuaciones impares (1,3,5,7) para casos entre dos niveles.
   - **Escala A — Relación Social:** D1 Relaciones sociales · D2 Referencia conjunta · D3 Capacidades intersubjetivas/mentalistas (Teoría de la Mente).
   - **Escala B — Comunicación y Lenguaje:** D4 Funciones comunicativas · D5 Lenguaje expresivo · D6 Lenguaje receptivo.
@@ -331,12 +331,38 @@ campo.
   implementado (contradicción interna del prototipo, Anexo B.2 del plan).
 
 ### 5.18 (D9) La tabla `grupo` se corrige: id propio + `UNIQUE(nombre, anio)`
+**CONFIRMADA POR EL EQUIPO el 2026-08-14** (Lucas). Era lo único que bloqueaba M12.1; se implementa ahí.
+
+```
+grupo
+  id            PK, serial      -- identificador vacío: no es la letra ni el color
+  nombre        text            -- "Grupo Azul" · "Grupo Celeste" · "Grupo Naranja" · "Grupo Verde"
+  anio          smallint
+  tecnico1_id, tecnico1_rol · tecnico2_id, tecnico2_rol
+  UNIQUE (nombre, anio)
+```
+
 - **Dos motivos, no uno.** (a) La PK por letra **no admite más de un año**: crear el grupo A de 2027 obliga
   a sobrescribir el de 2026 y los expedientes viejos pasan a apuntar al nuevo sin aviso (limitación ya
   registrada en §6 y en `esquema-datos-v2.md` §2.1). (b) **La PK `A..E` no representa el dominio real**:
   los grupos de IPPU son **por color** — Azul, Celeste, Naranja, Verde.
 - **Cierra `puntos-a-validar.md` §2.6** eligiendo la opción (b) de las tres que estaban sobre la mesa.
-- **Confirmar con el equipo antes de implementarla** (M12.0 del plan): toca FKs y consultas del panel.
+- **Con id propio, «Azul 2026» y «Azul 2027» son dos filas distintas** y el vínculo de cada expediente
+  (`hce_diurna.grupo_id`) no se mueve nunca. El `UNIQUE` impide el problema opuesto: dos filas
+  "Azul 2026" por error.
+- **Granularidad anual, no por fecha** (aclaración de la confirmación). Con fecha completa, "Azul
+  2026-03-01" y "Azul 2026-08-15" serían dos filas válidas y volvería a haber dos grupos Azul en el mismo
+  año. Además `anio` es la granularidad que ya usan `protocolo` e `informe_cierre` para los ciclos
+  anuales: mantenerla es **coherencia interna del esquema**, no preferencia.
+- **Nombres por color en la propia fila, sin catálogo aparte.** Si en 2028 dejan de usar "Naranja", la
+  fila de 2026 lo sigue diciendo. Un catálogo de colores sólo agregaría una tabla que mantener.
+- **Los técnicos van en la fila del grupo**: es lo que hace que se preserve quién estuvo a cargo cada año,
+  y es el punto que justifica todo el cambio.
+- ⚠️ **Límite aceptado, queda anotado:** con granularidad anual, si un técnico cambia a mitad de año la
+  fila se sobrescribe y sólo queda rastro en la auditoría. Se acepta por ahora — modelar vigencias por
+  técnico es bastante más caro. Depende de las respuestas de IPPU a §3.7 y §3.8 de
+  `docs/notas/consulta-a-ippu.md` (qué hacen cuando falta un técnico y cuando un chico cambia de grupo).
+  **Si responden que pasa seguido, se revisa.**
 
 ---
 
@@ -355,20 +381,25 @@ campo.
   `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Sin dueño exclusivo (§5.6).
   - [x] ~~**M12.0** decisiones al papel + verificación del punto de partida~~ → **HECHO** (2026-08-14, Lucas).
         HTML del prototipo incorporado, mapas de estructura actualizados, repo verificado contra la realidad
-        y **diff de los 60 descriptores reportado** (ver bitácora §13). **Falta: que el equipo confirme D9.**
-  - [ ] **M12.1** correcciones al esquema existente (6 bandas · interpretación del Δ · `manual_version` y
-        metadatos de migración · fichas/ejemplos/reglas del IDEA · `grupo` D9 · recordatorios 4 → 8+ ·
-        vocabulario · cita Rivière 1997/2002). **Va primero y solo**, con los 21 tests corriendo.
+        y **diff de los 60 descriptores reportado** (ver bitácora §13).
+  - [x] ~~**M12.1** correcciones al esquema existente~~ → **HECHO** (2026-08-14, Lucas). **D9 confirmada**
+        e implementada · 6 bandas (`banda_idea`) · interpretación del Δ (`delta_interpretacion`, la alerta
+        Δ ≤ −7 sale de ahí) · `manual_version` + metadatos de origen · `idea_ficha`/`idea_ejemplo`/
+        `idea_regla` + `descriptor_breve` · recordatorios 4 → 8 · auditoría a nivel campo · vocabulario ·
+        cita Rivière 1997/2002. **33 tablas**, generador de catálogos versionado,
+        **53 tests en verde + 1 salteado a propósito**. Ver bitácora §13.
   - [ ] **M12.2** puntuación independiente y consenso (D7). El cambio de modelo más profundo.
   - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.3** catálogo de talleres ·
         **M12.4** HCE-SEV · **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
   - [ ] **M12.8** cierre: migración regenerada, seed desde el JSON del prototipo, tests y docs. **Una sola
         persona.** Nadie corre `alembic revision --autogenerate` hasta acá.
 - [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). 8 puntos para IPPU (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**), 6 para el equipo (incl. **ratificar §5.8**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. la demo usa 8 talleres y el esquema dice 18, sin fuente que los liste; las referencias documentales de los 24 ítems no están verificadas).
-- [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **DECIDIDA**
+- [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
-  **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. Se implementa en **M12.1**.
-  **Falta que el equipo la confirme.** El planteo original queda abajo como registro:
+  **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. **Confirmada por el equipo
+  e implementada en M12.1** (modelo, FKs de `hce_diurna` y `foto` a entero, seed de los 4 grupos, 5 tests).
+  Queda **un residuo más chico anotado en §5.18**: con granularidad anual, un cambio de técnico a mitad de
+  año sobrescribe la fila y sólo deja rastro en `auditoria`. El planteo original queda abajo como registro:
 - [ ] ~~**la tabla `grupo` no admite más de un año**~~ (contexto histórico): Su PK es sólo la letra (`A..E`) pero lleva columna `anio`, así que **el grupo A existe para un único año en toda la historia**: crear el de 2027 obliga a sobrescribir el de 2026 (se pierde quiénes fueron sus técnicos) y los expedientes viejos, que en `grupo_id` guardan sólo la letra, pasan a apuntar al grupo nuevo **sin aviso**. Contradice cómo `protocolo` e `informe_cierre` resuelven los ciclos anuales con `(hce_id, …, anio)`. Detectado al revisar M11.2; **se implementó tal cual lo especifica `esquema-datos-v2.md` §2.1, sin corregirlo por cuenta propia** (cambiarlo modifica ese documento). Opciones: (a) PK compuesta `(id, anio)` · (b) id propio con `UNIQUE(letra, anio)` · (c) dejarlo y **quitar la columna `anio`**, si los grupos no se reconfiguran año a año. Anotado en los 3 lugares donde se va a mirar: `esquema-datos-v2.md` §2.1, el docstring de `Grupo` y `docs/notas/puntos-a-validar.md` §2.6. **No bloquea M11.3.**
 - [ ] **ENVIAR A IPPU:** `docs/notas/consulta-a-ippu.md` (2026-08-07). Versión **no técnica** del anterior, en formato de cuestionario respondible por los funcionarios: **Parte 1** lo que entendimos de su trabajo (para que nos corrijan) · **Parte 2** los 10 supuestos que tomamos (para confirmar o desmentir) · **Parte 3** 10 dudas puntuales. Las 4 marcadas ⚠️ son las que destraban más: **2.1** (¿el IDEA se hace una vez o todos los años?), **3.1** (lista de talleres), **3.2** (citas bibliográficas de la escala) y **3.3** (acceso al sistema actual). Los dos documentos se mantienen sincronizados: si cambia uno, cambia el otro.
 - [x] ~~**Modularizar la demo**~~ → **HECHO** (2026-08-07, §5.5). La demo dejó de ser recurso exclusivo: **se puede trabajar en paralelo** tomando archivos distintos de `demo/js/`.
@@ -430,7 +461,7 @@ campo.
 
 ## 10. Glosario
 - **NNA**: niños, niñas y adolescentes. · **TEA**: Trastorno del Espectro Autista.
-- **HCE**: Historia Clínica Electrónica. · **IDEA**: Inventario de Espectro Autista (Á. Rivière, 1997).
+- **HCE**: Historia Clínica Electrónica. · **IDEA**: Inventario de Espectro Autista (Á. Rivière, 1997/2002).
 - **CAA/AAC**: Comunicación Aumentativa y Alternativa. · **INAU/BPS**: organismos uruguayos (convenios).
 - **LIDIA**: laboratorio de la Lic. en Ing. de Datos e IA de UTEC. · **ARASAAC**: banco mundial de pictogramas (referencia L2).
 
@@ -681,3 +712,16 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     - **Recomendación (a decidir en M12.1, no tomada acá):** **no reemplazar** los 60 por los del prototipo — perderíamos fidelidad al instrumento original a cambio de nada. Si la versión corta les sirve en pantalla, entra como campo aparte (`descriptor_breve`), no encima del oficial. Lo que sí conviene tomar del prototipo son los catálogos que **no tenemos**: `IDEA_FICHAS` (12), `IDEA_EJ` (12) e `IDEA_REGLAS` (9).
   - **Verificación de la sesión:** `pytest -q` **21 passed** · `alembic heads` una sola cabeza y la base al día · 28 tablas · catálogos con los conteos esperados. **Ningún cambio en modelos, migraciones ni catálogos.**
   - **Próximo: M12.1** (correcciones al esquema existente) — va **primera y sola**, con los 21 tests corriendo después de cada cambio. **Antes:** confirmar **D9** con el equipo. (Lucas + Claude)
+- **2026-08-14** — **M12.1 · Correcciones al esquema existente** (ronda **M12**, plan `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`). Va **primera y sola**; la sesión corta acá, antes de M12.2.
+  - **D9 confirmada por el equipo e implementada.** `grupo` pasa a **id serial sin significado** + `nombre` por color (`Grupo Azul` · `Celeste` · `Naranja` · `Verde`) + **`UNIQUE(nombre, anio)`**, con `anio SMALLINT`. Se barrieron las dos FK (`hce_diurna.grupo_id` y `foto.grupo_id`, de texto a entero) y los usos del id como si fuera el nombre. **Granularidad anual, no por fecha** — con fecha completa volverían a existir dos grupos Azul en el mismo año, y `anio` es lo que ya usan `protocolo` e `informe_cierre`. **Límite aceptado y anotado en §5.18:** un cambio de técnico a mitad de año sobrescribe la fila y sólo deja rastro en la auditoría; depende de las respuestas de IPPU a §3.7/§3.8 de `consulta-a-ippu.md`. **Cerró `puntos-a-validar.md` §2.6.** No hubo migración de datos: los `A..E` sólo existían en un test y en los docstrings.
+  - **Catálogos nuevos (5 tablas, 28 → 33).** `banda_idea` (6 tramos con nivel DSM-5-TR y el texto orientativo copiado **tal cual** — es deliberadamente neutro y reescribirlo rompe esa propiedad) · `delta_interpretacion` (6 tramos con acción y `signo`; **la alerta institucional Δ ≤ −7 pasa a derivarse de la fila con `alerta=True`**, ya no de un número suelto) · `idea_ficha` (12) · `idea_ejemplo` (48 = 12 × niveles 8/6/4/2; el prototipo no trae ejemplo de nivel 0 y no se inventó uno) · `idea_regla` (9).
+  - **Los 60 descriptores NO se reemplazaron**, cerrando lo que M12.0 dejó recomendado. El corrimiento que el prototipo dice haber corregido es contra una «Guía del aplicador» interna de IPPU que nunca tuvimos; los nuestros son el texto literal de Rivière (1997/2002) y los suyos, paráfrasis condensadas. **Lo que sí entró:** `idea_nivel.descriptor_breve` (la versión corta, **al lado** y nunca encima) y `idea_dimension.que_evalua`. Un test fija que 59 de 60 difieren y nombra el único que coincide (D11/8, «Ausencia completa de conductas de imitación»): si esa cuenta sube, alguien copió los del prototipo encima de los oficiales.
+  - **Campos nuevos.** `idea.manual_version` (el literal `Manual Unificado IDEA v1.0 (07/2026)`, que el prototipo pide persistir con cada evaluación firmada) · **`OrigenMigracionMixin`** en `persona`, `hce_diurna` e `idea` (`sistema_origen`, `fecha_original`, `fecha_migracion`, `responsable_migracion`), que **reemplaza al `idea.migrado_origen JSONB`** de M11.2: eran los mismos datos en una bolsa sin forma, imposible de filtrar · **`auditoria` a nivel campo** (`campo`, `valor_ant`, `valor_nuevo`) con **`hce_id` nullable**, porque hay eventos institucionales —cambiar los técnicos de un grupo, retirar un taller— que no son de ningún expediente. Esa granularidad es justamente lo que hace verdadera la garantía de D9.
+  - **Recordatorios 4 → 8:** a los del flujo (`lb pa pb ic`, con IDEA en semanas 2–3 e IC a 10 días hábiles) se suman `ayex` (60/30), `vf` (90/30), `inc` (>60 días sin gestiones) e `inau` (informes semestrales). Configurables y **nunca bloqueantes**.
+  - **Decisión: los 6 catálogos sueltos de la demo van a constante, no a tabla.** `LIKERT_LBL`, `VF_DOMINIOS`, `VF_NIVELES`, `PRESTACIONES`, `BPS_PRESTACIONES` y `BPS_ESTADOS` viven ahora en **`app/core/constantes.py`**. Criterio escrito ahí: tabla si se consulta, se filtra o la institución lo cambia sin desplegar; constante si es texto fijo de presentación que acompaña a un valor ya guardado. Los 6 dominios de VF, por ejemplo, son las **claves fijas** de `valoracion_funcional.dominios` y vienen de la CIF, no de IPPU. Pasan a tabla el día que el panel necesite filtrar por alguno.
+  - **Generador de catálogos versionado.** `herramientas/generar_catalogos_backend.py` (con `--check` para CI) reemplaza al script `vm` de Node de M11.2c, que nunca quedó en el repo. Produce las secciones nuevas desde el Prototipo v4 y **preserva** las que vienen de la demo v4.1; M12.8 tiene que pasar esas también y vaciar la lista `DESDE_LA_DEMO`. `app/data/catalogos_iniciales.json` sigue sin editarse a mano.
+  - **Vocabulario §8.1 — el prototipo incumple su propia regla.** El generador normaliza «grave» → «severo» y **reporta cada sustitución**. Hubo **una**: `IDEA_FICHAS[7].nc`, "un trastorno grave de anticipación". También normaliza «Rivière (1997)» → «Rivière (1997/2002)» en las fuentes de `idea_regla`. En el repo propio quedaban dos citas sueltas, en §3 y en el glosario de este archivo: corregidas. **La demo no se tocó** (no-goal §2 del plan): su `js/catalogos.js` sigue diciendo "1997", y el plan §8 ya lo tiene listado como cambio a decidir aparte antes de la reunión con IPPU.
+  - **Tests: 53 en verde + 1 salteado a propósito** (`tests/test_m12_catalogos.py`, 32 nuevos). Cubren: los dos casos de D9 (que «Azul 2026» y «Azul 2027» convivan, y que el segundo «Azul 2026» sea rechazado) · los bordes de las 6 bandas (0, 15, 16, 90, 91, 96) y que cubran 0–96 sin huecos · que la alerta del Δ sea una sola y arranque en −7 · que los tramos del Δ no dejen huecos · que ningún catálogo diga «grave» · que los 60 oficiales sigan intactos · **el seed completo corrido dos veces con 0 nuevas / 0 actualizadas** · que el seed no pise los cortes de las bandas ni los grupos ya configurados.
+  - ⚠️ **`test_la_migracion_coincide_con_los_modelos` queda salteado hasta M12.8, a propósito.** La regla de la ronda congela las migraciones hasta el cierre, así que los modelos van deliberadamente adelante del esquema aplicado y ese test **tiene que** fallar. No se borró ni se comentó: sigue calculando el diff y lo **reporta al saltear** (`pytest -rs` muestra hoy **32 diferencias**), para que el desfasaje pendiente esté a la vista. **M12.8 tiene que volver a poner el `assert`** — está anotado en el plan y en el docstring del test.
+  - **Docs actualizados:** `esquema-datos-v2.md` (cabecera al estado real —decía "no implementada todavía"—, §2.1 `grupo` como fuente de D9, §2.2 `idea`, §2.3 `auditoria`, §2.4 con los 5 catálogos nuevos y el criterio tabla-vs-constante, §4 con 5 reglas más para M11.3) · `PLAN-M12` (corregidos los bullets de `baremo_categoria.implicancia` y de los 60 descriptores, agregado el de los 6 catálogos sueltos, y anotado en M12.8 que `solo_al_crear` **no** era un bug pendiente) · `puntos-a-validar.md` §2.6 cerrado · banner de «documento histórico» en los dos docs del backend v1 (`esquema-datos.md`, `ejemplos-endpoints.md`), que seguían mostrando `"grupo_id": "A"` sin decir que describen una API retirada.
+  - **Próximo: M12.2** (puntuación independiente y consenso, D7) — el cambio de modelo más profundo y el único que no sale del prototipo. Después, M12.3–M12.7 se reparten en paralelo. (Lucas + Claude)

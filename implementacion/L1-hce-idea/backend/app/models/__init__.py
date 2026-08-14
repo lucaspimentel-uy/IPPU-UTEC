@@ -10,10 +10,15 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
 """
 from app.models.catalogos import (
+    BandaIdea,
     BaremoCategoria,
     CategoriaDocumento,
+    DeltaInterpretacion,
     IdeaDimension,
+    IdeaEjemplo,
+    IdeaFicha,
     IdeaNivel,
+    IdeaRegla,
     IppuItem,
     Recordatorio,
     Servicio,
@@ -43,7 +48,8 @@ from app.models.transversales import (
 
 __all__ = [
     # catálogos
-    "BaremoCategoria", "CategoriaDocumento", "IdeaDimension", "IdeaNivel",
+    "BandaIdea", "BaremoCategoria", "CategoriaDocumento", "DeltaInterpretacion",
+    "IdeaDimension", "IdeaEjemplo", "IdeaFicha", "IdeaNivel", "IdeaRegla",
     "IppuItem", "Recordatorio", "Servicio", "Taller",
     # identidad
     "Grupo", "HceDiurna", "HceTaller", "Persona", "PersonaServicio", "Profesional",

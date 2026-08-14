@@ -150,9 +150,18 @@ qué permite ese hosting.
 **Qué bloquea.** Nada ahora — Docker se usa **sólo para desarrollo** y el código no depende de
 él (habla con la base por un `DATABASE_URL`). Se decide en Fase 6, con la respuesta al punto 1.5.
 
-### 2.6 La tabla `grupo` no soporta más de un año — decisión técnica pendiente
-**Qué es.** `esquema-datos-v2.md` §2.1 define `grupo` con clave primaria `id (A..E)` y además una
-columna `anio`. Como la clave es sólo la letra, **el grupo A puede existir para un solo año en toda
+### 2.6 ~~La tabla `grupo` no soporta más de un año~~ — **CERRADO** (2026-08-14)
+> **Decidido y confirmado por el equipo el 2026-08-14** (`handoff.md` §5.18 / D9): opción **(b)**, id
+> propio + **`UNIQUE(nombre, anio)`**, y el nombre pasa a ser el **color** (Azul · Celeste · Naranja ·
+> Verde), que es el dominio real de IPPU según el Prototipo v4. Granularidad **anual**, no por fecha: es
+> la que ya usan `protocolo` e `informe_cierre`. Implementado en **M12.1**.
+>
+> **Queda abierto un residuo, más chico:** con granularidad anual, un cambio de técnico a mitad de año
+> sobrescribe la fila y sólo deja rastro en la auditoría. Se acepta; depende de las respuestas de IPPU a
+> §3.7 y §3.8 de `consulta-a-ippu.md`. Si pasa seguido, hay que modelar vigencias por técnico.
+
+**Qué era.** `esquema-datos-v2.md` §2.1 definía `grupo` con clave primaria `id (A..E)` y además una
+columna `anio`. Como la clave era sólo la letra, **el grupo A podía existir para un solo año en toda
 la historia**.
 
 **Por qué importa.** En 2027, crear el grupo A obliga a sobrescribir la fila de 2026 — se pierde el
