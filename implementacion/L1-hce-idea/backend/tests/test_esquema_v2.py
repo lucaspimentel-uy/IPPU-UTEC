@@ -293,14 +293,14 @@ def test_la_migracion_coincide_con_los_modelos():
     generar la migración: los tests pasarían igual y el desfasaje aparecería
     recién al desplegar.
 
-    ⚠️ **Suspendido a propósito mientras dure M12** (regla de la ronda,
-    `PLAN-M12-absorcion-prototipo-v4-2026-08.md` §3): nadie corre
-    `alembic revision --autogenerate` hasta **M12.8**, donde la migración inicial
-    única se regenera una sola vez. O sea que durante la ronda los modelos van
-    *deliberadamente* adelante del esquema aplicado y este test tiene que fallar.
-    No se borra ni se comenta: sigue calculando el diff y lo **reporta** al
-    saltear, así el desfasaje pendiente queda a la vista (`pytest -rs`) en vez de
-    desaparecer. **M12.8 tiene que volver a poner el `assert`.**
+    Estuvo salteado durante M12.1, mientras la regla de la ronda congelaba la
+    migración hasta M12.8. **La enmienda §5.19 de `handoff.md` (2026-08-14) la
+    derogó**: la migración inicial única se regenera al cerrar cada sub-módulo
+    —sólo se congela si hay trabajo en paralelo real sobre `app/models/`— así que
+    este test volvió a ser bloqueante y **ya no se saltea durante la ronda**.
+
+    El único skip que queda es el de infraestructura: si la base de desarrollo no
+    está levantada no hay con qué comparar, y eso no es un desfasaje.
     """
     from alembic.autogenerate import compare_metadata
     from alembic.migration import MigrationContext
@@ -318,13 +318,11 @@ def test_la_migracion_coincide_con_los_modelos():
     finally:
         eng.dispose()
 
-    pytest.skip(
-        f"M12 en curso: {len(diff)} diferencias modelos ↔ migración, esperadas. "
-        "La migración se regenera en M12.8 y ahí vuelve el assert."
-    )
-
-    assert not diff, (  # noqa: W0101  — vuelve a M12.8, ver el docstring
-        "Los modelos y el esquema aplicado difieren. Correr:\n"
-        "  alembic revision --autogenerate -m '<qué cambió>'\n"
+    assert not diff, (
+        "Los modelos y el esquema aplicado difieren. Regenerar la migración inicial\n"
+        "única (no apilar revisiones): borrar el archivo de alembic/versions/,\n"
+        "  psql -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'\n"
+        "  alembic revision --autogenerate -m 'esquema v2 inicial (<sub-módulo>)'\n"
+        "  alembic upgrade head && python -m app.seed_catalogos\n"
         f"Diferencias: {diff}"
     )

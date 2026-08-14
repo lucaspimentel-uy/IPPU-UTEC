@@ -6,10 +6,11 @@ API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Ale
 > **33 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
 > expone `/health`. El esquema está documentado en [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
 >
-> ⚠️ **Durante M12 la migración está congelada** (regla de la ronda): nadie corre
-> `alembic revision --autogenerate` hasta **M12.8**, donde se regenera la migración inicial única. O sea
-> que **los modelos van adelante del esquema aplicado** y `alembic upgrade head` todavía crea las 28
-> tablas de M11.2. Los tests no dependen de eso: crean las tablas desde los modelos.
+> **Migraciones** (regla enmendada el 2026-08-14, `handoff.md` §5.19): la migración inicial **única** se
+> regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` **en
+> verde** — ya no se saltea, y `alembic upgrade head` crea las **33 tablas** actuales. Se congela sólo si
+> hay trabajo en paralelo real sobre `app/models/`; ahí la descongela y regenera una sola persona al
+> terminar. **Se regenera el mismo archivo de migración, no se apilan revisiones.**
 
 ## Arranque
 

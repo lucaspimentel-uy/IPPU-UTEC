@@ -9,7 +9,7 @@
 >
 > - **Última actualización:** 2026-08-14
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 y M12.1 hechos** (2026-08-14): **33 tablas**, 53 tests. **Sigue M12.2** (puntuación independiente y consenso, D7). ⚠️ **Durante M12 nadie corre `alembic revision --autogenerate`**: la migración inicial única se regenera una sola vez en **M12.8**, así que los modelos van adelante del esquema aplicado a propósito. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 y M12.1 hechos** (2026-08-14): **33 tablas**, 53 tests. **Sigue M12.2** (puntuación independiente y consenso, D7). ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -364,6 +364,31 @@ grupo
   `docs/notas/consulta-a-ippu.md` (qué hacen cuando falta un técnico y cuando un chico cambia de grupo).
   **Si responden que pasa seguido, se revisa.**
 
+### 5.19 (E1) **Enmienda** a la regla de migraciones de M12: se regenera por sub-módulo, no al final (2026-08-14, Lucas)
+La regla original del plan (§3 de `PLAN-M12-absorcion-prototipo-v4-2026-08.md`) congelaba
+`alembic revision --autogenerate` **hasta M12.8**. **Queda enmendada así:**
+
+> La migración inicial única se regenera **al cerrar cada sub-módulo de M12**, con el test
+> `test_la_migracion_coincide_con_los_modelos` pasando. Se congela **sólo si hay trabajo en paralelo real**
+> sobre `app/models/` — en ese caso se descongela al terminar el paralelo y regenera **una sola persona**.
+> Mientras la ronda la ejecute alguien solo, **no hay congelamiento**.
+
+- **Por qué se enmienda (dos motivos).** (a) El motivo original era evitar que tres `autogenerate` en
+  paralelo conflictúen; **hoy no aplica: la ronda la está ejecutando una sola persona.** (b) Aun cuando
+  aplicara, se pasó por alto que dejar diferencias acumulándose hasta M12.8 es **justamente lo que la regla
+  quería evitar**: M12.1 ya dejaba 32 diferencias y después del fan-out (M12.3–M12.7) serían más de cien,
+  de autores distintos, vistas por primera vez al final. El riesgo se movía de sitio, no desaparecía.
+- **Qué cambia en la práctica:** el test de coincidencia modelos ↔ migración **deja de estar salteado** y
+  vuelve a ser bloqueante. Cerrar un sub-módulo incluye regenerar la migración inicial única y correr la
+  reconstrucción limpia (drop schema → `alembic upgrade head` → `python -m app.seed_catalogos`).
+- **Deroga** la «Regla de migraciones» de §3 del plan, el recuadro de ajuste al criterio de verificación de
+  M12.1, el ⚠️ de la cabecera de este archivo y el de `CLAUDE.md`, y la línea de §6 sobre M12.8 (todos
+  corregidos en esta sesión). **M12.8 sigue existiendo como cierre**, pero ya no es el único momento en que
+  se toca la migración.
+- **Se sigue manteniendo una migración inicial *única*:** no se apilan revisiones. Se regenera el mismo
+  archivo, no se agrega uno nuevo por sub-módulo.
+- **Aplicada en la misma sesión:** migración regenerada con las 33 tablas de M12.1 y test reactivado.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -387,12 +412,14 @@ grupo
         Δ ≤ −7 sale de ahí) · `manual_version` + metadatos de origen · `idea_ficha`/`idea_ejemplo`/
         `idea_regla` + `descriptor_breve` · recordatorios 4 → 8 · auditoría a nivel campo · vocabulario ·
         cita Rivière 1997/2002. **33 tablas**, generador de catálogos versionado,
-        **53 tests en verde + 1 salteado a propósito**. Ver bitácora §13.
+        **53 tests en verde + 1 salteado a propósito** → tras la enmienda **§5.19** (mismo día): migración
+        regenerada con las 33 tablas y **54 en verde, 0 salteados**. Ver bitácora §13.
   - [ ] **M12.2** puntuación independiente y consenso (D7). El cambio de modelo más profundo.
   - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.3** catálogo de talleres ·
         **M12.4** HCE-SEV · **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
-  - [ ] **M12.8** cierre: migración regenerada, seed desde el JSON del prototipo, tests y docs. **Una sola
-        persona.** Nadie corre `alembic revision --autogenerate` hasta acá.
+  - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
+        ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
+        (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
 - [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). 8 puntos para IPPU (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**), 6 para el equipo (incl. **ratificar §5.8**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. la demo usa 8 talleres y el esquema dice 18, sin fuente que los liste; las referencias documentales de los 24 ítems no están verificadas).
 - [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
@@ -722,6 +749,15 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Generador de catálogos versionado.** `herramientas/generar_catalogos_backend.py` (con `--check` para CI) reemplaza al script `vm` de Node de M11.2c, que nunca quedó en el repo. Produce las secciones nuevas desde el Prototipo v4 y **preserva** las que vienen de la demo v4.1; M12.8 tiene que pasar esas también y vaciar la lista `DESDE_LA_DEMO`. `app/data/catalogos_iniciales.json` sigue sin editarse a mano.
   - **Vocabulario §8.1 — el prototipo incumple su propia regla.** El generador normaliza «grave» → «severo» y **reporta cada sustitución**. Hubo **una**: `IDEA_FICHAS[7].nc`, "un trastorno grave de anticipación". También normaliza «Rivière (1997)» → «Rivière (1997/2002)» en las fuentes de `idea_regla`. En el repo propio quedaban dos citas sueltas, en §3 y en el glosario de este archivo: corregidas. **La demo no se tocó** (no-goal §2 del plan): su `js/catalogos.js` sigue diciendo "1997", y el plan §8 ya lo tiene listado como cambio a decidir aparte antes de la reunión con IPPU.
   - **Tests: 53 en verde + 1 salteado a propósito** (`tests/test_m12_catalogos.py`, 32 nuevos). Cubren: los dos casos de D9 (que «Azul 2026» y «Azul 2027» convivan, y que el segundo «Azul 2026» sea rechazado) · los bordes de las 6 bandas (0, 15, 16, 90, 91, 96) y que cubran 0–96 sin huecos · que la alerta del Δ sea una sola y arranque en −7 · que los tramos del Δ no dejen huecos · que ningún catálogo diga «grave» · que los 60 oficiales sigan intactos · **el seed completo corrido dos veces con 0 nuevas / 0 actualizadas** · que el seed no pise los cortes de las bandas ni los grupos ya configurados.
-  - ⚠️ **`test_la_migracion_coincide_con_los_modelos` queda salteado hasta M12.8, a propósito.** La regla de la ronda congela las migraciones hasta el cierre, así que los modelos van deliberadamente adelante del esquema aplicado y ese test **tiene que** fallar. No se borró ni se comentó: sigue calculando el diff y lo **reporta al saltear** (`pytest -rs` muestra hoy **32 diferencias**), para que el desfasaje pendiente esté a la vista. **M12.8 tiene que volver a poner el `assert`** — está anotado en el plan y en el docstring del test.
+  - ⚠️ ~~**`test_la_migracion_coincide_con_los_modelos` queda salteado hasta M12.8, a propósito.** La regla de la ronda congela las migraciones hasta el cierre, así que los modelos van deliberadamente adelante del esquema aplicado y ese test **tiene que** fallar. No se borró ni se comentó: sigue calculando el diff y lo **reporta al saltear** (`pytest -rs` muestra hoy **32 diferencias**), para que el desfasaje pendiente esté a la vista. **M12.8 tiene que volver a poner el `assert`** — está anotado en el plan y en el docstring del test.~~ → **Revertido el mismo día por la enmienda §5.19** (ver la entrada siguiente de esta bitácora): la migración se regeneró con las 33 tablas y el test volvió a ser bloqueante.
   - **Docs actualizados:** `esquema-datos-v2.md` (cabecera al estado real —decía "no implementada todavía"—, §2.1 `grupo` como fuente de D9, §2.2 `idea`, §2.3 `auditoria`, §2.4 con los 5 catálogos nuevos y el criterio tabla-vs-constante, §4 con 5 reglas más para M11.3) · `PLAN-M12` (corregidos los bullets de `baremo_categoria.implicancia` y de los 60 descriptores, agregado el de los 6 catálogos sueltos, y anotado en M12.8 que `solo_al_crear` **no** era un bug pendiente) · `puntos-a-validar.md` §2.6 cerrado · banner de «documento histórico» en los dos docs del backend v1 (`esquema-datos.md`, `ejemplos-endpoints.md`), que seguían mostrando `"grupo_id": "A"` sin decir que describen una API retirada.
   - **Próximo: M12.2** (puntuación independiente y consenso, D7) — el cambio de modelo más profundo y el único que no sale del prototipo. Después, M12.3–M12.7 se reparten en paralelo. (Lucas + Claude)
+
+- **2026-08-14** — **Enmienda §5.19 · la migración de M12 se descongela.** Sesión corta y de una sola cosa; **M12.2 no arrancó**.
+  - **La decisión, primero al papel (§5.19).** La regla de §3 del plan congelaba `alembic revision --autogenerate` hasta M12.8. Se enmienda: **la migración inicial única se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando, y **sólo se congela si hay trabajo en paralelo real sobre `app/models/`** (ahí descongela y regenera una sola persona al terminar el paralelo). **Dos motivos:** (a) el motivo original —tres `autogenerate` simultáneos— no aplica, la ronda la ejecuta una sola persona; (b) aun aplicando, dejar 32 diferencias acumulándose hasta M12.8, y más de cien después del fan-out, **de autores distintos y vistas por primera vez al final**, es exactamente el riesgo que la regla quería evitar: se movía de lugar, no desaparecía. Se sigue manteniendo **una** migración inicial: se regenera el mismo archivo, no se apilan revisiones.
+  - **Texto corregido en los 5 lugares que decían lo contrario:** cabecera de este archivo · §6 (bullet de M12.8) · `PLAN-M12` §3 (con la regla vieja tachada y el porqué), el recuadro de M12.1 y los bullets de M12.8 · `CLAUDE.md` · `backend/README.md` · `docs/estructura-repositorio.md`. La entrada de M12.1 de esta misma bitácora quedó tachada con puntero acá, no reescrita.
+  - **Migración regenerada:** se borró `f6ca521bcc6a_..._m11_2.py` (28 tablas) y se generó **`46da34fcc64e_esquema_v2_inicial_m12_1.py`** con las **33** de M12.1 (las 5 nuevas: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla`; más `grupo` con id propio y las FKs a entero de D9). **Reconstrucción limpia de punta a punta**, dos veces: drop schema → `alembic upgrade head` → `python -m app.seed_catalogos`. 34 tablas en `information_schema` = 33 + `alembic_version`.
+  - **Test reactivado.** `test_la_migracion_coincide_con_los_modelos` volvió a tener su `assert`, sin `skip` (queda sólo el de infraestructura, para cuando la base de desarrollo no está levantada). Docstring reescrito y mensaje de error actualizado: ahora explica el flujo de **regenerar la migración única**, no el de agregar una revisión.
+  - **`solo_al_crear` verificado a mano, no sólo por unit test.** Seed corrido **dos veces seguidas → 0 nuevas / 0 actualizadas en las 14 secciones**; después, 8 campos de institución pisados por SQL directo (`banda_idea.total_max` 15→20 · `baremo_categoria.pct_min` · `recordatorio.activo`+`periodo` · `taller.activo` · `servicio.activo` · `delta_interpretacion.delta_min`+`alerta` · `grupo.dias`+`obs`, este último por `solo_insertar`) y **tercera corrida: los 8 sobrevivieron intactos**. En la misma corrida se pisó también `banda_idea.texto` —contenido del instrumento, **no** de la institución— y el seed **sí** lo restauró: es la única "1 actualizada" del resumen, y es la contraprueba de que el seed efectivamente corrió y comparó en vez de no hacer nada.
+  - **Verificación:** `pytest -q` → **54 en verde, 0 salteados** (los 53 de M12.1 más el que estaba salteado). `generar_catalogos_backend.py --check` → OK. La base de desarrollo quedó reconstruida y sembrada limpia.
+  - **Próximo: M12.2** (puntuación independiente y consenso, D7), sin cambios. (Lucas + Claude)

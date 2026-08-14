@@ -94,9 +94,10 @@ capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
 - **M12.0 y M12.1 HECHOS** (2026-08-14): **33 tablas**, 5 catálogos nuevos, D9 (`grupo`) implementada,
   **53 tests**. Sigue **M12.2** (puntuación independiente y consenso, D7).
-- ⚠️ **Regla de la ronda: nadie corre `alembic revision --autogenerate` hasta M12.8.** Se trabaja sobre
-  los modelos; la migración inicial única se regenera una sola vez al cierre. Por eso
-  `test_la_migracion_coincide_con_los_modelos` está **salteado a propósito** y M12.8 debe reactivarlo.
+- ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
+  inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
+  **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,
+  y ahí la descongela y regenera una sola persona al terminar el paralelo.
 - Los catálogos se regeneran con **`python herramientas/generar_catalogos_backend.py`** (`--check` valida
   que el JSON del repo esté al día). Lo que **no** es catálogo —Likert, dominios de VF, prestaciones,
   vocabulario— vive en `app/core/constantes.py`, con el criterio escrito en su docstring.

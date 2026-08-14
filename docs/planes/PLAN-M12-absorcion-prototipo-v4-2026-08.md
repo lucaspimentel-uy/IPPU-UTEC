@@ -118,10 +118,23 @@ literales) y se extrajo entero. Lo que queda es incorporarlo.
 tablas nuevas e independientes → se reparten entre los tres (§12.3), cada uno en su archivo de
 `app/models/`. M12.8 lo hace **una sola persona**.
 
-**Regla de migraciones:** nadie corre `alembic revision --autogenerate` hasta M12.8. Se trabaja sobre los
-modelos; la migración inicial única **se regenera una sola vez al cierre**, como en M11.2. Nada está
-desplegado y no hay datos reales — apilar ocho migraciones no compra nada y tres autogenerate en paralelo
-garantizan conflicto.
+**Regla de migraciones** — ⚠️ **enmendada el 2026-08-14** (`handoff.md` **§5.19**; el texto original queda
+citado abajo):
+
+> La migración inicial única se regenera **al cerrar cada sub-módulo de M12**, con el test
+> `test_la_migracion_coincide_con_los_modelos` pasando. Se congela **sólo si hay trabajo en paralelo real**
+> sobre `app/models/` — en ese caso se descongela al terminar el paralelo y regenera **una sola persona**.
+> Mientras la ronda la ejecute alguien solo, **no hay congelamiento**.
+
+Se mantiene una migración inicial **única**: se regenera el mismo archivo, no se apilan revisiones.
+
+~~Regla original: nadie corre `alembic revision --autogenerate` hasta M12.8. Se trabaja sobre los modelos;
+la migración inicial única se regenera una sola vez al cierre, como en M11.2. Nada está desplegado y no hay
+datos reales — apilar ocho migraciones no compra nada y tres autogenerate en paralelo garantizan conflicto.~~
+El motivo (evitar conflictos entre tres `autogenerate` simultáneos) sólo aplica cuando efectivamente hay
+tres personas sobre `app/models/`; y dejar el desfasaje acumulándose hasta M12.8 —32 diferencias en M12.1,
+más de cien después del fan-out, de autores distintos, vistas por primera vez al final— era el mismo riesgo
+corrido de lugar.
 
 ---
 
@@ -192,12 +205,13 @@ Primero, solo, con los tests de M11.2 corriendo después de cada cambio.
 "grave" · test de los 6 tramos con sus bordes (0, 15, 16, 90, 91, 96) · el diff de descriptores reportado
 por escrito, se aplique o no.
 
-> ⚠️ **Ajuste al criterio de verificación, hecho en M12.1.** El test
-> `test_la_migracion_coincide_con_los_modelos` **no puede estar en verde durante la ronda**: la regla de
-> §3 dice que la migración se regenera una sola vez en M12.8, así que los modelos van deliberadamente
-> adelante del esquema aplicado. Queda **salteado con el conteo de diferencias en el mensaje** (visible
-> con `pytest -rs`) en vez de borrado, y **M12.8 tiene que volver a poner el `assert`**. Los otros 20 de
-> M11.2 siguen en verde.
+> ⚠️ ~~**Ajuste al criterio de verificación, hecho en M12.1.** El test
+> `test_la_migracion_coincide_con_los_modelos` no puede estar en verde durante la ronda: la regla de §3
+> dice que la migración se regenera una sola vez en M12.8, así que los modelos van deliberadamente adelante
+> del esquema aplicado. Queda salteado con el conteo de diferencias en el mensaje (visible con `pytest -rs`)
+> en vez de borrado, y M12.8 tiene que volver a poner el `assert`.~~
+> **Revertido el 2026-08-14 por la enmienda §5.19** (ver §3): la migración se regeneró con las 33 tablas de
+> M12.1, el test volvió a ser bloqueante y **ya no se saltea durante la ronda**. Los 21 de M11.2 en verde.
 
 ---
 
@@ -296,10 +310,11 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 
 ---
 
-### M12.8 — Cierre: migración regenerada, seed, tests, docs
+### M12.8 — Cierre: seed, tests, docs
 Una sola persona.
-- **Regenerar la migración inicial única.** Reconstrucción limpia: drop schema → `alembic upgrade head` →
-  `python -m app.seed_catalogos`.
+- **Regenerar la migración inicial única** una última vez, con la reconstrucción limpia de siempre: drop
+  schema → `alembic upgrade head` → `python -m app.seed_catalogos`. ⚠️ Desde la enmienda **§5.19**
+  (2026-08-14) esto **ya se hizo al cerrar cada sub-módulo**, así que acá es confirmación, no puesta al día.
 - **Seed:** terminar de regenerar `app/data/catalogos_iniciales.json` desde
   `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` — la fuente autoritativa cambió.
   **M12.1 ya dejó el generador versionado:** `herramientas/generar_catalogos_backend.py` (con `--check`
@@ -313,9 +328,9 @@ Una sola persona.
   para M12.8 es extenderlo a los catálogos de M12.3–M12.7.
 - **Índices de FK** en cada tabla nueva: que la cuenta de FKs sin respaldo siga en **0**.
 - **Tipos:** columnas `Numeric` anotadas `Decimal`, no `float`.
-- **Tests:** los 21 de M11.2 + los nuevos de cada módulo + **volver a activar** el test de desfasaje
-  modelos ↔ migración, que M12.1 dejó salteado a propósito mientras la migración está congelada (ver el
-  recuadro de M12.1). Cada rechazo probado junto con su caso que sí debe pasar.
+- **Tests:** los 21 de M11.2 + los nuevos de cada módulo, con el test de desfasaje modelos ↔ migración en
+  verde (ya reactivado el 2026-08-14 por §5.19; no hay nada que "volver a activar"). Cada rechazo probado
+  junto con su caso que sí debe pasar.
 - **Docs:** `backend/docs/esquema-datos-v2.md` → **v3** · `backend/README.md` · `CLAUDE.md` (ronda en
   curso) · `handoff.md` §6 y §13 · `docs/estructura-repositorio.md` si aparecieron carpetas nuevas.
 - **Nomenclatura:** cerrar `puntos-a-validar.md` §2.3 — conviven cinco usos de "fase" y esta ronda agrega

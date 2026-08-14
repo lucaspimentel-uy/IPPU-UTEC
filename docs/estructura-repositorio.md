@@ -143,8 +143,8 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── f6ca521bcc6a_esquema_v2_inicial_m11_2.py   # migración única del esquema v2 (28 tablas)
-│           # ⚠️ congelada durante M12: se regenera una sola vez en M12.8 (33 tablas y las que sumen M12.3–M12.7)
+│       └── 46da34fcc64e_esquema_v2_inicial_m12_1.py   # migración única del esquema v2 (33 tablas)
+│           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
 │   ├── core/
@@ -169,7 +169,7 @@ backend/
 ├── pytest.ini                   # pythonpath=. → que `pytest -q` funcione tal como está documentado
 ├── tests/
 │   ├── conftest.py
-│   ├── test_esquema_v2.py       # tests estructurales de M11.2 (21; 1 salteado mientras dure M12)
+│   ├── test_esquema_v2.py       # tests estructurales de M11.2 (22, todos en verde)
 │   └── test_m12_catalogos.py    # tests de M12.1: grupo/D9, bandas, Δ, catálogos IDEA, seed (32)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
@@ -184,9 +184,10 @@ Notas:
 - **Catálogos:** `app/data/catalogos_iniciales.json` lo genera `herramientas/generar_catalogos_backend.py`
   (`--check` valida que el del repo esté al día); nunca se edita a mano. Lo que **no** es catálogo va a
   `app/core/constantes.py`, con el criterio tabla-vs-constante escrito en su docstring.
-- **Migraciones congeladas durante M12:** nadie corre `alembic revision --autogenerate` hasta M12.8. Los
-  modelos van adelante del esquema aplicado a propósito, y `test_la_migracion_coincide_con_los_modelos`
-  queda salteado (reporta el conteo de diferencias) hasta que M12.8 lo reactive.
+- **Migraciones (regla enmendada el 2026-08-14, `handoff.md` §5.19):** la migración inicial **única** se
+  regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` en verde.
+  Se regenera el mismo archivo, no se apilan revisiones. Sólo se congela si hay trabajo en paralelo real
+  sobre `app/models/`, y ahí la descongela y regenera una sola persona al terminar.
 
 ## `herramientas/`
 
