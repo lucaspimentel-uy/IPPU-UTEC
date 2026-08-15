@@ -51,7 +51,7 @@ IPPU/
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
 │       │   ├── index.html   # markup · css/estilos.css · js/*.js (12 módulos, orden de carga = semántica)
 │       └── backend/          # API FastAPI + SQLAlchemy + Alembic (ver backend/README.md)
-│           ├── app/          # main, core (config/db), models, schemas, routers
+│           ├── app/          # main, core (config/db), models (+severidad.py, M12.4), schemas, routers
 │           ├── alembic/      # migraciones · docs/ (esquema-datos.md, ejemplos-endpoints.md)
 │           └── tests/        # pytest (base aislada)
 └── herramientas/
@@ -92,14 +92,19 @@ Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa 
 Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
 capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
-- **M12.0 a M12.3 HECHOS** (2026-08-14): **34 tablas**, 5 catálogos nuevos, D9 (`grupo`) implementada, la
+- **M12.0 a M12.4 HECHOS** (2026-08-15): **36 tablas**, 6 catálogos nuevos, D9 (`grupo`) implementada, la
   **puntuación independiente de los dos técnicos** con su registro de consenso (D7, §5.16 — ⚠️ **agregado
   nuestro, no del prototipo**; el guard de «diferencia ≥2 exige documentación» va a **M11.3**, y kappa
-  **no** se calcula todavía) y el **catálogo dinámico de talleres** con los 14 reales (D5, M12.3).
-  ⚠️ **El conteo bajó de 35 a 34 en M12.3 y NO es una regresión:** M12.3 no crea tablas y **retira
-  `hce_taller`** (§5.20), resto de v1 — la participación la crea M12.6 como `pai_taller`, **por nombre**.
-  **92 tests**. Siguen **M12.4–M12.7**, que van **en paralelo** (uno cada uno,
+  **no** se calcula todavía), el **catálogo dinámico de talleres** con los 14 reales (D5, M12.3) y
+  **HCE-SEV** (M12.4): `severidad_dsm` **0..1 por expediente** (dos dominios independientes 1–3, con
+  justificación / fecha / profesional obligatorios) + `severidad_nivel` (3 grados, etiquetas **derivadas**).
+  ⚠️ **El conteo se movió dos veces y ninguna fue regresión:** M12.3 lo bajó de 35 a 34 —no crea tablas y
+  **retira `hce_taller`** (§5.20), resto de v1; la participación la crea M12.6 como `pai_taller`, **por
+  nombre**— y M12.4 lo subió a 36 con las dos tablas nuevas, retirando además la **columna**
+  `hce_diurna.nivel_soporte` (§5.24: era una tercera fuente de verdad sobre el nivel DSM).
+  **123 tests**. Siguen **M12.5–M12.7**, que van **en paralelo** (uno cada uno,
   archivos distintos de `app/models/`) — ahí sí se **congela** la migración hasta terminar el paralelo.
+  El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 y M12.7 no dependen de nadie.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

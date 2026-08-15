@@ -395,7 +395,41 @@ algún lado cómo se resolvió, o sólo queda el valor acordado?**
 
 ---
 
-### 3.11 Algo que no preguntamos
+### 3.11 El nivel de severidad DSM-5-TR, ¿se revisa en algún momento fijo del año?
+
+Ya está el módulo para registrarlo: los dos niveles por separado (comunicación social y
+comportamientos restringidos y repetitivos), con la justificación, la fecha y quién lo registró.
+
+**Lo que no sabemos es cada cuánto se vuelve a mirar.** ¿Se revisa en una instancia fija —por
+ejemplo al cierre del año, junto con la evaluación— o se corrige cuando el equipo ve que cambió?
+
+Las dos formas son válidas y el sistema sirve para las dos; lo preguntamos porque cambia **cómo se
+guarda el historial**: si hay una revisión anual, conviene que quede una ficha por año y se puedan
+comparar; si se corrige cuando hace falta, alcanza con una sola que se va actualizando (y de todos
+modos queda registrado quién la cambió y cuándo).
+
+> _Respuesta:_
+
+---
+
+### 3.12 El PAI, ¿cómo se llama oficialmente?
+
+En el prototipo que nos pasaron figura como «**Propuesta** de Atención **Individual**». En la
+normativa de INAU lo encontramos como «**Proyecto** de Atención **Integral**». Por los campos, es
+claramente el mismo documento.
+
+**¿Cuál es el nombre que corresponde poner en lo que se presenta a INAU?** Lo preguntamos porque
+ese nombre va impreso en el documento que se entrega.
+
+Aprovechamos: entendemos que el PAI **se actualiza durante el año** (hay una sección de «evaluación
+del PAI anterior» y fechas de revisión). **¿Puede haber más de un PAI en el mismo año** —uno inicial
+y una actualización posterior—, o siempre es uno solo por año?
+
+> _Respuesta:_
+
+---
+
+### 3.13 Algo que no preguntamos
 
 **¿Hay algo de cómo trabajan que creen que deberíamos saber y que no aparece en ninguna de estas
 preguntas?** Esta es probablemente la pregunta más útil de todas.

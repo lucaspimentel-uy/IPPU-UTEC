@@ -13,6 +13,7 @@ versionado; esto lo reemplaza y queda en el repo.
 |---|---|
 | `idea_dimension`, `idea_nivel.descriptor`, `ippu_item`, `baremo_categoria`, `categoria_documento`, `servicio` | lo ya generado desde la **demo v4.1** (se preserva tal cual) |
 | `taller` (M12.3 · D5) | **`CAT_TALLERES` del Prototipo v4** — los 14 reales, en reemplazo de los 8 de la demo |
+| `severidad_nivel` (M12.4) | `SEV_ETQ`, `SEV_CS`, `SEV_CRR` y `SEV_APOYO` del Prototipo v4, en una fila por grado |
 | `idea_nivel.descriptor_breve`, `idea_dimension.que_evalua` | `IDEA_DESC` del **Prototipo v4** |
 | `idea_ficha`, `idea_ejemplo`, `idea_regla` | `IDEA_FICHAS`, `IDEA_EJ`, `IDEA_REGLAS` del Prototipo v4 |
 | `banda_idea`, `delta_interpretacion` | `ideaInterpreta()` y `deltaInterpreta()` del HTML del Prototipo v4 |
@@ -237,6 +238,38 @@ def talleres(proto: dict) -> list[dict]:
     ]
 
 
+def severidad_niveles(proto: dict) -> list[dict]:
+    """Los 3 grados del DSM-5-TR de HCE-SEV (M12.4).
+
+    Las cuatro constantes del prototipo —`SEV_ETQ`, `SEV_CS`, `SEV_CRR` y
+    `SEV_APOYO`— están todas indexadas por el mismo grado "1"/"2"/"3" y el módulo
+    las renderiza como **una sola tabla de cuatro columnas**. Se generan como una
+    fila por grado, no como tres catálogos paralelos con la misma clave.
+
+    Es todo texto de IPPU: pasa por `_cita()` como el resto, así que le aplican
+    las dos reglas de M12.1 (cita de Rivière y vocabulario §8.1).
+    """
+    etq, cs, crr, apoyo = (
+        proto["SEV_ETQ"], proto["SEV_CS"], proto["SEV_CRR"], proto["SEV_APOYO"]
+    )
+    grados = ["1", "2", "3"]
+    for nombre, tabla in (
+        ("SEV_ETQ", etq), ("SEV_CS", cs), ("SEV_CRR", crr), ("SEV_APOYO", apoyo)
+    ):
+        assert sorted(tabla) == grados, f"{nombre} no trae exactamente los grados 1–3"
+    assert max(len(v) for v in etq.values()) <= 60, "una etiqueta no entra en severidad_nivel.etiqueta"
+    return [
+        {
+            "grado": int(g),
+            "etiqueta": _cita(etq[g]),
+            "descriptor_cs": _cita(cs[g]),
+            "descriptor_crr": _cita(crr[g]),
+            "apoyos": _cita(apoyo[g]),
+        }
+        for g in grados
+    ]
+
+
 def reglas(proto: dict) -> list[dict]:
     return [
         {"regla": _cita(r["r"]), "descripcion": _cita(r["d"]),
@@ -278,7 +311,8 @@ def construir() -> dict:
         "_origen": (
             "Generado por herramientas/generar_catalogos_backend.py (M12.1). "
             "Instrumentos y catálogos base: demo v4.1. "
-            "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve y talleres: "
+            "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres y "
+            "niveles de severidad DSM-5-TR: "
             "Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). "
             "Recordatorios y grupos: Manual + plan M12. "
             "NO editar a mano: correr el script."
@@ -297,6 +331,7 @@ def construir() -> dict:
         nivel["descriptor_breve"] = _cita(desc[nivel["dimension_id"] - 1][f"n{nivel['valor']}"])
 
     datos["taller"] = talleres(proto)
+    datos["severidad_nivel"] = severidad_niveles(proto)
     datos["idea_ficha"] = fichas(proto)
     datos["idea_ejemplo"] = ejemplos(proto)
     datos["idea_regla"] = reglas(proto)

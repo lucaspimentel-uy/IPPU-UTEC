@@ -40,6 +40,17 @@ mal puesto cambia el resultado de una valoración real.
 **Qué bloquea.** Nada técnico: la tabla es paramétrica y corregirlo es un UPDATE, sin migración.
 **Sí bloquea el uso clínico real.**
 
+> ⚠️ **Al reconciliar contra el anexo: se ajustan los CORTES, NUNCA las ETIQUETAS** (anotado en M12.4;
+> el guard completo está en `backend/docs/esquema-datos-v2.md` §4). IPPU declara que **la nomenclatura
+> oficial del instrumento puede diferir de la institucional**, y que en sus pantallas e informes se usa
+> **siempre la institucional**: «severo / muy severo», nunca «grave» (§8.1). Si el anexo del decreto
+> dijera «grave», alinear la columna `categoria` haría saltar en rojo el test de `VOCABULARIO_PROHIBIDO`
+> — y **quien lo vea va a creer que el test está mal y el decreto tiene razón**, cuando es exactamente al
+> revés. **Se tocan `pct_min` y `pct_max`; `categoria` no se toca.**
+>
+> Esto se escribe acá, y no sólo en el esquema, porque **acá es donde alguien va a leer la tarea el día
+> que llegue el anexo.**
+
 ### 1.3 ~~Catálogo real de talleres~~ — **CERRADO** (2026-08-14)
 > **Lo resolvió la fuente, no una decisión nuestra:** el **Prototipo v4** trae el catálogo real
 > (`CAT_TALLERES`, **14 talleres** con sus nombres oficiales). Cargados en **M12.3** (`handoff.md` §5.14 /
@@ -119,6 +130,30 @@ M11.3 cuesta migración más reescritura de servicios. Conviene presentarlo así
 
 **Qué bloquea.** Nada técnico: está modelado y es opcional. Bloquea saber si hay que acompañar el cambio
 con formación/instructivo, y cuándo tiene sentido empezar a calcular kappa.
+
+### 1.10 ¿La severidad DSM-5-TR se re-evalúa en una instancia fija? (M12.4)
+**Qué es.** ¿La severidad se vuelve a mirar **en una instancia institucional fija** —al cierre anual,
+junto con el IDEA— o **se ajusta cuando el equipo lo ve necesario**?
+
+**Por qué importa.** Define la forma final de `severidad_dsm`. Hoy es **0..1 por expediente** (un registro
+que se edita), que es lo correcto si la respuesta es «se corrige cuando cambia». Si hay **cadencia
+institucional**, debería ser **1:N con `anio`**, como `protocolo` e `informe_cierre` — y entonces cada
+re-evaluación queda como fila propia y comparable, en vez de como una edición.
+
+**Qué bloquea.** **Nada:** 0..1 se eligió justamente por ser **la dirección reversible** (pasar a 1:N es
+agregar un `id` y soltar la PK, sin perder filas; el camino inverso obliga a descartar). Pero conviene
+preguntarlo antes de M11.3, porque el guard de auditoría que hoy compensa el 0..1 deja de ser suficiente
+si lo que quieren es una serie temporal comparable.
+
+### 1.11 ¿Cómo se llama oficialmente el PAI? (M12.4 · §5.22)
+**Qué es.** El Prototipo v4 lo llama «**Propuesta** de Atención **Individual**»; la normativa INAU aparece
+como «**Proyecto** de Atención **Integral**». Los campos confirman que es el mismo instrumento.
+
+**Por qué importa.** **El nombre va impreso en lo que se le entrega a INAU.** No es una cuestión de
+etiqueta interna.
+
+**Qué bloquea.** Nada de modelo (la tabla se llama `pai` en cualquier caso), pero conviene tenerlo antes
+de generar el PDF en M11.4.
 
 ---
 
@@ -224,6 +259,29 @@ junto con la pregunta abierta de §5.18: qué pasa cuando un técnico cambia a m
 
 **Qué bloquea.** **Nada hoy** — los grupos de 2026 están sembrados y el año no cambia hasta marzo.
 Se anota ahora para que no se descubra el día que haga falta.
+
+### 2.9 El catálogo de talleres quedó sin forma de administrarse — hueco que dejó M12.3
+**Qué es.** D5 (§5.14) decidió que el catálogo de talleres es **dinámico y lo administra coordinación**:
+agregar, reordenar, orientar a grupos y retirar. M12.3 cargó **los 14 nombres reales** con
+`grupos_orientados` vacío y `retirado_en` en `None` —el repo carga nombres, no gestión— pero **no hay
+endpoint ni pantalla** para nada de eso. El prototipo sí los tiene (`tallerAdd`, `tallerToggle`,
+`tallerGrupos`, `tallerGestion`).
+
+**Por qué importa.** Es **el mismo hueco y el mismo destino que §2.8** (abrir un año nuevo de grupos): una
+decisión de modelo que delega en coordinación una operación que todavía no existe. La mitad del valor de
+D5 —que la oferta cambie por grupo y por período sin tocar código— depende de que exista la pantalla.
+
+**Qué se pide.** Que **M11.3/M11.4** incluyan la gestión del catálogo de talleres (alta, orden,
+orientación a grupos, retiro) con su registro en HCE-LOG y `hce_id NULL`, como el resto de los eventos
+institucionales. Conviene resolverlo junto con §2.8: es el mismo tipo de pantalla.
+
+**Qué bloquea.** **Nada hoy** — los 14 están sembrados y `activo` es derivado, así que el catálogo
+funciona para leer. Se anota para que no se descubra cuando IPPU pida cambiar la oferta.
+
+> **M12.4 no agrega nada acá.** Su catálogo nuevo (`severidad_nivel`, los 3 grados DSM-5-TR) **no lo toca
+> coordinación**: es texto del instrumento, no configuración institucional — por eso se sembró **sin**
+> `solo_al_crear`, y ahí el seed manda. Si M12.5–M12.7 agregan catálogos que coordinación **sí** deba
+> tocar (el de **centros educativos** de M12.5 es el candidato claro), suman a este mismo punto.
 
 ---
 

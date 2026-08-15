@@ -161,7 +161,12 @@ class HceDiurna(OrigenMigracionMixin, Base):
 
     diagnostico: Mapped[str | None] = mapped_column(String(200))
     cie11: Mapped[str | None] = mapped_column(String(20))
-    nivel_soporte: Mapped[str | None] = mapped_column(String(40))
+    # `nivel_soporte` **se retiró en M12.4** (`handoff.md` §5.24). Era la
+    # etiqueta visible de la ficha, no un dato del diagnóstico de ingreso: en el
+    # prototipo el propio HCE-SEV la pisa en cada edición
+    # (`setSev()` → `p.nivel = sevResumen(p)`). El nivel de apoyo que IPPU juzga
+    # vive en `severidad_dsm` —con justificación, fecha y autor— y la etiqueta
+    # se deriva de ahí contra `severidad_nivel`.
     dx_fecha: Mapped[date | None] = mapped_column(Date)
     derivacion: Mapped[str | None] = mapped_column(String(200))
     medicacion: Mapped[str | None] = mapped_column(Text)
@@ -177,6 +182,12 @@ class HceDiurna(OrigenMigracionMixin, Base):
 
     persona: Mapped["Persona"] = relationship(back_populates="hce")
     grupo: Mapped["Grupo | None"] = relationship()
+    # HCE-SEV (M12.4). 0..1: el expediente sin registro de severidad es válido —
+    # el módulo no es obligatorio. `cascade` para que borrar el expediente se
+    # lleve el registro, igual que el resto de los módulos.
+    severidad: Mapped["SeveridadDsm | None"] = relationship(  # noqa: F821
+        back_populates="hce", cascade="all, delete-orphan", uselist=False
+    )
 
     # La participación en talleres **no cuelga del expediente**: `hce_taller`
     # (N:M por `taller_id`) se retiró en M12.3 — `handoff.md` §5.20. Era un resto

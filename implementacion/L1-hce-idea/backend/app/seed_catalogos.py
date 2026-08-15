@@ -36,6 +36,7 @@ from app.models import (
     IppuItem,
     Recordatorio,
     Servicio,
+    SeveridadNivel,
     Taller,
 )
 
@@ -126,6 +127,10 @@ CATALOGOS: list[tuple] = [
      ("delta_min", "delta_max", "alerta")),
     (IdeaRegla, "idea_regla", "regla", ()),
     (IdeaFicha, "idea_ficha", "codigo", ()),
+    # M12.4 · HCE-SEV: los 3 grados del DSM-5-TR. Sin `solo_al_crear` — el texto
+    # es del instrumento (DSM-5-TR, vía el Manual), no un ajuste institucional:
+    # acá el seed manda, igual que en las dimensiones del IDEA.
+    (SeveridadNivel, "severidad_nivel", "grado", ()),
 ]
 
 #: Catálogos con identidad compuesta. Van después del `flush` de las dimensiones.

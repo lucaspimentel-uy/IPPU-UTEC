@@ -1,5 +1,5 @@
 {
-  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve y talleres: Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
+  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres y niveles de severidad DSM-5-TR: Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
   "idea_dimension": [
     {
       "id": 1,
@@ -859,6 +859,29 @@
       "orden": 14,
       "grupos_orientados": [],
       "retirado_en": null
+    }
+  ],
+  "severidad_nivel": [
+    {
+      "grado": 1,
+      "etiqueta": "Grado 1 · Necesita ayuda",
+      "descriptor_cs": "Sin apoyos, las dificultades de comunicación social producen limitaciones observables: cuesta iniciar interacciones, las respuestas resultan atípicas o poco exitosas, la conversación de ida y vuelta es dificultosa y el interés social puede parecer disminuido.",
+      "descriptor_crr": "La inflexibilidad interfiere de manera significativa en uno o más contextos; dificultad para alternar entre actividades; problemas de organización y planificación que limitan la autonomía.",
+      "apoyos": "Apoyo puntual o intermitente: entrenamiento explícito en habilidades sociales y conversacionales, apoyos organizativos y de planificación (agendas, listas, rutinas), ajustes razonables en el ámbito educativo, acompañamiento en transiciones y espacios no estructurados."
+    },
+    {
+      "grado": 2,
+      "etiqueta": "Grado 2 · Necesita ayuda notable",
+      "descriptor_cs": "Déficits marcados que se mantienen aun con apoyos instalados; inicio de interacciones limitado; respuestas reducidas o atípicas a la iniciativa social de otros; comunicación centrada en intereses muy concretos.",
+      "descriptor_crr": "Inflexibilidad evidente incluso para un observador no especializado; malestar o dificultad ante el cambio; las conductas interfieren en contextos variados; cuesta redirigir el foco o la actividad.",
+      "apoyos": "Apoyo sustancial y diario: rutinas y apoyos visuales estables, SAAC según perfil comunicativo, mediación adulta planificada para la interacción con pares, anticipación estructurada de cambios, adaptaciones curriculares significativas, entrenamiento a la familia."
+    },
+    {
+      "grado": 3,
+      "etiqueta": "Grado 3 · Necesita ayuda muy notable",
+      "descriptor_cs": "Déficits severos en la comunicación verbal y no verbal que limitan seriamente el funcionamiento diario; inicio de interacciones muy limitado y respuesta mínima a la apertura social de otros; la comunicación se orienta casi exclusivamente a satisfacer necesidades.",
+      "descriptor_crr": "Inflexibilidad extrema; malestar intenso ante cualquier cambio; las conductas restringidas o repetitivas interfieren marcadamente en todos los ámbitos; gran dificultad para cambiar el foco de atención o de acción.",
+      "apoyos": "Apoyo intensivo, continuo y en todos los contextos: acompañamiento permanente, sistemas aumentativos y alternativos de comunicación (SAAC), entornos altamente estructurados con anticipación sistemática, supervisión constante para la seguridad y las AVD, coordinación intersectorial (salud–educación–protección)."
     }
   ],
   "idea_ficha": [

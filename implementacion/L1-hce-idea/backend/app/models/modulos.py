@@ -300,7 +300,10 @@ class PuntuacionIdea(PuntuacionConsensoMixin, Base):
     idea_id: Mapped[int] = mapped_column(
         ForeignKey("idea.id", ondelete="CASCADE"), index=True
     )
-    dimension_id: Mapped[int] = mapped_column(ForeignKey("idea_dimension.id"))
+    # `index=True` agregado en M12.4: el `UNIQUE(idea_id, dimension_id)` no sirve
+    # a esta FK porque `dimension_id` no es la columna líder. Era la única FK sin
+    # respaldo del esquema junto con la de abajo (criterio de cierre de la ronda).
+    dimension_id: Mapped[int] = mapped_column(ForeignKey("idea_dimension.id"), index=True)
     ns_t1: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     ns_t2: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
@@ -400,7 +403,8 @@ class PuntuacionProtocolo(PuntuacionConsensoMixin, Base):
     protocolo_id: Mapped[int] = mapped_column(
         ForeignKey("protocolo.id", ondelete="CASCADE"), index=True
     )
-    item_id: Mapped[int] = mapped_column(ForeignKey("ippu_item.id"))
+    # Ídem: el `UNIQUE(protocolo_id, item_id)` no cubre esta FK (M12.4).
+    item_id: Mapped[int] = mapped_column(ForeignKey("ippu_item.id"), index=True)
 
     protocolo: Mapped["Protocolo"] = relationship(back_populates="puntuaciones")
 

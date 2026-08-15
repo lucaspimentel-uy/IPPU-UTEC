@@ -282,7 +282,27 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ---
 
-### M12.4 — HCE-SEV · Severidad DSM-5-TR
+### M12.4 — HCE-SEV · Severidad DSM-5-TR ✅ **HECHO** (2026-08-15, Lucas)
+> **Cómo quedó.** **`severidad_dsm`** con **PK = `hce_id` (0..1)**, como `consentimiento`: la regla del
+> módulo dice que el registro describe la necesidad de apoyo **actual**, y 0..1 es además **la dirección
+> reversible** (→1:N es agregar un `id`; el inverso obliga a descartar filas). ⚠️ Es correcto **sólo con el
+> guard de auditoría de campo** anotado en §4 del esquema — sin `app/services/` nada garantiza todavía que
+> un UPDATE deje rastro. Los dos dominios son independientes **en sus valores**, pero los dos son NOT NULL
+> (la regla dice «por separado para **cada** dominio», y «sin juzgar» ya es *no tener fila*); ídem
+> `justificacion` —con `CHECK` de no-vacío por regex, porque `btrim()` recorta sólo espacios—, `fecha` y
+> `profesional_id`. Las **etiquetas se derivan**, no se guardan. El catálogo es **`severidad_nivel`**: una
+> fila por grado con `etiqueta`, `descriptor_cs`, `descriptor_crr` y `apoyos` — las cuatro constantes del
+> prototipo comparten la misma clave 1–3 y se renderizan como una sola tabla, así que tres tablas
+> paralelas serían la misma fila partida. **Sin FK entrantes ni salientes hacia los instrumentos**, con
+> tests estructurales en las dos direcciones. La regla del sistema quedó **verbatim** como docstring.
+> ⚠️ **Se retiró `hce_diurna.nivel_soporte`** (§5.24): es **una columna, no una tabla**, y el conteo sube
+> **34 → 36** por las dos tablas nuevas. **123 tests en verde, 0 salteados**, migración regenerada
+> (`f432ea139fd9`) con el test de coincidencia pasando.
+>
+> **Hallazgo colateral:** la cuenta de FKs sin respaldo **no estaba en 0** — `puntuacion_idea.dimension_id`
+> y `puntuacion_protocolo.item_id` quedaron sin índice en M12.2 (su `UNIQUE` compuesto no las cubre).
+> Corregidas, y el chequeo quedó **automatizado como test** para M12.5–M12.7.
+
 - `severidad_dsm { hce_id, nivel_cs, nivel_crr, justificacion, fecha, profesional_id }` — dos campos
   **independientes**, con los descriptores largos de `SEV_CS`/`SEV_CRR` y la tabla de apoyos `SEV_APOYO`
   como catálogo.
@@ -316,6 +336,31 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ### M12.6 — HCE-PAI · Propuesta de Atención Individual (INAU)
 El más grande. Las 15 secciones y todos los campos están en `docs/markdown/prototipo-v4-referencia.md` §7.
+
+> ⚠️ **Tres cosas decididas antes de arrancar (2026-08-15), leerlas primero.**
+> 1. **§5.22 — la sección V no duplica HCE-INC.** `centro`, `modalidad` y `grado` viven en `inclusion`
+>    (M12.5) y pasan a ser una **sexta sección de carga única**, junto a I, II, VI, XI y XV. `apoyosEd` y
+>    `otrasEd` **sí** son de PAI. El PAI de INAU es un documento **dinámico** (actualización en SIPI ante
+>    cualquier cambio significativo + revisiones periódicas); una copia congelada del centro educativo
+>    contradice esa obligación, y el modo de falla es entregarle a un organismo del Estado un dato
+>    desactualizado. Reparto que fija: **lo que se compromete** se congela por instancia (`pai_objetivo`,
+>    `pai_coordinacion`); **lo que es diagnóstico de situación** se lee en vivo. **Costo de orden:
+>    ninguno** — carga única es *ausencia* de columnas, no FK.
+> 2. **`pai` NO lleva `UNIQUE(hce_id, anio)`.** Con revisión semestral puede haber más de un PAI por año
+>    (inicial + actualización; de ahí `tipo` y la sección IX). **No replicar el patrón de
+>    `informe_cierre`**, que sí es anual único.
+> 3. **§5.23 — M12.4 iba antes que este módulo** y ya está hecho: `severidad_dsm` tiene PK = `hce_id`,
+>    `nivel_cs`/`nivel_crr` 1–3 y las etiquetas derivadas de `severidad_nivel`. Con eso alcanza para
+>    escribir el mapeo «qué sección lee de qué tabla» de la sección VI.
+>
+> **Verificar contra el JS antes de modelar la cabecera:** si `padronInau`, `disposicion`, `judicial` y
+> `expediente` **existen en el objeto `pai`** o **sólo se renderizan desde HCE-ORG**.
+> `prototipo-v4-referencia.md` §7 afirma **las dos cosas** —los lista en «campos de cabecera» y a la vez
+> declara la sección II de carga única— y no pueden ser ciertas a la vez.
+>
+> **Preguntar a IPPU (ya anotado):** el nombre oficial. El prototipo dice «Propuesta de Atención
+> Individual»; la normativa INAU aparece como «**Proyecto de Atención Integral**». Los campos confirman que
+> es el mismo instrumento, pero el nombre va impreso en lo que se entrega.
 
 - Cabecera `pai` (~46 campos) + tablas hijas: `pai_objetivo {area, obj, estr, ind, resp, plazo}` ·
   `pai_evaluacion_previa {obj, logro, com, dec}` · `pai_equipo {nombre, rol, participacion}` ·
@@ -500,7 +545,7 @@ demo. Dos cosas para decidir antes de M12.5:
 | 14 talleres reales, catálogo dinámico, por nombre | 8 talleres inventados, catálogo cerrado | M12.3 · D5 |
 | Grupos por color | `grupo.id (A..E)` | M12.1 · D9 |
 | `baremo_categoria.implicancia` | **Ya está** (verificado en M12.0) | Sin trabajo |
-| HCE-SEV | No existe | M12.4 |
+| HCE-SEV | No existe | M12.4 ✅ (`severidad_dsm` 0..1 + `severidad_nivel` 3 grados; `hce_diurna.nivel_soporte` retirada, §5.24) |
 | HCE-INC + catálogo de centros + tablero | No existe | M12.5 |
 | HCE-PAI (15 secciones, ~46 campos, 4 tablas hijas) | No existe | M12.6 |
 | Ateneos y jornadas (una entidad, 4 tipos) | No existe | M12.7 |
@@ -537,6 +582,12 @@ Para llevar a IPPU, no para resolver por nuestra cuenta. Detalle en
 ## Anexo C — Orden sugerido de sesiones
 
 `M12.0` (corto) → `M12.1` → `M12.2` → **[M12.3 · M12.4 · M12.5 · M12.6 · M12.7 en paralelo]** → `M12.8`.
+
+> **Corregido el 2026-08-15 (§5.23):** el fan-out no era del todo libre. **`M12.4` va antes que `M12.6`** —
+> no por esquema (la carga única de la sección VI es *ausencia* de columnas, así que M12.6 compila igual)
+> sino **por conocimiento**: M12.6 necesita conocer la forma de `severidad_dsm` para escribir el mapeo «qué
+> sección lee de qué tabla» que el plan le exige. **M12.5 y M12.7 siguen sin dependencias.** Orden
+> efectivo: `M12.3` → `M12.4` → **[M12.5 · M12.6 · M12.7]** → `M12.8`.
 
 Cortes buenos para revisar: **después de M12.1** (toca tablas con tests existentes y produce el diff de
 descriptores, que tiene consecuencias clínicas) y **después de M12.2** (el cambio de modelo más profundo).

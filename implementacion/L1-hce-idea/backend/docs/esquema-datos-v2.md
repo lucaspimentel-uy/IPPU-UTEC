@@ -52,6 +52,7 @@ erDiagram
     HCE_DIURNA  ||--o| ORGANISMO_INAU : "HCE-ORG (0..1)"
     HCE_DIURNA  ||--o| ORGANISMO_BPS : "HCE-ORG (0..1)"
     HCE_DIURNA  ||--o{ REGISTRO_ORGANISMO : "envíos INAU · gestiones BPS"
+    HCE_DIURNA  ||--o| SEVERIDAD_DSM : "HCE-SEV (0..1, sin firma)"
     HCE_DIURNA  ||--o| VALORACION_FUNCIONAL : "HCE-VF (0..1)"
     HCE_DIURNA  ||--o{ AUDITORIA : "HCE-LOG (solo inserción)"
     HCE_DIURNA  ||--o{ OBSERVACION : "seguimiento"
@@ -64,6 +65,10 @@ erDiagram
     IDEA_DIMENSION      ||--o{ IDEA_NIVEL : "descriptores 0–8"
     IDEA_DIMENSION      ||--o| IDEA_FICHA : "ayuda contextual (M12.1)"
     IDEA_DIMENSION      ||--o{ IDEA_EJEMPLO : "ejemplo clínico por nivel (M12.1)"
+    %% `SEVERIDAD_NIVEL` (3 grados DSM-5-TR) es tabla de referencia **sin FK
+    %% entrantes**: `severidad_dsm.nivel_cs/_crr` son el dato primario —el juicio
+    %% clínico—, no una clasificación derivada, y el rango lo garantiza un CHECK.
+    %% Mismo criterio que `taller` (M12.3) y que `idea` respecto de `banda_idea`.
     DOCUMENTO   ||--o| CONSENTIMIENTO : "adjunto"
     DOCUMENTO   ||--o| AUTORIZACION_IMAGEN : "copia firmada"
 ```
@@ -101,8 +106,29 @@ erDiagram
 > fila y sólo queda rastro en `auditoria`. Modelar vigencias por técnico es bastante más caro y depende
 > de las respuestas de IPPU a §3.7/§3.8 de `docs/notas/consulta-a-ippu.md`. Si responden que pasa
 > seguido, se revisa.
-| `hce_diurna` | id, persona_id FK **UK** (0..1), **hc_historico** (identificador secundario, §10), **grupo_id FK (entero)**, diagnostico, cie11, nivel_soporte, dx_fecha, derivacion, medicacion, alerta, **anamnesis JSONB**, activo, fecha_baja, timestamps, **+ metadatos de origen** | HCE-00 siempre editable (sin firma). Un expediente por persona; los ciclos anuales viven en `protocolo.anio` / `informe_cierre.anio` (decisión abierta de `modelo-datos.md`, resuelta así). |
+| `hce_diurna` | id, persona_id FK **UK** (0..1), **hc_historico** (identificador secundario, §10), **grupo_id FK (entero)**, diagnostico, cie11, ~~nivel_soporte~~, dx_fecha, derivacion, medicacion, alerta, **anamnesis JSONB**, activo, fecha_baja, timestamps, **+ metadatos de origen** | HCE-00 siempre editable (sin firma). Un expediente por persona; los ciclos anuales viven en `protocolo.anio` / `informe_cierre.anio` (decisión abierta de `modelo-datos.md`, resuelta así). ⚠️ **`nivel_soporte` se retiró en M12.4** (`handoff.md` §5.24) — ver la nota de abajo. |
 | ~~`hce_taller`~~ | ~~hce_id FK, taller_id FK~~ | **RETIRADA en M12.3** (`handoff.md` §5.20). Resto de v1: participación viva, por expediente y por `taller_id`. La especificación fija `pai_taller { pai_id, taller_nombre }` —por nombre y por instancia de PAI— y la construye **M12.6**; no hay nada preexistente que reusar. |
+
+> ⚠️ **`hce_diurna.nivel_soporte` se retiró en M12.4** (`handoff.md` §5.24) — **una columna, no una tabla:
+> el conteo no cambia por esto.** Con HCE-SEV iban a convivir **tres** lugares con un «nivel DSM». Quedan
+> dos, y hay que no confundirlos:
+>
+> | Dónde | Qué es |
+> |---|---|
+> | `banda_idea.nivel_dsm` (M12.1 · D4) | Propiedad **de la banda**, no del NNA: «un total de 56–75 se corresponde orientativamente con Nivel 2». Contenido del catálogo del IDEA. **Se queda.** |
+> | `severidad_dsm.nivel_cs` / `.nivel_crr` (M12.4) | **La evaluación actual de IPPU**: juicio clínico, por dominio, con justificación, fecha y autor. |
+>
+> **Se probó que `nivel_soporte` no era ninguna de las dos.** La hipótesis razonable —que fuera el nivel
+> que trae el **diagnóstico externo**, dato histórico vecino de `diag` y `cie11` en las Especificaciones
+> §3— quedó refutada por el HTML del prototipo: (1) HCE-00 lo rotula `Nivel de soporte DSM-5-TR
+> (orientativo)`, sin ninguna referencia al ingreso; (2) el módulo `sev` **lo pisa en cada edición**
+> (`setSev()` → `p.nivel = sevResumen(p);  // sincroniza la etiqueta visible de la ficha`), dejándole un
+> string de otro formato (`"CS: Grado 2 · CRR: Grado 2"`); (3) la ficha nunca muestra dos niveles, hay un
+> solo slot. Además el identificador `nivel_soporte` aparece **una sola vez en las 406 KB** del prototipo,
+> en el «esquema **sugerido**» de Especificaciones §3, y la app nunca lo usa. Era la etiqueta visible
+> denormalizada: una copia sin justificación, fecha ni autor de lo que `severidad_dsm` registra bien.
+> **Divergencia declarada con la fuente normativa:** las Especificaciones lo listan y nosotros no lo
+> implementamos, habilitado por el «Principio de la ronda» del plan M12.
 
 > **Metadatos de origen (`OrigenMigracionMixin`, M12.1 · §10).** Cuatro columnas nullable en `persona`,
 > `hce_diurna` e `idea`: **`sistema_origen`** (NULL = el dato nació acá), **`fecha_original`** (la que
@@ -158,6 +184,47 @@ que la demo, M1).
 > `documentacion_pendiente` son **derivados, no almacenados** (`hybrid_property`), mismo criterio que el
 > estado visible de los módulos.
 
+#### HCE-SEV · Severidad DSM-5-TR (M12.4) — módulo **sin firma**
+Va en `app/models/severidad.py`, archivo propio: no es parte del flujo firmable y no comparte nada con él.
+En el orden de la ficha va **entre CI e IDEA** (`FICHA_TABS` del Prototipo v4: `ci · sev · idea`). Ese
+orden **no está modelado en ninguna tabla** y no se inventa una — queda para **M11.4**, que es donde se
+define la navegación.
+
+| Tabla | Campos propios | Notas |
+|---|---|---|
+| **`severidad_dsm`** | **PK = hce_id**, `nivel_cs` (1–3), `nivel_crr` (1–3), `justificacion`, `fecha`, `profesional_id` FK | **0..1 por expediente**, como `consentimiento`. Sin firma, siempre editable. |
+
+- **Los dos dominios son independientes.** CS 3 con CRR 1 es un perfil corriente y nada en el modelo los
+  ata. «Independientes» es sobre sus **valores**: los dos son NOT NULL, porque la regla dice que la
+  severidad «se especifica por separado para **cada** dominio» y una fila con un dominio en blanco sería
+  una afirmación a medias. El estado «todavía no se juzgó» ya es representable **sin fila** — eso es lo
+  que compra el 0..1 —, así que columnas nullable serían una segunda forma de decir lo mismo.
+- **`justificacion`, `fecha` y `profesional_id` son NOT NULL**, y la justificación además no puede estar
+  vacía (`CHECK justificacion ~ '[^[:space:]]'`; `btrim()` a secas recorta sólo espacios y dejaba pasar
+  tabuladores). Sin justificación no hay forma de distinguir un juicio clínico de una derivación que
+  alguien hizo a ojo desde el IDEA — que es justo lo que la regla dura del módulo prohíbe. Que el
+  profesional esté **habilitado** para diagnosticar es permiso (Fase 4), no integridad.
+- **Las etiquetas no se guardan.** «Grado 2 · Necesita ayuda notable» se **deriva** del número contra
+  `severidad_nivel`. Guardarla acá sería reintroducir el campo que se acaba de retirar de `hce_diurna`.
+- **Sin FK a `severidad_nivel`, a propósito.** `nivel_cs`/`nivel_crr` son el **dato primario** —el juicio
+  clínico—, no una clasificación derivada de otra cosa, y el grado DSM-5-TR vale aunque la tabla de
+  descriptores esté vacía. Mismo criterio que `idea` respecto de `banda_idea`, y distinto de
+  `valoracion_funcional.categoria_id`, que **sí** es FK porque ahí la categoría la deriva el servidor
+  desde `pct`.
+
+> ⚠️ **Por qué 0..1 y qué lo condiciona.** Dos razones: (a) la regla del módulo dice que el registro
+> describe la necesidad de apoyo **actual** — que la severidad fluctúe no pide una fila por medición, pide
+> que la fila diga **cuándo** se juzgó; (b) **es la dirección reversible**: 0..1 → 1:N es agregar un `id` y
+> soltar la PK, sin perder filas; 1:N → 0..1 obliga a elegir una fila por expediente y descartar el resto.
+>
+> **Esto es correcto sólo con el guard de auditoría de §4.** «La historia vive en `auditoria`» es hoy una
+> aspiración: no existe `app/services/`, así que nada garantiza todavía que un UPDATE escriba
+> `campo`/`valor_ant`/`valor_nuevo`. Con esa línea escrita, 0..1 es correcto; **sin ella, borra en silencio
+> la fluctuación que la propia regla menciona como propiedad del fenómeno.**
+>
+> Si IPPU responde que la severidad se re-evalúa en una instancia fija (al cierre anual, junto con el
+> IDEA), esto pasa a 1:N con `anio`. Anotado en `docs/notas/puntos-a-validar.md` §1.
+
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
 |---|---|---|
@@ -181,6 +248,7 @@ que la demo, M1).
 | `categoria_documento` | 12 categorías (incl. las 4 de «Registro histórico — HCE anterior») | §10. |
 | `recordatorio` | **8 filas** (clave, texto, periodo, activo, orden) — flujo (`lb pa pb ic`) + vencimientos (`ayex vf inc inau`) | §4: configurables por coordinación, **nunca bloqueantes**. |
 | **`taller`** (M12.3 · D5) | **14 filas**: `nombre` UK, `orden`, `grupos_orientados` (**array de nombres de color**), `retirado_en`. `activo` es **derivado** (`retirado_en IS NULL`), no columna | Catálogo **dinámico**: la oferta cambia por grupo y período (§5.14). Los 14 reales del Prototipo v4 reemplazan a los 8 de la demo — no coincide ninguno. **Sin FK entrantes**: la participación se guarda **por nombre** en `pai_taller` (M12.6). `grupos_orientados` no es FK porque desde D9 un grupo es `(nombre, anio)` y un `grupo_id` ataría el taller a un año. |
+| **`severidad_nivel`** (M12.4) | **3 filas**, una por grado DSM-5-TR: `grado` PK (1–3), `etiqueta`, `descriptor_cs`, `descriptor_crr`, `apoyos` | Las cuatro constantes del prototipo (`SEV_ETQ`, `SEV_CS`, `SEV_CRR`, `SEV_APOYO`) están indexadas por el mismo grado y el módulo las muestra como **una sola tabla de cuatro columnas**: tres tablas paralelas con la misma PK serían la misma fila partida. Es catálogo y no constante porque **se consulta por sí mismo** —el módulo la muestra como tabla de referencia mientras el técnico decide— y su redacción es texto institucional sujeto a §8.1. **Sin `solo_al_crear`**: el texto es del instrumento (DSM-5-TR vía el Manual), no un ajuste de IPPU, así que acá el seed manda. **Sin FK entrantes** (ver §2.2). |
 | `servicio` | 3 servicios | §3.1. |
 | **`banda_idea`** (M12.1 · D4) | **6 tramos** del total 0–96 con `perfil`, `nivel_dsm` (DSM-5-TR) y `texto` orientativo | Deroga las 3 bandas de `handoff.md` §3. Los cortes son de la institución (`solo_al_crear`); el **texto se copia tal cual** del prototipo porque es deliberadamente neutro —alude sólo a escalas y dimensiones del IDEA y no prescribe abordajes— y reescribirlo rompe esa propiedad. |
 | **`delta_interpretacion`** (M12.1) | **6 tramos** del Δ (B−A) con `etiqueta`, `accion`, `signo` y **`alerta`**; extremos abiertos (límites nullable) | **La alerta institucional Δ ≤ −7 pasa a derivarse de acá**, no de un número suelto en el código. Sigue valiendo §5.2: el Δ es siempre B−A entre dos protocolos. |
@@ -214,11 +282,21 @@ que la demo, M1).
 | `evaluacion_area/general` + ítems (provisionales) | **Se eliminan** → `documento` con `es_registro_historico` (§10, como en la demo M7) |
 | `anamnesis` (tabla 1:1) | `hce_diurna.anamnesis` JSONB (HCE-00) |
 | — | Nuevos: `consentimiento`, `informe_cierre`, `documento`, `foto`, `autorizacion_imagen`, `organismo_*`, `registro_organismo`, `valoracion_funcional`, `auditoria`, `baremo_categoria`, `categoria_documento`, `recordatorio`, `servicio`, `persona_servicio` |
-| — | Nuevos de M12.1: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla` · de **M12.2**: `puntuacion_idea`, `puntuacion_protocolo` |
+| — | Nuevos de M12.1: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla` · de **M12.2**: `puntuacion_idea`, `puntuacion_protocolo` · de **M12.4**: `severidad_dsm`, `severidad_nivel` |
+| `hce_taller` · `hce_diurna.nivel_soporte` | **Retirados** en M12.3 (§5.20) y M12.4 (§5.24): dos fuentes de verdad que sobrevivieron al rewrite v1 → v2 sin revisarse contra las decisiones nuevas |
 | `observacion`, `evento`, `grupo`, `taller`, catálogo IDEA | Se conservan (ajustes menores: FK a `hce_diurna`) |
 | Migraciones incrementales SQLite-compatibles | **Migración inicial única** contra Postgres (v1 sin datos reales; los 12 tests v1 se reescriben como tests v2 — el plan §M11.4 ya preveía tests nuevos al mover lógica) |
 
 ## 4. Reglas duras — todas en el servidor (decisión 2)
+
+> ### Principio transversal: **IPPU registra, no determina.**
+> No es una frase nuestra: aparece dos veces en la fuente normativa, en dos módulos distintos. Las
+> Especificaciones §1 lo dicen para HCE-VF —«IPPU **registra** la valoración oficial (BUND — Ley N.º
+> 20.378, Decreto 72/025), **no certifica**»— y la regla del sistema de HCE-SEV lo dice para severidad —el
+> registro «**no sustituye la determinación de elegibilidad** para servicios o prestaciones»—. Es la misma
+> frase en dos módulos, y unifica los guards de HCE-SEV y HCE-VF de acá abajo: el sistema **documenta** el
+> juicio del equipo y el estado de trámites de otros organismos; **no produce** la determinación que le
+> corresponde a MIDES, BPS o INAU.
 
 | Regla (fuente) | Dónde vive en v2 | Test previsto |
 |---|---|---|
@@ -240,6 +318,14 @@ que la demo, M1).
 | **`NS` de un técnico contra número del otro** (M12.2) | **Sin resolver a propósito — M11.3.** Es un desacuerdo real que la aritmética no expresa: `diferencia` queda NULL. Qué corresponde hacer (¿discusión?, ¿documentación?, ¿reobservar?) lo define el servicio, no el modelo | hoy: `test_ns_contra_numero_no_produce_diferencia_numerica` deja el caso fijado |
 | **Las dos puntuaciones NO son obligatorias** (M12.2) | Ningún guard las exige: una evaluación con sólo el consenso es válida. Hace falta para migrar históricos y para el seed espejo | `test_una_evaluacion_sin_puntuaciones_independientes_es_valida` |
 | **Kappa no se calcula en esta ronda** (D7) | Se guardan los datos que lo hacen posible y nada más. El cálculo es de la fase piloto | — |
+| **HCE-SEV · entrada: el nivel no se calcula ni se deriva** (M12.4) | **Pendiente — M11.3.** Ningún camino escribe `nivel_cs`/`nivel_crr` desde el IDEA ni desde la Escala IPPU-TEA: son instrumentos **no homologables** (regla del módulo + §5.2). Justificación clínica obligatoria — la base ya exige que no esté vacía; el servicio exige que sea sustantiva | estructural ya en verde: `severidad_dsm` no tiene FK ni columna hacia `idea`/`protocolo` |
+| **HCE-SEV · salida (1): la severidad no participa de ningún cálculo de elegibilidad** (M12.4) | **Pendiente — M11.3.** Ni `pct`, ni categoría del baremo, ni qué prestaciones se sugieren. Es el **espejo del guard §7.5**, que hoy cierra la entrada del baremo y deja la salida abierta. Concreto: «Grado 3» **no implica ni sugiere** un porcentaje de baremo, ni la «Dependencia Severa» que evalúan MIDES/BPS — son determinaciones de otros organismos | estructural ya en verde: `valoracion_funcional` y `baremo_categoria` no tienen FK ni columna hacia `severidad_dsm` |
+| ⚠️ **HCE-SEV · salida (2): NO extender el correlato clínico de la autogeneración de VF** (M12.4) | **Pendiente — M11.3.** Especificaciones §1(g) sancionan un mapeo **cerrado** de escalas IDEA a dominios CIF —comunicación ← E2, interacciones ← E1, aprendizaje ← E4—, con niveles **editables** y revisión obligatoria de los técnicos. `severidad_dsm` **no está en ese mapeo y no se agrega**: sería inventar un correlato que IPPU no definió, justo en el camino que lleva a una determinación de elegibilidad | `sugiereNivel` opera sólo sobre los tres dominios sancionados; agregar un cuarto origen → test en rojo |
+| **HCE-SEV · salida (3): en el Reporte de VF, la severidad va en palabras, nunca como «Grado 3»** (M12.4) | **Pendiente — M11.3.** «Necesita ayuda notable en comunicación social», sí; el numeral, no. **No es agregado nuestro:** es la regla que el módulo ya se aplica a sí mismo — §1(g) «nunca números crudos ni porcentajes» y §1(h) documento descriptivo con aclaración expresa de que **no es certificado ni informe clínico** | el Reporte de VF generado no contiene «Grado N» ni el entero 1/2/3 |
+| **Toda edición de `severidad_dsm` registra auditoría de campo** (M12.4) | **Pendiente — M11.3.** `campo`, `valor_ant`, `valor_nuevo` en cada UPDATE. **Es la condición que hace correcto el 0..1** (§2.2): la regla del módulo dice que la severidad **fluctúa en el tiempo**, así que sin esta línea una sola tabla por expediente borra en silencio esa fluctuación | editar `nivel_cs` de 2 a 3 deja el valor anterior legible en `auditoria` |
+| **`valoracion_funcional.pct` NULL es un estado válido, no un dato faltante** (M12.4) | **Pendiente — M11.3.** En **menores de 2 años no se aplica el BUND**: la constancia se emite en base a IBMF e IRSA. `categoria_baremo(NULL)` devuelve **«no corresponde»** — no error, no categoría por defecto. La edad se deriva de `persona.fecha_nac`, **sin campo nuevo**. La demo ya lo implementa (bitácora M9); el backend no | `pct=None` → «no corresponde»; `pct=0` → la categoría de 0–4 %, que es distinto |
+| ⚠️ **Decreto 72/025: se reconcilian los CORTES, nunca las ETIQUETAS** (M12.4) | **Pendiente — cuando llegue el anexo.** IPPU declara que la nomenclatura oficial del instrumento **puede diferir** de la institucional, y que en sus pantallas e informes se usa **siempre la institucional** («severo / muy severo»). Si el anexo dijera «grave», alinear las etiquetas violaría §8.1 y el test de `VOCABULARIO_PROHIBIDO` saltaría en rojo — y quien lo vea va a creer que el test está mal y el decreto tiene razón. **Se ajustan `pct_min`/`pct_max`; `categoria` no se toca.** Anotado también en `docs/notas/puntos-a-validar.md` §1.2, que es donde alguien va a leer la tarea ese día | el test de catálogos sin «grave» sigue en verde después de reconciliar los cortes |
+| **`pai_taller.taller_nombre` se resuelve contra el catálogo al mostrar** (M12.3 → M12.6) | **Pendiente — M11.3/M11.4.** Sin FK (§5.20): el nombre se casa contra `taller.nombre` en lectura y, si la fila está retirada (`Taller.activo` derivado, filtra también en SQL), se muestra con la marca **«retirado del catálogo»**. Un nombre que no casa con ninguna fila se muestra igual, sin romper | fila pendiente de M12.3, hereda M12.6 (§5.21) |
 
 ## 5. Plan de implementación (sub-módulos de M11)
 

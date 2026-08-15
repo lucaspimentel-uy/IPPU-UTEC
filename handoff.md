@@ -7,9 +7,9 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-14
+> - **Última actualización:** 2026-08-15
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.3 hechos** (2026-08-14): **34 tablas** (⚠️ **bajó de 35 en M12.3 y no es regresión**: retira `hce_taller`, §5.20), **92 tests**. **Siguen M12.4–M12.7**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 hechos** (2026-08-15): **36 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 suma `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24), **123 tests**. **Siguen M12.5–M12.7**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 y M12.7 no dependen de nadie. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -420,6 +420,103 @@ participación**. Se traspasa **tal cual a M12.6**, que es donde nace `pai_talle
 - M12.3 verifica lo que sí le corresponde: el catálogo (los 14, `activo` derivado, `grupos_orientados`,
   `orden`, idempotencia del seed). Ver bitácora §13.
 
+### 5.22 (E4) La sección V de HCE-PAI no duplica HCE-INC: es carga única (2026-08-15, Lucas)
+`centro`, `modalidad` y `grado` viven en **`inclusion`** (M12.5) y **no** se modelan como columnas propias
+de `pai` (M12.6): la sección V pasa a ser una **sexta sección de carga única**, junto a I, II, VI, XI y XV.
+`apoyosEd` y `otrasEd` **sí** son de PAI y se quedan ahí.
+
+- **Fundamento principal.** El PAI de INAU es un **documento dinámico** que debe reflejar el estado actual
+  del NNA, con actualización en SIPI ante cualquier cambio significativo y revisiones formales periódicas.
+  Una copia congelada del centro educativo contradice esa obligación. **El propio prototipo lo corrobora:**
+  `fRev`, `fAnual`, `frecuencia`, `etapa` y la sección IX «Evaluación del PAI anterior (solo
+  actualizaciones)» sólo tienen sentido en un instrumento con revisión periódica.
+- **El reparto que fija.** Lo que **se compromete** se congela por instancia (`pai_objetivo`,
+  `pai_coordinacion` son filas hijas de ese PAI; la firma marca el inicio de esos compromisos). Lo que es
+  **diagnóstico de situación** se lee en vivo. La sección V es diagnóstico, no compromiso.
+- **Fundamento secundario:** mismo criterio de fuente única que §5.20 (`hce_taller`), que `sensible`
+  (M12.5) y que `activo` (M12.3). El prototipo dejó V editable, pero ahí `centro` es **texto libre en
+  ambos lados** y duplicar no cuesta nada; nosotros lo convertimos en FK a catálogo.
+- **Modo de falla que evita:** el PAI se presenta a INAU; con copia propia, un cambio de centro en HCE-INC
+  no se refleja y se entrega **un dato desactualizado a un organismo del Estado**.
+- **El registro histórico se resuelve archivando el PDF** de cada revisión en HCE-DOC, como el informe de
+  cierre — no duplicando columnas.
+- **Costo de orden: ninguno.** Carga única es *ausencia* de columnas, no FK: M12.5 y M12.6 siguen siendo
+  independientes entre sí y se pueden hacer en cualquier orden.
+- ⚠️ **Reversible, con la carga de la prueba invertida:** hoy documentar el PAI como foto congelada es lo
+  que requeriría justificación. **Fuente: investigación sobre normativa INAU (2026-08-15), no material
+  entregado por IPPU** — confirmar en la reunión.
+
+**Dos consecuencias para M12.6, anotadas ahora:**
+1. **`pai` NO lleva `UNIQUE(hce_id, anio)`.** Con revisión semestral puede haber más de un PAI por año
+   (inicial + actualización; de ahí `tipo` y la sección IX). **No replicar el patrón de `informe_cierre`**,
+   que sí es anual único.
+2. **Verificar el nombre oficial con IPPU:** el prototipo dice «Propuesta de Atención Individual»; la
+   normativa INAU aparece como «Proyecto de Atención Integral». Los campos confirman que es el mismo
+   instrumento; el nombre va impreso en lo que se entrega. → `consulta-a-ippu.md` y `puntos-a-validar.md`
+   §1, sincronizados.
+
+### 5.23 (E5) M12.4 va antes que M12.6 — dependencia de conocimiento, no de esquema (2026-08-15, Lucas)
+M12.6 **no necesita `severidad_dsm` para compilar** (la carga única de la sección VI es *ausencia* de
+columnas), pero **sí necesita conocer su forma** para escribir el mapeo «qué sección lee de qué tabla» que
+el plan le exige. Queda fijado el orden **M12.4 → M12.6**; **M12.5 y M12.7 siguen libres** y sin
+dependencias entre sí. Corregidos el checklist de §6 y el plan.
+
+Anotado además en el plan §M12.6: **verificar contra el JS del prototipo** si los campos de cabecera de las
+secciones de carga única (`padronInau`, `disposicion`, `judicial`, `expediente`) existen en el objeto `pai`
+o sólo se renderizan desde HCE-ORG. `prototipo-v4-referencia.md` §7 afirma **las dos cosas** y no pueden ser
+ciertas a la vez.
+
+### 5.24 (E6) Se retira `hce_diurna.nivel_soporte`: era una tercera fuente de verdad sobre el nivel DSM (2026-08-15, Lucas)
+Al modelar HCE-SEV (M12.4) iban a convivir **tres** lugares con un «nivel DSM». Relevados los tres, **uno
+no era un dato**: `hce_diurna.nivel_soporte` (`String(40)`, nullable) **se elimina**. El conteo de tablas
+no cambia; es una columna.
+
+**Qué queda, y por qué son cosas distintas:**
+- **`banda_idea.nivel_dsm`** (M12.1 · D4) — **se queda.** Es propiedad **de la banda**, no del NNA: dice
+  «un total de 56–75 se corresponde orientativamente con Nivel 2». Es contenido del catálogo, no un juicio
+  sobre nadie. Gana docstring aclarándolo y su guard en §4 del esquema.
+- **`severidad_dsm.nivel_cs` / `.nivel_crr`** (M12.4) — **la evaluación actual de IPPU**, por juicio
+  clínico, separada por dominio, con justificación, fecha y autor.
+
+**La hipótesis que se probó y se refutó.** Se sospechaba que `nivel_soporte` era el nivel que trae el
+**diagnóstico externo** —dato histórico que llega con el NNA, vecino de `diag` y `cie11` en las
+Especificaciones §3— y por lo tanto no duplicaba nada. **La evidencia del HTML del prototipo dice que no**
+(se buscó en `docs/fuentes/prototipo-v4/HCE_IPPU_Prototipo_v4.html`, no en el `.md` de referencia):
+
+1. **La etiqueta con que HCE-00 lo renderiza es `Nivel de soporte DSM-5-TR (orientativo)`**, con opciones
+   `No determinado / Nivel 1 / Nivel 2 / Nivel 3`. No dice «del diagnóstico de ingreso» ni nada parecido, y
+   «orientativo» es la **misma palabra** que el módulo IDEA usa para la banda.
+2. **El módulo `sev` lo escribe, siempre.** `setSev()` hace
+   `const r=sevResumen(p); if(r) p.nivel=r;  // sincroniza la etiqueta visible de la ficha`, dejando en el
+   campo un string de otro formato (`"CS: Grado 2 · CRR: Grado 2"`). El changelog del propio prototipo lo
+   dice literal: «La etiqueta de nivel de la ficha del usuario **se sincroniza automáticamente** con este
+   registro». Un dato histórico del diagnóstico de ingreso que el módulo de severidad pisa en cada edición
+   no es un dato histórico.
+3. **La ficha nunca muestra dos.** Hay un solo slot (`Soporte orientativo: ${p.nivel}`, y
+   `CIE-11 / Soporte` en el informe), cuyo contenido cambia de formato en cuanto alguien toca SEV.
+
+**Dos confirmaciones más, por fuera de los tres tests:**
+- `nivel_soporte` aparece **una sola vez en las 406 KB** del prototipo: en el «esquema **sugerido**» de
+  Especificaciones §3. La aplicación no lo usa nunca — el campo real es `p.nivel`.
+- **Nuestra propia demo lo confirma:** `demo/js/datos.js` guarda `apoyo:"Grado 2 — Requiere apoyo
+  sustancial"`. Es el contenido de HCE-SEV colapsado en un campo, no el nivel de un diagnóstico externo.
+
+**Por qué se borra en vez de renombrarse.** Renombrarlo a «nivel de soporte del diagnóstico de ingreso»
+habría sido inventarle un significado que ninguna fuente le da — el error que la propia consigna del
+módulo señala como peor que dejarlo. Y mantenerlo garantiza el modo de falla concreto: dos lugares
+respondiendo «¿qué nivel de apoyo necesita este NNA?», uno con justificación, fecha y autor y otro sin
+nada, divergiendo en silencio.
+
+- **Costo, relevado antes de decidir:** **0 tests, 0 seed, 0 routers, 0 schemas, 0 usos en la demo.** Toca
+  `app/models/identidad.py` (1 línea), la migración (que se regenera igual) y la fila de `hce_diurna` en
+  `backend/docs/esquema-datos-v2.md` §2.1. Mismo perfil que §5.20.
+- **Divergencia declarada con la fuente normativa.** Las Especificaciones §3 lo listan; nosotros no lo
+  implementamos. Es un **esquema sugerido** que el propio prototipo no sigue, y el «Principio de la ronda»
+  del plan M12 habilita apartarse cuando el prototipo y el buen modelado no coinciden. Queda escrito acá y
+  en §2.1 del esquema, no sólo en el commit.
+- ⚠️ **La demo queda con `p.apoyo`** y **no se toca** (no-goal de la ronda). Cuando la demo incorpore
+  HCE-SEV, `apoyo` pasa a **derivarse** de ese registro; anotado como deuda en §6.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -460,8 +557,17 @@ participación**. Se traspasa **tal cual a M12.6**, que es donde nace `pai_talle
         (§5.20): la participación la crea M12.6 como `pai_taller`, por nombre. ⚠️ **34 tablas — bajó de 35
         y no es regresión:** M12.3 no crea tablas. El test de participación del plan se traspasó a **M12.6**
         (§5.21). **92 tests en verde, 0 salteados**, migración regenerada (`3f11e10c13ed`). Ver bitácora §13.
-  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.4** HCE-SEV ·
+  - [x] ~~**M12.4** HCE-SEV · Severidad DSM-5-TR~~ → **HECHO** (2026-08-15, Lucas). **36 tablas**:
+        `severidad_dsm` (**0..1 por expediente, PK = `hce_id`**, dos dominios independientes 1–3,
+        justificación / fecha / profesional NOT NULL) y su catálogo `severidad_nivel` (3 grados con
+        etiqueta, los dos descriptores largos y los apoyos, generados de `SEV_*`). Las **etiquetas se
+        derivan**, no se guardan. ⚠️ **Se retiró `hce_diurna.nivel_soporte`** (§5.24) — es una columna,
+        no una tabla: **el conteo sube de 34 a 36 por las dos tablas nuevas, nada más**. **123 tests en
+        verde, 0 salteados**, migración regenerada (`f432ea139fd9`). Ver bitácora §13.
+  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`):
         **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
+        ⚠️ **§5.23:** **M12.4 iba antes que M12.6** (dependencia de conocimiento, ya resuelta);
+        **M12.5 y M12.7 no dependen de nadie**. M12.6 arranca con §5.22 ya decidida.
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
@@ -536,6 +642,20 @@ participación**. Se traspasa **tal cual a M12.6**, que es donde nace `pai_talle
 - **HCE**: Historia Clínica Electrónica. · **IDEA**: Inventario de Espectro Autista (Á. Rivière, 1997/2002).
 - **CAA/AAC**: Comunicación Aumentativa y Alternativa. · **INAU/BPS**: organismos uruguayos (convenios).
 - **LIDIA**: laboratorio de la Lic. en Ing. de Datos e IA de UTEC. · **ARASAAC**: banco mundial de pictogramas (referencia L2).
+
+### Tres términos que se parecen y **no son lo mismo** (M12.4)
+Se escriben acá para que no se confundan en una reunión con INAU o con BPS:
+- **Severidad DSM-5-TR** (HCE-SEV): nivel de apoyo clínico **1 / 2 / 3, por dominio** (comunicación social
+  y comportamientos restringidos y repetitivos). Lo registra **el técnico de IPPU por juicio clínico**,
+  con justificación, fecha y autor. Es lo que modela `severidad_dsm`.
+- **Dependencia Severa** (Uruguay): **condición legal** que evalúan **MIDES/BPS** para pensiones y
+  cuidados. **No la determina IPPU** ni sale de este registro. «Grado 3» no la implica ni la sugiere.
+- **SEV** a secas, en documentación del Estado: **Sistema de Evaluación Presupuestal** (gestión de fondos
+  públicos, INAU). **Sin relación** con este módulo, que se llama HCE-SEV porque así lo nombra el
+  `FICHA_TABS` del Prototipo v4 (D1).
+
+Y un cuarto que se parece a los tres pero es de otra cosa: **`banda_idea.nivel_dsm`** es el soporte
+DSM-5-TR **orientativo de una banda del total IDEA** — propiedad de la banda, no del NNA (§5.24).
 
 ## 11. Privacidad y ética (importante)
 - Trabajar **solo con datos simulados/anonimizados** mientras no exista acuerdo de confidencialidad firmado.
@@ -839,3 +959,25 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **`puntos-a-validar.md` §1.3 CERRADO** y `consulta-a-ippu.md` §3.1 reescrito (los dos sincronizados, como pide su cabecera): la pregunta «¿cuál es la lista completa de talleres?» **la respondió el propio prototipo de IPPU**; queda sólo pedirles confirmación de si esos 14 son los que dictan este año y si alguno va sólo a ciertos grupos. Sale de las 4 preguntas ⚠️ que más nos frenaban: quedan 3.
   - **Para M12.6:** el catálogo queda consumible — tabla **`taller`**, PK `id`, y `nombre` **UNIQUE `String(80)`**. `pai_taller.taller_nombre` casa **por texto exacto contra `taller.nombre`, sin FK** (a propósito: una FK reintroduciría exactamente lo que D5 evita). Para mostrar «retirado del catálogo», resolver el nombre contra el catálogo y leer `Taller.activo`, que filtra también en SQL.
   - **Próximo: M12.4–M12.7.** Si se toman en paralelo, ahí sí aplica el congelamiento de §5.19. (Lucas + Claude)
+
+- **2026-08-15** — **M12.4 · HCE-SEV · Severidad DSM-5-TR** (ronda **M12**). Corrido **solo**: ninguna rama de M12.5–M12.7 abierta, así que **§5.19 no congeló la migración** — se regeneró al cerrar, como en M12.1–M12.3.
+  - **Punto de partida verificado contra la realidad, no contra el handoff:** `d6da306`, árbol limpio, head `3f11e10c13ed`, **34 tablas** (metadata y base coinciden), **92 tests en verde, 0 salteados**. Única diferencia: Docker Desktop no estaba levantado y `pytest` **salteaba 67 tests en silencio** en vez de fallar — es entorno, no repo, pero conviene saberlo: **un `92 passed` sólo vale con el contenedor arriba**.
+  - **El relevamiento previo cambió el módulo antes de escribirlo.** Con `severidad_dsm` iban a convivir **tres** lugares con un «nivel DSM»: `banda_idea.nivel_dsm`, `hce_diurna.nivel_soporte` y el registro nuevo. Se puso a prueba la hipótesis de que `nivel_soporte` **no** duplicaba nada (que fuera el nivel del **diagnóstico externo**, dato histórico vecino de `diag` y `cie11` en Especificaciones §3), buscando la evidencia en el **HTML del prototipo**, no en el `.md` de referencia. **Quedó refutada, con los tres tests apuntando al mismo lado:** (a) HCE-00 lo rotula `Nivel de soporte DSM-5-TR (orientativo)` —sin ninguna mención al ingreso, y «orientativo» es la misma palabra que usa la banda del IDEA—; (b) el módulo `sev` **lo escribe siempre**: `setSev()` → `p.nivel = sevResumen(p);  // sincroniza la etiqueta visible de la ficha`, dejándole un string de otro formato (`"CS: Grado 2 · CRR: Grado 2"`), y el changelog del prototipo lo dice literal; (c) la ficha **nunca muestra dos** niveles, hay un solo slot cuyo formato cambia en cuanto alguien toca SEV. Dos confirmaciones más: el identificador `nivel_soporte` aparece **una sola vez en las 406 KB** del prototipo —en el «esquema **sugerido**» de §3, que la app nunca usa— y **nuestra propia demo lo confirma**: `demo/js/datos.js` guarda `apoyo:"Grado 2 — Requiere apoyo sustancial"`, que es el contenido de HCE-SEV colapsado en un campo.
+  - **Decisión escrita antes de tocar código (§12.6): se retira `hce_diurna.nivel_soporte`** → **§5.24**. Era la etiqueta visible denormalizada: una copia sin justificación, fecha ni autor de lo que `severidad_dsm` registra bien. **No se renombró** a «nivel del diagnóstico de ingreso» porque habría sido inventarle un significado que ninguna fuente le da. **Costo relevado antes de decidir: 0 tests, 0 seed, 0 routers, 0 schemas, 0 usos en la demo.** ⚠️ **Es una columna, no una tabla:** el conteo sube 34 → 36 por las **dos tablas nuevas**, y esto no lo baja. **Divergencia declarada con la fuente normativa** (las Especificaciones §3 lo listan; nosotros no lo implementamos), habilitada por el «Principio de la ronda».
+  - **`banda_idea.nivel_dsm` SE QUEDA** y gana docstring: es propiedad **DE LA BANDA**, no del NNA — «un total de 56–75 se corresponde orientativamente con Nivel 2» es contenido del catálogo del IDEA (D4), no un juicio sobre nadie.
+  - **`severidad_dsm` en archivo propio `app/models/severidad.py`**, no en `modulos.py` (que es el flujo firmable, y HCE-SEV **no se firma**) ni en `catalogos.py`: son los dos puntos de conflicto si M12.5–M12.7 arrancan en paralelo.
+  - **0..1 por expediente, PK = `hce_id`**, como `consentimiento`. Dos razones: la regla del módulo dice que el registro describe la necesidad de apoyo **actual** —que la severidad fluctúe no pide una fila por medición, pide que la fila diga **cuándo** se juzgó—, y **es la dirección reversible**: 0..1 → 1:N es agregar un `id`; el camino inverso obliga a descartar filas. ⚠️ **Con una condición, anotada como guard obligatorio de M11.3:** «la historia vive en `auditoria`» es hoy una **aspiración** —no existe `app/services/`—, así que **toda edición de `severidad_dsm` tiene que registrar auditoría de campo**. Con esa línea escrita el 0..1 es correcto; sin ella borra en silencio la fluctuación que la propia regla menciona como propiedad del fenómeno.
+  - **Los dos dominios son independientes en sus *valores*, no en su presencia.** CS 3 con CRR 1 pasa y nada los ata; pero los dos son **NOT NULL**, porque la regla dice que la severidad «se especifica por separado para **cada** dominio». El estado «todavía no se juzgó» ya es representable **sin fila** —eso compra el 0..1—, así que columnas nullable serían una segunda forma de decir lo mismo. `justificacion`, `fecha` y `profesional_id` también NOT NULL: un juicio clínico sin justificación, fecha ni autor no es un juicio clínico.
+  - **Bug encontrado al escribir el test de justificación vacía:** `btrim()` sin argumentos recorta **sólo espacios**, así que una justificación de tabuladores o saltos de línea pasaba el CHECK. Cambiado a `justificacion ~ '[^[:space:]]'`. Es exactamente para lo que sirve probar cada rechazo con más de un caso.
+  - **La regla del sistema se persiste verbatim** como docstring del modelo, igual que D4 hizo con el texto neutro de las bandas: está redactada para **no prescribir** y para acotar el alcance del registro («no sustituye la determinación de elegibilidad»), y parafrasearla rompe esa propiedad.
+  - **Catálogo `severidad_nivel`: una fila por grado, no tres tablas.** `SEV_ETQ`, `SEV_CS`, `SEV_CRR` y `SEV_APOYO` están todas indexadas por el mismo grado 1–3 y el prototipo las renderiza como **una tabla de cuatro columnas**; tres tablas paralelas con la misma PK serían la misma fila partida en pedazos. **Generado**, no transcrito (`herramientas/generar_catalogos_backend.py`, sección nueva) — `--check` en verde. Las **etiquetas se derivan** del número contra este catálogo y **no se guardan** en `severidad_dsm`: guardarlas sería reintroducir ahí el campo que se acaba de retirar de `hce_diurna`.
+  - **Sin FK a `severidad_nivel`, a propósito.** `nivel_cs`/`nivel_crr` son el **dato primario** —el juicio clínico—, no una clasificación derivada, y el grado DSM-5-TR vale aunque la tabla de descriptores esté vacía. Mismo criterio que `idea` respecto de `banda_idea`, y **distinto** de `valoracion_funcional.categoria_id`, que sí es FK porque ahí la categoría **la deriva el servidor** desde `pct`. El rango lo garantiza un CHECK.
+  - ⚠️ **La cuenta de FKs sin respaldo NO estaba en 0** —el criterio de cierre de la ronda la da por sentada—. `puntuacion_idea.dimension_id` y `puntuacion_protocolo.item_id` quedaron sin índice en **M12.2**: su `UNIQUE` compuesto no las cubre porque no son la columna líder. **Corregidas acá** (`index=True`) y el chequeo quedó **automatizado como test**, para que no vuelva a pasar inadvertido en M12.5–M12.7.
+  - **Guards nuevos anotados en `esquema-datos-v2.md` §4** (no implementados: son M11.3), bajo un principio transversal escrito ahí por primera vez — **«IPPU registra, no determina»**, que no es frase nuestra: las Especificaciones §1 la dicen para VF («no certifica») y la regla de HCE-SEV para severidad («no sustituye la determinación de elegibilidad»). **Entrada:** el nivel no se calcula ni se deriva del IDEA ni de la IPPU-TEA. **Salida, en tres afirmaciones precisas y no en una prohibición ancha:** (1) `severidad_dsm` no participa de ningún cálculo de elegibilidad —ni `pct`, ni categoría del baremo, ni prestaciones sugeridas—, que es el **espejo del guard §7.5**, hoy cerrado sólo de entrada; (2) ⚠️ **no se extiende el correlato clínico de la autogeneración de VF**: §1(g) sanciona un mapeo **cerrado** (comunicación ← E2, interacciones ← E1, aprendizaje ← E4) y `severidad_dsm` no está en él — agregarlo sería inventar un correlato que IPPU no definió, justo en el camino que lleva a una determinación de elegibilidad; (3) en el Reporte de VF la severidad va **en palabras** («necesita ayuda notable en comunicación social»), nunca «Grado 3» ni numeral, que es la regla que el propio módulo ya se aplica (§1(g) «nunca números crudos ni porcentajes», §1(h) «no es certificado ni informe clínico»).
+  - **Tres guards más, del mismo material y hasta hoy sin anotar en ningún lado:** (4) auditoría de campo obligatoria en toda edición de `severidad_dsm`; (5) **`valoracion_funcional.pct` NULL es un estado válido, no un dato faltante** — en menores de 2 años **no se aplica el BUND** y la constancia sale de IBMF/IRSA, así que `categoria_baremo(NULL)` devuelve **«no corresponde»**, no error ni categoría por defecto (la edad sale de `persona.fecha_nac`, sin campo nuevo; **la demo ya lo implementa desde M9, el backend no**); (6) ⚠️ **cuando llegue el anexo del Decreto 72/025 se reconcilian los CORTES, nunca las ETIQUETAS** — IPPU declara que la nomenclatura oficial puede diferir de la institucional y que en sus pantallas usa siempre la suya; si el anexo dijera «grave», alinear las etiquetas violaría §8.1 y el test de `VOCABULARIO_PROHIBIDO` saltaría en rojo, y **quien lo vea va a creer que el test está mal y el decreto tiene razón**. Anotado **también** en `puntos-a-validar.md` §1.2, que es donde alguien va a leer la tarea el día que llegue.
+  - **Tests: 123 en verde, 0 salteados** (`tests/test_m12_severidad.py`, 31 nuevos). Cubren CS 3 / CRR 1 sin que uno arrastre al otro y los tres grados válidos · justificación NULL, vacía y de sólo espacios/tabs rechazadas, con su caso que pasa · ídem `fecha` y `profesional_id`, incluido profesional inexistente · niveles fuera de 1–3 rechazados en los dos dominios · expediente **sin** severidad válido · un solo registro por expediente · **borrado en cascada** · las tres etiquetas derivadas · descriptores de los dos dominios distintos entre sí · ningún texto nuevo dice «grave» · y el **aislamiento estructural en las dos direcciones**: `severidad_dsm` no tiene FK ni columna hacia `idea`/`protocolo`, y ni `valoracion_funcional` ni `baremo_categoria` tienen FK ni columna hacia `severidad_dsm` — que es la forma verificable hoy de «instrumentos no homologables» y de «no participa de la elegibilidad».
+  - **Migración regenerada** (§5.19): `3f11e10c13ed` (34 tablas) → **`f432ea139fd9_esquema_v2_inicial_m12_4.py`** con las **36**. Reconstrucción limpia verificada: drop schema → `alembic upgrade head` → seed (**15 secciones**, `severidad_nivel` 3/3) → seed **por segunda vez 0/0 en todo** → `pytest -q` con `test_la_migracion_coincide_con_los_modelos` **en verde** → `/health` 200 → `generar_catalogos_backend.py --check` OK.
+  - **Dos decisiones más de la ronda, sin código pero condicionan M12.5 y M12.6:** **§5.22 (E4)** la sección V de HCE-PAI **no duplica HCE-INC** —`centro`, `modalidad` y `grado` pasan a carga única, porque el PAI de INAU es un documento **dinámico** con actualización en SIPI ante cualquier cambio y una copia congelada del centro educativo contradice esa obligación; el modo de falla concreto es entregarle a un organismo del Estado un dato desactualizado—, con dos consecuencias anotadas para M12.6 (**`pai` NO lleva `UNIQUE(hce_id, anio)`**: con revisión semestral puede haber más de un PAI por año; y **verificar el nombre oficial**, «Propuesta de Atención Individual» del prototipo vs. «Proyecto de Atención Integral» de la normativa INAU). ⚠️ Su fuente es **investigación sobre normativa INAU, no material entregado por IPPU** — va a la reunión. Y **§5.23 (E5)** **M12.4 iba antes que M12.6** por dependencia de **conocimiento**, no de esquema: M12.6 no necesita `severidad_dsm` para compilar (carga única es *ausencia* de columnas) pero sí conocer su forma para escribir el mapeo «qué sección lee de qué tabla». **M12.5 y M12.7 siguen libres.**
+  - **Anotado en el plan §M12.6:** verificar contra el JS si `padronInau`, `disposicion`, `judicial` y `expediente` existen en el objeto `pai` o sólo se renderizan desde HCE-ORG — `prototipo-v4-referencia.md` §7 **afirma las dos cosas** y no pueden ser ciertas a la vez.
+  - **Deuda que deja:** la demo conserva `p.apoyo` (no se toca, es no-goal de la ronda); cuando incorpore HCE-SEV, `apoyo` pasa a **derivarse** de ese registro. Y el catálogo de talleres de M12.3 **sigue sin forma de administrarse** — ahora se le suma `severidad_nivel`, aunque ése no lo toca coordinación (es texto del instrumento). Ambos en `puntos-a-validar.md` §2.
+  - **Próximo: M12.5 · M12.6 · M12.7**, en paralelo y en archivos distintos de `app/models/`. Si se toman a la vez, ahí sí aplica el congelamiento de §5.19. (Lucas + Claude)

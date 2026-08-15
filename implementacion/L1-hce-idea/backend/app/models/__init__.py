@@ -7,6 +7,7 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
   catalogos     §2.4  catálogos paramétricos (IDEA, IPPU-TEA, baremo, …)
   identidad     §2.1  persona / expediente / grupo / profesional
   modulos       §2.2  el flujo firmable CI → LB → PA → PB → IC
+  severidad     §2.2  HCE-SEV (M12.4) — módulo **sin firma**, con su catálogo
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
 """
 from app.models.catalogos import (
@@ -39,6 +40,10 @@ from app.models.modulos import (
     PuntuacionIdea,
     PuntuacionProtocolo,
 )
+from app.models.severidad import (
+    SeveridadDsm,
+    SeveridadNivel,
+)
 from app.models.transversales import (
     Auditoria,
     AutorizacionImagen,
@@ -62,6 +67,8 @@ __all__ = [
     # módulos del flujo
     "Consentimiento", "Idea", "InformeCierre", "Protocolo",
     "PuntuacionIdea", "PuntuacionProtocolo",
+    # HCE-SEV (M12.4)
+    "SeveridadDsm", "SeveridadNivel",
     # transversales
     "Auditoria", "AutorizacionImagen", "Documento", "Evento", "Foto",
     "Observacion", "OrganismoBps", "OrganismoInau", "RegistroOrganismo",

@@ -180,6 +180,15 @@ class BandaIdea(Base):
     propiedad, que las especificaciones llaman "neutralidad metodológica".
 
     Es catálogo paramétrico (D6): IPPU puede correr un corte sin migración.
+
+    ⚠️ **`nivel_dsm` es propiedad DE LA BANDA, no del NNA** (aclaración de M12.4).
+    Dice «un total de 56–75 se corresponde **orientativamente** con Nivel 2»: es
+    contenido del catálogo del IDEA, no un juicio sobre nadie. El nivel de apoyo
+    que IPPU **juzga** vive en `severidad_dsm`, con justificación, fecha y autor,
+    y **no se deriva de acá** — son instrumentos no homologables (§4). Que las
+    dos columnas se llamen parecido es la razón por la que
+    `hce_diurna.nivel_soporte`, que era una tercera copia sin dueño claro, se
+    retiró en M12.4 (`handoff.md` §5.24).
     """
     __tablename__ = "banda_idea"
 
