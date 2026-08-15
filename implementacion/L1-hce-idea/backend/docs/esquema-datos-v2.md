@@ -4,7 +4,8 @@
 > ampliación por la ronda M12** (absorción del Prototipo v4). Lo marcado «M12.1» y «M12.2» ya está en los
 > modelos **y en la migración**: por la enmienda §5.19 (2026-08-14) la migración inicial única se regenera
 > al cerrar **cada** sub-módulo, con `test_la_migracion_coincide_con_los_modelos` en verde. Al cerrar
-> M12.2 son **35 tablas**. Este documento pasa a **v3** en M12.8.
+> M12.3 son **34 tablas** — ⚠️ **bajó de 35 y no es una regresión**: M12.3 no crea tablas (`taller` ya
+> existía) y **retira `hce_taller`** (§5.20). Este documento pasa a **v3** en M12.8.
 >
 > Deriva del **Documento Técnico IPPU v1.0** (§6 modelo sugerido) y del **modelo clínico ya
 > validado en la demo v4.0** (ronda M0–M10). Toma `docs/markdown/modelo-datos.md` como punto de
@@ -55,7 +56,9 @@ erDiagram
     HCE_DIURNA  ||--o{ AUDITORIA : "HCE-LOG (solo inserción)"
     HCE_DIURNA  ||--o{ OBSERVACION : "seguimiento"
     HCE_DIURNA  ||--o{ EVENTO : "alta/baja"
-    HCE_DIURNA  }o--o{ TALLER : "plan IPPU"
+    %% `HCE_DIURNA }o--o{ TALLER` se retiró en M12.3 (§5.20): la participación
+    %% no cuelga del expediente ni apunta a `taller.id` — es `pai_taller
+    %% { pai_id, taller_nombre }`, por nombre y por PAI, y la crea M12.6.
     CATEGORIA_DOCUMENTO ||--o{ DOCUMENTO : clasifica
     BAREMO_CATEGORIA    ||--o{ VALORACION_FUNCIONAL : "deriva (sólo de pct)"
     IDEA_DIMENSION      ||--o{ IDEA_NIVEL : "descriptores 0–8"
@@ -99,7 +102,7 @@ erDiagram
 > de las respuestas de IPPU a §3.7/§3.8 de `docs/notas/consulta-a-ippu.md`. Si responden que pasa
 > seguido, se revisa.
 | `hce_diurna` | id, persona_id FK **UK** (0..1), **hc_historico** (identificador secundario, §10), **grupo_id FK (entero)**, diagnostico, cie11, nivel_soporte, dx_fecha, derivacion, medicacion, alerta, **anamnesis JSONB**, activo, fecha_baja, timestamps, **+ metadatos de origen** | HCE-00 siempre editable (sin firma). Un expediente por persona; los ciclos anuales viven en `protocolo.anio` / `informe_cierre.anio` (decisión abierta de `modelo-datos.md`, resuelta así). |
-| `hce_taller` | hce_id FK, taller_id FK | Plan IPPU (N:M). |
+| ~~`hce_taller`~~ | ~~hce_id FK, taller_id FK~~ | **RETIRADA en M12.3** (`handoff.md` §5.20). Resto de v1: participación viva, por expediente y por `taller_id`. La especificación fija `pai_taller { pai_id, taller_nombre }` —por nombre y por instancia de PAI— y la construye **M12.6**; no hay nada preexistente que reusar. |
 
 > **Metadatos de origen (`OrigenMigracionMixin`, M12.1 · §10).** Cuatro columnas nullable en `persona`,
 > `hce_diurna` e `idea`: **`sistema_origen`** (NULL = el dato nació acá), **`fecha_original`** (la que
@@ -177,7 +180,8 @@ que la demo, M1).
 | `baremo_categoria` | 5 filas (min, max, categoria, rango, implicancia) | **§0.4**: cortes a confirmar contra el anexo del Decreto 72/025 — editable sin migración. |
 | `categoria_documento` | 12 categorías (incl. las 4 de «Registro histórico — HCE anterior») | §10. |
 | `recordatorio` | **8 filas** (clave, texto, periodo, activo, orden) — flujo (`lb pa pb ic`) + vencimientos (`ayex vf inc inau`) | §4: configurables por coordinación, **nunca bloqueantes**. |
-| `taller` · `servicio` | talleres (los 14 reales entran en **M12.3** · D5) · 3 servicios | Ya existía / §3.1. |
+| **`taller`** (M12.3 · D5) | **14 filas**: `nombre` UK, `orden`, `grupos_orientados` (**array de nombres de color**), `retirado_en`. `activo` es **derivado** (`retirado_en IS NULL`), no columna | Catálogo **dinámico**: la oferta cambia por grupo y período (§5.14). Los 14 reales del Prototipo v4 reemplazan a los 8 de la demo — no coincide ninguno. **Sin FK entrantes**: la participación se guarda **por nombre** en `pai_taller` (M12.6). `grupos_orientados` no es FK porque desde D9 un grupo es `(nombre, anio)` y un `grupo_id` ataría el taller a un año. |
+| `servicio` | 3 servicios | §3.1. |
 | **`banda_idea`** (M12.1 · D4) | **6 tramos** del total 0–96 con `perfil`, `nivel_dsm` (DSM-5-TR) y `texto` orientativo | Deroga las 3 bandas de `handoff.md` §3. Los cortes son de la institución (`solo_al_crear`); el **texto se copia tal cual** del prototipo porque es deliberadamente neutro —alude sólo a escalas y dimensiones del IDEA y no prescribe abordajes— y reescribirlo rompe esa propiedad. |
 | **`delta_interpretacion`** (M12.1) | **6 tramos** del Δ (B−A) con `etiqueta`, `accion`, `signo` y **`alerta`**; extremos abiertos (límites nullable) | **La alerta institucional Δ ≤ −7 pasa a derivarse de acá**, no de un número suelto en el código. Sigue valiendo §5.2: el Δ es siempre B−A entre dos protocolos. |
 | **`idea_ficha`** (M12.1) | 12 fichas (`IDEA-D01..D12`): definición, objetivo, indicadores, qué no confundir, errores frecuentes, preguntas guía, claves de J. Martos, nota de evidencia | Ayuda contextual, nivel 1 de 3. |

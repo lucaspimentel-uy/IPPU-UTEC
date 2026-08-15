@@ -9,7 +9,7 @@
 >
 > - **Última actualización:** 2026-08-14
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.2 hechos** (2026-08-14): **35 tablas**, **74 tests**. **Siguen M12.3–M12.7**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.3 hechos** (2026-08-14): **34 tablas** (⚠️ **bajó de 35 en M12.3 y no es regresión**: retira `hce_taller`, §5.20), **92 tests**. **Siguen M12.4–M12.7**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -389,6 +389,37 @@ La regla original del plan (§3 de `PLAN-M12-absorcion-prototipo-v4-2026-08.md`)
   archivo, no se agrega uno nuevo por sub-módulo.
 - **Aplicada en la misma sesión:** migración regenerada con las 33 tablas de M12.1 y test reactivado.
 
+### 5.20 (E2) Se retira `hce_taller`: la participación en talleres la modela M12.6 como `pai_taller` (2026-08-14, Lucas)
+`HceTaller` (`app/models/identidad.py`, N:M `hce_diurna` ↔ `taller` por FK) **se elimina**, junto con
+`HceDiurna.talleres`. **El conteo de tablas baja de 35 a 34 — no es una regresión, es esto.**
+
+- **Qué es:** un resto del esquema v1 que sobrevivió el rewrite a v2 sin revisarse contra las decisiones
+  nuevas. Modela la participación **viva, por expediente y por `taller_id`**.
+- **Qué dice la fuente normativa:** las Especificaciones Técnicas del Prototipo v4 (§3, modelo sugerido)
+  fijan `pai_taller { pai_id, taller_nombre }` — **por nombre** y **por instancia de PAI**, no por
+  expediente ni por FK. Es exactamente lo que D5 (§5.14) decidió: agregar, reordenar o retirar un taller
+  no puede alterar lo ya registrado, y un `taller_id` ata el registro a la fila del catálogo.
+- **Por qué se borra en vez de adaptarse:** no son dos implementaciones de lo mismo, son **dos modelos
+  distintos** (unidad de registro distinta y clave de participación distinta). Dejar los dos garantiza dos
+  fuentes de verdad sobre "en qué talleres está el NNA", que es justo lo que §5.3 manda evitar.
+- **Costo cero hoy:** relevamiento verificado — **0 tests, 0 seed, 0 routers, 0 schemas** la referencian.
+  No hay datos reales ni nada desplegado.
+- **Deroga:** el `HCE_DIURNA }o--o{ TALLER` del diagrama ER §1 de `backend/docs/esquema-datos-v2.md` y la
+  fila `hce_taller` de su §2.1.
+- **Consecuencia para M12.6:** la participación **no tiene nada preexistente que reusar**; la construye ese
+  módulo como `pai_taller`. Queda anotado en el plan, junto con el criterio de verificación de M12.3 que se
+  le traspasa (ver §5.21).
+
+### 5.21 (E3) El test de participación de M12.3 pasa a M12.6 (2026-08-14, Lucas)
+El plan pedía verificar M12.3 con un test que "carga participación en Taller de huerta, lo retira del
+catálogo y afirma que la participación sigue legible y marcada como retirada". **No es escribible en
+M12.3:** con `hce_taller` retirada (§5.20) y `pai_taller` sin construir, **no existe tabla de
+participación**. Se traspasa **tal cual a M12.6**, que es donde nace `pai_taller`.
+- **No se inventó una tabla de participación en M12.3 ni un mock que finja una** que M12.6 va a modelar
+  distinto: sería exactamente el trabajo duplicado que §5.3 documenta.
+- M12.3 verifica lo que sí le corresponde: el catálogo (los 14, `activo` derivado, `grupos_orientados`,
+  `orden`, idempotencia del seed). Ver bitácora §13.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -422,12 +453,19 @@ La regla original del plan (§3 de `PLAN-M12-absorcion-prototipo-v4-2026-08.md`)
         tres tramos (0 · 1 · ≥2) son **constante y no catálogo** — es el invariante metodológico del
         Manual. **El guard queda para M11.3**; kappa **no** se calcula. **74 tests en verde, 0 salteados**,
         migración regenerada (`f54959f07cc4`) con el test de coincidencia pasando. Ver bitácora §13.
-  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.3** catálogo de talleres ·
-        **M12.4** HCE-SEV · **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
+  - [x] ~~**M12.3** catálogo dinámico de talleres (D5)~~ → **HECHO** (2026-08-14, Lucas). Los **14 reales**
+        del prototipo reemplazan a los 8 de la demo; `taller` suma `orden`, `grupos_orientados`
+        (**array de nombres de color, no FK**: con D9 un `grupo_id` ataría el taller a un año) y
+        `retirado_en`, y **`activo` pasó a derivado** (`hybrid_property`). Se **retiró `hce_taller`**
+        (§5.20): la participación la crea M12.6 como `pai_taller`, por nombre. ⚠️ **34 tablas — bajó de 35
+        y no es regresión:** M12.3 no crea tablas. El test de participación del plan se traspasó a **M12.6**
+        (§5.21). **92 tests en verde, 0 salteados**, migración regenerada (`3f11e10c13ed`). Ver bitácora §13.
+  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`): **M12.4** HCE-SEV ·
+        **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
-- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. la demo usa 8 talleres y el esquema dice 18, sin fuente que los liste; las referencias documentales de los 24 ítems no están verificadas).
+- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4.
 - [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
   **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. **Confirmada por el equipo
@@ -785,3 +823,19 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Anotado antes de que se olvide — hueco que dejó M12.1** (`puntos-a-validar.md` §2.8): con `UNIQUE(nombre, anio)` y seed *insert-only*, **no existe todavía ningún mecanismo para «abrir un año nuevo» de grupos**. Que el seed no los cree es correcto —coordinación es dueña de la fila—, pero en marzo de 2027 alguien tiene que poder crearlos y hoy la única vía es un `INSERT` a mano. Es de **M11.3/M11.4**; hoy no bloquea nada.
   - **Para la reunión con IPPU** (`puntos-a-validar.md` §1.9 y `consulta-a-ippu.md` §3.9, sincronizados): **¿los dos técnicos ya puntúan de forma independiente, o es práctica a introducir?** De la respuesta depende si D7 sirve desde el día uno o queda latente. La pregunta se redactó dejando claro que el sistema acepta igual un solo valor: no se les impone una forma de trabajar.
   - **Próximo: M12.3–M12.7 en paralelo** (catálogo de talleres · HCE-SEV · HCE-INC · HCE-PAI · ateneos), uno cada uno y en archivos distintos de `app/models/`. ⚠️ **Ahí sí aplica el congelamiento de §5.19**: mientras haya trabajo en paralelo real sobre los modelos, la migración se congela y la regenera **una sola persona** al terminar. (Lucas + Claude)
+
+- **2026-08-14** — **M12.3 · Catálogo dinámico de talleres (D5)** (ronda **M12**). Corrido **solo**: no había ninguna rama de M12.4–M12.7 abierta, así que **§5.19 no congeló la migración** — se regeneró al cerrar, como en M12.1 y M12.2.
+  - **`taller` deja de ser una lista fija.** Suma `orden` (la especificación pide poder **reordenar** y hasta acá el orden era el de inserción), `grupos_orientados` y `retirado_en`. Los tres son de coordinación, no del repo.
+  - **`activo` dejó de ser columna: es derivado** (`hybrid_property` = `retirado_en IS NULL`, sirve igual en Python que en el `filter()` de SQL). Un booleano guardado al lado de la fecha se desincroniza en cuanto alguien escribe uno de los dos, y deja dos respuestas a «¿está vigente?». Mismo criterio sin drift que el estado visible de los módulos (M1), `procedimiento`/`documentacion_pendiente` (M12.2) y el `sensible` que viene en M12.5. Hay test de que **no se puede contradecir**: no hay setter ni por atributo ni por constructor, y `activo` no está en `__table__.columns`.
+  - **`grupos_orientados` es un array de nombres de color en texto, NO una FK a `grupo.id`.** Desde D9 (§5.18) un grupo es `(nombre, anio)` con id propio: un `grupo_id` ataría el taller al año en que se creó la fila y en enero habría que reapuntar los 14 a mano. Por nombre es robusto al cambio de año — **la misma lógica que D5 aplica a la participación**. Hay test que da de alta «Grupo Azul 2027» y verifica que el taller no se tocó.
+  - **Los 14 reales, generados y no transcritos.** `taller` salió de `DESDE_LA_DEMO` en `herramientas/generar_catalogos_backend.py` y ahora se genera desde `CAT_TALLERES` del prototipo (el nombre más largo mide 51 y entra en `String(80)`; el script lo verifica). `grupos_orientados` sale vacío y `retirado_en` en `None`: **el repo carga nombres, no gestión** — a qué grupos se orienta cada taller lo decide coordinación desde la app.
+  - **`solo_al_crear` del seed pasó de `("activo",)` a `("orden", "grupos_orientados", "retirado_en")`:** la fila entera es de la institución. Verificado con test: re-correr el seed **no revive un taller retirado** ni pisa el orden ni la orientación.
+  - ⚠️ **Los 8 talleres viejos no los borra el seed.** `_sincronizar` no borra ni desactiva lo que dejó de estar en el JSON, **por diseño** (podría haber registros apuntándole). Como no hay datos reales y `hce_taller` desapareció, **nada los referencia** y la reconstrucción limpia documentada (drop schema → `alembic upgrade head` → `python -m app.seed_catalogos`) los elimina sola. **No se escribió una migración de datos para esto.** Pero **una base de desarrollo que no se reconstruya va a conservar 8 talleres fantasma y el seed no lo avisa** — anotado también en `backend/README.md` con el `DELETE`.
+  - **Decisión nueva, escrita antes de ejecutarla (§12.6): se retira `hce_taller`** → **§5.20**. Era un resto de v1 que sobrevivió el rewrite sin revisarse: modelaba participación **viva, por expediente y por `taller_id`**, mientras que las Especificaciones Técnicas §3 fijan `pai_taller { pai_id, taller_nombre }` —por nombre y por instancia de PAI—. No son dos implementaciones de lo mismo: son **dos modelos distintos**, y dejar los dos garantizaba dos fuentes de verdad. **Uso hoy: 0 tests, 0 seed, 0 routers, 0 schemas** (relevado). Deroga el `HCE_DIURNA }o--o{ TALLER` del ER §1 y la fila `hce_taller` de §2.1 de `esquema-datos-v2.md`.
+  - ⚠️ **El conteo de tablas BAJA: 35 → 34. No es una regresión.** M12.3 **no crea tablas** —`taller` ya existía— y retira una. Dicho explícito acá, en el plan, en el README y en `estructura-repositorio.md` para que nadie lo lea como pérdida de trabajo.
+  - **El criterio de verificación del plan se traspasó a M12.6** → **§5.21**. Pedía «cargar participación en Taller de huerta, retirarlo y afirmar que sigue legible y marcada como retirada»: con `hce_taller` retirada y `pai_taller` sin construir **no existe tabla de participación**. No se inventó una acá ni un mock que finja una que M12.6 va a modelar distinto — sería el trabajo duplicado de §5.3. Anotado en el plan, en M12.3 y en M12.6.
+  - **Tests: 92 en verde, 0 salteados** (`tests/test_m12_talleres.py`, 18 nuevos). Cubren los 14 con nombres exactos y que no quede ninguno de los 8 viejos · `activo` derivado en Python y en SQL, imposible de contradecir, y retirar/reincorporar reversible · `grupos_orientados` con varios colores y sobreviviendo al alta del grupo del año siguiente · reordenar sin tocar `nombre` · seed idempotente (0/0) que no revive lo retirado · `HceTaller` inexistente e inimportable · y que **ninguna tabla tenga FK a `taller.id`**, que es lo que hace que retirar un taller no pueda arrastrar un registro clínico.
+  - **Migración regenerada** (§5.19): `f54959f07cc4` (35 tablas) → **`3f11e10c13ed_esquema_v2_inicial_m12_3.py`** con las **34**. Reconstrucción limpia verificada: drop schema → `alembic upgrade head` → seed (14 secciones) → `pytest -q` con `test_la_migracion_coincide_con_los_modelos` **en verde**. `generar_catalogos_backend.py --check` → OK.
+  - **`puntos-a-validar.md` §1.3 CERRADO** y `consulta-a-ippu.md` §3.1 reescrito (los dos sincronizados, como pide su cabecera): la pregunta «¿cuál es la lista completa de talleres?» **la respondió el propio prototipo de IPPU**; queda sólo pedirles confirmación de si esos 14 son los que dictan este año y si alguno va sólo a ciertos grupos. Sale de las 4 preguntas ⚠️ que más nos frenaban: quedan 3.
+  - **Para M12.6:** el catálogo queda consumible — tabla **`taller`**, PK `id`, y `nombre` **UNIQUE `String(80)`**. `pai_taller.taller_nombre` casa **por texto exacto contra `taller.nombre`, sin FK** (a propósito: una FK reintroduciría exactamente lo que D5 evita). Para mostrar «retirado del catálogo», resolver el nombre contra el catálogo y leer `Taller.activo`, que filtra también en SQL.
+  - **Próximo: M12.4–M12.7.** Si se toman en paralelo, ahí sí aplica el congelamiento de §5.19. (Lucas + Claude)

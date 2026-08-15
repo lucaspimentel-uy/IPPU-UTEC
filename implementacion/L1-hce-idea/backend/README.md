@@ -2,14 +2,16 @@
 
 API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL.**
 
-> **Estado: M12.2** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1 y la
-> puntuación independiente de M12.2: **35 tablas** y catálogos cargados. Los routers de dominio se
+> **Estado: M12.3** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1, la
+> puntuación independiente de M12.2 y el catálogo dinámico de talleres de M12.3: **34 tablas** y catálogos
+> cargados. ⚠️ **Bajó de 35 y no es una regresión:** M12.3 no crea tablas (`taller` ya existía) y retira
+> `hce_taller`, resto del esquema v1 (`handoff.md` §5.20). Los routers de dominio se
 > construyen en M11.4 — hoy la API sólo expone `/health`. El esquema está documentado en
 > [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
 >
 > **Migraciones** (regla enmendada el 2026-08-14, `handoff.md` §5.19): la migración inicial **única** se
 > regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` **en
-> verde** — ya no se saltea, y `alembic upgrade head` crea las **35 tablas** actuales. Se congela sólo si
+> verde** — ya no se saltea, y `alembic upgrade head` crea las **34 tablas** actuales. Se congela sólo si
 > hay trabajo en paralelo real sobre `app/models/`; ahí la descongela y regenera una sola persona al
 > terminar. **Se regenera el mismo archivo de migración, no se apilan revisiones.**
 
@@ -109,10 +111,19 @@ python herramientas/generar_catalogos_backend.py --check  # falla si el repo que
 
 Contiene 12 dimensiones IDEA con sus 60 descriptores oficiales (**+ la versión
 corta del Prototipo v4 en `descriptor_breve`**), los 24 ítems de la Escala
-IPPU-TEA, el baremo BUND, 12 categorías documentales, **8 recordatorios**, 8
-talleres (los 14 reales entran en M12.3), 3 servicios y los catálogos que sumó
-M12.1: **6 bandas del IDEA**, **6 tramos de interpretación del Δ**, 12 fichas, 48
-ejemplos clínicos, 9 reglas y los **4 grupos por color**.
+IPPU-TEA, el baremo BUND, 12 categorías documentales, **8 recordatorios**, los
+**14 talleres reales** del Prototipo v4 (M12.3, en reemplazo de los 8 de la demo
+—no coincidía ninguno—), 3 servicios y los catálogos que sumó M12.1: **6 bandas
+del IDEA**, **6 tramos de interpretación del Δ**, 12 fichas, 48 ejemplos
+clínicos, 9 reglas y los **4 grupos por color**.
+
+⚠️ **Los 8 talleres viejos no se borran solos.** El seed nunca borra ni desactiva
+lo que dejó de estar en el JSON (es por diseño: podría haber registros
+apuntándole). Como no hay datos reales y `hce_taller` desapareció, la
+**reconstrucción limpia** documentada más arriba (drop schema → `alembic upgrade
+head` → `python -m app.seed_catalogos`) los elimina sola — pero **una base de
+desarrollo que no se reconstruya va a quedar con 8 talleres fantasma, y el seed
+no lo avisa**. Si es tu caso: `DELETE FROM taller WHERE nombre IN (...)`.
 
 Dos fuentes, y el script sabe cuál es cuál: los instrumentos vienen de la demo
 v4.1 (lo que se adaptó al Documento Técnico en M0–M10) y lo nuevo, del Prototipo

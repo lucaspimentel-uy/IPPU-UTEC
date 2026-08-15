@@ -1,5 +1,5 @@
 {
-  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas y descriptor_breve: Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
+  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve y talleres: Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
   "idea_dimension": [
     {
       "id": 1,
@@ -758,40 +758,6 @@
       "orden": 12
     }
   ],
-  "taller": [
-    {
-      "nombre": "Habilidades sociales",
-      "activo": true
-    },
-    {
-      "nombre": "Lenguaje y comunicación",
-      "activo": true
-    },
-    {
-      "nombre": "Motricidad",
-      "activo": true
-    },
-    {
-      "nombre": "Juego simbólico",
-      "activo": true
-    },
-    {
-      "nombre": "Música y expresión",
-      "activo": true
-    },
-    {
-      "nombre": "Vida diaria (AVD)",
-      "activo": true
-    },
-    {
-      "nombre": "Arte y plástica",
-      "activo": true
-    },
-    {
-      "nombre": "Psicomotricidad",
-      "activo": true
-    }
-  ],
   "servicio": [
     {
       "clave": "atencion_diurna",
@@ -807,6 +773,92 @@
       "clave": "clinica",
       "nombre": "Clínica",
       "activo": false
+    }
+  ],
+  "taller": [
+    {
+      "nombre": "Taller de cuentos y estimulación del lenguaje",
+      "orden": 1,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de música y expresión",
+      "orden": 2,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de expresión plástica",
+      "orden": 3,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller pedagógico / iniciación a la lógica",
+      "orden": 4,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de cocina",
+      "orden": 5,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de huerta",
+      "orden": 6,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de higiene y AVD",
+      "orden": 7,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de habilidades sociales",
+      "orden": 8,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Taller de TICs",
+      "orden": 9,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Educación Física",
+      "orden": 10,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Actividades lúdicas y de juego",
+      "orden": 11,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Actividades sensoriales",
+      "orden": 12,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Salidas didácticas / paseos",
+      "orden": 13,
+      "grupos_orientados": [],
+      "retirado_en": null
+    },
+    {
+      "nombre": "Participación de familia / referentes en actividades",
+      "orden": 14,
+      "grupos_orientados": [],
+      "retirado_en": null
     }
   ],
   "idea_ficha": [

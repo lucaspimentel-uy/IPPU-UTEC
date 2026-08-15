@@ -247,7 +247,7 @@ el consenso.
 
 ---
 
-### M12.3 — Catálogo dinámico de talleres
+### M12.3 — Catálogo dinámico de talleres ✅ **HECHO** (2026-08-14, Lucas)
 Implementa D5.
 - `taller`: `id, nombre, activo, grupos_orientados[], retirado_en`. Administrable por coordinación.
 - Participación **por nombre** (`pai.talleres{}` en el prototipo). Agregar, reordenar o desactivar nunca
@@ -256,8 +256,29 @@ Implementa D5.
   los reales, salieron de la demo. Documentar el reemplazo en la bitácora.
 - Todo cambio del catálogo va a HCE-LOG.
 
-**Verificación:** test que carga participación en "Taller de huerta", lo retira del catálogo y afirma que
-la participación sigue legible y marcada como retirada.
+> **Cómo quedó.** `taller` suma `orden` (no había forma de **reordenar**), `grupos_orientados` y
+> `retirado_en`; **`activo` dejó de ser columna** y es `hybrid_property` (`retirado_en IS NULL`) — un
+> booleano al lado de la fecha se desincroniza, mismo criterio sin drift que `procedimiento` (M12.2).
+> `grupos_orientados` es **array de nombres de color en texto, no FK**: desde D9 un grupo es
+> `(nombre, anio)` y un `grupo_id` ataría el taller al año en que se creó la fila. Los **14 reales** salen
+> ahora de `CAT_TALLERES` (`taller` salió de `DESDE_LA_DEMO` en el generador) y el `solo_al_crear` del seed
+> pasó de `("activo",)` a `("orden", "grupos_orientados", "retirado_en")`: la fila entera es de la
+> institución, y por eso re-correr el seed **no revive un taller retirado**.
+> **Se retiró `hce_taller`** (§5.20): resto de v1, sin uso (0 tests/seed/routers/schemas), incompatible con
+> la participación por nombre que fija la especificación. ⚠️ **34 tablas — bajó de 35 y no es regresión:**
+> M12.3 no crea tablas, `taller` ya existía. **92 tests en verde, 0 salteados**, migración regenerada
+> (`3f11e10c13ed`) con el test de coincidencia pasando.
+
+~~**Verificación:** test que carga participación en "Taller de huerta", lo retira del catálogo y afirma que
+la participación sigue legible y marcada como retirada.~~ → **traspasada a M12.6** (`handoff.md` §5.21):
+con `hce_taller` retirada y `pai_taller` sin construir **no existe tabla de participación**, y fabricar
+acá una —o un mock— sería trabajo que M12.6 rehace distinto.
+
+**Verificación efectiva de M12.3:** los 14 con los nombres exactos del prototipo y ninguno de los 8 viejos ·
+`activo` derivado, coherente en Python y en SQL, e **imposible de contradecir** (no hay setter, no es
+columna) · `grupos_orientados` con varios colores, que sobrevive al alta del mismo grupo en otro año ·
+`orden` reordena sin tocar `nombre` · seed idempotente (0/0 en la segunda corrida) que **no revive** un
+taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna tabla tiene FK a `taller.id`**.
 
 ---
 
@@ -301,6 +322,16 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
   `pai_coordinacion {area, situacion, frecuencia, contacto}` con **6 filas fijas precargadas**.
 - Marcados por nombre contra catálogo: `talleres` (M12.3), `prest` (`PAI_PREST`, 6), `circuito`
   (`PAI_CIRCUITO`, 4). `pai_objetivo.area` desde `PAI_AREAS` (9), `plazo` ∈ Trimestral/Semestral/Anual.
+- ⚠️ **La participación en talleres la crea este módulo, desde cero:** `pai_taller { pai_id,
+  taller_nombre }` (Especificaciones Técnicas §3). **No hay nada preexistente que reusar** — el
+  `hce_taller` de v1 se retiró en M12.3 (`handoff.md` §5.20) por ser el modelo contrario: participación por
+  expediente y por `taller_id`. `taller_nombre` es **texto que casa contra `taller.nombre`** (UK,
+  `String(80)`), **sin FK**: retirar o reordenar un taller no puede arrastrar un registro clínico, y un
+  taller retirado se muestra con la marca «retirado del catálogo» resolviendo el nombre contra el catálogo
+  (`Taller.activo` es derivado y filtra también en SQL).
+- **Hereda de M12.3 el criterio de verificación que allá no era escribible** (§5.21): cargar participación
+  en «Taller de huerta», retirarlo del catálogo y afirmar que la participación **sigue legible y marcada
+  como retirada**.
 - **Carga única confirmada en el código:** las secciones I, II, VI, XI y XV se renderizan `readonly` desde
   HCE-00/ORG/LB/PA/PB/SEV. Modelarlas como **referencias, no como columnas propias** — copiarlas crea
   drift, que es justo lo que el diseño de M11.2 evita en el estado de flujo.

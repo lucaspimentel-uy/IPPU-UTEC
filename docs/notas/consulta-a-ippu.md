@@ -260,14 +260,23 @@ general, o van juntos?**
 
 Preguntas concretas que no pudimos resolver con el material que tenemos.
 
-### 3.1 ¿Cuál es la lista completa de talleres? ⚠️
+### 3.1 La lista de talleres — **ya la respondió el Prototipo v4** ✅
 
-Tenemos ocho cargados: Habilidades sociales · Lenguaje y comunicación · Motricidad · Juego simbólico ·
-Música y expresión · Vida diaria (AVD) · Arte y plástica · Psicomotricidad.
+La pregunta era cuál es la lista completa. **La encontramos en el prototipo que nos pasaron**, así que
+cargamos esos catorce y dimos de baja los ocho que teníamos (los habíamos armado nosotros para poder
+mostrar algo, y no coincidía ninguno):
 
-En un documento aparece mencionado que serían dieciocho, pero no encontramos ninguna lista.
+Taller de cuentos y estimulación del lenguaje · Taller de música y expresión · Taller de expresión
+plástica · Taller pedagógico / iniciación a la lógica · Taller de cocina · Taller de huerta · Taller de
+higiene y AVD · Taller de habilidades sociales · Taller de TICs · Educación Física · Actividades lúdicas
+y de juego · Actividades sensoriales · Salidas didácticas / paseos · Participación de familia /
+referentes en actividades.
 
-**¿Nos pasan la lista completa con los nombres como los usan ustedes?**
+**Sólo nos queda confirmar dos cosas, y ninguna nos frena:** ¿esos catorce son los que están dictando
+este año?, y ¿hay talleres que se ofrecen sólo a algunos grupos? El sistema los deja **agregar, cambiar
+de orden, indicar a qué grupos se orientan y dar de baja desde la propia aplicación**, sin que nosotros
+toquemos nada — y dar de baja un taller **no borra ni cambia** lo que ya quedó registrado de un chico:
+sigue viéndose, con la aclaración de que el taller salió del catálogo.
 
 > _Respuesta:_
 
@@ -398,8 +407,9 @@ preguntas?** Esta es probablemente la pregunta más útil de todas.
 ## Para cerrar
 
 Las preguntas marcadas con ⚠️ son las que más nos frenan: **2.1** (si el IDEA se hace una vez o todos
-los años), **3.1** (la lista de talleres), **3.2** (las citas de la escala) y **3.3** (el acceso al
-sistema actual). Si sólo pueden responder algunas, esas cuatro son las que más nos destraban.
+los años), **3.2** (las citas de la escala) y **3.3** (el acceso al sistema actual). Si sólo pueden
+responder algunas, esas tres son las que más nos destraban. (**3.1**, la lista de talleres, ya quedó
+resuelta con el prototipo: sólo pedimos confirmación.)
 
 El resto puede venir después, sin problema.
 

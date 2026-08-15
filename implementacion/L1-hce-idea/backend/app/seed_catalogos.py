@@ -112,7 +112,11 @@ CATALOGOS: list[tuple] = [
     (CategoriaDocumento, "categoria_documento", "nombre", ()),
     # §4: qué recordatorios están activos y en qué período lo fija coordinación.
     (Recordatorio, "recordatorio", "clave", ("activo", "periodo")),
-    (Taller, "taller", "nombre", ("activo",)),
+    # D5 (§5.14): el catálogo de talleres lo administra coordinación entera —
+    # el orden, a qué grupos se orienta cada uno y cuándo se retira. `activo` ya
+    # no está: es derivado de `retirado_en` (M12.3), y protegerlo es lo que hace
+    # que re-correr el seed no reviva un taller que coordinación retiró.
+    (Taller, "taller", "nombre", ("orden", "grupos_orientados", "retirado_en")),
     # Taller Terapéutico y Clínica se activan en Fase 2 desde la propia app.
     (Servicio, "servicio", "clave", ("activo",)),
     # D6 (§5.15): las bandas y la interpretación del Δ son paramétricas. Los

@@ -177,21 +177,8 @@ class HceDiurna(OrigenMigracionMixin, Base):
 
     persona: Mapped["Persona"] = relationship(back_populates="hce")
     grupo: Mapped["Grupo | None"] = relationship()
-    talleres: Mapped[list["HceTaller"]] = relationship(
-        back_populates="hce", cascade="all, delete-orphan"
-    )
 
-
-class HceTaller(Base):
-    """N:M expediente ↔ taller: el plan de talleres del NNA."""
-    __tablename__ = "hce_taller"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(ForeignKey("hce_diurna.id", ondelete="CASCADE"))
-    taller_id: Mapped[int] = mapped_column(ForeignKey("taller.id"), index=True)
-
-    hce: Mapped["HceDiurna"] = relationship(back_populates="talleres")
-
-    __table_args__ = (
-        UniqueConstraint("hce_id", "taller_id", name="uq_hce_taller"),
-    )
+    # La participación en talleres **no cuelga del expediente**: `hce_taller`
+    # (N:M por `taller_id`) se retiró en M12.3 — `handoff.md` §5.20. Era un resto
+    # de v1; el modelo que fija la especificación es `pai_taller { pai_id,
+    # taller_nombre }`, por nombre y por instancia de PAI, y lo construye M12.6.

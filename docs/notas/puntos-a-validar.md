@@ -40,15 +40,18 @@ mal puesto cambia el resultado de una valoración real.
 **Qué bloquea.** Nada técnico: la tabla es paramétrica y corregirlo es un UPDATE, sin migración.
 **Sí bloquea el uso clínico real.**
 
-### 1.3 Catálogo real de talleres
-**Qué es.** La lista completa de talleres del plan IPPU, con sus nombres oficiales.
-
-**Por qué importa.** Hay una inconsistencia sin resolver: la demo usa **8** talleres, el
-documento de esquema menciona **18**, y no encontramos ninguna fuente que los liste. Se
-cargaron los 8 verificables.
-
-**Qué bloquea.** Nada urgente — es un catálogo, se completa con un INSERT. Importa cuando se
-quiera usar el cruce taller × evolución.
+### 1.3 ~~Catálogo real de talleres~~ — **CERRADO** (2026-08-14)
+> **Lo resolvió la fuente, no una decisión nuestra:** el **Prototipo v4** trae el catálogo real
+> (`CAT_TALLERES`, **14 talleres** con sus nombres oficiales). Cargados en **M12.3** (`handoff.md` §5.14 /
+> D5), en **reemplazo** de los 8 que había — no coincide ninguno: los nuestros los inventó la demo.
+>
+> **El «8 vs 18» era falso.** Los 18 de `esquema-datos.md` (v1) no salían de ninguna fuente de IPPU; no
+> hay nada que conciliar.
+>
+> **Lo que sí queda para IPPU, y no bloquea nada:** el catálogo es **dinámico y administrable por
+> coordinación** (orden, a qué grupos se orienta cada taller, cuándo se retira). El repo siembra sólo los
+> nombres; el resto se carga desde la app. Si IPPU confirma que la oferta 2026 difiere de la del
+> prototipo, es un `UPDATE`, sin migración.
 
 ### 1.4 Referencias documentales de los 24 ítems de la Escala IPPU-TEA
 **Qué es.** Cada ítem trae una cita (DSM-5-TR, CIF, y papers como Wing & Gould 1979 o

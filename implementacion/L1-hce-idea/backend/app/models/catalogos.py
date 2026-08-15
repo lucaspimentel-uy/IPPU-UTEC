@@ -13,10 +13,14 @@ ese archivo.
 
 Todo lo de este módulo se carga con `python -m app.seed_catalogos`.
 """
+from datetime import date
+
 from sqlalchemy import (
-    Boolean, CheckConstraint, ForeignKey, Integer, SmallInteger, String, Text,
-    UniqueConstraint,
+    Boolean, CheckConstraint, Date, ForeignKey, Integer, SmallInteger, String,
+    Text, UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -325,17 +329,55 @@ class Recordatorio(Base):
 
 
 class Taller(Base):
-    """Talleres del plan IPPU.
+    """Catálogo **dinámico** de talleres — M12.3 · D5 (`handoff.md` §5.14).
 
-    PENDIENTE: se siembran los 8 que usa la demo v4.1, que son los únicos con
-    respaldo verificable. `esquema-datos-v2.md` §2.4 menciona 18 pero no hay
-    fuente que los liste — está anotado como punto a definir con IPPU.
+    Deja de ser una lista fija: la oferta cambia por grupo y por período, así que
+    coordinación **agrega, reordena, orienta y retira** desde la app. Se siembran
+    los **14 reales** del Prototipo v4 (`CAT_TALLERES`); los 8 anteriores salían
+    de la demo, que los inventó, y no coincide ninguno — se reemplazan, no se
+    complementan.
+
+    **La participación no vive acá ni apunta a `id`.** Se registra **por nombre**
+    en `pai_taller { pai_id, taller_nombre }` (M12.6), de modo que agregar,
+    reordenar o retirar un taller nunca altera lo ya registrado y un taller
+    retirado sigue legible con la marca «retirado del catálogo». El `hce_taller`
+    de v1 —N:M por `taller_id` y por expediente— **se retiró** por eso
+    (`handoff.md` §5.20).
     """
     __tablename__ = "taller"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     nombre: Mapped[str] = mapped_column(String(80), unique=True)
-    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: Orden de presentación. La especificación pide poder **reordenar** y hasta
+    #: acá no había con qué: el orden era el de inserción.
+    orden: Mapped[int] = mapped_column(Integer, default=0)
+    #: Grupos a los que se orienta, como **nombres de color en texto**
+    #: (`Grupo Azul`…), **no** FK a `grupo.id`. Desde D9 (§5.18) un grupo es
+    #: `(nombre, anio)`: un `grupo_id` ataría el taller al año en que se creó la
+    #: fila y en enero habría que reapuntar los 14. Por nombre es robusto al
+    #: cambio de año — la misma lógica que D5 aplica a la participación.
+    grupos_orientados: Mapped[list[str]] = mapped_column(
+        ARRAY(String(60)), default=list, server_default="{}"
+    )
+    #: Cuándo salió del catálogo. NULL = vigente.
+    retirado_en: Mapped[date | None] = mapped_column(Date)
+
+    @hybrid_property
+    def activo(self) -> bool:
+        """**Derivado, no columna**: `retirado_en IS NULL`.
+
+        Un booleano guardado al lado de `retirado_en` se desincroniza en cuanto
+        alguien escribe uno de los dos (retirar sin desactivar, reactivar sin
+        limpiar la fecha) y deja dos respuestas para «¿está vigente?». Mismo
+        criterio sin drift que el estado de módulo, `procedimiento` /
+        `documentacion_pendiente` (M12.2) y `sensible` (M12.5).
+        """
+        return self.retirado_en is None
+
+    @activo.inplace.expression
+    @classmethod
+    def _activo_sql(cls):
+        return cls.retirado_en.is_(None)
 
 
 class Servicio(Base):

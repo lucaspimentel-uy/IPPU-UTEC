@@ -11,7 +11,8 @@ versionado; esto lo reemplaza y queda en el repo.
 
 | Sección | Fuente |
 |---|---|
-| `idea_dimension`, `idea_nivel.descriptor`, `ippu_item`, `baremo_categoria`, `categoria_documento`, `taller`, `servicio` | lo ya generado desde la **demo v4.1** (se preserva tal cual) |
+| `idea_dimension`, `idea_nivel.descriptor`, `ippu_item`, `baremo_categoria`, `categoria_documento`, `servicio` | lo ya generado desde la **demo v4.1** (se preserva tal cual) |
+| `taller` (M12.3 · D5) | **`CAT_TALLERES` del Prototipo v4** — los 14 reales, en reemplazo de los 8 de la demo |
 | `idea_nivel.descriptor_breve`, `idea_dimension.que_evalua` | `IDEA_DESC` del **Prototipo v4** |
 | `idea_ficha`, `idea_ejemplo`, `idea_regla` | `IDEA_FICHAS`, `IDEA_EJ`, `IDEA_REGLAS` del Prototipo v4 |
 | `banda_idea`, `delta_interpretacion` | `ideaInterpreta()` y `deltaInterpreta()` del HTML del Prototipo v4 |
@@ -46,7 +47,7 @@ SALIDA = (
 #: a ser la fuente autoritativa; hasta entonces tocarlas sería trabajo perdido.
 DESDE_LA_DEMO = (
     "idea_dimension", "idea_nivel", "ippu_item", "baremo_categoria",
-    "categoria_documento", "taller", "servicio",
+    "categoria_documento", "servicio",
 )
 
 #: La cita del instrumento va **siempre** "1997/2002" (regla de M12.1): la
@@ -214,6 +215,28 @@ def ejemplos(proto: dict) -> list[dict]:
     ]
 
 
+def talleres(proto: dict) -> list[dict]:
+    """Los **14 talleres reales** de `CAT_TALLERES` (M12.3 · D5, `handoff.md` §5.14).
+
+    Reemplazan a los 8 que había: ninguno coincide: los nuestros salieron de la
+    demo, que los inventó. `CAT_TALLERES` es un array plano de nombres, así que
+    lo único que aporta el prototipo es el nombre y su orden de aparición.
+
+    `grupos_orientados` sale **vacío** y `retirado_en` en `None`: a qué grupos se
+    orienta cada taller y cuándo se retira lo decide coordinación desde la app
+    (`tallerGrupos` / `tallerToggle` en el prototipo). Vacío significa «sin
+    orientación registrada», no «ninguno» — inventarle grupos sería poner en el
+    repo un dato de gestión que IPPU no nos dio.
+    """
+    nombres = proto["CAT_TALLERES"]
+    assert len(nombres) == 14, f"CAT_TALLERES trae {len(nombres)}, se esperaban 14"
+    assert max(len(n) for n in nombres) <= 80, "un nombre no entra en taller.nombre"
+    return [
+        {"nombre": _cita(n), "orden": i, "grupos_orientados": [], "retirado_en": None}
+        for i, n in enumerate(nombres, start=1)
+    ]
+
+
 def reglas(proto: dict) -> list[dict]:
     return [
         {"regla": _cita(r["r"]), "descripcion": _cita(r["d"]),
@@ -255,8 +278,9 @@ def construir() -> dict:
         "_origen": (
             "Generado por herramientas/generar_catalogos_backend.py (M12.1). "
             "Instrumentos y catálogos base: demo v4.1. "
-            "Bandas, Δ, fichas, ejemplos, reglas y descriptor_breve: Prototipo v4 de IPPU "
-            "(docs/fuentes/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. "
+            "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve y talleres: "
+            "Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). "
+            "Recordatorios y grupos: Manual + plan M12. "
             "NO editar a mano: correr el script."
         ),
     }
@@ -272,6 +296,7 @@ def construir() -> dict:
     for nivel in datos["idea_nivel"]:
         nivel["descriptor_breve"] = _cita(desc[nivel["dimension_id"] - 1][f"n{nivel['valor']}"])
 
+    datos["taller"] = talleres(proto)
     datos["idea_ficha"] = fichas(proto)
     datos["idea_ejemplo"] = ejemplos(proto)
     datos["idea_regla"] = reglas(proto)

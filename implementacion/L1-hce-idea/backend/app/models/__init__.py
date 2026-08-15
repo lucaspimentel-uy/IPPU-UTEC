@@ -27,7 +27,6 @@ from app.models.catalogos import (
 from app.models.identidad import (
     Grupo,
     HceDiurna,
-    HceTaller,
     Persona,
     PersonaServicio,
     Profesional,
@@ -59,7 +58,7 @@ __all__ = [
     "IdeaDimension", "IdeaEjemplo", "IdeaFicha", "IdeaNivel", "IdeaRegla",
     "IppuItem", "Recordatorio", "Servicio", "Taller",
     # identidad
-    "Grupo", "HceDiurna", "HceTaller", "Persona", "PersonaServicio", "Profesional",
+    "Grupo", "HceDiurna", "Persona", "PersonaServicio", "Profesional",
     # módulos del flujo
     "Consentimiento", "Idea", "InformeCierre", "Protocolo",
     "PuntuacionIdea", "PuntuacionProtocolo",

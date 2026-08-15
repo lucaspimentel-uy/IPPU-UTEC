@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.2)
+"""esquema v2 inicial (M12.3)
 
-Revision ID: f54959f07cc4
+Revision ID: 3f11e10c13ed
 Revises: 
-Create Date: 2026-08-14 22:26:47.594223
+Create Date: 2026-08-14 23:37:29.346062
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f54959f07cc4'
+revision: str = '3f11e10c13ed'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -156,7 +156,9 @@ def upgrade() -> None:
     op.create_table('taller',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=80), nullable=False),
-    sa.Column('activo', sa.Boolean(), nullable=False),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.Column('grupos_orientados', postgresql.ARRAY(sa.String(length=60)), server_default='{}', nullable=False),
+    sa.Column('retirado_en', sa.Date(), nullable=True),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_taller')),
     sa.UniqueConstraint('nombre', name=op.f('uq_taller_nombre'))
     )
@@ -320,16 +322,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_foto_grupo_id'), 'foto', ['grupo_id'], unique=False)
     op.create_index(op.f('ix_foto_hce_id'), 'foto', ['hce_id'], unique=False)
-    op.create_table('hce_taller',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('hce_id', sa.Integer(), nullable=False),
-    sa.Column('taller_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_hce_taller_hce_id_hce_diurna'), ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['taller_id'], ['taller.id'], name=op.f('fk_hce_taller_taller_id_taller')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_hce_taller')),
-    sa.UniqueConstraint('hce_id', 'taller_id', name='uq_hce_taller')
-    )
-    op.create_index(op.f('ix_hce_taller_taller_id'), 'hce_taller', ['taller_id'], unique=False)
     op.create_table('idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -584,8 +576,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_idea_evaluador_t2_id'), table_name='idea')
     op.drop_index(op.f('ix_idea_evaluador_t1_id'), table_name='idea')
     op.drop_table('idea')
-    op.drop_index(op.f('ix_hce_taller_taller_id'), table_name='hce_taller')
-    op.drop_table('hce_taller')
     op.drop_index(op.f('ix_foto_hce_id'), table_name='foto')
     op.drop_index(op.f('ix_foto_grupo_id'), table_name='foto')
     op.drop_table('foto')
