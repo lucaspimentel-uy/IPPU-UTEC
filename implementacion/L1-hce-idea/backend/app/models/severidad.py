@@ -124,6 +124,17 @@ class SeveridadDsm(Base):
     «todavía no se juzgó» ya es representable **sin fila** — que es justo lo que
     compra el 0..1. Columnas nullable serían una segunda forma de decir lo mismo.
 
+    ⚠️ **La contracara, anotada para M11.4: no hay guardado parcial.** Un técnico
+    que ya juzgó CS pero todavía no CRR **no puede grabar**, y a diferencia de
+    LB/PA/PB/IC este módulo **no tiene borrador ni firma** donde apoyar el a
+    medias. Se resuelve en la UI (validar antes de enviar, que es lo que hace el
+    prototipo: los dos `<select>` van en el mismo formulario) o, si IPPU dice que
+    juzgar un dominio y el otro después es práctica real, volviendo nullable las
+    dos columnas — un cambio de una línea, aceptando que ahí «fila con un dominio
+    en blanco» y «sin fila» pasan a significar casi lo mismo. Las tres opciones
+    están en `backend/docs/esquema-datos-v2.md` §2.2. **No se decide acá:** es
+    flujo de trabajo, y M12 es capa de modelo.
+
     ── Las etiquetas no se guardan ─────────────────────────────────────────
     «Grado 2 · Necesita ayuda notable» **se deriva** del número contra
     `severidad_nivel`, no se copia acá. Guardarla sería reintroducir en esta

@@ -225,6 +225,22 @@ define la navegación.
 > Si IPPU responde que la severidad se re-evalúa en una instancia fija (al cierre anual, junto con el
 > IDEA), esto pasa a 1:N con `anio`. Anotado en `docs/notas/puntos-a-validar.md` §1.
 
+> ⚠️ **Restricción de UX conocida, para M11.4 — no reabre la decisión.** Que los dos dominios sean NOT
+> NULL significa que **no hay guardado parcial**: un técnico que ya juzgó CS pero todavía no CRR **no puede
+> grabar**. Es defendible —el DSM-5-TR pide especificar los dos, y el prototipo mismo trata el registro
+> como una unidad— pero **este módulo no tiene borrador ni firma**, así que a diferencia de LB/PA/PB/IC
+> **no hay estado intermedio donde apoyar el a medias**. Quien haga el router tiene que decidirlo de forma
+> explícita, y las opciones son:
+>
+> 1. **La UI valida antes de enviar** y el registro se crea completo (lo más simple, y lo que hace el
+>    prototipo: los dos `<select>` están en el mismo formulario).
+> 2. **Borrador del lado del cliente** hasta que estén los dos, sin tocar el modelo.
+> 3. Si IPPU dice que juzgar un dominio y el otro después es práctica real, **volver nullable las dos
+>    columnas** — es un cambio de una línea, pero hay que aceptar entonces que «fila con un dominio en
+>    blanco» y «sin fila» pasan a significar casi lo mismo, y definir cuál usa el sistema.
+>
+> **Se anota, no se decide acá:** es una pregunta de flujo de trabajo, y M12 es capa de modelo.
+
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
 |---|---|---|
@@ -335,8 +351,15 @@ define la navegación.
    (IDEA/IPPU-TEA/baremo/categorías/recordatorios/talleres/servicios).
 3. **M11.3 — Servicios (motor de flujo):** `flujo.py` (habilitado/estado/firmar/addenda/excepción
    + auditoría transaccional), guards §5.2/§7.5, totales materializados.
-4. **M11.4 — Routers v2:** persona/HCE (búsqueda 3 vías), módulos CI/LB/PA/PB/IC, DOC/foto,
+4. **M11.4 — Routers v2:** persona/HCE (búsqueda 3 vías), módulos CI/LB/PA/PB/IC, **SEV**, DOC/foto,
    ORG, VF (+ autogeneración descriptiva), auditoría (GET), Swagger con ejemplos.
+   **Dos cosas que M12.4 dejó anotadas acá a propósito** (ver §2.2):
+   - **El orden de los módulos en la ficha no está modelado en ninguna tabla** y **no se inventó una**.
+     El del Prototipo v4 (`FICHA_TABS`) es `resumen · anamnesis · ci · **sev** · idea · protA · protB ·
+     cierre · docs · inc · org · pai · vf · log` — **SEV va entre CI e IDEA**. Hoy vive implícito; si M11.4
+     necesita materializarlo, que sea una decisión suya y quede escrita.
+   - **`severidad_dsm` no admite guardado parcial** (los dos dominios son NOT NULL y el módulo no tiene
+     borrador ni firma). Resolverlo en la UI o en el schema, con las tres opciones planteadas en §2.2.
 5. **M11.5 — Seed clínico + tests:** seed espejo de la demo v4.0 (8 NNA, 4 arquetipos §11) y
    pytest contra Postgres. **Criterio de aceptación (§12-A):** reproducir por API el ciclo del
    usuario demo 1 con números idénticos (IDEA 58 · PA 60 · PB 79 · Δ +19) + guards + secuencia.
