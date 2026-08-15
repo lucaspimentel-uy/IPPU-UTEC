@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.1)
+"""esquema v2 inicial (M12.2)
 
-Revision ID: 46da34fcc64e
+Revision ID: f54959f07cc4
 Revises: 
-Create Date: 2026-08-14 19:52:55.196018
+Create Date: 2026-08-14 22:26:47.594223
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '46da34fcc64e'
+revision: str = 'f54959f07cc4'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -348,14 +348,21 @@ def upgrade() -> None:
     sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('evaluador_t1_id', sa.Integer(), nullable=True),
+    sa.Column('evaluador_t2_id', sa.Integer(), nullable=True),
     sa.Column('sistema_origen', sa.String(length=120), nullable=True),
     sa.Column('fecha_original', sa.Date(), nullable=True),
     sa.Column('fecha_migracion', sa.Date(), nullable=True),
     sa.Column('responsable_migracion', sa.String(length=120), nullable=True),
+    sa.CheckConstraint('evaluador_t1_id IS NULL OR evaluador_t2_id IS NULL OR evaluador_t1_id <> evaluador_t2_id', name=op.f('ck_idea_evaluadores_distintos')),
     sa.CheckConstraint('total IS NULL OR total BETWEEN 0 AND 96', name=op.f('ck_idea_rango_total')),
+    sa.ForeignKeyConstraint(['evaluador_t1_id'], ['profesional.id'], name=op.f('fk_idea_evaluador_t1_id_profesional')),
+    sa.ForeignKeyConstraint(['evaluador_t2_id'], ['profesional.id'], name=op.f('fk_idea_evaluador_t2_id_profesional')),
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_idea_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_idea'))
     )
+    op.create_index(op.f('ix_idea_evaluador_t1_id'), 'idea', ['evaluador_t1_id'], unique=False)
+    op.create_index(op.f('ix_idea_evaluador_t2_id'), 'idea', ['evaluador_t2_id'], unique=False)
     op.create_index(op.f('ix_idea_hce_id'), 'idea', ['hce_id'], unique=False)
     op.create_table('informe_cierre',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -431,13 +438,20 @@ def upgrade() -> None:
     sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('evaluador_t1_id', sa.Integer(), nullable=True),
+    sa.Column('evaluador_t2_id', sa.Integer(), nullable=True),
     sa.CheckConstraint("tipo = 'B' OR deltas IS NULL", name=op.f('ck_protocolo_deltas_solo_en_b')),
     sa.CheckConstraint("tipo IN ('A','B')", name=op.f('ck_protocolo_tipo_valido')),
+    sa.CheckConstraint('evaluador_t1_id IS NULL OR evaluador_t2_id IS NULL OR evaluador_t1_id <> evaluador_t2_id', name=op.f('ck_protocolo_evaluadores_distintos')),
     sa.CheckConstraint('total IS NULL OR total BETWEEN 24 AND 120', name=op.f('ck_protocolo_rango_total')),
+    sa.ForeignKeyConstraint(['evaluador_t1_id'], ['profesional.id'], name=op.f('fk_protocolo_evaluador_t1_id_profesional')),
+    sa.ForeignKeyConstraint(['evaluador_t2_id'], ['profesional.id'], name=op.f('fk_protocolo_evaluador_t2_id_profesional')),
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_protocolo_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_protocolo')),
     sa.UniqueConstraint('hce_id', 'tipo', 'anio', name='uq_protocolo_hce_tipo_anio')
     )
+    op.create_index(op.f('ix_protocolo_evaluador_t1_id'), 'protocolo', ['evaluador_t1_id'], unique=False)
+    op.create_index(op.f('ix_protocolo_evaluador_t2_id'), 'protocolo', ['evaluador_t2_id'], unique=False)
     op.create_index(op.f('ix_protocolo_hce_id'), 'protocolo', ['hce_id'], unique=False)
     op.create_table('registro_organismo',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -499,11 +513,53 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_consentimiento'))
     )
     op.create_index(op.f('ix_consentimiento_documento_id'), 'consentimiento', ['documento_id'], unique=False)
+    op.create_table('puntuacion_idea',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('idea_id', sa.Integer(), nullable=False),
+    sa.Column('dimension_id', sa.Integer(), nullable=False),
+    sa.Column('ns_t1', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('ns_t2', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('valor_t1', sa.SmallInteger(), nullable=True),
+    sa.Column('valor_t2', sa.SmallInteger(), nullable=True),
+    sa.Column('diferencia', sa.SmallInteger(), sa.Computed('abs(valor_t1 - valor_t2)', persisted=True), nullable=True),
+    sa.Column('documentacion', sa.Text(), nullable=True),
+    sa.CheckConstraint("documentacion IS NULL OR btrim(documentacion) <> ''", name=op.f('ck_puntuacion_idea_documentacion_no_vacia')),
+    sa.CheckConstraint('NOT (ns_t1 AND valor_t1 IS NOT NULL)', name=op.f('ck_puntuacion_idea_ns_t1_sin_valor')),
+    sa.CheckConstraint('NOT (ns_t2 AND valor_t2 IS NOT NULL)', name=op.f('ck_puntuacion_idea_ns_t2_sin_valor')),
+    sa.CheckConstraint('valor_t1 IS NULL OR valor_t1 BETWEEN 0 AND 8', name=op.f('ck_puntuacion_idea_rango_t1')),
+    sa.CheckConstraint('valor_t2 IS NULL OR valor_t2 BETWEEN 0 AND 8', name=op.f('ck_puntuacion_idea_rango_t2')),
+    sa.ForeignKeyConstraint(['dimension_id'], ['idea_dimension.id'], name=op.f('fk_puntuacion_idea_dimension_id_idea_dimension')),
+    sa.ForeignKeyConstraint(['idea_id'], ['idea.id'], name=op.f('fk_puntuacion_idea_idea_id_idea'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_puntuacion_idea')),
+    sa.UniqueConstraint('idea_id', 'dimension_id', name='uq_puntuacion_idea_dimension')
+    )
+    op.create_index(op.f('ix_puntuacion_idea_idea_id'), 'puntuacion_idea', ['idea_id'], unique=False)
+    op.create_table('puntuacion_protocolo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('protocolo_id', sa.Integer(), nullable=False),
+    sa.Column('item_id', sa.Integer(), nullable=False),
+    sa.Column('valor_t1', sa.SmallInteger(), nullable=True),
+    sa.Column('valor_t2', sa.SmallInteger(), nullable=True),
+    sa.Column('diferencia', sa.SmallInteger(), sa.Computed('abs(valor_t1 - valor_t2)', persisted=True), nullable=True),
+    sa.Column('documentacion', sa.Text(), nullable=True),
+    sa.CheckConstraint("documentacion IS NULL OR btrim(documentacion) <> ''", name=op.f('ck_puntuacion_protocolo_documentacion_no_vacia')),
+    sa.CheckConstraint('valor_t1 IS NULL OR valor_t1 BETWEEN 1 AND 5', name=op.f('ck_puntuacion_protocolo_rango_t1')),
+    sa.CheckConstraint('valor_t2 IS NULL OR valor_t2 BETWEEN 1 AND 5', name=op.f('ck_puntuacion_protocolo_rango_t2')),
+    sa.ForeignKeyConstraint(['item_id'], ['ippu_item.id'], name=op.f('fk_puntuacion_protocolo_item_id_ippu_item')),
+    sa.ForeignKeyConstraint(['protocolo_id'], ['protocolo.id'], name=op.f('fk_puntuacion_protocolo_protocolo_id_protocolo'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_puntuacion_protocolo')),
+    sa.UniqueConstraint('protocolo_id', 'item_id', name='uq_puntuacion_protocolo_item')
+    )
+    op.create_index(op.f('ix_puntuacion_protocolo_protocolo_id'), 'puntuacion_protocolo', ['protocolo_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_puntuacion_protocolo_protocolo_id'), table_name='puntuacion_protocolo')
+    op.drop_table('puntuacion_protocolo')
+    op.drop_index(op.f('ix_puntuacion_idea_idea_id'), table_name='puntuacion_idea')
+    op.drop_table('puntuacion_idea')
     op.drop_index(op.f('ix_consentimiento_documento_id'), table_name='consentimiento')
     op.drop_table('consentimiento')
     op.drop_index(op.f('ix_autorizacion_imagen_documento_id'), table_name='autorizacion_imagen')
@@ -514,6 +570,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_registro_organismo_autor_id'), table_name='registro_organismo')
     op.drop_table('registro_organismo')
     op.drop_index(op.f('ix_protocolo_hce_id'), table_name='protocolo')
+    op.drop_index(op.f('ix_protocolo_evaluador_t2_id'), table_name='protocolo')
+    op.drop_index(op.f('ix_protocolo_evaluador_t1_id'), table_name='protocolo')
     op.drop_table('protocolo')
     op.drop_table('organismo_inau')
     op.drop_table('organismo_bps')
@@ -523,6 +581,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_informe_cierre_hce_id'), table_name='informe_cierre')
     op.drop_table('informe_cierre')
     op.drop_index(op.f('ix_idea_hce_id'), table_name='idea')
+    op.drop_index(op.f('ix_idea_evaluador_t2_id'), table_name='idea')
+    op.drop_index(op.f('ix_idea_evaluador_t1_id'), table_name='idea')
     op.drop_table('idea')
     op.drop_index(op.f('ix_hce_taller_taller_id'), table_name='hce_taller')
     op.drop_table('hce_taller')

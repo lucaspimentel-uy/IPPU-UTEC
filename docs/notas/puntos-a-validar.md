@@ -97,6 +97,26 @@ lectura (§10), pero no una migración masiva.
 
 **Qué bloquea.** Nada del desarrollo actual. Hay que decidirlo antes de un piloto.
 
+### 1.9 ¿Los dos técnicos ya puntúan de forma independiente? — ⚠️ **para la reunión**
+**Qué es.** El Manual de Procedimientos v1.0 establece que los dos técnicos puntúan **por separado** y
+después consensúan, y llama a ese circuito *el único requisito metodológico invariante* del instrumento.
+La pregunta es de hecho, no de norma: **¿así se trabaja hoy en IPPU, o es una práctica a introducir?**
+
+**Por qué importa.** En **M12.2** se modeló toda la puntuación independiente (`puntuacion_idea`,
+`puntuacion_protocolo`, evaluadores identificados, registro del consenso) para que el kappa de
+confiabilidad interjueces que pide el Manual §23 sea calculable. **De la respuesta depende si eso sirve
+desde el día uno o queda latente:** si hoy los técnicos consensúan de entrada y anotan un solo valor, las
+columnas van a quedar en NULL hasta que cambie la práctica — que es exactamente por qué se modelaron
+nullable.
+
+**Ojo con el contexto:** ⚠️ **es agregado nuestro, no algo que IPPU haya pedido.** Su propio Prototipo v4
+guarda un único array de consenso y **no** tiene puntuación por evaluador; declara kappa como requisito y
+no lo implementa. La decisión de modelarlo es D7 (`handoff.md` §5.16), tomada porque agregarlo después de
+M11.3 cuesta migración más reescritura de servicios. Conviene presentarlo así en la reunión.
+
+**Qué bloquea.** Nada técnico: está modelado y es opcional. Bloquea saber si hay que acompañar el cambio
+con formación/instructivo, y cuándo tiene sentido empezar a calcular kappa.
+
 ---
 
 ## 2. Para el equipo (grupo + Matías)
@@ -183,6 +203,24 @@ documento de esquema. Detectado revisando M11.2; no bloquea M11.3.
 del backend. Desde §5.6 no hay módulos con dueño exclusivo: quien lo toma, avisa.
 
 **Qué se pide.** Que alguien lo tome y lo diga, para no duplicar trabajo como pasó en julio.
+
+### 2.8 No hay forma de «abrir un año nuevo» de grupos — hueco que dejó M12.1
+**Qué es.** D9 (§5.18) resolvió que `grupo` tenga id propio y `UNIQUE(nombre, anio)`, justamente para que
+«Azul 2026» y «Azul 2027» sean dos filas distintas. Pero **nadie puede crear la de 2027**: el seed de
+catálogos es *insert-only* sobre `grupo` (coordinación es dueña de la fila entera y el seed no la pisa —
+correcto, y hay test que lo fija) y **todavía no existe endpoint ni pantalla que cree grupos**.
+
+**Por qué importa.** En marzo de 2027 alguien tiene que poder abrir los cuatro grupos del año con sus
+técnicos. Hoy la única vía es un `INSERT` a mano contra la base. La mitad del valor de D9 —preservar
+quién estuvo a cargo cada año— depende de que crear el año siguiente sea una operación normal y no una
+intervención de DBA.
+
+**Qué se pide.** Que **M11.3/M11.4** incluyan el alta de grupo (crear el año, asignar técnicos) y su
+registro en HCE-LOG con `hce_id NULL`, como el resto de los eventos institucionales. Conviene resolverlo
+junto con la pregunta abierta de §5.18: qué pasa cuando un técnico cambia a mitad de año.
+
+**Qué bloquea.** **Nada hoy** — los grupos de 2026 están sembrados y el año no cambia hasta marzo.
+Se anota ahora para que no se descubra el día que haga falta.
 
 ---
 

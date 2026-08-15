@@ -57,9 +57,10 @@ IPPU/
   incremental posible. Hecho el 2026-08-07: **M11.1** (infra Postgres-only con docker-compose) y **M11.2**
   (28 tablas del esquema v2, migración inicial única y catálogos cargados — 12 dimensiones IDEA con sus 60
   descriptores, 24 ítems IPPU-TEA, baremo, categorías documentales, recordatorios, talleres y servicios).
-  El 2026-08-14, **M12.0 y M12.1** de la ronda M12 (absorción del Prototipo v4): **33 tablas**, bandas del
-  IDEA, interpretación del Δ, fichas/ejemplos/reglas del IDEA y la tabla `grupo` corregida.
-  Verificado con **53 tests estructurales** contra Postgres. **Falta M11.3** (los servicios con las reglas
+  El 2026-08-14, **M12.0 a M12.2** de la ronda M12 (absorción del Prototipo v4): **35 tablas**, bandas del
+  IDEA, interpretación del Δ, fichas/ejemplos/reglas del IDEA, la tabla `grupo` corregida y la **puntuación
+  independiente de los dos técnicos** con su registro de consenso (D7).
+  Verificado con **74 tests estructurales** contra Postgres. **Falta M11.3** (los servicios con las reglas
   clínicas), M11.4 (routers), M11.5 (seed + tests) y M11.6 (docs), que se retoman al cerrar M12. Arranque en
   `implementacion/L1-hce-idea/backend/README.md`; esquema en `backend/docs/esquema-datos-v2.md`.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.

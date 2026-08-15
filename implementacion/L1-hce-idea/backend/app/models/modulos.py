@@ -14,16 +14,26 @@ Tres cosas que hay que entender de este archivo:
 3. **Los totales se materializan pero los calcula Python.** `total`, `esc_*` y
    `deltas` son columnas para que el panel institucional no tenga que recorrer
    JSONB, pero las escribe el servidor al guardar/firmar.
+
+4. **El consenso vive en JSONB; las puntuaciones independientes, en tablas.**
+   `idea.dim` y `protocolo.items` guardan el valor **consensuado** —el que vale
+   como puntaje del instrumento— y no se tocaron en M12.2. Las dos puntuaciones
+   previas al consenso van en `puntuacion_idea` / `puntuacion_protocolo`, que
+   son tablas de verdad (ver su docstring). Son dos cosas distintas: una es el
+   resultado del instrumento, la otra es el dato de confiabilidad interjueces.
 """
 from datetime import date
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Boolean, CheckConstraint, Date, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean, CheckConstraint, Computed, Date, ForeignKey, Integer, SmallInteger,
+    String, Text, UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
+from app.core.constantes import CONSENSO_DIFERENCIA_AMBIGUEDAD, CONSENSO_PROCEDIMIENTOS
 from app.core.database import Base
 from app.models.mixins import OrigenMigracionMixin
 
@@ -48,6 +58,138 @@ class FirmaMixin:
     excepcion: Mapped[dict | None] = mapped_column(JSONB)
 
 
+class PuntuacionConsensoMixin:
+    """Puntuación independiente de los dos técnicos, previa al consenso (D7).
+
+    ── Por qué existe ──────────────────────────────────────────────────────
+    **Esto no sale del Prototipo v4.** El prototipo guarda un único array plano
+    de consenso (`punt[12]` para el IDEA, `punt[24]` para el protocolo) y **no
+    tiene puntuación por evaluador en ninguna parte**; declara kappa como
+    requisito y no lo implementa. Es el único cambio de toda la ronda M12 que es
+    agregado nuestro: **decisión D7** (`handoff.md` §5.16), no requisito del
+    cliente. Que quede claro para quien lo lea dentro de dos meses.
+
+    El fundamento es el **Manual de Procedimientos v1.0**, que establece que los
+    dos técnicos puntúan de forma independiente y después consensúan, y llama a
+    ese circuito *el único requisito metodológico invariante* del instrumento.
+    Sin las dos puntuaciones no hay forma de calcular el kappa de confiabilidad
+    interjueces que el propio Manual §23 pide como control. Se modela **ahora**
+    y no después porque hacerlo después de M11.3 cuesta migración **más**
+    reescritura de servicios; hoy no hay ni servicios ni datos.
+
+    ── Por qué tabla y no JSONB ────────────────────────────────────────────
+    El consenso sigue donde estaba (`idea.dim`, `protocolo.items`): el
+    instrumento se lee y se escribe entero, y ese argumento de M11.2 sigue en
+    pie. Para las puntuaciones independientes **no vale**, por cuatro motivos:
+
+    1. **Kappa se calcula a lo ancho, no a lo largo.** Compara t1 contra t2 para
+       una misma dimensión sobre toda la cohorte. Como filas es un `GROUP BY
+       dimension_id`; dentro de `dim` es recorrer el JSONB de cada evaluación.
+    2. **«Diferencias ≥2 sin documentar» es una consulta institucional**, no un
+       dato de un expediente: es el control de confiabilidad del Manual.
+    3. **El evaluador es una FK.** Dentro de JSONB sería un entero que nadie
+       garantiza que exista.
+    4. **`NS` necesita representación tipada** distinta de «todavía no puntuado»
+       (ver `PuntuacionIdea`).
+
+    ── Qué NO está acá ─────────────────────────────────────────────────────
+    - **El guard.** «Diferencia ≥2 exige documentación» es lógica de negocio y
+      va al servicio de firma en M11.3 (§5.2.2: la BD no lleva reglas clínicas).
+      Acá está el campo y el marcador, no el rechazo.
+    - **El cálculo de kappa.** Se guardan los datos que lo hacen posible y nada
+      más; el cálculo es de la fase piloto.
+    - **La obligatoriedad.** Todo es nullable: una evaluación con sólo el
+      consenso es válida. Hace falta para los históricos migrados y para el seed
+      espejo de la demo, donde el consenso es lo único que existe — y porque
+      todavía no sabemos si los técnicos de IPPU ya trabajan así o si es una
+      práctica a introducir (pregunta abierta, `handoff.md` §7).
+
+    `diferencia` es **columna generada** (`abs(valor_t1 - valor_t2)`): aritmética
+    pura, sin contenido clínico, imposible de desfasar y consultable. El umbral
+    que la interpreta —el 2 de la ambigüedad clínica— **no** está en la DDL: vive
+    en `core/constantes.py`. La base calcula el número, Python lo interpreta.
+    """
+
+    #: Puntuación del técnico 1 (`evaluador_t1_id` del módulo padre).
+    valor_t1: Mapped[int | None] = mapped_column(SmallInteger)
+    #: Puntuación del técnico 2 (`evaluador_t2_id` del módulo padre).
+    valor_t2: Mapped[int | None] = mapped_column(SmallInteger)
+    #: Generada por Postgres. NULL si falta alguna de las dos (o si una es NS):
+    #: no hay diferencia que calcular, que es distinto de una diferencia de 0.
+    diferencia: Mapped[int | None] = mapped_column(
+        SmallInteger, Computed("abs(valor_t1 - valor_t2)", persisted=True)
+    )
+    #: Cómo se resolvió el consenso. Campo propio y **no una observación suelta**:
+    #: es el registro que el Manual exige cuando hay ambigüedad clínica, y tiene
+    #: que poder consultarse sin leer texto libre de otra tabla.
+    documentacion: Mapped[str | None] = mapped_column(Text)
+
+    @hybrid_property
+    def procedimiento(self) -> str | None:
+        """`registro` · `discusion_breve` · `ambiguedad_clinica`.
+
+        **Derivado, no almacenado** — mismo criterio que el estado visible de los
+        módulos: guardarlo sería una segunda fuente de verdad que en algún
+        momento queda desfasada de `diferencia`.
+        """
+        if self.diferencia is None:
+            return None
+        clave = None
+        for minimo, valor, _ in CONSENSO_PROCEDIMIENTOS:
+            if self.diferencia >= minimo:
+                clave = valor
+        return clave
+
+    @hybrid_property
+    def documentacion_pendiente(self) -> bool:
+        """Ambigüedad clínica sin documentar.
+
+        Es un marcador, no un guard: quien rechaza la firma es el servicio
+        (M11.3). Como `hybrid_property` sirve igual en Python (`p.documentacion_
+        pendiente`) que en SQL (`filter(Modelo.documentacion_pendiente)`), que es
+        la consulta de control de confiabilidad del Manual.
+        """
+        return (
+            self.diferencia is not None
+            and self.diferencia >= CONSENSO_DIFERENCIA_AMBIGUEDAD
+            and self.documentacion is None
+        )
+
+    @documentacion_pendiente.inplace.expression
+    @classmethod
+    def _documentacion_pendiente_sql(cls):
+        # `NULL >= 2` es NULL en SQL, así que las filas sin diferencia calculable
+        # quedan fuera del filtro — igual que en la versión Python.
+        return (cls.diferencia >= CONSENSO_DIFERENCIA_AMBIGUEDAD) & cls.documentacion.is_(None)
+
+
+class EvaluadoresMixin:
+    """Los dos técnicos que puntuaron por separado (D7).
+
+    Van en el módulo y no en cada dimensión: son los mismos para toda la
+    evaluación. `t1`/`t2` de las filas de puntuación refieren a estos.
+
+    **No se derivan de `firmas`.** La puntuación independiente ocurre *antes* de
+    firmar, así que en el momento en que hacen falta `firmas` todavía está vacío.
+    Además el firmante puede no ser el evaluador (una addenda la firma quien
+    corresponda).
+
+    **Sin `evaluadorN_rol`**, a diferencia de `grupo`: el rol ya viaja en
+    `firmas` (`{profesional_id, rol, fecha}`) y en `profesional.especialidad`.
+    Repetirlo acá sería una tercera copia con dos formas de quedar desfasada.
+
+    Nullable: ver `PuntuacionConsensoMixin` (históricos y seed espejo).
+    """
+
+    @declared_attr
+    def evaluador_t1_id(cls) -> Mapped[int | None]:
+        return mapped_column(ForeignKey("profesional.id"), index=True)
+
+    @declared_attr
+    def evaluador_t2_id(cls) -> Mapped[int | None]:
+        return mapped_column(ForeignKey("profesional.id"), index=True)
+
+
 class Consentimiento(FirmaMixin, Base):
     """HCE-CI. El único bloqueo sin excepción posible de todo el flujo (§4.2).
 
@@ -65,7 +207,7 @@ class Consentimiento(FirmaMixin, Base):
     documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"), index=True)
 
 
-class Idea(FirmaMixin, OrigenMigracionMixin, Base):
+class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     """HCE-LB — el IDEA como **línea base única**, no como evaluación anual.
 
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
@@ -111,13 +253,74 @@ class Idea(FirmaMixin, OrigenMigracionMixin, Base):
     esc_d: Mapped[int | None] = mapped_column(Integer)
 
     hce: Mapped["HceDiurna"] = relationship()
+    puntuaciones: Mapped[list["PuntuacionIdea"]] = relationship(
+        back_populates="idea", cascade="all, delete-orphan",
+        order_by="PuntuacionIdea.dimension_id",
+    )
 
     __table_args__ = (
         CheckConstraint("total IS NULL OR total BETWEEN 0 AND 96", name="rango_total"),
+        CheckConstraint(
+            "evaluador_t1_id IS NULL OR evaluador_t2_id IS NULL "
+            "OR evaluador_t1_id <> evaluador_t2_id",
+            name="evaluadores_distintos",
+        ),
     )
 
 
-class Protocolo(FirmaMixin, Base):
+class PuntuacionIdea(PuntuacionConsensoMixin, Base):
+    """Puntuación independiente de cada dimensión del IDEA, antes del consenso.
+
+    Una fila por (evaluación, dimensión). El valor **consensuado** no está acá:
+    sigue en `idea.dim`, que es el puntaje del instrumento. Acá está el dato de
+    confiabilidad interjueces. El porqué de todo esto: `PuntuacionConsensoMixin`.
+
+    **`NS` se modela aparte del número.** En el consenso `NS` es el literal
+    `"NS"` dentro de un JSONB, que ahí no molesta; en una columna tipada haría
+    falta guardar texto y perder el rango. Con `valor_tN` + `ns_tN` quedan
+    distinguibles los tres estados que existen de verdad:
+
+    | `valor_t1` | `ns_t1` | significa |
+    |---|---|---|
+    | NULL | false | todavía no puntuó |
+    | 0..8 | false | puntuó |
+    | NULL | true  | puntuó **NS** (observación insuficiente) |
+
+    `NS` sigue siendo valor válido del IDEA y **bloquea la firma** — eso último
+    lo impone el servicio (M11.3), como siempre.
+
+    ⚠️ **Caso sin resolver, a propósito:** que uno ponga `NS` y el otro un número
+    es un desacuerdo real que la diferencia numérica no puede expresar (queda
+    NULL). No se inventa una regla acá: qué hacer con eso lo define el servicio
+    en M11.3 y está anotado en `esquema-datos-v2.md` §4.
+    """
+    __tablename__ = "puntuacion_idea"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    idea_id: Mapped[int] = mapped_column(
+        ForeignKey("idea.id", ondelete="CASCADE"), index=True
+    )
+    dimension_id: Mapped[int] = mapped_column(ForeignKey("idea_dimension.id"))
+    ns_t1: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    ns_t2: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+    idea: Mapped["Idea"] = relationship(back_populates="puntuaciones")
+
+    __table_args__ = (
+        UniqueConstraint("idea_id", "dimension_id", name="uq_puntuacion_idea_dimension"),
+        CheckConstraint("valor_t1 IS NULL OR valor_t1 BETWEEN 0 AND 8", name="rango_t1"),
+        CheckConstraint("valor_t2 IS NULL OR valor_t2 BETWEEN 0 AND 8", name="rango_t2"),
+        # NS y número son excluyentes: si puntuó NS no hay valor numérico.
+        CheckConstraint("NOT (ns_t1 AND valor_t1 IS NOT NULL)", name="ns_t1_sin_valor"),
+        CheckConstraint("NOT (ns_t2 AND valor_t2 IS NOT NULL)", name="ns_t2_sin_valor"),
+        CheckConstraint(
+            "documentacion IS NULL OR btrim(documentacion) <> ''",
+            name="documentacion_no_vacia",
+        ),
+    )
+
+
+class Protocolo(FirmaMixin, EvaluadoresMixin, Base):
     """HCE-PA / HCE-PB — Escala IPPU-TEA: 24 ítems Likert 1–5, por año.
 
     A = mitad de año, B = fin de año. `UNIQUE(hce_id, tipo, anio)` impide dos
@@ -157,12 +360,58 @@ class Protocolo(FirmaMixin, Base):
     esc_4: Mapped[int | None] = mapped_column(Integer)
 
     hce: Mapped["HceDiurna"] = relationship()
+    puntuaciones: Mapped[list["PuntuacionProtocolo"]] = relationship(
+        back_populates="protocolo", cascade="all, delete-orphan",
+        order_by="PuntuacionProtocolo.item_id",
+    )
 
     __table_args__ = (
         UniqueConstraint("hce_id", "tipo", "anio", name="uq_protocolo_hce_tipo_anio"),
         CheckConstraint("tipo IN ('A','B')", name="tipo_valido"),
         CheckConstraint("total IS NULL OR total BETWEEN 24 AND 120", name="rango_total"),
         CheckConstraint("tipo = 'B' OR deltas IS NULL", name="deltas_solo_en_b"),
+        CheckConstraint(
+            "evaluador_t1_id IS NULL OR evaluador_t2_id IS NULL "
+            "OR evaluador_t1_id <> evaluador_t2_id",
+            name="evaluadores_distintos",
+        ),
+    )
+
+
+class PuntuacionProtocolo(PuntuacionConsensoMixin, Base):
+    """Puntuación independiente de cada ítem de la Escala IPPU-TEA (24), antes
+    del consenso. El porqué está en `PuntuacionConsensoMixin`.
+
+    Igual que su par del IDEA, pero **sin `NS`**: la escala es Likert 1–5 y no
+    admite «no sabe» (lo que exige es observación obligatoria en los extremos
+    1 y 5, y eso es del consenso, no de esta tabla).
+
+    Una fila por (protocolo, ítem). El valor consensuado sigue en
+    `protocolo.items`.
+
+    Es tabla propia y no una tabla polimórfica compartida con el IDEA: los dos
+    instrumentos tienen rango distinto, referencian catálogos distintos y sólo
+    uno admite NS. Una FK polimórfica los uniría en el papel y perdería las tres
+    garantías estructurales.
+    """
+    __tablename__ = "puntuacion_protocolo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    protocolo_id: Mapped[int] = mapped_column(
+        ForeignKey("protocolo.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[int] = mapped_column(ForeignKey("ippu_item.id"))
+
+    protocolo: Mapped["Protocolo"] = relationship(back_populates="puntuaciones")
+
+    __table_args__ = (
+        UniqueConstraint("protocolo_id", "item_id", name="uq_puntuacion_protocolo_item"),
+        CheckConstraint("valor_t1 IS NULL OR valor_t1 BETWEEN 1 AND 5", name="rango_t1"),
+        CheckConstraint("valor_t2 IS NULL OR valor_t2 BETWEEN 1 AND 5", name="rango_t2"),
+        CheckConstraint(
+            "documentacion IS NULL OR btrim(documentacion) <> ''",
+            name="documentacion_no_vacia",
+        ),
     )
 
 

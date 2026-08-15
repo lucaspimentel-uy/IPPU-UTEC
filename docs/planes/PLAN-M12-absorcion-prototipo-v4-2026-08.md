@@ -215,9 +215,22 @@ por escrito, se aplique o no.
 
 ---
 
-### M12.2 — Puntuación independiente y consenso
+### M12.2 — Puntuación independiente y consenso ✅ **HECHO** (2026-08-14, Lucas)
 Implementa D7. Es el cambio de modelo más profundo, y **el único que no sale del prototipo** — modelarlo
 es decisión nuestra, así que conviene que quede especialmente bien argumentado en el commit.
+
+> **Cómo quedó.** Dos tablas nuevas — **`puntuacion_idea`** (0–8 + `NS` tipado) y
+> **`puntuacion_protocolo`** (1–5, sin `NS`) — con `valor_t1`/`valor_t2` nullable, `documentacion` y
+> `diferencia` como **columna generada** (`abs(t1-t2)`). Los evaluadores van en `idea`/`protocolo`
+> (`evaluador_t1_id`/`evaluador_t2_id`, con `CHECK` de que no sean la misma persona), no por fila: son los
+> mismos para toda la evaluación, y **no se derivan de `firmas`** porque la puntuación independiente pasa
+> antes de firmar. **El consenso no se movió:** sigue en `idea.dim` / `protocolo.items`.
+> `procedimiento` y `documentacion_pendiente` son **derivados** (`hybrid_property`, sirven en Python y en
+> SQL), no columnas: mismo criterio sin drift que el estado visible de los módulos. Los tres tramos
+> (0 · 1 · ≥2) son **constante** (`core/constantes.py`) y no catálogo paramétrico — es el invariante
+> metodológico del Manual; si se pudiera correr con un `UPDATE`, los kappas de antes y después no serían
+> comparables. **El guard queda para M11.3** (§4 del esquema), kappa no se calcula. **35 tablas · 74 tests
+> en verde, 0 salteados**, migración regenerada con el test de coincidencia pasando.
 
 - Hoy `idea` y `protocolo` guardan el consenso, igual que el prototipo. El Manual establece que los dos
   técnicos puntúan **de forma independiente** y después consensúan; sin las dos puntuaciones no hay kappa.

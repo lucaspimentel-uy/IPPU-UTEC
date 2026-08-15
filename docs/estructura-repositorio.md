@@ -143,7 +143,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── 46da34fcc64e_esquema_v2_inicial_m12_1.py   # migración única del esquema v2 (33 tablas)
+│       └── f54959f07cc4_esquema_v2_inicial_m12_2.py   # migración única del esquema v2 (35 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -151,10 +151,11 @@ backend/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
 │   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 33 tablas del esquema v2 (28 de M11.2 + 5 de M12.1)
+│   ├── models/               # SQLAlchemy — 35 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2)
 │   │   ├── catalogos.py
 │   │   ├── identidad.py
 │   │   ├── mixins.py         # OrigenMigracionMixin (metadatos de dato migrado, §10)
+│   │   │                     # (Firma/Evaluadores/PuntuacionConsenso viven en modulos.py)
 │   │   ├── modulos.py
 │   │   └── transversales.py
 │   ├── schemas/              # Pydantic (pendiente: M11.3/M11.4)

@@ -27,6 +27,34 @@ IDEA_MANUAL_VERSION = "Manual Unificado IDEA v1.0 (07/2026)"
 IDEA_CITA = "Rivière, Á. (1997/2002). IDEA — Inventario de Espectro Autista."
 
 # --------------------------------------------------------------------------
+# Consenso interjueces (D7 · `handoff.md` §5.16 · M12.2)
+# --------------------------------------------------------------------------
+# Los dos técnicos puntúan por separado y después consensúan. El Manual de
+# Procedimientos v1.0 define el procedimiento **por la diferencia** entre las dos
+# puntuaciones independientes, y llama a ese circuito «el único requisito
+# metodológico invariante» del instrumento.
+#
+# **Constante y no catálogo, a propósito.** Por el criterio de arriba, un tramo
+# es catálogo cuando la institución lo mueve sin desplegar (bandas del IDEA,
+# baremo, interpretación del Δ). Estos tres tramos son lo contrario: son el
+# invariante metodológico. Si alguien pudiera correr el umbral de la ambigüedad
+# clínica con un UPDATE, dejaría de ser invariante — y los kappas calculados
+# antes y después del UPDATE no serían comparables.
+
+#: Tramos: (diferencia mínima, clave, qué corresponde hacer).
+CONSENSO_PROCEDIMIENTOS: tuple[tuple[int, str, str], ...] = (
+    (0, "registro", "Coincidencia: se registra la puntuación y se sigue."),
+    (1, "discusion_breve", "Discusión breve entre los dos técnicos hasta acordar."),
+    (2, "ambiguedad_clinica",
+     "Ambigüedad clínica: exige documentar por escrito cómo se resolvió el consenso."),
+)
+
+#: Diferencia a partir de la cual hay ambigüedad clínica y la documentación pasa
+#: a ser obligatoria. El **guard** que la exige para firmar vive en el servicio
+#: (M11.3), no acá y no en la base: decisión §5.2.2.
+CONSENSO_DIFERENCIA_AMBIGUEDAD = 2
+
+# --------------------------------------------------------------------------
 # Vocabulario institucional (§8.1)
 # --------------------------------------------------------------------------
 #: Términos **prohibidos** en todo texto generado, catálogo o etiqueta, con su

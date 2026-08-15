@@ -32,7 +32,14 @@ from app.models.identidad import (
     PersonaServicio,
     Profesional,
 )
-from app.models.modulos import Consentimiento, Idea, InformeCierre, Protocolo
+from app.models.modulos import (
+    Consentimiento,
+    Idea,
+    InformeCierre,
+    Protocolo,
+    PuntuacionIdea,
+    PuntuacionProtocolo,
+)
 from app.models.transversales import (
     Auditoria,
     AutorizacionImagen,
@@ -55,6 +62,7 @@ __all__ = [
     "Grupo", "HceDiurna", "HceTaller", "Persona", "PersonaServicio", "Profesional",
     # módulos del flujo
     "Consentimiento", "Idea", "InformeCierre", "Protocolo",
+    "PuntuacionIdea", "PuntuacionProtocolo",
     # transversales
     "Auditoria", "AutorizacionImagen", "Documento", "Evento", "Foto",
     "Observacion", "OrganismoBps", "OrganismoInau", "RegistroOrganismo",

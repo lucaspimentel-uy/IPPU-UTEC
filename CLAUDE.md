@@ -92,8 +92,11 @@ Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa 
 Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
 capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
-- **M12.0 y M12.1 HECHOS** (2026-08-14): **33 tablas**, 5 catálogos nuevos, D9 (`grupo`) implementada,
-  **53 tests**. Sigue **M12.2** (puntuación independiente y consenso, D7).
+- **M12.0 a M12.2 HECHOS** (2026-08-14): **35 tablas**, 5 catálogos nuevos, D9 (`grupo`) implementada y la
+  **puntuación independiente de los dos técnicos** con su registro de consenso (D7, §5.16 — ⚠️ **agregado
+  nuestro, no del prototipo**; el guard de «diferencia ≥2 exige documentación» va a **M11.3**, y kappa
+  **no** se calcula todavía). **74 tests**. Siguen **M12.3–M12.7**, que van **en paralelo** (uno cada uno,
+  archivos distintos de `app/models/`) — ahí sí se **congela** la migración hasta terminar el paralelo.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

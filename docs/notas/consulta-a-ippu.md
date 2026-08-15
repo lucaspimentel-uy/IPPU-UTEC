@@ -357,7 +357,27 @@ institución, cambio de grupo a mitad de año):
 
 ---
 
-### 3.9 Cómo se entrega el informe a la familia
+### 3.9 Los dos técnicos, ¿puntúan cada uno por su lado y después acuerdan? ⚠️
+
+Cuando se aplica el IDEA o la Escala IPPU-TEA y participan dos técnicos:
+
+**¿Cada uno pone su puntaje por separado y recién después se juntan a acordar el valor final?
+¿O lo conversan mientras evalúan y anotan un solo número?**
+
+Y si puntúan por separado: **cuando hay una diferencia grande entre los dos, ¿queda registrado en
+algún lado cómo se resolvió, o sólo queda el valor acordado?**
+
+> _Por qué preguntamos._ El Manual de Procedimientos dice que la puntuación es independiente y el
+> consenso viene después, y lo presenta como el punto metodológico más importante del instrumento.
+> Preparamos el sistema para poder guardar las dos puntuaciones y lo que se conversó, pero **queremos
+> saber si eso es lo que ya hacen o algo que habría que empezar a hacer.** Si hoy anotan un solo
+> número, el sistema lo acepta igual — no queremos imponerles una forma de trabajar.
+
+> _Respuesta:_
+
+---
+
+### 3.10 Cómo se entrega el informe a la familia
 
 **¿En papel firmado, por correo electrónico, en una entrevista, o varias de estas?**
 **Y la constancia de que la familia lo recibió, ¿cómo se registra hoy?**
@@ -366,7 +386,7 @@ institución, cambio de grupo a mitad de año):
 
 ---
 
-### 3.10 Algo que no preguntamos
+### 3.11 Algo que no preguntamos
 
 **¿Hay algo de cómo trabajan que creen que deberíamos saber y que no aparece en ninguna de estas
 preguntas?** Esta es probablemente la pregunta más útil de todas.

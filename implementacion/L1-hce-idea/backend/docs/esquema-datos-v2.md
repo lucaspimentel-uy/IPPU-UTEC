@@ -1,9 +1,10 @@
 # Esquema de datos v2 — HCE IPPU (M11 · backend v2)
 
 > **Estado: IMPLEMENTADO en M11.2** (2026-08-07, 28 tablas + migración inicial única) y **en curso de
-> ampliación por la ronda M12** (absorción del Prototipo v4). Lo marcado «M12.1» ya está en los modelos;
-> **la migración se regenera una sola vez en M12.8** (regla de la ronda), así que hasta entonces los
-> modelos van deliberadamente adelante del esquema aplicado. Este documento pasa a **v3** en M12.8.
+> ampliación por la ronda M12** (absorción del Prototipo v4). Lo marcado «M12.1» y «M12.2» ya está en los
+> modelos **y en la migración**: por la enmienda §5.19 (2026-08-14) la migración inicial única se regenera
+> al cerrar **cada** sub-módulo, con `test_la_migracion_coincide_con_los_modelos` en verde. Al cerrar
+> M12.2 son **35 tablas**. Este documento pasa a **v3** en M12.8.
 >
 > Deriva del **Documento Técnico IPPU v1.0** (§6 modelo sugerido) y del **modelo clínico ya
 > validado en la demo v4.0** (ronda M0–M10). Toma `docs/markdown/modelo-datos.md` como punto de
@@ -119,9 +120,40 @@ que la demo, M1).
 | Tabla | Campos propios | Notas |
 |---|---|---|
 | `consentimiento` | **PK = hce_id**, firmante, fecha, **autorizaciones JSONB** (`{evaluacion, registro, comunicacion}`), documento_id FK (adjunto) | Único bloqueo sin excepción (§4.2): lo impone el servidor. |
-| `idea` (HCE-LB) | id, hce_id FK, **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) | 1:N — reingreso >12 meses = instancia nueva; la vigente es la de mayor `fecha_consenso`. `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. |
-| `protocolo` (HCE-PA/PB) | id, hce_id FK, **tipo CHECK ('A','B')**, **anio**, fecha, semanas, **items JSONB** (24 × `{valor 1–5, obs}`), sint_tec1, sint_tec2, otros, ajustes (sólo B), **deltas JSONB** (sólo B; escribe el servidor al firmar B), `total`, `esc_1..esc_4` | **UK**(hce_id, tipo, anio). `CHECK(total BETWEEN 24 AND 120)`. `CHECK(tipo='B' OR deltas IS NULL)`. |
+| `idea` (HCE-LB) | id, hce_id FK, **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **evaluador_t1_id / evaluador_t2_id FK** (M12.2), **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) | 1:N — reingreso >12 meses = instancia nueva; la vigente es la de mayor `fecha_consenso`. `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. **`evaluador_tN_id`** (M12.2 · D7): los dos técnicos que puntuaron por separado, con `CHECK` de que no sean la misma persona. |
+| `protocolo` (HCE-PA/PB) | id, hce_id FK, **tipo CHECK ('A','B')**, **anio**, fecha, semanas, **items JSONB** (24 × `{valor 1–5, obs}`), sint_tec1, sint_tec2, otros, ajustes (sólo B), **deltas JSONB** (sólo B; escribe el servidor al firmar B), **evaluador_t1_id / evaluador_t2_id FK** (M12.2), `total`, `esc_1..esc_4` | **UK**(hce_id, tipo, anio). `CHECK(total BETWEEN 24 AND 120)`. `CHECK(tipo='B' OR deltas IS NULL)`. `CHECK` de evaluadores distintos. |
+| **`puntuacion_idea`** (M12.2 · D7) | id, idea_id FK, dimension_id FK, **valor_t1 / valor_t2** (0–8, nullable), **ns_t1 / ns_t2 bool**, **diferencia** (columna **generada**: `abs(valor_t1 - valor_t2)`), documentacion | **UK**(idea_id, dimension_id). Puntuación **independiente** de cada técnico, previa al consenso. El consenso **no se movió**: sigue en `idea.dim`. `NS` se representa con `ns_tN=true` + `valor_tN NULL` (`CHECK` de exclusión mutua), que lo distingue de «todavía no puntuó». |
+| **`puntuacion_protocolo`** (M12.2 · D7) | id, protocolo_id FK, item_id FK, **valor_t1 / valor_t2** (1–5, nullable), **diferencia** (generada), documentacion | **UK**(protocolo_id, item_id). Igual que la anterior pero **sin `NS`**: la escala IPPU-TEA es Likert 1–5. |
 | `informe_cierre` (HCE-IC) | id, hce_id FK, **anio**, fecha, **sint_escala JSONB** (4), val_tec1, val_tec2, recomendaciones, orientaciones, **recibi JSONB** (`{firmante, fecha}`) | **UK**(hce_id, anio) — bug A corregido. El PDF se genera desde acá: único informe válido (§5.3). |
+
+> **M12.2 — puntuación independiente y consenso (D7 · `handoff.md` §5.16).** ⚠️ **Es el único cambio de
+> toda la ronda M12 que NO sale del Prototipo v4.** El prototipo guarda un único array plano de consenso
+> (`punt[12]`, `punt[24]`) y no tiene puntuación por evaluador en ninguna parte; declara kappa como
+> requisito y no lo implementa. Lo agregamos porque el **Manual de Procedimientos v1.0** establece que los
+> dos técnicos puntúan de forma independiente y después consensúan, y llama a ese circuito *el único
+> requisito metodológico invariante* del instrumento — sin las dos puntuaciones no hay kappa (§23 del
+> Manual). Se hace **ahora** porque después de M11.3 cuesta migración **más** reescritura de servicios.
+>
+> **Por qué tablas y no más claves dentro del JSONB.** El argumento de M11.2 —«el instrumento se lee y se
+> escribe entero»— vale para el **consenso**, que por eso no se tocó, y no vale para el dato de
+> confiabilidad: kappa se calcula **a lo ancho** (t1 vs. t2 de una dimensión sobre toda la cohorte, un
+> `GROUP BY dimension_id`), «diferencias ≥2 sin documentar» es una consulta institucional y no un dato de
+> un expediente, el evaluador es una FK que dentro de JSONB nadie garantiza, y `NS` necesita
+> representación tipada. **Tampoco se hereda la forma del prototipo:** sus arrays planos son justamente lo
+> que no sirve para esto.
+>
+> **Todo es nullable, y eso es requisito, no comodidad:** los históricos migrados y el seed espejo de la
+> demo sólo tienen el consenso, y todavía no sabemos si los técnicos de IPPU ya puntúan por separado o si
+> es práctica a introducir (pregunta abierta, `handoff.md` §7). Una evaluación con sólo el consenso es
+> válida.
+>
+> **`diferencia` es columna generada; el umbral que la interpreta, no.** La base calcula `abs(t1 - t2)`
+> —aritmética pura, sin contenido clínico, imposible de desfasar y consultable—; el **2** que la convierte
+> en «ambigüedad clínica» vive en `core/constantes.py::CONSENSO_DIFERENCIA_AMBIGUEDAD`, no en la DDL. Es
+> constante y **no catálogo paramétrico** (contra el criterio general de D6) a propósito: si el umbral se
+> pudiera correr con un `UPDATE`, los kappas de antes y después no serían comparables. `procedimiento` y
+> `documentacion_pendiente` son **derivados, no almacenados** (`hybrid_property`), mismo criterio que el
+> estado visible de los módulos.
 
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
@@ -178,6 +210,7 @@ que la demo, M1).
 | `evaluacion_area/general` + ítems (provisionales) | **Se eliminan** → `documento` con `es_registro_historico` (§10, como en la demo M7) |
 | `anamnesis` (tabla 1:1) | `hce_diurna.anamnesis` JSONB (HCE-00) |
 | — | Nuevos: `consentimiento`, `informe_cierre`, `documento`, `foto`, `autorizacion_imagen`, `organismo_*`, `registro_organismo`, `valoracion_funcional`, `auditoria`, `baremo_categoria`, `categoria_documento`, `recordatorio`, `servicio`, `persona_servicio` |
+| — | Nuevos de M12.1: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla` · de **M12.2**: `puntuacion_idea`, `puntuacion_protocolo` |
 | `observacion`, `evento`, `grupo`, `taller`, catálogo IDEA | Se conservan (ajustes menores: FK a `hce_diurna`) |
 | Migraciones incrementales SQLite-compatibles | **Migración inicial única** contra Postgres (v1 sin datos reales; los 12 tests v1 se reescriben como tests v2 — el plan §M11.4 ya preveía tests nuevos al mover lógica) |
 
@@ -199,6 +232,10 @@ que la demo, M1).
 | **Banda del IDEA sólo desde `banda_idea`** (D4) | Servicio: `banda(total)` lee el catálogo; ningún corte hardcodeado | mover un corte por UPDATE cambia la banda devuelta |
 | **Alerta del Δ sólo desde `delta_interpretacion`** (M12.1) | La alerta institucional sale de la fila con `alerta=True`, no del literal −7 | Δ = −7 → alerta; Δ = −6 → no |
 | **Auditoría de campo** (M12.1) | Toda edición registra `campo`, `valor_ant`, `valor_nuevo`; los cambios de grupo y de catálogo van con `hce_id NULL` | cambiar el técnico de un grupo deja el valor anterior legible |
+| **Diferencia ≥2 exige documentar el consenso** (M12.2 · D7) | **Pendiente — M11.3.** El servicio de firma rechaza firmar mientras haya filas con `documentacion_pendiente`. La base sólo calcula `diferencia` y marca; el umbral está en `core/constantes.py`, no en la DDL (§5.2.2) | firmar con una dimensión de diferencia 2 sin documentar → 422 con el detalle de cuáles |
+| **`NS` de un técnico contra número del otro** (M12.2) | **Sin resolver a propósito — M11.3.** Es un desacuerdo real que la aritmética no expresa: `diferencia` queda NULL. Qué corresponde hacer (¿discusión?, ¿documentación?, ¿reobservar?) lo define el servicio, no el modelo | hoy: `test_ns_contra_numero_no_produce_diferencia_numerica` deja el caso fijado |
+| **Las dos puntuaciones NO son obligatorias** (M12.2) | Ningún guard las exige: una evaluación con sólo el consenso es válida. Hace falta para migrar históricos y para el seed espejo | `test_una_evaluacion_sin_puntuaciones_independientes_es_valida` |
+| **Kappa no se calcula en esta ronda** (D7) | Se guardan los datos que lo hacen posible y nada más. El cálculo es de la fase piloto | — |
 
 ## 5. Plan de implementación (sub-módulos de M11)
 
