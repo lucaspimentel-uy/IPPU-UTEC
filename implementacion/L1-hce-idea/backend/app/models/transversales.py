@@ -21,20 +21,52 @@ if TYPE_CHECKING:  # sólo para los tipos: evita el import circular en runtime
 
 
 class Documento(Base):
-    """HCE-DOC — adjuntos categorizados.
+    """HCE-DOC — adjuntos categorizados, **de un expediente o de un ateneo**.
 
     `es_registro_historico` marca lo migrado de la HCE anterior (§10): esos
     documentos son **inmutables**. El servicio rechaza UPDATE y DELETE sobre
     ellos; acá sólo queda la marca, porque «inmutable» es una regla de negocio
-    y las reglas viven en Python (§5.2.2).
+    y las reglas viven en Python (§5.2.2). Esa regla **no cambia con el alcance
+    institucional**: se apoya en `es_registro_historico`, no en `hce_id`, y un
+    documento de ateneo nace con el flag en `False` (es material producido en el
+    sistema nuevo, no migrado).
 
     `archivo_ref` es una referencia, no el binario: el storage real es Fase 6.
+
+    ── M12.7 · alcance institucional (`handoff.md` §5.25) ───────────────────
+    Hasta acá `hce_id` era NOT NULL: **todo documento pertenecía a un
+    expediente**. Un ateneo institucional o una jornada de capacitación no
+    tienen expediente, y el Prototipo v4 pide adjuntarles material — su
+    placeholder de `materiales` dice literalmente «Referencia a documentos en
+    **HCE-DOC institucional**». No es invención nuestra: es un requisito que
+    apareció en el relevamiento.
+
+    **Se resuelve relajando la FK de la tabla dueña, no creando una tabla
+    paralela**, que es exactamente lo que hizo M12.1 con `auditoria.hce_id` por
+    la misma razón (eventos de la institución que no son de ningún expediente).
+    Una `ateneo_documento` aparte daría **dos formas de adjuntar un archivo** =
+    dos fuentes de verdad sobre «documentos de la institución», que es lo que
+    §5.20, §5.22 y §5.24 prohíben tres veces.
+
+    El `CHECK` es el mismo XOR estructural de `foto`: exactamente **uno** de los
+    dos dueños. Además del alcance nuevo, gana el invariante «no hay documentos
+    huérfanos», que antes daba el NOT NULL.
+
+    ⚠️ `categoria_documento` **no se tocó**: está en `DESDE_LA_DEMO` del
+    generador y M12.8 la regenera desde el prototipo. Mientras tanto un
+    documento institucional usa «Otro»; la categoría propia queda anotada para
+    M12.8.
     """
     __tablename__ = "documento"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hce_id: Mapped[int] = mapped_column(
+    hce_id: Mapped[int | None] = mapped_column(
         ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
+    )
+    #: Alcance institucional (M12.7): el documento cuelga del ateneo y no de
+    #: ningún expediente. Cascada, porque el adjunto **es parte** del registro.
+    ateneo_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ateneo.id", ondelete="CASCADE"), index=True
     )
     categoria_id: Mapped[int] = mapped_column(
         ForeignKey("categoria_documento.id"), index=True
@@ -46,6 +78,15 @@ class Documento(Base):
     archivo_ref: Mapped[str | None] = mapped_column(String(400))
 
     categoria: Mapped["CategoriaDocumento"] = relationship()
+    ateneo: Mapped["Ateneo | None"] = relationship(  # noqa: F821
+        back_populates="documentos"
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "num_nonnulls(hce_id, ateneo_id) = 1", name="expediente_xor_ateneo"
+        ),
+    )
 
 
 class AutorizacionImagen(Base):

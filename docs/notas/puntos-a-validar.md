@@ -155,6 +155,47 @@ etiqueta interna.
 **Qué bloquea.** Nada de modelo (la tabla se llama `pai` en cualquier caso), pero conviene tenerlo antes
 de generar el PDF en M11.4.
 
+### 1.12 Los ateneos de grupo, ¿son dato sensible? (M12.7 · D7) — ⚠️ **para la reunión**
+**Qué es.** El aviso de confidencialidad del Prototipo v4 dice que los **ateneos clínicos referidos a un
+NNA** contienen datos sensibles de salud (Ley 18.331) y heredan la matriz de acceso de su HCE, y que los
+**institucionales y las jornadas** son de acceso general del equipo técnico. **No dice nada del ateneo de
+grupo**, que es el cuarto tipo.
+
+**Por qué importa.** No es un hueco teórico: el propio seed del prototipo trae uno —«Cierre de ciclo —
+Grupo Celeste»— que discute los Δ de protocolos de un grupo de NNA identificables. Bajo la regla tal como
+está escrita, eso queda **no sensible** y de acceso general.
+
+**Qué implementamos mientras tanto.** Lo que dice la fuente: `sensible = (tipo == 'Ateneo clínico
+(NNA)')`. **Como el campo es derivado y no una columna, cambiar el criterio cuesta una línea y ninguna
+migración** — por eso no bloquea.
+
+**Qué bloquea.** Nada del modelo. Sí condiciona la matriz de permisos de **Fase 4**.
+
+### 1.13 El código de los ateneos: ¿un prefijo o dos? (M12.7 · D2)
+**Qué es.** El prototipo se contradice: el seed muestra `JC-2026-001` para la jornada de capacitación,
+pero la función que crea registros (`atNuevo()`) genera siempre `AT-`, y su contador cuenta las dos
+formas en **una sola serie por año**.
+
+**Qué elegimos y por qué.** `AT-` para los cuatro tipos, leyendo «AT» como el módulo («Ateneos y
+Capacitación») y no como el tipo. Motivo concreto: el tipo se puede corregir después de crear el
+registro, y con prefijo por tipo **corregir un tipo mal cargado cambiaría el identificador de un
+registro ya circulado**.
+
+**Qué bloquea.** Nada: el código se **deriva**, no se guarda. Si IPPU prefiere `JC-` para las jornadas,
+es una línea de código y cero migración.
+
+### 1.14 El número de ateneo, ¿es del año en que se hizo o del año en que se cargó? (M12.7 · D3)
+**Qué es.** En el prototipo el número sale del **año de creación del registro**, pero el filtro de la
+lista busca por el **año de la fecha del ateneo**. Son dos cosas distintas y en el prototipo conviven sin
+que nadie lo note.
+
+**Qué elegimos.** El número se congela al crear (es un correlativo **de registración**, como el de un
+libro de actas) y el filtro va contra la fecha del hecho. **Consecuencia visible:** un ateneo del
+20-dic-2026 cargado en enero queda como `AT-2027-001` y aparece bajo el filtro «2026».
+
+**Qué preguntar.** Si eso les resulta raro en la práctica, o si prefieren que el número siga al año del
+hecho — que obliga a renumerar cuando alguien corrige la fecha.
+
 ---
 
 ## 2. Para el equipo (grupo + Matías)

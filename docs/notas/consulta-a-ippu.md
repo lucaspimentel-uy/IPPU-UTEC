@@ -429,7 +429,36 @@ y una actualización posterior—, o siempre es uno solo por año?
 
 ---
 
-### 3.13 Algo que no preguntamos
+### 3.13 Los ateneos de grupo, ¿quién puede verlos? ⚠️
+
+En el prototipo dice que los **ateneos clínicos de un NNA** son datos sensibles y que sólo los ve quien
+tiene acceso a su historia, y que los **institucionales y las jornadas de capacitación** los puede ver
+todo el equipo técnico. Nos queda una duda con el cuarto tipo: **el ateneo de grupo**.
+
+Lo preguntamos porque en el ejemplo que trae el propio prototipo, el ateneo de grupo («Cierre de ciclo —
+Grupo Celeste») repasa la evolución de los chicos del grupo. **¿Ese registro lo puede ver todo el equipo,
+o sólo quienes trabajan con ese grupo?**
+
+> _Respuesta:_
+
+---
+
+### 3.14 El número del ateneo (`AT-2026-001`)
+
+Dos preguntas chicas sobre cómo numerarlos:
+
+1. En el prototipo, las jornadas de capacitación aparecen a veces como `JC-…` y a veces como `AT-…`.
+   **¿Quieren que las jornadas lleven su propio prefijo, o alcanza con uno solo para todo?**
+2. Si un ateneo se hizo en **diciembre** y se carga en **enero**, ¿el número tendría que ser del año en
+   que se hizo o del año en que se cargó? Nosotros lo dejamos como el año en que se carga (así el número
+   no cambia nunca una vez asignado), pero eso hace que un ateneo de diciembre de 2026 pueda quedar
+   numerado como `AT-2027-001`. **¿Les sirve así?**
+
+> _Respuesta:_
+
+---
+
+### 3.15 Algo que no preguntamos
 
 **¿Hay algo de cómo trabajan que creen que deberíamos saber y que no aparece en ninguna de estas
 preguntas?** Esta es probablemente la pregunta más útil de todas.

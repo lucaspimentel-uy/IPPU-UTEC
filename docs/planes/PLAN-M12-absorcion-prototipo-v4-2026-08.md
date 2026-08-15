@@ -386,7 +386,7 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 
 ---
 
-### M12.7 — Ateneos y jornadas
+### M12.7 — Ateneos y jornadas ✅ **HECHO** (2026-08-15, Lucas)
 - **Una sola entidad** con campos según tipo (así lo hace el prototipo, no cuatro tablas):
   `ateneo { id, tipo, fecha, titulo, nna_id, grupo_id, participantes, situacion, hipotesis, recursos,
   seguimiento, capacitador, modalidad, contenidos, materiales, evaluacion }` + `ateneo_acuerdo
@@ -396,6 +396,26 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 - Vínculo cruzado con el NNA; hereda su matriz de acceso (dato sensible). Modelar el vínculo; el permiso
   es Fase 4.
 - Filtros por tipo, año, grupo y texto → índices correspondientes.
+
+> **Cómo quedó, y en qué se apartó de este texto.** **38 tablas** (36 → 38), **240 tests, 0 salteados**,
+> migración `9246e659d2c9`. Detalle completo en `handoff.md` §13 y en `backend/docs/esquema-datos-v2.md`
+> §2.5.
+>
+> 1. **`AT_TIPOS` es constante, no catálogo.** El tipo es el **discriminador** contra el que están
+>    escritos los 5 CHECK de obligación/prohibición: con catálogo editable, un quinto tipo cargado desde
+>    la app cae fuera de todas las reglas y la fila se guarda sin sujeto y con los dos bloques de
+>    contenido a la vez. Por eso el conteo es 38 y no 39.
+> 2. **`id` no es el código.** El plan fija el **formato visible**; la PK es un serial y la identidad del
+>    correlativo es `UNIQUE(anio_correlativo, numero)`, con `codigo` como `hybrid_property` — el patrón
+>    de D9 (§5.18). Una PK de texto repetiría lo que §5.18 corrigió.
+> 3. **`nna_id` se llama `hce_referida_id`** y apunta a `hce_diurna`, con **RESTRICT**: es una
+>    referencia, no una pertenencia. Fijado como regla de nomenclatura en **§5.26**, que **M12.6 hereda**.
+> 4. **Los adjuntos obligaron a §5.25:** `documento.hce_id` era NOT NULL, así que un ateneo institucional
+>    o una jornada no podían tener ninguno. Se le dio a HCE-DOC **alcance institucional** (nullable +
+>    `ateneo_id` + XOR), como M12.1 hizo con `auditoria.hce_id`.
+> 5. **El índice de texto quedó como btree en `titulo`**, no `tsvector`: `vAteneos` busca **subcadena** y
+>    `tsvector` matchea **lexemas** («capacit» no encontraría «capacitación»). Las dos opciones y su
+>    diferencia semántica están en §4 del esquema, para decidirlas cuando exista la consulta.
 
 ---
 
@@ -481,6 +501,25 @@ completo.
 
 **Ya previstos:** secuencia CI→LB→PA→PB→IC · firma = bloqueo · addenda · habilitación excepcional con
 constancia (CI sin excepción) · Δ solo B−A · baremo solo desde `pct` · fotos §8.4 · histórico inmutable.
+
+**De M12.7 (ateneos), con su detalle en `esquema-datos-v2.md` §4:**
+- **Las 4 consecuencias de UI de que el registro nazca completo** (D6): «+ Nuevo registro» abre formulario
+  y hace **un POST completo**, no crea una fila vacía · **el correlativo lo asigna el servidor** ·
+  «+ Agregar acuerdo» agrega la fila en el cliente · **corregir un tipo mal cargado exige limpiar
+  `hce_referida_id` en la misma sentencia** (el CHECK rechaza el estado intermedio, y está bien que lo
+  haga).
+- **`''` vs `NULL`:** los CHECK usan `~ '[^[:space:]]'`, así que la base **acepta las dos
+  representaciones del vacío**. **`NULL` es la canónica** y el servicio normaliza al guardar; hasta
+  entonces, **cualquier `WHERE campo IS NOT NULL` está mal**. Vale para todo campo de texto opcional del
+  esquema.
+- **Asignación del correlativo:** race condition + reuso tras rollback (el `length+1` del prototipo hace
+  las dos cosas mal).
+- **«Una jornada no lleva acuerdos»** y **`ateneo.fecha` ↔ `grupo.anio`** (esta última **advertencia,
+  nunca bloqueo**): las dos son cross-table, o sea que un CHECK no alcanza y §5.2.2 prohíbe los triggers.
+- **Búsqueda de texto:** hoy btree en `titulo`. `tsvector`+GIN vs. `pg_trgm`, con la diferencia semántica
+  explicada, cuando exista la consulta.
+- **Autoría y timestamps:** no hay convención de esquema (`creado_en` existe en 1 de 38 tablas). Definirla
+  para todo el esquema, no por módulo.
 
 **Nuevos:** severidad DSM no derivable de puntajes · fundamentación obligatoria en ítems con valor 1 o 5 ·
 consenso con diferencia ≥2 exige documentación · IDEA firmado atado a `manual_version` · participación en

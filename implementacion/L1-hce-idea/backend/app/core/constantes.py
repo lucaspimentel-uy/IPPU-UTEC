@@ -150,3 +150,54 @@ PRESTACIONES: tuple[tuple[str, str, str], ...] = (
      "Adaptaciones curriculares, acompañamiento y protocolos de inclusión según normativa "
      "educativa vigente."),
 )
+
+# --------------------------------------------------------------------------
+# Ateneos y jornadas (M12.7 · `AT_TIPOS` del Prototipo v4)
+# --------------------------------------------------------------------------
+#: Los 4 tipos de registro, como **clave → etiqueta**.
+#:
+#: **Constante y no catálogo, a propósito** — y es la decisión más consecuente
+#: del módulo. Por el criterio de arriba, un valor es catálogo cuando la
+#: institución lo mueve sin desplegar. `AT_TIPOS` **parece** eso (la lista
+#: alimenta un filtro y un `<select>`), pero es lo contrario: el tipo es el
+#: **discriminador que decide qué es el registro** — qué referencias son
+#: obligatorias, cuáles están prohibidas y qué bloque del formulario se
+#: renderiza. Los CHECK de `ateneo` están escritos contra estas cuatro claves.
+#:
+#: **Modo de falla que evita.** Con catálogo editable, coordinación agrega
+#: «Ateneo de familia» desde la app; los CHECK están escritos como
+#: `tipo = 'clinico' OR …`, así que el tipo nuevo **cae fuera de todos**: la fila
+#: se guarda sin NNA, sin grupo, y con campos de jornada y de desarrollo clínico
+#: a la vez. Nadie despliega, nadie revisa, y el módulo acepta en silencio un
+#: registro cuyo formulario no tiene secciones definidas. Como constante, sumar
+#: un quinto tipo es un cambio que toca a la vez esta línea, los CHECK y los
+#: tests — que es exactamente la revisión que se quiere.
+#:
+#: Mismo razonamiento que `CONSENSO_PROCEDIMIENTOS`, y misma forma que los
+#: dominios cerrados que ya gobiernan comportamiento en el esquema
+#: (`protocolo.tipo`, `evento.tipo`, `registro_organismo.organismo`,
+#: `servicio.clave`): **CHECK IN (...) + constante**, nunca tabla.
+#:
+#: **Se persiste la clave, no la etiqueta** (segunda mitad del criterio de este
+#: archivo: texto fijo de presentación que acompaña a un valor ya guardado). Si
+#: IPPU reformula «Ateneo clínico (NNA)», no se reescribe ni una fila.
+ATENEO_TIPOS: dict[str, str] = {
+    "clinico": "Ateneo clínico (NNA)",
+    "grupo": "Ateneo de grupo",
+    "institucional": "Ateneo institucional",
+    "jornada": "Jornada de capacitación",
+}
+
+#: Prefijo del código visible (`AT-2026-001`). **Uno solo para los cuatro
+#: tipos**, aunque el seed del prototipo muestre `JC-2026-001` para la jornada:
+#: su `atNuevo()` genera siempre `AT-` y su contador (`a.id.includes(anio)`)
+#: cuenta las dos formas en **una sola serie**, o sea que el propio prototipo no
+#: implementa las series separadas que su seed sugiere. Además `tipo` es
+#: editable después de crear: con prefijo por tipo, corregir un tipo mal cargado
+#: cambiaría el identificador de un registro ya circulado.
+#:
+#: `AT` se lee como el **módulo** («Ateneos y Capacitación»), no como el tipo.
+#: Pregunta abierta con IPPU (`docs/notas/consulta-a-ippu.md`): si prefieren
+#: `JC-` para jornadas, es **una línea de `Ateneo.codigo`** y cero migración,
+#: porque el código es derivado y no la PK.
+ATENEO_CODIGO_PREFIJO = "AT"

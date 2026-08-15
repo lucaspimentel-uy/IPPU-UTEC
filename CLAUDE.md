@@ -85,14 +85,14 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **123 passed, 0 skipped**: si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **240 passed, 0 skipped**: si ves «skipped», algo está mal.
 
 **Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
 Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
 capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
-- **M12.0 a M12.4 HECHOS** (2026-08-15): **36 tablas**, 6 catálogos nuevos, D9 (`grupo`) implementada, la
+- **M12.0 a M12.4 y M12.7 HECHOS** (2026-08-15): **38 tablas**, 6 catálogos nuevos, D9 (`grupo`) implementada, la
   **puntuación independiente de los dos técnicos** con su registro de consenso (D7, §5.16 — ⚠️ **agregado
   nuestro, no del prototipo**; el guard de «diferencia ≥2 exige documentación» va a **M11.3**, y kappa
   **no** se calcula todavía), el **catálogo dinámico de talleres** con los 14 reales (D5, M12.3) y
@@ -101,10 +101,15 @@ capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de
   ⚠️ **El conteo se movió dos veces y ninguna fue regresión:** M12.3 lo bajó de 35 a 34 —no crea tablas y
   **retira `hce_taller`** (§5.20), resto de v1; la participación la crea M12.6 como `pai_taller`, **por
   nombre**— y M12.4 lo subió a 36 con las dos tablas nuevas, retirando además la **columna**
-  `hce_diurna.nivel_soporte` (§5.24: era una tercera fuente de verdad sobre el nivel DSM).
-  **123 tests**. Siguen **M12.5–M12.7**, que van **en paralelo** (uno cada uno,
+  `hce_diurna.nivel_soporte` (§5.24: era una tercera fuente de verdad sobre el nivel DSM), y **M12.7**
+  lo llevó a **38** con `ateneo` + `ateneo_acuerdo` (una sola entidad con campos según tipo; `AT_TIPOS`
+  entró como **constante** y no como catálogo, porque el tipo es el discriminador contra el que están
+  escritos los 5 CHECK; `codigo` y `sensible` son **derivados**). M12.7 dejó además **§5.25** (HCE-DOC
+  con alcance institucional: `documento.hce_id` nullable + `ateneo_id` + XOR) y **§5.26** (nomenclatura
+  **`hce_id` = pertenencia / `hce_<calificador>_id` = referencia**, que **M12.6 hereda**).
+  **240 tests**. Siguen **M12.5 y M12.6**, que van **en paralelo** (uno cada uno,
   archivos distintos de `app/models/`) — ahí sí se **congela** la migración hasta terminar el paralelo.
-  El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 y M12.7 no dependen de nadie.
+  El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

@@ -8,8 +8,14 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
   identidad     §2.1  persona / expediente / grupo / profesional
   modulos       §2.2  el flujo firmable CI → LB → PA → PB → IC
   severidad     §2.2  HCE-SEV (M12.4) — módulo **sin firma**, con su catálogo
+  ateneo        §2.5  Ateneos y jornadas (M12.7) — registro **institucional**,
+                      transversal: no cuelga del expediente, lo referencia
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
 """
+from app.models.ateneo import (
+    Ateneo,
+    AteneoAcuerdo,
+)
 from app.models.catalogos import (
     BandaIdea,
     BaremoCategoria,
@@ -58,6 +64,8 @@ from app.models.transversales import (
 )
 
 __all__ = [
+    # ateneos y jornadas (M12.7)
+    "Ateneo", "AteneoAcuerdo",
     # catálogos
     "BandaIdea", "BaremoCategoria", "CategoriaDocumento", "DeltaInterpretacion",
     "IdeaDimension", "IdeaEjemplo", "IdeaFicha", "IdeaNivel", "IdeaRegla",

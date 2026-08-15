@@ -46,9 +46,25 @@ erDiagram
     HCE_DIURNA  ||--o{ IDEA : "HCE-LB (1:N por reingreso >12m)"
     HCE_DIURNA  ||--o{ PROTOCOLO : "HCE-PA/PB (A|B × año)"
     HCE_DIURNA  ||--o{ INFORME_CIERRE : "HCE-IC (1 por año — bug A corregido)"
-    HCE_DIURNA  ||--o{ DOCUMENTO : "HCE-DOC"
+    HCE_DIURNA  ||--o{ DOCUMENTO : "HCE-DOC (XOR)"
+    ATENEO      ||--o{ DOCUMENTO : "institucional (XOR)"
+    %% La arista `HCE_DIURNA ||--o{ DOCUMENTO` **dejó de ser la única** en M12.7
+    %% (§5.25): `documento.hce_id` pasa a nullable y aparece `ateneo_id`, con
+    %% `CHECK(num_nonnulls(hce_id, ateneo_id) = 1)`. Motivo: un ateneo
+    %% institucional o una jornada no tienen expediente, y el Prototipo v4 les
+    %% pide adjuntos («Referencia a documentos en HCE-DOC **institucional**»).
+    %% Se relaja la FK de la tabla dueña, como M12.1 hizo con `auditoria.hce_id`
+    %% — no se crea una tabla paralela, que sería una segunda fuente de verdad
+    %% sobre «documentos de la institución» (§5.20 · §5.22 · §5.24).
     HCE_DIURNA  ||--o{ FOTO : "individual"
     GRUPO       ||--o{ FOTO : "grupal (XOR)"
+    HCE_DIURNA  ||--o{ ATENEO : "ateneo clínico — REFERENCIA (RESTRICT)"
+    GRUPO       ||--o{ ATENEO : "sujeto (de grupo) · contexto (clínico)"
+    PROFESIONAL ||--o{ ATENEO : "autor del registro"
+    ATENEO      ||--o{ ATENEO_ACUERDO : "acuerdos (cascada)"
+    %% `ATENEO` es el único vínculo hacia `HCE_DIURNA` que **no** es pertenencia:
+    %% no cascadea, porque es historia institucional que referencia a un NNA. De
+    %% ahí que la columna se llame `hce_referida_id` y no `hce_id` (§5.26).
     HCE_DIURNA  ||--o| ORGANISMO_INAU : "HCE-ORG (0..1)"
     HCE_DIURNA  ||--o| ORGANISMO_BPS : "HCE-ORG (0..1)"
     HCE_DIURNA  ||--o{ REGISTRO_ORGANISMO : "envíos INAU · gestiones BPS"
@@ -244,7 +260,7 @@ define la navegación.
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
 |---|---|---|
-| `documento` | id, hce_id FK, categoria_id FK, nombre, fecha_original, fecha_carga, **es_registro_historico bool**, archivo_ref (storage real: Fase 6) | Histórico (§10) = inmutable: el servidor rechaza UPDATE/DELETE. |
+| `documento` | id, **hce_id FK nullable / ateneo_id FK nullable + `CHECK(num_nonnulls(hce_id, ateneo_id)=1)`**, categoria_id FK, nombre, fecha_original, fecha_carga, **es_registro_historico bool**, archivo_ref (storage real: Fase 6) | Histórico (§10) = inmutable: el servidor rechaza UPDATE/DELETE — **la regla no cambia con el alcance institucional**, porque se apoya en `es_registro_historico` y no en `hce_id`. **M12.7 · §5.25:** el documento cuelga de un expediente **o** de un ateneo, nunca de los dos ni de ninguno. Antes `hce_id` era NOT NULL y un ateneo institucional o una jornada —que no tienen expediente— no podían tener adjuntos, contra lo que pide el propio Prototipo v4. Se relaja la FK de la tabla dueña, como M12.1 con `auditoria.hce_id`; una tabla paralela habría sido una segunda fuente de verdad. El XOR además conserva el invariante «no hay documentos huérfanos» que daba el NOT NULL. ⚠️ `categoria_documento` **no se tocó** (está en `DESDE_LA_DEMO`): un documento institucional usa «Otro» hasta M12.8. |
 | `autorizacion_imagen` | **PK = hce_id**, registrada bool, fecha, documento_id FK (copia firmada) | Condición §8.4 para `foto`. |
 | `foto` | id, **hce_id nullable / grupo_id nullable + `CHECK(num_nonnulls(hce_id, grupo_id)=1)`**, descripcion, fecha, archivo_ref | Individual: exige autorización del NNA; grupal: de **todas** las familias activas del grupo — ambas en el servidor (§4). |
 | `organismo_inau` | **PK = hce_id**, sipi, convenio, referente, ingreso, obs | |
@@ -286,6 +302,45 @@ define la navegación.
 > de presentación que acompaña a un valor ya guardado. Los 6 dominios de VF, por ejemplo, son las claves
 > fijas de `valoracion_funcional.dominios` (JSONB) y vienen de la CIF, no de IPPU: agregar un séptimo no
 > es un `UPDATE` sino un cambio de formulario.
+
+### 2.5 Ateneos y jornadas (M12.7) — registro **institucional**, no del expediente
+
+| Tabla | Campos clave | Notas |
+|---|---|---|
+| **`ateneo`** | id, **anio_correlativo SMALLINT**, **numero SMALLINT `CHECK 1–999`**, **UK(anio_correlativo, numero)**, **tipo `CHECK IN ('clinico','grupo','institucional','jornada')`**, fecha, titulo (`CHECK` no vacío), **hce_referida_id FK `RESTRICT`**, grupo_id FK `RESTRICT`, autor_id FK `RESTRICT`, participantes, · *desarrollo clínico:* situacion, hipotesis, recursos, seguimiento · *jornada:* capacitador, modalidad, contenidos, materiales, evaluacion. **`codigo` y `sensible` son derivados**, no columnas | **Una sola entidad con campos según tipo**, como el Prototipo v4 (`DB.ateneos[]`), no cuatro tablas. Índices para los filtros: `tipo`, `fecha` (año + orden), `grupo_id`, `titulo` (btree — la búsqueda de texto quedó como deuda, ver §4). |
+| **`ateneo_acuerdo`** | id, ateneo_id FK **CASCADE**, acuerdo (`CHECK` no vacío), responsable_rol (**texto, no FK**), plazo, orden | Tabla hija y no JSONB: «acuerdos vencidos sin cumplir» es una consulta **entre** ateneos. Sin `UNIQUE(ateneo_id, orden)`: el empate lo desempata `id` (orden de inserción, la semántica del array del prototipo) y un `UNIQUE` no diferido rompería el `UPDATE` que intercambia dos filas. |
+
+> **Los 5 CHECK de tipo, y el criterio que los ordena.** *El sujeto del registro es obligatorio; el
+> contexto es opcional; las referencias ajenas están prohibidas.*
+> `(hce_referida_id IS NOT NULL) = (tipo='clinico')` · `tipo<>'grupo' OR grupo_id IS NOT NULL` ·
+> `tipo IN ('clinico','grupo') OR grupo_id IS NULL` · los 5 campos de jornada sólo en `jornada` · los 4
+> de desarrollo clínico sólo fuera de `jornada`. Son **forma** —qué referencias pueden o deben existir
+> según el discriminador—, la misma clase que `foto.individual_xor_grupal`. Las obligaciones de
+> *contenido* no están ni acá ni en un guard: ninguno de esos campos es `req` en el prototipo.
+
+> **`~ '[^[:space:]]'` y no `num_nonnulls()`.** Los 17 campos del prototipo nacen en `''` (`atNuevo()`),
+> así que `num_nonnulls()` contaría la cadena vacía como valor presente y rechazaría un registro que en
+> realidad está vacío; y `btrim()` sin argumentos recorta **sólo espacios**. Se resuelve en la DDL y no
+> como invariante de la API porque `routers/`, `schemas/` y `services/` todavía no existen. ⚠️ **La
+> consecuencia está en §4**: `''` y `NULL` conviven y la base ya no los distingue.
+
+> **`AT_TIPOS` es constante, no catálogo** (`core/constantes.py::ATENEO_TIPOS`, clave → etiqueta; se
+> persiste la clave). El tipo **es el discriminador que decide qué es el registro**, y los CHECK están
+> escritos contra sus cuatro claves: con catálogo editable, un quinto tipo cargado desde la app caería
+> fuera de las cinco reglas y la fila se guardaría sin sujeto y con los dos bloques de contenido a la
+> vez. Misma forma que `protocolo.tipo`, `evento.tipo`, `servicio.clave`.
+
+> **`hce_referida_id` NO es `hce_id`, y la diferencia es la de §5.26.** En las otras 12 tablas `hce_id`
+> es **pertenencia** (cascada); acá es **referencia** (RESTRICT): el ateneo es historia institucional
+> —una reunión con acuerdos, responsables y plazos— que no puede desaparecer como efecto secundario de
+> borrar un expediente. `SET NULL` está descartado: chocaría con el CHECK y el DELETE fallaría igual,
+> con peor mensaje. Costo operativo cero: la baja de un expediente es **lógica** (`activo`/`fecha_baja`).
+
+> **El correlativo de registración ≠ el año del hecho.** `anio_correlativo` se congela al crear (en el
+> prototipo el registro nace con `fecha:''`, así que el año del hecho **no existe** al numerar) y el
+> filtro de año va contra `fecha`. Consecuencia declarada: `AT-2027-001` puede tener `fecha=2026-12-20`.
+> El techo de 999 no es cosmético — `f"{n:03d}"` ensancha y `lpad(t,3,'0')` **trunca**, así que con
+> `numero=1000` las dos mitades de `codigo` devolverían códigos distintos y colisionantes.
 
 ## 3. Qué cambia respecto del esquema v1 (Fases 0–2)
 
@@ -341,6 +396,13 @@ define la navegación.
 | **Toda edición de `severidad_dsm` registra auditoría de campo** (M12.4) | **Pendiente — M11.3.** `campo`, `valor_ant`, `valor_nuevo` en cada UPDATE. **Es la condición que hace correcto el 0..1** (§2.2): la regla del módulo dice que la severidad **fluctúa en el tiempo**, así que sin esta línea una sola tabla por expediente borra en silencio esa fluctuación | editar `nivel_cs` de 2 a 3 deja el valor anterior legible en `auditoria` |
 | **`valoracion_funcional.pct` NULL es un estado válido, no un dato faltante** (M12.4) | **Pendiente — M11.3.** En **menores de 2 años no se aplica el BUND**: la constancia se emite en base a IBMF e IRSA. `categoria_baremo(NULL)` devuelve **«no corresponde»** — no error, no categoría por defecto. La edad se deriva de `persona.fecha_nac`, **sin campo nuevo**. La demo ya lo implementa (bitácora M9); el backend no | `pct=None` → «no corresponde»; `pct=0` → la categoría de 0–4 %, que es distinto |
 | ⚠️ **Decreto 72/025: se reconcilian los CORTES, nunca las ETIQUETAS** (M12.4) | **Pendiente — cuando llegue el anexo.** IPPU declara que la nomenclatura oficial del instrumento **puede diferir** de la institucional, y que en sus pantallas e informes se usa **siempre la institucional** («severo / muy severo»). Si el anexo dijera «grave», alinear las etiquetas violaría §8.1 y el test de `VOCABULARIO_PROHIBIDO` saltaría en rojo — y quien lo vea va a creer que el test está mal y el decreto tiene razón. **Se ajustan `pct_min`/`pct_max`; `categoria` no se toca.** Anotado también en `docs/notas/puntos-a-validar.md` §1.2, que es donde alguien va a leer la tarea ese día | el test de catálogos sin «grave» sigue en verde después de reconciliar los cortes |
+| **M12.7 · Ateneos — las 4 consecuencias de UI de que el registro nazca completo** (D6) | **Pendiente — M11.4.** `tipo`, `fecha` y `titulo` son NOT NULL, así que: (1) **«+ Nuevo registro» no puede crear una fila vacía y navegar**, como hace `atNuevo()` — abre un formulario y hace **un POST completo**; (2) **el correlativo lo asigna el servidor**, nunca el cliente y nunca `length+1`; (3) **«+ Agregar acuerdo» agrega la fila en el cliente**, no en la base (`acuerdo` es NOT NULL y no vacío); (4) **corregir un tipo mal cargado exige limpiar `hce_referida_id` en la misma sentencia** — el CHECK `(hce_referida_id IS NOT NULL) = (tipo='clinico')` rechaza el estado intermedio. Es correcto que lo haga (no puede quedar un institucional con un NNA colgado ni un instante), pero la UI tiene que enterarse | `test_cambiar_el_tipo_de_un_clinico_exige_limpiar_el_nna` (y su caso que pasa) fijan (4); (1)–(3) son de M11.4 |
+| **M12.7 · `''` y `NULL` significan lo mismo y la base ya no los distingue** (C1) | **Pendiente — M11.3.** El CHECK usa `~ '[^[:space:]]'` en vez de `num_nonnulls()`, que es lo correcto (ver §2.5), pero el efecto es que la base **acepta las dos representaciones del vacío**. **`NULL` es la canónica**: el servicio normaliza al guardar (`'' → NULL`, y `btrim` unicode → `NULL` si queda vacío) en los 17 campos de texto de `ateneo` y en `ateneo_acuerdo.responsable_rol`. Hasta que esa línea exista, **cualquier `WHERE situacion IS NOT NULL` está mal** y hay que escribir `WHERE situacion ~ '[^[:space:]]'`. Vale para todo campo de texto opcional del esquema, no sólo para este módulo | insertar `''` y leerlo como ausente; después de normalizar, `IS NOT NULL` y el regex coinciden |
+| **M12.7 · una jornada no lleva acuerdos** | **Pendiente — M11.3.** El bloque de acuerdos vive en la rama **no**-jornada del prototipo. Es cross-table (`ateneo` ↔ `ateneo_acuerdo`): un CHECK no alcanza y §5.2.2 prohíbe los triggers | `test_una_jornada_con_acuerdos_hoy_se_guarda` deja el hueco fijado |
+| **M12.7 · `ateneo.fecha` ↔ `grupo.anio`: advertencia, NUNCA bloqueo** | **Pendiente — M11.3.** Con D9 un grupo es `(nombre, anio)`, así que un ateneo puede apuntar al grupo de otro año. **No se prohíbe:** un ateneo de febrero-2026 que revisa el ciclo del Grupo Celeste **2025** es legítimo. Se avisa, como los recordatorios del §4 | `test_la_fecha_puede_no_coincidir_con_el_anio_del_grupo` |
+| **M12.7 · asignación del correlativo** (C7) | **Pendiente — M11.3.** La BD sólo garantiza `UNIQUE(anio_correlativo, numero)`. El servicio asigna dentro de la transacción y tiene que resolver las dos cosas que el `length+1` del prototipo hace mal: **race condition** (dos usuarios sacan el mismo número) y **reuso tras un rollback** (el número vuelve a estar libre y se reasigna a otro registro). Opciones: `SELECT max(numero) … FOR UPDATE` sobre el año, o una secuencia por año | dos altas concurrentes del mismo año no comparten número |
+| **M12.7 · búsqueda de texto** (C3) | **Pendiente — M11.3/M11.4.** Hoy hay un **btree en `titulo`**, que sirve para igualdad y prefijo. `vAteneos` busca **subcadena** (`lowercase includes`) sobre título + situación + contenidos, y las dos salidas no son equivalentes: **`tsvector` + GIN** matchea *lexemas*, así que «capacit» **no** encuentra «capacitación» y, sin `unaccent`, «capacitacion» tampoco; **`pg_trgm`** sí da subcadena real, pero sería **la primera extensión del repo**. Se decide cuando exista la consulta, no antes — una columna generada de búsqueda congela la semántica de entrada | — |
+| **M12.7 · autoría y timestamps: falta convención de esquema** (R3) | **Pendiente — M11.3/M11.4.** `ateneo.autor_id` copia la forma de los tres registros fechados transversales (nullable, FK, index), pero **no hay mixin**, y `creado_en`/`actualizado_en` existen en **1 de las 38 tablas** (`hce_diurna`). Que un registro institucional no tenga marca temporal propia es un problema real; se resuelve con una convención de **todo** el esquema, no estrenándola en el módulo más chico. Mientras tanto el rastro es `auditoria` | — |
 | **`pai_taller.taller_nombre` se resuelve contra el catálogo al mostrar** (M12.3 → M12.6) | **Pendiente — M11.3/M11.4.** Sin FK (§5.20): el nombre se casa contra `taller.nombre` en lectura y, si la fila está retirada (`Taller.activo` derivado, filtra también en SQL), se muestra con la marca **«retirado del catálogo»**. Un nombre que no casa con ninguna fila se muestra igual, sin romper | fila pendiente de M12.3, hereda M12.6 (§5.21) |
 
 ## 5. Plan de implementación (sub-módulos de M11)

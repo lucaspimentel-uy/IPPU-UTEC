@@ -9,7 +9,7 @@
 >
 > - **Última actualización:** 2026-08-15
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 hechos** (2026-08-15): **36 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 suma `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24), **123 tests**. **Siguen M12.5–M12.7**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 y M12.7 no dependen de nadie. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
+> - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 y M12.7 hechos** (2026-08-15): **38 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 sube a 36 con `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24; M12.7 sube a 38 con `ateneo` + `ateneo_acuerdo`), **240 tests**. **Siguen M12.5 y M12.6**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie. ⚠️ **M12.6 arranca con §5.26 ya decidida** (nomenclatura `hce_id` = pertenencia · `hce_<calificador>_id` = referencia) y con §5.22. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -517,6 +517,62 @@ nada, divergiendo en silencio.
 - ⚠️ **La demo queda con `p.apoyo`** y **no se toca** (no-goal de la ronda). Cuando la demo incorpore
   HCE-SEV, `apoyo` pasa a **derivarse** de ese registro; anotado como deuda en §6.
 
+### 5.25 (E7) HCE-DOC gana alcance institucional: un documento cuelga de un expediente **o** de un ateneo (2026-08-15, Lucas)
+`documento.hce_id` pasa a **nullable**, aparece `documento.ateneo_id` (FK a `ateneo`, CASCADE, con
+índice) y un `CHECK(num_nonnulls(hce_id, ateneo_id) = 1)` garantiza que sea exactamente uno.
+**El conteo de tablas no cambia por esto: son columnas.**
+
+- **Qué lo obliga.** Un ateneo institucional y una jornada de capacitación **no tienen expediente**, y
+  hasta acá `documento.hce_id` era NOT NULL: no había forma de adjuntarles material. **No es invención
+  nuestra:** el placeholder de `materiales` del Prototipo v4 dice literalmente *«Referencia a documentos
+  en **HCE-DOC institucional**»*. Es un requisito que apareció en el relevamiento.
+- **Por qué se relaja la FK de la tabla dueña y no se crea una tabla aparte.** Es **exactamente** lo que
+  hizo M12.1 con `auditoria.hce_id`, por la misma razón (eventos de la institución que no son de ningún
+  expediente). Una `ateneo_documento` paralela daría **dos formas de adjuntar un archivo** = dos fuentes
+  de verdad sobre «documentos de la institución», que es lo que §5.20, §5.22 y §5.24 prohíben tres veces.
+- **El XOR no afloja nada:** conserva el invariante «no hay documentos huérfanos» que daba el NOT NULL, y
+  es la misma forma que `foto.individual_xor_grupal`.
+- **La regla «Registro histórico inmutable (§10)» sigue intacta**, verificado antes de tocar nada: se
+  apoya en `es_registro_historico`, no en `hce_id`. Un documento de ateneo nace con el flag en `False`
+  (material producido en el sistema nuevo, no migrado) y, si algún día se migrara un acta vieja, la regla
+  aplica textual.
+- **Costo, relevado antes de decidir:** **0 tests, 0 routers, 0 schemas, 0 seed** referencian `Documento`.
+  Mismo perfil que §5.20 y §5.24.
+- ⚠️ **`categoria_documento` NO se tocó.** Está en `DESDE_LA_DEMO` del generador y el propio comentario
+  dice que tocarla antes de M12.8 «sería trabajo perdido». Un documento institucional usa «Otro»
+  mientras tanto; **la categoría propia queda anotada para M12.8**.
+- **Deroga** dos cosas de `backend/docs/esquema-datos-v2.md`, las dos corregidas en esta sesión:
+  **(a)** la arista `HCE_DIURNA ||--o{ DOCUMENTO : "HCE-DOC"` del **diagrama ER §1**, que pasa a XOR con
+  `ATENEO` (actualizada con su comentario `%%`, como M12.3 hizo con la suya);
+  **(b)** la fila `documento` de **§2.3**, que decía `hce_id FK` sin marcar nullable —a diferencia de
+  `auditoria` y de `foto`, que sí lo marcan— y ahora dice
+  `hce_id FK nullable / ateneo_id FK nullable + CHECK(num_nonnulls(hce_id, ateneo_id)=1)`, con el mismo
+  formato que la fila de `foto`.
+
+### 5.26 (E8) Nomenclatura: `hce_id` es pertenencia, `hce_<calificador>_id` es referencia (2026-08-15, Lucas)
+**Regla de nomenclatura para todo el esquema. M12.6 y lo que venga la heredan.**
+
+> Una columna que se llama **`hce_id`** significa que la fila **es contenido del expediente** y muere con
+> él: `ondelete="CASCADE"`. Una **referencia** —una fila que menciona a un expediente pero no le
+> pertenece y le sobrevive— lleva un **calificador en el nombre** y `ondelete="RESTRICT"` explícito:
+> `ateneo.hce_referida_id`.
+
+- **De dónde sale.** M12.7 necesitaba la primera referencia no-perteneciente hacia `hce_diurna`. Con el
+  nombre `hce_id`, las dos semánticas opuestas quedaban indistinguibles al leer el modelo, y el borrado
+  de un expediente se comportaría distinto según la tabla sin que nada lo dijera. Es la misma clase de
+  ambigüedad que §5.24 documenta como causa de divergencia silenciosa — con la diferencia de que acá se
+  resuelve **antes** de que exista el problema.
+- **Qué NO cambia.** Ninguna de las 12 tablas existentes se renombra: todas son pertenencia y su
+  `hce_id` ya dice la verdad. Esto sólo fija cómo se nombra lo que viene.
+- **Aplicación inmediata en M12.6:** **`pai.hce_id` es pertenencia** (el PAI es contenido del expediente
+  y se va con él). No hace falta calificador.
+- **Se extiende a las otras FK del mismo tipo.** `ateneo.grupo_id` y `ateneo.autor_id` llevan
+  `ondelete="RESTRICT"` **explícito** aunque `hce_diurna.grupo_id` y `severidad_dsm.profesional_id` lo
+  dejen implícito (mismo comportamiento, NO ACTION): en una tabla donde conviven referencias y cascadas,
+  decirlo en voz alta es lo que hace legible la diferencia.
+- Escrito también en `backend/docs/esquema-datos-v2.md` §1 (comentario `%%` del ER) y §2.5, y fijado por
+  `test_el_ateneo_no_tiene_columna_hce_id`.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -564,10 +620,20 @@ nada, divergiendo en silencio.
         derivan**, no se guardan. ⚠️ **Se retiró `hce_diurna.nivel_soporte`** (§5.24) — es una columna,
         no una tabla: **el conteo sube de 34 a 36 por las dos tablas nuevas, nada más**. **123 tests en
         verde, 0 salteados**, migración regenerada (`f432ea139fd9`). Ver bitácora §13.
+  - [x] ~~**M12.7** Ateneos y jornadas~~ → **HECHO** (2026-08-15, Lucas). **38 tablas**: `ateneo` (una
+        sola entidad con campos según tipo, como el prototipo) y `ateneo_acuerdo`. **`AT_TIPOS` entró
+        como constante, NO como catálogo** (`core/constantes.py::ATENEO_TIPOS`) porque el tipo es el
+        **discriminador** contra el que están escritos los 5 CHECK de obligación/prohibición: como
+        catálogo editable, un quinto tipo cargado desde la app caería fuera de todos. **`codigo`
+        (`AT-2026-001`) y `sensible` son derivados**, no columnas — el correlativo real es
+        `UNIQUE(anio_correlativo, numero)`, patrón de D9. **Dos decisiones nuevas: §5.25** (HCE-DOC gana
+        alcance institucional — `documento.hce_id` nullable + `ateneo_id` + XOR) y **§5.26** (nomenclatura
+        `hce_id` = pertenencia · `hce_<calificador>_id` = referencia, **que M12.6 hereda**).
+        **240 tests en verde, 0 salteados**, migración regenerada (`9246e659d2c9`). Ver bitácora §13.
   - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`):
-        **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande) · **M12.7** ateneos.
+        **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande). ~~M12.7~~ hecho.
         ⚠️ **§5.23:** **M12.4 iba antes que M12.6** (dependencia de conocimiento, ya resuelta);
-        **M12.5 y M12.7 no dependen de nadie**. M12.6 arranca con §5.22 ya decidida.
+        **M12.5 no depende de nadie**. M12.6 arranca con §5.22 y **§5.26** ya decididas.
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
@@ -993,3 +1059,71 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **Verificado ejerciendo los tres modos de falla a mano**, no con un test verde: Docker abajo → aborta con (a), `no tests ran`, **exit 1** · esquema borrado (`drop schema public cascade`) → aborta con (b), exit 1 · `alembic_version` pisada a `3f11e10c13ed` → aborta con (c) mostrando `Aplicada: 3f11e10c13ed` / `Head: f432ea139fd9`, exit 1 · estado restaurado (`upgrade head` + seed, 15 secciones) → **123 passed, 0 skipped, exit 0**, con `-rs` sin sección SKIPPED. Mismo número que antes del cambio.
   - ⚠️ **Consecuencia retroactiva, que es el motivo de cerrarlo ahora y no después.** **Todos los conteos de tests de la bitácora desde M11.2 (21) hasta M12.4 (123) son válidos sólo si Docker estaba arriba en esa corrida — y no hay forma de auditarlo a posteriori.** El registro dice «N en verde»; no dice cuántos se saltearon, y el exit 0 no dejaba rastro. No implica que estén mal: implica que **no son verificables**. Lo que sí está verificado es el estado de hoy, comprobado en esta sesión con la guardia puesta: **123, 0 salteados**. **De acá en adelante el número que se anote es auditable**, porque una corrida incompleta ya no puede terminar en «passed». Se cierra **antes** de M12.5–M12.7 y de M12.8 justamente para que los conteos del fan-out nazcan confiables.
   - Documentado en `backend/README.md` (sección nueva en el arranque, con la tabla de los tres chequeos) y en `CLAUDE.md`. (Lucas + Claude)
+- **2026-08-15** — **M12.7 · Ateneos clínicos y jornadas de capacitación.** **38 tablas** (`ateneo` +
+  `ateneo_acuerdo`; 36 → 38, sin tabla de catálogo), **240 tests en verde, 0 salteados** —el primer
+  conteo del fan-out que nace auditable, con la guardia de entorno ya puesta—, migración inicial única
+  regenerada (**`9246e659d2c9`**) con `test_la_migracion_coincide_con_los_modelos` en verde. Cero
+  triggers, `/health` 200, `generar_catalogos_backend.py --check` OK y sin movimiento.
+  - **Una sola entidad con campos según tipo**, como el prototipo (`DB.ateneos[]`), no cuatro tablas:
+    lo que cambia entre tipos no es la forma del registro sino qué bloque de contenido se llena.
+  - **`AT_TIPOS` entró como CONSTANTE, no como catálogo** — la decisión más consecuente del módulo.
+    Parece catálogo (alimenta un filtro), pero el tipo es el **discriminador contra el que están
+    escritos los 5 CHECK**: con catálogo editable, coordinación agrega «Ateneo de familia» desde la app,
+    el tipo nuevo cae fuera de todas las reglas (`tipo = 'clinico' OR …`) y la fila se guarda **sin
+    sujeto y con los dos bloques de contenido a la vez**, sin que nadie despliegue ni revise nada.
+    Misma forma que `protocolo.tipo` / `evento.tipo` / `servicio.clave`, y mismo razonamiento que
+    `CONSENSO_PROCEDIMIENTOS`. Se persiste la **clave**, no la etiqueta.
+    `test_el_check_y_la_constante_no_pueden_divergir` es el que hace ruido si alguien agrega una clave.
+  - **Identificador: serial + `UNIQUE(anio_correlativo, numero)`, con `codigo` derivado** —el patrón de
+    D9 (§5.18)—, no PK de texto. El código codifica año, prefijo y número, y **los tres son
+    corregibles**: con PK de texto, renumerar arrastraría las FK hijas y dejaría colgada toda referencia
+    ya emitida en papel.
+  - **Prefijo `AT-` para los cuatro tipos**, resolviendo la contradicción del prototipo (su seed muestra
+    `JC-2026-001`, pero `atNuevo()` genera siempre `AT-` y su contador `id.includes(anio)` cuenta las dos
+    formas en **una sola serie**). Además `tipo` es editable: con prefijo por tipo, corregir un tipo mal
+    cargado cambiaría el identificador de un registro ya circulado. Como el código es derivado, si IPPU
+    prefiere `JC-`, es **una línea y cero migración**. → `docs/notas/`.
+  - **El correlativo es de registración, no cronológico.** Se congela al crear —en el prototipo el
+    registro nace con `fecha:''`, o sea que el año del hecho **no existe** al numerar— y el filtro de año
+    va contra `fecha`. Divergencia declarada: `AT-2027-001` puede tener `fecha = 2026-12-20`. La columna
+    se llama `anio_correlativo` y no `anio` justamente para que nadie filtre por la equivocada.
+  - **`sensible` derivado** (`tipo == 'clinico'`), nunca capturado, con expresión SQL para Fase 4.
+    ⚠️ **Hueco de la fuente:** el aviso del prototipo nombra los clínicos (sensibles) y los
+    institucionales y jornadas (acceso general), pero **no dice qué es un ateneo de grupo** — y su propio
+    seed muestra uno discutiendo Δ de protocolos de NNA identificables. Se implementó lo que dice la
+    fuente y la pregunta va a IPPU; que sea derivado hace que cambiar de criterio cueste una línea.
+  - **Dos decisiones nuevas: §5.25 y §5.26.** La primera le da a HCE-DOC **alcance institucional**
+    (`documento.hce_id` nullable + `ateneo_id` + XOR), porque un ateneo institucional o una jornada no
+    tienen expediente y el prototipo les pide adjuntos («Referencia a documentos en HCE-DOC
+    **institucional**»); se relajó la FK de la tabla dueña como M12.1 hizo con `auditoria.hce_id`, en vez
+    de crear una tabla paralela que sería una segunda fuente de verdad. La segunda fija la **nomenclatura
+    `hce_id` = pertenencia / `hce_<calificador>_id` = referencia**, que **M12.6 hereda**.
+  - **Tres hallazgos que no estaban previstos y valen más que el módulo:**
+    1. **`lpad` trunca y `f"{n:03d}"` ensancha.** Con `numero = 1000`, las dos mitades de `codigo`
+       devolvían códigos **distintos** (`AT-2026-1000` en Python, `AT-2026-100` en SQL) y el `UNIQUE` no
+       lo veía, porque es sobre `numero` y no sobre el código. Verificado contra Postgres antes de
+       escribirlo. Se cerró con `CHECK numero BETWEEN 1 AND 999`: el formato de tres dígitos pasa de
+       convención a **garantía estructural**, y el desborde falla fuerte en vez de generar un código
+       colisionante.
+    2. **Corregir el tipo de un ateneo clínico exige limpiar `hce_referida_id` en la MISMA sentencia**,
+       por el CHECK `(hce_referida_id IS NOT NULL) = (tipo='clinico')`. Es correcto —no puede quedar un
+       institucional con un NNA colgado ni un instante— pero es una consecuencia de UI que no estaba
+       prevista: se sumó a las otras tres de D6 para M11.4, con su test y el caso que sí pasa.
+    3. **`''` y `NULL` conviven y la base ya no los distingue.** Los CHECK usan `~ '[^[:space:]]'` y no
+       `num_nonnulls()` —los 17 campos del prototipo nacen en `''`, y `btrim()` sin argumentos recorta
+       sólo espacios: el defecto que M12.4 dejó documentado—, y se resolvió en la DDL y no como
+       invariante de la API porque `routers/`, `schemas/` y `services/` todavía no existen: una garantía
+       estructural que depende de código no escrito no es una garantía. **Pero el efecto es que cualquier
+       `WHERE situacion IS NOT NULL` de M11.3/M11.4 estaría mal.** Queda escrito en §4 del esquema:
+       **`NULL` es la representación canónica**, el servicio normaliza al guardar, y hasta entonces se
+       consulta con el regex. Vale para todo campo de texto opcional del esquema, no sólo para este
+       módulo.
+  - **Lo que NO se hizo, y por qué:** sin `tsvector`/GIN (btree en `titulo`) — `vAteneos` busca
+    **subcadena** y `tsvector` matchea **lexemas**: «capacit» no encontraría «capacitación»; las dos
+    opciones y su diferencia semántica quedan en §4. Sin asignación del correlativo (es de M11.3, con la
+    race condition y el reuso tras rollback que el `length+1` del prototipo hace mal). Sin timestamps
+    (existen en 1 de 38 tablas: no es convención y no se estrena en el módulo más chico). Sin tocar
+    `categoria_documento` (está en `DESDE_LA_DEMO`; la categoría propia es de M12.8).
+  - **`README.md` estaba desactualizado desde M12.4**, no desde esta sesión: decía «34 tablas y 92 tests
+    (M12.0 a M12.3)». Se puso al día con M12.4 + M12.7 y con la guardia de entorno de pytest.
+    (Lucas + Claude)

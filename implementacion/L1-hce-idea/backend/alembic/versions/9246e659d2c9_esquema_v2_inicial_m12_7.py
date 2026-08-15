@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.4)
+"""esquema v2 inicial (M12.7)
 
-Revision ID: f432ea139fd9
+Revision ID: 9246e659d2c9
 Revises: 
-Create Date: 2026-08-15 10:25:08.646531
+Create Date: 2026-08-15 15:19:14.250556
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f432ea139fd9'
+revision: str = '9246e659d2c9'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -269,6 +269,46 @@ def upgrade() -> None:
     sa.UniqueConstraint('persona_id', name=op.f('uq_hce_diurna_persona_id'))
     )
     op.create_index(op.f('ix_hce_diurna_grupo_id'), 'hce_diurna', ['grupo_id'], unique=False)
+    op.create_table('ateneo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('anio_correlativo', sa.SmallInteger(), nullable=False),
+    sa.Column('numero', sa.SmallInteger(), nullable=False),
+    sa.Column('tipo', sa.String(length=20), nullable=False),
+    sa.Column('fecha', sa.Date(), nullable=False),
+    sa.Column('titulo', sa.String(length=200), nullable=False),
+    sa.Column('hce_referida_id', sa.Integer(), nullable=True),
+    sa.Column('grupo_id', sa.Integer(), nullable=True),
+    sa.Column('autor_id', sa.Integer(), nullable=True),
+    sa.Column('participantes', sa.Text(), nullable=True),
+    sa.Column('situacion', sa.Text(), nullable=True),
+    sa.Column('hipotesis', sa.Text(), nullable=True),
+    sa.Column('recursos', sa.Text(), nullable=True),
+    sa.Column('seguimiento', sa.Text(), nullable=True),
+    sa.Column('capacitador', sa.String(length=200), nullable=True),
+    sa.Column('modalidad', sa.String(length=200), nullable=True),
+    sa.Column('contenidos', sa.Text(), nullable=True),
+    sa.Column('materiales', sa.Text(), nullable=True),
+    sa.Column('evaluacion', sa.Text(), nullable=True),
+    sa.CheckConstraint("(hce_referida_id IS NOT NULL) = (tipo = 'clinico')", name=op.f('ck_ateneo_nna_solo_en_ateneo_clinico')),
+    sa.CheckConstraint("tipo <> 'grupo' OR grupo_id IS NOT NULL", name=op.f('ck_ateneo_grupo_requerido_en_ateneo_de_grupo')),
+    sa.CheckConstraint("tipo <> 'jornada' OR NOT (situacion ~ '[^[:space:]]' OR hipotesis ~ '[^[:space:]]' OR recursos ~ '[^[:space:]]' OR seguimiento ~ '[^[:space:]]')", name=op.f('ck_ateneo_desarrollo_clinico_no_va_en_jornada')),
+    sa.CheckConstraint("tipo = 'jornada' OR NOT (capacitador ~ '[^[:space:]]' OR modalidad ~ '[^[:space:]]' OR contenidos ~ '[^[:space:]]' OR materiales ~ '[^[:space:]]' OR evaluacion ~ '[^[:space:]]')", name=op.f('ck_ateneo_campos_de_jornada_solo_en_jornada')),
+    sa.CheckConstraint("tipo IN ('clinico', 'grupo') OR grupo_id IS NULL", name=op.f('ck_ateneo_grupo_solo_con_sujeto')),
+    sa.CheckConstraint("tipo IN ('clinico', 'grupo', 'institucional', 'jornada')", name=op.f('ck_ateneo_tipo_valido')),
+    sa.CheckConstraint("titulo ~ '[^[:space:]]'", name=op.f('ck_ateneo_titulo_no_vacio')),
+    sa.CheckConstraint('numero BETWEEN 1 AND 999', name=op.f('ck_ateneo_rango_numero')),
+    sa.ForeignKeyConstraint(['autor_id'], ['profesional.id'], name=op.f('fk_ateneo_autor_id_profesional'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['grupo_id'], ['grupo.id'], name=op.f('fk_ateneo_grupo_id_grupo'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['hce_referida_id'], ['hce_diurna.id'], name=op.f('fk_ateneo_hce_referida_id_hce_diurna'), ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_ateneo')),
+    sa.UniqueConstraint('anio_correlativo', 'numero', name='uq_ateneo_correlativo')
+    )
+    op.create_index(op.f('ix_ateneo_autor_id'), 'ateneo', ['autor_id'], unique=False)
+    op.create_index(op.f('ix_ateneo_fecha'), 'ateneo', ['fecha'], unique=False)
+    op.create_index(op.f('ix_ateneo_grupo_id'), 'ateneo', ['grupo_id'], unique=False)
+    op.create_index(op.f('ix_ateneo_hce_referida_id'), 'ateneo', ['hce_referida_id'], unique=False)
+    op.create_index(op.f('ix_ateneo_tipo'), 'ateneo', ['tipo'], unique=False)
+    op.create_index(op.f('ix_ateneo_titulo'), 'ateneo', ['titulo'], unique=False)
     op.create_table('auditoria',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=True),
@@ -287,21 +327,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_auditoria_hce_id'), 'auditoria', ['hce_id'], unique=False)
     op.create_index(op.f('ix_auditoria_usuario_id'), 'auditoria', ['usuario_id'], unique=False)
-    op.create_table('documento',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('hce_id', sa.Integer(), nullable=False),
-    sa.Column('categoria_id', sa.Integer(), nullable=False),
-    sa.Column('nombre', sa.String(length=200), nullable=False),
-    sa.Column('fecha_original', sa.Date(), nullable=True),
-    sa.Column('fecha_carga', sa.Date(), nullable=False),
-    sa.Column('es_registro_historico', sa.Boolean(), nullable=False),
-    sa.Column('archivo_ref', sa.String(length=400), nullable=True),
-    sa.ForeignKeyConstraint(['categoria_id'], ['categoria_documento.id'], name=op.f('fk_documento_categoria_id_categoria_documento')),
-    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_documento_hce_id_hce_diurna'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_documento'))
-    )
-    op.create_index(op.f('ix_documento_categoria_id'), 'documento', ['categoria_id'], unique=False)
-    op.create_index(op.f('ix_documento_hce_id'), 'documento', ['hce_id'], unique=False)
     op.create_table('evento',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -504,31 +529,37 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_valoracion_funcional'))
     )
     op.create_index(op.f('ix_valoracion_funcional_categoria_id'), 'valoracion_funcional', ['categoria_id'], unique=False)
-    op.create_table('autorizacion_imagen',
-    sa.Column('hce_id', sa.Integer(), nullable=False),
-    sa.Column('registrada', sa.Boolean(), nullable=False),
-    sa.Column('fecha', sa.Date(), nullable=True),
-    sa.Column('documento_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['documento_id'], ['documento.id'], name=op.f('fk_autorizacion_imagen_documento_id_documento')),
-    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_autorizacion_imagen_hce_id_hce_diurna'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_autorizacion_imagen'))
+    op.create_table('ateneo_acuerdo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('ateneo_id', sa.Integer(), nullable=False),
+    sa.Column('acuerdo', sa.Text(), nullable=False),
+    sa.Column('responsable_rol', sa.String(length=80), nullable=True),
+    sa.Column('plazo', sa.Date(), nullable=True),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.CheckConstraint("acuerdo ~ '[^[:space:]]'", name=op.f('ck_ateneo_acuerdo_acuerdo_no_vacio')),
+    sa.ForeignKeyConstraint(['ateneo_id'], ['ateneo.id'], name=op.f('fk_ateneo_acuerdo_ateneo_id_ateneo'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_ateneo_acuerdo'))
     )
-    op.create_index(op.f('ix_autorizacion_imagen_documento_id'), 'autorizacion_imagen', ['documento_id'], unique=False)
-    op.create_table('consentimiento',
-    sa.Column('hce_id', sa.Integer(), nullable=False),
-    sa.Column('firmante', sa.String(length=120), nullable=True),
-    sa.Column('fecha', sa.Date(), nullable=True),
-    sa.Column('autorizaciones', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('documento_id', sa.Integer(), nullable=True),
-    sa.Column('firmado', sa.Boolean(), nullable=False),
-    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.ForeignKeyConstraint(['documento_id'], ['documento.id'], name=op.f('fk_consentimiento_documento_id_documento')),
-    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_consentimiento_hce_id_hce_diurna'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_consentimiento'))
+    op.create_index(op.f('ix_ateneo_acuerdo_ateneo_id'), 'ateneo_acuerdo', ['ateneo_id'], unique=False)
+    op.create_table('documento',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('hce_id', sa.Integer(), nullable=True),
+    sa.Column('ateneo_id', sa.Integer(), nullable=True),
+    sa.Column('categoria_id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(length=200), nullable=False),
+    sa.Column('fecha_original', sa.Date(), nullable=True),
+    sa.Column('fecha_carga', sa.Date(), nullable=False),
+    sa.Column('es_registro_historico', sa.Boolean(), nullable=False),
+    sa.Column('archivo_ref', sa.String(length=400), nullable=True),
+    sa.CheckConstraint('num_nonnulls(hce_id, ateneo_id) = 1', name=op.f('ck_documento_expediente_xor_ateneo')),
+    sa.ForeignKeyConstraint(['ateneo_id'], ['ateneo.id'], name=op.f('fk_documento_ateneo_id_ateneo'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['categoria_id'], ['categoria_documento.id'], name=op.f('fk_documento_categoria_id_categoria_documento')),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_documento_hce_id_hce_diurna'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_documento'))
     )
-    op.create_index(op.f('ix_consentimiento_documento_id'), 'consentimiento', ['documento_id'], unique=False)
+    op.create_index(op.f('ix_documento_ateneo_id'), 'documento', ['ateneo_id'], unique=False)
+    op.create_index(op.f('ix_documento_categoria_id'), 'documento', ['categoria_id'], unique=False)
+    op.create_index(op.f('ix_documento_hce_id'), 'documento', ['hce_id'], unique=False)
     op.create_table('puntuacion_idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('idea_id', sa.Integer(), nullable=False),
@@ -569,21 +600,52 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_puntuacion_protocolo_item_id'), 'puntuacion_protocolo', ['item_id'], unique=False)
     op.create_index(op.f('ix_puntuacion_protocolo_protocolo_id'), 'puntuacion_protocolo', ['protocolo_id'], unique=False)
+    op.create_table('autorizacion_imagen',
+    sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('registrada', sa.Boolean(), nullable=False),
+    sa.Column('fecha', sa.Date(), nullable=True),
+    sa.Column('documento_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['documento_id'], ['documento.id'], name=op.f('fk_autorizacion_imagen_documento_id_documento')),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_autorizacion_imagen_hce_id_hce_diurna'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_autorizacion_imagen'))
+    )
+    op.create_index(op.f('ix_autorizacion_imagen_documento_id'), 'autorizacion_imagen', ['documento_id'], unique=False)
+    op.create_table('consentimiento',
+    sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('firmante', sa.String(length=120), nullable=True),
+    sa.Column('fecha', sa.Date(), nullable=True),
+    sa.Column('autorizaciones', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('documento_id', sa.Integer(), nullable=True),
+    sa.Column('firmado', sa.Boolean(), nullable=False),
+    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.ForeignKeyConstraint(['documento_id'], ['documento.id'], name=op.f('fk_consentimiento_documento_id_documento')),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_consentimiento_hce_id_hce_diurna'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_consentimiento'))
+    )
+    op.create_index(op.f('ix_consentimiento_documento_id'), 'consentimiento', ['documento_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_consentimiento_documento_id'), table_name='consentimiento')
+    op.drop_table('consentimiento')
+    op.drop_index(op.f('ix_autorizacion_imagen_documento_id'), table_name='autorizacion_imagen')
+    op.drop_table('autorizacion_imagen')
     op.drop_index(op.f('ix_puntuacion_protocolo_protocolo_id'), table_name='puntuacion_protocolo')
     op.drop_index(op.f('ix_puntuacion_protocolo_item_id'), table_name='puntuacion_protocolo')
     op.drop_table('puntuacion_protocolo')
     op.drop_index(op.f('ix_puntuacion_idea_idea_id'), table_name='puntuacion_idea')
     op.drop_index(op.f('ix_puntuacion_idea_dimension_id'), table_name='puntuacion_idea')
     op.drop_table('puntuacion_idea')
-    op.drop_index(op.f('ix_consentimiento_documento_id'), table_name='consentimiento')
-    op.drop_table('consentimiento')
-    op.drop_index(op.f('ix_autorizacion_imagen_documento_id'), table_name='autorizacion_imagen')
-    op.drop_table('autorizacion_imagen')
+    op.drop_index(op.f('ix_documento_hce_id'), table_name='documento')
+    op.drop_index(op.f('ix_documento_categoria_id'), table_name='documento')
+    op.drop_index(op.f('ix_documento_ateneo_id'), table_name='documento')
+    op.drop_table('documento')
+    op.drop_index(op.f('ix_ateneo_acuerdo_ateneo_id'), table_name='ateneo_acuerdo')
+    op.drop_table('ateneo_acuerdo')
     op.drop_index(op.f('ix_valoracion_funcional_categoria_id'), table_name='valoracion_funcional')
     op.drop_table('valoracion_funcional')
     op.drop_index(op.f('ix_severidad_dsm_profesional_id'), table_name='severidad_dsm')
@@ -612,12 +674,16 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_evento_hce_id'), table_name='evento')
     op.drop_index(op.f('ix_evento_autor_id'), table_name='evento')
     op.drop_table('evento')
-    op.drop_index(op.f('ix_documento_hce_id'), table_name='documento')
-    op.drop_index(op.f('ix_documento_categoria_id'), table_name='documento')
-    op.drop_table('documento')
     op.drop_index(op.f('ix_auditoria_usuario_id'), table_name='auditoria')
     op.drop_index(op.f('ix_auditoria_hce_id'), table_name='auditoria')
     op.drop_table('auditoria')
+    op.drop_index(op.f('ix_ateneo_titulo'), table_name='ateneo')
+    op.drop_index(op.f('ix_ateneo_tipo'), table_name='ateneo')
+    op.drop_index(op.f('ix_ateneo_hce_referida_id'), table_name='ateneo')
+    op.drop_index(op.f('ix_ateneo_grupo_id'), table_name='ateneo')
+    op.drop_index(op.f('ix_ateneo_fecha'), table_name='ateneo')
+    op.drop_index(op.f('ix_ateneo_autor_id'), table_name='ateneo')
+    op.drop_table('ateneo')
     op.drop_index(op.f('ix_hce_diurna_grupo_id'), table_name='hce_diurna')
     op.drop_table('hce_diurna')
     op.drop_index(op.f('ix_persona_servicio_servicio_id'), table_name='persona_servicio')
