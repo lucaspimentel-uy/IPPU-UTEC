@@ -39,6 +39,29 @@ uvicorn app.main:app --reload         # 6. API en http://127.0.0.1:8000/docs
 
 Tests: `pytest -q` (usa la base `ippu_test`, aislada de la de desarrollo).
 
+### `docker compose up -d` es requisito de `pytest` — y la suite lo verifica sola
+
+Los pasos 1 y 4 de arriba **no son opcionales para correr los tests**, y desde el
+2026-08-15 **no hace falta acordarse**: una guardia de sesión en
+`tests/conftest.py` chequea tres cosas antes del primer test y **aborta la
+corrida entera** (`exit 1`, `no tests ran`) con el comando que la arregla:
+
+| Qué chequea | Mensaje |
+|---|---|
+| Postgres responde, en las **dos** bases (test y desarrollo) | `docker compose up -d` |
+| La base de desarrollo tiene esquema | `alembic upgrade head` |
+| La base de desarrollo está en el **head actual** (derivado de `alembic/versions/`, no hardcodeado) | `alembic upgrade head`, con las dos revisiones a la vista |
+
+**Por qué aborta en vez de saltear.** Antes, con el contenedor abajo, la corrida
+terminaba en `34 passed, 89 skipped` y **exit code 0**. Los `skip` no estaban
+ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devolvía
+éxito**: indistinguible de una válida para CI, para `if ($?)` y para quien lee
+«34 passed» de un vistazo. Ahora o corre entera o no arranca. **No quedó ningún
+`skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
+cada vez que ella no prevé un caso.
+
+Una corrida válida de hoy es **123 passed, 0 skipped**.
+
 ## Por qué Postgres en Docker
 
 Decisión `handoff.md` §5.2.1. Dos motivos:

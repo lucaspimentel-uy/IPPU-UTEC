@@ -299,8 +299,14 @@ def test_la_migracion_coincide_con_los_modelos():
     —sólo se congela si hay trabajo en paralelo real sobre `app/models/`— así que
     este test volvió a ser bloqueante y **ya no se saltea durante la ronda**.
 
-    El único skip que queda es el de infraestructura: si la base de desarrollo no
-    está levantada no hay con qué comparar, y eso no es un desfasaje.
+    **Ya no queda ningún skip** (2026-08-15). Acá había uno de infraestructura
+    —«si la base de desarrollo no está levantada no hay con qué comparar»— que
+    era correcto en su intención y equivocado en su efecto: con el contenedor
+    abajo la sesión entera terminaba en `34 passed, 89 skipped` y **exit 0**, o
+    sea indistinguible de una corrida válida para cualquier automatización. Que
+    la base esté arriba y en el head lo verifica ahora la guardia de sesión de
+    `tests/conftest.py`, que **aborta** en vez de saltear. Si este test corre, es
+    porque hay con qué comparar.
     """
     from alembic.autogenerate import compare_metadata
     from alembic.migration import MigrationContext
@@ -313,8 +319,6 @@ def test_la_migracion_coincide_con_los_modelos():
     try:
         with eng.connect() as conn:
             diff = compare_metadata(MigrationContext.configure(conn), Base.metadata)
-    except Exception as exc:  # noqa: BLE001
-        pytest.skip(f"Base de desarrollo no disponible ({exc})")
     finally:
         eng.dispose()
 
