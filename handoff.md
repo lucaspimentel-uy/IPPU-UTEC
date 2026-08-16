@@ -607,6 +607,7 @@ lo decidió — los nuestros son texto literal de Rivière).
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
+- [ ] **F1-nav · ajustes de navegación del frontend · SIN COMMITEAR, EN RAMA** (Lucas + Claude, 2026-08-16, ver §13). Rama `demo/F1-navegacion` con **4 cambios aplicados**: KPI Inicio sin bajada, `eval-bar` movida arriba de "Flujo de módulos", barra secundaria de 3 accesos (HCE-DOC/ORG/VF; Contacto familiar EXCLUIDO por no existir como sección) y en Grupos botón de acceso + barra 3 accesos + **bloque nuevo "Técnicos autorizados del grupo"** (§21.1) + cambio de responsables 1/2. `node --check` en verde en los 4 JS modificados. **Falta antes del commit + push:** **(a)** verificar visualmente en navegador (esta sesión no controla browser); **(b)** re-baseline del fingerprint Playwright (Playwright no instalado); **(c)** decidir si se mergea a main directo o vía PR (rama local); **(d)** push a los remotos disponibles. **Deuda nueva:** el cambio de responsable NO queda en HCE-LOG (la bitácora hoy es por NNA, no por grupo; §5.18 y §7). **Pregunta abierta introducida:** definición de «tutor» (`docs/notas/puntos-a-validar.md` §2.10 y §7).
 - [ ] **Ronda de alineación de la demo v4.1 con el Prototipo v4 · COMMITEADA, pendientes de verificación** (Samuel + Lucas, 2026-08-16, §5.27). **6 alineaciones aplicadas** (cita Rivière · bandas IDEA 6 tramos · Δ con acción · 14 talleres · grupos por color · vocabulario ya cumplido) + 2 fixes de layout (heatmap, ancho de main). **Commiteada en `main` el 2026-08-16** por Lucas para desbloquear la sesión F1-nav que arrancó a continuación (`demo/F1-navegacion`). **Falta post-commit (migradas de pre-commit):** **(a)** verificar visualmente en navegador (doble clic en `demo/index.html`, recorrer Analítica · Grupos · alta de NNA · expedientes) — solapa parcialmente con la verificación de §6 de F1-nav; **(b)** re-baseline del **fingerprint Playwright** (`demo/verificacion/`) — 3 pasos rompen a propósito (bandas, talleres, grupos); Playwright no estaba instalado en el clone al momento del commit. **Deudas nuevas:** el catálogo de talleres ahora tiene los 14 pero **sin gestión** (retirar/agregar, orientación a grupos) — la demo carga nombres, no administra; anotado como absorción parcial de D5 (§5.14). Cuando la demo incorpore HCE-SEV en una ronda futura, `p.apoyo` de `datos.js` pasa a derivarse (deuda que ya venía de §5.24).
   - **Notas de Samuel al cerrar sesión (2026-08-16) para la próxima ronda:**
     - **FALTA agregar como módulos nuevos** (no entraron en las alineaciones, requieren ronda propia):
@@ -743,6 +744,12 @@ lo decidió — los nuestros son texto literal de Rivière).
   (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25), la **matriz de 14 roles** (mencionada en sus
   pendientes, ausente del prototipo), el **anexo del Decreto 72/025** y la verificación de las 24 citas
   bibliográficas de la Escala IPPU-TEA.
+
+### Abierta por F1-nav (2026-08-16)
+- **¿«Tutor» es sinónimo de Técnico/a responsable del grupo, un rol distinto (referente por NNA), o el
+  tutor legal de la familia?** Los tres tienen consecuencias distintas en el modelo. F1-nav implementó
+  lo definido (asignar/cambiar responsables 1 y 2 desde el panel §21.1) y NO creó un rol nuevo. Detalle
+  en `docs/notas/puntos-a-validar.md` §2.10.
 
 **Resueltas (movidas desde aquí):** stack backend = **FastAPI + SQLAlchemy + Alembic** (SQLite→Postgres); base = **PostgreSQL** (no MariaDB); alcance del MVP = ronda **M0–M10** sobre la demo + Fases A–D del Documento Técnico §12. **Cortes del baremo:** el prototipo usa exactamente los que asumimos (0–4 / 5–24 / 25–49 / 50–95 / 96–100) con su implicancia — confirma **qué usa IPPU**, no qué dice el decreto, así que el anexo del Decreto 72/025 sigue pendiente. **Talleres:** los 14 reales están en el prototipo (§5.14 / D5); el "8 vs 18" era falso.
 
@@ -1264,3 +1271,87 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **§12.3 (coordinación):** Samuel tomó `demo/*` en esta sesión — avisar en el grupo cuando se
     haga el push, para que Lucas y Victor sincronicen antes de tocar la demo. Push hecho el 2026-08-16
     junto con el commit. (Samuel + Lucas + Claude)
+
+- **2026-08-16** — **F1-nav · ajustes de navegación del frontend** (Lucas + Claude, rama
+  `demo/F1-navegacion`). Ronda de demo, **fuera de la ronda M12** (M12.5/6 quedan sin tocar). Prompt
+  ejecutado: `prompt-sesion-demo-F1-ajustes-frontend.md`. Arrancó inmediatamente después de commitear
+  F1-alineación de Samuel en `main`. **Sin push todavía** — pendiente verificación visual + confirmación.
+  - **Alcance real distinto al que asumía el prompt.** El prompt asumía cosas que el código actual no
+    tiene (buttons de eval-bar con habilitación por estado, nombre de grupo como link, tres bloques
+    del grupo ya existentes). El relevamiento previo (§0 del prompt) las anotó una por una antes de
+    tocar código y el usuario aprobó el plan ajustado en base a eso.
+  - **4 cambios aplicados:**
+    1. **KPI «NNA activos» sin bajada.** `index.html:73` — eliminado el `<div class="sub">Convenio
+       INAU</div>`. La bajada era **engañosa**: el número lo llena `ui-core.js:118` con
+       `NNA.filter(p=>p.activo).length`, sin filtrar por convenio (el seed de `datos.js` no tiene
+       campo `convenio`; verificado con `grep`). Anotado sin corregir: el `pagedesc` de `index.html:70`
+       ("Expedientes del convenio INAU.") tiene el mismo problema y queda fuera de alcance de F1-nav.
+    2. **`eval-bar` movida arriba de "Flujo de módulos".** `expediente.js:74-88` — swap del bloque
+       eval-bar con `${flujoPanelHtml(p)}`. Mismos ids, mismos handlers, mismos botones. **Los botones
+       NO dependen del estado del flujo** (contra lo que asumía el prompt §2): siempre visibles y
+       enabled, la habilitación se chequea al hacer clic dentro de la vista destino. Como consecuencia,
+       la barra no necesita re-renderizarse tras firmar/addendear — sólo `renderFlujo` se llama, que
+       actualiza `flujoPanelBody`.
+    3. **Barra secundaria de navegación entre `eval-bar` y `flujoPanelHtml`** con **3 accesos** (no 4):
+       HCE-DOC, HCE-ORG, HCE-VF. **`Contacto familiar` EXCLUIDO** — no existe como sección propia
+       (es una `info-card` en el layout izquierdo del expediente, `expediente.js:118-125`, con
+       `p.referente/tel/loc`); se reporta y se espera instrucción (§3 del prompt). Implementación:
+       clase CSS nueva `.section-nav` con `border:dashed` para no competir con `.eval-bar` sólida;
+       ids `anchor-doc/-org/-vf` agregados a los `flujo-card` wrappers de `docPanelHtml`/`orgPanelHtml`/
+       `vfPanelHtml` (`hce-doc-org-vf.js:52,202,394`); helper `scrollASeccion(id)` en `ui-core.js` que
+       hace `scrollIntoView({behavior:'smooth', block:'start'})`. El contexto del NNA no cambia.
+       `class="no-print"` en la barra la oculta al imprimir (ya en `@media print` del CSS).
+    4. **Grupos — botón acceso + barra 3 accesos + bloque "Técnicos autorizados del grupo" NUEVO +
+       cambio de responsables.** `grupos-usuario.js` reescrito parcialmente:
+       - **Estructura de `GRUPOS[]` migrada:** el array plano `encargados:["Dr. X — Rol"]` se retira;
+         cada grupo pasa a tener `responsable1:{nombre,rol}`, `responsable2:{nombre,rol}|null` y
+         `tecnicosAutorizados:[]` (vacío por defecto). Helper `todosTecnicosDelGrupo(g)` devuelve la
+         nómina completa con alcance derivado ("HCE completa del grupo · firma" para responsables,
+         "Texto libre donde participa" para autorizados). Grupos Celeste y Verde tienen sólo
+         `responsable1` (así estaban los `encargados` originales).
+       - **Bloque nuevo "Técnicos autorizados del grupo"** (§21.1 del Manual): nota, tabla con
+         Profesional/Rol/Alcance/acciones, alta por nombre+disciplina, botón Quitar por fila. Copiado
+         semánticamente del Prototipo v4 (`HCE_IPPU_Prototipo_v4.html:2328-2330`). ⚠️ Esto es un
+         **módulo nuevo en la demo** — pisa parcialmente la regla de §5.27 ("sin módulos nuevos");
+         el usuario aprobó el override explícitamente para F1-nav (opción "crearlo copiando del
+         prototipo v4"). No se cambian decisiones §5; queda anotado acá.
+       - **Cambio de responsable 1/2:** vía modal reutilizando `openFlujoModal` (el mismo que HCE-DOC
+         usa para autorización de imagen). Alcance fijo mostrado en el modal.
+       - **⚠️ HCE-LOG a nivel grupo NO existe** — `logEvento(nna,...)` en `flujo.js:104` es por NNA.
+         Los cambios de responsable **NO quedan registrados**. La UI lo dice explícitamente en el
+         modal ("El cambio no queda registrado en HCE-LOG..."), y §5.18 ya conocía el límite (la
+         fila del grupo es anual: el cambio sobrescribe). No se inventa vía nueva.
+       - **KPI "Técnicos asignados"** ahora cuenta desde la estructura nueva
+         (`GRUPOS.flatMap(g=>todosTecnicosDelGrupo(g).map(t=>t.nombre))` únicos), no desde `encargados`.
+       - **Botón "→ Abrir detalle"** al lado del `h2` de cada card: como no hay vista de detalle
+         separada (todo está inline en la card), hace `scrollASeccion('grp-${g.id}')`. El nombre del
+         grupo NO se convierte en link (el prompt asumía que ya lo era; no lo era; se mantiene tal cual
+         para no cambiar UX).
+       - **Barra `.section-nav` al comienzo de cada cardbody** con 3 accesos: `Integrantes y estado
+         del ciclo` (ancla `grp-{id}-integrantes`), `Técnicos autorizados del grupo`
+         (`grp-{id}-tecnicos`), `Registro fotográfico grupal` (`grp-{id}-fotos`). "Estado del ciclo"
+         no existe en la data — la etiqueta va tal cual la pidió el prompt, apunta al mismo bloque
+         de Integrantes.
+       - **Regla dura §8.4 / art. 11 CNA** (autorización de imagen bloquea fotos si falta consentimiento
+         de las familias): NO se toca. Sigue en `hce-doc-org-vf.js` con `subirFoto`/`subirFotoGrupo`.
+       - **CSS nuevo:** `.tec-aut-table` y `.tec-aut-alta` en `estilos.css`, más el bloque `.section-nav`
+         del cambio 3.
+  - **Regla anti-contradicción respetada:** no se reabre §5.2 (no-homologabilidad IDEA/IPPU-TEA,
+    baremo desde `pct`, etc.), no se toca backend/pytest/M12, no se inventa el rol "tutor" (§7 y
+    `puntos-a-validar.md` §2.10).
+  - **Contradicciones código↔prompt anotadas** (que el prompt asumía como dadas y no lo eran):
+    - Convenio INAU en el KPI (el número no filtra por convenio; el seed no tiene el campo).
+    - Eval-bar con habilitación por estado (los botones no tienen tal lógica hoy).
+    - Nombre de grupo como link (no lo era).
+    - Detalle de grupo como vista aparte (no existe; todo es inline).
+    - "Los tres bloques del grupo ya existen" (Técnicos autorizados NO existía; se creó copiando el prototipo v4).
+    - `3 NNA del seed` (son 8, verificado con `grep 'id: \+\+nnaSeq' datos.js`).
+  - **Verificación:** `node --check` sobre los 4 archivos JS modificados (expediente.js,
+    hce-doc-org-vf.js, ui-core.js, grupos-usuario.js) — todos parsean OK. **NO** hice recorrida
+    visual en navegador (esta sesión de Claude Code no controla un navegador). **NO** corrí el
+    fingerprint Playwright (no está instalado en este clone; corresponde correrlo antes del push
+    para tener una nueva línea de base F1-nav que incluya los cambios estructurales del
+    `renderGrupos()`).
+  - **§12.3 (coordinación):** rama `demo/F1-navegacion` local, sin push. Cuando se pushee, avisar
+    en el grupo — Lucas retomó `demo/*` en esta sesión después de la F1-alineación de Samuel.
+    (Lucas + Claude)

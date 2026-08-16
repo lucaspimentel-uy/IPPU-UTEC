@@ -324,6 +324,28 @@ funciona para leer. Se anota para que no se descubra cuando IPPU pida cambiar la
 > `solo_al_crear`, y ahí el seed manda. Si M12.5–M12.7 agregan catálogos que coordinación **sí** deba
 > tocar (el de **centros educativos** de M12.5 es el candidato claro), suman a este mismo punto.
 
+### 2.10 «Tutor» en el panel de Grupos — término sin fuente normativa (F1-nav, 2026-08-16)
+**Qué es.** Durante F1-nav se pidió agregar «poder asignar tutores» al panel de Grupos. El término
+**«tutor» no aparece en ninguna fuente normativa del proyecto**: ni en el Manual de Procedimientos
+v1.0, ni en el Prototipo v4, ni en `backend/docs/esquema-datos-v2.md`, ni en `handoff.md`. Las únicas
+ocurrencias de «tutor» en el repo son «padre/madre/tutor» en el contacto familiar del Prototipo
+(v1 y v4), es decir el **tutor legal de la familia**, no un rol técnico.
+
+**Por qué importa.** «Tutor» puede ser tres cosas distintas y cada una tiene consecuencias distintas
+en el modelo:
+1. Sinónimo de **Técnico/a responsable del grupo** → no hace falta modelo nuevo; es rebautizar `responsable1/2`.
+2. Un **rol técnico distinto** (por ejemplo referente por NNA, no por grupo) → tabla nueva o campo
+   nuevo en `nna` con FK a un usuario técnico.
+3. El **tutor legal de la familia** (padre/madre/adulto responsable del NNA) → ya está modelado
+   como contacto familiar; no se agrega en el panel de Grupos.
+
+**Qué se hizo por ahora.** F1-nav implementó lo definido (asignar/cambiar Técnico/a responsable 1
+y 2 desde el panel §21.1). No se creó ningún rol «tutor». Ver `handoff.md` §7 (misma pregunta con
+menos texto).
+
+**Qué bloquea.** Nada por ahora. Si al validar la demo IPPU dice que quería la opción (2) o (3), es
+trabajo de otra ronda (modelo + UI). La (1) es cosmética.
+
 ---
 
 ## 3. Supuestos que tomamos — confirmar, no discutir
