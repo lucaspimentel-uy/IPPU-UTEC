@@ -341,7 +341,7 @@ function analiticaAgregados(){
   const lbs     = conLB.map(n=>lbTotales(n.flujo.lb.dim)).filter(t=>!t.hayNS && t.count===12);
   const ideaEsc = [0,1,2,3].map(i=>promedio(lbs.map(t=>t.esc[i])));
   const ideaTot = promedio(lbs.map(t=>t.total));
-  const banda   = {Leve:0, Moderado:0, Severo:0};
+  const banda   = Object.fromEntries(IDEA_BANDAS.map(b=>[b.perfil,0]));
   lbs.forEach(t=>banda[bandaIdea(t.total)]++);
 
   /* IPPU-TEA — sólo NNA con Protocolo A y B firmados y con el delta ya registrado por el
@@ -409,33 +409,36 @@ function renderAnalitica(){
       `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`
     : `<div class="empty-state"><div class="big">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
 
-  /* --- Distribución por banda de severidad (sobre las líneas base firmadas) --- */
-  const BANDAS = [["Leve (0 – 32)","Leve","var(--ok)"],
-                  ["Moderada (33 – 64)","Moderado","var(--warn)"],
-                  ["Severa (65 – 96)","Severo","var(--bad)"]];
+  /* --- Distribución por banda de severidad (6 bandas §5.13/D4) --- */
+  const BANDAS = IDEA_BANDAS.map((b,i)=>{
+    const min = i===0 ? 0 : IDEA_BANDAS[i-1].max+1;
+    const nombreCorto = b.perfil.split(" (")[0]; // corta el paréntesis descriptivo largo
+    return [`${nombreCorto} (${min} – ${b.max}) · ${b.ns}`, b.perfil, b.color];
+  });
   const nLb = a.lbs.length, sinLB = nAct - a.conLB.length;
   document.getElementById("distChart").innerHTML = BANDAS.map(b=>`
     <div class="hbarrow"><div class="lab">${b[0]}</div>
       <div class="track" style="height:24px"><div class="fill" style="width:${nLb ? a.banda[b[1]]/nLb*100 : 0}%;background:${b[2]}">${a.banda[b[1]]} NNA</div></div></div>
   `).join("") +
-    `<div class="note">Distribución de ${nLb} ${plural(nLb,"línea base IDEA firmada","líneas base IDEA firmadas")} según la banda orientativa del puntaje total. ` +
+    `<div class="note">Distribución de ${nLb} ${plural(nLb,"línea base IDEA firmada","líneas base IDEA firmadas")} según la banda orientativa del puntaje total, con el soporte DSM-5-TR orientativo asociado. ` +
     (sinLB ? `Quedan fuera ${sinLB} ${plural(sinLB,"NNA activo sin línea base firmada","NNA activos sin línea base firmada")}.`
            : `Todos los NNA activos tienen su línea base firmada.`) + `</div>`;
 }
 
-// Heatmap talleres × escalas
+// Heatmap talleres × escalas — datos ilustrativos (§5.1.3, fuera de alcance).
+// Los nombres se alinean con los 14 reales del prototipo (§5.14 / D5); los valores no.
 const talleres = [
-  ["Habilidades sociales",[2.1,1.4,0.8,1.0]],
-  ["Lenguaje y comunicación",[1.2,2.0,0.5,0.9]],
-  ["Motricidad",[0.6,0.4,1.1,0.3]],
-  ["Juego simbólico",[1.0,0.8,0.6,1.8]],
-  ["Música y expresión",[0.9,1.1,0.7,1.2]],
-  ["Vida diaria (AVD)",[0.4,0.3,1.6,0.2]]
+  ["Taller de habilidades sociales",[2.1,1.4,0.8,1.0]],
+  ["Taller de cuentos y estimulación del lenguaje",[1.2,2.0,0.5,0.9]],
+  ["Educación Física",[0.6,0.4,1.1,0.3]],
+  ["Actividades lúdicas y de juego",[1.0,0.8,0.6,1.8]],
+  ["Taller de música y expresión",[0.9,1.1,0.7,1.2]],
+  ["Taller de higiene y AVD",[0.4,0.3,1.6,0.2]]
 ];
 const heatColor = v => v>=1.5 ? "#0E8F7E" : v>=0.9 ? "#6FBF9E" : v>=0.4 ? "#D9C26B" : "#C9CFD8";
 document.getElementById("heatTable").innerHTML =
   `<tr><th class="row">Taller</th><th>Rel. Soc.</th><th>Comun.</th><th>Anticip.</th><th>Simbol.</th></tr>` +
-  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td style="background:${heatColor(v)}">${v.toFixed(1)}</td>`).join("")}</tr>`).join("");
+  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td><div class="heat-cell" style="background:${heatColor(v)}">${v.toFixed(1)}</div></td>`).join("")}</tr>`).join("");
 
 // La distribución por banda de severidad se calcula en renderAnalitica() (más arriba),
 // junto con los KPIs y los dos gráficos por escala.

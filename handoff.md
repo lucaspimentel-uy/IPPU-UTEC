@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-15
+> - **Última actualización:** 2026-08-16
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 y M12.7 hechos** (2026-08-15): **38 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 sube a 36 con `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24; M12.7 sube a 38 con `ateneo` + `ateneo_acuerdo`), **240 tests**. **Siguen M12.5 y M12.6**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie. ⚠️ **M12.6 arranca con §5.26 ya decidida** (nomenclatura `hce_id` = pertenencia · `hce_<calificador>_id` = referencia) y con §5.22. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
@@ -573,11 +573,63 @@ nada, divergiendo en silencio.
 - Escrito también en `backend/docs/esquema-datos-v2.md` §1 (comentario `%%` del ER) y §2.5, y fijado por
   `test_el_ateneo_no_tiene_columna_hce_id`.
 
+### 5.27 (F1) Se abre una ronda de alineación de la demo v4.1 con el Prototipo v4 (2026-08-16, Samuel)
+La demo dejó de estar alineada con las decisiones que M12 fue tomando en el backend (bandas de 3 tramos
+vs. 6, talleres inventados vs. los 14 reales, grupos por letra vs. por color, cita Rivière 1997 vs.
+1997/2002). Aunque **M12 tiene la demo como no-goal** (plan §2), estas divergencias son deuda visual
+para cualquiera que abra la demo esperando que refleje el modelo institucional. Se abre una **ronda
+paralela sobre la demo** — no reemplaza M12, va aparte.
+
+- **Alcance de esta ronda: sólo alineaciones** de lo que ya existe con el Prototipo v4. **No** se
+  agregan módulos nuevos (HCE-SEV, HCE-INC, HCE-PAI, Ateneos) — eso queda para rondas posteriores si
+  se decide. Cambios concretos en §13 (bitácora 2026-08-16).
+- **§5.2 sigue en pie.** La demo no tiene backend, sólo `demo/*` se toca.
+- ⚠️ **Divergencia acotada con §5.18 (D9) — a propósito.** El backend usa **`grupo.id` serial + `nombre`
+  por color + `UNIQUE(nombre, anio)`** porque necesita distinguir «Azul 2026» de «Azul 2027» (§5.18). La
+  demo usa **el color como identidad** (`GRUPOS[i].id = "Azul"`) porque **no tiene concepto de año** en
+  el seed y meter serial + `anio` obligaría a inventar un modelo que la demo no representa. **No
+  contradice §5.18:** la propiedad de dominio que D9 fija —«los grupos son por color»— se cumple; lo
+  que difiere es la implementación. El día que la demo hable con la API (Fase 3), esto se reconcilia.
+- ⚠️ **Grupo E ("Multiedad — taller abierto") retirado de la demo.** El prototipo v4 tiene exactamente
+  4 grupos por color; el E era invención de la demo original y **ningún NNA seed lo usaba** (verificado
+  antes de retirar). El `USUARIO.grupos` y `EQUIPO` se ajustaron para no referenciarlo. Si en el
+  dominio real IPPU tiene un espacio multiedad, se agrega como grupo o como categoría aparte.
+- ⚠️ **`ALERTA_DELTA` pasa a ser derivado** del catálogo `deltaInterpreta` (busca el mayor Δ con
+  `alerta:true`) en vez de constante suelta `-7`. Mismo criterio sin drift que §5.20/§5.24: una sola
+  fuente de verdad. Verificado: sigue devolviendo `-7`.
+
+**Lo que esta ronda NO habilita:** tocar decisiones de §5.2, agregar módulos nuevos a la demo sin abrir
+otra ronda, ni reemplazar los 60 descriptores del IDEA por las paráfrasis del prototipo (M12.1
+lo decidió — los nuestros son texto literal de Rivière).
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
+- [ ] **Ronda de alineación de la demo v4.1 con el Prototipo v4 · COMMITEADA, pendientes de verificación** (Samuel + Lucas, 2026-08-16, §5.27). **6 alineaciones aplicadas** (cita Rivière · bandas IDEA 6 tramos · Δ con acción · 14 talleres · grupos por color · vocabulario ya cumplido) + 2 fixes de layout (heatmap, ancho de main). **Commiteada en `main` el 2026-08-16** por Lucas para desbloquear la sesión F1-nav que arrancó a continuación (`demo/F1-navegacion`). **Falta post-commit (migradas de pre-commit):** **(a)** verificar visualmente en navegador (doble clic en `demo/index.html`, recorrer Analítica · Grupos · alta de NNA · expedientes) — solapa parcialmente con la verificación de §6 de F1-nav; **(b)** re-baseline del **fingerprint Playwright** (`demo/verificacion/`) — 3 pasos rompen a propósito (bandas, talleres, grupos); Playwright no estaba instalado en el clone al momento del commit. **Deudas nuevas:** el catálogo de talleres ahora tiene los 14 pero **sin gestión** (retirar/agregar, orientación a grupos) — la demo carga nombres, no administra; anotado como absorción parcial de D5 (§5.14). Cuando la demo incorpore HCE-SEV en una ronda futura, `p.apoyo` de `datos.js` pasa a derivarse (deuda que ya venía de §5.24).
+  - **Notas de Samuel al cerrar sesión (2026-08-16) para la próxima ronda:**
+    - **FALTA agregar como módulos nuevos** (no entraron en las alineaciones, requieren ronda propia):
+      - **PAI INAU** (= HCE-PAI, Propuesta de Atención Individual) — 15 secciones + tablas hijas
+        (objetivos, evaluación PAI anterior, equipo, coordinaciones con 6 filas fijas). El más grande.
+        Sección VII y XI son referencias (carga única desde HCE-00/ORG/LB/PA/PB/SEV), decidido en §5.22.
+      - **HCE-INC** (Inclusión educativa, dentro del expediente) — ficha (`centro`, `tipoCentro`, `grado`,
+        `modalidad`, referente educativo, estado) + **bitácora** con 5 catálogos (TIPOS, ESTADOS, TEMAS,
+        MEDIOS, ROLES). `sensible` derivado (`tema === 'Clínica — sensible'`). No hay catálogo de
+        centros educativos en el prototipo — es texto libre.
+      - **Ateneos clínicos y jornadas de capacitación** (vista transversal, no por NNA) — una sola
+        entidad `DB.ateneos[]` con **4 tipos** (`AT_TIPOS`: Ateneo clínico · Ateneo de grupo · Ateneo
+        institucional · Jornada de capacitación); correlativo `AT-2026-001`. Campos según tipo. Ver
+        §5.25 y §5.26 del backend por convenciones de nomenclatura y XOR con HCE-DOC.
+      - *(Pendiente de decidir si entra: **HCE-SEV** — módulo chico, va entre CI e IDEA. La demo hoy
+        tiene `p.apoyo` como string suelto que se derivaría de este módulo.)*
+    - **CORREGIR** (chico, dentro del alcance actual):
+      - **Panel inicial** (vista Inicio, no expediente): tiene una **referencia a «Eval. intermedia»**
+        que quedó colgada. La Eval. intermedia fue reemplazada por PA/PB en M5 (v3.7, §M5.2 del plan);
+        el código sigue en `demo/js/` sin exponerse — pero el panel inicial la menciona. Buscar en
+        `index.html` y `js/ui-core.js`.
+      - **Pestaña Analítica Institucional**: también tiene la misma referencia a Eval. intermedia,
+        corregir en el mismo pasaje.
 - [ ] **M11 · Backend v2 — EN CURSO.** Desde §5.6 no tiene dueño exclusivo — quien lo tome, avisa. Las 3 decisiones de arquitectura están cerradas (§5.2) y el esquema v2 escrito (`backend/docs/esquema-datos-v2.md`).
   - [x] ~~**M11.1** infra Postgres-only~~ → **HECHO** (2026-08-07, rama `feat/m11-backend-v2`). `docker-compose.yml` con Postgres 16 en `127.0.0.1:5440` (§5.9) + base `ippu_test` aparte para pytest; `config.py` **rechaza al arrancar** cualquier URL que no sea Postgres; Alembic sin el batch-mode de SQLite y con `compare_type`; convención de nombres de constraints para que el autogenerate sea reproducible entre las tres máquinas.
   - [x] ~~**M11.2** modelos + migración + catálogos~~ → **HECHO** (2026-08-07). **28 tablas** en 4 módulos (`catalogos` · `identidad` · `modulos` · `transversales`), migración inicial única, y seed idempotente de catálogos **generado desde la demo v4.1** (12 dimensiones IDEA + 60 descriptores, 24 ítems IPPU-TEA, baremo, 12 categorías documentales, 4 recordatorios, 8 talleres, 3 servicios). Se retiró el backend v1 completo (modelos/schemas/routers/seed/tests + 3 migraciones): hablaba del modelo pre-Documento Técnico. **Verificado:** reconstrucción limpia (drop schema → `alembic upgrade head` → seed) + **21 tests estructurales en verde** + API levanta.
@@ -1127,3 +1179,88 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **`README.md` estaba desactualizado desde M12.4**, no desde esta sesión: decía «34 tablas y 92 tests
     (M12.0 a M12.3)». Se puso al día con M12.4 + M12.7 y con la guardia de entorno de pytest.
     (Lucas + Claude)
+
+- **2026-08-16** — **Ronda de alineación de la demo v4.1 con el Prototipo v4** (Samuel; commit hecho
+  por Lucas). Ronda **paralela a M12**, sobre la demo (no-goal de M12). Decisión en **§5.27 (F1)**.
+  **Commiteada en `main`** el 2026-08-16 para desbloquear la sesión F1-nav que arrancó a continuación
+  (`demo/F1-navegacion`, ver bitácora del mismo día). Verificación visual + re-baseline del fingerprint
+  quedaron pendientes post-commit (ver §6 y la anotación "NO verificado" más abajo).
+  - **Alcance: solo alineaciones sobre lo que ya existe.** No se agregaron módulos nuevos (HCE-SEV,
+    HCE-INC, HCE-PAI, Ateneos quedan para otra ronda si se decide). §5.2 y §5.5 intactos.
+  - **6 alineaciones aplicadas:**
+    1. **Cita Rivière 1997 → 1997/2002** (`catalogos.js:102`, comentario del bloque). Cierra la deuda
+       que M12.1 ya había arreglado en el backend pero no en la demo.
+    2. **Vocabulario «grave» → «severo» (§8.1): ya cumplido.** La única ocurrencia de "grave" en toda
+       la demo era un **comentario que cita la regla** (`hce-doc-org-vf.js:243`). Nada que cambiar.
+    3. **Bandas del IDEA: 3 tramos → 6 con soporte DSM-5-TR** (§5.13 / D4). Reemplazadas «Leve
+       0–32 · Moderada 33–64 · Severa 65–96» por las 6 del prototipo (Muy leve ≤15 · Leve ≤30 · Leve a
+       moderado ≤55 · Moderado ≤75 · Moderado a severo ≤90 · Severo a muy severo >90), cada una con su
+       nivel DSM-5-TR y su texto orientativo **copiado tal cual** del prototipo (`ideaInterpreta`):
+       reescribirlo rompía la neutralidad metodológica, igual que en M12.1. Introducida constante
+       `IDEA_BANDAS` en `catalogos.js` con `perfil`, `ns`, `color`, `txt`. `bandaIdea()` y
+       `colorBanda()` mantienen su firma (devuelven strings) — no rompe usos en `flujo.js` ni
+       `expediente.js`. En `ui-core.js` la distribución por banda ahora se construye desde
+       `IDEA_BANDAS`, con el `ns` visible en el label.
+    4. **Interpretación del Δ con 6 tramos y acción sugerida** (M12.1). La demo ya tenía los 6 rangos;
+       faltaba el campo `a` (acción). Agregado con **texto textual del prototipo** en los 6 tramos.
+       El tramo `Regresión significativa` lleva `alerta:true`. **`ALERTA_DELTA` pasa a ser derivado**
+       del catálogo (busca el mayor Δ con `alerta:true`) en vez de constante suelta `-7`. Verificado:
+       sigue devolviendo `-7`. Una sola fuente de verdad, criterio de §5.20/§5.24.
+    5. **Los 14 talleres reales del prototipo** (§5.14 / D5) reemplazan a los 8 inventados. Ninguno
+       coincidía exactamente. **Mapeo semántico** aplicado por texto en 4 archivos: Habilidades sociales
+       → *Taller de habilidades sociales* · Lenguaje y comunicación → *Taller de cuentos y estimulación
+       del lenguaje* · Motricidad → *Educación Física* · Juego simbólico / Actividades lúdicas →
+       *Actividades lúdicas y de juego* · Música y expresión → *Taller de música y expresión* · Vida
+       diaria (AVD) → *Taller de higiene y AVD* · Arte y plástica → *Taller de expresión plástica* ·
+       Psicomotricidad → *Actividades sensoriales* · Cocina → *Taller de cocina*. Archivos tocados:
+       `index.html` (14 chips en `#tallerPicker`, antes 8), `datos.js` (8 NNAs), `grupos-usuario.js`
+       (4 grupos + fix `de 18 institucionales` → `de 14`), `ui-core.js` (heatmap ilustrativo con nombres
+       alineados; valores intactos: §5.1.3 sigue fuera de alcance). **Absorción parcial:** los 14
+       nombres se cargan pero la demo **no gestiona** el catálogo (retirar, orientar a grupos, reordenar)
+       — hoy es lista fija en el picker. Anotado en §6 como deuda.
+    6. **Grupos por color** (§5.18 / D9): A → Azul · B → Celeste · C → Naranja · D → Verde. **Grupo E
+       ("Multiedad — taller abierto") retirado** — el prototipo tiene exactamente 4 grupos por color,
+       y `datos.js` no tenía ningún NNA en E (verificado antes de retirar). `USUARIO.grupos:["A","E"]`
+       → `["Azul"]`. `EQUIPO[i].g` remapeado en las 4 filas. `<select id="f_grupo">` con 4 options.
+       ⚠️ **Divergencia acotada con §5.18 — explicada en §5.27:** la demo usa `GRUPOS[i].id = "Azul"`
+       (nombre como identidad) en vez del `id serial + UNIQUE(nombre, anio)` del backend, porque la
+       demo **no tiene concepto de año**. Se reconcilia en Fase 3 cuando la demo hable con la API.
+       Colateral positivo: la búsqueda `deburr("azul")` ya no colisiona con nombres de NNA que
+       contengan la letra (antes `"a"` matcheaba grupo A y todos los que tenían «a» en el nombre).
+  - **2 fixes de layout aplicados sobre la marcha** (reportados por Samuel al abrir la demo):
+    1. **Heatmap desbordado y luego con cuadros desproporcionados** (`css/estilos.css` §Analítica +
+       `ui-core.js:441`). Causa raíz: los nombres nuevos son 2-3x más largos que los viejos, y el CSS
+       tenía `white-space:nowrap` en `.heat th.row`. Primer fix: envolver con `white-space:normal` +
+       `word-break:break-word` y `table-layout:fixed` para que las columnas respeten el ancho. Efecto
+       secundario: filas con nombres largos crecían en altura y estiraban los `td` de valor (que sólo
+       tenían `height:30px` como mínimo). Segundo fix: mover el cuadrito de color a un `<div
+       class="heat-cell">` con dimensiones **fijas** (42×30) dentro del TD, así el visual del heatmap
+       queda desacoplado de la altura de la fila.
+    2. **Espacio en blanco a la derecha en todas las vistas** (`css/estilos.css:73`). Causa: el `main`
+       tenía `max-width:1180px` — en pantallas anchas dejaba franja vacía después del sidebar (218px).
+       Sacado el `max-width`, agregado `min-width:0` (previene el bug clásico de flex donde un ítem
+       ignora `flex:1` por contenido ancho). `pagedesc` mantiene su `max-width:760px` porque una línea
+       de párrafo muy larga se lee mal — sólo cambia el contenedor de cards/tablas/gráficos. El
+       `@media print { main{max-width:none} }` de línea 533 seguía siendo redundante en runtime; ahora
+       coincide con el layout normal.
+  - **Archivos modificados (6):** `demo/index.html` · `demo/css/estilos.css` · `demo/js/catalogos.js`
+    · `demo/js/datos.js` · `demo/js/grupos-usuario.js` · `demo/js/ui-core.js`. Diff bruto:
+    +96 / −69 en los 5 primeros (antes del fix de layout); el layout suma unas líneas más.
+  - **Verificación hasta acá:** **`node --check` en los 7 JS de `demo/js/` → OK** (todos parsean).
+    Chequeo derivado con `vm` en Node: `bandaIdea(58)` = «Moderado» (**§12-A crítico intacto** —
+    Martín sigue en su banda), bordes 0/15/16/30/58/75/90/96 correctos, `ALERTA_DELTA` = −7. Búsqueda
+    por grupo con `"azul"` y `"grupo azul"` — funciona por lectura estática.
+  - **NO verificado al momento del commit (deuda post-commit, ver §6):**
+    - **Fingerprint Playwright** (`demo/verificacion/`): 3 pasos rompen a propósito (`banda` en analítica,
+      talleres del heatmap, grupos en modelo/expediente). Hay que re-baseline con la demo actualizada,
+      como se hizo en v4.1 con `D3_analitica_derivada`. Playwright **no estaba instalado en el clone al
+      momento del commit** (no es dependencia del repo, §5.5.4) — se instala aparte con el comando del
+      README de `demo/verificacion/`.
+    - **Visual en navegador**: abrir `demo/index.html` con doble clic y recorrer Analítica · Grupos ·
+      alta de NNA (picker de 14 talleres) · expedientes (los 8 NNAs). Los 2 fixes de layout se
+      dispararon justamente por hacer este paso — quedan pendientes de revisar de nuevo con el fix.
+      **Solapa parcialmente con la verificación visual de F1-nav** (§6.2 del prompt): Grupos y
+      expedientes los recorre F1-nav; Analítica y alta de NNA no.
+  - **§12.3 (coordinación):** Samuel tomó `demo/*` en esta sesión — avisar en el grupo cuando se
+    haga el push, para que Lucas y Victor sincronicen antes de tocar la demo. Push hecho el 2026-08-16
+    junto con el commit. (Samuel + Lucas + Claude)

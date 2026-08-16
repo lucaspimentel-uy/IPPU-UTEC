@@ -12,12 +12,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Sofía", apellido:"R.", nac:"2015-03-12", edad:11, sexo:"Femenino",
     ci:"5.789.123-4", loc:"Montevideo", referente:"Marta R. (madre)", tel:"099 456 789",
-    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    grupo:"Celeste", tecnico:"Lic. Torres — Psicopedagogía",
     dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2019-08-20",
     deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 2 — Requiere apoyo sustancial",
     antec:"Embarazo y parto sin complicaciones. Retraso en aparición del lenguaje. Sin antecedentes familiares de TEA.",
     med:"Ninguna", alerta:"Hipersensibilidad auditiva a ruidos fuertes",
-    talleres:["Habilidades sociales","Lenguaje y comunicación","Música y expresión"],
+    talleres:["Taller de habilidades sociales","Taller de cuentos y estimulación del lenguaje","Taller de música y expresión"],
     activo:true,
     anamnesis:{
       motivo:"Derivada por dificultades en la interacción social y del lenguaje; ingresa para abordaje interdisciplinario.",
@@ -34,12 +34,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Martín", apellido:"G.", nac:"2017-06-05", edad:9, sexo:"Masculino",
     ci:"6.012.345-1", loc:"Canelones", referente:"Pablo G. (padre)", tel:"098 222 111",
-    grupo:"A", tecnico:"Dr. González — Psicología",
+    grupo:"Azul", tecnico:"Dr. González — Psicología",
     dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2021-05-14",
     deriv:"Centro de Diagnóstico Temprano — INAU", apoyo:"Grado 2 — Requiere apoyo sustancial",
     antec:"Detección a los 3 años por la educadora del CAIF. Buena respuesta a intervención temprana.",
     med:"Ninguna", alerta:"—",
-    talleres:["Habilidades sociales","Lenguaje y comunicación","Juego simbólico","Motricidad"],
+    talleres:["Taller de habilidades sociales","Taller de cuentos y estimulación del lenguaje","Actividades lúdicas y de juego","Educación Física"],
     activo:true,
     anamnesis:{
       motivo:"Detección temprana en el CAIF; ingresa para continuar intervención en habilidades sociales y lenguaje.",
@@ -58,12 +58,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Valentina", apellido:"P.", nac:"2013-11-22", edad:13, sexo:"Femenino",
     ci:"5.345.678-9", loc:"Montevideo", referente:"Laura P. (madre)", tel:"091 777 333",
-    grupo:"C", tecnico:"Lic. Pereira — Fonoaudiología",
+    grupo:"Naranja", tecnico:"Lic. Pereira — Fonoaudiología",
     dx:"TEA con discapacidad intelectual asociada", dxFecha:"2017-02-10",
     deriv:"Neuropediatría — Casa de Galicia", apoyo:"Grado 3 — Requiere apoyo muy sustancial",
     antec:"Diagnóstico a los 4 años. Uso de comunicación aumentativa (pictogramas).",
     med:"Risperidona 0,5 mg", alerta:"Crisis ante cambios bruscos de rutina",
-    talleres:["Lenguaje y comunicación","Vida diaria (AVD)","Psicomotricidad"],
+    talleres:["Taller de cuentos y estimulación del lenguaje","Taller de higiene y AVD","Actividades sensoriales"],
     historial:[
       {tipo:"alta", fecha:"2022-04-12", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Pereira."},
       {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Pereira", score:55, total:96},
@@ -73,12 +73,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Joaquín", apellido:"M.", nac:"2018-01-30", edad:8, sexo:"Masculino",
     ci:"6.234.567-8", loc:"Montevideo", referente:"Sofía M. (madre)", tel:"099 888 444",
-    grupo:"A", tecnico:"Dr. González — Psicología",
+    grupo:"Azul", tecnico:"Dr. González — Psicología",
     dx:"TEA — en proceso diagnóstico", dxFecha:"2025-11-03",
     deriv:"Pediatría — policlínica barrial", apoyo:"Grado 1 — Requiere apoyo",
     antec:"En proceso de confirmación diagnóstica. Buen nivel de lenguaje, dificultades en flexibilidad.",
     med:"Ninguna", alerta:"—",
-    talleres:["Habilidades sociales","Juego simbólico"],
+    talleres:["Taller de habilidades sociales","Actividades lúdicas y de juego"],
     historial:[
       {tipo:"alta", fecha:"2025-12-01", titulo:"Alta en HCE", desc:"Ingreso reciente. Expediente creado por Dr. González."},
       {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Dr. González", score:31, total:96}
@@ -87,12 +87,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Lucía", apellido:"F.", nac:"2014-09-08", edad:12, sexo:"Femenino",
     ci:"5.456.789-0", loc:"San José", referente:"Diego F. (padre)", tel:"092 555 666",
-    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    grupo:"Celeste", tecnico:"Lic. Torres — Psicopedagogía",
     dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2018-07-19",
     deriv:"Neuropediatría — Hospital de San José", apoyo:"Grado 2 — Requiere apoyo sustancial",
     antec:"Diagnóstico a los 4 años. Escolarizada con maestra de apoyo.",
     med:"Ninguna", alerta:"Selectividad alimentaria importante",
-    talleres:["Habilidades sociales","Arte y plástica","Vida diaria (AVD)"],
+    talleres:["Taller de habilidades sociales","Taller de expresión plástica","Taller de higiene y AVD"],
     historial:[
       {tipo:"alta", fecha:"2023-02-20", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Lic. Torres."},
       {tipo:"idea", fecha:"2026-01-15", titulo:"Evaluación IDEA — inicial", desc:"Período Enero 2026 · Evaluador: Lic. Torres", score:47, total:96},
@@ -102,12 +102,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Tomás", apellido:"D.", nac:"2016-04-17", edad:10, sexo:"Masculino",
     ci:"5.901.234-5", loc:"Montevideo", referente:"Carla D. (madre)", tel:"094 333 222",
-    grupo:"C", tecnico:"Dra. Silva — Neuropediatría",
+    grupo:"Naranja", tecnico:"Dra. Silva — Neuropediatría",
     dx:"TEA con discapacidad intelectual asociada", dxFecha:"2020-10-05",
     deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 3 — Requiere apoyo muy sustancial",
     antec:"Diagnóstico a los 4 años. Sin evaluación IDEA registrada aún en el ciclo 2026.",
     med:"Ninguna", alerta:"—",
-    talleres:["Psicomotricidad","Vida diaria (AVD)"],
+    talleres:["Actividades sensoriales","Taller de higiene y AVD"],
     activo:false, bajaFecha:"2026-05-20",
     historial:[
       {tipo:"alta", fecha:"2024-08-30", titulo:"Alta en HCE", desc:"Ingreso al programa. Expediente creado por Dra. Silva."},
@@ -117,12 +117,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Bruno", apellido:"D.", nac:"2019-02-14", edad:7, sexo:"Masculino",
     ci:"6.345.678-2", loc:"Montevideo", referente:"Carmen D. (madre)", tel:"099 111 222",
-    grupo:"A", tecnico:"Dr. González — Psicología",
+    grupo:"Azul", tecnico:"Dr. González — Psicología",
     dx:"TEA — en proceso diagnóstico", dxFecha:"2026-03-10",
     deriv:"Pediatría — policlínica barrial", apoyo:"Grado 1 — Requiere apoyo",
     antec:"Ingreso reciente. Aún sin evaluación IDEA en el ciclo.",
     med:"Ninguna", alerta:"—",
-    talleres:["Habilidades sociales","Juego simbólico"],
+    talleres:["Taller de habilidades sociales","Actividades lúdicas y de juego"],
     activo:true,
     anamnesis:{
       motivo:"Ingreso reciente derivado de pediatría para valoración interdisciplinaria.",
@@ -137,12 +137,12 @@ const NNA = [
   {
     id: ++nnaSeq, nombre:"Camila", apellido:"S.", nac:"2015-08-22", edad:10, sexo:"Femenino",
     ci:"5.678.901-3", loc:"Canelones", referente:"Rosa S. (madre)", tel:"098 444 555",
-    grupo:"B", tecnico:"Lic. Torres — Psicopedagogía",
+    grupo:"Celeste", tecnico:"Lic. Torres — Psicopedagogía",
     dx:"TEA — Trastorno del Espectro Autista", dxFecha:"2020-04-18",
     deriv:"Neuropediatría — Hospital Pereira Rossell", apoyo:"Grado 2 — Requiere apoyo sustancial",
     antec:"Última evaluación IDEA en 2025; pendiente la del ciclo actual.",
     med:"Ninguna", alerta:"—",
-    talleres:["Habilidades sociales","Arte y plástica"],
+    talleres:["Taller de habilidades sociales","Taller de expresión plástica"],
     activo:true,
     anamnesis:{
       motivo:"Seguimiento anual en el programa.",

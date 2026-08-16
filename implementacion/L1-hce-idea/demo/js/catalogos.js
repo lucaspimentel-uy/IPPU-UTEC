@@ -11,8 +11,19 @@ function tieneIdeaAnio(nna, anio){ return ideaEvals(nna).some(e => anioDe(e.fech
 /* M4: "pendiente" deja de ser anual — es no tener la línea base IDEA (HCE-LB) firmada. */
 function tieneLBFirmada(nna){ return !!(nna.flujo && nna.flujo.lb.firmado); }
 function pendienteIdea(nna){ return nna.activo && !tieneLBFirmada(nna); }
-const bandaIdea  = s => s>=65 ? "Severo" : s>=33 ? "Moderado" : "Leve";
-const colorBanda = s => s>=65 ? "var(--bad)" : s>=33 ? "var(--warn)" : "var(--ok)";
+/* 6 bandas del IDEA con soporte DSM-5-TR (§5.13 / D4, Prototipo v4).
+   Texto orientativo copiado tal cual (M12.1): es deliberadamente neutro. */
+const IDEA_BANDAS = [
+  {max:15, perfil:"Muy leve",                                                ns:"Nivel 1",   color:"var(--ok)",   txt:"Sugerencia: priorizar los objetivos en las dimensiones del IDEA con mayor puntaje individual."},
+  {max:30, perfil:"Leve",                                                    ns:"Nivel 1",   color:"var(--ok)",   txt:"Sugerencia: revisar el perfil por escala del IDEA para focalizar los apoyos donde la afectación relativa es mayor."},
+  {max:55, perfil:"Leve a moderado",                                         ns:"Nivel 1–2", color:"var(--warn)", txt:"Sugerencia: atender especialmente las Escalas 1 y 2 del IDEA (Relación Social y Comunicación) al definir objetivos del semestre."},
+  {max:75, perfil:"Moderado",                                                ns:"Nivel 2",   color:"var(--warn)", txt:"Sugerencia: el perfil por escala del IDEA orienta la priorización de apoyos; valorar en equipo la necesidad de apoyos a la comunicación (Escala 2)."},
+  {max:90, perfil:"Moderado a severo (alta necesidad de apoyo)",             ns:"Nivel 2–3", color:"var(--bad)",  txt:"Sugerencia: perfil de alta necesidad de apoyo; leer las cuatro escalas del IDEA en conjunto para estructurar los apoyos del entorno grupal."},
+  {max:96, perfil:"Severo a muy severo (necesidad de apoyo muy sustancial)", ns:"Nivel 3",   color:"var(--bad)",  txt:"Sugerencia: apoyo muy sustancial en todas las áreas; los objetivos se anclan en las dimensiones del IDEA de mayor puntaje."}
+];
+const ideaInterpreta = t => IDEA_BANDAS.find(b => t <= b.max) || IDEA_BANDAS[IDEA_BANDAS.length-1];
+const bandaIdea  = s => ideaInterpreta(s).perfil;
+const colorBanda = s => ideaInterpreta(s).color;
 /* Totales de la línea base IDEA desde flujo.lb.dim (0–8 | 'NS' | null). */
 function lbTotales(dim){
   const esc=[0,0,0,0]; let total=0, hayNS=false, count=0;
@@ -69,17 +80,24 @@ function calcularDelta(protoA, protoB){
   const a=protTotales(protoA.item), b=protTotales(protoB.item);
   return {esc:[0,1,2,3].map(i=>b.esc[i]-a.esc[i]), total:b.total-a.total};
 }
-/* Interpretación del delta por rango (§5.2). d ≤ −7 en una escala ⇒ alerta institucional. */
+/* Interpretación del delta por rango (§5.2, Prototipo v4 · deltaInterpreta).
+   Texto y acción copiados tal cual del prototipo (M12.1). Un tramo lleva alerta=true:
+   la alerta institucional Δ ≤ −7 se deriva del catálogo, no de un número suelto. */
 function deltaInterpreta(d){
-  if(d>=13) return {t:"Progreso muy significativo", c:"var(--ok)"};
-  if(d>=7)  return {t:"Progreso significativo", c:"var(--ok)"};
-  if(d>=1)  return {t:"Progreso leve", c:"var(--ok)"};
-  if(d===0) return {t:"Sin cambio", c:"var(--ink-2)"};
-  if(d>=-6) return {t:"Regresión leve", c:"var(--warn)"};
-  return {t:"Regresión significativa", c:"var(--bad)"};
+  if(d>=13) return {t:"Progreso muy significativo", a:"Documentar y analizar qué estrategias lo produjeron para replicarlas.", c:"var(--ok)"};
+  if(d>=7)  return {t:"Progreso significativo",     a:"Documentar; mantener la línea de intervención.",                        c:"var(--ok)"};
+  if(d>=1)  return {t:"Progreso leve",              a:"Revisar si los objetivos de esa escala son suficientemente ambiciosos.",c:"var(--ok)"};
+  if(d===0) return {t:"Sin cambio",                 a:"Analizar si el área está consolidada o requiere mayor intensidad.",     c:"var(--ink-2)"};
+  if(d>=-6) return {t:"Regresión leve",             a:"Identificar factores contextuales; revisar estrategias.",               c:"var(--warn)"};
+  return       {t:"Regresión significativa",         a:"Reunión técnica urgente; contacto con familia; posible revisión del plan.", c:"var(--bad)", alerta:true};
 }
 const fmtDelta = d => (d>0?"+":"")+d;
-const ALERTA_DELTA = -7;   // umbral de alerta institucional por escala
+/* Umbral de alerta institucional derivado: el mayor Δ que aún dispara alerta:true.
+   Cambiar el criterio se hace en deltaInterpreta (una sola fuente de verdad). */
+const ALERTA_DELTA = (() => {
+  for(let d=-1; d>=-24; d--) if(deltaInterpreta(d).alerta) return d;
+  return -Infinity; // ningún tramo con alerta
+})();
 
 /* M5.3 · Al firmar el Protocolo B: delta B−A automático + alerta institucional (§5.2).
    Si el PA no está firmado (habilitación excepcional de PB), no hay delta — queda constancia. */
@@ -99,7 +117,7 @@ function calcularDeltasPB(nna){
   }
 }
 
-/* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997 ===============
+/* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997/2002 ===============
    Cada dimensión: array de [puntuación, descriptor_oficial]
    Puntuaciones pares (0,2,4,6,8) = niveles principales
    Puntuaciones impares (1,3,5,7) = casos claramente situados entre dos pares

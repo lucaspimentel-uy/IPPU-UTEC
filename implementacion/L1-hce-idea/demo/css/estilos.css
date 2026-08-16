@@ -70,7 +70,7 @@
   .navitem .ico{width:18px;text-align:center;opacity:.85}
   .sidebar .foot{margin-top:auto;padding:16px 20px;font-size:.68rem;color:#6E879E;border-top:1px solid #234059}
 
-  main{flex:1;padding:26px 30px 60px;max-width:1180px}
+  main{flex:1;padding:26px 30px 60px;min-width:0}
   .crumbs{font-size:.78rem;color:var(--ink-2);margin-bottom:14px}
   .crumbs b{color:var(--ink)}
 
@@ -226,10 +226,14 @@
   .chart-wrap{padding-bottom:34px}
 
   /* ============ ANALÍTICA ============ */
-  .heat{border-collapse:collapse;font-size:.72rem;width:100%}
-  .heat th{font-weight:600;color:var(--ink-2);padding:6px;text-align:center;font-size:.68rem}
-  .heat th.row{text-align:left;white-space:nowrap}
-  .heat td{width:42px;height:30px;text-align:center;border:2px solid #fff;border-radius:5px;font-weight:700;color:#fff}
+  .heat{border-collapse:collapse;font-size:.72rem;width:100%;table-layout:fixed}
+  .heat th{font-weight:600;color:var(--ink-2);padding:6px;text-align:center;font-size:.68rem;vertical-align:middle}
+  .heat th.row{text-align:left;white-space:normal;line-height:1.25;padding:6px 10px 6px 0;word-break:break-word}
+  /* El cuadrito de color vive en un div interior (.heat-cell) con dimensiones fijas.
+     Antes el color estaba en el TD, y cuando una fila crecía por nombres largos el TD
+     se estiraba con ella — de ahí los cuadros desproporcionados. */
+  .heat td{padding:2px;text-align:center;vertical-align:middle}
+  .heat-cell{width:42px;height:30px;margin:0 auto;border-radius:5px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center}
   .legend{display:flex;gap:14px;font-size:.7rem;color:var(--ink-2);margin-top:10px;flex-wrap:wrap}
   .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;font-style:normal}
   .hbarrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:.78rem}

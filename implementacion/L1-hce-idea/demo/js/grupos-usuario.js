@@ -10,28 +10,27 @@
    histórico de solo lectura ("Registro histórico — HCE anterior", §10).
    ===================================================================== */
 
-/* ---------- GRUPOS DE REFERENCIA ---------- */
+/* ---------- GRUPOS DE REFERENCIA ----------
+   §5.18 / D9: los grupos reales de IPPU son por color (Azul · Celeste · Naranja · Verde).
+   La letra A..E era invención de la demo original; el prototipo v4 confirma los 4 colores.
+   El grupo E ("Multiedad — taller abierto") se retira: no existe en el dominio real. */
 const GRUPOS = [
-  {id:"A", franja:"6 – 9 años",  dias:"Lun · Mié · Vie", horario:"9:00 – 12:00",
+  {id:"Azul", franja:"6 – 9 años",  dias:"Lun · Mié · Vie", horario:"9:00 – 12:00",
    encargados:["Dr. González — Psicología","Lic. Pereira — Fonoaudiología"],
-   talleres:["Habilidades sociales","Lenguaje y comunicación","Juego simbólico","Motricidad"],
+   talleres:["Taller de habilidades sociales","Taller de cuentos y estimulación del lenguaje","Actividades lúdicas y de juego","Educación Física"],
    obs:"Grupo de menor edad. Énfasis en intervención temprana y juego."},
-  {id:"B", franja:"9 – 12 años", dias:"Lun · Mié · Vie", horario:"13:00 – 16:00",
+  {id:"Celeste", franja:"9 – 12 años", dias:"Lun · Mié · Vie", horario:"13:00 – 16:00",
    encargados:["Lic. Torres — Psicopedagogía"],
-   talleres:["Habilidades sociales","Música y expresión","Arte y plástica","Vida diaria (AVD)"],
+   talleres:["Taller de habilidades sociales","Taller de música y expresión","Taller de expresión plástica","Taller de higiene y AVD"],
    obs:"Trabajo en habilidades sociales y expresión."},
-  {id:"C", franja:"12 – 15 años", dias:"Mar · Jue", horario:"9:00 – 12:00",
+  {id:"Naranja", franja:"12 – 15 años", dias:"Mar · Jue", horario:"9:00 – 12:00",
    encargados:["Lic. Pereira — Fonoaudiología","Dra. Silva — Neuropediatría"],
-   talleres:["Lenguaje y comunicación","Vida diaria (AVD)","Psicomotricidad"],
+   talleres:["Taller de cuentos y estimulación del lenguaje","Taller de higiene y AVD","Actividades sensoriales"],
    obs:"Mayor proporción de apoyos sustanciales. Foco en autonomía y CAA."},
-  {id:"D", franja:"15 – 18 años", dias:"Mar · Jue", horario:"13:00 – 16:00",
+  {id:"Verde", franja:"15 – 18 años", dias:"Mar · Jue", horario:"13:00 – 16:00",
    encargados:["Lic. Torres — Psicopedagogía"],
-   talleres:["Vida diaria (AVD)","Cocina","Habilidades sociales"],
-   obs:"Preparación para la vida adulta e inserción."},
-  {id:"E", franja:"Multiedad — taller abierto", dias:"Vie", horario:"9:00 – 12:00",
-   encargados:["Dr. González — Psicología"],
-   talleres:["Música y expresión","Actividades lúdicas"],
-   obs:"Espacio recreativo y de integración intergrupal."}
+   talleres:["Taller de higiene y AVD","Taller de cocina","Taller de habilidades sociales"],
+   obs:"Preparación para la vida adulta e inserción."}
 ];
 
 function renderGrupos(){
@@ -42,7 +41,7 @@ function renderGrupos(){
     <div class="kpi"><div class="lab">Grupos de referencia</div><div class="val">${GRUPOS.length}</div><div class="sub">Por edad y modalidad</div></div>
     <div class="kpi"><div class="lab">NNA en seguimiento</div><div class="val ok">${NNA.length}</div><div class="sub">Distribuidos en grupos</div></div>
     <div class="kpi"><div class="lab">Técnicos asignados</div><div class="val purple">${new Set(GRUPOS.flatMap(g=>g.encargados)).size}</div><div class="sub">Encargados de grupo</div></div>
-    <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 18 institucionales</div></div>`;
+    <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 14 institucionales</div></div>`;
   cont.innerHTML = GRUPOS.map(g=>{
     const integrantes = NNA.filter(n=>n.grupo===g.id);
     const intHtml = integrantes.length
@@ -68,12 +67,12 @@ function renderGrupos(){
 }
 
 /* ---------- USUARIO / PERFIL ---------- */
-const USUARIO = {nombre:"Dr. González", rol:"Técnico · Psicología", email:"gonzalez@fundacionippu.uy", cargo:"Técnico de referencia", grupos:["A","E"]};
+const USUARIO = {nombre:"Dr. González", rol:"Técnico · Psicología", email:"gonzalez@fundacionippu.uy", cargo:"Técnico de referencia", grupos:["Azul"]};
 const EQUIPO = [
-  {n:"Dr. González",  e:"Psicología",      g:"A · E"},
-  {n:"Lic. Torres",   e:"Psicopedagogía",  g:"B · D"},
-  {n:"Lic. Pereira",  e:"Fonoaudiología",  g:"A · C"},
-  {n:"Dra. Silva",    e:"Neuropediatría",  g:"C"}
+  {n:"Dr. González",  e:"Psicología",      g:"Azul"},
+  {n:"Lic. Torres",   e:"Psicopedagogía",  g:"Celeste · Verde"},
+  {n:"Lic. Pereira",  e:"Fonoaudiología",  g:"Azul · Naranja"},
+  {n:"Dra. Silva",    e:"Neuropediatría",  g:"Naranja"}
 ];
 function renderUsuario(){
   const cont = document.getElementById("usuarioContent");
