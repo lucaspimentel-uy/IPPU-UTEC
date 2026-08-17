@@ -124,8 +124,10 @@ estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **Lo que asumimos:** el IDEA se aplica **una vez, al ingreso**, como punto de partida. No se repite
 todos los años. Sólo se vuelve a hacer si el niño/a se va y **regresa después de más de un año**.
 
-**Por qué lo asumimos:** así lo indica el Documento Técnico. Pero sabemos que antes se hacía todos
-los años, y queremos estar seguros de que el cambio es real y no una interpretación nuestra.
+**Por qué lo asumimos:** así lo indica el Documento Técnico, un rediseño que hicimos después de
+nuestra primera consulta con ustedes. Pero en esa primera consulta, en junio, usted nos dijo que el
+IDEA se hacía todos los años — y no volvimos a confirmar si eso cambió con el nuevo enfoque. Por eso
+esta es, de todas, la pregunta que más necesitamos que respondan.
 
 **Por qué importa:** es el punto que más nos condiciona. Si en la práctica ustedes lo siguen
 aplicando todos los años, tenemos que rehacer una parte del sistema — y es mucho más simple hacerlo

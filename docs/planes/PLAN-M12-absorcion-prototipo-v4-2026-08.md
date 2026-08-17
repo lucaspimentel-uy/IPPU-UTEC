@@ -458,14 +458,23 @@ Una sola persona.
 - §1.8 datos históricos → estrategia completa (solo IDEA estructurado; resto legacy; acta de cierre;
   coexistencia acotada; verificación por muestreo; metadatos de origen).
 - §2.6 `grupo` → se decide en M12 (D9), con el dato nuevo de que los grupos son por color.
-- De `consulta-a-ippu.md`: **2.1** (IDEA una sola vez), **2.3** (informe anual), **2.5** (áreas/general),
+- De `consulta-a-ippu.md`: **2.3** (informe anual), **2.5** (áreas/general),
   **2.7/2.8** (baremo y su origen), **2.9** (períodos como recordatorios), **2.10** (fotos), **3.1**
   (talleres), **3.6** (quién ve qué, en 4 perfiles).
+
+⚠️ **`consulta-a-ippu.md` §2.1 (IDEA una sola vez) NO cierra.** Estaba en esta lista por inferencia —
+el Prototipo v4 modela `idea` como objeto único por paciente, no como arreglo anual — pero esa es la
+estructura de datos de **nuestra propia herramienta de referencia**, no una confirmación de IPPU. Y
+desde el cuestionario del 15/06/2026 (P10, P12) tenemos lo contrario **por escrito**: Fernando Sierra
+dijo que el IDEA se aplica anualmente y que las evaluaciones no se consolidan. Sigue siendo, de las
+cuatro marcadas ⚠️, la que más pesa — no se acorta en M12.8.
 
 **Siguen abiertos:** §1.2 cortes contra el **anexo del Decreto 72/025** (el prototipo repite los mismos
 que asumimos — confirma qué usa IPPU, no qué dice el decreto) · §1.4 citas de los 24 ítems (ahora tenemos
 el texto exacto de cada una, pero siguen sin verificar) · §1.5 acceso a la HCE actual · §1.6
-confidencialidad · §2.1 ratificar §5.8 · §2.2 rama aparcada · §2.4 numeración de líneas · §2.5 despliegue.
+confidencialidad · **`consulta-a-ippu.md` §2.1** (IDEA una sola vez — ver nota arriba) ·
+`puntos-a-validar.md` §2.1 ratificar §5.8 · §2.2 rama aparcada · §2.4 numeración de líneas · §2.5
+despliegue.
 
 **Nuevos (van a los dos documentos):**
 - **Descriptores IDEA:** si el Manual Unificado corrigió el corrimiento en D3/D4/D6/D12, **¿qué pasa con

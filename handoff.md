@@ -689,7 +689,7 @@ lo decidió — los nuestros son texto literal de Rivière).
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
-- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4.
+- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4. §1.1 ganó cita de fuente primaria (cuestionario 15/06, P10/P12) y se corrigió el plan M12 §4, que la daba por cerrada por error — ver bitácora 2026-08-17.
 - [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
   **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. **Confirmada por el equipo
@@ -1264,3 +1264,22 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **§12.3 (coordinación):** Samuel tomó `demo/*` en esta sesión — avisar en el grupo cuando se
     haga el push, para que Lucas y Victor sincronicen antes de tocar la demo. Push hecho el 2026-08-16
     junto con el commit. (Samuel + Lucas + Claude)
+
+- **2026-08-17** — **Cruce del cuestionario de relevamiento (15/06) contra §2.1: la pregunta del IDEA
+  no cierra sola.** Tarea de notas, **no** es sub-módulo de M12: no toca `app/models/` ni genera
+  migración.
+  - **El hallazgo.** `docs/markdown/Cuestionario IPPU UTEC, respuestas.md` — ya estaba en el repo,
+    nunca se había cruzado contra §2.1 de `consulta-a-ippu.md` — responde P10 y P12 del Bloque 1: la
+    frecuencia de evaluación con IDEA es «Anual» y las evaluaciones «aparecen por año (individual), no
+    hay un histórico consolidado». Es anterior al Documento Técnico que introdujo la línea base única,
+    así que describe la práctica con el sistema viejo — no resuelve la pregunta, pero es la primera
+    evidencia escrita, y va en contra del supuesto vigente.
+  - **Corrección al plan M12 §4.** Tenía a `consulta-a-ippu.md` §2.1 en la lista de preguntas que
+    "cierran solas" en M12.8, por inferencia de que el Prototipo v4 modela `idea` como objeto único
+    (no por confirmación de IPPU). Corregido: sigue abierta, con nota explicando por qué no se acorta.
+  - **Agregado:** cita de fuente en `puntos-a-validar.md` §1.1 · párrafo reformulado en
+    `consulta-a-ippu.md` §2.1, dirigido a Fernando, sin tocar la pregunta ni los checkboxes.
+  - Nota aparte, sin acción: P31 del mismo cuestionario confirma que existe un «Área de Inclusión»
+    (hoy todo en Drive, sin planilla estructurada) — contexto para cuando se resuelva el punto de
+    catálogo de centros educativos de M12.5. No se creó pregunta nueva por esto.
+  - Sin tests (no aplica). Commit + push a los dos remotos. (Lucas + Claude)

@@ -25,6 +25,14 @@ se repite sólo si hay reingreso a más de 12 meses).
 Técnico, no de una preferencia nuestra. Si en la práctica IPPU sigue aplicando el IDEA todos
 los años, la tabla `idea` cambia de forma.
 
+**Ya tenemos una fuente primaria, no sólo memoria institucional.** El cuestionario de relevamiento
+que Fernando Sierra respondió el 15/06/2026 (`docs/markdown/Cuestionario IPPU UTEC, respuestas.md`,
+P10 y P12) dice, en sus palabras: la frecuencia de evaluación con IDEA es **«Anual»**, y **«las
+evaluaciones aparecen por año (individual). No hay un histórico consolidado.»** Es anterior al
+Documento Técnico (jul-2026) que introdujo la línea base única, así que describe la práctica **con
+el sistema viejo**, no una opinión sobre el rediseño — pero es la evidencia más concreta que existe
+hoy de que el supuesto puede no sostenerse.
+
 **Qué bloquea.** Formalmente es la puerta de entrada a M11. Se avanzó igual con M11.1 y M11.2
 porque el riesgo está acotado a **una** de las 28 tablas y corregirla ahora es barato; después
 de M11.3/M11.4 deja de serlo. **Conviene resolverlo antes de seguir con M11.3.**
