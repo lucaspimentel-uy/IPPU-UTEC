@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-16
+> - **Última actualización:** 2026-08-17
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 y M12.7 hechos** (2026-08-15): **38 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 sube a 36 con `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24; M12.7 sube a 38 con `ateneo` + `ateneo_acuerdo`), **240 tests**. **Siguen M12.5 y M12.6**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie. ⚠️ **M12.6 arranca con §5.26 ya decidida** (nomenclatura `hce_id` = pertenencia · `hce_<calificador>_id` = referencia) y con §5.22. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
@@ -607,7 +607,7 @@ lo decidió — los nuestros son texto literal de Rivière).
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
-- [ ] **F1-nav · ajustes de navegación del frontend · SIN COMMITEAR, EN RAMA** (Lucas + Claude, 2026-08-16, ver §13). Rama `demo/F1-navegacion` con **4 cambios aplicados**: KPI Inicio sin bajada, `eval-bar` movida arriba de "Flujo de módulos", barra secundaria de 3 accesos (HCE-DOC/ORG/VF; Contacto familiar EXCLUIDO por no existir como sección) y en Grupos botón de acceso + barra 3 accesos + **bloque nuevo "Técnicos autorizados del grupo"** (§21.1) + cambio de responsables 1/2. `node --check` en verde en los 4 JS modificados. **Falta antes del commit + push:** **(a)** verificar visualmente en navegador (esta sesión no controla browser); **(b)** re-baseline del fingerprint Playwright (Playwright no instalado); **(c)** decidir si se mergea a main directo o vía PR (rama local); **(d)** push a los remotos disponibles. **Deuda nueva:** el cambio de responsable NO queda en HCE-LOG (la bitácora hoy es por NNA, no por grupo; §5.18 y §7). **Pregunta abierta introducida:** definición de «tutor» (`docs/notas/puntos-a-validar.md` §2.10 y §7).
+- [ ] **F1-nav · ajustes de navegación del frontend · PUSHEADA en `demo/F1-navegacion`** (Lucas + Claude, 2026-08-16 → 2026-08-17, ver §13). Rama `demo/F1-navegacion` con **4 cambios de F1-nav (2026-08-16)** + **rework de vista Grupos en F1-nav2 (2026-08-17)**: la Grupos pasó de "todo inline en cards" a **listado + detalle-view separada** alineando con `vGrupos`/`vGrupoDetalle` del Prototipo v4. Detalle con 3 cards (Integrantes con tabla NNA/CIE-11+Soporte/CI·LB·PA·PB·IC/Uso de imagen, Técnicos autorizados condicional a permiso §21.1, Fotografía grupal). `node --check` en verde en los 4 JS modificados. **Falta:** **(a)** verificar visualmente en navegador (esta sesión no controla browser); **(b)** re-baseline del fingerprint Playwright (Playwright no instalado); **(c)** decidir si se mergea a main o queda como PR abierto. **Deudas nuevas:** cambio de responsable sin HCE-LOG (§5.18 y §7); matriz de roles §21.1 pendiente de precisión con IPPU (§7 F1-nav2); formato oficial del Nº de HCE por confirmar (§7 F1-nav2). **Preguntas abiertas:** «tutor» (2026-08-16, §7), permisos §21.1 y formato HC (2026-08-17, §7).
 - [ ] **Ronda de alineación de la demo v4.1 con el Prototipo v4 · COMMITEADA, pendientes de verificación** (Samuel + Lucas, 2026-08-16, §5.27). **6 alineaciones aplicadas** (cita Rivière · bandas IDEA 6 tramos · Δ con acción · 14 talleres · grupos por color · vocabulario ya cumplido) + 2 fixes de layout (heatmap, ancho de main). **Commiteada en `main` el 2026-08-16** por Lucas para desbloquear la sesión F1-nav que arrancó a continuación (`demo/F1-navegacion`). **Falta post-commit (migradas de pre-commit):** **(a)** verificar visualmente en navegador (doble clic en `demo/index.html`, recorrer Analítica · Grupos · alta de NNA · expedientes) — solapa parcialmente con la verificación de §6 de F1-nav; **(b)** re-baseline del **fingerprint Playwright** (`demo/verificacion/`) — 3 pasos rompen a propósito (bandas, talleres, grupos); Playwright no estaba instalado en el clone al momento del commit. **Deudas nuevas:** el catálogo de talleres ahora tiene los 14 pero **sin gestión** (retirar/agregar, orientación a grupos) — la demo carga nombres, no administra; anotado como absorción parcial de D5 (§5.14). Cuando la demo incorpore HCE-SEV en una ronda futura, `p.apoyo` de `datos.js` pasa a derivarse (deuda que ya venía de §5.24).
   - **Notas de Samuel al cerrar sesión (2026-08-16) para la próxima ronda:**
     - **FALTA agregar como módulos nuevos** (no entraron en las alineaciones, requieren ronda propia):
@@ -750,6 +750,19 @@ lo decidió — los nuestros son texto literal de Rivière).
   tutor legal de la familia?** Los tres tienen consecuencias distintas en el modelo. F1-nav implementó
   lo definido (asignar/cambiar responsables 1 y 2 desde el panel §21.1) y NO creó un rol nuevo. Detalle
   en `docs/notas/puntos-a-validar.md` §2.10.
+
+### Abiertas por F1-nav2 (2026-08-17)
+- **Matriz de roles §21.1 — quiénes ven / administran la nómina de Técnicos autorizados del grupo.**
+  El Prototipo v4 y el Manual dicen «esta nómina la administra coordinación». La demo lo simula con
+  un flag `USUARIO.puedeAdministrarTecnicos` y un toggle en `/usuarios`. En el sistema real esto sale
+  del rol asignado (Coordinación / Dirección técnica). Falta que IPPU precise: ¿qué roles ven el
+  bloque? ¿pueden todos verlo pero sólo administrar coordinación, o directamente no lo ven los
+  técnicos comunes? Impacta la matriz de permisos del backend.
+- **Nº de HCE (`HC-YYYY-NNN`).** El Prototipo v4 muestra HC formateado (`HC-2025-014`). La demo no
+  lo tiene como campo; F1-nav2 lo deriva con `nroHC(n) = HC-${año(altaFecha)||actual}-${id.padStart(3,'0')}`.
+  Como los ids seed son 101-108, salen `HC-YYYY-101`..`HC-YYYY-108`. Si IPPU tiene un formato oficial
+  del nº de HCE (probablemente sí — la HCE actual tiene ≈14 años), sustituirlo. Anexado a la lista
+  §1.7 de `puntos-a-validar.md` cuando corresponda.
 
 **Resueltas (movidas desde aquí):** stack backend = **FastAPI + SQLAlchemy + Alembic** (SQLite→Postgres); base = **PostgreSQL** (no MariaDB); alcance del MVP = ronda **M0–M10** sobre la demo + Fases A–D del Documento Técnico §12. **Cortes del baremo:** el prototipo usa exactamente los que asumimos (0–4 / 5–24 / 25–49 / 50–95 / 96–100) con su implicancia — confirma **qué usa IPPU**, no qué dice el decreto, así que el anexo del Decreto 72/025 sigue pendiente. **Talleres:** los 14 reales están en el prototipo (§5.14 / D5); el "8 vs 18" era falso.
 
@@ -1355,3 +1368,82 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **§12.3 (coordinación):** rama `demo/F1-navegacion` local, sin push. Cuando se pushee, avisar
     en el grupo — Lucas retomó `demo/*` en esta sesión después de la F1-alineación de Samuel.
     (Lucas + Claude)
+
+- **2026-08-17** — **F1-nav2 · rework de la vista Grupos: listado + detalle** (Lucas + Claude, rama
+  `demo/F1-navegacion`). Continuación de F1-nav sobre la misma rama. Motivo: al ver la vista Grupos
+  post-F1-nav, quedaba "todo inline en cards" — no coincidía con `vGrupos`/`vGrupoDetalle` del
+  Prototipo v4 (`HCE_IPPU_Prototipo_v4.html:2295-2349`), donde el listado es breve (con link al
+  detalle) y el detalle es una vista dedicada con crumb + header + 3 cards.
+  - **Cambio de paradigma:** de una vista larga con todo inline a **listado plano + detalle-view
+    separada dentro de la misma sección** (`#view-grupos`). Sin cambiar rutas ni sidebar. Estado
+    local `_grupoAbierto` decide qué renderizar; `renderGrupos()` reinicia a listado,
+    `abrirGrupo(gid)` → `renderGrupoDetalle(gid)`.
+  - **Listado (`renderGrupos`, rewrite):** una card por grupo con h2 clickable (`btn-link.h2-link`),
+    dupla técnica en la línea de hint, mini-tabla NNA/firmados-de-5, contador de fotos, botón
+    "Abrir grupo". El KPI grid (`#gruposKpi`) sigue visible; se oculta con `display:none` al abrir
+    detalle. **Se retiran** los ítems que F1-nav (2026-08-16) había puesto inline por card: la
+    barra `.section-nav`, la data-row Encargados (ahora sólo en la nómina §21.1 del detalle), la
+    data-row de Talleres/Días/etc (van al header del detalle). Semánticamente todo sigue vivo, sólo
+    cambia dónde aparece.
+  - **Detalle (`renderGrupoDetalle`, nuevo):** crumb «Grupos de referencia › Grupo X» (link
+    invocando `renderGrupos()`), pagehead con h1 y línea "Técnicos responsables: · · N integrante(s)
+    · Días · Horario", `obs` como bajada en itálica, y **3 cards**:
+    1. **Integrantes y estado del ciclo** — tabla `.grupo-integrantes` con 4 columnas: NNA (nombre
+       + edad + sexo, con `nroHC(n)` derivado y CI abajo), CIE-11 · Soporte (CIE-11 corto sin
+       descripción + `p.apoyo` abajo), CI · LB · PA · PB · IC (5 mini-badges por `estadoModulo`),
+       Uso de imagen (mbadge firmado/bloqueado según `p.autImagen.registrada`).
+    2. **Técnicos autorizados del grupo** — **CONDICIONAL** a `puedeAdministrarTecnicos()` (ver
+       abajo). Si no se ve, en lugar aparece `notice.info` explicando "Nómina §21.1 no visible:
+       tu rol actual (X) no incluye la administración…".
+    3. **Registro fotográfico grupal** — usa `notice.ok`/`notice.warn` según `grupoAutImagen(g.id).ok`,
+       con `uprow` para el form de carga (input file + descripción + botón), thumbnails con
+       placeholder visual (📷). La regla dura §8.4 sigue en `subirFotoGrupo` de recordatorios.js,
+       intacta.
+  - **Permiso §21.1 (nuevo modelo, simplificado para demo):**
+    - `USUARIO.puedeAdministrarTecnicos: false` — flag nuevo, default false porque el USUARIO seed
+      es "Técnico de referencia" (cargo Manual).
+    - Helper `puedeAdministrarTecnicos()` retorna el flag.
+    - Toggle nuevo en `renderUsuario()`: card "Permisos (simulación demo)" con checkbox "Simular
+      rol con acceso a la nómina §21.1 (Coordinación / Dirección técnica)". Handler
+      `toggleCoordinacionDemo(v)` — si el detalle está abierto, re-renderiza para reflejar el cambio
+      instantáneamente. **La demo NO decide qué roles tienen acceso** — eso lo define IPPU; el toggle
+      simula la matriz de permisos que va a implementar el backend.
+    - Bloque §21.1 se render sólo si el flag es true; si no, `notice.info` visible con el
+      motivo. Los handlers (`agregarTecnicoAutorizado`, `quitarTecnicoAutorizado`,
+      `abrirCambioResponsable`, `confirmarCambioResponsable`) siguen igual, pero ahora llaman
+      `_refrescarVistaGrupos()` (nuevo helper) que decide entre `renderGrupos()` o
+      `renderGrupoDetalle(_grupoAbierto)`.
+  - **`todosTecnicosDelGrupo(g)` retocado:** ahora devuelve `{nombre, rol, disciplina, alcance,
+    esResponsable, ixAutorizado}`. Para responsables `rol="Técnico/a responsable 1|2"` y
+    `disciplina=responsable.rol` (Psicología, Fonoaudiología…). Para otros habilitados
+    `rol=disciplina`. Esto matchea la columna "Rol / disciplina" del prototipo v4, donde para los
+    responsables sale «Técnico/a responsable 1» y para los demás la disciplina directamente.
+  - **`nroHC(n)` helper (nuevo):** deriva `HC-YYYY-NNN` a partir de `id` con año de `altaFecha` o
+    año actual como fallback. Formato copiado del prototipo v4 (que muestra `HC-2025-014`). Como
+    los ids seed son 101-108, salen `HC-YYYY-101`..`HC-YYYY-108`. Si IPPU tiene un formato oficial,
+    se sustituye (§7 F1-nav2, nueva pregunta abierta).
+  - **CSS nuevo (`estilos.css`):** `.grupos-grid` (grid auto-fill), `.grupo-card`, `.btn-link.h2-link`
+    (el h2 clickable), `.grupo-mini` (mini-tabla del listado), `.grupo-integrantes` (tabla del
+    detalle), `.notice`/`.notice.ok`/`.notice.warn`/`.notice.info` (boxes reutilizables del
+    prototipo v4), `.uprow` (fila de carga), `.thumbs`/`.thumb`/`.thumb-img`/`.cap` (thumbnails
+    con placeholder 📷 — no hay sistema de archivos real), `.pagehead` (cabecera de página estilo
+    prototipo v4).
+  - **Regla anti-contradicción respetada:** no se toca §5.2 (reglas duras); §8.4 (autorización
+    de imagen) intacta; no se cambia el modelo de datos §21.1 más allá de lo que ya se había
+    decidido en F1-nav (responsable1/2 + tecnicosAutorizados); no se agrega backend.
+  - **Contradicción resuelta:** F1-nav (2026-08-16) había asumido que la vista Grupos era "una
+    sola vista larga" (por eso las barras `.section-nav` inline). En realidad el prototipo v4 la
+    modela como listado + detalle. F1-nav2 corrige esa lectura y adopta el paradigma del prototipo.
+    La `.section-nav` de F1-nav se retira de la vista Grupos (sigue vigente en el expediente,
+    Cambio 3 de F1-nav — ahí el paradigma sí es una vista larga).
+  - **Preguntas abiertas nuevas (§7 F1-nav2):**
+    - Matriz de roles §21.1 — quiénes ven / administran la nómina. Impacta backend.
+    - Formato oficial del Nº de HCE — el `nroHC(n)` derivado puede no coincidir con el usado en la
+      HCE actual (≈14 años).
+  - **Verificación:** `node --check` en verde en `grupos-usuario.js` (+ los 3 JS de F1-nav que no
+    se re-tocaron). **NO** hay recorrida visual en navegador (Claude Code no controla browser).
+    **NO** hay fingerprint Playwright post-cambio (Playwright no instalado). F1-nav2 rompe varios
+    pasos del fingerprint por diseño (nueva estructura de `renderGrupos()`, tabla de integrantes,
+    thumbnails) — cuando se re-baseline habrá que aceptarlos.
+  - **§12.3 (coordinación):** rama `demo/F1-navegacion` (pusheada el 2026-08-16 con F1-nav; se
+    pushea F1-nav2 hoy). Cuando se pushee, avisar en el grupo. (Lucas + Claude)

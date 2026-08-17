@@ -502,6 +502,37 @@
   .tec-aut-alta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .tec-aut-alta input{flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:.8rem}
 
+  /* Vista Grupos · listado + detalle (F1-nav2 2026-08-17). */
+  .grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+  .grupo-card .cardhead h2{margin:0}
+  .btn-link.h2-link{font-size:1.15rem;font-weight:700;color:var(--ink);padding:0;background:none}
+  .btn-link.h2-link:hover{color:var(--orange);text-decoration:underline}
+  .grupo-mini{width:100%;border-collapse:collapse;font-size:.8rem}
+  .grupo-mini td{padding:4px 0;border-bottom:1px dashed var(--line-2,#eef)}
+  .grupo-mini td:first-child{padding-left:0}
+  .grupo-integrantes{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:4px}
+  .grupo-integrantes th{text-align:left;padding:8px;font-weight:700;color:var(--ink-2);border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.4px}
+  .grupo-integrantes td{padding:10px 8px;border-bottom:1px solid var(--line-2,#eef);vertical-align:top}
+  .grupo-integrantes td .btn-link{padding:0;font-size:.9rem}
+  .grupo-integrantes .hint{margin-top:2px}
+  /* Notice boxes reutilizables (info / ok / warn) — Prototipo v4 usa notice n-xxx. */
+  .notice{padding:10px 14px;border-radius:8px;font-size:.82rem;line-height:1.4;border-left:4px solid var(--ink-2);background:#F5F7FA}
+  .notice.ok{border-left-color:var(--ok);background:#EEF7EF}
+  .notice.warn{border-left-color:var(--warn);background:#FDF6EA}
+  .notice.info{border-left-color:var(--orange);background:#FDF3EA}
+  /* Fila de carga (fotos, alta): pattern del prototipo v4. */
+  .uprow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:10px}
+  .uprow input[type="file"],.uprow input[type="text"]{padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:.82rem;width:100%}
+  /* Thumbnails de fotografías grupales (placeholder visual, sin sistema de archivos real). */
+  .thumbs{display:flex;gap:12px;flex-wrap:wrap}
+  .thumb{width:140px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+  .thumb-img{height:80px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:#F0F3F7;color:var(--ink-2)}
+  .thumb .cap{padding:6px 8px;font-size:.72rem;color:var(--ink-2)}
+  /* Cabecera de página tipo Prototipo v4. */
+  .pagehead{margin-bottom:18px}
+  .pagehead h1{margin:0 0 4px 0}
+  .pagehead .pagedesc{margin:4px 0;color:var(--ink-2);font-size:.85rem}
+
   /* ============ IMPRESIÓN (informe → PDF) ============ */
   /* M9 · HCE-VF — valoración funcional (BUND/CIF) */
   .vf-alerta{border-left:4px solid var(--warn);background:#FDF6EA;padding:10px 14px;border-radius:8px;font-size:.8rem;margin:10px 0}
