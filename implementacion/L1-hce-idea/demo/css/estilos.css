@@ -502,6 +502,23 @@
   .tec-aut-alta{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .tec-aut-alta input{flex:1;min-width:140px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;font-size:.8rem}
 
+  /* Vista Inclusión (F1-nav3 2026-08-18) — chips de estado del área. Colores tomados
+     de la paleta demo (--ok / --warn / --bad) para no meter tonos del Prototipo v4. */
+  .inc-chip{display:inline-block;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700;line-height:1.4;border:1px solid transparent;white-space:nowrap}
+  .inc-chip.inc-ok    {background:#E3F4EA;color:var(--ok);   border-color:#9FD0AC}
+  .inc-chip.inc-warn  {background:#FBEEDC;color:var(--warn); border-color:#E6CD8F}
+  .inc-chip.inc-danger{background:#FBE5E5;color:var(--bad);  border-color:#EAA79F}
+  .inc-chip.inc-off   {background:#EEF1F0;color:var(--ink-2);border-color:#CCD6D3}
+  .inc-kpirow{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .kpi.kpi-inc{text-align:center;padding:12px 10px;overflow:hidden}
+  .kpi.kpi-inc .val{font-size:1.6rem;font-weight:800;color:var(--ink);margin-bottom:6px}
+  /* Dentro de los KPI, las etiquetas largas (ej. "Inclusión parcial (horario
+     reducido)") deben poder cortar de línea; en la tabla se mantiene nowrap. */
+  .kpi.kpi-inc .inc-chip{white-space:normal;max-width:100%;font-size:.7rem;padding:4px 10px;line-height:1.25;display:inline-block}
+  .inc-table th,.inc-table td{font-size:.82rem;vertical-align:top}
+  .inc-table td .btn-link{padding:0;font-size:.85rem}
+  .inc-table .hint{margin-top:2px}
+
   /* Vista Grupos · listado + detalle (F1-nav2 2026-08-17). */
   .grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
   .grupo-card .cardhead h2{margin:0}

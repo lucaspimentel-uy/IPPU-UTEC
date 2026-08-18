@@ -56,6 +56,7 @@
     <div class="sec">Institucional</div>
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
+    <button class="navitem" data-view="inclusion"><span class="ico">⇆</span> Inclusión</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
     <div class="foot">v4.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
@@ -397,6 +398,19 @@
       <div id="gruposList"></div>
     </section>
 
+    <!-- ============ VISTA: INCLUSIÓN EDUCATIVA Y SOCIAL (F1-nav3) ============
+         Tablero institucional del área de Inclusión (Prototipo v4, línea 225 / vInclusion
+         línea 2205), portado con la fuente, colores y formato de la demo. Reemplaza la
+         planilla general del área: cada fila se alimenta del módulo HCE-INC por NNA.
+         En esta ronda sólo entra el TABLERO; el módulo HCE-INC individual (ficha +
+         bitácora) se engancha cuando M12 abra HCE-INC como módulo de la HCE. -->
+    <section class="view" id="view-inclusion">
+      <div class="crumbs">Institucional › <b>Inclusión educativa y social</b></div>
+      <h1 class="pagetitle">Tablero del área de Inclusión educativa y social</h1>
+      <p class="pagedesc">Situación de inclusión de todos los NNA del servicio. Reemplaza la planilla general del área: cada fila se alimenta automáticamente del módulo HCE-INC de la HCE individual (dato único, sin doble carga).</p>
+      <div id="inclusionContent"></div>
+    </section>
+
     <!-- ============ VISTA: USUARIO / PERFIL ============ -->
     <section class="view" id="view-usuarios">
       <div class="crumbs">Institucional › <b>Mi usuario</b></div>
@@ -582,5 +596,6 @@
 <script src="js/hce-doc-org-vf.js"></script>
 <script src="js/recordatorios.js"></script>
 <script src="js/grupos-usuario.js"></script>
+<script src="js/inclusion.js"></script>
 </body>
 </html>
