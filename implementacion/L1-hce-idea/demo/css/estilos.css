@@ -105,7 +105,7 @@
   .btn-primary:hover{background:#C26A06}
   .btn-ghost{background:#EEF3F8;color:var(--ink)}
   .btn-ghost:hover{background:#E1EAF2}
-  .btn-link{background:none;color:var(--orange);padding:4px 6px}
+  .btn-link{background:none;border:none;color:var(--orange);padding:4px 6px}
   .btn-link:hover{text-decoration:underline}
   .kpirow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}

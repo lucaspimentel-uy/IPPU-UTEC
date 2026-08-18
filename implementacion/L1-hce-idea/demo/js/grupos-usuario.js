@@ -164,16 +164,16 @@ function renderGrupoDetalle(gid){
     </tr>`;
   }).join("");
   const integrantesCard = `
-    <div class="card"><h3>Integrantes y estado del ciclo</h3>
+    <div class="card"><div class="cardbody"><h3>Integrantes y estado del ciclo</h3>
       ${integrantes.length
         ? `<table class="grupo-integrantes"><thead><tr><th>NNA</th><th>CIE-11 · Soporte</th><th>CI · LB · PA · PB · IC</th><th>Uso de imagen</th></tr></thead><tbody>${filas}</tbody></table>`
         : `<div class="hint">Sin NNA asignados a este grupo (demo).</div>`}
-    </div>`;
+    </div></div>`;
   // Bloque §21.1 — CONDICIONAL al permiso del usuario
   const puede = puedeAdministrarTecnicos();
   const filasTec = todosTecnicosDelGrupo(g);
   const tecnicosCard = puede ? `
-    <div class="card"><h3>Técnicos autorizados del grupo</h3>
+    <div class="card"><div class="cardbody"><h3>Técnicos autorizados del grupo</h3>
       <div class="hint" style="margin-bottom:8px">Los técnicos responsables acceden a la HCE completa de los integrantes del grupo. Los demás técnicos habilitados acceden únicamente a los campos de texto libre donde participan (Manual, §21.1). Esta nómina la administra coordinación.</div>
       <table class="tec-aut-table"><thead><tr><th>Profesional</th><th>Rol / disciplina</th><th>Alcance</th><th></th></tr></thead><tbody>
         ${filasTec.map(t => `<tr>
@@ -190,12 +190,12 @@ function renderGrupoDetalle(gid){
         <input placeholder="Disciplina — Fonoaudiología, T.O., Psicomotricidad…" id="ta_${g.id}_rol">
         <button class="btn btn-ghost btn-mini" onclick="agregarTecnicoAutorizado('${g.id}')">Autorizar</button>
       </div>
-    </div>` : "";
+    </div></div>` : "";
   // Bloque fotografía grupal
   const gi = grupoAutImagen(g.id);
   const fotos = GRUPOS_FOTOS[g.id]||[];
   const fotosCard = `
-    <div class="card"><h3>Registro fotográfico grupal</h3>
+    <div class="card"><div class="cardbody"><h3>Registro fotográfico grupal</h3>
       ${gi.ok
         ? `<div class="notice ok" style="margin-bottom:10px">Todas las familias del grupo registran autorización de uso de imagen. Se habilita la carga de fotografías grupales.</div>
            <div class="uprow no-print">
@@ -207,7 +207,7 @@ function renderGrupoDetalle(gid){
       ${fotos.length
         ? `<div class="thumbs" style="margin-top:12px">${fotos.map(f=>`<div class="thumb"><div class="thumb-img">📷</div><div class="cap">${f.desc||"Sin descripción"}<br><span class="hint">${f.fecha}</span></div></div>`).join("")}</div>`
         : `<div class="hint" style="margin-top:10px">Sin fotografías grupales registradas.</div>`}
-    </div>`;
+    </div></div>`;
   cont.innerHTML = `
     <div class="crumbs"><button class="btn-link" onclick="renderGrupos()">Grupos de referencia</button> › <b>Grupo ${g.id}</b></div>
     <div class="pagehead">
