@@ -1550,3 +1550,37 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **§12.3 (coordinación):** archivo propio `js/ateneos.js`; de compartidos sólo `index.html`,
     `css/estilos.css` y **dos líneas** de `js/expediente.js`. Avisar en el grupo antes de pushear.
     (Samuel + Claude)
+
+- **2026-08-19** (segunda) — **Cruce del handoff contra las preguntas abiertas: seis inconsistencias.**
+  Tarea de notas, sin código. Se corrigieron dos; las otras cuatro quedan anotadas acá.
+  - **Corregida 1 — la rama iba una commit atrás de `main`.** `684c4f5` (el cruce del cuestionario
+    15/06 que **reabre §2.1, IDEA anual**) estaba en `main` y no en `demo/F1-navegacion`, así que en
+    esta rama §2.1 seguía figurando como pregunta que "cierra sola" en M12.8. **Merge, no rebase** —
+    la rama ya está pusheada y Lucas y Victor la tienen. Único conflicto: §13, porque los dos lados
+    agregan bitácora al final; resuelto por fecha real de commit (cruce 09:48 antes de F1-nav2 10:44).
+  - **Corregida 2 — `consulta-a-ippu.md` §3.1 le prometía a IPPU algo que no existe.** Decía, en
+    presente y en el documento que se les manda, que «el sistema los deja agregar, cambiar de orden,
+    indicar a qué grupos se orientan y dar de baja desde la propia aplicación». Eso lo tiene el
+    **Prototipo v4** (`tallerAdd`, `tallerToggle`, `tallerGrupos`), no lo nuestro: §6 de este archivo
+    y `puntos-a-validar.md` §2.9 registran que **la demo carga nombres y no administra**, y que no
+    hay endpoint ni pantalla. Reescrito: se mantiene lo que sí es cierto (el diseño del catálogo y
+    que la participación se guarda **por nombre**, así que dar de baja no borra lo registrado) y se
+    dice explícitamente que **la pantalla todavía no está construida**.
+  - **Anotadas, sin tocar** (cambian documentos que §5 manda modificar por escrito, o tienen dueño):
+    1. **§9 «Datos clave» quedó pre-M12 y se contradice con §5 y §7 de este mismo archivo:** dice
+       **«5 grupos»** (§5.18/D9: son **4** por color, el grupo E se retiró) y **«18 talleres»** (§7
+       Resueltas: son **14** y «el "8 vs 18" **era falso**»). Además `30 INAU + 108 BPS` = 138, no
+       los «~120 NNA» de la misma línea.
+    2. **Los conteos de `puntos-a-validar.md` en §6 están viejos:** dice «9 puntos para IPPU / 8 para
+       el equipo»; el archivo tiene **14** (§1.1–§1.14) y **10** (§2.1–§2.10). Los 6 supuestos sí dan.
+    3. **Dos preguntas de §7 que nunca entraron a `consulta-a-ippu.md`:** el **catálogo de centros
+       educativos** (y P31 del cuestionario ya confirmó que el Área de Inclusión existe y está «todo
+       en Drive, sin planilla estructurada» — es el momento de preguntarlo) y **«tutor»** (§2.10 de
+       `puntos-a-validar.md`; está clasificada como punto de equipo, pero el fondo —si hay un
+       referente por NNA distinto del técnico responsable— sólo lo contesta IPPU).
+    4. **F1-nav3 (Inclusión, commit `648cb04`) sigue sin entrada en esta bitácora ni en §6.** La
+       tiene que completar quien la hizo; esta sesión no inventa lo que se decidió ahí.
+  - **Cruzó consistente, sin acción:** las dos divergencias de F1-nav4 coinciden con lo ya decidido
+    en `puntos-a-validar.md` §1.13 (prefijo único `AT-`) y §1.14 (correlativo de registración), y la
+    consulta ya las pregunta en §3.14. §3.13 pregunta por el ateneo de grupo, que es justamente el
+    silencio que la demo reproduce del prototipo. (Samuel + Claude)

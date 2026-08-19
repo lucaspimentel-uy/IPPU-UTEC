@@ -327,6 +327,13 @@ institucionales. Conviene resolverlo junto con §2.8: es el mismo tipo de pantal
 **Qué bloquea.** **Nada hoy** — los 14 están sembrados y `activo` es derivado, así que el catálogo
 funciona para leer. Se anota para que no se descubra cuando IPPU pida cambiar la oferta.
 
+> **Corregido el 2026-08-19:** `consulta-a-ippu.md` §3.1 afirmaba, en presente y en el documento que
+> se le manda a IPPU, que «el sistema los deja agregar, cambiar de orden, indicar a qué grupos se
+> orientan y dar de baja desde la propia aplicación». Era la funcionalidad del **Prototipo v4**, no la
+> nuestra. Reescrito para decir qué está diseñado, qué ya funciona (participación **por nombre**, así
+> que dar de baja no borra lo registrado) y que **la pantalla todavía no existe**. Mientras este punto
+> siga abierto, ese párrafo no puede volver a prometerla.
+
 > **M12.4 no agrega nada acá.** Su catálogo nuevo (`severidad_nivel`, los 3 grados DSM-5-TR) **no lo toca
 > coordinación**: es texto del instrumento, no configuración institucional — por eso se sembró **sin**
 > `solo_al_crear`, y ahí el seed manda. Si M12.5–M12.7 agregan catálogos que coordinación **sí** deba
