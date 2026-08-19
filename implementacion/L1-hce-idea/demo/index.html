@@ -38,10 +38,13 @@
     <span>Historia Clínica Electrónica · Protocolo IDEA</span>
   </div>
   <div class="spacer"></div>
-  <div class="userchip">
-    <div class="avatar">DG</div>
-    <div>Dr. González<br><span style="font-size:.7rem;color:#8FA9C0">Técnico · Psicología</span></div>
-  </div>
+  <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
+       Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
+  <button class="userchip" onclick="go('usuarios'); renderUsuario()"
+          title="Ver mi perfil" aria-label="Mi usuario — Dr. González, Técnico · Psicología">
+    <span class="avatar">DG</span>
+    <span class="userchip-txt">Dr. González<br><span class="rol">Técnico · Psicología</span></span>
+  </button>
   <button class="btn-exit" onclick="logout()">Salir</button>
 </header>
 
@@ -49,16 +52,17 @@
 
   <!-- ===================== SIDEBAR ===================== -->
   <nav class="sidebar">
+    <!-- B1: «Registrar NNA» salió de acá — es una acción, no un destino, y estaba
+         duplicada con el botón de la vista Inicio (los dos llamaban a openAlta()).
+         B2: «Mi usuario» salió de acá — se entra por el perfil de la topbar. -->
     <div class="sec">Historia clínica</div>
-    <button class="navitem active" data-view="inicio"><span class="ico">⌂</span> Inicio / NNA</button>
-    <button class="navitem" onclick="openAlta()"><span class="ico">+</span> Registrar NNA</button>
-    <button class="navitem" data-view="pendientes"><span class="ico">◔</span> Pendientes</button>
+    <button class="navitem active" data-view="inicio">Inicio · NNA</button>
+    <button class="navitem" data-view="pendientes">Pendientes</button>
     <div class="sec">Institucional</div>
-    <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
-    <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
-    <button class="navitem" data-view="inclusion"><span class="ico">⇆</span> Inclusión</button>
-    <button class="navitem" data-view="ateneos"><span class="ico">◈</span> Ateneos y capacitación</button>
-    <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
+    <button class="navitem" data-view="analitica">Analítica institucional</button>
+    <button class="navitem" data-view="grupos">Grupos</button>
+    <button class="navitem" data-view="inclusion">Inclusión</button>
+    <button class="navitem" data-view="ateneos">Ateneos y capacitación</button>
     <div class="foot">v4.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
@@ -74,14 +78,14 @@
       <div class="kpirow">
         <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div></div>
         <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Línea base (HCE-LB) firmada</div></div>
-        <div class="kpi" onclick="go('pendientes')" style="cursor:pointer" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
+        <div class="kpi kpi-link" onclick="go('pendientes')" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
         <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
       </div>
 
       <div class="card">
         <div class="cardhead">
           <h2>Listado de NNA</h2>
-          <div style="flex:1"></div>
+          <div class="cardhead-sp"></div>
           <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
         </div>
         <div class="nna-toolbar">
@@ -141,7 +145,7 @@
       </div>
 
       <div class="idea-summary">
-        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IDEA</div>
+        <div><div class="sum-lab">Puntaje total IDEA</div>
         <div class="tot"><span id="ideaTotal">0</span><small> / 96</small></div></div>
         <div class="nivel" id="ideaNivel">Sin puntuar</div>
         <div class="spacer"></div>
@@ -188,7 +192,7 @@
       </div>
 
       <div class="idea-summary">
-        <div><div style="font-size:.7rem;color:#ABC0D4;text-transform:uppercase;letter-spacing:.08em">Puntaje total IPPU-TEA</div>
+        <div><div class="sum-lab">Puntaje total IPPU-TEA</div>
         <div class="tot"><span id="protTotal">0</span><small> / 120</small></div></div>
         <div class="nivel" id="protNivel">0 / 24 ítems</div>
         <div class="spacer"></div>

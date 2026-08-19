@@ -344,9 +344,13 @@ function renderUsuario(){
     <div class="note" style="margin-top:6px">Demo: el control de acceso real (autenticación JWT por terapeuta, roles y visibilidad por grupo) se implementa en el backend. Cada técnico solo ve los NNA de los grupos que coordina.</div>`;
 }
 
-/* ---------- Wiring + render inicial de los módulos nuevos ---------- */
+/* ---------- Wiring + render inicial de los módulos nuevos ----------
+   B2 (2026-08-19): «Mi usuario» salió de la barra de navegación y se entra por el
+   perfil de la topbar, que llama a `go('usuarios'); renderUsuario()` en su onclick.
+   El listener sobre `.navitem[data-view="usuarios"]` se retira porque ya no hay
+   ningún elemento que lo matchee: no fallaba, pero quedaba como cableado muerto
+   apuntando a un nodo inexistente. */
 document.querySelectorAll('.navitem[data-view="grupos"]').forEach(b=>b.addEventListener("click", renderGrupos));
-document.querySelectorAll('.navitem[data-view="usuarios"]').forEach(b=>b.addEventListener("click", renderUsuario));
 document.querySelectorAll('.navitem[data-view="analitica"]').forEach(b=>b.addEventListener("click", renderRecordatorios));
 
 renderGrupos();
