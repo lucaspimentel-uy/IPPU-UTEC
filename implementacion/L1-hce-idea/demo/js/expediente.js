@@ -90,6 +90,7 @@ function abrirExpediente(id){
       <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-doc')">🗂 HCE-DOC · Documentos y fotos</button>
       <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-org')">🏛 HCE-ORG · Áreas INAU y BPS</button>
       <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-vf')">♿ HCE-VF · Valoración funcional (BUND / CIF)</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-ateneos')">◈ Ateneos clínicos referidos</button>
     </div>
 
     ${flujoPanelHtml(p)}
@@ -162,6 +163,11 @@ function abrirExpediente(id){
     ${orgPanelHtml(p)}
 
     ${vfPanelHtml(p)}
+
+    <!-- F1-nav4 (2026-08-19): ateneos clínicos referidos a este NNA. El panel lo arma
+         ateneos.js (que carga después que este archivo, igual que hce-doc-org-vf.js:
+         la función se resuelve al renderizar, no al cargar). -->
+    ${ateneosPanelHtml(p)}
   `;
   go("expediente");
 }

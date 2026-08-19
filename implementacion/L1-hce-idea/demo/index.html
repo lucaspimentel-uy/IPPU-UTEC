@@ -57,6 +57,7 @@
     <button class="navitem" data-view="analitica"><span class="ico">◫</span> Analítica institucional</button>
     <button class="navitem" data-view="grupos"><span class="ico">◰</span> Grupos</button>
     <button class="navitem" data-view="inclusion"><span class="ico">⇆</span> Inclusión</button>
+    <button class="navitem" data-view="ateneos"><span class="ico">◈</span> Ateneos y capacitación</button>
     <button class="navitem" data-view="usuarios"><span class="ico">☺</span> Mi usuario</button>
     <div class="foot">v4.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
@@ -411,6 +412,22 @@
       <div id="inclusionContent"></div>
     </section>
 
+    <!-- ============ VISTA: ATENEOS Y CAPACITACIÓN (F1-nav4) ============
+         Sección `#/ateneos` del Prototipo v4 (`HCE_IPPU_Prototipo_v4.html:227` en la
+         navegación / `vAteneos` línea 1878 · `vAteneoDet` línea 1911), portada con la
+         fuente, los colores y el formato de la demo. Primera sección de la demo que NO
+         cuelga de un NNA: registro institucional transversal con 4 tipos en UNA sola
+         entidad con campos según tipo (`docs/markdown/prototipo-v4-referencia.md` §9;
+         backend M12.7, `ateneo` + `ateneo_acuerdo`).
+         Listado y detalle viven los dos dentro de #ateneosContent (mismo paradigma que
+         la vista Grupos post-F1-nav2; el prototipo usa dos rutas de hash). -->
+    <section class="view" id="view-ateneos">
+      <div class="crumbs">Institucional › <b>Ateneos y capacitación</b></div>
+      <h1 class="pagetitle">Ateneos clínicos y jornadas de capacitación</h1>
+      <p class="pagedesc">Registro institucional transversal, con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos referidos a un NNA aparecen también en su expediente y heredan su matriz de acceso por roles.</p>
+      <div id="ateneosContent"></div>
+    </section>
+
     <!-- ============ VISTA: USUARIO / PERFIL ============ -->
     <section class="view" id="view-usuarios">
       <div class="crumbs">Institucional › <b>Mi usuario</b></div>
@@ -597,5 +614,6 @@
 <script src="js/recordatorios.js"></script>
 <script src="js/grupos-usuario.js"></script>
 <script src="js/inclusion.js"></script>
+<script src="js/ateneos.js"></script>
 </body>
 </html>

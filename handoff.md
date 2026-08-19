@@ -607,7 +607,7 @@ lo decidió — los nuestros son texto literal de Rivière).
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
-- [ ] **F1-nav · ajustes de navegación del frontend · PUSHEADA en `demo/F1-navegacion`** (Lucas + Claude, 2026-08-16 → 2026-08-17, ver §13). Rama `demo/F1-navegacion` con **4 cambios de F1-nav (2026-08-16)** + **rework de vista Grupos en F1-nav2 (2026-08-17)**: la Grupos pasó de "todo inline en cards" a **listado + detalle-view separada** alineando con `vGrupos`/`vGrupoDetalle` del Prototipo v4. Detalle con 3 cards (Integrantes con tabla NNA/CIE-11+Soporte/CI·LB·PA·PB·IC/Uso de imagen, Técnicos autorizados condicional a permiso §21.1, Fotografía grupal). `node --check` en verde en los 4 JS modificados. **Falta:** **(a)** verificar visualmente en navegador (esta sesión no controla browser); **(b)** re-baseline del fingerprint Playwright (Playwright no instalado); **(c)** decidir si se mergea a main o queda como PR abierto. **Deudas nuevas:** cambio de responsable sin HCE-LOG (§5.18 y §7); matriz de roles §21.1 pendiente de precisión con IPPU (§7 F1-nav2); formato oficial del Nº de HCE por confirmar (§7 F1-nav2). **Preguntas abiertas:** «tutor» (2026-08-16, §7), permisos §21.1 y formato HC (2026-08-17, §7).
+- [ ] **F1-nav · ajustes de navegación del frontend · PUSHEADA en `demo/F1-navegacion`** (Lucas + Claude, 2026-08-16 → 2026-08-19, ver §13). Rama `demo/F1-navegacion` con **4 cambios de F1-nav (2026-08-16)** + **rework de vista Grupos en F1-nav2 (2026-08-17)** + **tablero de Inclusión en F1-nav3 (2026-08-18)** + **sección Ateneos y capacitación en F1-nav4 (2026-08-19)**: la Grupos pasó de "todo inline en cards" a **listado + detalle-view separada** alineando con `vGrupos`/`vGrupoDetalle` del Prototipo v4. Detalle con 3 cards (Integrantes con tabla NNA/CIE-11+Soporte/CI·LB·PA·PB·IC/Uso de imagen, Técnicos autorizados condicional a permiso §21.1, Fotografía grupal). `node --check` en verde en los 4 JS modificados. **Falta:** **(a)** verificar visualmente en navegador (esta sesión no controla browser); **(b)** re-baseline del fingerprint Playwright (Playwright no instalado); **(c)** decidir si se mergea a main o queda como PR abierto. **Deudas nuevas:** cambio de responsable sin HCE-LOG (§5.18 y §7); matriz de roles §21.1 pendiente de precisión con IPPU (§7 F1-nav2); formato oficial del Nº de HCE por confirmar (§7 F1-nav2). **Preguntas abiertas:** «tutor» (2026-08-16, §7), permisos §21.1 y formato HC (2026-08-17, §7).
 - [ ] **Ronda de alineación de la demo v4.1 con el Prototipo v4 · COMMITEADA, pendientes de verificación** (Samuel + Lucas, 2026-08-16, §5.27). **6 alineaciones aplicadas** (cita Rivière · bandas IDEA 6 tramos · Δ con acción · 14 talleres · grupos por color · vocabulario ya cumplido) + 2 fixes de layout (heatmap, ancho de main). **Commiteada en `main` el 2026-08-16** por Lucas para desbloquear la sesión F1-nav que arrancó a continuación (`demo/F1-navegacion`). **Falta post-commit (migradas de pre-commit):** **(a)** verificar visualmente en navegador (doble clic en `demo/index.html`, recorrer Analítica · Grupos · alta de NNA · expedientes) — solapa parcialmente con la verificación de §6 de F1-nav; **(b)** re-baseline del **fingerprint Playwright** (`demo/verificacion/`) — 3 pasos rompen a propósito (bandas, talleres, grupos); Playwright no estaba instalado en el clone al momento del commit. **Deudas nuevas:** el catálogo de talleres ahora tiene los 14 pero **sin gestión** (retirar/agregar, orientación a grupos) — la demo carga nombres, no administra; anotado como absorción parcial de D5 (§5.14). Cuando la demo incorpore HCE-SEV en una ronda futura, `p.apoyo` de `datos.js` pasa a derivarse (deuda que ya venía de §5.24).
   - **Notas de Samuel al cerrar sesión (2026-08-16) para la próxima ronda:**
     - **FALTA agregar como módulos nuevos** (no entraron en las alineaciones, requieren ronda propia):
@@ -618,10 +618,12 @@ lo decidió — los nuestros son texto literal de Rivière).
         `modalidad`, referente educativo, estado) + **bitácora** con 5 catálogos (TIPOS, ESTADOS, TEMAS,
         MEDIOS, ROLES). `sensible` derivado (`tema === 'Clínica — sensible'`). No hay catálogo de
         centros educativos en el prototipo — es texto libre.
-      - **Ateneos clínicos y jornadas de capacitación** (vista transversal, no por NNA) — una sola
+      - ~~**Ateneos clínicos y jornadas de capacitación** (vista transversal, no por NNA) — una sola
         entidad `DB.ateneos[]` con **4 tipos** (`AT_TIPOS`: Ateneo clínico · Ateneo de grupo · Ateneo
         institucional · Jornada de capacitación); correlativo `AT-2026-001`. Campos según tipo. Ver
-        §5.25 y §5.26 del backend por convenciones de nomenclatura y XOR con HCE-DOC.
+        §5.25 y §5.26 del backend por convenciones de nomenclatura y XOR con HCE-DOC.~~
+        → **HECHO en la demo** (F1-nav4, 2026-08-19, ver §13): `demo/js/ateneos.js` + vista
+        `#view-ateneos` + panel en el expediente. Falta la parte de HCE-DOC (adjuntos por ateneo).
       - *(Pendiente de decidir si entra: **HCE-SEV** — módulo chico, va entre CI e IDEA. La demo hoy
         tiene `p.apoyo` como string suelto que se derivaría de este módulo.)*
     - **CORREGIR** (chico, dentro del alcance actual):
@@ -1447,3 +1449,85 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     thumbnails) — cuando se re-baseline habrá que aceptarlos.
   - **§12.3 (coordinación):** rama `demo/F1-navegacion` (pusheada el 2026-08-16 con F1-nav; se
     pushea F1-nav2 hoy). Cuando se pushee, avisar en el grupo. (Lucas + Claude)
+
+- **2026-08-19** — **F1-nav4 · sección «Ateneos y capacitación» en la demo** (Samuel + Claude, rama
+  `demo/F1-navegacion`). Continuación de F1-nav sobre la misma rama. Se porta la sección `#/ateneos`
+  del Prototipo v4 (`HCE_IPPU_Prototipo_v4.html`: nav línea 227 · `AT_TIPOS` 1822 · `DB.ateneos[]`
+  1823-1861 · `vAteneos` 1878 · `vAteneoDet` 1911 · panel del resumen 882), con la fuente, los
+  colores y el formato de la demo. Es el tercero de los tres módulos que Samuel dejó anotados como
+  «FALTA agregar» al cerrar el 2026-08-16 (§6); **quedan PAI INAU y HCE-INC individual**.
+  - ⚠️ **Deuda de registro heredada:** la ronda **F1-nav3 (tablero de Inclusión, `js/inclusion.js`,
+    fechada 2026-08-18)** está en el código pero **no tiene entrada en esta bitácora ni en §6**.
+    No la escribe esta sesión (no la hizo y no va a inventar lo que se decidió ahí): la tiene que
+    completar quien la haya hecho.
+  - **Archivos:** **nuevo** `demo/js/ateneos.js` (único archivo propio de la ronda) · `index.html`
+    (ítem de menú + `#view-ateneos` + `<script>` al final) · `css/estilos.css` (bloque `.at-*`) ·
+    `js/expediente.js` (**dos líneas**: `${ateneosPanelHtml(p)}` y su atajo en la `.section-nav`).
+  - **Alcance portado:** listado con los 4 filtros del prototipo (tipo · año · grupo · texto en
+    título/situación/contenidos), alta con correlativo, baja con confirmación, y detalle editable
+    con **campos según tipo** — desarrollo clínico (situación → hipótesis → recursos → tabla de
+    acuerdos con responsable y plazo → seguimiento) para los tres tipos de ateneo, y capacitador /
+    modalidad / contenidos / materiales / evaluación para la jornada. La `notice` de
+    **confidencialidad** (Ley 18.331) va textual del prototipo.
+  - **Ajuste del mismo día (Samuel):** se **retira** la `notice` que el prototipo pone al abrir el
+    listado con el flujo del registro (situación → hipótesis → recursos → acuerdos → seguimiento).
+    La secuencia no cambia —es la del prototipo y sigue guiando el formulario— y el detalle la
+    conserva en su propio `hint`, que es donde se carga; arriba del listado sólo empujaba la tabla
+    hacia abajo. **Es la única `notice` del prototipo que la demo no reproduce.**
+  - **Paradigma de navegación:** listado + detalle **dentro de la misma vista**, como Grupos
+    post-F1-nav2. El prototipo usa dos rutas de hash (`#/ateneos` y `#/ateneos/<id>`) y la demo no
+    tiene router. Clickear el ítem del menú vuelve siempre al listado (mismo criterio que Grupos).
+  - **Vínculo cruzado con la HCE:** `ateneosPanelHtml(p)` agrega al expediente la tarjeta «Ateneos
+    clínicos referidos a este NNA» (`anchor-ateneos`), siguiendo el patrón de
+    `docPanelHtml`/`orgPanelHtml`/`vfPanelHtml`. Se hizo porque el texto del prototipo **promete**
+    ese vínculo en la propia descripción de la sección: dejarlo sin implementar era escribirlo y
+    que no fuera cierto.
+  - **Dos divergencias deliberadas respecto del prototipo, las dos escritas en la cabecera del
+    archivo:**
+    1. **Prefijo único `AT-`.** El seed del prototipo escribe la jornada como `JC-2026-001`, pero
+       su propio `atNuevo()` genera siempre `AT-` y **M12.7 ya cerró el punto**: `Ateneo.codigo` es
+       derivado con un único `ATENEO_CODIGO_PREFIJO`. Emitir `JC-` contradecía una decisión ya
+       registrada (regla anti-contradicción de `CLAUDE.md`), así que la jornada del seed es
+       `AT-2026-002`.
+    2. **Cambiar el tipo limpia las referencias que ese tipo no admite** (`nna` y/o `grupo`). El
+       prototipo las deja colgadas; el backend tiene CHECK que lo prohíbe (bitácora del
+       2026-08-15). Una demo que deja armar un registro que la API va a rechazar miente.
+    - También se sigue la semántica de `anio_correlativo` de M12.7: el correlativo es del **año de
+      registración** y el filtro por año mira **`fecha`**, así que un `AT-2027-001` con fecha de
+      diciembre 2026 aparece bajo «2026». Es a propósito — libro de actas, no orden cronológico.
+  - **Remapeo del seed al modelo de la demo:** `nna:'U-0001'` → `nna:101` (Sofía R., que ya está en
+    grupo Celeste como allá) y `'Grupo Celeste'` → `'Celeste'` (los ids reales de `GRUPOS`, §5.18/D9).
+  - **Dos cosas que NO son del prototipo y se agregaron igual, chicas:** `atEsc()` (escape de texto
+    del usuario en atributos — sin él, un título con comillas rompe el formulario, y acá el
+    contenido se tipea en pantalla) y el re-render **sólo de las filas** al filtrar (`atRenderFilas`),
+    porque el buscador usa `oninput` y recrear el `<input>` le robaba el foco en cada tecla. El
+    prototipo puede permitirse `route()` entero porque usa `onchange`.
+  - **Deudas conocidas (no bloquean, quedan anotadas):**
+    - **Sin HCE-LOG.** El HCE-LOG de la demo es por NNA y un ateneo es transversal — misma
+      limitación ya registrada para el cambio de responsable de grupo (§5.18). El prototipo tampoco
+      lo hace: lo declara pendiente del sistema definitivo.
+    - **Sin adjuntos.** `docs[]` existe en el prototipo y §5.25 ya modeló el XOR
+      `documento.hce_id` / `documento.ateneo_id`, pero HCE-DOC en la demo es por expediente. Cuando
+      la demo absorba el alcance institucional de HCE-DOC, se engancha acá.
+    - **Sin guard «una jornada no lleva acuerdos»** ni coherencia `fecha` ↔ año del grupo: son
+      guards de **M11.3**, no de la demo. La UI ya no ofrece acuerdos cuando el tipo es jornada,
+      pero el array queda si alguien cambia el tipo después de cargarlos.
+    - **`.hint` no existe como clase global** (sólo `.field .hint`), así que Grupos e Inclusión la
+      vienen usando suelta y sin estilo. Esta ronda **no la tocó** para no cambiar de aspecto vistas
+      ajenas: definió `.at-hint` propia. Si el equipo quiere, promoverla a global es un renglón.
+  - **Verificación:** `node --check` en verde en los 14 JS. Además, **concatenación en el orden de
+    `index.html`** para descartar redeclaraciones en el scope global (los `<script>` clásicos lo
+    comparten) — en verde. Y un **smoke test headless** con un shim mínimo de DOM (no hay Playwright
+    ni jsdom en esta máquina, sin red para instalarlos): carga los 14 scripts sin excepciones y
+    ejercita 30 asserts sobre la sección — render, los 4 filtros, detalle clínico vs. jornada,
+    alta/baja, herencia de grupo al elegir NNA, limpieza al cambiar de tipo, escape de texto y el
+    panel del expediente. **Todo en verde.** El harness quedó **fuera del repo** (scratchpad de la
+    sesión): agregarlo a `demo/verificacion/` cambiaría la historia de tooling del equipo y eso se
+    decide en grupo — si lo quieren, se commitea aparte.
+    **NO** hay recorrida visual en navegador (Claude Code no controla browser) ni fingerprint
+    Playwright — F1-nav4 agrega markup nuevo, así que cuando se re-baseline habrá pasos nuevos.
+  - **Regla anti-contradicción respetada:** no se toca §5.2; `AT_TIPOS` entra como **constante** y no
+    como catálogo, igual que en M12.7; la entidad es **una sola con campos según tipo**, no cuatro.
+  - **§12.3 (coordinación):** archivo propio `js/ateneos.js`; de compartidos sólo `index.html`,
+    `css/estilos.css` y **dos líneas** de `js/expediente.js`. Avisar en el grupo antes de pushear.
+    (Samuel + Claude)
