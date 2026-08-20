@@ -22,8 +22,9 @@ IPPU/
 ├── README.md       ← Este archivo
 ├── docs/
 │   ├── estructura-repositorio.md  ← Mapa detallado de carpetas y rutas del repo
-│   ├── fuentes/    ← Documentos originales (PDF, PPTX, DOCX) + reuniones/ (XLSX)
-│   │   └── prototipo-v4/  ← Prototipo v4 de IPPU (HTML original + sus catálogos extraídos)
+│   ├── fuentes/    ← Respaldo. Sólo 2 archivos desde la purga del 2026-08-20 (handoff §5.29)
+│   ├── prototipo-v4/  ← Prototipo v4 de IPPU (HTML original + catálogos). NO es respaldo:
+│   │                     lo lee generar_catalogos_backend.py como insumo de build (§5.30)
 │   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
 │   ├── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
 │   └── planes/     ← Planes de ronda (M0–M11 · M12 absorción del Prototipo v4 ← vigente)
@@ -105,6 +106,8 @@ claude
 ## 🛠️ Convertir nuevos documentos a Markdown
 ```bash
 python herramientas/conversor_docling.py "docs/fuentes/<archivo>" -o "docs/markdown"
+# Regla desde el 2026-08-20 (handoff §5.29): convertido y verificado que nadie cite el
+# original, el original se borra. La historia de git es el respaldo.
 # o una carpeta entera:
 python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
 ```

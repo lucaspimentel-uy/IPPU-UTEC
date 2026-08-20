@@ -5,9 +5,11 @@
 > ~15 KB de markup y CSS, y **387 KB de JavaScript** con toda la aplicación y todos sus catálogos como
 > literales. Este documento resume lo que hay adentro.
 >
-> **Rutas:** original en `docs/fuentes/prototipo-v4/HCE_IPPU_Prototipo_v4.html` · datos completos en
-> `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` · regenerador en
+> **Rutas:** original en `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` · datos completos en
+> `docs/prototipo-v4/prototipo-v4-catalogos.json` · regenerador en
 > `herramientas/extraer_prototipo_v4.js`.
+> ⚠️ La carpeta salió de `docs/fuentes/` el 2026-08-20 (`handoff.md` §5.30): no es respaldo, es **insumo
+> de build** — `herramientas/generar_catalogos_backend.py` la lee en tiempo de ejecución.
 >
 > Este `.md` es la **versión legible y citable** del prototipo, en lugar de la conversión Docling que el
 > v1 no pudo tener (ver la excepción en `docs/estructura-repositorio.md`): Docling rinde solo el shell

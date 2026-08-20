@@ -36,8 +36,10 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-PROTO_JSON = RAIZ / "docs" / "fuentes" / "prototipo-v4" / "prototipo-v4-catalogos.json"
-PROTO_HTML = RAIZ / "docs" / "fuentes" / "prototipo-v4" / "HCE_IPPU_Prototipo_v4.html"
+# `docs/prototipo-v4/` NO está bajo docs/fuentes/ a propósito (handoff.md §5.30):
+# esa carpeta es respaldo que no se lee, y esto es un insumo de build que sí se lee acá.
+PROTO_JSON = RAIZ / "docs" / "prototipo-v4" / "prototipo-v4-catalogos.json"
+PROTO_HTML = RAIZ / "docs" / "prototipo-v4" / "HCE_IPPU_Prototipo_v4.html"
 SALIDA = (
     RAIZ / "implementacion" / "L1-hce-idea" / "backend" / "app" / "data"
     / "catalogos_iniciales.json"
@@ -313,7 +315,7 @@ def construir() -> dict:
             "Instrumentos y catálogos base: demo v4.1. "
             "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres y "
             "niveles de severidad DSM-5-TR: "
-            "Prototipo v4 de IPPU (docs/fuentes/prototipo-v4/). "
+            "Prototipo v4 de IPPU (docs/prototipo-v4/). "
             "Recordatorios y grupos: Manual + plan M12. "
             "NO editar a mano: correr el script."
         ),

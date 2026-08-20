@@ -10,7 +10,9 @@
 > Deriva del **Documento Técnico IPPU v1.0** (§6 modelo sugerido) y del **modelo clínico ya
 > validado en la demo v4.0** (ronda M0–M10). Toma `docs/markdown/modelo-datos.md` como punto de
 > partida **con los bugs A y B corregidos** y las 3 decisiones de arquitectura cerradas (2026-07-30).
-> Reemplaza a `esquema-datos.md` (v1, pre-Documento Técnico).
+> Reemplaza a `esquema-datos.md` (v1, pre-Documento Técnico), **borrado el 2026-08-20** junto con
+> `ejemplos-endpoints.md`: describían el backend v1, retirado entero en M11.2 (`handoff.md` §5.29).
+> Este documento es la única fuente citable del esquema.
 >
 > **Fuente normativa desde ago-2026 (§5.10 / D1):** Manual de Procedimientos v1.0 + Prototipo v4 de
 > IPPU, por encima del Documento Técnico. Decisiones de la ronda: `handoff.md` §5.10–§5.18.
@@ -425,7 +427,7 @@ define la navegación.
 5. **M11.5 — Seed clínico + tests:** seed espejo de la demo v4.0 (8 NNA, 4 arquetipos §11) y
    pytest contra Postgres. **Criterio de aceptación (§12-A):** reproducir por API el ciclo del
    usuario demo 1 con números idénticos (IDEA 58 · PA 60 · PB 79 · Δ +19) + guards + secuencia.
-6. **M11.6 — Cierre:** actualizar este doc al estado "implementado", `ejemplos-endpoints.md` v2,
+6. **M11.6 — Cierre:** actualizar este doc al estado "implementado", escribir `ejemplos-endpoints.md` v2 (el v1 se borró, §5.29),
    handoff. Después (rondas siguientes): **Fase 3** conectar la demo a la API → **Fase 4** JWT/roles (§9) → **Fase 6** resto de Docker (app + NGINX).
 
 ## 6. Preguntas abiertas (no bloquean el arranque)

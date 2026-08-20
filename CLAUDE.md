@@ -40,42 +40,57 @@ IPPU/
 ├── README.md                  # Overview para humanos
 ├── docs/
 │   ├── estructura-repositorio.md  # Mapa detallado de carpetas y rutas del repo
-│   ├── fuentes/               # Originales (PDF, PPTX, DOCX) + reuniones/ (XLSX) — respaldo, NO se leen
-│   │   └── prototipo-v4/      # HTML del Prototipo v4 + prototipo-v4-catalogos.json (32 constantes)
+│   ├── fuentes/               # Sólo 2 archivos desde la purga del 2026-08-20 (handoff.md §5.29):
+│   │                          #  el Prototipo v1 (sin conversión, es app JS) y el cuestionario
+│   │                          #  respondido por IPPU (prueba primaria). Respaldo, NO se leen.
+│   ├── prototipo-v4/          # HTML del Prototipo v4 + prototipo-v4-catalogos.json (32 constantes).
+│   │                          #  FUERA de fuentes/ a propósito (§5.30): esto SÍ se lee — lo consume
+│   │                          #  herramientas/generar_catalogos_backend.py como insumo de build.
 │   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
 │   │   └── prototipo-v4-referencia.md   # qué hay dentro del Prototipo v4 y dónde (fuente normativa M12)
-│   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (para enviar)
-│   └── planes/                # Planes de ronda (M0–M11 · PLAN-M12-absorcion-prototipo-v4-2026-08.md)
+│   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (enviada, sin respuesta)
+│   ├── planes/                # Planes de ronda (M0–M11 · PLAN-M12 · agenda-reunion-ippu-2026-08.md)
+│   └── prompts/               # Prompts de sesión (los que antes vivían sueltos en la raíz)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
 │       │   ├── index.html   # markup · css/estilos.css · js/*.js (12 módulos, orden de carga = semántica)
 │       └── backend/          # API FastAPI + SQLAlchemy + Alembic (ver backend/README.md)
 │           ├── app/          # main, core (config/db), models (+severidad.py, M12.4), schemas, routers
-│           ├── alembic/      # migraciones · docs/ (esquema-datos.md, ejemplos-endpoints.md)
+│           ├── alembic/      # migraciones · docs/ (esquema-datos-v2.md — los dos docs del v1 se
+│           │                 #  borraron el 2026-08-20: describían la API retirada en M11.2)
 │           └── tests/        # pytest (base aislada)
 └── herramientas/
     ├── conversor_docling.py            # Conversor de documentos → Markdown (Docling)
     ├── extraer_prototipo_v4.js         # Regenera los catálogos del Prototipo v4 desde su URL (para diffear una v5)
-    └── generar_catalogos_backend.py    # Genera app/data/catalogos_iniciales.json (`--check` para validar)
+    ├── generar_catalogos_backend.py    # Genera app/data/catalogos_iniciales.json (`--check` para validar)
+    └── verificar_estado.py             # Mide el repo y lo compara con lo que la doc afirma (`--check`)
 ```
 
 ## Convertir documentos a Markdown
 El conversor usa [Docling]. Salida recomendada: `docs/markdown/`.
 ```bash
 # Un archivo
-python herramientas/conversor_docling.py "docs/fuentes/IPPU.pdf" -o "docs/markdown"
+python herramientas/conversor_docling.py "docs/fuentes/UnDocumento.pdf" -o "docs/markdown"
 # Varios / una carpeta entera (batch). -r para recursivo, --overwrite para rehacer.
 python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
 ```
 Por defecto omite los `.md` ya existentes. Si no se pasa `-o`, escribe en `./markdown_convertido`.
-Nota: `IPPU.pdf` es escaneado → Docling aplica OCR (la primera corrida descarga modelos y tarda).
+Si el PDF es escaneado, Docling aplica OCR (la primera corrida descarga modelos y tarda).
 
-**Regla: una vez convertido, se trabaja con el `.md`.** Los originales quedan sólo como respaldo, y por eso
-`docs/fuentes/` está excluido del grafo de conocimiento vía `.graphifyignore` (`handoff.md` §5.7): indexar
-las dos copias duplica el costo en tokens sin agregar información. **Excepción:** `HCE_IPPU_Prototipo_v1.html`
-no tiene conversión a propósito (es una app JS y Docling rinde sólo el shell vacío) y se cita desde su ruta
-original en `docs/fuentes/`.
+**Regla: una vez convertido, se trabaja con el `.md`.** Desde el **2026-08-20** la regla se aplicó hasta el
+final: los originales que ya tenían conversión **se borraron** (`handoff.md` §5.29), porque el respaldo
+verificable lo da la historia de git —precedente §5.5— y conservar las dos copias sólo duplicaba el peso.
+En `docs/fuentes/` quedan **dos** archivos, cada uno por un motivo escrito:
+- `HCE_IPPU_Prototipo_v1.html` — no tiene conversión a propósito (es una app JS y Docling rinde sólo el
+  shell vacío); se cita desde su ruta original.
+- `Cuestionario IPPU UTEC, respuestas.docx` — prueba primaria de lo que IPPU contestó por escrito (§5.31).
+
+La carpeta sigue excluida del grafo vía `.graphifyignore`. ⚠️ **`docs/prototipo-v4/` NO está bajo
+`fuentes/`** y no es respaldo: es **insumo de build** y el código lo lee (§5.30).
+
+**Si borrás un original, borrá también su `.md` si nadie lo consume** — y verificá con un grep antes, que
+es exactamente lo que destapó que `IPPU.md` no lo leía nadie.
 
 ## Dominio mínimo (IDEA)
 4 escalas → **12 dimensiones (D1–D12)**, cada una **0–8**, total **0–96** (menor = mejor).

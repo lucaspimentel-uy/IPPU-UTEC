@@ -10,7 +10,7 @@
 > - **Última actualización:** 2026-08-16
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 y M12.7 hechos** (2026-08-15): **38 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 sube a 36 con `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24; M12.7 sube a 38 con `ateneo` + `ateneo_acuerdo`), **240 tests**. **Siguen M12.5 y M12.6**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie. ⚠️ **M12.6 arranca con §5.26 ya decidida** (nomenclatura `hce_id` = pertenencia · `hce_<calificador>_id` = referencia) y con §5.22. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
-> - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/fuentes/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
+> - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
 
@@ -23,7 +23,7 @@
 4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/index.html`** (abrir en navegador, sin servidor).
    Desde 2026-08-07 está **modularizada**: `index.html` + `css/estilos.css` + `js/*.js` (12 módulos, ver §5.5).
 5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: **`docker compose up -d`** → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` — **una corrida válida es `240 passed, 0 skipped`**; si el contenedor no está arriba, si la base está vacía o si no está en el head, `pytest` **aborta con exit 1** y te dice el comando (guardia de sesión en `tests/conftest.py`, 2026-08-15). Antes se salteaba en silencio y devolvía **exit 0** con la mitad de los tests sin correr.
-6. **Diagrama ER interactivo** del esquema **v1** (Artifact, 18 tablas): https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2 — ⚠️ es privado de la cuenta de Lucas, **Samuel y Victor no pueden abrirlo**; la versión citable para todos es `backend/docs/esquema-datos.md`. El esquema **v2** (el que se implementa en M11) está en `backend/docs/esquema-datos-v2.md`. Fuente HTML del Artifact: no quedó en el repo; si hace falta, se regenera.
+6. **El esquema vigente es `backend/docs/esquema-datos-v2.md`** — es el que se implementa desde M11 y **la única versión citable**. ⚠️ **Corregido el 2026-08-20 (§5.29):** este punto decía que «la versión citable para todos es `backend/docs/esquema-datos.md`», que era el esquema **v1**, del backend **retirado entero en M11.2**; mandaba a Samuel y Victor a citar un modelo muerto. Ese archivo y `ejemplos-endpoints.md` se borraron. El **diagrama ER interactivo** del v1 sigue existiendo como Artifact (https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2) pero es **privado de la cuenta de Lucas** y describe 18 tablas de un esquema que ya no rige: no es referencia para nadie. Si alguna vez hace falta un ER del v2, se genera de nuevo.
 
 ---
 
@@ -481,7 +481,7 @@ no cambia; es una columna.
 **La hipótesis que se probó y se refutó.** Se sospechaba que `nivel_soporte` era el nivel que trae el
 **diagnóstico externo** —dato histórico que llega con el NNA, vecino de `diag` y `cie11` en las
 Especificaciones §3— y por lo tanto no duplicaba nada. **La evidencia del HTML del prototipo dice que no**
-(se buscó en `docs/fuentes/prototipo-v4/HCE_IPPU_Prototipo_v4.html`, no en el `.md` de referencia):
+(se buscó en `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` —entonces bajo `docs/fuentes/`, ver §5.30—, no en el `.md` de referencia):
 
 1. **La etiqueta con que HCE-00 lo renderiza es `Nivel de soporte DSM-5-TR (orientativo)`**, con opciones
    `No determinado / Nivel 1 / Nivel 2 / Nivel 3`. No dice «del diagnóstico de ingreso» ni nada parecido, y
@@ -993,6 +993,10 @@ git push gitlab main && git push origin main
 
 **Al terminar:**
 5. Verificar antes de dar por hecho (pytest / Playwright según corresponda) y decir el resultado real.
+5b. **`python herramientas/verificar_estado.py --check`** — mide el repo (tablas, migración, un solo head,
+   tests si Docker está arriba) y falla si algún `.md` afirma otra cosa. Existe porque la documentación se
+   desfasó del repo **cuatro veces** en la ronda M12 y las cuatro se encontraron de casualidad (§5.29).
+   Silencioso si coincide. ⚠️ Sin Docker **no estima** el conteo de tests: lo reporta como no medido.
 6. **Actualizar `handoff.md`**: §5 si tomaste una decisión de arquitectura · §6 pendientes · §13 bitácora
    (qué se hizo, cómo se verificó, qué sigue).
 7. Commit + merge a `main` + **push a los dos remotos**.

@@ -2,14 +2,14 @@
 /* Extrae los catálogos y constantes del Prototipo v4 de IPPU.
    Uso:  node herramientas/extraer_prototipo_v4.js [url] [salida.json]
    Por defecto: https://lovely-salmiakki-4db73d.netlify.app/
-            →   docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json
+            →   docs/prototipo-v4/prototipo-v4-catalogos.json
 
    No ejecuta el código de la app: localiza cada literal por balanceo de delimitadores
    y lo evalúa aislado. Reproducible: si IPPU publica una v5, se vuelve a correr y se
    diffea contra el JSON anterior. */
 const fs=require('fs'), vm=require('vm'), https=require('https');
 const URL_=process.argv[2]||'https://lovely-salmiakki-4db73d.netlify.app/';
-const OUT=process.argv[3]||'docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json';
+const OUT=process.argv[3]||'docs/prototipo-v4/prototipo-v4-catalogos.json';
 const WANT=['IDEA_MANUAL_V','IDEA_DIMS','IDEA_DESC','IDEA_EJ','IDEA_FICHAS','IDEA_REGLAS',
  'IPPU_ITEMS','LIKERT_LBL','ESCALAS','SEV_ETQ','SEV_CS','SEV_CRR','SEV_APOYO','PAI_AREAS',
  'PAI_PREST','PAI_CIRCUITO','CAT_TALLERES','AT_TIPOS','INC_TIPOS','INC_ESTADOS','INC_TEMAS',

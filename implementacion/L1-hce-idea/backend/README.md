@@ -111,8 +111,8 @@ backend/
 ├── tests/                   # tests estructurales del esquema
 └── docs/
     ├── esquema-datos-v2.md  # ESQUEMA VIGENTE
-    ├── esquema-datos.md     # v1, histórico (pre-Documento Técnico)
-    └── ejemplos-endpoints.md# v1, se reescribe en M11.6
+    └── (los dos docs del backend v1 —esquema-datos.md y ejemplos-endpoints.md— se
+        borraron el 2026-08-20: describían la API retirada en M11.2. Ver handoff §5.29)
 ```
 
 ## Dónde vive cada regla
@@ -157,7 +157,7 @@ no lo avisa**. Si es tu caso: `DELETE FROM taller WHERE nombre IN (...)`.
 
 Dos fuentes, y el script sabe cuál es cuál: los instrumentos vienen de la demo
 v4.1 (lo que se adaptó al Documento Técnico en M0–M10) y lo nuevo, del Prototipo
-v4 (`docs/fuentes/prototipo-v4/`). En **M12.8** todo pasa a salir del prototipo.
+v4 (`docs/prototipo-v4/`). En **M12.8** todo pasa a salir del prototipo.
 
 **Lo que no es catálogo** —etiquetas Likert, dominios y niveles de HCE-VF, guía
 de prestaciones, opciones de BPS, vocabulario institucional— vive en

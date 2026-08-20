@@ -15,9 +15,10 @@ IPPU/
 ├── .graphifyignore
 ├── docs/
 ├── implementacion/
-├── herramientas/
-└── graphify-out/
+└── herramientas/
 ```
+> `graphify-out/` existe en disco pero **no se versiona** desde el 2026-08-20 (`handoff.md` §5.29).
+
 
 ## Raíz del repo
 
@@ -28,34 +29,29 @@ IPPU/
 | `README.md` | Overview del proyecto para humanos (equipo, líneas de trabajo, cómo retomar). |
 | `.gitignore` | Exclusiones del repositorio (venvs, caches, temporales, etc.). |
 | `.graphifyignore` | Exclusiones propias del grafo de conocimiento (`/graphify`); se combina con `.gitignore`. |
-| `graphify-out/` | Salida generada por `/graphify` (grafo, caches, reportes). No se edita a mano. |
+| `graphify-out/` | Salida generada por `/graphify` (grafo, caches, reportes). **No se versiona ni se edita a mano:** es un artefacto que se **regenera a demanda al cerrar ronda**. Se desversionó el 2026-08-20 (§5.29) porque 1,6 MB describiendo un repo de dos semanas atrás confunden más de lo que ayudan. |
 
 ## `docs/` — documentación y fuentes
 
 ```
 docs/
 ├── estructura-repositorio.md   # este archivo
-├── fuentes/                    # originales sin convertir — respaldo, NO se leen ni indexan
-│   ├── Cuestionario IPPU UTEC, respuestas.docx
-│   ├── Documento de trabajo.docx
-│   ├── Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.pdf
-│   ├── Guia_Relevamiento.docx
-│   ├── HCE_IPPU_Prototipo_v1.html   # excepción: se cita desde acá, no tiene conversión (ver abajo)
-│   ├── IPPU.pdf
-│   ├── IPPU_UTEC_Presentacion_13.05.2026.pptx
-│   ├── Proyectos, Investigaciones y Oportunidades de Desarrollo.pdf
-│   ├── escala-del-inventario-del-espectro-autista-idea.pdf
-│   ├── prototipo-v4/            # Prototipo v4 de IPPU (ago-2026) — fuente normativa de la ronda M12
-│   │   ├── HCE_IPPU_Prototipo_v4.html    # original bajado de la URL publicada (406 KB, app JS)
-│   │   └── prototipo-v4-catalogos.json   # 32 constantes extraídas del HTML (sin los 2 base64, D3)
-│   └── reuniones/               # actas de reunión (XLSX)
+├── fuentes/                    # respaldo, NO se leen ni indexan. Sólo 2 archivos desde la purga
+│   │                           #  del 2026-08-20 (§5.29): el resto se borró tras verificar que su
+│   │                           #  .md los cubre. Recuperables en el tag `pre-limpieza-2026-08-20`.
+│   ├── Cuestionario IPPU UTEC, respuestas.docx   # prueba primaria de lo que IPPU contestó (§5.31)
+│   └── HCE_IPPU_Prototipo_v1.html   # excepción: se cita desde acá, no tiene conversión (ver abajo)
+├── prototipo-v4/               # Prototipo v4 de IPPU (ago-2026) — fuente normativa de la ronda M12.
+│   │                           #  ⚠️ NO está bajo fuentes/ a propósito (§5.30): esto SÍ se lee, lo
+│   │                           #  consume herramientas/generar_catalogos_backend.py. Es insumo de build.
+│   ├── HCE_IPPU_Prototipo_v4.html    # original bajado de la URL publicada (406 KB, app JS)
+│   └── prototipo-v4-catalogos.json   # 32 constantes extraídas del HTML (sin los 2 base64, D3)
 ├── markdown/                    # conversiones .md de docs/fuentes/ — fuente de lectura y cita
 │   ├── 1_documento-tecnico-utec-lidia.md   # Documento Técnico IPPU v1.0 (fuente normativa vigente)
 │   ├── Cuestionario IPPU UTEC, respuestas.md
 │   ├── Documento de trabajo.md
 │   ├── Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.md
 │   ├── Guia_Relevamiento.md
-│   ├── IPPU.md
 │   ├── IPPU_UTEC_Presentacion_13.05.2026.md
 │   ├── Proyectos, Investigaciones y Oportunidades de Desarrollo.md
 │   ├── Reunión IPPU_UTEC - 2026_05_13 ....md
@@ -66,27 +62,34 @@ docs/
 │   ├── modelo-datos.md          # propuesta Postgres+JSONB de un integrante — registrada, no adoptada
 │   └── prototipo-v4-referencia.md   # versión legible y citable del Prototipo v4 (extraída por script)
 ├── notas/
-│   ├── consulta-a-ippu.md       # cuestionario no técnico, versión para enviar a IPPU
+│   ├── consulta-a-ippu.md       # cuestionario no técnico. ENVIADO y sin respuesta (§5.28)
 │   └── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
-└── planes/
-    ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
-    └── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
+├── planes/
+│   ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
+│   ├── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
+│   └── agenda-reunion-ippu-2026-08.md            # recorrida con IPPU: supuesto y costo de un «no»
+└── prompts/                     # prompts de sesión (antes sueltos en la raíz del repo)
 ```
 
 Notas:
-- **Regla de conversión:** una vez que un original en `docs/fuentes/` tiene su `.md` en `docs/markdown/`,
-  se trabaja siempre con el `.md`. Los originales quedan solo como respaldo verificable (por eso
-  `docs/fuentes/` está en `.graphifyignore`: indexar las dos copias duplica costo sin agregar información).
+- **Regla de conversión:** una vez que un original tiene su `.md` en `docs/markdown/`, se trabaja siempre
+  con el `.md`. Desde el **2026-08-20** la regla se aplica hasta el final: el original **se borra** salvo
+  que haya un motivo escrito para conservarlo (§5.29). El respaldo verificable lo da la historia de git
+  —precedente §5.5— y el tag `pre-limpieza-2026-08-20`. `docs/fuentes/` sigue en `.graphifyignore`.
 - **Excepción:** los prototipos de IPPU son apps JS y Docling solo rinde su shell vacío, así que **no se
   convierten con Docling**.
   - `HCE_IPPU_Prototipo_v1.html` no tiene conversión de ningún tipo: se cita desde su ruta original.
-  - `prototipo-v4/HCE_IPPU_Prototipo_v4.html` **sí tiene versión legible**, producida por script
+  - `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` **sí tiene versión legible**, producida por script
     (`herramientas/extraer_prototipo_v4.js`) en lugar de por Docling: `docs/markdown/prototipo-v4-referencia.md`
-    (narrativa) y `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` (los datos). La regla se cumple
-    igual: se lee y se cita desde `docs/markdown/`, y el HTML queda solo como respaldo.
-- **`docs/fuentes/prototipo-v4/`** es la única subcarpeta de `fuentes/` con original **y** datos extraídos
-  juntos. El JSON no incluye `CLINICA_HTML_B64` ni `TALLER_HTML_B64` (Clínica y Taller Terapéutico están
-  fuera de alcance — `handoff.md` §5.12 / D3); si el alcance cambia, se extraen del HTML.
+    (narrativa) y `docs/prototipo-v4/prototipo-v4-catalogos.json` (los datos). Se lee y se cita desde
+    `docs/markdown/`; el HTML queda como original **y** como insumo del generador de catálogos.
+- ⚠️ **`docs/prototipo-v4/` no es `docs/fuentes/`, y la diferencia es funcional** (§5.30). `fuentes/` es
+  respaldo que **no se lee**; esta carpeta la **lee código en tiempo de ejecución**
+  (`herramientas/generar_catalogos_backend.py`, líneas 41–42). Vivió bajo `fuentes/` hasta el 2026-08-20 y
+  eso hacía **falsa** la regla de esa carpeta. Al mudarse perdió la exclusión del grafo que heredaba, así
+  que se la repuso explícitamente en `.graphifyignore`.
+  El JSON no incluye `CLINICA_HTML_B64` ni `TALLER_HTML_B64` (Clínica y Taller Terapéutico están fuera de
+  alcance — `handoff.md` §5.12 / D3); si el alcance cambia, se extraen del HTML.
 - **`docs/planes/`** agrupa los planes de ronda de trabajo (documentos de alcance/roadmap para una
   ronda concreta, distintos de la bitácora continua de `handoff.md`). Nuevos planes van acá.
 
@@ -172,9 +175,9 @@ backend/
 │   │   └── catalogos_iniciales.json   # generado por herramientas/generar_catalogos_backend.py
 │   └── seed_catalogos.py
 ├── docs/
-│   ├── esquema-datos.md        # esquema v1 (histórico, backend v1 retirado)
-│   ├── esquema-datos-v2.md      # esquema v2 vigente — leer antes de tocar app/models/
-│   └── ejemplos-endpoints.md
+│   └── esquema-datos-v2.md      # esquema v2 vigente — leer antes de tocar app/models/
+│                                # (esquema-datos.md y ejemplos-endpoints.md, del backend v1
+│                                #  retirado en M11.2, se borraron el 2026-08-20: §5.29)
 ├── pytest.ini                   # pythonpath=. → que `pytest -q` funcione tal como está documentado
 ├── tests/
 │   ├── conftest.py
@@ -209,10 +212,15 @@ Notas:
 |---|---|
 | `herramientas/conversor_docling.py` | Convierte `docs/fuentes/*` → `docs/markdown/*.md` (Docling). Uso en `CLAUDE.md`. |
 | `herramientas/generar_catalogos_backend.py` | `python herramientas/generar_catalogos_backend.py` → genera `backend/app/data/catalogos_iniciales.json` desde la demo v4.1 y el Prototipo v4. Con `--check` no escribe: falla si el archivo del repo quedó desfasado (sirve para CI y para detectar ediciones a mano). |
-| `herramientas/extraer_prototipo_v4.js` | `node herramientas/extraer_prototipo_v4.js` → regenera `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` desde la URL publicada del Prototipo v4. Existe para **diffear** si IPPU publica una v5, no para correrlo de rutina. |
+| `herramientas/extraer_prototipo_v4.js` | `node herramientas/extraer_prototipo_v4.js` → regenera `docs/prototipo-v4/prototipo-v4-catalogos.json` desde la URL publicada del Prototipo v4. Existe para **diffear** si IPPU publica una v5, no para correrlo de rutina. |
+| `herramientas/verificar_estado.py` | `python herramientas/verificar_estado.py --check` → **mide el repo** (tablas en `app/models/`, revisión de Alembic, un solo head, tests si Docker está arriba) y lo compara contra lo que afirman `handoff.md`, `README.md`, `CLAUDE.md`, `docs/estructura-repositorio.md` y `backend/README.md`. Silencioso si coincide, **exit ≠ 0 con el diff** si no. Nació el 2026-08-20 tras la **cuarta** vez que la doc se desfasó del repo. Va en el checklist de cierre de sesión (§12.4). |
 
 ## `graphify-out/`
 
 Salida generada de `/graphify` (grafo de conocimiento del repo): `graph.json`, `graph.html`,
-`GRAPH_REPORT.md`, `manifest.json` y caches. Se regenera con el skill; no se edita a mano y partes de
-su caché están excluidas de git (ver `.gitignore`).
+`GRAPH_REPORT.md`, `manifest.json` y caches. Se regenera con el skill y no se edita a mano.
+
+⚠️ **No se versiona** desde el 2026-08-20 (`handoff.md` §5.29): la carpeta entera está en `.gitignore`.
+Antes se versionaba y el resultado fue 1,6 MB de grafo que describía el repo del 2026-08-07 —sin M12.1 a
+M12.7 ni la ronda de la demo—, es decir un mapa desactualizado con apariencia de mapa vigente.
+**Se regenera a demanda al cerrar ronda**, que es cuando vale la pena mirarlo.

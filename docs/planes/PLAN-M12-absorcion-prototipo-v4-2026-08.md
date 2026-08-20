@@ -11,7 +11,7 @@
 >
 > **Material de trabajo ya extraído** — no hay que volver a derivarlo:
 > - `docs/markdown/prototipo-v4-referencia.md` — qué hay adentro del prototipo y dónde. **Leer esto.**
-> - `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` — 32 constantes (fichas IDEA, 60 descriptores,
+> - `docs/prototipo-v4/prototipo-v4-catalogos.json` — 32 constantes (fichas IDEA, 60 descriptores,
 >   24 ítems, 14 talleres, campos de PAI/INC/ateneos). Fuera del grafo por `.graphifyignore`.
 > - `herramientas/extraer_prototipo_v4.js` — lo regenera desde la URL, para diffear si sale una v5.
 >
@@ -79,12 +79,16 @@ literales) y se extrajo entero. Lo que queda es incorporarlo.
 1. **Bajar el original** a `docs/fuentes/prototipo-v4/HCE_IPPU_Prototipo_v4.html`
    (`curl -sSL <url> -o …`), junto al `prototipo-v4-catalogos.json` que ya está ahí. El nombre sigue la
    convención de `HCE_IPPU_Prototipo_v1.html`.
+   > ⚠️ **Ruta histórica.** La carpeta se movió a **`docs/prototipo-v4/`** el 2026-08-20
+   > (`handoff.md` §5.30): estar bajo `fuentes/` hacía falsa la regla «respaldo, no se leen», porque
+   > `generar_catalogos_backend.py` la lee. El paso se hizo tal como está escrito; la ruta de hoy es otra.
 2. **No convertir el HTML con Docling.** Es una app JS: rinde el shell vacío, misma razón por la que el
    v1 es la excepción documentada en `docs/estructura-repositorio.md`. La diferencia es que el v4 **sí
    tiene versión legible** — `docs/markdown/prototipo-v4-referencia.md` —, producida por script en lugar
    de por Docling. La regla de conversión se cumple igual: se lee y se cita desde `docs/markdown/`.
 3. **Actualizar los mapas de estructura**, que el cambio lo exige explícitamente:
-   `docs/estructura-repositorio.md` (carpeta `docs/fuentes/prototipo-v4/`, el `.md` nuevo en
+   `docs/estructura-repositorio.md` (carpeta `docs/prototipo-v4/` — entonces `docs/fuentes/prototipo-v4/`,
+   ver §5.30 —, el `.md` nuevo en
    `docs/markdown/`, el plan nuevo en `docs/planes/`, la herramienta nueva en `herramientas/`) y los mapas
    resumidos de `README.md` y `CLAUDE.md`.
 4. **Verificar el punto de partida contra la realidad, no contra el handoff:** `alembic heads`, conteo de
@@ -425,7 +429,7 @@ Una sola persona.
   schema → `alembic upgrade head` → `python -m app.seed_catalogos`. ⚠️ Desde la enmienda **§5.19**
   (2026-08-14) esto **ya se hizo al cerrar cada sub-módulo**, así que acá es confirmación, no puesta al día.
 - **Seed:** terminar de regenerar `app/data/catalogos_iniciales.json` desde
-  `docs/fuentes/prototipo-v4/prototipo-v4-catalogos.json` — la fuente autoritativa cambió.
+  `docs/prototipo-v4/prototipo-v4-catalogos.json` — la fuente autoritativa cambió.
   **M12.1 ya dejó el generador versionado:** `herramientas/generar_catalogos_backend.py` (con `--check`
   para CI). Hoy produce las secciones nuevas y **preserva** las que vienen de la demo v4.1
   (`DESDE_LA_DEMO`); M12.8 tiene que pasar esas también al prototipo y vaciar esa lista.
@@ -449,7 +453,12 @@ Una sola persona.
 
 ## 4. Qué cambia en `docs/notas/puntos-a-validar.md` y `docs/notas/consulta-a-ippu.md`
 
-`consulta-a-ippu.md` **nunca se envió**, así que no hay que corregir un documento en circulación: hay que
+⚠️ **Corregido el 2026-08-20 (`handoff.md` §5.28): `consulta-a-ippu.md` SÍ se envió**, después del
+2026-08-14 y sin respuesta hasta hoy. Lo que sigue se escribió creyendo lo contrario, así que **sí hay un
+documento en circulación**: cualquier corrección a esas preguntas es una corrección sobre algo que IPPU ya
+tiene en sus manos, y conviene decírselo en la reunión en vez de reemplazarlo en silencio.
+
+~~`consulta-a-ippu.md` **nunca se envió**, así que no hay que corregir un documento en circulación:~~ hay que
 **reescribirlo mucho más corto**. El prototipo respondió gran parte solo.
 
 **Cierran (el prototipo los responde):**
@@ -554,8 +563,12 @@ talleres robusta a cambios de catálogo · `sensible` derivado del tema, nunca c
 
 ## 8. Nota sobre la reunión con IPPU
 
-No es parte del plan técnico, pero lo condiciona: **`consulta-a-ippu.md` nunca se envió** y hay fecha de
-demo. Dos cosas para decidir antes de M12.5:
+No es parte del plan técnico, pero lo condiciona. ⚠️ **Enmendado el 2026-08-20 (§5.28):** cuando se
+escribió esto se creía que **`consulta-a-ippu.md` nunca se había enviado**. **Se envió** —después del
+2026-08-14— y **no hubo respuesta**. Eso no debilita lo que sigue: lo refuerza. La reunión ya no es «la
+primera vez que preguntamos», es **la escalada de preguntas que IPPU tiene sin contestar**, y eso cambia el
+tono con el que se lleva, no el contenido. Sigue habiendo fecha de demo. Dos cosas para decidir antes de
+M12.5:
 
 1. **Qué se muestra.** Se muestra **nuestra demo**, con nuestro diseño — no una versión de la de ellos.
    Lo que aporta UTEC es un sistema que funciona y persiste; su prototipo es una especificación. El
@@ -574,8 +587,11 @@ demo. Dos cosas para decidir antes de M12.5:
    sirviendo como red. La cuarta toca datos de muestra en tres archivos, uno de ellos compartido
    (`ui-core.js`) — conviene decidirla aparte, y notar que el heatmap de talleres ya está declarado fuera
    de alcance en el propio comentario del código (§5.1.3).
-2. **Las preguntas se llevan a la reunión, no por correo.** Un cuestionario de 30 preguntas sin enviar es
-   peor que seis preguntas hechas en persona. Las que destraban ahora: los descriptores corregidos y qué
+2. **Las preguntas se llevan a la reunión, no por correo.** La decisión sigue en pie y el 2026-08-20 quedó
+   **confirmada por los hechos**: el cuestionario se envió y no volvió. Un cuestionario de 30 preguntas sin
+   responder es peor que seis preguntas hechas en persona.
+   > La agenda de esa reunión está escrita en `docs/planes/agenda-reunion-ippu-2026-08.md`: pantalla por
+   > pantalla, con el supuesto que cada una pone a prueba y lo que costaría un «no». Las que destraban ahora: los descriptores corregidos y qué
    pasa con las evaluaciones viejas · el anexo del Decreto 72/025 · el acceso a la HCE actual · el acuerdo
    de confidencialidad · la matriz de roles · si ya puntúan de forma independiente.
 
