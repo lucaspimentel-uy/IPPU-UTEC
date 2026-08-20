@@ -2,20 +2,21 @@
 
 API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL.**
 
-> **Estado: M12.4** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1, la
-> puntuación independiente de M12.2, el catálogo dinámico de talleres de M12.3 y **HCE-SEV** (M12.4):
-> **36 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
+> **Estado: M12.7** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1, la
+> puntuación independiente de M12.2, el catálogo dinámico de talleres de M12.3, **HCE-SEV** (M12.4) y los
+> **ateneos y jornadas** de M12.7: **38 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
 > expone `/health`. El esquema está documentado en
 > [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
 >
-> ⚠️ **El conteo se movió dos veces y ninguna fue una regresión.** M12.3 lo bajó de 35 a **34**: no crea
+> ⚠️ **El conteo se movió tres veces y ninguna fue una regresión.** M12.3 lo bajó de 35 a **34**: no crea
 > tablas (`taller` ya existía) y retira `hce_taller`, resto del esquema v1 (`handoff.md` §5.20). M12.4 lo
 > sube a **36** con `severidad_dsm` + `severidad_nivel`, y retira **una columna, no una tabla**
-> (`hce_diurna.nivel_soporte`, §5.24: era una tercera fuente de verdad sobre el nivel DSM).
+> (`hce_diurna.nivel_soporte`, §5.24: era una tercera fuente de verdad sobre el nivel DSM). M12.7 lo lleva
+> a **38** con `ateneo` + `ateneo_acuerdo` (§5.25, §5.26).
 >
 > **Migraciones** (regla enmendada el 2026-08-14, `handoff.md` §5.19): la migración inicial **única** se
 > regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` **en
-> verde** — ya no se saltea, y `alembic upgrade head` crea las **36 tablas** actuales. Se congela sólo si
+> verde** — ya no se saltea, y `alembic upgrade head` crea las **38 tablas** actuales. Se congela sólo si
 > hay trabajo en paralelo real sobre `app/models/`; ahí la descongela y regenera una sola persona al
 > terminar. **Se regenera el mismo archivo de migración, no se apilan revisiones.**
 
@@ -60,7 +61,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **123 passed, 0 skipped**.
+Una corrida válida de hoy es **240 passed, 0 skipped**.
 
 ## Por qué Postgres en Docker
 

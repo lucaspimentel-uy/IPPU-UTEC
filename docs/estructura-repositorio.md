@@ -143,7 +143,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── f432ea139fd9_esquema_v2_inicial_m12_4.py   # migración única del esquema v2 (36 tablas)
+│       └── 9246e659d2c9_esquema_v2_inicial_m12_7.py   # migración única del esquema v2 (38 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -151,10 +151,13 @@ backend/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
 │   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 36 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
+│   ├── models/               # SQLAlchemy — 38 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
 │   │                         #  − hce_taller, retirada en M12.3: handoff §5.20
 │   │                         #  + 2 de M12.4; ahí se retiró la COLUMNA hce_diurna.nivel_soporte,
-│   │                         #    que no mueve el conteo de tablas: handoff §5.24)
+│   │                         #    que no mueve el conteo de tablas: handoff §5.24
+│   │                         #  + 2 de M12.7: ateneo + ateneo_acuerdo, handoff §5.25/§5.26)
+│   │   ├── ateneo.py         # Ateneos clínicos y jornadas (M12.7): ateneo + ateneo_acuerdo
+│   │   │                     # AT_TIPOS es CONSTANTE, no catálogo: es el discriminador de los 5 CHECK
 │   │   ├── catalogos.py
 │   │   ├── identidad.py
 │   │   ├── mixins.py         # OrigenMigracionMixin (metadatos de dato migrado, §10)
@@ -179,8 +182,9 @@ backend/
 │   ├── test_m12_catalogos.py    # M12.1: grupo/D9, bandas, Δ, catálogos IDEA, seed, vocabulario
 │   ├── test_m12_consenso.py     # M12.2 · D7: puntuación independiente, diferencia, NS tipado
 │   ├── test_m12_talleres.py     # M12.3 · D5: los 14, `activo` derivado, sin FK a taller.id
-│   └── test_m12_severidad.py    # M12.4: HCE-SEV, aislamiento en las dos direcciones, FKs con índice
-│                                # (123 en verde, 0 salteados — requieren el contenedor arriba)
+│   ├── test_m12_severidad.py    # M12.4: HCE-SEV, aislamiento en las dos direcciones, FKs con índice
+│   └── test_m12_ateneos.py      # M12.7: los 4 tipos, los 5 CHECK, correlativo, codigo/sensible derivados
+│                                # (240 en verde, 0 salteados — requieren el contenedor arriba)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
