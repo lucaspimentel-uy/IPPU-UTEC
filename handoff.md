@@ -1516,3 +1516,38 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
      que es acotado y reparable.
   - **Nota:** los puntos 1 y 2 ya se los pasó Lucas a Boris de palabra; quedan acá igual, fechados, para que
     existan en el repo y no dependan de que alguien se acuerde.
+
+- **2026-08-20** — **Fase 2: ejecución de la limpieza.** Cuatro commits separados por propósito, sobre el
+  tag `pre-limpieza-2026-08-20` (anotado, pusheado a los dos remotos, y su mensaje **dice que marca `main`
+  sin F1 mergeada** para que nadie lo confunda con una foto completa). (Lucas + Claude)
+  - **Borrado** (`f3a97f4`): 10 originales de `docs/fuentes/` + `docs/markdown/IPPU.md` + los dos
+    documentos del backend v1 (`esquema-datos.md`, `ejemplos-endpoints.md`). `docs/fuentes/` queda con
+    **dos** archivos. **Movido:** `docs/fuentes/prototipo-v4/` → **`docs/prototipo-v4/`**, con la exclusión
+    del grafo repuesta a mano en `.graphifyignore` — al salir de `fuentes/` la había perdido.
+  - **Barrido de referencias completo:** `CLAUDE.md` (mapa, ejemplo de conversión, regla de conversión —
+    reescrita para decir que el original **se borra**) · `README.md` · `docs/estructura-repositorio.md` ·
+    `prototipo-v4-referencia.md` · `PLAN-M12` · `backend/README.md` · `esquema-datos-v2.md` ·
+    `catalogos_iniciales.json` (`_origen`, regenerado) · `handoff.md` §0.6 y cabecera.
+    **Rutas en código:** `generar_catalogos_backend.py` (líneas 41–42) y `extraer_prototipo_v4.js`.
+  - ⚠️ **Corrección de hecho al plan M12**, en tres lugares: decía que `consulta-a-ippu.md` «nunca se
+    envió». **Sí se envió**, después del 2026-08-14, y no hubo respuesta. La decisión de llevar las
+    preguntas a la reunión **queda confirmada por los hechos**, no debilitada.
+  - **`graphify-out/` desversionado** (`e782f36`) y **`docs/prompts/` creada** (`70bf2aa`).
+  - **`herramientas/verificar_estado.py`** (`0271ea8`), el arreglo durable del desfasaje docs↔repo que ya
+    pasó **cuatro veces**. Dos cosas que costaron iteraciones y quedan escritas en su docstring: el corte
+    entre presente e historia es **estructural** (en `handoff.md` se compara sólo hasta `## 5.`), porque
+    adivinar por prosa marcaba 13 líneas correctas para su fecha — y **el nombre de un sub-módulo no marca
+    historia**: ponerlo producía el falso negativo exacto que el script viene a evitar, ya que la línea
+    real que decía «36 tablas» es *«…de M12.7: **38 tablas**»*. **Probado inyectando las cuatro derivas.**
+  - **Verificación, con los números reales:** barrido de referencias colgantes → **0** ·
+    `generar_catalogos_backend.py --check` → **OK** · `pytest -q` → **240 passed, 0 skipped** ·
+    `verificar_estado.py --check` → **OK** · `node --check` sobre los 12 módulos de la demo → OK.
+  - ⚠️ **`git merge --no-commit --no-ff gitlab/demo/F1-navegacion` da UN conflicto**, y es esta misma
+    entrada de bitácora contra las de F1: las dos apéndices al final del archivo. **Medido antes y después
+    de la sesión:** el baseline era limpio y **la Fase 2 no agregó ninguno** — la purga, el movimiento, la
+    desversión, `docs/prompts/` y el verificador mergean todos limpio, porque F1 no toca ninguno de esos
+    archivos. **La resolución es determinista:** primero las entradas de F1 (16 al 19), después ésta (20),
+    que es la cronología que §13 ya usa. Nada se pierde.
+  - **La demo no se tocó:** `git status` sobre `demo/` vacío en toda la sesión. La verificación fue
+    **read-only**; no se abrió navegador, así que lo que se afirma es que los archivos están intactos y
+    parsean, no que alguien miró la consola.
