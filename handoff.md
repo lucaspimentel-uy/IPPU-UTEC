@@ -602,6 +602,154 @@ paralela sobre la demo** — no reemplaza M12, va aparte.
 otra ronda, ni reemplazar los 60 descriptores del IDEA por las paráfrasis del prototipo (M12.1
 lo decidió — los nuestros son texto literal de Rivière).
 
+## 5.28 → 5.32 · Decisiones de la sesión de limpieza y pivote (2026-08-20, Lucas)
+
+### 5.28 (G1) El backend está bloqueado por validación, no por trabajo; y **M13 no se abre** (2026-08-20, Lucas)
+M12 llegó hasta donde puede llegar sola. Hecho: **M12.0–M12.4 y M12.7** — 38 tablas, 240 tests, migración
+única `9246e659d2c9`. Lo que falta **no está esperando manos, está esperando respuestas**:
+
+| Sub-módulo | Qué le falta para arrancar |
+|---|---|
+| **M12.5** (HCE-INC) | **Ratificación de §5.8.** El plan M12 §7 lo dice con todas las letras: «ratificarlo o pararlo **antes de M12.5**». No depende de ningún otro sub-módulo (§5.23) ni del catálogo de centros educativos —el Prototipo v4 lo resuelve como texto libre—, así que su única puerta es esa. |
+| **M12.6** (HCE-PAI) | La misma ratificación de §5.8, **y** material de IPPU que no tenemos: el Anexo A del Manual y las secciones que el prototipo no muestra (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25). Es el módulo más grande (15 secciones, ~46 campos, 4 tablas hijas) y el que más superficie construye sobre supuestos sin confirmar. Sus dependencias internas **ya están resueltas**: §5.22, §5.26 y M12.4 (§5.23). |
+| **M12.8** (cierre) | Depende de los dos anteriores. Una sola persona. |
+
+**El motivo del bloqueo, dicho como es.** `consulta-a-ippu.md` **sí se envió** (después del 2026-08-14) y
+**no hubo respuesta**. No es «la pregunta no salió»: es «se preguntó y no contestaron». La reunión con IPPU
+es entonces la **escalada** de una pregunta ya formulada, no un segundo intento por otro canal.
+⚠️ **Esto deja desactualizado al plan M12**, que en tres lugares (§6 línea 452, §8 líneas 557 y 577,
+escritos el 2026-08-14) afirma que el cuestionario «nunca se envió». Se corrige en esta misma sesión.
+La *decisión* de la línea 577 —«las preguntas se llevan a la reunión, no por correo»— sigue valiendo; lo
+que cambió es su premisa.
+
+**M13 no se abre.** Se evaluó abrir una ronda de restyle de la demo y **se descarta**: el commit `5544e71`
+de `demo/F1-navegacion` es literalmente «restyle visual completo + B1/B2» y toca **1.371 líneas de
+`demo/css/estilos.css`**. El trabajo que M13 iba a hacer **ya está en curso, dentro de F1, hecho por otra
+persona**. Abrir una ronda paralela sobre los mismos archivos es exactamente la duplicación que §5.3
+documenta y que la regla anti-contradicción existe para evitar. Queda registrado como **evaluado y
+absorbido por F1**, no como pendiente.
+
+**Lo que sí es nuestro y no choca con nada:** la **agenda de la reunión**
+(`docs/planes/agenda-reunion-ippu-2026-08.md`). Es agenda, no CSS: no toca un solo archivo de `demo/`.
+El **no-goal del plan M12 sobre la capa de presentación del Prototipo v4 no se modifica**.
+
+### 5.29 (G2) **Enmienda a §5.7:** se purgan los originales de `docs/fuentes/` (2026-08-20, Lucas)
+§5.7 (2026-08-07) evaluó borrar esta carpeta y **lo descartó** por dos motivos. Se revisan los dos:
+
+1. *«Los originales son el respaldo verificable de lo que entregó IPPU y la única fuente para rehacer una
+   conversión lossy (`IPPU.md` salió de OCR)».* **No sobrevive.** El grep del 2026-08-20 muestra que
+   `IPPU.md` lo citan exactamente dos lugares y **ninguno lo consume**: `docs/estructura-repositorio.md:58`
+   (el mapa listándose a sí mismo) y `handoff.md:210`, que es **§5.7 argumentando que hay que guardar el PDF
+   para poder rehacer `IPPU.md`**. El argumento se sostiene a sí mismo y nada más. Y el «respaldo
+   verificable» ya lo da la historia de git — **precedente: §5.5**, donde el monolito de 3.949 líneas se
+   borró apoyándose justamente en eso.
+2. *«`HCE_IPPU_Prototipo_v1.html` no tiene conversión markdown a propósito».* **Sobrevive intacto.** Ese
+   archivo **se queda**.
+
+**Keep-list, archivo por archivo** (A2–A4 + extensión, Lucas 2026-08-20). No se decide nada en tiempo de
+ejecución: lo que no está en esta lista, no se toca.
+
+- **SE QUEDA en `docs/fuentes/`:** `HCE_IPPU_Prototipo_v1.html`.
+- **SE MUEVE:** `prototipo-v4/` → ver **§5.30**.
+- **SE VAN** (11 archivos): `IPPU.pdf` · `IPPU_UTEC_Presentacion_13.05.2026.pptx` ·
+  `escala-del-inventario-del-espectro-autista-idea.pdf` ·
+  `Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.pdf` ·
+  `Proyectos, Investigaciones y Oportunidades de Desarrollo.pdf` ·
+  `Cuestionario IPPU UTEC, respuestas.docx` · `Documento de trabajo.docx` · `Guia_Relevamiento.docx` ·
+  los 3 `.xlsx` de `reuniones/`.
+- **SE VA también `docs/markdown/IPPU.md`** (A2): OCR degradado —`Diagn6stico`, `autorizaci6n`,
+  `yel analisisdedatosofrecen`, tablas partidas (`Cornunicacion`, `Evaiuacionesy`), índice desordenado
+  1-3-2-4-6-6— que **ningún documento normativo consume**. Borrar el PDF y conservar el `.md` era la
+  opción menos coherente de las tres: se pierde la capacidad de rehacerlo y se conserva algo que nadie lee.
+- **Todas las demás conversiones `.md` se quedan**, incluida la del cuestionario respondido.
+
+**Lo que se acepta perder, explícito:**
+- **29 imágenes** que las conversiones nunca extrajeron (dejaron `<!-- image -->`): **25** del PPTX,
+  **3** del PDF de Fundaciones, **1** del de Proyectos. Medido, no estimado.
+- El **PDF de la escala IDEA y `IPPU.pdf` no pierden ninguna imagen** (0 placeholders): en esos dos el
+  original no aportaba nada que el `.md` no tenga, más allá del OCR.
+- El **DOCX del cuestionario respondido como prueba primaria**. Queda su `.md`, que es lo que efectivamente
+  se cita —incluido el cruce de §5.31—, pero el original firmado por IPPU deja de estar en el repo.
+
+**Requisito previo, no negociable:** tag anotado **`pre-limpieza-2026-08-20`** antes de borrar nada, y su
+mensaje **tiene que decir que marca `main` sin F1 mergeada**. Si no lo dice, el próximo que busque un punto
+de recuperación va a creer que ahí está todo el trabajo del equipo, y lo que hay es `main` sin la ronda de
+la demo.
+
+### 5.30 (G3) `docs/fuentes/prototipo-v4/` estaba mal clasificado: es insumo de build (2026-08-20, Lucas)
+`CLAUDE.md` y `docs/estructura-repositorio.md` declaran que `docs/fuentes/` es «respaldo, **NO se leen**».
+Es falso desde M12.1: `herramientas/generar_catalogos_backend.py` **lee esa carpeta en tiempo de ejecución**
+—`prototipo-v4-catalogos.json` (línea 39) y `HCE_IPPU_Prototipo_v4.html` (línea 40)— y
+`herramientas/extraer_prototipo_v4.js:12` **escribe** ahí. Contradicción regla↔código, y **tercera
+divergencia docs↔repo de esta ronda**.
+
+Se evaluaron dos salidas:
+- **(A) Mover** a una ruta que signifique «insumo de build». Costo: un barrido de referencias que **ya está
+  enumerado** por esta sesión, así que hacerlo ahora sale casi gratis; hacerlo después obliga a rehacer el
+  barrido.
+- **(B) Enmendar la regla** con una excepción explícita. Más barato hoy, pero deja una carpeta con dos
+  semánticas y un lector que tiene que acordarse de cuál aplica a cada archivo.
+
+**Decidido: (A).** `docs/fuentes/prototipo-v4/` → **`docs/prototipo-v4/`**. Es fuente normativa n.º 1
+(§5.10) **y** insumo de build: pertenece a `docs/`, pero fuera de la carpeta cuya regla es «no se leen».
+⚠️ **Consecuencia que hay que atender en el mismo movimiento:** `.graphifyignore` excluye `docs/fuentes/`,
+así que al salir de ahí los 400 KB de HTML + 64 KB de JSON **entrarían al grafo**. La ruta nueva se agrega
+explícitamente a `.graphifyignore`: el criterio de §5.7 —no indexar originales caros— no cambia, cambia
+dónde vive el archivo.
+
+Con (A) o con (B), lo que **no** podía quedar es el texto de la regla diciendo algo falso.
+
+### 5.31 (G4) §5.8 / IDEA anual: el argumento de costo se dio vuelta. Se mide y **no se toca el modelo** (2026-08-20, Lucas)
+§5.8 (2026-08-07) sostuvo el arranque de M11 sin la validación de IPPU con este razonamiento: si IPPU
+pidiera volver al IDEA anual, «el arreglo es agregar `anio` y cambiar un `UNIQUE` — barato **ahora**, caro
+después de que M11.3 y M11.4 construyan encima».
+
+**Ya no es hipotético.** Fernando Sierra respondió **«Anual»** por escrito (cuestionario 15/06/2026, P10 y
+P12; cruzado por Victor el 2026-08-17). El Documento Técnico dice lo contrario —línea base única— y es la
+base sobre la que se construyó M4 y todo el esquema v2.
+
+**El costo, medido contra el código y no contra los documentos:**
+
+- ⚠️ **`idea` ya es 1:N.** **No hay `UNIQUE` sobre `idea.hce_id` que cambiar**: el índice es
+  `ix_idea_hce_id ... unique=False` (migración `9246e659d2c9`, línea 392), y hay un test que lo afirma —
+  `test_idea_admite_varias_lineas_base_por_expediente` (`tests/test_esquema_v2.py:54`), puesto ahí a
+  propósito porque «un reingreso a más de 12 meses abre una línea base nueva». **§5.8 se equivocó en este
+  punto**, y se equivocó **sobreestimando**: el cambio es puramente **aditivo**.
+- **Tablas afectadas: 1 de 38.** Se agrega `anio` + `UniqueConstraint("hce_id", "anio")` — el mismo patrón
+  que el esquema ya usa **tres veces**: `uq_informe_cierre_hce_anio`, `uq_protocolo_hce_tipo_anio` y
+  `uq_grupo_nombre_anio` (D9, §5.18).
+- **FKs a reconectar: ninguna.** La única que apunta a `idea.id` es `puntuacion_idea.idea_id`
+  (`app/models/modulos.py:301`, CASCADE) y es **por instancia**: sigue siendo correcta si hay N instancias.
+- **Tests: 9 sitios** construyen `Idea(` en 3 archivos (`test_esquema_v2.py` ×4, `test_m12_consenso.py` ×4,
+  `test_m12_severidad.py` ×1). Con `anio` nullable no rompe **ninguno**; con `NOT NULL` hay que agregar un
+  kwarg en esos 9. Tests que hablan de la **forma** de `idea`: 3.
+- **Migración:** se regenera el archivo único, como en cada sub-módulo (§5.19).
+- **Docs a tocar:** docstring de `Idea` (`modulos.py:211`), `esquema-datos-v2.md` §2.2, y el vocabulario
+  «línea base única» de la cabecera de este archivo, de `CLAUDE.md` y de los dos planes.
+- ⚠️ **La demo sí paga, y es la parte cara.** `nna.flujo.lb` es un **objeto único, no una colección**:
+  `Object.assign(f.lb, {...})` (`demo/js/flujo.js:39`), `f.lb.kind` (`:41`), y ~18 sitios en 6 módulos
+  (`catalogos.js`, `evaluaciones.js`, `expediente.js`, `flujo.js`, `hce-doc-org-vf.js`,
+  `informe-cierre.js`) leen `p.flujo.lb.*` como instancia única. Pasar a anual obliga a un **selector de
+  año** — que es, con precisión incómoda, **el trabajo que la v3.3 ya tenía hecho y que M4 retiró**.
+
+**Conclusión: el argumento de §5.8 apunta al revés que hace dos semanas.** En el backend el cambio salió
+**más barato** de lo estimado (aditivo · 1 tabla · 0 FKs · 0 tests rotos si es nullable), y **M11.3 no
+arrancó**: sigue siendo el momento barato. Lo caro se mudó a la demo, que hoy está **bajo F1** y no se toca.
+
+**No se cambia el modelo.** Se deja el número escrito para que la decisión se tome **mirándolo**, y no por
+inercia ni por la urgencia de la reunión. **Punto abierto, con número puesto:** decidir con IPPU si `idea`
+pasa a anual; si la respuesta es sí, el costo backend es el de arriba y el costo demo es un selector de año
+en 6 módulos.
+⚠️ **Deuda declarada:** la actualización de `docs/notas/puntos-a-validar.md` §2.1 queda **debiendo** — el
+archivo está congelado por F1 (§12.3). Se hace al aterrizar F1.
+
+### 5.32 (G5) «Samuel» y «Boris Furtado» son la misma persona (2026-08-20, Lucas)
+§8 ya los nombra juntos, pero la **historia de git no tiene ningún «Samuel»**: los commits de
+`demo/F1-navegacion` están firmados **`Boris Furtado <boris.furtado.b@estudiantes.utec.edu.uy>`**.
+Confirmado por Lucas. Se anota para que ninguna sesión futura vuelva a deducirlo, y sobre todo **para que
+§5.27 y los pendientes de §6 no se lean como si acreditaran la ronda F1 a un tercero**: el «Samuel» de la
+documentación y el «Boris Furtado» de los commits son el mismo autor.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -749,6 +897,8 @@ lo decidió — los nuestros son texto literal de Rivière).
 ## 8. Equipo y contactos
 - **UTEC-LIDIA — equipo actual (3):** **Lucas Pimentel** · **Samuel (Boris) Furtado** · **Victor Uria**.
   (Bruno Delvalle y Rafael Quintanilla figuraban en el equipo inicial; hoy no están activos en L1.)
+  ⚠️ **En git no existe ningún «Samuel»:** Samuel firma como **`Boris Furtado
+  <boris.furtado.b@estudiantes.utec.edu.uy>`** — es quien commitea `demo/F1-navegacion`. Misma persona (§5.32).
 - **UTEC (docentes/referentes):** Matías López (`matias.lopez@utec.edu.uy`), Vitalio Alfonso Reguera (agregado por Victor, 2026-08-03), Mikaela/Ruth Pivani (`ruth.pivani@utec.edu.uy`).
 - **IPPU:** Fernando Sierra — Director.
 
@@ -1283,3 +1433,67 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     (hoy todo en Drive, sin planilla estructurada) — contexto para cuando se resuelva el punto de
     catálogo de centros educativos de M12.5. No se creó pregunta nueva por esto.
   - Sin tests (no aplica). Commit + push a los dos remotos. (Lucas + Claude)
+
+- **2026-08-20** — **Sesión de pivote y limpieza del repo · Fase 1 (decisiones).** Con M12.5/M12.6/M12.8
+  frenados por validación y no por falta de manos, la sesión no escribe modelos: escribe decisiones, mide
+  costos y ordena el repo. **Cinco decisiones nuevas: §5.28–§5.32.** (Lucas + Claude)
+  - **§5.28** — el bloqueo del backend nombrado sub-módulo por sub-módulo, con su condición de desbloqueo. Y
+    **M13 no se abre**: el restyle que iba a hacer ya está en curso dentro de F1 (`5544e71`, 1.371 líneas de
+    `estilos.css`), así que abrirlo en paralelo era la duplicación de §5.3. Queda como evaluado y absorbido.
+  - **§5.29** — enmienda a §5.7: se purgan los originales de `docs/fuentes/`, con keep-list archivo por
+    archivo y con lo que se acepta perder medido (29 imágenes, no estimadas).
+  - **§5.30** — `docs/fuentes/prototipo-v4/` estaba mal clasificado: código lo lee en runtime mientras la
+    regla dice «no se leen». Se mueve a `docs/prototipo-v4/`.
+  - **§5.31** — el argumento de costo de §5.8 se dio vuelta, **medido contra el código**.
+  - **§5.32** — «Samuel» y «Boris Furtado» son la misma persona.
+  - **Creado `docs/planes/agenda-reunion-ippu-2026-08.md`**: la recorrida con IPPU pantalla por pantalla,
+    cada una con el supuesto que pone a prueba y lo que costaría un «no». Es agenda, no ronda de frontend:
+    no toca `demo/`.
+  - **Corrección de hecho al cuestionario.** El plan M12 afirma en tres lugares (líneas 452, 557 y 577,
+    escritas el 2026-08-14) que `consulta-a-ippu.md` «nunca se envió». **Sí se envió**, después de esa fecha,
+    y no hubo respuesta (confirmado por Lucas). La decisión de la línea 577 —llevar las preguntas a la
+    reunión— sigue valiendo; cambió su premisa. Se corrige en la Fase 2.
+
+- **2026-08-20** — **Hallazgos sobre `demo/F1-navegacion`, registrados sin tocar la rama.** F1 es ronda
+  abierta de otra persona (§5.32: Boris/Samuel) y su ítem (d) —si se mergea— es decisión del dueño. **No se
+  mergeó y no se editó un solo archivo de `demo/`.** Se dejan asentados porque son deuda que su cierre
+  hereda, y porque uno de ellos afecta la agenda de la reunión. (Lucas + Claude)
+  1. ⚠️ **Regresión de talleres.** `g.talleres` sigue definido en los 4 grupos
+     (`js/grupos-usuario.js:34, 40, 46, 52`) y **no se dibuja en ningún lado**: lo único que sobrevive es el
+     KPI agregado «Talleres cubiertos: N de 14» (`:93`). En `main` la lista se dibujaba como tags por grupo
+     (`:56`). Es **pérdida silenciosa de capacidad** y cae justo sobre §5.14 / D5, que es uno de los
+     supuestos que la reunión tenía que validar mirando la pantalla. Además `index.html:401` sigue
+     prometiendo que «cada grupo tiene técnicos **encargados**, días/horarios y **talleres asignados**»:
+     las dos mitades son falsas hoy — F1 renombró `encargados` y sacó los talleres de la vista.
+  2. ⚠️ **El harness de verificación está roto en F1 y no tiene baseline para volver.** `fingerprint.js:82`
+     recorre `['inicio','pendientes','analitica','grupos','usuarios']` y clickea
+     `.navitem[data-view="${v}"]`; **B2 borró `data-view="usuarios"`** del `index.html` (0 ocurrencias en
+     F1, 1 en `main`), así que muere en ese paso. **F1 no puede auto-verificarse.** Y el problema de fondo es
+     peor: `demo/verificacion/.gitignore` excluye `*.json`, de modo que **no hay ningún fingerprint
+     versionado** contra el cual re-baselinear. El ítem (c) de F1 en §6 —«re-baseline del fingerprint»— **no
+     es una tarea pendiente: es imposible tal como está diseñado el harness**. El único método que funciona
+     es comparar dos worktrees, y el `README.md` lo menciona **en una línea suelta** (línea 44, «usá
+     `git stash` o un `git worktree`»), no como procedimiento. §5.5 vendió este harness como la red de
+     seguridad de todo refactor de la demo; **hoy no atrapa nada**. Deuda que hereda el cierre de F1.
+     **Arreglo propuesto, a elección de quien cierre F1:** versionar un fingerprint de referencia, **o**
+     escribir el procedimiento de dos worktrees en `demo/verificacion/README.md`.
+  3. ⚠️ **Cambio de modelo hecho en la capa de presentación.** `GRUPOS` pasó de `encargados: string[]` a
+     `responsable1` / `responsable2` (objetos `{nombre, rol}`, el segundo nullable) **+
+     `tecnicosAutorizados: []`**. **§5.18 / D9 no modela nada de eso**: modeló `grupo` con id propio y
+     `UNIQUE(nombre, anio)`, sin responsables y sin técnicos autorizados. **No hay decisión en §5 detrás de
+     este cambio** y diverge del backend. Queda como **ítem de reconciliación** para la próxima vez que se
+     toque `grupo` — y con efecto inmediato en la reunión: lo que IPPU vea en esa pantalla está **mostrado
+     pero no modelado**, así que un «sí» de ellos es **trabajo nuevo**, no un supuesto confirmado
+     (`agenda-reunion-ippu-2026-08.md` §4).
+  4. ⚠️ **F1 excedió el alcance que §5.27 le fijó.** §5.27 dice, textual: «**No** se agregan módulos nuevos
+     (HCE-SEV, HCE-INC, HCE-PAI, **Ateneos**)». F1 agregó `js/ateneos.js` (488 líneas) y `js/inclusion.js`
+     (175 líneas) — es decir, Ateneos y HCE-INC — **sin enmendar §5.27**. El propio §6 de F1 los describe
+     como F1-nav3 y F1-nav4, así que no está oculto; lo que falta es la enmienda escrita. Por §12.6 esto se
+     resuelve por escrito en §5, no de hecho: **lo tiene que hacer quien cierre F1**, ampliando §5.27 o
+     abriendo decisión nueva. No se toca desde acá.
+  5. ✅ **Resultado positivo, y vale registrarlo.** El restyle **no tocó comportamiento**: 23 pasos idénticos
+     cubriendo todos los guards clínicos, catálogos byte a byte iguales, cero funciones globales perdidas.
+     El riesgo grande de un restyle de 1.371 líneas **no se materializó**; lo que se rompió es lo de arriba,
+     que es acotado y reparable.
+  - **Nota:** los puntos 1 y 2 ya se los pasó Lucas a Boris de palabra; quedan acá igual, fechados, para que
+    existan en el repo y no dependan de que alguien se acuerde.
