@@ -649,14 +649,17 @@ El **no-goal del plan M12 sobre la capa de presentación del Prototipo v4 no se 
 **Keep-list, archivo por archivo** (A2–A4 + extensión, Lucas 2026-08-20). No se decide nada en tiempo de
 ejecución: lo que no está en esta lista, no se toca.
 
-- **SE QUEDA en `docs/fuentes/`:** `HCE_IPPU_Prototipo_v1.html`.
+- **SE QUEDAN en `docs/fuentes/`, y son los dos únicos:**
+  - `HCE_IPPU_Prototipo_v1.html` — no tiene conversión markdown a propósito (motivo 2 de §5.7).
+  - `Cuestionario IPPU UTEC, respuestas.docx` — es la **prueba primaria** de lo que IPPU contestó por
+    escrito, y es justo la fuente que §5.31 necesita citar para el IDEA anual (P10/P12, Fernando Sierra).
+    Un original que sostiene una decisión abierta no es respaldo redundante.
 - **SE MUEVE:** `prototipo-v4/` → ver **§5.30**.
-- **SE VAN** (11 archivos): `IPPU.pdf` · `IPPU_UTEC_Presentacion_13.05.2026.pptx` ·
+- **SE VAN** (10 archivos): `IPPU.pdf` · `IPPU_UTEC_Presentacion_13.05.2026.pptx` ·
   `escala-del-inventario-del-espectro-autista-idea.pdf` ·
   `Fundaciones Internacionales que financian proyectos TEA-Neurodivergencia.pdf` ·
   `Proyectos, Investigaciones y Oportunidades de Desarrollo.pdf` ·
-  `Cuestionario IPPU UTEC, respuestas.docx` · `Documento de trabajo.docx` · `Guia_Relevamiento.docx` ·
-  los 3 `.xlsx` de `reuniones/`.
+  `Documento de trabajo.docx` · `Guia_Relevamiento.docx` · los 3 `.xlsx` de `reuniones/`.
 - **SE VA también `docs/markdown/IPPU.md`** (A2): OCR degradado —`Diagn6stico`, `autorizaci6n`,
   `yel analisisdedatosofrecen`, tablas partidas (`Cornunicacion`, `Evaiuacionesy`), índice desordenado
   1-3-2-4-6-6— que **ningún documento normativo consume**. Borrar el PDF y conservar el `.md` era la
@@ -668,8 +671,20 @@ ejecución: lo que no está en esta lista, no se toca.
   **3** del PDF de Fundaciones, **1** del de Proyectos. Medido, no estimado.
 - El **PDF de la escala IDEA y `IPPU.pdf` no pierden ninguna imagen** (0 placeholders): en esos dos el
   original no aportaba nada que el `.md` no tenga, más allá del OCR.
-- El **DOCX del cuestionario respondido como prueba primaria**. Queda su `.md`, que es lo que efectivamente
-  se cita —incluido el cruce de §5.31—, pero el original firmado por IPPU deja de estar en el repo.
+- Las **planillas de asistencia** de las 3 reuniones de mayo, más allá de sus `.md`.
+
+**Se aprovecha la misma limpieza para otros dos borrados que no son de `docs/fuentes/`:**
+- **La documentación del backend v1, completa:** `backend/docs/esquema-datos.md` **y**
+  `backend/docs/ejemplos-endpoints.md`. Los dos describen un backend y una API que **se retiraron enteros
+  en M11.2**, los dos ya tenían banner de «documento histórico», y borrar uno solo dejaba media
+  documentación de una API inexistente. ⚠️ Al borrarlos hay que arreglar **`handoff.md` §0.6**, que hoy
+  manda a Samuel y Victor a citar el esquema **v1** como «la versión citable para todos» — eso es falso
+  desde M11.2 y se arreglaba igual aunque el archivo se conservara. El esquema vigente es
+  `esquema-datos-v2.md`.
+- **`graphify-out/` se desversiona** (`git rm -r --cached` + `.gitignore`): 1,6 MB de artefacto
+  **generado**, y desactualizado desde el 2026-08-07 — no conoce M12.1–M12.7 ni F1, así que hoy describe
+  un repo que no existe. Se regenera a demanda al cerrar ronda, y así queda escrito en
+  `docs/estructura-repositorio.md`.
 
 **Requisito previo, no negociable:** tag anotado **`pre-limpieza-2026-08-20`** antes de borrar nada, y su
 mensaje **tiene que decir que marca `main` sin F1 mergeada**. Si no lo dice, el próximo que busque un punto
