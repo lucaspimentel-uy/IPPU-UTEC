@@ -62,7 +62,7 @@ docs/
 │   ├── modelo-datos.md          # propuesta Postgres+JSONB de un integrante — registrada, no adoptada
 │   └── prototipo-v4-referencia.md   # versión legible y citable del Prototipo v4 (extraída por script)
 ├── notas/
-│   ├── consulta-a-ippu.md       # cuestionario no técnico. ENVIADO y sin respuesta (§5.28)
+│   ├── consulta-a-ippu.md       # cuestionario no técnico. Enviado el 2026-08-19 (§5.28)
 │   └── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
 ├── planes/
 │   ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)

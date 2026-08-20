@@ -453,10 +453,11 @@ Una sola persona.
 
 ## 4. Qué cambia en `docs/notas/puntos-a-validar.md` y `docs/notas/consulta-a-ippu.md`
 
-⚠️ **Corregido el 2026-08-20 (`handoff.md` §5.28): `consulta-a-ippu.md` SÍ se envió**, después del
-2026-08-14 y sin respuesta hasta hoy. Lo que sigue se escribió creyendo lo contrario, así que **sí hay un
-documento en circulación**: cualquier corrección a esas preguntas es una corrección sobre algo que IPPU ya
-tiene en sus manos, y conviene decírselo en la reunión en vez de reemplazarlo en silencio.
+⚠️ **Enmendado el 2026-08-20 (`handoff.md` §5.28): `consulta-a-ippu.md` se envió el 2026-08-19.** Lo de
+abajo se escribió el 14/08, cuando todavía era cierto que no había salido. Consecuencia concreta: **ahora
+sí hay un documento en circulación**, así que reescribirlo corto ya no es gratis — cualquier cambio a esas
+preguntas cae sobre algo que IPPU **ya tiene en sus manos**, y corresponde decírselo en la reunión en vez
+de reemplazarlo en silencio.
 
 ~~`consulta-a-ippu.md` **nunca se envió**, así que no hay que corregir un documento en circulación:~~ hay que
 **reescribirlo mucho más corto**. El prototipo respondió gran parte solo.
@@ -563,12 +564,11 @@ talleres robusta a cambios de catálogo · `sensible` derivado del tema, nunca c
 
 ## 8. Nota sobre la reunión con IPPU
 
-No es parte del plan técnico, pero lo condiciona. ⚠️ **Enmendado el 2026-08-20 (§5.28):** cuando se
-escribió esto se creía que **`consulta-a-ippu.md` nunca se había enviado**. **Se envió** —después del
-2026-08-14— y **no hubo respuesta**. Eso no debilita lo que sigue: lo refuerza. La reunión ya no es «la
-primera vez que preguntamos», es **la escalada de preguntas que IPPU tiene sin contestar**, y eso cambia el
-tono con el que se lleva, no el contenido. Sigue habiendo fecha de demo. Dos cosas para decidir antes de
-M12.5:
+No es parte del plan técnico, pero lo condiciona. ⚠️ **Enmendado el 2026-08-20 (§5.28):** esto se
+escribió el 14/08, cuando `consulta-a-ippu.md` no se había enviado. **Se envió el 2026-08-19.** Todavía no
+hay respuesta, pero **hace un día**: no es que IPPU no conteste, es que no hubo tiempo. Lo que sigue vale
+igual — la reunión sigue siendo el canal rápido — pero **sin leerlo como reclamo**. Sigue habiendo fecha de
+demo. Dos cosas para decidir antes de M12.5:
 
 1. **Qué se muestra.** Se muestra **nuestra demo**, con nuestro diseño — no una versión de la de ellos.
    Lo que aporta UTEC es un sistema que funciona y persiste; su prototipo es una especificación. El
@@ -587,13 +587,17 @@ M12.5:
    sirviendo como red. La cuarta toca datos de muestra en tres archivos, uno de ellos compartido
    (`ui-core.js`) — conviene decidirla aparte, y notar que el heatmap de talleres ya está declarado fuera
    de alcance en el propio comentario del código (§5.1.3).
-2. **Las preguntas se llevan a la reunión, no por correo.** La decisión sigue en pie y el 2026-08-20 quedó
-   **confirmada por los hechos**: el cuestionario se envió y no volvió. Un cuestionario de 30 preguntas sin
-   responder es peor que seis preguntas hechas en persona.
-   > La agenda de esa reunión está escrita en `docs/planes/agenda-reunion-ippu-2026-08.md`: pantalla por
-   > pantalla, con el supuesto que cada una pone a prueba y lo que costaría un «no». Las que destraban ahora: los descriptores corregidos y qué
+2. **Las preguntas se llevan a la reunión, no por correo.** Un cuestionario de 30 preguntas sin enviar es
+   peor que seis preguntas hechas en persona. Las que destraban ahora: los descriptores corregidos y qué
    pasa con las evaluaciones viejas · el anexo del Decreto 72/025 · el acceso a la HCE actual · el acuerdo
    de confidencialidad · la matriz de roles · si ya puntúan de forma independiente.
+   > ⚠️ **Tensión abierta (2026-08-20).** Esta decisión se tomó el 14/08 y el **19/08 el cuestionario salió
+   > por correo igual**. O se revirtió sin escribirlo —que es justo lo que §12.6 pide no hacer— o el envío
+   > se pensó como **complemento** de la reunión y no como reemplazo. **Lo aclara por escrito quien envió**,
+   > en `handoff.md` §5. Mientras tanto valen las dos cosas: el cuestionario está en circulación y la
+   > reunión sigue siendo donde se responden.
+   > La agenda está en `docs/planes/agenda-reunion-ippu-2026-08.md`: pantalla por pantalla, con el supuesto
+   > que cada una pone a prueba y lo que costaría un «no».
 
 ---
 

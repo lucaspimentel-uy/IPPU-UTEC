@@ -614,13 +614,25 @@ M12 llegó hasta donde puede llegar sola. Hecho: **M12.0–M12.4 y M12.7** — 3
 | **M12.6** (HCE-PAI) | La misma ratificación de §5.8, **y** material de IPPU que no tenemos: el Anexo A del Manual y las secciones que el prototipo no muestra (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25). Es el módulo más grande (15 secciones, ~46 campos, 4 tablas hijas) y el que más superficie construye sobre supuestos sin confirmar. Sus dependencias internas **ya están resueltas**: §5.22, §5.26 y M12.4 (§5.23). |
 | **M12.8** (cierre) | Depende de los dos anteriores. Una sola persona. |
 
-**El motivo del bloqueo, dicho como es.** `consulta-a-ippu.md` **sí se envió** (después del 2026-08-14) y
-**no hubo respuesta**. No es «la pregunta no salió»: es «se preguntó y no contestaron». La reunión con IPPU
-es entonces la **escalada** de una pregunta ya formulada, no un segundo intento por otro canal.
-⚠️ **Esto deja desactualizado al plan M12**, que en tres lugares (§6 línea 452, §8 líneas 557 y 577,
-escritos el 2026-08-14) afirma que el cuestionario «nunca se envió». Se corrige en esta misma sesión.
-La *decisión* de la línea 577 —«las preguntas se llevan a la reunión, no por correo»— sigue valiendo; lo
-que cambió es su premisa.
+**El motivo del bloqueo, dicho como es.** `consulta-a-ippu.md` **se envió el 2026-08-19** y todavía no hay
+respuesta — pero **hace un solo día**, así que **esto no es «IPPU no contesta»**: es una pregunta **en
+vuelo**, sin tiempo material de volver. Decirlo de otra forma sería cargarle a IPPU una demora que no
+existe. Lo que bloquea a M12.5 y M12.6 **no es el silencio de IPPU, es que la respuesta todavía no llegó**,
+y un cuestionario de 30 preguntas no vuelve en 24 horas.
+
+Consecuencia práctica: la reunión **no es una escalada**, es el canal donde esas preguntas se responden más
+rápido de lo que volvería el formulario. Y si a la fecha de la reunión el cuestionario sigue sin respuesta,
+**eso tampoco es un dato sobre IPPU** — es lo esperable.
+
+⚠️ **Dos cosas quedan abiertas por el envío del 19/08, y las resuelve el equipo, no una sesión:**
+1. **El plan M12 quedó viejo, no equivocado.** Afirma en tres lugares (§6 línea 452, §8 líneas 557 y 577)
+   que el cuestionario «nunca se envió»; **era cierto el 2026-08-14**, cuando se escribió, y dejó de serlo
+   cinco días después. Se marca como enmendado, no como error.
+2. **Hay una tensión real con la decisión de la línea 577** —«las preguntas se llevan a la reunión, **no
+   por correo**», tomada el 14/08— porque el 19/08 el cuestionario **salió por correo igual**. O la
+   decisión se revirtió sin escribirlo (lo que §12.6 pide no hacer), o el envío se pensó como complemento
+   de la reunión y no como reemplazo. **No lo resolvemos acá**: queda anotado para que lo aclare quien
+   envió, por escrito y en §5.
 
 **M13 no se abre.** Se evaluó abrir una ronda de restyle de la demo y **se descarta**: el commit `5544e71`
 de `demo/F1-navegacion` es literalmente «restyle visual completo + B1/B2» y toca **1.371 líneas de
@@ -1469,9 +1481,11 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     cada una con el supuesto que pone a prueba y lo que costaría un «no». Es agenda, no ronda de frontend:
     no toca `demo/`.
   - **Corrección de hecho al cuestionario.** El plan M12 afirma en tres lugares (líneas 452, 557 y 577,
-    escritas el 2026-08-14) que `consulta-a-ippu.md` «nunca se envió». **Sí se envió**, después de esa fecha,
-    y no hubo respuesta (confirmado por Lucas). La decisión de la línea 577 —llevar las preguntas a la
-    reunión— sigue valiendo; cambió su premisa. Se corrige en la Fase 2.
+    escritas el 2026-08-14) que `consulta-a-ippu.md` «nunca se envió». **Se envió el 2026-08-19** (dato de
+    Lucas). Era cierto al escribirse y dejó de serlo cinco días después: el plan quedó **viejo, no
+    equivocado**. ⚠️ Todavía no hay respuesta, pero **hace un día**: no es «IPPU no contesta». Y queda una
+    **tensión sin resolver** — la línea 577 decidió el 14/08 «no por correo» y el 19/08 salió por correo;
+    lo aclara por escrito quien envió (§5.28). Se corrige en la Fase 2.
 
 - **2026-08-20** — **Hallazgos sobre `demo/F1-navegacion`, registrados sin tocar la rama.** F1 es ronda
   abierta de otra persona (§5.32: Boris/Samuel) y su ítem (d) —si se mergea— es decisión del dueño. **No se
@@ -1530,8 +1544,8 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     `catalogos_iniciales.json` (`_origen`, regenerado) · `handoff.md` §0.6 y cabecera.
     **Rutas en código:** `generar_catalogos_backend.py` (líneas 41–42) y `extraer_prototipo_v4.js`.
   - ⚠️ **Corrección de hecho al plan M12**, en tres lugares: decía que `consulta-a-ippu.md` «nunca se
-    envió». **Sí se envió**, después del 2026-08-14, y no hubo respuesta. La decisión de llevar las
-    preguntas a la reunión **queda confirmada por los hechos**, no debilitada.
+    envió». **Se envió el 2026-08-19.** Sin respuesta todavía, pero hace un día: se corrigió el texto para
+    que no se lea como reclamo a IPPU, y se dejó anotada la tensión con la decisión de «no por correo».
   - **`graphify-out/` desversionado** (`e782f36`) y **`docs/prompts/` creada** (`70bf2aa`).
   - **`herramientas/verificar_estado.py`** (`0271ea8`), el arreglo durable del desfasaje docs↔repo que ya
     pasó **cuatro veces**. Dos cosas que costaron iteraciones y quedan escritas en su docstring: el corte

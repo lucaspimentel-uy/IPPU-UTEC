@@ -9,8 +9,11 @@
 > esto** (§5.28), no por falta de manos.
 >
 > - **Autor:** Lucas · **Fecha:** 2026-08-20 · **Estado:** borrador para llevar a la reunión.
-> - **Antecedente:** `docs/notas/consulta-a-ippu.md` **se envió y no hubo respuesta**. Esta reunión es la
->   **escalada** de preguntas ya formuladas, no un segundo intento por otro canal.
+> - **Antecedente:** `docs/notas/consulta-a-ippu.md` **se envió el 2026-08-19** y todavía no volvió — pero
+>   hace un día, así que **no hay que llevarlo como reclamo**: no hubo tiempo material de contestarlo. La
+>   reunión no es una escalada; es el canal donde estas preguntas se responden más rápido que un formulario
+>   de 30 ítems. Lo que sí cambia: IPPU **ya tiene el cuestionario en sus manos**, así que conviene
+>   apoyarse en él («esto ya se lo mandamos, mirémoslo juntos») en vez de preguntar de cero.
 
 ---
 
