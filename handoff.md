@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-17
+> - **Última actualización:** 2026-08-20 (Fase B — merge de F1 + cuestionario)
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — Ronda M0–M10 COMPLETA (demo v4.1)** · **M11.1 y M11.2 HECHOS** (backend v2: 28 tablas, migración única, catálogos, 21 tests). En curso: **M12 · absorción del Prototipo v4**, intercalada **entre M11.2 y M11.3** porque toca la misma capa (modelos, migración inicial, catálogos) — ver §5.10–§5.18 y `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **M12.0 a M12.4 y M12.7 hechos** (2026-08-15): **38 tablas** (34 tras M12.3, ⚠️ que **bajó de 35 y no fue regresión**: retira `hce_taller`, §5.20; M12.4 sube a 36 con `severidad_dsm` + `severidad_nivel` y retira la **columna** `hce_diurna.nivel_soporte`, §5.24; M12.7 sube a 38 con `ateneo` + `ateneo_acuerdo`), **240 tests**. **Siguen M12.5 y M12.6**, que se reparten **en paralelo** (uno cada uno, archivos distintos de `app/models/`) — y ahí sí **se congela la migración** hasta que termine el paralelo (§5.19). El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie. ⚠️ **M12.6 arranca con §5.26 ya decidida** (nomenclatura `hce_id` = pertenencia · `hce_<calificador>_id` = referencia) y con §5.22. ⚠️ **La regla de migraciones de M12 quedó enmendada el 2026-08-14 (§5.19):** la migración inicial única **se regenera al cerrar cada sub-módulo**, con el test de coincidencia modelos ↔ migración pasando; sólo se congela si hay trabajo en paralelo real sobre `app/models/`. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. En paralelo, pendiente con IPPU: **validar la demo** (sobre todo el cambio de IDEA a línea base única).
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
@@ -948,6 +948,41 @@ construye sobre supuestos sin confirmar. **Sigue bloqueada.**
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
+
+> ### 📌 Pendientes abiertos por la Fase B del 2026-08-20 (F1 aterrizó — estos ya no esperan a nada)
+>
+> **Los que decían «cuando aterrice F1» y ahora se deben por nombre:**
+> - [ ] **Partir `handoff.md`.** Son **2.100+ líneas** y §13 se lleva la mitad. Sacar la bitácora a
+>   `docs/bitacora.md` y dejar acá estado + decisiones. **Nadie lo tomó.**
+> - [ ] **Cabecera de estado en `puntos-a-validar.md`**, como la que ganó `consulta-a-ippu.md`: qué es,
+>   qué no es, y que **ya no es «el mismo contenido»** que la consulta.
+> - [ ] **`puntos-a-validar.md` §2.1 — la deuda declarada de §5.31.** El costo medido del IDEA anual
+>   todavía no está ahí. Ahora el archivo está descongelado.
+> - [x] ~~Mover el prompt de F1 a `docs/prompts/`~~ → **HECHO** (`281405b`).
+> - [ ] **Plegar `docs/notas/respuestas-reunion-ippu-2026-08-21.md`** después de la reunión: «sí» →
+>   `puntos-a-validar.md` con fecha · «no» → entrada en §5 **antes de tocar código** · respuestas del
+>   cuestionario → bajo su `> _Respuesta:_` en `consulta-a-ippu.md` **y en el Google Doc**. Recién
+>   entonces se borra. **La condición de retiro está escrita en el propio archivo.**
+>
+> **Nuevos de esta noche:**
+> - [ ] ⚠️ **El harness de verificación no corre de punta a punta.** `fingerprint.js:82` recorre
+>   `['inicio','pendientes','analitica','grupos','usuarios']` y **`usuarios` ya no es un `.navitem`**
+>   (B2 lo sacó de la barra): el `page.click()` **tira** y la corrida aborta. Faltan además `inclusion`
+>   y `ateneos`. Es barato de arreglar; lo caro es correrlo sin saberlo. **Decidido que el procedimiento
+>   de dos worktrees queda documentado en vez de commitear un baseline** (§13, Fase B): si se prefiere
+>   un baseline versionado, hay que sacar `*.json` del `.gitignore` y **fijar el escenario de la Parte
+>   C**, y eso es una decisión, no una tarea.
+> - [ ] ⚠️ **`grupo` — mostrado y no modelado, y mergear F1 no lo modeló.** `responsable1`,
+>   `responsable2` y `tecnicosAutorizados` viven en la demo y **§5.18 no los tiene**. Si IPPU confirma
+>   mañana, eso **no valida un supuesto: abre trabajo de backend**. Va a lista de reconciliación.
+> - [ ] **`verificar_estado.py` — chequeo de afirmaciones de prosa** (§5.34): contar las secciones
+>   `^### N.N` de los archivos de `docs/notas/` y compararlas con lo que §6 afirma sobre ellos.
+>   **Después de la reunión**, no antes.
+> - [ ] **Pegar el link del Google Doc** en la cabecera de `docs/notas/consulta-a-ippu.md`. Sin eso, el
+>   snapshot no tiene contra qué re-sincronizarse y §5.34 se repite.
+> - [ ] **Aclararle a IPPU** que la intro del cuestionario apunta a una pregunta que no quedó en el
+>   documento (agenda §1). Treinta segundos, dicho de frente.
+
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
 - [ ] **F1-nav · ajustes de navegación del frontend · rama `demo/F1-navegacion`, ⚠️ CON 4 COMMITS SIN PUSHEAR** (Lucas · Samuel + Claude, 2026-08-16 → 2026-08-19, ver §13). Cuatro rondas sobre la misma rama: **F1-nav** (4 cambios de navegación + nómina §21.1, 2026-08-16) · **F1-nav2** (vista Grupos = **listado + detalle**, alineando con `vGrupos`/`vGrupoDetalle`; detalle con 3 cards — Integrantes con tabla NNA/CIE-11+Soporte/CI·LB·PA·PB·IC/Uso de imagen, Técnicos autorizados condicional al permiso §21.1, Fotografía grupal — 2026-08-17) · **F1-nav3** (tablero de Inclusión, 2026-08-18, `648cb04`) · **F1-nav4** (sección **Ateneos y capacitación**: `js/ateneos.js` + `#view-ateneos` + panel en el expediente, 2026-08-19). **Pusheado hasta `648cb04` (F1-nav3); quedan locales 4 commits:** `4f29bc9` F1-nav4 · `230b4c0` **merge de `main`** (traía `684c4f5`, el cruce que reabre §2.1 — la rama había quedado atrás) · `554ff37` corrección de `consulta-a-ippu.md` §3.1. **Falta:** **(a)** **pushear los 4 commits** — ⚠️ y antes decidir a qué remotos: el clone de esta sesión tiene **sólo `origin`** (`git.utec.edu.uy`), no el `gitlab` que pide `CLAUDE.md` §4; **(b)** verificar visualmente en navegador (ninguna de las 4 rondas lo hizo: Claude Code no controla browser); **(c)** re-baseline del fingerprint Playwright (no está instalado, y F1-nav2/3/4 rompen pasos a propósito); **(d)** decidir si se mergea a `main` o queda como PR abierto. **Deudas nuevas:** cambio de responsable sin HCE-LOG (§5.18 y §7); matriz de roles §21.1 pendiente con IPPU (§7 F1-nav2); formato oficial del Nº de HCE por confirmar (§7 F1-nav2); **de F1-nav4** — ateneos **sin HCE-LOG** (el de la demo es por NNA y un ateneo es transversal, misma limitación que §5.18), **sin adjuntos** (HCE-DOC en la demo es por expediente; §5.25 ya modeló el XOR) y sin los guards de M11.3; **`.hint` no existe como clase global** (sólo `.field .hint`), así que Grupos e Inclusión la usan suelta y sin estilo — F1-nav4 no la tocó y definió `.at-hint` propia. **Preguntas abiertas:** «tutor» (2026-08-16, §7), permisos §21.1 y formato HC (2026-08-17, §7). **F1-nav4 no abrió ninguna:** sus dos divergencias respecto del prototipo ya estaban decididas y documentadas en `puntos-a-validar.md` §1.13 (prefijo único `AT-`) y §1.14 (correlativo de registración), y `consulta-a-ippu.md` **§3.12 y §3.13** ya las preguntan (eran §3.13/§3.14 antes de la revisión del equipo del 19/08 — §5.34). **⚠️ F1-nav3 sigue sin entrada en §13 ni acá**: la tiene que completar quien la hizo.
@@ -2035,3 +2070,108 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
   - **La demo no se tocó:** `git status` sobre `demo/` vacío en toda la sesión. La verificación fue
     **read-only**; no se abrió navegador, así que lo que se afirma es que los archivos están intactos y
     parsean, no que alguien miró la consola.
+
+- **2026-08-20** — **Fase B: se mergea F1, y aparece que el repo tenía el cuestionario equivocado.**
+  Sesión de víspera (la reunión con IPPU es el 21/08). **Tres decisiones nuevas: §5.33–§5.35.**
+  (Lucas + Claude)
+  - **§5.33 primero, y el orden importa.** F1 agregó `ateneos.js` (488) e `inclusion.js` (175) — **663
+    líneas de módulo nuevo** que §5.27 prohibía textualmente. La enmienda se escribió **antes** del merge,
+    no después: §12.6 pide que una decisión escrita se cambie por escrito y antes del hecho, no que el
+    merge la cambie de hecho. Se acepta porque esas 663 líneas son lo único que pone M12.5 y M12.7
+    delante de IPPU mañana — **el exceso de alcance y el valor para la reunión son el mismo hecho**.
+  - **Merge `--no-ff` de `demo/F1-navegacion` (`5544e71`).** Conflicto **único**, en §13, **tal cual lo
+    predijo el dry-run de la Fase A** — y la entrada §5.33, escrita antes, **no agregó ninguno**.
+    Resuelto en cronología: primero las entradas de F1 (17 y 19), después las del 20. **Nada se
+    descartó de ninguno de los dos lados** (100 líneas de un lado, 194 del otro, 295 con el separador).
+  - **Regresión de talleres reparada (§5.14 / D5).** `g.talleres` seguía sembrado en los 4 grupos
+    (`grupos-usuario.js:34/40/46/52`) pero F1 había retirado la fila que los dibujaba: sobrevivía sólo el
+    KPI agregado «Talleres cubiertos: N de 14». **Se restauró en el markup y el estilo de F1**, no
+    revirtiendo su restyle — `.talleres-list`/`.taller-tag` **siguen definidas** en `estilos.css:832`, F1
+    las restiló y las dejó **sin uso**. Va como card propia en el detalle del grupo. Y `index.html:401`
+    prometía «técnicos **encargados** … y **talleres asignados**»: F1 renombró lo primero y quitó lo
+    segundo, así que las dos mitades se leían como bugs en una recorrida.
+  - **Deuda del harness, descargada por el lado barato.** El ítem (c) de §6 de F1 —«re-baseline del
+    fingerprint»— **es imposible como está diseñado el harness**: `verificacion/.gitignore` excluye
+    `*.json`, así que **no existe ninguna captura versionada** contra la cual re-basear. En vez de
+    inventar una a medianoche, se escribió el **procedimiento de dos worktrees** en
+    `demo/verificacion/README.md` —pasó de ser una línea suelta a comandos que se copian y pegan— más
+    por qué no hay baseline y qué haría falta para tenerlo. ⚠️ **Y lo que faltaba decir en voz alta: el
+    harness hoy no corre de punta a punta.** `fingerprint.js:82` hace click en
+    `.navitem[data-view="usuarios"]`, que **B2 sacó de la barra** (el `#view-usuarios` existe, se llega
+    por otro lado), así que la corrida **aborta ahí**; y no visita `inclusion` ni `ateneos`. §5.5 vendió
+    este harness como la red de todo refactor de la demo: **una red que no se sabe rota es peor que no
+    tenerla.**
+  - ⚠️ **§5.34 — el repo describía un cuestionario que IPPU no tiene.** El documento que salió el 19/08
+    **no** es `consulta-a-ippu.md` con §3.1 corregido: el equipo lo revisó antes de mandarlo, **sacó tres
+    preguntas** y renumeró todo lo posterior. Es la **quinta** divergencia docs↔realidad de la ronda y
+    **la primera con la otra mitad afuera del repo**, que es exactamente la que ningún script de acá
+    podía ver.
+    - **Las tres que se sacaron y nunca se preguntaron:** §2.7 y §2.8 (los dos del **baremo**) y **§3.2,
+      las citas de la Escala IPPU-TEA, que estaba marcada ⚠️**. Verificado sobre el documento enviado:
+      **0** ocurrencias de «baremo», «BUND» y «72/025»; **0** de cualquier pregunta por citas. **No se
+      relocalizaron: no están.**
+    - ⚠️ **El documento se contradice a sí mismo y IPPU lo tiene en la mano:** su intro sigue diciendo
+      que las que más frenan son «**3.2** (las citas de la escala) y **3.3** (el acceso al sistema)» —
+      numeración del borrador. En el enviado, §3.2 **es** «Acceso al sistema» y §3.3 es «Qué hacer con
+      los expedientes que ya existen». **Dos punteros rotos, no uno.** No se corrige el archivo: es el
+      registro de lo que se mandó. Se aclara de palabra en la reunión (agenda §1).
+    - **§3.1 está bien.** Trae la corrección de F1 (`554ff37`): «lo que todavía no construimos es la
+      pantalla para hacer esos cambios». **Sin sobrepromesa. Nada que desdecir mañana.**
+    - **Qué se hizo:** `consulta-a-ippu.md` pasa a ser el **snapshot del documento enviado**, palabra por
+      palabra — **verificado: 2.695 palabras idénticas**, sólo se normalizó el marcado que arrastraba la
+      conversión del `.docx`. Cabecera de estado nueva (es snapshot de un **Google Doc del equipo**,
+      ⚠️ **falta pegar el link**). La versión superada **se borró**, apoyándose en git y en el tag
+      `pre-limpieza-2026-08-20` (precedente §5.5, reusado en §5.29), y las tres preguntas retiradas se
+      conservan **con su redacción original** en `puntos-a-validar.md` §1.2 y §1.4.
+    - **Barrido de referencias, misma disciplina que la purga de la Fase 2.** Corregidas: `handoff.md`
+      §5.18 y §6 (F1-nav), `puntos-a-validar.md` §2.6, `esquema-datos-v2.md` §2.1 y `PLAN-M12` §4.
+      **Resultado: 0 citas vivas apuntando a numeración vieja.** Las de §13 no se tocaron: describen
+      estado pasado y eran correctas a su fecha.
+    - **Dos afirmaciones falsas que no eran de numeración:** §6 decía «Parte 3, **11** dudas puntuales»
+      (son **14**) y nombraba entre las cuatro ⚠️ una pregunta **que no existe**; §7 daba el baremo por
+      **preguntado** cuando nunca se preguntó.
+    - ⚠️ **`verificar_estado.py` no puede atrapar esta clase de deriva**, y quedó escrito como límite
+      conocido con arreglo candidato (contar secciones `^### N.N` de `docs/notas/` contra lo que §6
+      afirma). **Se dejó sin implementar a propósito:** la víspera de una reunión no es noche de extender
+      la herramienta de verificación.
+  - **§5.35 — la puerta de §5.8 no está antes de M12.5, está antes de M11.3.** Medido contra el código:
+    M12.5 no toca `idea` en ninguna línea de su especificación, y el pase a IDEA anual **ya es aditivo**
+    —`ix_idea_hce_id … unique=False` (`9246e659d2c9:392`), `idea` ya es 1:N—. Deja de serlo en **M11.3**,
+    donde «la vigente es la de mayor `fecha_consenso`» (`modulos.py:219`, test en `test_esquema_v2.py:54`)
+    pasa de docstring a guards. **Enmienda la fila de §5.28 escrita el mismo día** (entrada nueva, no
+    edición: §5 es append-only). ⚠️ **No ratifica §5.8 y no destraba M12.6**, cuyo segundo bloqueo —el
+    material que falta de IPPU— sigue en pie. `PLAN-M12` §7 dejó de decir «antes de M12.5».
+  - **Sexta divergencia, y la creó este mismo merge:** la doc decía **12 módulos** de demo y pasaron a
+    **14**. Corregida en `CLAUDE.md`, `README.md`, `docs/estructura-repositorio.md` y la cabecera de este
+    archivo. ⚠️ **`verificar_estado.py --check` daba OK igual** — no cuenta módulos de la demo. La
+    encontró un `grep`.
+  - **Agenda reescrita y hoja de aterrizaje creada.** La agenda ahora **no vuelve a preguntar lo que IPPU
+    ya contestó** en el cuestionario del 15/06: acceso a la HCE (P3/P45) pasa a «quién redacta el
+    documento de confidencialidad y para cuándo»; fotos (P43, la autorización de imagen ya existe y es
+    genérica) pasa a «¿el bloqueo les traba el día a día?»; inclusión (P31) pasa a «pásennos la planilla
+    del Drive». **Talleres subió al tope**: en junio contestaron **«No»** a registrar asistencia (P14) e
+    indicadores por taller (P15), y **M12.6 está por construir `pai_taller`** — la primera pregunta es si
+    estamos modelando una práctica que no existe. **§4 (dos técnicos) se pregunta SIN mostrar la
+    pantalla**, con la frase exacta escrita: la pantalla del IDEA muestra **firma doble sobre puntaje
+    único de consenso** (`flujo.js:195`), que es **lo contrario** de §5.16/D7, y un «sí» contra ella
+    confirmaría el modelo que no construimos. `docs/notas/respuestas-reunion-ippu-2026-08-21.md` queda
+    pre-armado para llenar: cada pregunta con la respuesta de junio citada debajo y **una línea que nombra
+    qué §5 o sub-módulo dispara cada respuesta posible**.
+  - **Verificación, con los números reales:** `node --check` sobre los **14** módulos de `demo/js/` → **14
+    OK** · `generar_catalogos_backend.py --check` → **OK, al día** · `pytest -q` → **240 passed, 0
+    skipped** (28,00 s) · `verificar_estado.py --check` → **OK** · barrido de citas renumeradas → **0**.
+    **Ningún conteo se movió**: 38 tablas, 240 tests, migración `9246e659d2c9`.
+  - **Reconciliación del corpus del grafo, que la Fase A dejó debiendo — cierra exacto.** Se recuperó
+    `graphify-out/manifest.json` de la historia (`e782f36^`), que es la lista real de lo que el grafo
+    indexó el 2026-08-07: **72 archivos**. Con la misma regla hoy: **77**.
+    **72 − 26 (bajas) + 31 (altas) = 77.** Las bajas son el **backend v1** (23 archivos, retirado en
+    M11.2) + los **3** de la purga de §5.29 (`docs/markdown/IPPU.md` y los dos docs del backend v1). Las
+    altas son 16 de backend v2/M12, 9 de `docs/`, 3 de `herramientas/`, 2 de demo (`ateneos.js`,
+    `inclusion.js`) y 1 prompt. ⚠️ **Un detalle que costó una pasada:** `git ls-tree --name-only` **cita
+    con escapes** las rutas con acentos, así que las 3 actas de reunión aparecían como borradas cuando
+    nunca se tocaron — se rehizo con `-z`. Y `PLAN-modular-…md` es un **movimiento** a `docs/planes/`, no
+    una baja.
+  - ⚠️ **Lo que esta sesión NO pudo cerrar, y hay que decirlo: nadie abrió la demo en un navegador.**
+    Toda la verificación fue automática. El merge trajo **1.371 líneas de `estilos.css`** que ninguna
+    sesión miró con ojos, y mañana eso se abre delante de IPPU. **Es el único riesgo que ninguna sesión
+    puede cerrar por sí sola.**
