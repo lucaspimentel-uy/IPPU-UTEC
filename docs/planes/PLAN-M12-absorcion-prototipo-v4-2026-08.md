@@ -561,7 +561,16 @@ talleres robusta a cambios de catálogo · `sensible` derivado del tema, nunca c
   como contraste para verificar cálculos, no como reemplazo.
 - **Hay fecha de demo con IPPU y esta ronda no produce nada visible.** Ver §8.
 - **§5.8 sigue sin ratificar.** M11 arrancó sin cruzar su puerta de validación y M12 la cruza otra vez,
-  con más superficie construida. Ratificarlo o pararlo antes de M12.5.
+  con más superficie construida. ~~Ratificarlo o pararlo **antes de M12.5**.~~
+  ⚠️ **Enmendado el 2026-08-20 (`handoff.md` §5.35): la puerta no está antes de M12.5, está antes de
+  M11.3.** Medido contra el código: M12.5 no toca `idea` en ninguna línea de su especificación, y pasar el
+  IDEA a anual **ya es aditivo** —no hay `UNIQUE` sobre `idea.hce_id` que cambiar, el índice es
+  `ix_idea_hce_id … unique=False` (`9246e659d2c9:392`) y `idea` ya es 1:N. Deja de ser aditivo en
+  **M11.3**, donde la resolución «la vigente es la de mayor `fecha_consenso`» (`app/models/modulos.py:219`,
+  test en `tests/test_esquema_v2.py:54`) pasa de docstring a guards con test.
+  **§5.8 no queda ratificado:** sigue «a ratificar por el equipo». Lo que se movió es **dónde está la
+  puerta**. Y **M12.6 no queda destrabada**: su segundo bloqueo —el material que falta de IPPU, Anexo A del
+  Manual y las 13 secciones que el prototipo no muestra— sigue en pie (§5.28).
 
 ---
 

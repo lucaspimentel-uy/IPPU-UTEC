@@ -819,6 +819,132 @@ calcular «días desde la última gestión» en el tablero. **Mostrar Inclusión
 - **No se abren módulos nuevos adicionales** en la demo sin abrir otra ronda. HCE-PAI y HCE-SEV **siguen
   fuera**: ninguna de las dos ramas los tiene (verificado en la Fase A de esta sesión).
 
+### 5.34 (H2) El repo describía un cuestionario que IPPU no tiene — **quinta divergencia, y la primera con la otra mitad afuera** (2026-08-20, Lucas)
+Desde el **2026-08-19** hasta esta noche, `docs/notas/consulta-a-ippu.md` **no era el documento que se le
+envió a IPPU**. El equipo lo revisó antes de mandarlo, **sacó tres preguntas** y renumeró todo lo que
+venía después. El repo siguió describiendo el borrador.
+
+**Es la quinta vez en esta ronda que la documentación se desfasa de la realidad**, y por eso se escribió
+`verificar_estado.py` (§13, Fase 2: «el desfasaje docs↔repo que ya pasó cuatro veces»). Pero **ésta es de
+otra clase**: las cuatro anteriores tenían las dos mitades adentro del repo —un `.md` contra el código—,
+y ésta tiene **la otra mitad en manos de un tercero**. Ningún script del repo la podía ver.
+
+**Las tres preguntas que se sacaron. No están «enviadas y esperando respuesta»: están sin preguntar.**
+
+| Se sacó | Era | Dónde sigue abierta |
+|---|---|---|
+| §2.7 | Los porcentajes de la valoración funcional (baremo) | `puntos-a-validar.md` §1.2 · §7 de este archivo · agenda §1 |
+| §2.8 | El porcentaje lo define el organismo oficial, no la institución | ídem |
+| §3.2 ⚠️ | Las citas bibliográficas de la Escala IPPU-TEA | `puntos-a-validar.md` §1.4 · agenda §1 |
+
+Verificado por búsqueda sobre el documento enviado: **0** ocurrencias de «baremo», «BUND» y «72/025»;
+**0** de cualquier pregunta por citas bibliográficas. **No se relocalizaron: no están.**
+
+⚠️ **La §3.2 estaba marcada ⚠️** como una de las cuatro que más destraban. Que se haya caído en la
+revisión significa que la verificación de las 24 citas de la Escala IPPU-TEA **no tiene hoy ningún canal
+escrito**. La reunión es el único que queda.
+
+⚠️ **El documento enviado se contradice a sí mismo, y IPPU lo tiene en la mano.** Su intro sigue diciendo
+que las que más frenan son «**3.2** (las citas de la escala) y **3.3** (el acceso al sistema actual)» —
+numeración **anterior** a la revisión. En el documento que recibieron, **§3.2 es «Acceso al sistema
+actual»** y **§3.3 es «Qué hacer con los expedientes que ya existen»**. Son **dos punteros rotos**, no uno,
+y la pregunta por las citas no está en ninguna parte. Si alguien de IPPU la fue a buscar, no la encontró.
+**No se corrige el archivo** —es el registro de lo que se mandó—; se aclara de palabra en la reunión.
+
+**Otras diferencias, menores y verificadas:** §2.6 ganó «(Sin estar en el HCE)» · §2.1 conserva su ⚠️ pero
+perdió el «*el más importante*» · §3.1 trae la corrección de F1 (`554ff37`), **sin sobrepromesa**: dice
+«**Lo que todavía no construimos es la pantalla para hacer esos cambios**». **Nada que desdecir mañana.**
+· El documento **termina cortado**: después de §3.14 hay un encabezado vacío donde el borrador tenía «Para
+cerrar». No se reconstruye.
+
+**Mapa de renumeración — la referencia canónica del repo.** Toda cita usa la columna «Enviado».
+
+| Borrador | Enviado | Borrador | Enviado |
+|---|---|---|---|
+| 2.7 baremo | **se sacó** | 3.6 quién ve qué | **3.5** |
+| 2.8 organismo oficial | **se sacó** | 3.7 falta un técnico | **3.6** |
+| 2.9 períodos | **2.7** | 3.8 cambia de grupo | **3.7** |
+| 2.10 fotos | **2.8** | 3.9 puntuación independiente ⚠️ | **3.8** |
+| 3.1 talleres | **3.1** (texto cambiado) | 3.10 informe a la familia | **3.9** |
+| 3.2 citas de la escala ⚠️ | **se sacó** | 3.11 severidad DSM | **3.10** |
+| 3.3 acceso al sistema ⚠️ | **3.2** | 3.12 nombre del PAI | **3.11** |
+| 3.4 expedientes existentes | **3.3** | 3.13 ateneos de grupo ⚠️ | **3.12** |
+| 3.5 número de historia | **3.4** | 3.14 número de ateneo | **3.13** |
+| | | 3.15 algo que no preguntamos | **3.14** |
+
+§1.1–§1.6 y §2.1–§2.6 no cambiaron.
+
+**Qué se hizo esta noche.** `consulta-a-ippu.md` pasa a ser el **snapshot del documento enviado**, palabra
+por palabra (verificado: **2.695 palabras idénticas**; sólo se normalizó el marcado que arrastraba la
+conversión del `.docx`). Se le puso cabecera de estado. **La versión superada se borró**, apoyándose en la
+historia de git y en el tag `pre-limpieza-2026-08-20` — precedente §5.5, reusado en §5.29 —, y las tres
+preguntas retiradas se conservan **con su redacción original** en `puntos-a-validar.md` §1.2 y §1.4. Por
+eso el archivo viejo no necesita sobrevivir como hermano: lo que había que rescatar de él, se rescató.
+
+⚠️ **El artefacto autoritativo es un Google Doc del equipo, no este repo.** El `.md` es un snapshot
+fechado. Si el Doc cambia y nadie re-baja el snapshot, **esta misma divergencia vuelve**. Falta pegar el
+link en la cabecera del archivo.
+
+### ⚠️ `verificar_estado.py` no puede atrapar esta clase de deriva — límite conocido
+El script compara **tablas, migración, un solo head y conteo de tests**. **No compara prosa.** Su propio
+docstring lo dice de otra forma: el corte presente/historia es *estructural*, y adivinar por redacción
+producía 13 falsos positivos. Consecuencia concreta y medible: §6 de este archivo afirmaba «Parte 3 **11**
+dudas puntuales» cuando el documento enviado tiene **14**, y nombraba entre las cuatro ⚠️ una pregunta que
+**no existe** — y `--check` daba **OK** mientras tanto. Lo mismo pasó esta noche con «12 módulos» de la
+demo, que el merge de F1 convirtió en 14: lo encontró un `grep`, no el verificador.
+
+**Arreglo candidato, para después de la reunión:** contar las secciones `^### N.N` de los archivos de
+`docs/notas/` y compararlas contra los números que `handoff.md` §6 afirma sobre ellos. Es barato y cubre
+la familia entera de «un `.md` dice cuántas cosas tiene otro `.md`».
+
+⚠️ **No se implementa esta noche.** La víspera de una reunión no es el momento de extender la herramienta
+de verificación: si la extensión sale ruidosa, el costo lo paga el día que nadie la corra (§13, Fase 2).
+Queda en §6 con dueño a definir.
+
+### 5.35 (H3) La puerta de §5.8 no está antes de M12.5: está antes de **M11.3** (2026-08-20, Lucas)
+**Esto NO ratifica §5.8.** §5.8 sigue **«a ratificar por el equipo»**, exactamente igual que ayer. Lo que
+cambia es **dónde está la puerta**: no «antes de M12.5», sino **antes de M11.3**.
+
+**La medición, contra el código y no contra los documentos.** M12.5 (HCE-INC) no toca `idea` en ninguna
+línea de su especificación: ficha (`centro`, `tipoCentro`, `grado`, `modalidad`, referente, estado) +
+bitácora con 5 catálogos + `sensible` derivado. Y del lado del esquema, **pasar el IDEA a anual ya es
+aditivo**:
+
+- **No hay `UNIQUE` sobre `idea.hce_id` que cambiar.** El índice es `ix_idea_hce_id … unique=False`
+  (migración `9246e659d2c9`, línea 392). `idea` **ya es 1:N** (§5.31 lo midió primero).
+- La regla que resuelve cuál rige está escrita en prosa, no en el esquema: **«la vigente es la de mayor
+  `fecha_consenso`»** (`app/models/modulos.py:219`), y su test es
+  `test_idea_admite_varias_lineas_base_por_expediente` (`tests/test_esquema_v2.py:54`).
+
+**Por eso la puerta se corre.** Mientras el cambio sea aditivo sobre el esquema, construir M12.5 encima
+**no lo encarece**. Deja de ser aditivo **en M11.3**, que es donde se implementa la resolución por
+`fecha_consenso` — ahí el «cuál IDEA rige» pasa de docstring a código con guards y tests, y cambiar el
+modelo después obliga a reescribirlos. **La puerta está antes de M11.3, no antes de M12.5.**
+
+⚠️ **Esto enmienda §5.28, escrita hoy mismo.** Su tabla dice que la «única puerta» de M12.5 es la
+ratificación de §5.8. **Medido, es falso:** M12.5 está frenada **por asociación** —se decidió no abrir
+sub-módulos con la validación en vuelo—, no por una dependencia técnica sobre `idea`. §5 es **append-only**
+(§12.6): esto es una entrada nueva que corrige esa fila, **no una edición** de §5.28.
+
+⚠️ **M12.6 NO queda destrabada por esto, y «desacoplado de §5.8» no se lee «destrabado».** Su esquema
+también está libre de `idea`, pero §5.28 le puso **dos** bloqueos independientes y **el segundo sigue en
+pie**: falta material de IPPU — el **Anexo A del Manual** y las 13 secciones que el prototipo no muestra
+(§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25). Es el módulo más grande y el que más superficie
+construye sobre supuestos sin confirmar. **Sigue bloqueada.**
+
+**Dos derivados de la medición, con destinatario, para que no se pierdan:**
+
+1. **Una pregunta distinta, que no es §5.8 y no se mezcla con ella.** Si el IDEA pasa a anual, hay que
+   decidir aparte si `inclusion.estado` / `fecha_estado` (M12.5) también se anualizan — el estado de
+   inclusión educativa es del año lectivo, igual que el grupo (D9). **Son dos preguntas, no una:** el IDEA
+   es un instrumento con línea base; el estado de inclusión es una situación vigente. Mezclarlas hace que
+   una respuesta de IPPU se lea como si contestara las dos. **Destinatario: el equipo, al abrir M12.5.**
+2. **Requisito para M11.3, y va al esquema, no a una tabla.** Con `idea` 1:N y la resolución por
+   `fecha_consenso`, un **PAI de 2024 no puede renderizar en silencio el IDEA de hoy**: tiene que resolver
+   contra la línea base vigente **a su fecha**, o decir explícitamente cuál usó. El propio test lo deja
+   servido — siembra un IDEA de 2024 y otro de 2026 sobre el mismo expediente. **Destinatario:
+   `backend/docs/esquema-datos-v2.md` §4** (dónde vive cada regla), cuando M11.3 se tome.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
