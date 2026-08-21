@@ -163,6 +163,17 @@ function renderGrupoDetalle(gid){
       <td>${imgBadge}</td>
     </tr>`;
   }).join("");
+  // §5.14 / D5 — los talleres que dicta el grupo. F1 dejó sólo el KPI agregado ("Talleres
+  // cubiertos: N de 14") y perdió el detalle por grupo, que es el dato que D5 pide que se vea.
+  // Se restaura en el markup y el estilo de F1: .talleres-list/.taller-tag siguen definidas en
+  // estilos.css (restiladas por F1) y habían quedado sin uso.
+  const talleresCard = `
+    <div class="card"><div class="cardbody"><h3>Talleres del grupo</h3>
+      ${(g.talleres && g.talleres.length)
+        ? `<div class="talleres-list">${g.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")}</div>
+           <div class="hint" style="margin-top:8px">${g.talleres.length} de los 14 talleres institucionales (§5.14 · D5).</div>`
+        : `<div class="hint">Sin talleres asignados a este grupo (demo).</div>`}
+    </div></div>`;
   const integrantesCard = `
     <div class="card"><div class="cardbody"><h3>Integrantes y estado del ciclo</h3>
       ${integrantes.length
@@ -215,6 +226,7 @@ function renderGrupoDetalle(gid){
       <p class="pagedesc">Técnicos responsables: <b>${r1}</b> · <b>${r2}</b> · ${integrantes.length} integrante(s) · ${g.dias} · ${g.horario}</p>
       ${g.obs ? `<p class="pagedesc" style="font-style:italic">${g.obs}</p>` : ""}
     </div>
+    ${talleresCard}
     ${integrantesCard}
     ${tecnicosCard}
     ${!puede ? `<div class="notice info" style="margin:14px 0"><b>Nómina §21.1 no visible:</b> tu rol actual (${(typeof USUARIO !== "undefined" && USUARIO.cargo) || "técnico"}) no incluye la administración de técnicos autorizados del grupo. Coordinación / Dirección técnica pueden verla y modificarla.</div>` : ""}
