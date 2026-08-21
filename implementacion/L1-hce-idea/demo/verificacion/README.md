@@ -40,8 +40,10 @@ git show HEAD:implementacion/L1-hce-idea/demo/index.html > /tmp/antes.html
 node fingerprint.js /tmp/antes.html antes.json
 ```
 
-Ojo: si la demo está partida en `css/` y `js/`, recuperar sólo el `index.html` no alcanza —
-usá `git stash` o un `git worktree` de la versión previa completa.
+⚠️ **Recuperar sólo el `index.html` no alcanza.** La demo está partida en `css/` y `js/`
+desde la modularización (§5.5): el `index.html` define el orden de carga, pero el
+comportamiento vive en los 14 módulos. El procedimiento completo está abajo, en
+**«Comparar dos versiones con `git worktree`»** — usalo, no improvises con `git stash`.
 
 **2. Capturar el estado DESPUÉS.**
 
@@ -92,3 +94,70 @@ Se escribió el 2026-08-07 para verificar la modularización de la demo (`handof
 Ahí atrapó un error real que **no se veía en pantalla**: al partir el monolito, el seed de
 `flujo.js` llamaba a `fmtFecha()` —declarada en otro archivo que cargaba después— y tiraba
 `ReferenceError` en carga, abortando el seed en silencio. La demo se veía perfecta.
+
+## Comparar dos versiones con `git worktree` — **el procedimiento**
+
+Es la forma soportada de usar este harness. `git stash` no sirve: deja una sola copia del
+árbol y la demo necesita `index.html` + `css/` + `js/` **completos y coherentes entre sí**.
+
+Un worktree es un segundo checkout del mismo repo en otra carpeta, sin clonar de nuevo y sin
+tocar tu rama actual.
+
+```bash
+cd implementacion/L1-hce-idea/demo/verificacion
+
+# WT queda al lado del repo, no adentro. Se calcula, no se cuenta con "../.." a ojo.
+WT="$(git rev-parse --show-toplevel)/../ippu-wt-antes"
+
+# 1. Segundo checkout de la versión ANTES (un commit, un tag o una rama).
+git worktree add "$WT" <commit-tag-o-rama>
+
+# 2. Capturar la versión ANTES (demo completa, no sólo el HTML).
+node fingerprint.js "$WT/implementacion/L1-hce-idea/demo/index.html" antes.json
+
+# 3. Capturar la versión DESPUÉS (tu árbol de trabajo actual).
+node fingerprint.js ../index.html despues.json
+
+# 4. Comparar. Exit 0 = idénticos; exit 1 = hay diferencias y te muestra la primera.
+node comparar.js antes.json despues.json
+
+# 5. Limpiar.
+git worktree remove "$WT"
+```
+
+En PowerShell es lo mismo con `$WT = "$(git rev-parse --show-toplevel)/../ippu-wt-antes"`.
+
+**Cuándo se corre:** antes de mergear cualquier rama que refactorice `demo/js/` sin querer
+cambiar comportamiento. Si el diff sale limpio, el refactor no rompió nada. Si sale sucio,
+hay que mirar **cada** diferencia y decidir si era intencional — el script no lo sabe.
+
+## Por qué no hay un baseline versionado
+
+`.gitignore` de esta carpeta excluye `*.json`, así que **las capturas nunca se commitean**:
+son artefactos locales de cada comparación. La consecuencia es que **no existe un
+«fingerprint de referencia» en el repo** contra el cual comparar sin generar el lado
+«antes» uno mismo. Por eso el procedimiento de arriba genera los dos lados.
+
+Tenerlo requeriría tres cosas, y ninguna es gratis: (1) sacar `*.json` del `.gitignore` o
+exceptuar un `baseline.json`; (2) **fijar** el escenario de la Parte C, que hoy muta el
+modelo en un orden que cambia cuando alguien agrega un paso; y (3) aceptar que cada cambio
+intencional de comportamiento obliga a re-commitear el baseline, con la revisión que eso
+implica — si no, se vuelve un archivo que todos regeneran sin mirar. **Queda anotado como
+opción, no como pendiente**: mientras el harness se use para verificar refactors puntuales,
+dos capturas locales alcanzan.
+
+## ⚠️ Estado del harness al 2026-08-20 — hoy no corre de punta a punta
+
+Después del merge de `demo/F1-navegacion`, la Parte A quedó desalineada con la demo. Antes
+de confiar en una corrida hay que arreglar dos cosas (ninguna se hizo la noche del 20/08,
+a propósito: era la víspera de la reunión con IPPU):
+
+- **`fingerprint.js:82` recorre `['inicio','pendientes','analitica','grupos','usuarios']`.**
+  `usuarios` **ya no es un `.navitem`**: F1/B2 lo sacó de la barra de navegación (el
+  `#view-usuarios` sigue existiendo, se llega por otro lado). El `page.click()` sobre
+  `.navitem[data-view="usuarios"]` **tira**, así que la corrida aborta ahí.
+- **Faltan las dos vistas nuevas:** `inclusion` y `ateneos` existen como `.navitem` y como
+  `#view-*`, y el harness no las visita — o sea que no las cubre.
+
+Arreglarlo es cambiar esa lista por las vistas que la demo realmente tiene. Es barato; lo
+que **no** es barato es correrlo sin saber esto y creer que el verde significa algo.
