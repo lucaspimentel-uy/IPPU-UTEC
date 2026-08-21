@@ -779,6 +779,47 @@ documentación y el «Boris Furtado» de los commits son el mismo autor.
 
 ---
 
+## 5.33 → 5.35 · Decisiones de la sesión de pre-reunión (Fase B, 2026-08-20, Lucas)
+
+### 5.33 (H1) **Enmienda a §5.27:** F1 se pasó del alcance que esa decisión fijó, y aun así se mergea (2026-08-20, Lucas)
+§5.27 (2026-08-16, Samuel) abrió la ronda F1 y escribió su alcance con todas las letras: «**Alcance de esta
+ronda: sólo alineaciones** de lo que ya existe con el Prototipo v4. **No** se agregan módulos nuevos
+(HCE-SEV, HCE-INC, HCE-PAI, **Ateneos**) — eso queda para rondas posteriores si se decide».
+
+**Lo que F1 agregó igual**, medido sobre `5544e71` contra la base `684c4f5`:
+
+| Archivo nuevo | Líneas | Qué es |
+|---|---|---|
+| `demo/js/ateneos.js` | 488 | La sección **Ateneos y capacitación** — uno de los módulos que §5.27 nombra. |
+| `demo/js/inclusion.js` | 175 | Tablero institucional de **Inclusión** — el otro. |
+
+**663 líneas de módulo nuevo.** Esto **no estaba permitido** por §5.27 y no se lo va a leer como si lo
+hubiera estado: la decisión decía lo contrario, por escrito, cuatro días antes.
+
+**Por qué se acepta en vez de revertirse, dicho como es.** Esas mismas 663 líneas son **lo único que puede
+poner M12.5 (HCE-INC) y M12.7 (Ateneos) delante de IPPU mañana**, y los dos sub-módulos están **bloqueados
+por validación** (§5.28) — es decir, están esperando exactamente la conversación de la reunión. El exceso de
+alcance y el valor para la reunión **son el mismo hecho**: si F1 se hubiera quedado dentro de §5.27, mañana
+no habría nada que mostrar de esos dos módulos. Se acepta el trabajo y se registra el exceso; no se
+regulariza el procedimiento. Lo que §12.6 pide es que la decisión se cambie **por escrito y antes**, y esta
+entrada existe para que el merge no la cambie **de hecho, en el código**.
+
+⚠️ **Qué es `inclusion.js` en realidad — para que nadie lea la demo como si cubriera M12.5.** Es un
+**tablero institucional**: KPIs y listado **por estado** sobre los 7 `INC_ESTADOS`, con datos simulados por
+expediente. **No** es la ficha/bitácora **por NNA** de HCE-INC (`mInc()` del prototipo) — el propio archivo
+lo declara en su cabecera (`inclusion.js:10`) — y **no deriva `sensible`** (`tema === 'Clínica — sensible'`),
+que es una de las reglas que M12.5 tiene que implementar. Siembra un array `bitacora` sólo para poder
+calcular «días desde la última gestión» en el tablero. **Mostrar Inclusión mañana no es mostrar HCE-INC.**
+
+**Lo que esta enmienda NO habilita.** Las demás prohibiciones de §5.27 siguen en pie, sin cambios:
+- **§5.2 intacta** — la demo no tiene backend, sólo se toca `demo/*`.
+- **Los 60 descriptores del IDEA no se reemplazan** por las paráfrasis del Prototipo v4 (M12.1: los
+  nuestros son texto literal de Rivière).
+- **No se abren módulos nuevos adicionales** en la demo sin abrir otra ronda. HCE-PAI y HCE-SEV **siguen
+  fuera**: ninguna de las dos ramas los tiene (verificado en la Fase A de esta sesión).
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 - [x] ~~Ronda M0–M10 (adaptar la demo al Doc. Técnico)~~ → **COMPLETA** (2026-07-30, demo v4.0). Ver bitácora.
 - [ ] **Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
