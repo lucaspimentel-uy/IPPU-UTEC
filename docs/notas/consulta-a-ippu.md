@@ -1,4 +1,6 @@
 <!-- ESTADO DEL DOCUMENTO — cabecera nuestra, NO forma parte de lo que recibió IPPU. -->
+Link del docs: 
+https://docs.google.com/document/d/1F1GdDwluxQR_uLaYdr0GF-RgQUfcTXx7/edit?rtpof=true
 
 > ## ⚠️ Este archivo es un **snapshot** — el original vive en un Google Doc del equipo
 >
