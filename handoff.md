@@ -2175,3 +2175,104 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     Toda la verificación fue automática. El merge trajo **1.371 líneas de `estilos.css`** que ninguna
     sesión miró con ojos, y mañana eso se abre delante de IPPU. **Es el único riesgo que ninguna sesión
     puede cerrar por sí sola.**
+
+- **2026-08-21** — **Notas de accesibilidad de la UI, para quien retome el restyle** (`6f31145`;
+  backfill: la sesión cerró sin este ítem, §12.4 paso 6). No se tocó `demo/` — sólo documentación, nueva
+  `docs/guias/notas-accesibilidad-ui.md` (182 líneas) + `docs/estructura-repositorio.md` con la carpeta
+  registrada. (Lucas + Claude)
+  - **§2 — 6 ratios WCAG sobre la paleta *borrador* que motivó el restyle de F1** (anillo de foco 1,23:1,
+    borde de campo 1,48:1, blanco sobre ámbar/verde de acento 3,19:1/3,30:1, fila seleccionada 1,15:1, texto
+    secundario 4,55:1 — éste pasa AA por ~1%). Ninguno de esos hex está en `estilos.css` hoy: son diagnóstico
+    de qué evitar al fijar la paleta definitiva, no del código vigente.
+  - **§1 confirma que el criterio ya se aplicó una vez con éxito**: el naranja institucional pasó de 2,6:1
+    (según el propio mensaje de F1) a ≈4,8:1 verificado acá — pasa AA.
+  - **§2.6 — mismo defecto, sin resolver, en el código vigente**: el patrón "sacar `outline` nativo y
+    reemplazarlo por `box-shadow`" sigue vivo en 10 selectores de `estilos.css` (líneas 255, 324, 430, 583,
+    790, 878, 903, 955, 1019, 1060). ⚠️ **Los dos ratios de §2.6 (≈1,6:1 anillo naranja, ≈1,37:1 ámbar de
+    observaciones) están calculados a mano, no con herramienta — quedan pendientes de verificación por
+    script.** Item 4 de la sesión siguiente (2026-08-21, tarde) los recalculó por script: ver esa entrada.
+  - **§3 — dos reglas de dominio verificadas contra el código de hoy**, con cita de archivo:línea: severidad
+    ≠ urgencia (`catalogos.js:16-23`, `ui-core.js:192,204,257-268` — las 6 bandas del IDEA y su total usan
+    la tríada `--ok/--warn/--bad`, que debería quedar reservada a bloqueos accionables) y dos vocabularios de
+    estado sin token propio (ciclo de vida del módulo — vacío/en curso colapsan, addenda sin marca de badge,
+    excepción sin color propio — y `NS` vs. `null` sin tratamiento visual distinto de un número).
+  - **Verificación:** ninguna — es documentación, no código; el propio documento lo dice en su cabecera.
+    `python herramientas/verificar_estado.py --check` **no se corrió al cerrar** (no lo mide: no hay tablas,
+    migración ni tests de por medio), pero tampoco se registró el resultado — hueco de proceso, no de
+    contenido. Cerrado por la sesión siguiente (2026-08-21, tarde): ver esa entrada.
+
+- **2026-08-21 (tarde)** — **Se arregla el harness de `demo/verificacion/`, se mide (no se adopta) un
+  baseline versionado, se hace el retro-test contra la regresión de talleres, y se reemplazan por script los
+  dos ratios a mano de `notas-accesibilidad-ui.md` §2.6.** Alcance de archivos respetado: sólo
+  `demo/verificacion/`, `handoff.md`, `docs/` y `herramientas/` — **cero cambios en `demo/css/`, `demo/js/`
+  o `demo/index.html`.** (Lucas + Claude)
+  - **1 — Harness.** `npx playwright --version` → 1.62.1, Chromium 151.0.7922.34 lanza sin error (verificado
+    con un `chromium.launch()` real, no asumido). `fingerprint.js` tenía un único punto de entrada hardcodeado
+    (`.navitem[data-view="${v}"]`) que asumía las 5 vistas viejas; se reemplazó por un mapa `VISTAS` declarado
+    una sola vez (`entrada` + `contenido` por vista, las 7 que existen hoy — incluida `usuarios`, cuyo punto
+    de entrada real es `.userchip`, no un `.navitem`), con dos guardas que fallan **con el nombre de la vista**
+    en vez de morir en silencio: (a) antes de arrancar, que cada `entrada` resuelva en el DOM; (b) después de
+    cada click, que el `contenido` haya quedado no-vacío — existe porque `usuarios` es el caso real de "click
+    sin contenido" (su `render()` sólo corre si se llama `renderUsuario()`, a diferencia de
+    grupos/inclusión/ateneos que se pintan solos al cargar la página). Verificado que el click al `.userchip`
+    **alcanza** (su propio `onclick` encadena `go()` + `renderUsuario()`): `#usuarioContent` capturó 2.457
+    caracteres reales, no un shell vacío. **Corrida real:** 42 pasos capturados, 0 errores de consola/página,
+    exit 0. Dos corridas seguidas sobre el mismo commit: **43/43 idénticos** (los 42 pasos + `errors`).
+  - **2 — Baseline: medido, no adoptado.** Determinismo perfecto (arriba). Dependencia del calendario:
+    de 8 sitios con `new Date()`/`Date.now()` en `demo/js/`, sólo **2 llegan a un paso que el harness
+    captura hoy**, y se confirmó adelantando el reloj del navegador +48h con `page.addInitScript` —
+    `incDiasSin()` en `A3_vista_inclusion` (`inclusion.js:35-39`) corrió 92→94, 127→129, 162→164, 50→52,
+    51→53, 97→99 (un día por día real) y `fechaGen` de `generarInforme()` en `C6e_vista_informe`
+    (`expediente.js:193-194`) corrió 21/08/2026→23/08/2026. Un tercer campo (`nroHC()`, año de fallback
+    porque ningún NNA seed tiene `altaFecha`) rota una vez al año. ⚠️ **Se descartaron dos sospechosos que el
+    enunciado asumía riesgosos y no lo son**: `vfAlertaVigencia` (90/30 días) y `edadDesde()` usan fechas
+    **fijas** (`HOY="2026-07-15"` y `"2026-06-10"` hardcodeada) contra el reloj real, no `new Date()` sin
+    ancla — no calendario-dependientes. Tamaño: ~528 KB por captura (540.546 bytes), 43 comparaciones.
+    **Tres opciones escritas en `demo/verificacion/README.md`** con su costo real: (1) versionar tal cual —
+    rota solo, no recomendada; (2) sólo el procedimiento de dos worktrees ya documentado — **recomendada, sin
+    adoptar**, porque "antes" y "después" comparten el mismo reloj real dentro de la misma corrida y los 2
+    campos volátiles nunca generan falso positivo; (3) versionar con los 2 campos normalizados (mismo
+    mecanismo que ya usa `HH:MM`) — más mantenimiento (un campo nuevo no se normaliza solo). **Decisión
+    queda para Lucas, va a §5** (borrador impreso al cierre de esta sesión, sin commitear).
+  - **3 — Retro-test.** `pre-limpieza-2026-08-20` confirmado por su propio mensaje de tag: marca `main`
+    **sin** F1 mergeada. Comparación literal (tag vs. `main` actual, dos worktrees): **20 de 43 pasos
+    distintos** — esperable, F1 fue un restyle completo. **La regresión de talleres NO aparece en este par**,
+    pero no porque el harness sea ciego: **no existe entre estos dos extremos** — se verificó por script que
+    `A3_vista_grupos` contiene "taller" tanto en el tag (pre-F1) como en `main` hoy (la regresión se abrió y
+    se cerró *dentro* del rango, en el merge `d94b102` → el fix `c452aa8`, ambos posteriores al tag).
+    **Prueba dirigida, más reveladora:** se comparó `d94b102` (el merge de F1, con la regresión) contra
+    `c452aa8` (el commit inmediato siguiente que la repara — 13 líneas, 2 archivos) con el harness ya
+    arreglado corriendo sobre los dos. Resultado: **1 de 43 pasos distinto**, exactamente `A3_vista_grupos`,
+    con la primera divergencia cayendo en la frase de `index.html` que `c452aa8` corrigió. **El harness
+    arreglado sí atrapa la regresión, limpio, cuando los dos extremos la enmarcan.** Lo que esto separa: un
+    diff entre dos puntos con un restyle completo de por medio es de valor bajo para encontrar una pérdida de
+    contenido puntual (20 de 43 campos "distintos" no dice cuál importa); un diff entre un commit y su fix
+    inmediato es nítido. **Independiente del harness, por grep:** hoy en `main` los talleres **sí** se
+    renderizan (`grupos-usuario.js:172-177`, card propia) y `index.html` **ya no contiene** la frase vieja
+    "días/horarios y talleres asignados" — no porque siga sin cumplirse, sino porque el bloque estático que
+    la tenía se **retiró entero** esta misma mañana (`8fbb629`, cabecera duplicada de Grupos) y la descripción
+    que la reemplaza (`grupos-usuario.js:97`) no promete nada sobre talleres/técnicos. **La regresión de
+    talleres está cerrada en `main` hoy, por dos commits distintos y anteriores a esta sesión.**
+  - **4 — Contraste por script.** Nuevo `herramientas/verificar_contraste_ui.js` (Playwright, reusa el
+    install de `demo/verificacion/`): extrae colores estáticos de `estilos.css` (30 variables + 40
+    literales con color) y mide en vivo lo que realmente se renderiza. **Anillos de foco:** el regex de
+    extracción (no es un parser CSS) encontró 6 de los ~10 selectores que citaba la sesión de la mañana —
+    los 4 que no aparecieron **no se dan por resueltos**, se marcan como no verificados. De los 6, se
+    midieron 5 con foco real disparado en el DOM: los 4 que usan `--focus` (naranja) dieron **1,61:1** en
+    cuatro pantallas independientes (login, búsqueda, `select`, campo de formulario); el de observaciones del
+    Protocolo (ámbar propio) dio **1,34:1**, medido sobre `NNA 101` (Sofía, PA en borrador) porque `NNA 102`
+    tiene el PA firmado y sus `textarea` quedan `disabled` — no aceptan foco. **Los dos números a mano de la
+    mañana se sostuvieron:** error de 0,01 en el naranja, 0,03 en el ámbar; mismo veredicto (fallan 2.4.11)
+    en los dos. **Pares texto/fondo en vivo:** 59 pares distintos en 6 vistas + usuarios + un expediente + el
+    formulario IDEA; **14 no llegan a su criterio** — los 4 peores (<2,2:1) son texto blanco sobre el color de
+    dato puro de una escala en heatmap/barras de progreso; el resto incluye `.pill.pend` (4,30:1, el mismo
+    hallazgo de dominio de §3.1) y los `.at-chip` de Ateneos. Tabla completa y método en
+    `notas-accesibilidad-ui.md` §2.6/§2.7; script registrado en `docs/estructura-repositorio.md`.
+  - **Verificación de cierre:** `node --check` sobre los dos scripts → OK · harness re-corrido una vez más
+    tras el último cambio → 42 pasos, 0 errores · `python herramientas/verificar_estado.py --check` → **OK**.
+    Sin Docker levantado esta sesión — no se corrió `pytest` (no se tocó `backend/`).
+  - **Lo que quedó sin resolver, dicho en voz alta:** de los ~10 anillos de foco citados, 5 no se midieron
+    (`.btn`/`.opcion` por la limitación real de `:focus-visible` con foco programático en Chromium headless;
+    técnicos-autorizados/acuerdos-de-ateneo/fila-de-usuario por no abrirse su modo edición en esta corrida) —
+    quedan como no verificados, no como "iguales a los otros por declaración". El barrido de pares vivos no
+    cubre Protocolo A/B, Informe de Cierre ni los modales de firma/addenda/excepción.
