@@ -48,7 +48,10 @@ IPPU/
 │   │                          #  herramientas/generar_catalogos_backend.py como insumo de build.
 │   ├── markdown/              # Conversiones .md de las fuentes — leer y citar SIEMPRE desde acá
 │   │   └── prototipo-v4-referencia.md   # qué hay dentro del Prototipo v4 y dónde (fuente normativa M12)
-│   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md (enviada, sin respuesta)
+│   ├── notas/                 # puntos-a-validar.md (interno) · consulta-a-ippu.md — SNAPSHOT de lo
+│   │                          #  enviado el 19/08, sin respuesta. El equipo le sacó 3 preguntas al
+│   │                          #  revisarlo y renumeró de §2.7 y §3.2 en adelante (§5.34): citar por
+│   │                          #  la numeración de ese archivo, que es la que IPPU tiene delante.
 │   ├── planes/                # Planes de ronda (M0–M11 · PLAN-M12 · agenda-reunion-ippu-2026-08.md)
 │   └── prompts/               # Prompts de sesión (los que antes vivían sueltos en la raíz)
 ├── implementacion/

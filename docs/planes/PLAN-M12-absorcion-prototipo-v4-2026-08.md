@@ -468,9 +468,12 @@ de reemplazarlo en silencio.
 - §1.8 datos históricos → estrategia completa (solo IDEA estructurado; resto legacy; acta de cierre;
   coexistencia acotada; verificación por muestreo; metadatos de origen).
 - §2.6 `grupo` → se decide en M12 (D9), con el dato nuevo de que los grupos son por color.
-- De `consulta-a-ippu.md`: **2.3** (informe anual), **2.5** (áreas/general),
-  **2.7/2.8** (baremo y su origen), **2.9** (períodos como recordatorios), **2.10** (fotos), **3.1**
-  (talleres), **3.6** (quién ve qué, en 4 perfiles).
+- De `consulta-a-ippu.md`, **renumerado el 2026-08-20 contra el documento realmente enviado** (§5.34):
+  **2.3** (informe anual), **2.5** (áreas/general), **2.7** (períodos como recordatorios), **2.8**
+  (fotos), **3.1** (talleres), **3.5** (quién ve qué, en 4 perfiles).
+  ⚠️ **El baremo y su origen salieron de la lista**: eran §2.7/§2.8 del borrador y **el equipo los
+  retiró antes de enviar**, así que no están preguntados. Siguen abiertos en `puntos-a-validar.md`
+  §1.2.
 
 ⚠️ **`consulta-a-ippu.md` §2.1 (IDEA una sola vez) NO cierra.** Estaba en esta lista por inferencia —
 el Prototipo v4 modela `idea` como objeto único por paciente, no como arreglo anual — pero esa es la

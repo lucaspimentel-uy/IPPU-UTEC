@@ -84,7 +84,9 @@ IPPU/
   **ateneos/jornadas**. Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`.
 - **Qué falta definir con IPPU** (validar la demo, cortes del baremo, acceso a la HCE actual…) está en
   `docs/notas/puntos-a-validar.md` — versión interna, con lo que bloquea cada punto. La versión **no
-  técnica para mandarle a IPPU**, en formato de cuestionario, es `docs/notas/consulta-a-ippu.md`.
+  técnica**, en formato de cuestionario, es `docs/notas/consulta-a-ippu.md`: **se envió el 2026-08-19**
+  y todavía no volvió. Ese archivo es un **snapshot** de lo enviado, no un borrador editable — el equipo
+  le sacó tres preguntas al revisarlo y su numeración difiere del borrador anterior (`handoff.md` §5.34).
 
 ## 🚀 Cómo retomar el trabajo
 ```bash

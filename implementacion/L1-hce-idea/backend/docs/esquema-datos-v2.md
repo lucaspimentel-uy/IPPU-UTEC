@@ -122,7 +122,8 @@ erDiagram
 >
 > ⚠️ **Límite aceptado:** con granularidad anual, un **cambio de técnico a mitad de año** sobrescribe la
 > fila y sólo queda rastro en `auditoria`. Modelar vigencias por técnico es bastante más caro y depende
-> de las respuestas de IPPU a §3.7/§3.8 de `docs/notas/consulta-a-ippu.md`. Si responden que pasa
+> de las respuestas de IPPU a §3.6/§3.7 de `docs/notas/consulta-a-ippu.md` (eran §3.7/§3.8 antes de la
+> revisión del equipo del 19/08 — `handoff.md` §5.34). Si responden que pasa
 > seguido, se revisa.
 | `hce_diurna` | id, persona_id FK **UK** (0..1), **hc_historico** (identificador secundario, §10), **grupo_id FK (entero)**, diagnostico, cie11, ~~nivel_soporte~~, dx_fecha, derivacion, medicacion, alerta, **anamnesis JSONB**, activo, fecha_baja, timestamps, **+ metadatos de origen** | HCE-00 siempre editable (sin firma). Un expediente por persona; los ciclos anuales viven en `protocolo.anio` / `informe_cierre.anio` (decisión abierta de `modelo-datos.md`, resuelta así). ⚠️ **`nivel_soporte` se retiró en M12.4** (`handoff.md` §5.24) — ver la nota de abajo. |
 | ~~`hce_taller`~~ | ~~hce_id FK, taller_id FK~~ | **RETIRADA en M12.3** (`handoff.md` §5.20). Resto de v1: participación viva, por expediente y por `taller_id`. La especificación fija `pai_taller { pai_id, taller_nombre }` —por nombre y por instancia de PAI— y la construye **M12.6**; no hay nada preexistente que reusar. |
