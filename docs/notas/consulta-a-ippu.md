@@ -275,10 +275,16 @@ y de juego · Actividades sensoriales · Salidas didácticas / paseos · Partici
 referentes en actividades.
 
 **Sólo nos queda confirmar dos cosas, y ninguna nos frena:** ¿esos catorce son los que están dictando
-este año?, y ¿hay talleres que se ofrecen sólo a algunos grupos? El sistema los deja **agregar, cambiar
-de orden, indicar a qué grupos se orientan y dar de baja desde la propia aplicación**, sin que nosotros
-toquemos nada — y dar de baja un taller **no borra ni cambia** lo que ya quedó registrado de un chico:
-sigue viéndose, con la aclaración de que el taller salió del catálogo.
+este año?, y ¿hay talleres que se ofrecen sólo a algunos grupos?
+
+**Cómo está hoy, para no prometerles de más.** La lista está diseñada para que la manejen ustedes:
+agregar un taller, cambiar el orden, indicar a qué grupos se orienta cada uno y dar de baja los que
+dejen de dictarse. Y la participación de cada chico se guarda **por el nombre del taller**, así que
+dar de baja uno **no borra ni cambia** lo que ya quedó registrado: sigue viéndose, con la aclaración
+de que el taller salió de la lista. **Lo que todavía no construimos es la pantalla para hacer esos
+cambios**: hoy los catorce están cargados y se leen, pero modificarlos lo tenemos que hacer nosotros.
+Está entre lo próximo que viene. Si la oferta de este año ya es distinta de esos catorce, avísennos
+igual y la ajustamos nosotros mientras tanto.
 
 > _Respuesta:_
 

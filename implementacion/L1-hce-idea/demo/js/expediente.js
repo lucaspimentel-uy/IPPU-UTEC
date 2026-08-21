@@ -71,8 +71,6 @@ function abrirExpediente(id){
       </div>
     </div>
 
-    ${flujoPanelHtml(p)}
-
     <div class="eval-bar">
       <span class="eval-bar-lbl">Cargar evaluación:</span>
       <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Editar HCE-00</button>
@@ -86,6 +84,16 @@ function abrirExpediente(id){
            (decisión §0.2 del plan / §10 Documento Técnico IPPU). Código y vistas conservados,
            solo se dejan de exponer; se resuelven como archivo histórico de solo lectura en M7 (HCE-DOC). -->
     </div>
+
+    <div class="section-nav no-print">
+      <span class="section-nav-lbl">Ir a sección:</span>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-doc')">🗂 HCE-DOC · Documentos y fotos</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-org')">🏛 HCE-ORG · Áreas INAU y BPS</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-vf')">♿ HCE-VF · Valoración funcional (BUND / CIF)</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-ateneos')">◈ Ateneos clínicos referidos</button>
+    </div>
+
+    ${flujoPanelHtml(p)}
 
     <div class="exp-grid">
       <div>
@@ -155,6 +163,11 @@ function abrirExpediente(id){
     ${orgPanelHtml(p)}
 
     ${vfPanelHtml(p)}
+
+    <!-- F1-nav4 (2026-08-19): ateneos clínicos referidos a este NNA. El panel lo arma
+         ateneos.js (que carga después que este archivo, igual que hce-doc-org-vf.js:
+         la función se resuelve al renderizar, no al cargar). -->
+    ${ateneosPanelHtml(p)}
   `;
   go("expediente");
 }

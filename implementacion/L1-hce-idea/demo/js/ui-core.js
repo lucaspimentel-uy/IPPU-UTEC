@@ -169,6 +169,12 @@ function irAEval(view, id){
     openEditar(id, 1);
   }
 }
+/* Navegación intra-vista: scroll suave hacia una sección del expediente o de un grupo.
+   El contexto (NNA abierto, o vista Grupos) no cambia — es puro atajo visual. */
+function scrollASeccion(anchorId){
+  const el = document.getElementById(anchorId);
+  if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+}
 
 renderNNA();
 
