@@ -394,11 +394,13 @@
          entran ahora a HCE-DOC como archivo histórico de solo lectura, con categoría específica
          "Registro histórico — HCE anterior (…)" y fecha original (§10 Documento Técnico). -->
 
-    <!-- ============ VISTA: GRUPOS ============ -->
+    <!-- ============ VISTA: GRUPOS ============
+         Crumbs/título/descripción los renderiza grupos-usuario.js (renderGrupos /
+         renderGrupoDetalle) dentro de #gruposList: listado y detalle necesitan cabeceras
+         distintas y F1-nav2 (27cd90b) ya arma la del detalle ahí. Duplicaban con un bloque
+         estático acá — se retira el estático, no F1's markup (handoff §13, sesión pre-reunión
+         2026-08-21). -->
     <section class="view" id="view-grupos">
-      <div class="crumbs">Institucional › <b>Grupos de referencia</b></div>
-      <h1 class="pagetitle">Grupos de referencia</h1>
-      <p class="pagedesc">Los NNA se organizan en grupos de referencia por edad y modalidad de funcionamiento. Cada grupo tiene dos técnicos responsables, días/horarios y talleres del catálogo institucional. (Datos simulados.)</p>
       <div class="kpirow" id="gruposKpi"></div>
       <div id="gruposList"></div>
     </section>

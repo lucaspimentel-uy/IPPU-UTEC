@@ -92,6 +92,8 @@ function renderGrupos(){
     <div class="kpi"><div class="lab">Técnicos asignados</div><div class="val purple">${tecnicosUnicos.size}</div><div class="sub">Responsables + habilitados (§21.1)</div></div>
     <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 14 institucionales</div></div>`;
   cont.innerHTML = `
+    <div class="crumbs">Institucional › <b>Grupos de referencia</b></div>
+    <h1 class="pagetitle">Grupos de referencia</h1>
     <p class="pagedesc">La atención del Servicio de Atención Diurna se organiza en grupos de referencia por edad y modalidad de funcionamiento. El grupo es la unidad de intervención y de planificación (Manual, §2). Tocá un grupo para ver el detalle.</p>
     <div class="grupos-grid">
     ${GRUPOS.map(g=>{
