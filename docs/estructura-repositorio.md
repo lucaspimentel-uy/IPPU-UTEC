@@ -112,7 +112,7 @@ demo/
 ├── index.html            # markup de la demo — se abre directo en el navegador
 ├── css/
 │   └── estilos.css
-├── js/                    # 12 módulos; EL ORDEN DE CARGA en index.html ES la semántica
+├── js/                    # 14 módulos; EL ORDEN DE CARGA en index.html ES la semántica
 │   ├── utils.js           # helpers compartidos — lo tocan todos, coordinar antes
 │   ├── ui-core.js
 │   ├── datos.js
@@ -124,7 +124,9 @@ demo/
 │   ├── informe-cierre.js
 │   ├── grupos-usuario.js
 │   ├── recordatorios.js
-│   └── hce-doc-org-vf.js
+│   ├── hce-doc-org-vf.js
+│   ├── inclusion.js       # F1 · tablero institucional de Inclusión por estado. NO es HCE-INC (§5.33)
+│   └── ateneos.js         # F1 · sección Ateneos y capacitación (§5.33)
 └── verificacion/          # harness de verificación E2E (Playwright)
     ├── README.md
     ├── comparar.js

@@ -57,7 +57,7 @@ IPPU/
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
-│       │   ├── index.html   # markup · css/estilos.css · js/*.js (12 módulos, orden de carga = semántica)
+│       │   ├── index.html   # markup · css/estilos.css · js/*.js (14 módulos, orden de carga = semántica)
 │       └── backend/          # API FastAPI + SQLAlchemy + Alembic (ver backend/README.md)
 │           ├── app/          # main, core (config/db), models (+severidad.py, M12.4), schemas, routers
 │           ├── alembic/      # migraciones · docs/ (esquema-datos-v2.md — los dos docs del v1 se
