@@ -71,7 +71,12 @@ docs/
 │   ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
 │   ├── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
 │   └── agenda-reunion-ippu-2026-08.md            # recorrida con IPPU: supuesto y costo de un «no»
-└── prompts/                     # prompts de sesión (antes sueltos en la raíz del repo)
+├── prompts/                     # prompts de sesión (antes sueltos en la raíz del repo)
+└── guias/                       # notas técnicas de referencia, no de negocio ni de ronda
+    └── notas-accesibilidad-ui.md   # hallazgos WCAG medidos + reglas de dominio color↔significado
+                                     #  (severidad ≠ urgencia, IDEA invertido, vocabularios de estado
+                                     #  sin token) para quien retome el restyle de demo/. NO se tocó
+                                     #  demo/ al escribirla — es sólo documentación.
 ```
 
 Notas:
@@ -95,6 +100,10 @@ Notas:
   alcance — `handoff.md` §5.12 / D3); si el alcance cambia, se extraen del HTML.
 - **`docs/planes/`** agrupa los planes de ronda de trabajo (documentos de alcance/roadmap para una
   ronda concreta, distintos de la bitácora continua de `handoff.md`). Nuevos planes van acá.
+- **`docs/guias/`** (nueva, 2026-08-21) agrupa notas técnicas de referencia que no son de una ronda ni de
+  negocio — hallazgos medidos, criterios técnicos reutilizables. Distinta de `docs/planes/` (alcance de
+  ronda) y de `docs/notas/` (interlocución con IPPU / equipo). Primer archivo:
+  `notas-accesibilidad-ui.md`.
 
 ## `implementacion/L1-hce-idea/` — Línea 1 (foco actual)
 
