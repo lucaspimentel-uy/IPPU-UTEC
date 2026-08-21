@@ -8,13 +8,15 @@
 > próxima ronda de restyle.
 >
 > **Dos tipos de hallazgo, con vigencia distinta:**
-> - **§2** — ratios WCAG calculados sobre la **paleta borrador** que motivó el restyle de F1 (`5544e71`,
->   2026-08-19). Son de un boceto, no de lo que corre hoy en el repo — ningún hex de §2.1–§2.5 aparece en
->   `demo/css/estilos.css`. Sirven como diagnóstico de qué evitar al definir la paleta definitiva.
-> - **§3** — reglas de dominio (qué significa cada color, no cuánto contrasta) verificadas **contra el
->   código que corre hoy** en `demo/js/` y `demo/css/estilos.css`, con cita de archivo y línea. Esta
->   sección tiene vida corta: si el restyle toca esos archivos, hay que re-verificarla, no asumir que
->   sigue valiendo.
+> - **§2.1–§2.5** — ratios WCAG calculados sobre la **paleta borrador** que motivó el restyle de F1
+>   (`5544e71`, 2026-08-19). Son de un boceto, no de lo que corre hoy en el repo — ningún hex de esas
+>   subsecciones aparece en `demo/css/estilos.css`. Sirven como diagnóstico de qué evitar al definir la
+>   paleta definitiva.
+> - **§2.6, §2.7 y §3** — verificadas **contra el código que corre hoy** en `demo/js/` y
+>   `demo/css/estilos.css`, con cita de archivo y línea; §2.6/§2.7 además **medidas por script**
+>   (`herramientas/verificar_contraste_ui.js`, no a mano) contra el DOM realmente renderizado. Estas
+>   secciones tienen vida corta: si el restyle toca esos archivos, hay que re-verificarlas —
+>   `verificar_contraste_ui.js` está para eso —, no asumir que siguen valiendo.
 >
 > Citar este archivo por sección: p. ej. `notas-accesibilidad-ui.md §3.1`.
 
@@ -84,15 +86,88 @@ en el repo, para saber qué ya se resolvió y qué sigue abierto:
 - **Ya resuelto** — ver §1: el naranja de acento pasó de 2,6:1 a ≈4,8:1 como texto. Es la misma familia de
   problema que §2.3, ya corregida para el color principal.
 - **Mismo defecto, otro color, todavía sin resolver** — el patrón "sacar el `outline` nativo y reemplazarlo
-  por un `box-shadow` de color" (el mismo mecanismo de §2.1) está vivo hoy en **10 selectores** de
-  `estilos.css` (líneas 255, 324, 430, 583, 790, 878, 903, 955, 1019, 1060 — botones, `select`, inputs de
-  login/búsqueda/técnicos-autorizados/ateneos/fotos/observaciones). 9 de los 10 usan
-  `--focus: 0 0 0 3px rgba(180,89,10,.34)` (el naranja institucional al 34% de opacidad); el décimo
-  (línea 790, textarea de observaciones del Protocolo) usa un tono ámbar propio,
-  `rgba(138,109,31,.24)`. Calculado a mano con la fórmula de luminancia relativa de WCAG — **no** verificado
-  con herramienta, así que conviene remedir antes de dar esto por cerrado —: el anillo naranja sobre blanco
-  da **≈1,6:1** y el ámbar **≈1,37:1**. Los dos siguen fallando 2.4.11, sólo que con otro número que en
-  §2.1.
+  por un `box-shadow` de color" (el mismo mecanismo de §2.1) está vivo hoy en al menos **6 selectores** de
+  `estilos.css` (líneas 255, 430, 582, 790, 878, 903 — botones, `select`, inputs de login/búsqueda/campos de
+  formulario/observaciones del Protocolo; la sesión que escribió esta nota citaba 10, pero el extractor por
+  regex de `herramientas/verificar_contraste_ui.js` sólo encuentra bloques `outline:none` +
+  `box-shadow` de una sola declaración — no es un parser CSS real, así que los 4 restantes —técnicos
+  autorizados, acuerdos de ateneo, fila de usuario— pueden seguir existiendo con otra sintaxis; **no
+  verificados, no se afirma que estén resueltos**). 5 de los 6 encontrados usan
+  `--focus: 0 0 0 3px rgba(180,89,10,.34)` (línea 101 — el naranja institucional al 34% de opacidad); el
+  sexto (línea 790, textarea de observaciones del Protocolo) usa un tono ámbar propio,
+  `rgba(138,109,31,.24)`.
+
+  **Medido por script (`node herramientas/verificar_contraste_ui.js`, 2026-08-21), no a mano.** El script
+  abre la demo con Playwright, enfoca de verdad cada campo (no infiere el color: lee
+  `getComputedStyle().boxShadow` ya resuelto por el navegador) y compone el `rgba` sobre el fondo real que
+  tiene detrás en su vista — no sobre un blanco asumido:
+
+  | Selector | Anillo real (computado) | Fondo real detrás | Ratio | Criterio | Veredicto |
+  |---|---|---|---|---|---|
+  | `select:focus` (:430) | `rgba(180,89,10,.34)` | `#FFFFFF` | **1,61:1** | 3:1 (1.4.11/2.4.11) | **Falla** |
+  | `.field input:focus` (:582) | `rgba(180,89,10,.34)` | `#FFFFFF` | **1,61:1** | 3:1 | **Falla** |
+  | `.login-field input:focus` (:878) | `rgba(180,89,10,.34)` | `#FFFFFF` | **1,61:1** | 3:1 | **Falla** |
+  | `.search-wrap input:focus` (:903) | `rgba(180,89,10,.34)` | `#FFFFFF` | **1,61:1** | 3:1 | **Falla** |
+  | `.prot-obs textarea:focus` (:790) | `rgba(138,109,31,.24)` | `#F7F0DC` (`--warn-soft`) | **1,34:1** | 3:1 | **Falla** |
+
+  Los cuatro anillos naranjas dieron el **mismo** 1,61:1 en cuatro pantallas distintas — coherente con que
+  comparten variable. La estimación a mano de la sesión anterior (§2.1: "≈1,6:1" / "≈1,37:1") **se sostuvo**:
+  el error fue de 0,01 en el naranja y 0,03 en el ámbar. No cambia el veredicto de ninguno de los dos — los
+  dos seguían fallando 2.4.11/1.4.11 a mano y siguen fallando medidos.
+
+  **Lo que el script NO pudo medir esta corrida, y por qué (honesto, no se rellenó con una estimación):**
+  `.btn:focus-visible` y `.opcion:focus-visible` no se resolvieron — Chromium sólo activa
+  `:focus-visible` con modalidad de teclado real, y un `.focus()` programático (aunque venga de un `Tab`
+  simulado por Playwright) no lo garantiza en headless de forma confiable. Los tres restantes citados en la
+  sesión anterior (técnicos autorizados, acuerdos de ateneo, fila de usuario) no se alcanzaron: viven detrás
+  de un modo edición que esta corrida no abrió. Ninguno de los cinco se cuenta arriba como medido.
+
+### 2.7 Pares texto/fondo que se renderizan hoy — barrido completo, no una muestra a mano
+
+Mismo script, misma corrida. Método: recorre las 6 vistas de listado (`inicio · pendientes · analitica ·
+grupos · inclusion · ateneos`) + `usuarios` + el expediente de un NNA + el formulario de línea base IDEA,
+y para **todo elemento con texto propio** visible en pantalla lee `getComputedStyle().color` y camina la
+cadena de ancestros hasta el primer `background-color` opaco (no asume blanco: lo mide). Deduplica por
+`(color, fondo, ¿texto grande?)`. Clasifica texto grande por la regla de WCAG 1.4.3 (≥24px, o ≥18,66px con
+peso ≥700) y aplica 4,5:1 o 3:1 según corresponda.
+
+**59 pares distintos encontrados. 14 no llegan a su criterio** (todos texto normal, ninguno calificó como
+grande):
+
+| Ratio | Primer plano | Fondo | Elemento (clase) |
+|---|---|---|---|
+| 1,57:1 | `#FFFFFF` | `#C9CFD8` | `.heat-cell` (heatmap de escalas) |
+| 1,73:1 | `#FFFFFF` | `#B9C6D6` | `.fill` (barra de progreso) |
+| 1,77:1 | `#FFFFFF` | `#D9C26B` | `.heat-cell` |
+| 2,18:1 | `#FFFFFF` | `#6FBF9E` | `.heat-cell` |
+| 3,01:1 | `#7E8D95` (`--ink-3`) | `#EDF1F3` (`--paper-3`) | `.ph` (placeholder) |
+| 3,04:1 | `#FFFFFF` | `#DD7B0C` (`--escB`) | `.fill` |
+| 3,24:1 | `#7E8D95` | `#F7F9FA` (`--paper-2`) | `.ic` (glifo de ícono) |
+| 3,43:1 | `#7E8D95` | `#FFFFFF` | `.search-ico` |
+| 3,43:1 | `#6C828E` | `#1E2F3A` (`--navy-2`) | `.foot` (pie del sidebar) |
+| 3,52:1 | `#0E8F7E` (`--teal`) | `#E3F4F1` (`--teal-soft`) | `.at-chip.at-clinico` |
+| 4,00:1 | `#FFFFFF` | `#0E8F7E` (`--teal`) | `.fill` |
+| 4,20:1 | `#B4590A` (`--orange`) | `#FBEEDC` (`--orange-soft`) | `.at-chip.at-jornada` |
+| 4,24:1 | `#7C929E` | `#1E2F3A` (`--navy-2`) | `.sec` (rótulo de sección, sidebar) |
+| 4,30:1 | `#8A6D1F` (`--warn`) | `#F7F0DC` (`--warn-soft`) | `.pill.pend` |
+
+Lectura rápida: los 4 peores (`.heat-cell`/`.fill` bajo 2,2:1) son **texto blanco sobre el color de dato
+puro de una escala** — el heatmap y las barras de progreso pintan el número directamente sobre el color de
+la serie sin ajustar su propio contraste; son los mismos 4 colores de datos de §2.6 del código fuente
+(`--teal`/`--escB`/`--warn`/`--ok` u homólogos), no colores nuevos. `.pill.pend` (4,30:1) es el mismo hallazgo
+de dominio que §3.1 describe más abajo — texto ámbar sobre `--warn-soft` — y falla el mismo criterio con el
+que se lo cita ahí, ahora con el número exacto en vez de "por poco". Los `.at-chip` (ámbar/verde sobre su
+propio "-soft") son la familia de estado de §3.2.A sin token de contraste garantizado.
+
+**Cobertura, dicho como es:** este barrido no visita los formularios de Protocolo A/B, Informe de Cierre ni
+los modales de firma/addenda/excepción (harían falta más pasos de interacción, como los que sí cubre
+`fingerprint.js`) — 59 pares es lo que aparece en listados, tableros, expediente e IDEA, no el 100% de la
+demo. Extenderlo a los formularios y modales queda para quien retome el restyle, reusando el mismo script.
+
+**Método, para poder re-correrlo:** `node herramientas/verificar_contraste_ui.js` (raíz del repo).
+Requiere Playwright instalado en `demo/verificacion/` (lo reusa, no instala uno propio — ver el README de
+esa carpeta). Con `--json archivo.json` además vuelca el resultado crudo (colores estáticos del CSS, los 59
+pares vivos y los anillos de foco) para no tener que releer la consola.
 
 ---
 
@@ -175,8 +250,10 @@ si algún resumen futuro lo compacta a badges, termine cayendo dentro de la ramp
 
 - Los ratios de §2.1–§2.5 son de la paleta borrador: antes de aplicar una corrección hay que fijar la
   paleta definitiva y volver a medir contra **esa**, no asumir que estos hex son el objetivo final.
-- §2.6 y §3 sí están medidos contra el código que corre hoy (2026-08-21) — es la parte de vida más corta
-  de este documento. Si el restyle toca `estilos.css` o cualquiera de los archivos citados, hay que
+- §2.6, §2.7 y §3 sí están medidos contra el código que corre hoy (2026-08-21) — es la parte de vida más
+  corta de este documento. Si el restyle toca `estilos.css` o cualquiera de los archivos citados, hay que
   remedir, no dar por buenas estas líneas.
-- Los cálculos de contraste de §2.6 son a mano (fórmula de luminancia relativa de WCAG), no verificados con
-  una herramienta dedicada — sirven para priorizar, no como número final de aceptación.
+- §2.6 y §2.7 están medidos **por script** (`herramientas/verificar_contraste_ui.js`, sesión del
+  2026-08-21 tarde) contra el DOM realmente renderizado — reemplaza el cálculo a mano de la primera versión
+  de este documento (que se sostuvo bien: ≤0,03 de error contra el número medido). Volver a correrlo antes
+  de dar por buena cualquier cifra de §2.6/§2.7 después de tocar `estilos.css`.
