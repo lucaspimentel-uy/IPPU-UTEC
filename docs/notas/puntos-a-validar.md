@@ -8,9 +8,14 @@
 > Las decisiones ya tomadas están en `handoff.md` §5 y no se reabren acá.
 >
 > **Este documento es interno.** Lo que se le manda a IPPU es
-> [`consulta-a-ippu.md`](consulta-a-ippu.md) — mismo contenido en la parte que les toca, pero sin
-> tecnicismos y en formato de preguntas que un funcionario puede responder. Si acá se agrega o cambia
-> un punto que IPPU tiene que definir, actualizar también el otro.
+> [`consulta-a-ippu.md`](consulta-a-ippu.md) — sin tecnicismos y en formato de preguntas que un
+> funcionario puede responder. Si acá se agrega o cambia un punto que IPPU tiene que definir,
+> actualizar también el otro.
+>
+> ⚠️ **No son «el mismo contenido».** Ese archivo es el **snapshot de lo que se envió el 19/08**, y el
+> equipo le sacó tres preguntas al revisarlo (§5.34): las dos del **baremo** y la de las **citas de la
+> escala**. Están acá, en §1.2 y §1.4, marcadas «nunca se preguntó». **Su numeración también difiere**
+> de §2.7 y §3.2 en adelante: al citarlo, usar la numeración de ese archivo, que es la que IPPU tiene.
 
 ---
 
@@ -59,6 +64,40 @@ mal puesto cambia el resultado de una valoración real.
 > Esto se escribe acá, y no sólo en el esquema, porque **acá es donde alguien va a leer la tarea el día
 > que llegue el anexo.**
 
+> ### ⚠️ Esto **nunca se le preguntó a IPPU** — se sacó en la revisión del equipo del 19/08
+>
+> El borrador de `consulta-a-ippu.md` tenía **dos** preguntas sobre esto (§2.7 y §2.8). **Ninguna de las
+> dos entró en el documento que se envió**: el equipo las retiró al revisarlo. Verificado sobre el
+> documento enviado — **0 ocurrencias** de «baremo», «BUND» y «72/025» (`handoff.md` §5.34).
+>
+> **Consecuencia:** esto **no** está «preguntado y esperando respuesta». Está **sin preguntar**, y hoy su
+> único canal es la reunión. Se conserva acá la redacción original para que se pueda preguntar tal cual:
+>
+> **Era §2.7 — Los porcentajes de la valoración funcional (baremo)**
+>
+> > **Lo que asumimos**, según el Decreto 72/025:
+> >
+> > | Porcentaje | Categoría |
+> > |---|---|
+> > | 0 % a 4 % | Sin discapacidad |
+> > | 5 % a 24 % | Leve |
+> > | 25 % a 49 % | Moderado |
+> > | 50 % a 95 % | Severo |
+> > | 96 % a 100 % | Muy severo |
+> >
+> > **Por qué importa:** de ese porcentaje depende el acceso a prestaciones. Un corte mal puesto cambia
+> > el resultado de una valoración real.
+> >
+> > **¿Están bien estos cortes? Si tienen el anexo del decreto a mano, nos sirve muchísimo.**
+>
+> **Era §2.8 — El porcentaje lo define el organismo oficial, no la institución**
+>
+> > **Lo que asumimos:** el porcentaje de discapacidad **viene del organismo que hace la valoración
+> > oficial**. El sistema lo registra tal cual y de ahí saca la categoría, pero **no lo calcula ni lo
+> > deduce** de las evaluaciones internas (ni del IDEA ni de la Escala IPPU-TEA).
+> >
+> > **¿Es correcto?**
+
 ### 1.3 ~~Catálogo real de talleres~~ — **CERRADO** (2026-08-14)
 > **Lo resolvió la fuente, no una decisión nuestra:** el **Prototipo v4** trae el catálogo real
 > (`CAT_TALLERES`, **14 talleres** con sus nombres oficiales). Cargados en **M12.3** (`handoff.md` §5.14 /
@@ -82,6 +121,30 @@ que ser correctas. Es la clase de detalle que se nota en una revisión externa.
 
 **Qué bloquea.** Nada del desarrollo. Sí conviene resolverlo antes de publicar o presentar el
 instrumento.
+
+> ### ⚠️ Esto **nunca se le preguntó a IPPU** — se sacó en la revisión del equipo del 19/08
+>
+> Era **§3.2 de `consulta-a-ippu.md`, y estaba marcada ⚠️** como una de las cuatro que más destraban.
+> **No entró en el documento enviado**: el equipo la retiró al revisarlo. Verificado — 0 ocurrencias de
+> ninguna pregunta por citas bibliográficas (`handoff.md` §5.34).
+>
+> ⚠️ **Y hay algo peor, que IPPU tiene en la mano:** la intro del documento enviado **sigue nombrando
+> «3.2 (las citas de la escala)»** entre las tres que más nos frenan — pero en ese documento §3.2 es
+> *Acceso al sistema actual*. Si alguien de IPPU fue a buscarla, no la encontró. Se aclara de palabra en
+> la reunión (agenda §1), no por escrito: corregir el documento enviado sería reescribir lo que se mandó.
+>
+> **Redacción original, para preguntarla tal cual:**
+>
+> > **Las citas bibliográficas de la Escala IPPU-TEA ⚠️**
+> >
+> > Cada uno de los 24 ítems de la escala tiene asociada una referencia (DSM-5-TR, clasificación CIF, y
+> > autores como Wing & Gould, Baron-Cohen, Rivière). Las tomamos **tal cual estaban** en el prototipo
+> > que nos pasaron.
+> >
+> > **No las verificamos contra las fuentes originales, y no deberíamos ser nosotros quienes lo hagan.**
+> >
+> > **¿Alguien del equipo las revisó en su momento? ¿Podemos darlas por buenas, o convendría que un
+> > técnico las repase antes de que el instrumento se presente formalmente?**
 
 ### 1.5 Acceso a la HCE actual — 🔴 crítico
 **Qué es.** Acceso al sistema de `fundacionippu.uy` y, sobre todo, **al esquema de su base de datos**.
@@ -265,7 +328,8 @@ qué permite ese hosting.
 >
 > **Queda abierto un residuo, más chico:** con granularidad anual, un cambio de técnico a mitad de año
 > sobrescribe la fila y sólo deja rastro en la auditoría. Se acepta; depende de las respuestas de IPPU a
-> §3.7 y §3.8 de `consulta-a-ippu.md`. Si pasa seguido, hay que modelar vigencias por técnico.
+> §3.6 y §3.7 de `consulta-a-ippu.md` (eran §3.7/§3.8 antes de la revisión del 19/08 — §5.34). Si pasa
+> seguido, hay que modelar vigencias por técnico.
 
 **Qué era.** `esquema-datos-v2.md` §2.1 definía `grupo` con clave primaria `id (A..E)` y además una
 columna `anio`. Como la clave era sólo la letra, **el grupo A podía existir para un solo año en toda
