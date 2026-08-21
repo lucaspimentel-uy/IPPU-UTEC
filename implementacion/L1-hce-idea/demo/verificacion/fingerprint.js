@@ -48,10 +48,37 @@ const norm = (s) => (s == null ? s : String(s)
     F.pasos[k] = norm(await page.evaluate(s => { const e = document.querySelector(s); return e ? e.innerHTML : null; }, sel));
   };
 
+  /* Una sola vez, en un solo lugar: por vista, el selector sobre el que hacer click para
+     llegar a ella (`entrada`) y el selector del contenedor que un render() deja poblado
+     (`contenido`). NO se infiere de `.navitem[data-view=...]`: `usuarios` no es un
+     `.navitem` (vive en el `.userchip`, `index.html:43`) y su contenido no se pinta al
+     cargar la página como sí hacen grupos/inclusión/ateneos (`renderGrupos()` /
+     `renderInclusion()` / `renderAteneos()` corren al final de su módulo) — sólo se llena
+     cuando corre `renderUsuario()`, que el propio onclick del `.userchip` ya encadena. Si la
+     nav vuelve a cambiar, se corrige ACÁ — no se agrega un caso especial en el loop de abajo. */
+  const VISTAS = {
+    inicio:     { entrada: '.navitem[data-view="inicio"]',     contenido: '#tbodyNNA' },
+    pendientes: { entrada: '.navitem[data-view="pendientes"]', contenido: '#pendKpi' },
+    analitica:  { entrada: '.navitem[data-view="analitica"]',  contenido: '#anKpi' },
+    grupos:     { entrada: '.navitem[data-view="grupos"]',     contenido: '#gruposList' },
+    inclusion:  { entrada: '.navitem[data-view="inclusion"]',  contenido: '#inclusionContent' },
+    ateneos:    { entrada: '.navitem[data-view="ateneos"]',    contenido: '#ateneosContent' },
+    usuarios:   { entrada: '.userchip',                        contenido: '#usuarioContent' },
+  };
+
   await page.goto('file:///' + path.resolve(htmlPath).replace(/\\/g, '/'));
   await page.waitForSelector('#loginScreen', { state: 'attached' });
   await page.click('#loginForm button[type="submit"]');     // login pre-cargado
   await page.waitForSelector('#loginScreen.hidden', { state: 'attached' });
+
+  /* Falla fuerte y con nombre si la nav cambió: antes esto moría en silencio dentro de
+     page.click() (timeout genérico de Playwright, sin decir qué vista era). */
+  for (const [v, { entrada }] of Object.entries(VISTAS)) {
+    const existe = await page.evaluate(s => !!document.querySelector(s), entrada);
+    if (!existe) {
+      throw new Error(`fingerprint: el punto de entrada de la vista "${v}" (${entrada}) no existe en el DOM. La nav cambió — actualizar VISTAS en fingerprint.js.`);
+    }
+  }
 
   /* ============================================================================
      PARTE A — ESTADO INICIAL (antes de cualquier mutacion)
@@ -79,10 +106,20 @@ const norm = (s) => (s == null ? s : String(s)
     return out;
   });
 
-  for (const v of ['inicio', 'pendientes', 'analitica', 'grupos', 'usuarios']) {
-    await page.click(`.navitem[data-view="${v}"]`);
+  for (const [v, { entrada, contenido }] of Object.entries(VISTAS)) {
+    await page.click(entrada);
     await page.waitForTimeout(120);
     await html('A3_vista_' + v, `#view-${v}`);
+    /* Una vista puede tener crumbs/h1/p estáticos y aun así el contenedor que arma su
+       render() quedar vacío (justo lo que le pasaba a "usuarios" antes de este fix): un
+       fingerprint "poblado" en apariencia que en realidad grabó una vista en blanco. */
+    const vacio = await page.evaluate(s => {
+      const e = document.querySelector(s);
+      return !e || e.innerHTML.trim() === '';
+    }, contenido);
+    if (vacio) {
+      throw new Error(`fingerprint: la vista "${v}" quedó vacía en ${contenido} tras el click en ${entrada}. Falta un render() explícito además del click, o el contenedor cambió de id.`);
+    }
   }
 
   const ids = JSON.parse(F.pasos.A1_catalogos_y_globales).nnaIds || [];
