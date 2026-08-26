@@ -8,9 +8,28 @@ https://docs.google.com/document/d/1F1GdDwluxQR_uLaYdr0GF-RgQUfcTXx7/edit?rtpof=
 > |---|---|
 > | **Qué es** | El cuestionario **tal como se envió a IPPU**, palabra por palabra. |
 > | **Enviado** | **2026-08-19** (`handoff.md` §5.28). |
-> | **Respuesta** | **Todavía no hay.** No es que IPPU no conteste: un cuestionario de 30 preguntas no vuelve en 24 horas (§5.28). |
+> | **Respuesta** | **CONTESTADO EN LA REUNIÓN DEL 2026-08-21**, transcripto acá el **2026-08-26**. **25 de 28** preguntas quedaron contestadas; **3 siguen abiertas** (§2.2, §2.4, §3.1). |
 > | **Artefacto autoritativo** | **Google Doc del equipo** → `⟨pegar link acá⟩` · **fecha del snapshot: 2026-08-20**. |
 > | **Revisión** | El equipo lo revisó antes de mandarlo y **sacó tres preguntas** (ver abajo). |
+>
+> ### ✍️ Transcripción de la reunión — qué se escribió y qué falta
+>
+> Las respuestas de abajo salen de la **reunión con IPPU del 2026-08-21** y se escribieron el
+> **2026-08-26**, **bajo cada `> _Respuesta:_`**, que es el procedimiento que §6 de `handoff.md` fija.
+> **No se tocó ni una palabra de pregunta, ni la numeración, ni la estructura**: el archivo sigue siendo
+> el snapshot de lo que se envió el 19/08.
+>
+> | | |
+> |---|---|
+> | **Contestadas** | **25 de 28** — Parte 1: **6/6** · Parte 2: **6/8** · Parte 3: **13/14** |
+> | **Abiertas** | **3** — **§2.2** (plazo del reingreso) · **§2.4** (roles de los dos técnicos) · **§3.1** (los 14 talleres de este año) |
+> | **Contestada a medias** | **§3.2** — sabemos **dónde** está la HCE actual (Heroku), no en qué estado va el trámite ni con quién hablar |
+> | **Corrige lo que dice el documento** | **§1.3** (el consentimiento **no** es un bloqueo duro) y **§2.8** (la autorización de imagen aplica a **compartir**, no a guardar) |
+>
+> ⚠️ **ESTO TODAVÍA NO ESTÁ EN EL GOOGLE DOC.** El artefacto autoritativo es el Doc del equipo, no este
+> `.md` (§5.34): **alguien tiene que copiar estas respuestas ahí a mano**. Hasta que eso pase, el Doc y el
+> repo vuelven a divergir — que es exactamente lo que §5.34 documenta. Pendiente con nombre en
+> `handoff.md` §6.
 >
 > **Si el Google Doc cambia, este archivo queda viejo y nadie se entera.** Esa es exactamente la
 > divergencia que documenta **§5.34**: entre el 19/08 y el 20/08 el repo describió un cuestionario que
@@ -99,6 +118,10 @@ Entendimos que hay un orden que se respeta:
 **¿Es así? ¿Falta algún paso o hay alguno que sobra?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** El recorrido es ése, con **dos correcciones**: el **IDEA es anual**
+> (no sólo al ingreso), y el **consentimiento no traba** el proceso — el expediente avanza con «CI
+> pendiente» visible y una notificación. → `handoff.md` §5.36 y §5.38.
 
 ---
 
@@ -112,6 +135,9 @@ autor.
 **¿Es así como trabajan? ¿Siempre firman dos personas?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado: firman **dos técnicos**, y una vez firmado **queda
+> cerrado**; las correcciones van en una **nota aparte**.
 
 ---
 
@@ -124,6 +150,12 @@ antes de tener la evaluación IDEA, se puede, dejando constancia escrita del mo
 **¿Es correcto? ¿Hay algún otro paso que tampoco debería poder saltearse nunca?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** ⚠️ **No es así — IPPU lo corrigió.** Pidieron que el
+> consentimiento **no trabe el proceso de evaluación**: se avanza con estado **«CI pendiente» visible** y
+> notificación, en vez de bloqueo. El registro sigue siendo mínimo (referente familiar, fecha, firma).
+> ⚠️ **Punto de segunda mano**, registrado como **CONFIRMABLE** en `handoff.md` §5.38: **a re-confirmar con
+> IPPU**.
 
 ---
 
@@ -143,6 +175,10 @@ nada más.
 **¿Coincide con cómo lo entienden ustedes?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado, y con la regla dicha explícita: se compara **siempre
+> dentro del mismo instrumento** — el IDEA contra el IDEA del año anterior, el Protocolo B contra el A.
+> **Nunca entre instrumentos.**
 
 ---
 
@@ -155,6 +191,11 @@ constancia de que lo recibió.
 **¿Es así? ¿Hay otros informes que se entreguen (a escuelas, a organismos) y que también deberíamos** **contemplar?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Hay más informes.** Se generan **a pedido, sin fecha fija**,
+> para familias e instituciones: **BPS** siempre a fin de año y completo; **INAU** a pedido, y puede ser por
+> **un solo chico**. **Todos los revisa la dirección (ADMIN) antes de entregarse.** El **Informe de Cierre
+> Anual sigue siendo uno por año**. → `handoff.md` §5.40.
 
 ---
 
@@ -169,6 +210,11 @@ de quién hizo qué y cuándo.
 **¿Falta algo que registren habitualmente y que no esté en esta lista?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Falta la **guía de trámites para las familias** (BPS, MIDES,
+> INAU; el más consultado es **AYEX**), que se entrega **junto con los informes** (§5.49). Y en los
+> **ateneos** faltan un campo de **observaciones** y los **adjuntos de documentos**, PPTX en particular
+> (§5.46).
 
 ---
 
@@ -190,6 +236,10 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 ☐ Sí, se hace una sola vez al ingreso ☐ No, se sigue haciendo todos los años ☐ Depende — explicar:
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **☒ No, se sigue haciendo todos los años.** El IDEA es **anual,
+> siempre**, y el de cada año **se compara con el del anterior** — coincide con lo respondido en junio
+> (P10/P12). **La «línea base única» del Documento Técnico no rige.** → `handoff.md` §5.36.
 
 ---
 
@@ -210,6 +260,8 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **¿Es así, o el informe es uno solo que se va actualizando?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado: **uno por año**, y todos quedan guardados.
 
 ---
 
@@ -230,6 +282,8 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **¿Es correcto? ¿O todavía las usan para algo?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado: quedaron **reemplazadas por los Protocolos A y B**.
 
 ---
 
@@ -240,6 +294,10 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **¿Pasa esto en la práctica? ¿Hay personas que estén en más de un servicio a la vez?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado. En particular, un NNA puede **dejar de concurrir a
+> diurna y seguir en clínica**. ⚠️ Esa transición **igual tiene que poder registrarse**, aunque clínica esté
+> fuera de alcance (§5.12 / D3).
 
 ---
 
@@ -250,6 +308,10 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **¿Están de acuerdo, o preferirían que alguno sí sea obligatorio?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Confirmado: los períodos son **recordatorios sin fechas
+> rígidas**. ⚠️ Pero **el orden A→B es firme**. *(«No es lineal», del apunte del día, fue error de
+> transcripción y se descarta.)*
 
 ---
 
@@ -260,6 +322,10 @@ puede estar bien o mal. **Por favor confirmen o corrijan cada punto.**
 **¿Es así como lo manejan? ¿La autorización de imagen es un documento aparte del consentimiento** **general, o van juntos?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** ⚠️ **Al revés de como lo tenemos.** **Guardar** una foto en la
+> HCE **no requiere autorización**; **compartirla, sí**. Hoy el sistema bloquea el **guardado**, que es el
+> punto equivocado del flujo. → `handoff.md` §5.39.
 
 ---
 
@@ -297,6 +363,11 @@ Entendemos que esto depende del acuerdo de confidencialidad que planteó la Dire
 **¿En qué estado está ese trámite? ¿Hay alguien de parte del proveedor del sistema actual con quien** **podamos hablar?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** La HCE actual está **alojada en Heroku**. ⚠️ Eso es **dónde vive
+> hoy**, **no** el destino del sistema nuevo: las opciones de despliegue se evalúan más adelante (§5.44).
+> **Sin registro** sobre el estado del trámite de confidencialidad ni sobre un contacto del proveedor
+> actual: **esa parte sigue abierta**.
 
 ---
 
@@ -310,6 +381,9 @@ Nos dijeron que hay alrededor de **40 activos y otros tantos archivados**.
 Pasar sólo los activos ☐ Otra cosa:
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **☒ Pasarlos todos al sistema nuevo** — **activos y
+> archivados**. → `handoff.md` §5.43.
 
 ---
 
@@ -321,6 +395,9 @@ poder cruzarlos.
 **¿Qué forma tiene ese número? (por ejemplo: 1234, HC-2024-015, u otra)**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Es un **entero desde 1000**: 1001, 1002, … → `handoff.md`
+> §5.43.
 
 ---
 
@@ -329,6 +406,10 @@ poder cruzarlos.
 **¿Todos los técnicos ven todos los expedientes, o cada uno ve sólo los de su grupo?** **¿Hay información que sólo deberían ver ciertas personas (por ejemplo, coordinación o dirección)?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Cada técnico ve sólo los grupos que tiene asignados**, y tiene
+> **su propio usuario**. **ADMIN ve todo**, asigna los grupos y puede **crear otros ADMIN**. ⚠️ Hoy nada de
+> eso está modelado — es trabajo nuevo, no un supuesto confirmado (§5.41).
 
 ---
 
@@ -340,6 +421,9 @@ la institución, cambio de grupo a mitad de año):
 **¿Qué hacen hoy? ¿Firma otra persona? ¿Se espera? ¿Firma coordinación?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Lo firmado queda firmado; lo que está pendiente lo firma el
+> técnico nuevo.**
 
 ---
 
@@ -348,6 +432,9 @@ la institución, cambio de grupo a mitad de año):
 **¿Pasa? Y si pasa, ¿qué debería ocurrir con las evaluaciones ya firmadas y con las que faltan?** **¿Las firma el técnico del grupo nuevo o el del anterior?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Pasa. **Lo que ya está firmado queda firmado; lo que falta lo
+> firma el técnico del grupo nuevo.**
 
 ---
 
@@ -363,6 +450,11 @@ en** **algún lado cómo se resolvió, o sólo queda el valor acordado?**
 *Por qué preguntamos.* El Manual de Procedimientos dice que la puntuación es independiente y el consenso viene después, y lo presenta como el punto metodológico más importante del instrumento. Preparamos el sistema para poder guardar las dos puntuaciones y lo que se conversó, pero **queremos** **saber si eso es lo que ya hacen o algo que habría que empezar a hacer.** Si hoy anotan un solo número, el sistema lo acepta igual — no queremos imponerles una forma de trabajar.
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Lo conversan y anotan un solo número:** los dos técnicos
+> acuerdan **en persona** y se registra **un único valor, un solo campo**. ⚠️ Consecuencia que hay que
+> decir: el **kappa de confiabilidad interjueces** que pide el Manual §23 **no es calculable** con la
+> práctica actual (§5.47).
 
 ---
 
@@ -371,6 +463,9 @@ en** **algún lado cómo se resolvió, o sólo queda el valor acordado?**
 **¿En papel firmado, por correo electrónico, en una entrevista, o varias de estas?** **Y la constancia de que la familia lo recibió, ¿cómo se registra hoy?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Casi siempre en papel.** *(Sin registro sobre cómo se deja
+> constancia hoy de que la familia lo recibió.)*
 
 ---
 
@@ -387,6 +482,10 @@ puedan comparar; si se corrige cuando hace falta, alcanza con una sola que se v
 todos modos queda registrado quién la cambió y cuándo).
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Se corrige cuando el equipo lo ve necesario: sin cadencia
+> fija.** Confirma lo implementado — un registro **0..1 por expediente**, revisable, con los dos dominios
+> separados. **Sin cambios.**
 
 ---
 
@@ -403,6 +502,10 @@ Aprovechamos: entendemos que el PAI **se actualiza durante el año** (hay una se
 —uno inicial y una actualización posterior—, o siempre es uno solo por año?
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** «**Proyecto de Atención Integral**» (el nombre de INAU). Y **sí
+> puede haber más de un PAI por año**. Además, IPPU pidió **retirar la sección VII (Análisis estratégico)**.
+> → `handoff.md` §5.42.
 
 ---
 
@@ -417,6 +520,10 @@ ciclo — Grupo Celeste») repasa la evolución de los chicos del grupo. **¿Es
 todo el equipo,** **o sólo quienes trabajan con ese grupo?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **Sólo quienes trabajan con ese grupo.** Cada técnico ve los
+> ateneos de **su propio grupo**; la **jornada de capacitación** es la instancia transversal. → `handoff.md`
+> §5.46.
 
 ---
 
@@ -429,6 +536,10 @@ Dos preguntas chicas sobre cómo numerarlos:
 2. Si un ateneo se hizo en **diciembre** y se carga en **enero**, ¿el número tendría que ser del año en que se hizo o del año en que se cargó? Nosotros lo dejamos como el año en que se carga (así el número no cambia nunca una vez asignado), pero eso hace que un ateneo de diciembre de 2026 pueda quedar numerado como AT-2027-001. **¿Les sirve así?**
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** **(1)** Alcanza con **un solo prefijo**; un `JC-` propio para
+> las jornadas es aceptable **si es barato**. **(2)** Sí, sirve así: el número es el del **año en que se
+> carga**. → `handoff.md` §5.46.
 
 ---
 
@@ -437,5 +548,30 @@ Dos preguntas chicas sobre cómo numerarlos:
 **¿Hay algo de cómo trabajan que creen que deberíamos saber y que no aparece en ninguna de estas** **preguntas?** Esta es probablemente la pregunta más útil de todas.
 
 > _Respuesta:_
+>
+> **[reunión IPPU 2026-08-21]** Sí, y salió bastante. Lo principal:
+>
+> - **El consentimiento no debe trabar el proceso de evaluación** (§5.38 — ⚠️ de segunda mano).
+> - **Informes a pedido y configurables**, revisados por dirección antes de entregarse (§5.40).
+> - **Usuarios y permisos:** un usuario por técnico, cada uno ve sus grupos, ADMIN ve todo y asigna (§5.41).
+> - **Ateneos:** falta **observaciones** y **adjuntos** (PPTX); meta institucional de **8 al año, ≥2 por
+>   grupo** (§5.46).
+> - **Guía de trámites para las familias** — BPS, MIDES, INAU; el más consultado es **AYEX** (§5.49).
+> - **DSM-5 y CIF** como documentos de referencia, accesibles desde la aplicación.
+> - **Del PAI: se retira la sección VII** (§5.42).
 
 ---
+
+<!-- CIERRE — nuestro, NO forma parte de lo que recibió IPPU. Escrito el 2026-08-26. -->
+
+> ## 📋 Al cierre de la transcripción (2026-08-26)
+>
+> **De las 14 preguntas de la Parte 3 queda abierta 1: §3.1** (si los catorce talleres son los que se
+> dictan este año y si alguno va sólo a ciertos grupos). **§3.2 quedó contestada a medias**: sabemos que
+> la HCE actual está en **Heroku**, no en qué estado va el trámite de confidencialidad.
+>
+> **En todo el documento quedan abiertas 3 de 28:** **§2.2** · **§2.4** · **§3.1**.
+>
+> **Lo que la reunión contestó y este documento NO preguntaba** está en
+> `docs/notas/respuestas-reunion-ippu-2026-08-21.md` §14 y en `handoff.md` §5.36–§5.49. **Lo que la
+> reunión NO contestó**, incluidas las tres que nunca se enviaron, está en el §16 de ese mismo archivo.

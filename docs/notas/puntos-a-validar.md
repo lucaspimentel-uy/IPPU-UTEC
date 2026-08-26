@@ -16,12 +16,46 @@
 > equipo le sacó tres preguntas al revisarlo (§5.34): las dos del **baremo** y la de las **citas de la
 > escala**. Están acá, en §1.2 y §1.4, marcadas «nunca se preguntó». **Su numeración también difiere**
 > de §2.7 y §3.2 en adelante: al citarlo, usar la numeración de ese archivo, que es la que IPPU tiene.
+>
+> ---
+>
+> ## 🗓️ Actualizado el 2026-08-26 con la **reunión con IPPU del 2026-08-21**
+>
+> | | |
+> |---|---|
+> | **Cerrados por la reunión** | **10 de los 14 puntos de IPPU**: §1.1 · §1.2 · §1.4 · §1.7 · §1.8 · §1.9 · §1.10 · §1.11 · §1.12 · §1.13 · §1.14 *(§1.3 ya estaba cerrado desde el 2026-08-14)* |
+> | **Siguen abiertos con IPPU** | **§1.5** (acceso a la HCE — ahora sabemos que está en **Heroku**) y **§1.6** (acuerdo de confidencialidad — **reencuadrado**: ya no bloquea el desarrollo, bloquea que el dato salga) |
+> | **Abiertos NUEVOS, por la reunión** | **§2.11** usuarios y permisos · **§2.12** el modelo no representa la divulgación · **§2.13** revisión de informes · **§2.14** indicador de ateneos. Y **§2.8 pasó a BLOQUEANTE** |
+> | **Deuda saldada** | **§2.1** — el costo medido del IDEA anual, que §5.31 dejó debiendo el 2026-08-20 |
+> | **Decisiones nuevas** | `handoff.md` **§5.36–§5.49** (serie **I**) |
+>
+> ⚠️ **Un punto de esta ronda es de segunda mano** —que el consentimiento no trabe el flujo (§5.38 /
+> I3)— y está registrado como **CONFIRMABLE, no cerrado**. Va primero en el próximo contacto con IPPU.
+>
+> ⚠️ **12 de los 26 bloques del registro de la reunión quedaron SIN respuesta.** La lista está en
+> `respuestas-reunion-ippu-2026-08-21.md` §16 — es la agenda del próximo contacto.
+>
+> *(Sigue pendiente la **cabecera de estado completa** que pide `handoff.md` §6: esto es una nota de
+> ronda, no esa cabecera.)*
 
 ---
 
 ## 1. Para IPPU (institución)
 
-### 1.1 Validar la demo v4.1 — ⚠️ el más importante
+### 1.1 ~~Validar la demo v4.1~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Contestado en la reunión del 2026-08-21, y por el lado que hacía falta: el IDEA es ANUAL.**
+> Se hace **una vez por año, siempre**, y el de cada año se compara con el del anterior. Coincide con lo
+> que Fernando Sierra ya había respondido por escrito el 15/06 (P10/P12). **La «línea base única» del
+> Documento Técnico no sobrevive.** → `handoff.md` **§5.36 (I1)**; costo medido en **§2.1** de este
+> archivo.
+>
+> ⚠️ **Qué cerró exactamente, para que nadie lo lea de más.** Cerró **la pregunta que hacía a este punto
+> «el más importante»**. **No** cerró todo lo que la demo pone sobre la mesa: siguen **sin confirmar** las
+> **6 bandas del IDEA** (§5.13 / D4), los **7 estados de inclusión**, la **lista de talleres de este año**
+> y si el **estado de inclusión se anualiza**. Están en
+> `docs/notas/respuestas-reunion-ippu-2026-08-21.md` §16, en la lista de los 12 bloques sin respuesta.
+
 **Qué es.** Que IPPU revise la demo y confirme que el modelo clínico refleja cómo trabajan.
 En particular: **el IDEA pasó de evaluación anual a línea base única** (se aplica al ingreso y
 se repite sólo si hay reingreso a más de 12 meses).
@@ -42,7 +76,22 @@ hoy de que el supuesto puede no sostenerse.
 porque el riesgo está acotado a **una** de las 28 tablas y corregirla ahora es barato; después
 de M11.3/M11.4 deja de serlo. **Conviene resolverlo antes de seguir con M11.3.**
 
-### 1.2 Cortes del baremo BUND (Decreto 72/025)
+### 1.2 ~~Cortes del baremo BUND (Decreto 72/025)~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Los cortes están bien como están cargados.** Confirmado por IPPU y por la documentación oficial de
+> **BUND**: 0–4 sin discapacidad · 5–24 leve · 25–49 moderado · 50–95 severo · 96–100 muy severo.
+> **Cero trabajo:** no se toca el catálogo `baremo`, y **el guard de abajo —«se ajustan los cortes, nunca
+> las etiquetas»— nunca hay que ejercerlo.** → `handoff.md` **§5.48 (I13)**.
+>
+> ⚠️ **Se cerró sin haberse preguntado por escrito:** las dos preguntas del baremo se sacaron del
+> cuestionario en la revisión del 19/08 (§5.34) y **la reunión fue su único canal**. Salió bien; el
+> mecanismo que lo produjo sigue siendo el mismo.
+>
+> ⚠️ **Lo que la reunión NO contestó, y era la otra mitad de este punto:** si el **porcentaje lo fija el
+> organismo oficial** y el sistema lo registra tal cual (era §2.8 del borrador). **Eso sigue siendo
+> supuesto nuestro.** No bloquea: hoy `pct` es dato de entrada y el baremo sólo deriva de él, que es
+> exactamente lo que el supuesto dice.
+
 **Qué es.** Confirmar los porcentajes exactos de cada categoría contra el anexo del decreto.
 Hoy están cargados como 0–4 «Sin discapacidad» · 5–24 «Leve» · 25–49 «Moderado» ·
 50–95 «Severo» · 96–100 «Muy severo».
@@ -111,7 +160,15 @@ mal puesto cambia el resultado de una valoración real.
 > nombres; el resto se carga desde la app. Si IPPU confirma que la oferta 2026 difiere de la del
 > prototipo, es un `UPDATE`, sin migración.
 
-### 1.4 Referencias documentales de los 24 ítems de la Escala IPPU-TEA
+### 1.4 ~~Referencias documentales de los 24 ítems de la Escala IPPU-TEA~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **IPPU las da por buenas.** Las 24 referencias quedan confirmadas. → `handoff.md` **§5.48 (I13)**.
+>
+> ⚠️ **No quedó registrado quién las revisó ni cuándo.** Lo que cierra el punto es la confirmación
+> institucional, no la trazabilidad de la revisión: si el instrumento se presenta formalmente ante un
+> tercero, es razonable que eso se vuelva a pedir. Igual que §1.2, **esta pregunta nunca se envió por
+> escrito** (§5.34) y la reunión fue su único canal.
+
 **Qué es.** Cada ítem trae una cita (DSM-5-TR, CIF, y papers como Wing & Gould 1979 o
 Baron-Cohen 1985). **No están verificadas** contra las fuentes originales: se transcribieron
 del prototipo tal cual.
@@ -147,6 +204,16 @@ instrumento.
 > > técnico las repase antes de que el instrumento se presente formalmente?**
 
 ### 1.5 Acceso a la HCE actual — 🔴 crítico
+
+> **Actualizado el 2026-08-26 con lo que aportó la reunión — sigue ABIERTO.**
+> Lo único nuevo: **la HCE actual de IPPU está alojada en Heroku** (`handoff.md` **§5.44 / I9**). Es
+> **dónde vive hoy**, dato de entrada para saber desde dónde se migra. ⚠️ **No es una decisión de
+> despliegue**: §2.5 sigue abierto.
+>
+> **Y ahora este punto tiene más carga que antes:** IPPU confirmó que **se migran todos los expedientes**,
+> activos y archivados (§1.8), y que el número de historia es **un entero desde 1000** (§1.7). Ya sabemos
+> *qué* hay que traer; sigue faltando *desde dónde* y *con qué permiso*.
+
 **Qué es.** Acceso al sistema de `fundacionippu.uy` y, sobre todo, **al esquema de su base de datos**.
 
 **Por qué importa.** Sin esto no se puede diseñar la integración ni saber cómo migrar los
@@ -157,6 +224,16 @@ respecto del sistema con el que hay que convivir.
 integración real con la HCE de IPPU no.
 
 ### 1.6 Acuerdo de confidencialidad
+
+> **REENCUADRADO el 2026-08-26 (reunión IPPU 2026-08-21) — sigue ABIERTO, pero bloquea otra cosa.**
+> IPPU: **guardar** el dato en la HCE **no requiere permiso**; **compartirlo, sí** (`handoff.md`
+> **§5.45 / I10**). Entonces este punto **deja de bloquear el desarrollo** y pasa a bloquear **que el dato
+> salga del sistema**.
+>
+> ⚠️ **Lo que NO cambia:** la regla de `CLAUDE.md` sigue igual — **hasta que haya acuerdo firmado, sólo
+> datos simulados/anonimizados**. Y el trámite **no se movió**: quién redacta el documento, quién firma de
+> cada lado y para cuándo **quedó sin respuesta** en la reunión.
+
 **Qué es.** El documento legal que firmarían quienes accedan a datos sensibles. Lo planteó el
 Director de IPPU y quedó en que la Fundación lo redacta.
 
@@ -164,7 +241,15 @@ Director de IPPU y quedó en que la Fundación lo redacta.
 
 **Qué bloquea.** El acceso del punto 1.5 y cualquier prueba con datos reales.
 
-### 1.7 Formato del número de historia anterior
+### 1.7 ~~Formato del número de historia anterior~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Es un entero desde 1000:** 1001, 1002, … → `handoff.md` **§5.43 (I8)**.
+>
+> Hoy la columna es `hc_historico varchar(30)` **nullable, sin CHECK, sin índice y sin validación de
+> aplicación** — el único límite es el largo (relevamiento R0, BLOQUE 8). Con un entero desde 1000 **se
+> puede validar**, y conviene decidirlo junto con §1.8 y con `OrigenMigracionMixin`. **No se cambió el
+> tipo:** cerrar el punto es saber el formato, no implementarlo.
+
 **Qué es.** El esquema guarda `hc_historico` para poder cruzar cada expediente con el archivo
 de la HCE anterior. No sabemos qué formato tiene ese número.
 
@@ -173,7 +258,16 @@ al cargarlo en vez de aceptar cualquier texto.
 
 **Qué bloquea.** Nada hoy — está como texto libre. Importa al migrar los expedientes existentes.
 
-### 1.8 Cómo llegan los datos históricos
+### 1.8 ~~Cómo llegan los datos históricos~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Migran todos: activos y archivados.** → `handoff.md` **§5.43 (I8)** · `consulta-a-ippu.md` §3.3.
+>
+> ⚠️ **Y eso destapa una pregunta clínica que la reunión NO contestó:** qué se hace con los puntajes
+> aplicados con la «Guía del aplicador» que tenía el **corrimiento en las dimensiones 3, 4, 6 y 12**. Con
+> «migran todos», **esos puntajes entran igual**, sin criterio decidido. Es decisión **de IPPU**, no
+> nuestra, y va al próximo contacto (bloque 13.a de
+> `docs/notas/respuestas-reunion-ippu-2026-08-21.md`).
+
 **Qué es.** Los ~80 expedientes existentes: ¿se migran, se cargan a mano, se dejan sólo como
 archivo consultable?
 
@@ -182,7 +276,20 @@ lectura (§10), pero no una migración masiva.
 
 **Qué bloquea.** Nada del desarrollo actual. Hay que decidirlo antes de un piloto.
 
-### 1.9 ¿Los dos técnicos ya puntúan de forma independiente? — ⚠️ **para la reunión**
+### 1.9 ~~¿Los dos técnicos ya puntúan de forma independiente?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **No: la puntuación es conjunta.** Los dos técnicos **acuerdan en persona** y registran **un solo
+> número, un solo campo**. → `handoff.md` **§5.47 (I12)** · `consulta-a-ippu.md` §3.8.
+>
+> **D7 (§5.16) no queda equivocada: queda DORMIDA.** `puntuacion_idea` y `puntuacion_protocolo` se
+> modelaron **nullable exactamente para este caso**; no se retira nada, y el guard de «diferencia ≥ 2
+> exige documentación» que M11.3 tenía anotado **queda sin sujeto** mientras la práctica no cambie.
+>
+> ⚠️ **La consecuencia se dice, no se deja implícita:** el **kappa** que exige el **Manual §23** —al que
+> el propio Manual llama el **único requisito metodológico invariante** del instrumento— **NO es
+> calculable** con la práctica actual. Con un solo puntaje de consenso no hay dos series que comparar. **Si
+> el trabajo se presenta a INAU, eso se dice.**
+
 **Qué es.** El Manual de Procedimientos v1.0 establece que los dos técnicos puntúan **por separado** y
 después consensúan, y llama a ese circuito *el único requisito metodológico invariante* del instrumento.
 La pregunta es de hecho, no de norma: **¿así se trabaja hoy en IPPU, o es una práctica a introducir?**
@@ -202,7 +309,16 @@ M11.3 cuesta migración más reescritura de servicios. Conviene presentarlo así
 **Qué bloquea.** Nada técnico: está modelado y es opcional. Bloquea saber si hay que acompañar el cambio
 con formación/instructivo, y cuándo tiene sentido empezar a calcular kappa.
 
-### 1.10 ¿La severidad DSM-5-TR se re-evalúa en una instancia fija? (M12.4)
+### 1.10 ~~¿La severidad DSM-5-TR se re-evalúa en una instancia fija?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **No hay cadencia fija: se corrige cuando el equipo lo ve necesario.** **Confirma M12.4 tal cual está
+> implementado** — `severidad_dsm` **0..1 por expediente**, revisable, con los dos dominios separados.
+> **Cero trabajo:** no hay que versionar por año. → `handoff.md` **§5.48 (I13)** · `consulta-a-ippu.md`
+> §3.10.
+>
+> **Aporte extra de la reunión:** **DSM-5** y **CIF** son documentos de **referencia** para tener
+> vocabulario común; conviene dejarlos accesibles desde la aplicación.
+
 **Qué es.** ¿La severidad se vuelve a mirar **en una instancia institucional fija** —al cierre anual,
 junto con el IDEA— o **se ajusta cuando el equipo lo ve necesario**?
 
@@ -216,7 +332,19 @@ agregar un `id` y soltar la PK, sin perder filas; el camino inverso obliga a des
 preguntarlo antes de M11.3, porque el guard de auditoría que hoy compensa el 0..1 deja de ser suficiente
 si lo que quieren es una serie temporal comparable.
 
-### 1.11 ¿Cómo se llama oficialmente el PAI? (M12.4 · §5.22)
+### 1.11 ~~¿Cómo se llama oficialmente el PAI?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **«Proyecto de Atención Integral»** — el nombre de **INAU**, no «Propuesta de Atención Individual» del
+> prototipo. **Va impreso en lo que se le entrega a INAU.** → `handoff.md` **§5.42 (I7)** ·
+> `consulta-a-ippu.md` §3.11.
+>
+> **Dos cosas más que vinieron en la misma respuesta, y que sí cambian M12.6:**
+> - **Se retira la sección VII** («Análisis estratégico de la situación actual»), a pedido de IPPU.
+> - **Puede haber más de un PAI por año** → confirma la **consecuencia 1 de §5.22**: `pai` **no** lleva
+>   `UNIQUE(hce_id, anio)`. Y que sea **herramienta de trabajo de uso frecuente** confirma la lectura de
+>   **documento dinámico** de §5.22, que se apoyaba en investigación sobre normativa INAU y **no** en
+>   material de IPPU.
+
 **Qué es.** El Prototipo v4 lo llama «**Propuesta** de Atención **Individual**»; la normativa INAU aparece
 como «**Proyecto** de Atención **Integral**». Los campos confirman que es el mismo instrumento.
 
@@ -226,7 +354,19 @@ etiqueta interna.
 **Qué bloquea.** Nada de modelo (la tabla se llama `pai` en cualquier caso), pero conviene tenerlo antes
 de generar el PDF en M11.4.
 
-### 1.12 Los ateneos de grupo, ¿son dato sensible? (M12.7 · D7) — ⚠️ **para la reunión**
+### 1.12 ~~Los ateneos de grupo, ¿son dato sensible?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Cerrado en dirección RESTRICTIVA, y hay que decirlo porque el apunte crudo de la reunión decía lo
+> contrario.** El apunte decía «todos los técnicos ven todos los ateneos». **No es así:** **cada técnico ve
+> los de su propio grupo**, y **la jornada de capacitación es la instancia transversal** — donde varios
+> técnicos se juntan a repasar ateneos. → `handoff.md` **§5.46 (I11)** · `consulta-a-ippu.md` §3.12.
+>
+> ⚠️ **Lo implementado NO expresa esto.** El derivado es `sensible = (tipo == 'clinico')`
+> (`app/models/ateneo.py:310-326`): una regla de dos valores **sobre el tipo**, cuando lo que IPPU describe
+> es visibilidad **por grupo**. Hay con qué resolverlo —`ateneo.grupo_id` ya existe, exigido en el ateneo
+> de grupo y prohibido en institucional y jornada—, pero **es matriz de permisos: depende de §2.11 y cae en
+> Fase 4.** Cambiar el derivado sigue costando una línea; **construir la visibilidad por grupo, no**.
+
 **Qué es.** El aviso de confidencialidad del Prototipo v4 dice que los **ateneos clínicos referidos a un
 NNA** contienen datos sensibles de salud (Ley 18.331) y heredan la matriz de acceso de su HCE, y que los
 **institucionales y las jornadas** son de acceso general del equipo técnico. **No dice nada del ateneo de
@@ -242,7 +382,13 @@ migración** — por eso no bloquea.
 
 **Qué bloquea.** Nada del modelo. Sí condiciona la matriz de permisos de **Fase 4**.
 
-### 1.13 El código de los ateneos: ¿un prefijo o dos? (M12.7 · D2)
+### 1.13 ~~El código de los ateneos: ¿un prefijo o dos?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Alcanza con un solo prefijo**, y un `JC-` propio para las jornadas es **aceptable si es barato** — y
+> lo es: `codigo` es **derivado** (`app/models/ateneo.py:284-308`), **una línea y ninguna migración**. Lo
+> elegido en M12.7 (`AT-` para los cuatro) **queda validado**; si se quiere el `JC-`, se hace cuando toque
+> y sin costo de esquema. → `handoff.md` **§5.46 (I11)**.
+
 **Qué es.** El prototipo se contradice: el seed muestra `JC-2026-001` para la jornada de capacitación,
 pero la función que crea registros (`atNuevo()`) genera siempre `AT-`, y su contador cuenta las dos
 formas en **una sola serie por año**.
@@ -255,7 +401,13 @@ registro ya circulado**.
 **Qué bloquea.** Nada: el código se **deriva**, no se guarda. Si IPPU prefiere `JC-` para las jornadas,
 es una línea de código y cero migración.
 
-### 1.14 El número de ateneo, ¿es del año en que se hizo o del año en que se cargó? (M12.7 · D3)
+### 1.14 ~~El número de ateneo, ¿es del año en que se hizo o del año en que se cargó?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **Del año en que se REGISTRÓ** — exactamente lo implementado (`anio_correlativo`; el correlativo se
+> congela al crear). **Cero trabajo.** El efecto visible que preguntábamos —un ateneo de diciembre de 2026
+> cargado en enero queda `AT-2027-001`— **a IPPU le sirve así**. → `handoff.md` **§5.46 (I11)** ·
+> `consulta-a-ippu.md` §3.13.
+
 **Qué es.** En el prototipo el número sale del **año de creación del registro**, pero el filtro de la
 lista busca por el **año de la fecha del ateneo**. Son dos cosas distintas y en el prototipo conviven sin
 que nadie lo note.
@@ -280,6 +432,34 @@ tabla `idea` (punto 1.1) y frenar todo por eso dejaba la ronda parada por tiempo
 Pero es una decisión que corresponde al equipo, no a quien la tomó solo.
 
 **Qué se pide.** Ratificarlo o pararlo. Si se ratifica, va a `handoff.md` §5 con fecha y autor.
+
+
+> ### 💵 Deuda de §5.31 pagada — el costo medido del IDEA anual (2026-08-26)
+>
+> §5.31 (2026-08-20) dejó **declarado por escrito** que este número tenía que estar acá y no estaba,
+> porque el archivo estaba congelado por F1. **Ahora está**, y además **ya no es hipotético**: la reunión
+> del 21/08 confirmó que **el IDEA es anual** (§1.1, `handoff.md` §5.36).
+>
+> **Medido dos veces contra el código —§5.31 el 20/08 y el relevamiento R0 el 26/08— y da lo mismo: el
+> cambio es puramente ADITIVO.**
+>
+> | Qué | Medido |
+> |---|---|
+> | `UNIQUE` sobre `idea.hce_id` que cambiar | **ninguno** — `ix_idea_hce_id … unique=False` (migración `9246e659d2c9:392`). **`idea` ya es 1:N** |
+> | Tablas afectadas | **1 de 38** |
+> | FKs entrantes a reconectar | **ninguna** — la única es `puntuacion_idea.idea_id` (CASCADE), y es **por instancia** |
+> | Tests que construyen `Idea(` | **9** en 3 archivos. Con `anio` **nullable** no rompe **ninguno**; con `NOT NULL`, un kwarg en esos 9 |
+> | Qué se agrega | `anio` + `UniqueConstraint("hce_id","anio")` — **patrón que el esquema ya usa 3 veces** |
+> | Migración | se regenera el archivo único, como en cada sub-módulo (§5.19) |
+> | **La demo** | ⚠️ **la parte cara**: `nna.flujo.lb` es un **objeto único**, ~**18 usos en 6 módulos** → hay que construir un **selector de año** |
+>
+> **Y la puerta ya se movió por escrito:** §5.35 la puso **antes de M11.3**, no antes de M12.5 — porque
+> mientras el cambio sea aditivo, construir M12.5 encima **no lo encarece**. Deja de ser aditivo en M11.3,
+> donde «cuál IDEA rige» pasa de docstring a código con guards y tests.
+>
+> ⚠️ **Qué queda de este §2.1 después de todo esto.** La pregunta de contenido **la contestó IPPU**. Lo que
+> el equipo todavía **no ratificó por escrito** es la **decisión de procedimiento**: haber arrancado M11
+> sin cruzar su propia puerta. Eso se ratifica o se para **acá**, no en la reunión (§5.35).
 
 ### 2.2 Qué se hace con la rama `feature/base-datos-hce`
 **Qué es.** La rama de Victor (PostgreSQL + triggers PL/pgSQL, 1.605 líneas, probada
@@ -355,7 +535,24 @@ del backend. Desde §5.6 no hay módulos con dueño exclusivo: quien lo toma, av
 
 **Qué se pide.** Que alguien lo tome y lo diga, para no duplicar trabajo como pasó en julio.
 
-### 2.8 No hay forma de «abrir un año nuevo» de grupos — hueco que dejó M12.1
+### 2.8 No hay forma de «abrir un año nuevo» de grupos — ⚠️ **AHORA BLOQUEA** (2026-08-26)
+
+> ### ⚠️ Dejó de ser un hueco anotado: es un hueco bloqueante (reunión IPPU 2026-08-21)
+>
+> **Dos cosas de la reunión lo cambian de categoría:**
+> 1. **ADMIN crea los grupos cuando hace falta** (`handoff.md` **§5.37 / I2** y **§5.41 / I6**). No es una
+>    tarea de marzo de 2027: es **una operación normal del sistema** que hoy no existe.
+> 2. **Los cuatro nombres por color están mal** — los grupos reales son **Inicial · Escolares ·
+>    Preadolescentes · Adolescentes · Taller de Adolescentes** (§5.37). Corregirlos **es exactamente la
+>    operación que no hay forma de hacer desde la aplicación**.
+>
+> **Qué bloquea, con nombre:** que IPPU pueda usar el sistema con **sus** grupos. Hoy el único camino es un
+> `INSERT` a mano o regenerar el seed — R0 verificó que **no existe endpoint, servicio, script ni pantalla
+> que cree un grupo** (`app/routers/__init__.py` = 0 bytes, `app/services/` no existe), y que el seed es
+> *insert-only* sobre `grupo` con un test que lo fija.
+>
+> **Va junto con §2.11** (usuarios y asignación técnico↔grupo): es la misma pantalla.
+
 **Qué es.** D9 (§5.18) resolvió que `grupo` tenga id propio y `UNIQUE(nombre, anio)`, justamente para que
 «Azul 2026» y «Azul 2027» sean dos filas distintas. Pero **nadie puede crear la de 2027**: el seed de
 catálogos es *insert-only* sobre `grupo` (coordinación es dueña de la fila entera y el seed no la pisa —
@@ -427,6 +624,77 @@ trabajo de otra ronda (modelo + UI). La (1) es cosmética.
 
 ---
 
+### 2.11 Usuarios, roles y asignación técnico↔grupo — **abierto por la reunión** (2026-08-26)
+**Qué es.** IPPU confirmó cómo trabajan: **cada técnico tiene su propio usuario**, **ve sólo los grupos
+que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMIN** (`handoff.md`
+**§5.41 / I6**).
+
+**Por qué es un punto y no una confirmación.** Porque **no valida un supuesto: abre trabajo**. R0 verificó
+que **no existe** `usuario`, ni `rol`, ni `permiso`, ni ninguna tabla de asignación técnico↔grupo. Lo que
+hay es `profesional` con `rol varchar(20)` y un `CHECK (rol IN ('admin','tecnico'))` —**dos roles fijos
+por CHECK, no una tabla**— y **dos columnas fijas** en `grupo` (`tecnico1_id`, `tecnico2_id`): **techo de
+2 técnicos por grupo y sin vigencias**. Login: no existe (`app/main.py` monta sólo `/health`).
+
+**Qué bloquea.**
+- **La visibilidad por grupo de §1.12** (ateneos) y, en general, toda la matriz de permisos — **Fase 4**.
+- **La reconciliación de `grupo`**: F1 puso `responsable1`, `responsable2` y `tecnicosAutorizados` en la
+  demo **sin modelo detrás** (`handoff.md` §6).
+- **El residuo de §5.18** (cambio de técnico a mitad de año): la asignación N:M es donde vivirían las
+  vigencias. ⚠️ **La reunión no contestó esa pregunta** — se preguntó por el NNA que cambia de grupo, no
+  por el técnico.
+
+**Secuencia.** **Después de M12.5 y M12.6**, que no dependen de esto. **Enmienda el no-goal del plan M12**
+(«no se toca autenticación»), ya marcado en el plan.
+
+### 2.12 El modelo no representa la DIVULGACIÓN — **abierto por la reunión** (2026-08-26)
+**Qué es.** IPPU dijo cuatro cosas distintas que caen sobre **un mismo concepto que no existe en el
+modelo**: **guardar no requiere permiso, compartir sí** (fotos, §5.39 / I4; confidencialidad, §5.45 / I10),
+**los informes los revisa la dirección antes de entregarse** (§5.40 / I5) y **a las instituciones se les
+manda un resumen, no el expediente**.
+
+**Por qué importa.** R0 lo verificó de forma negativa:
+`grep -rni "compartir|exportar|export|pdf|difusion|difundir|publicar"` sobre `app/` devuelve **una sola
+línea, y es un comentario** (`modulos.py:429`). **No hay columnas ni tablas de compartición, destinatario,
+exportación, publicación o entrega.** El modelo tiene **almacenamiento** y nada más — y hoy los guards que
+existen (fotos) **bloquean el guardado**, que es el punto equivocado del flujo.
+
+**Qué bloquea.** **M11.3 y M11.4.** Hay que decidir cómo se representa la divulgación **antes** de que los
+servicios y los routers se construyan encima. **Éste es el momento barato por la misma razón que el IDEA
+anual:** R0 midió **0 routers, 0 schemas, 0 servicios**.
+
+### 2.13 Los informes necesitan un estado de revisión, y un área configurable — **abierto por la reunión** (2026-08-26)
+**Qué es.** Dos cosas de §5.40 (I5): **(a)** todo informe **lo revisa ADMIN antes de entregarse** —
+*borrador → revisado por dirección → entregado*, que es un **estado de flujo**, no un permiso de
+impresión; **(b)** lo que IPPU pidió es un **área de generación de informes configurable**, no un catálogo
+cerrado de tipos.
+
+**Por qué importa.** R0: **no existe ningún estado de revisión o aprobación** en el modelo, **ninguna otra
+entidad de informe** además de `informe_cierre`, **ni destinatario, ni solicitante, ni tipo**, y **ninguna
+generación de PDF** (1 comentario; `requirements.txt` sin librería de PDF). Modelar los tipos que IPPU
+nombró (BPS anual completo, INAU a pedido) **como enumeración fija sería repetir el error de tomar el
+ejemplo por la regla**.
+
+**Qué bloquea.** **M11.3 (el estado) y M11.4 (la generación).** No bloquea M12.5/M12.6. Va junto con §2.12:
+«revisado antes de entregar» es una **compuerta de salida**, y la salida es justamente lo que no está
+modelado. ⚠️ **El informe de cierre anual no cambia:** `informe_cierre` y su `UNIQUE(hce_id, anio)` están
+bien.
+
+### 2.14 Indicador de ateneos: 8 al año, al menos 2 por grupo — **abierto por la reunión** (2026-08-26)
+**Qué es.** IPPU tiene una **meta institucional: 8 ateneos al año, con un mínimo de 2 por grupo**
+(`handoff.md` **§5.46 / I11**).
+
+**Por qué importa.** Es el primer indicador que IPPU pide **por su cuenta**, y es medible con lo que ya
+existe: `ateneo` tiene `grupo_id`, `fecha` y `anio_correlativo`. **R0 confirmó que hoy nada cuenta ateneos
+por grupo ni por año.**
+
+**Qué bloquea.** **Nada hoy.** Es requisito del **tablero de M11.3/M11.4**, y se anota ahora para que no
+se descubra cuando alguien pida el número. ⚠️ **Ojo con qué año se cuenta:** el correlativo es del año de
+**registración** (§1.14) y el filtro de la lista va contra la **fecha del hecho** — un indicador anual
+tiene que decir cuál de los dos usa.
+
+---
+
+
 ## 3. Supuestos que tomamos — confirmar, no discutir
 
 Cosas que se resolvieron eligiendo la opción razonable para no frenar. Si alguna está mal, es
@@ -440,3 +708,14 @@ barato corregirla ahora:
 | Una persona puede existir **sin** expediente de Atención Diurna (p. ej. si sólo va a Taller Terapéutico) | corrección del bug B |
 | Un reingreso a más de 12 meses genera una **línea base IDEA nueva**, sin borrar la anterior | tabla `idea` es 1:N |
 | Taller Terapéutico y Clínica quedan **fuera de alcance**, pero existen como fila para no forzar el modelo después | tabla `servicio` |
+
+> ### ✅ Qué pasó con estos seis en la reunión del 2026-08-21
+>
+> | Supuesto | Estado |
+> |---|---|
+> | Roles de los técnicos = **texto libre** | **Sin respuesta.** `consulta-a-ippu.md` §2.4 sigue abierta |
+> | «Por áreas» y «general» = archivo histórico | **CONFIRMADO** — quedaron **reemplazadas por los Protocolos A y B** (consulta §2.5) |
+> | Informe de cierre **anual**, uno por año | **CONFIRMADO** (consulta §2.3 · `handoff.md` §5.40) |
+> | Una persona puede existir **sin** expediente de Atención Diurna | **CONFIRMADO**, y con un caso concreto: un NNA puede **dejar la diurna y seguir en clínica** (consulta §2.6) |
+> | Reingreso >12 meses = **línea base nueva** | ⚠️ **HAY QUE REVISARLO.** Con el IDEA **anual** (§1.1) ya hay uno por año igual; «reingreso» deja de ser lo que abre una instancia nueva. **No se resuelve acá** — va con la implementación de §5.36 |
+> | Taller Terapéutico y Clínica **fuera de alcance** | ⚠️ **Tensión, no contradicción.** §5.12 / D3 sigue en pie, pero la **transición** diurna → clínica **tiene que poder registrarse**: es un hecho del expediente de diurna |
