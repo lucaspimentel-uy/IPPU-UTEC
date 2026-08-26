@@ -106,7 +106,14 @@ literales) y se extrajo entero. Lo que queda es incorporarlo.
 - **No se calcula kappa.** Se guardan los datos que lo hacen posible (D7).
 - **No se implementan servicios ni routers.** Esto es capa de modelo, catálogos y migración. Los guards
   son M11.3; este plan solo deja escrito qué tendrán que cubrir (§6).
-- **No se toca autenticación.** La segmentación de HCE-INC se modela como **dato**, no como permiso.
+- ~~**No se toca autenticación.** La segmentación de HCE-INC se modela como **dato**, no como permiso.~~
+  → ⚠️ **ENMENDADO el 2026-08-26 por `handoff.md` §5.41 (I6)**, reunión IPPU 2026-08-21. **No está
+  borrado: está superado.** IPPU definió que **cada técnico tiene su propio usuario**, que **ve sólo los
+  grupos que tiene asignados**, y que **ADMIN ve todo, asigna grupos y crea otros ADMIN** — o sea
+  **usuario + rol + asignación N:M**, que es permiso y no dato. Este plan es **anterior a la reunión**:
+  el no-goal era correcto cuando se escribió y hoy está viejo. **Lo que no cambia:** el trabajo va
+  **después de M12.5 y M12.6**, así que **este no-goal sigue rigiendo dentro de la ronda M12**; lo que
+  cae es su validez como criterio para lo que venga después. Ver también `puntos-a-validar.md` §2.11.
 - **No se migran expedientes reales.** El esquema debe *soportar* la estrategia de migración; ejecutarla
   es otra ronda y depende del acuerdo de confidencialidad.
 - **No se copia nada de la capa de presentación del prototipo:** ni paleta, ni tipografías, ni tokens de
@@ -338,7 +345,7 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ---
 
-### M12.6 — HCE-PAI · Propuesta de Atención Individual (INAU)
+### M12.6 — HCE-PAI · **Proyecto de Atención Integral** (INAU) ⚠️ *renombrado el 2026-08-26, §5.42*
 El más grande. Las 15 secciones y todos los campos están en `docs/markdown/prototipo-v4-referencia.md` §7.
 
 > ⚠️ **Tres cosas decididas antes de arrancar (2026-08-15), leerlas primero.**
@@ -362,9 +369,24 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 > `prototipo-v4-referencia.md` §7 afirma **las dos cosas** —los lista en «campos de cabecera» y a la vez
 > declara la sección II de carga única— y no pueden ser ciertas a la vez.
 >
-> **Preguntar a IPPU (ya anotado):** el nombre oficial. El prototipo dice «Propuesta de Atención
+> ~~**Preguntar a IPPU (ya anotado):** el nombre oficial. El prototipo dice «Propuesta de Atención
 > Individual»; la normativa INAU aparece como «**Proyecto de Atención Integral**». Los campos confirman que
-> es el mismo instrumento, pero el nombre va impreso en lo que se entrega.
+> es el mismo instrumento, pero el nombre va impreso en lo que se entrega.~~
+>
+> ### ✅ CONTESTADO — reunión IPPU 2026-08-21 (registrado el 2026-08-26, `handoff.md` §5.42 / I7)
+>
+> 1. **El nombre oficial es «Proyecto de Atención Integral»** (INAU). **No** «Propuesta de Atención
+>    Individual», que es como lo llama el prototipo. Va **impreso en lo que se le entrega a INAU**, así
+>    que es el nombre que tiene que usar la pantalla, el PDF y cualquier rótulo del módulo. La **tabla**
+>    se sigue llamando `pai`.
+> 2. ⚠️ **La sección VII — «Análisis estratégico de la situación actual» — SE RETIRA**, a pedido de
+>    IPPU. **No se modela**: sale de las 15 secciones y no lleva columnas ni tabla hija. Con esto el
+>    módulo pasa a describir **14 secciones**, no 15.
+> 3. **Puede haber más de un PAI por año**, confirmado por IPPU: **ratifica** el punto 2 de arriba
+>    (`pai` **no** lleva `UNIQUE(hce_id, anio)`) — ya no es deducción nuestra desde normativa INAU.
+> 4. **Es una herramienta de trabajo de uso frecuente**, lo que **confirma la lectura de documento
+>    dinámico de §5.22** — que hasta la reunión se apoyaba en investigación sobre normativa INAU y no en
+>    material de IPPU. La §5.22 pedía justamente confirmarlo acá.
 
 - Cabecera `pai` (~46 campos) + tablas hijas: `pai_objetivo {area, obj, estr, ind, resp, plazo}` ·
   `pai_evaluacion_previa {obj, logro, com, dec}` · `pai_equipo {nombre, rol, participacion}` ·
