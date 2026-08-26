@@ -172,10 +172,20 @@ guardas nuevas, las dos con mensaje que nombra la vista — no un timeout genér
    vacío). La guarda queda igual, por si el día de mañana algún `render()` deja de correr al
    cargar.
 
+> **Vocabulario, para no repetir la confusión de sesiones anteriores:** un **paso** es una clave
+> de `F.pasos` — lo que `fingerprint.js` captura (hoy: **42**, `pasos capturados` en su propia
+> salida). Un **campo comparado** es lo que `comparar.js` reporta por fila — los 42 pasos **más**
+> el campo `errors` (comparado aparte, bajo «ERRORES DE CONSOLA / PAGINA») — hoy: **43**. Todo lo
+> que hable de un `.json` capturado dice "pasos"; todo lo que hable de una corrida de
+> `comparar.js` (`X iguales · Y distintos`, o "X/43") dice "campos comparados". Los dos números
+> son reales y **distintos a propósito** — no es un typo si en un párrafo dice 42 y en el de al
+> lado dice 43.
+
 **Corrida verificada (2026-08-21):** 7 vistas (`inicio · pendientes · analitica · grupos ·
 inclusion · ateneos · usuarios`) + 8 expedientes, **42 pasos capturados, 0 errores de
-consola/página**, exit 0. Dos corridas seguidas sobre el mismo commit: **43/43 idénticos**
-(los 42 pasos + el campo `errors`) — ver «Determinismo» más abajo.
+consola/página**, exit 0. Dos corridas seguidas sobre el mismo commit, comparadas con
+`comparar.js`: **43/43 campos comparados idénticos** (los 42 pasos + el campo `errors`) — ver
+«Determinismo» más abajo.
 
 <details>
 <summary>Histórico — el problema tal como estaba el 2026-08-20 (ya resuelto arriba)</summary>
@@ -196,11 +206,12 @@ a propósito: era la víspera de la reunión con IPPU):
 ## Determinismo y dependencia del calendario (medido 2026-08-21)
 
 **Determinismo: perfecto.** Dos corridas seguidas de `fingerprint.js` sobre el mismo commit
-(sin ningún cambio de por medio) dan **43/43 campos idénticos** (`comparar.js` → exit 0,
-`IDENTICOS`). No hay ningún ID aleatorio, orden de `Object.keys()` inestable, ni timestamp sin
-normalizar filtrándose al resultado — más allá de lo que ya cubre la normalización de `HH:MM`.
+(sin ningún cambio de por medio) dan **43/43 campos comparados idénticos** (`comparar.js` →
+exit 0, `IDENTICOS`). No hay ningún ID aleatorio, orden de `Object.keys()` inestable, ni
+timestamp sin normalizar filtrándose al resultado — más allá de lo que ya cubre la
+normalización de `HH:MM`.
 
-**Dependencia del calendario: dos campos, medidos, no dos categorías completas.** Grep de
+**Dependencia del calendario: dos pasos, medidos, no dos categorías completas.** Grep de
 `new Date()`/`Date.now()` en `demo/js/` da 8 sitios; de esos, sólo **2 llegan a un paso que el
 harness captura hoy**, y se verificó adelantando el reloj del navegador +48h con
 `page.addInitScript`:
@@ -225,7 +236,7 @@ harness capture. Los recordatorios del panel institucional (`recordatorios.js`) 
 "pendiente/al día" sale de `flujo.*.firmado`, no de una fecha.
 
 **Tamaño y cantidad de comparaciones.** Cada captura: **~528 KB** (540.546 bytes exactos,
-un solo `.json`). `comparar.js` recorre **43 campos** (42 pasos + `errors`).
+un solo `.json`). `comparar.js` recorre **43 campos comparados** (42 pasos + `errors`).
 
 ### Opciones para un baseline versionado — medidas, no elegidas
 
@@ -241,11 +252,11 @@ real a la luz de lo medido arriba:
 2. **Sólo el procedimiento de dos worktrees (el que ya está documentado arriba).** Costo: manual,
    dos corridas (~528 KB × 2, no versionadas) cada vez que alguien quiere comparar, y hay que
    tener a mano el commit/tag/rama de referencia. Beneficio real medido: como "antes" y
-   "después" se capturan con **el mismo reloj real**, dentro de la misma corrida, los 2 campos
+   "después" se capturan con **el mismo reloj real**, dentro de la misma corrida, los 2 pasos
    calendario-dependientes **no generan falso positivo nunca** — la comparación es efectivamente
    inmune al calendario sin tocar el código. Es la única opción de las tres con **0 mantenimiento**
    contra deriva de fecha.
-3. **Versionar un `baseline.json`, pero con los 2 campos volátiles normalizados** (mismo mecanismo
+3. **Versionar un `baseline.json`, pero con los 2 pasos volátiles normalizados** (mismo mecanismo
    que ya usa `norm()` para `HH:MM`: dos regex más, una para `\d+ días` dentro de
    `A3_vista_inclusion` → `N días`, otra para `dd/mm/aaaa` dentro de `C6e_vista_informe` →
    `DD/MM/AAAA`). Costo: ~15 líneas en `fingerprint.js`, revisadas una vez; sigue pesando ~528 KB
