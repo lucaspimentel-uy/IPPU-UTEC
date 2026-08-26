@@ -1948,6 +1948,65 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-08-26 · Sesión H1 — higiene del repositorio, sin tocar el modelo** (Lucas + Claude, rama
+  `chore/higiene-2026-08-26`, **sin mergear y sin pushear**). Sesión de mantenimiento entre M12.5 y M12.6.
+  **Alcance respetado:** no se tocó `app/models/`, ni `alembic/`, ni una fila de catálogo; no se corrió
+  `alembic revision|upgrade|downgrade|stamp`. El único código que cambió es el `print()` del seed.
+  - **El punto de partida se midió, no se citó.** **42 tablas · 307 passed / 0 skipped · head
+    `aa26917b6e76`** — coincide con lo que el encabezado afirmaba, que era lo que había que confirmar.
+  - **1 — El mapa del repo estaba viejo.** `verificar_estado.py --check` daba **DESFASADO** en tres puntos,
+    los tres en `docs/estructura-repositorio.md`: nombraba la migración `9246e659d2c9` (la de M12.7),
+    decía «38 tablas» en dos lugares, y no tenía `app/models/inclusion.py` ni
+    `tests/test_m12_inclusion.py`. Corregido y **`--check` en verde**. ⚠️ **Se preservó** el cambio que
+    otra sesión había dejado sin commitear en ese mismo archivo desde el 21/08 (la entrada del borrador de
+    color): las correcciones fueron **encima**, no en lugar de él.
+  - **2 — Los prompts sueltos, versionados.** Tres estaban sin versionar (R0, pre-review del harness, y el
+    de la sesión del harness que era un `.txt` con espacios y tilde en el nombre). Se commitearon y se
+    normalizaron los nombres a `prompt-<qué>-<cuándo>.md`, **la convención que ya estaba escrita** en
+    `docs/prompts/README.md`. Se completaron además dos renombres a medias (D1 y M12.5), con `git mv` para
+    que `git log --follow` los siga. **Ni una línea de contenido cambió**, y no queda ninguno sin versionar.
+  - **3 — `.gitattributes`, y la hipótesis salió al revés.** Se agregó (`text=auto` + `eol=lf`), pero
+    **`git add --renormalize .` movió 0 archivos: el índice ya estaba 100 % LF** (103 de 103). Lo que
+    cambió es el árbol de trabajo — **62 archivos de CRLF a LF**. ⚠️ **Y el ruido recurrente de
+    `prompt-sesion-pre-reunion-2026-08-20.md` en `git status` NO era CRLF:** verificado línea por línea,
+    sus 14 líneas «modificadas» eran **idénticas salvo barras invertidas multiplicadas**
+    (`\*\*` → `\\\\\\\*\\\\\\\*`) — una herramienta reescapando markdown. Se revirtió al estado
+    commiteado. Lo que **sí** era CRLF era peor de leer: el renombrado del prompt de D1 se diffeaba como
+    **574 líneas cambiadas** con el contenido idéntico.
+  - **4 — El seed ya no rompe en Windows.** `python -m app.seed_catalogos` —**paso 4 del arranque rápido**,
+    §0— terminaba en `UnicodeEncodeError` en una consola **cp1252**: el `Δ` que trae `_origen` (la
+    interpretación del Δ del Protocolo A→B). El `commit()` ya había pasado, así que **el seed corría y
+    quien lo corría veía un traceback donde tenían que ir los conteos**. Se arregló **la impresión, no el
+    dato**: `_preparar_salida()` decide **una vez por corrida** (reconfigurar recién al fallar deja dos
+    codificaciones en el mismo archivo redirigido, que es peor porque no se nota). Verificado con
+    `PYTHONIOENCODING=cp1252`: antes exit 1, después **dos corridas seguidas en exit 0 y 0/0 en los 17
+    catálogos**. `pytest -q`: **307 passed, 0 skipped**.
+  - **5 — Registro.** **§5.53 (K1)**: el Google Doc del equipo **está vacío** —lo confirmó Lucas
+    mirándolo—, así que **se retira su designación de artefacto autoritativo** (§5.34) y los dos pendientes
+    que colgaban de él se cierran **por inexistencia del destino, no por haberse hecho**. §5.34 no se
+    editó: §5 es append-only. **§6 estrena la lista «DECIDIDO, SIN IMPLEMENTAR»** con **I1** (el IDEA es
+    anual y `idea` no tiene `anio`) e **I2** (los nombres reales de los grupos, y el seed sigue plantando
+    los colores), porque §5 dice qué se decidió y §6 qué falta hacer, pero **nada decía «hoy el código
+    afirma lo contrario»**. En el acta del 21/08 se anotaron los **presentes**, que estaban en «sin
+    registro»: **Boris Furtado, Victor Uria, Lucas Pimentel y Matías López**, más la dirección de IPPU —
+    **Boris es una sola persona** (§5.32), no se lo cuenta dos veces.
+  - **6 — Encuadre de presentación a terceros, corregido.** El acta y `puntos-a-validar.md` decían «si el
+    trabajo se presenta a INAU, eso se dice»; PLAN-M12 decía «para rendir ante INAU no da lo mismo».
+    **Nosotros construimos la HCE para IPPU y no tenemos contacto con otras instituciones**: si IPPU le
+    muestra el sistema a INAU, eso es de IPPU, y no nos genera obligaciones de documentación. Lo que **sí**
+    es obligación nuestra —decirle a IPPU que **el kappa del Manual §23 no es calculable** con la práctica
+    actual (§5.47)— quedó **más fuerte, no más flojo**. **No se tocó `consulta-a-ippu.md`** (es el snapshot
+    palabra por palabra de lo enviado el 19/08) ni §5.25/§5.47.
+  - ⚠️ **Lo que esta sesión NO hizo, a propósito.** **No se implementó I1 ni I2** — están decididas y
+    tienen sesión asignada. **No se firmó** `docs/notas/borrador-color-y-significado-clinico.md`: se leyó,
+    se resumió en el chat y **se versionó tal cual con su banner intacto**, porque el mapa del repo ya lo
+    describía y un puntero a un archivo que sólo existe en un disco es peor que no mencionarlo (§12.1).
+    ⚠️ **Su condición de retiro NO se cumple**: sigue sin firmar, y encima **pide el número §5.36, que ya
+    está ocupado por I1** desde el 26/08. **No se mergeó ni se pusheó nada.**
+  - **Verificación:** `verificar_estado.py --check` **en verde** · `pytest -q` **307 passed, 0 skipped** ·
+    seed corrido dos veces en exit 0 · `git status` limpio. **Commits separados por asunto**, con el de
+    `.gitattributes` aparte para poder revertirlo solo.
+
 - **2026-08-26 · M12.5 — HCE-INC · Inclusión educativa y social** (Lucas + Claude, rama
   `backend/M12.5-hce-inc`, **sin mergear y sin pushear**). Primera sesión que **toca el backend desde el
   2026-08-15**: las tres del medio (limpieza y pivote, pre-reunión, D1) fueron documentación.
