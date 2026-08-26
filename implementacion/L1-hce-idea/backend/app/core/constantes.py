@@ -201,3 +201,141 @@ ATENEO_TIPOS: dict[str, str] = {
 #: `JC-` para jornadas, es **una línea de `Ateneo.codigo`** y cero migración,
 #: porque el código es derivado y no la PK.
 ATENEO_CODIGO_PREFIJO = "AT"
+
+
+# --------------------------------------------------------------------------
+# HCE-INC · Inclusión educativa y social (M12.5 · Prototipo v4)
+# --------------------------------------------------------------------------
+# Los cinco vocabularios del módulo salen de la **capa de catálogos** del
+# Prototipo v4 —`const INC_* = [...]` declaradas dentro del bloque de HCE-INC y
+# consumidas por sus propias funciones (`incChip`, `mInc`, `incAdd`)—, no del
+# seed de su base de demostración. La clasificación completa, con la evidencia
+# de cada uno, está en `handoff.md` §5.50 (J1).
+#
+# **De los cinco, sólo `INC_ESTADOS` es tabla** (`estado_inclusion`): es el
+# único que tiene atributos propios —descripción y semáforo— y que el módulo
+# **consulta por sí mismo**, renderizándolo como tabla de referencia mientras el
+# técnico decide. Los otros cuatro son listas planas de cadenas sin atributos:
+# por el criterio de la cabecera de este archivo, constante.
+
+#: Tipos de centro educativo o socioeducativo (`INC_TIPOS`, 10).
+#:
+#: **Constante y no catálogo.** Es una clasificación del **sistema educativo
+#: nacional** (ANEP, UTU, liceo público/privado), no de IPPU: un tipo nuevo lo
+#: crea el Estado, no coordinación, así que incorporarlo es un cambio de código
+#: con revisión y no un `UPDATE`. No tiene atributos que consultar y la lista se
+#: cierra con «Otro», que es lo que absorbe el caso no previsto sin bloquear la
+#: carga.
+#:
+#: Gobierna **dos** columnas —`inclusion.tipo_centro` y
+#: `catalogo_centro_educativo.tipo`— y ese es el segundo motivo para que sea una
+#: sola constante: son dos afirmaciones sobre sujetos distintos («este NNA
+#: concurre a un centro de este tipo» / «este centro es de este tipo»), y lo
+#: único que no puede pasar es que usen dos vocabularios distintos.
+INCLUSION_TIPOS_CENTRO: tuple[str, ...] = (
+    "Escuela especial (ANEP)",
+    "Escuela común (ANEP)",
+    "Educación inicial / jardín",
+    "Liceo público",
+    "Liceo privado",
+    "UTU / educación técnica",
+    "Taller de continuidad educativa",
+    "Centro privado especializado",
+    "Maestra comunitaria / domiciliaria",
+    "Otro",
+)
+
+#: Temas de una entrada de bitácora (`INC_TEMAS`, 5).
+#:
+#: **Constante y no catálogo — y es la decisión más consecuente del módulo**,
+#: por el mismo motivo que `ATENEO_TIPOS` (M12.7): el tema es el
+#: **discriminador** contra el que está escrita la derivación de `sensible`.
+#:
+#: **Modo de falla que evita.** Con catálogo editable, el área agrega «Salud
+#: mental» desde la app; la derivación está escrita como
+#: `tema = 'Clínica — sensible'`, así que el tema nuevo **cae fuera** y la
+#: entrada queda clasificada como no sensible **sin que nadie lo decida**. La
+#: consecuencia concreta no es cosmética: es información familiar grave
+#: circulando junto al dato escolar, que es exactamente lo que la segmentación
+#: existe para evitar. Como constante, sumar un sexto tema toca a la vez esta
+#: línea, el CHECK y los tests — que es la revisión que se quiere.
+INCLUSION_TEMAS: tuple[str, ...] = (
+    "Educativa / pedagógica",
+    "Coordinación interinstitucional",
+    "Familiar / social",
+    "Trámite o gestión",
+    "Clínica — sensible",
+)
+
+#: El tema del que se deriva `sensible`. Se nombra una sola vez, acá: el modelo,
+#: el CHECK y los tests lo leen de esta constante, así que no hay forma de que la
+#: cadena del modelo y la del catálogo se separen (`InclusionBitacora.sensible`).
+INCLUSION_TEMA_SENSIBLE = "Clínica — sensible"
+
+#: Medio por el que se hizo la gestión (`INC_MEDIOS`, 7).
+#:
+#: **Constante con CHECK, y no texto libre**, aunque no gobierne comportamiento:
+#: el módulo existe para que el área tenga indicadores («cantidad de
+#: articulaciones por caso», por qué medio se articula), y con texto libre
+#: «WhatsApp», «whatsapp» y «wsp» son tres categorías distintas y el indicador
+#: se vuelve ruido. «Otro» es la salida para el caso no previsto.
+INCLUSION_MEDIOS: tuple[str, ...] = (
+    "WhatsApp",
+    "Llamada",
+    "Reunión presencial",
+    "Videollamada",
+    "Correo",
+    "Visita al centro",
+    "Otro",
+)
+
+#: Rol del interlocutor de una gestión (`INC_ROLES`, 8). Mismo criterio que
+#: `INCLUSION_MEDIOS`. «INAU» es un organismo del Estado ya modelado en HCE-ORG,
+#: no un nombre propio de IPPU: el vocabulario no trae nada institucional
+#: específico (ver la clasificación de §5.50).
+INCLUSION_ROLES: tuple[str, ...] = (
+    "Familia",
+    "Centro educativo",
+    "Acompañante terapéutico",
+    "Maestra comunitaria / itinerante",
+    "INAU",
+    "Equipo de salud",
+    "Otra institución",
+    "Otro",
+)
+
+#: Estado inicial de la ficha de inclusión, y **el único que el sistema asigna
+#: solo**: el Prototipo v4 lo excluye del `<select>` con el que el área cambia
+#: el estado (`INC_ESTADOS.filter(e => e.n !== 'Sin registrar')`), porque no es
+#: una situación que alguien elija sino la ausencia de registro. Es el
+#: `server_default` de `inclusion.estado` y el fallback del tablero.
+INCLUSION_ESTADO_INICIAL = "Sin registrar"
+
+#: Presencia de asistente personal / acompañante terapéutico.
+#:
+#: ⚠️ **No estaba declarado como catálogo en el prototipo y el plan M12 no lo
+#: registra como dominio**: los tres valores están **inline** dentro del
+#: `<select>` de `mInc()`, sin nombre. No es contenido de la capa de catálogos
+#: ni relleno del seed —las dos categorías que ordena §5.50—, así que se
+#: clasifica y se declara: es un **dominio de tres estados** («no tiene»,
+#: «tiene», «lo está tramitando»), y el tercero es información de gestión que un
+#: booleano perdería.
+INCLUSION_AT_ESTADOS: tuple[str, ...] = (
+    "No",
+    "Sí",
+    "En trámite (lista de espera)",
+)
+
+#: Niveles del semáforo del tablero del área, tal como los usa `estado_inclusion.
+#: semaforo`. Del prototipo se toma la **semántica** y se descarta su
+#: implementación: ahí los valores son clases CSS (`inc-ok`, `inc-warn`,
+#: `inc-danger`, `inc-off`) y acá se guarda el nivel sin el prefijo, porque el
+#: nombre de una clase de hoja de estilos no es un dato del dominio.
+INCLUSION_SEMAFOROS: tuple[str, ...] = ("ok", "warn", "danger", "off")
+
+#: Días sin gestiones registradas a partir de los cuales el módulo avisa. El
+#: prototipo lo llama «umbral configurable» y ya existe como fila de
+#: `recordatorio` (clave `inc`, M12.1), que es donde coordinación lo ajusta: acá
+#: está sólo como el valor con el que nació, para que el número no quede suelto
+#: en una consulta de M11.3. **No bloquea nada** (§4).
+INCLUSION_ALERTA_DIAS = 60

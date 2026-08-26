@@ -71,6 +71,20 @@ erDiagram
     HCE_DIURNA  ||--o| ORGANISMO_BPS : "HCE-ORG (0..1)"
     HCE_DIURNA  ||--o{ REGISTRO_ORGANISMO : "envíos INAU · gestiones BPS"
     HCE_DIURNA  ||--o| SEVERIDAD_DSM : "HCE-SEV (0..1, sin firma)"
+    HCE_DIURNA  ||--o| INCLUSION : "HCE-INC (0..1, sin firma)"
+    INCLUSION   ||--o{ INCLUSION_BITACORA : "gestiones del área (cascada)"
+    ESTADO_INCLUSION ||--o{ INCLUSION : "estado semaforizado (FK por nombre)"
+    %% `INCLUSION` es 0..1 **hoy** y por decisión reversible (§5.51): el estado de
+    %% inclusión es una situación vigente, no un ciclo anual, y la historia del
+    %% caso ya vive en `INCLUSION_BITACORA`. Lleva `id` propio + `UNIQUE(hce_id)`
+    %% —y no `hce_id` como PK, como `SEVERIDAD_DSM`— justamente porque tiene tabla
+    %% hija: así anualizarla es **soltar el UNIQUE**, sin repuntar una sola fila.
+    %% `CATALOGO_CENTRO_EDUCATIVO` **no tiene arista**: `inclusion.centro` es
+    %% texto sin FK (§5.52). Un centro educativo es una entidad externa y de
+    %% mundo abierto — el catálogo no puede estar completo de antemano, y con FK
+    %% obligatoria una pantalla de administración que falta se convierte en un
+    %% registro clínico bloqueado. Mismo criterio que `pai_taller.taller_nombre`
+    %% (§5.20), con fundamento propio.
     HCE_DIURNA  ||--o| VALORACION_FUNCIONAL : "HCE-VF (0..1)"
     HCE_DIURNA  ||--o{ AUDITORIA : "HCE-LOG (solo inserción)"
     HCE_DIURNA  ||--o{ OBSERVACION : "seguimiento"
@@ -260,6 +274,81 @@ define la navegación.
 >
 > **Se anota, no se decide acá:** es una pregunta de flujo de trabajo, y M12 es capa de modelo.
 
+#### HCE-INC · Inclusión educativa y social (M12.5) — módulo **sin firma**
+Va en `app/models/inclusion.py`, archivo propio, por el mismo motivo que `severidad.py`. Registra la
+situación educativa del NNA **fuera de IPPU** y la bitácora de todas las articulaciones. En palabras de la
+fuente, «sustituye la práctica de adjuntar reportes individuales de texto libre»; **los reportes históricos
+del área quedan en HCE-DOC** como archivo de solo lectura — de ahí que la bitácora **no tenga backlog de
+migración**, que es lo que permite que `tema` sea NOT NULL.
+
+| Tabla | Campos propios | Notas |
+|---|---|---|
+| **`inclusion`** | `id` PK, **`hce_id` FK CASCADE UNIQUE**, `centro` (**texto, sin FK**), `tipo_centro`, `grado`, `modalidad`, `dias_horas`, `at`, `at_nombre`, `ref_nombre`, `ref_rol`, `ref_tel`, **`estado` FK→`estado_inclusion.nombre`** (`RESTRICT` + `ON UPDATE CASCADE`, `server_default 'Sin registrar'`, indexado), `fecha_estado` (indexado), `obs`, `creado_en`, `actualizado_en` | **0..1 por expediente** (§5.51). Sin firma, siempre editable. CHECK de dominio en `tipo_centro` y `at`. |
+| **`inclusion_bitacora`** | `id` PK, `inclusion_id` FK **CASCADE**, `fecha`, `interlocutor` (CHECK no vacío), `rol`, `medio`, **`tema` NOT NULL** (indexado), `contenido` (CHECK no vacío), `acuerdos`, `autor_id` FK nullable, `registrado_en`. **`sensible` es derivado**, no columna | Índice compuesto `(inclusion_id, fecha)`: cubre la FK **y** la columna «última gestión» del tablero, que es un `max(fecha)` por ficha. |
+
+- **`id` propio y no `hce_id` como PK — refina el patrón de `severidad_dsm`, no lo contradice.** La
+  diferencia es que esta ficha **tiene tabla hija**: con la PK en `hce_id`, pasar a una ficha por año
+  obligaría a repuntar cada fila de `inclusion_bitacora` y reconstruir su FK. Con `id` serial +
+  `UNIQUE(hce_id)`, anualizar es **soltar una restricción**: cero movimiento de datos.
+- **`hce_id` es pertenencia** (§5.26): sin calificador, `ondelete="CASCADE"`.
+- **⚠️ Contrato de nombres con M12.6.** `centro`, `modalidad` y `grado` **se llaman así y no se renombran**:
+  la sección V del PAI las lee **en vivo** desde acá (§5.22), no las copia. Fijado por
+  `test_el_contrato_de_nombres_con_m12_6_se_mantiene`. Si se mueven, la sección V del documento que se le
+  entrega a INAU queda en blanco sin que nada falle.
+- **`at` no es booleano.** Tres valores: `No` · `Sí` · `En trámite (lista de espera)`. El tercero es
+  información de gestión —hay un trámite abierto— que un `bool` perdería. ⚠️ **No estaba declarado como
+  catálogo en la fuente**: los tres valores están inline en el `<select>` de `mInc()`. Es el tercer caso de
+  la tabla de §5.50 y por eso queda escrito acá.
+- **`at` nace NULL, no en `'No'`** — divergencia declarada con el prototipo. «No tiene acompañante» es una
+  afirmación sobre el NNA; que un formulario en blanco la haga por defecto es un artefacto de UI.
+- **`tema` es NOT NULL, y es la única obligación que este módulo agrega** sobre lo que valida `incAdd`
+  (fecha · interlocutor · contenido). Motivo: de `tema` se deriva `sensible`, y con NULL la derivación
+  devolvería «no sensible» —el valor peligroso— **por omisión y no por decisión**.
+- **`rol` y `medio` son opcionales pero acotados.** Opcionales porque el `<select>` preseleccionado del
+  prototipo es un artefacto del widget y `incAdd` no los exige; acotados porque el módulo existe para dar
+  indicadores del área, y con texto libre «WhatsApp» y «wsp» son dos categorías distintas.
+
+> **`sensible` es derivado, nunca capturado.** `sensible = (tema == 'Clínica — sensible')`, con
+> `hybrid_property` **y expresión SQL**, para que `WHERE NOT sensible` se resuelva en la base — un filtro
+> de acceso aplicado después de leer ya leyó lo que no debía. Mismo criterio sin drift que `Taller.activo`
+> (§5.20) y `Ateneo.sensible` (M12.7).
+>
+> ⚠️ **Qué significa hoy, dicho sin eufemismo: es una clasificación SIN EFECTO.** Significa **restringida
+> para COMPARTIR, no para GUARDAR** — guardar el dato no requiere autorización, compartirlo sí (I4 ·
+> §5.39 y I10 · §5.45). El prototipo lo dice en el mismo sentido: esas entradas «son **visibles** sólo
+> para los técnicos responsables del grupo, el área de Inclusión, coordinación y dirección técnica».
+> **Pero el modelo no tiene dónde aplicarla:** R0 verificó que el esquema representa el almacenamiento y
+> **no representa la divulgación** — no hay columnas ni tablas de compartición, destinatario, exportación
+> o entrega en todo `app/`. Esa capa es más grande que este módulo y §5.39 la pone **antes de
+> M11.3/M11.4**. Acá queda sólo la clasificación, para que el día que exista el filtro tenga contra qué
+> filtrar.
+
+> **Por qué 0..1 y no una ficha por año** (§5.51, y es la pregunta que §5.35 dejó abierta a propósito).
+> **IPPU no la contestó**: la reunión del 21/08 respondió que el **IDEA** es anual (§5.36), que es otra
+> pregunta. Tres razones: (a) **la historia ya está modelada y no es esta tabla** — la bitácora es 1:N y
+> fechada; anualizar la ficha daría dos fuentes de verdad sobre «cómo venía la inclusión en 2025»;
+> (b) `fecha_estado` **se reescribe** en cada cambio en vez de acumular filas, y `p.inc` es un objeto y no
+> un array: el patrón anual del esquema se aplica a **ciclos**, y esto es un **estado**; (c) es la
+> dirección reversible, igual que `severidad_dsm`.
+>
+> ⚠️ **Y aplica la misma condición que HCE-SEV:** con una sola fila, cambiar de centro **pisa** el
+> anterior y el rastro queda sólo en `auditoria`, que hoy es una aspiración. El guard **«toda edición de
+> `inclusion` registra auditoría de campo»** está en §4. En la práctica el cambio **sí queda narrado en la
+> bitácora**, que es donde el área lo escribe. Pregunta abierta en `docs/notas/puntos-a-validar.md` §1.15.
+
+> **`centro` es texto y `estado` es FK — la asimetría es deliberada** (§5.52). No es incoherencia: **es de
+> quién es el dominio.** Los 7 estados son una clasificación **cerrada e interna** del área, así que un
+> valor fuera de la lista es un error de tipeo → FK con `RESTRICT` (no se borra un estado en uso) y
+> `ON UPDATE CASCADE` (renombrarlo se propaga). Un centro fuera del catálogo **es una escuela real que
+> todavía nadie cargó** → texto. Con FK obligatoria, el área no podría registrar la escuela a la que el
+> NNA ya entró hasta que alguien la dé de alta — y hoy **no existe pantalla que dé de alta nada**
+> (`puntos-a-validar.md` §2.8 y §2.9).
+
+> **El tablero del área es M11.3/M11.4, no esto.** Acá se garantizan los datos y los índices: `estado` y
+> `fecha_estado` sobre `inclusion` (los que pide el plan) y `(inclusion_id, fecha)` sobre la bitácora, del
+> que salen la columna «última gestión» y la alerta de **60 días sin gestiones** — cuyo umbral ya vive
+> como fila de `recordatorio` (clave `inc`, M12.1) y **no bloquea nada** (§4).
+
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
 |---|---|---|
@@ -284,6 +373,8 @@ define la navegación.
 | `recordatorio` | **8 filas** (clave, texto, periodo, activo, orden) — flujo (`lb pa pb ic`) + vencimientos (`ayex vf inc inau`) | §4: configurables por coordinación, **nunca bloqueantes**. |
 | **`taller`** (M12.3 · D5) | **14 filas**: `nombre` UK, `orden`, `grupos_orientados` (**array de nombres de color**), `retirado_en`. `activo` es **derivado** (`retirado_en IS NULL`), no columna | Catálogo **dinámico**: la oferta cambia por grupo y período (§5.14). Los 14 reales del Prototipo v4 reemplazan a los 8 de la demo — no coincide ninguno. **Sin FK entrantes**: la participación se guarda **por nombre** en `pai_taller` (M12.6). `grupos_orientados` no es FK porque desde D9 un grupo es `(nombre, anio)` y un `grupo_id` ataría el taller a un año. |
 | **`severidad_nivel`** (M12.4) | **3 filas**, una por grado DSM-5-TR: `grado` PK (1–3), `etiqueta`, `descriptor_cs`, `descriptor_crr`, `apoyos` | Las cuatro constantes del prototipo (`SEV_ETQ`, `SEV_CS`, `SEV_CRR`, `SEV_APOYO`) están indexadas por el mismo grado y el módulo las muestra como **una sola tabla de cuatro columnas**: tres tablas paralelas con la misma PK serían la misma fila partida. Es catálogo y no constante porque **se consulta por sí mismo** —el módulo la muestra como tabla de referencia mientras el técnico decide— y su redacción es texto institucional sujeto a §8.1. **Sin `solo_al_crear`**: el texto es del instrumento (DSM-5-TR vía el Manual), no un ajuste de IPPU, así que acá el seed manda. **Sin FK entrantes** (ver §2.2). |
+| **`estado_inclusion`** (M12.5) | **7 filas**: `nombre` **PK** (texto), `orden`, `semaforo` (`ok`/`warn`/`danger`/`off`), `descripcion`. `asignable` es **derivado** (`nombre <> 'Sin registrar'`), no columna | **El único de los cinco vocabularios de HCE-INC que es tabla.** Tiene atributos propios y el módulo **lo consulta por sí mismo** —lo renderiza como tabla de referencia mientras el área decide, y lo recorre para armar las 7 tarjetas del tablero—: mismo caso que `severidad_nivel`. **El nombre es la PK** porque lo que se registra **es** el estado, y así `inclusion.estado` guarda la cadena legible (el tablero la muestra sin join, como `incChip`) y el `server_default` puede ser el valor que fija el plan en vez de un id del seed. ⚠️ **`semaforo` guarda el nivel, no la clase CSS**: la fuente dice `inc-warn` y acá va `warn` — se toma el vocabulario y se descarta la implementación. **Sin `solo_al_crear`**: es vocabulario del área tal como lo define la fuente, así que el seed manda. |
+| **`catalogo_centro_educativo`** (M12.5) | **0 filas** (!): `id`, `nombre` UK, `tipo` (mismo dominio que `inclusion.tipo_centro`), `zona`, `contacto` | **Catálogo nuestro** — no existe en el prototipo (ahí `centro` es texto libre); lo pide D6 (§5.15). **Nace vacío a propósito** (§5.50): no hay nada normativo que extraer, y los seis nombres de escuela que existen están en `demo/js/inclusion.js` y son **relleno de nuestra demo** — sembrarlos habría puesto centros inventados por nosotros dentro del sistema de IPPU. *Insert-only* como `grupo`: las filas son de coordinación. **Sin FK entrantes** (§5.52). |
 | `servicio` | 3 servicios | §3.1. |
 | **`banda_idea`** (M12.1 · D4) | **6 tramos** del total 0–96 con `perfil`, `nivel_dsm` (DSM-5-TR) y `texto` orientativo | Deroga las 3 bandas de `handoff.md` §3. Los cortes son de la institución (`solo_al_crear`); el **texto se copia tal cual** del prototipo porque es deliberadamente neutro —alude sólo a escalas y dimensiones del IDEA y no prescribe abordajes— y reescribirlo rompe esa propiedad. |
 | **`delta_interpretacion`** (M12.1) | **6 tramos** del Δ (B−A) con `etiqueta`, `accion`, `signo` y **`alerta`**; extremos abiertos (límites nullable) | **La alerta institucional Δ ≤ −7 pasa a derivarse de acá**, no de un número suelto en el código. Sigue valiendo §5.2: el Δ es siempre B−A entre dos protocolos. |
@@ -300,7 +391,15 @@ define la navegación.
 > donde el texto oficial no entra — **nunca encima**.
 
 > **Lo que NO es catálogo** vive en `app/core/constantes.py`: etiquetas Likert, dominios y niveles de
-> HCE-VF, guía de prestaciones, opciones de BPS y vocabulario institucional. **Criterio:** tabla si se
+> HCE-VF, guía de prestaciones, opciones de BPS, vocabulario institucional, `ATENEO_TIPOS` y —desde
+> M12.5— **cuatro de los cinco vocabularios de HCE-INC**: `INCLUSION_TIPOS_CENTRO` (10),
+> `INCLUSION_TEMAS` (5), `INCLUSION_MEDIOS` (7) e `INCLUSION_ROLES` (8), más `INCLUSION_AT_ESTADOS` (3).
+> Son listas planas **sin atributos** que nadie consulta por sí mismas, y `INCLUSION_TEMAS` además es el
+> **discriminador** contra el que está escrita la derivación de `sensible` — el mismo argumento con que
+> `AT_TIPOS` es constante: con catálogo editable, un tema nuevo cargado desde la app caería fuera de la
+> derivación y la entrada quedaría **no sensible sin que nadie lo decida**. Los CHECK **se generan desde
+> la constante** (`_dominio()` en `models/inclusion.py`), con test parametrizado que impide que se
+> separen. **Criterio:** tabla si se
 > consulta, se filtra, se ordena o **la institución lo cambia sin desplegar**; constante si es texto fijo
 > de presentación que acompaña a un valor ya guardado. Los 6 dominios de VF, por ejemplo, son las claves
 > fijas de `valoracion_funcional.dominios` (JSONB) y vienen de la CIF, no de IPPU: agregar un séptimo no
@@ -406,6 +505,11 @@ define la navegación.
 | **M12.7 · asignación del correlativo** (C7) | **Pendiente — M11.3.** La BD sólo garantiza `UNIQUE(anio_correlativo, numero)`. El servicio asigna dentro de la transacción y tiene que resolver las dos cosas que el `length+1` del prototipo hace mal: **race condition** (dos usuarios sacan el mismo número) y **reuso tras un rollback** (el número vuelve a estar libre y se reasigna a otro registro). Opciones: `SELECT max(numero) … FOR UPDATE` sobre el año, o una secuencia por año | dos altas concurrentes del mismo año no comparten número |
 | **M12.7 · búsqueda de texto** (C3) | **Pendiente — M11.3/M11.4.** Hoy hay un **btree en `titulo`**, que sirve para igualdad y prefijo. `vAteneos` busca **subcadena** (`lowercase includes`) sobre título + situación + contenidos, y las dos salidas no son equivalentes: **`tsvector` + GIN** matchea *lexemas*, así que «capacit» **no** encuentra «capacitación» y, sin `unaccent`, «capacitacion» tampoco; **`pg_trgm`** sí da subcadena real, pero sería **la primera extensión del repo**. Se decide cuando exista la consulta, no antes — una columna generada de búsqueda congela la semántica de entrada | — |
 | **M12.7 · autoría y timestamps: falta convención de esquema** (R3) | **Pendiente — M11.3/M11.4.** `ateneo.autor_id` copia la forma de los tres registros fechados transversales (nullable, FK, index), pero **no hay mixin**, y `creado_en`/`actualizado_en` existen en **1 de las 38 tablas** (`hce_diurna`). Que un registro institucional no tenga marca temporal propia es un problema real; se resuelve con una convención de **todo** el esquema, no estrenándola en el módulo más chico. Mientras tanto el rastro es `auditoria` | — |
+| **M12.5 · toda edición de `inclusion` registra auditoría de campo** | **Pendiente — M11.3.** Misma condición que en `severidad_dsm`, y por la misma razón: **es lo que hace correcto el 0..1** (§2.2 · §5.51). Con una sola fila por expediente, cambiar de centro **pisa** el anterior. En la práctica el cambio también queda narrado en la bitácora, pero eso es texto del área, no el valor anterior del campo | cambiar `centro` deja el valor anterior legible en `auditoria` |
+| ⚠️ **M12.5 · `sensible` clasifica, NO restringe — y el filtro que falta es de COMPARTIR, no de guardar** | **Pendiente — antes de M11.3/M11.4** (§5.39 / I4 · §5.45 / I10). La derivación existe y es filtrable en SQL; **el permiso no existe**, porque el modelo representa el almacenamiento y **no representa la divulgación**. Concreto: hoy nada impide que una entrada «Clínica — sensible» salga en un export, un PDF o un resumen para el centro educativo. **No se resuelve en este módulo**: es la capa que I4 pone antes de M11.3 | estructural en verde: `test_sensible_se_puede_filtrar_en_sql` deja el `WHERE` listo para cuando exista quien lo aplique |
+| **M12.5 · el tablero del área se calcula desde las HCE, sin planilla paralela** | **Pendiente — M11.3/M11.4.** Los 7 contadores por estado, la columna «última gestión» y la alerta de **60 días** salen de `inclusion` + `inclusion_bitacora`. El umbral **no es un literal**: es la fila `inc` de `recordatorio` (M12.1) y **no bloquea nada** (§4). ⚠️ **Una decisión de alcance que el modelo no puede tomar:** el tablero de nuestra demo filtra `activo !== false` y el del prototipo **no filtra**. Son dos indicadores distintos —«NNA activos» vs. «todos»— y para rendir ante INAU no da lo mismo | — |
+| **M12.5 · `centro` se resuelve contra el catálogo al mostrar, y no casar NO es un error** | **Pendiente — M11.3/M11.4.** Sin FK (§5.52): el nombre se casa contra `catalogo_centro_educativo.nombre` para resolver `zona` y `contacto`. Un centro que no casa **se muestra igual**, y la lista de «mencionados sin ficha» es una **cola de trabajo para coordinación**, no una validación que falla. Misma forma que `pai_taller.taller_nombre` contra `taller` | — |
+| **M12.5 · `''` y `NULL` en los campos de texto de la ficha** | **Pendiente — M11.3.** Aplica textual lo que dejó escrito M12.7 (C1): el prototipo nace con `''` en `centro`, `grado`, `modalidad`, `dias_horas`, `at_nombre`, `ref_*` y `obs`. **`NULL` es la representación canónica** y el servicio normaliza al guardar. Hasta entonces, `WHERE centro IS NOT NULL` está mal — va el regex | insertar `''` y leerlo como ausente |
 | **`pai_taller.taller_nombre` se resuelve contra el catálogo al mostrar** (M12.3 → M12.6) | **Pendiente — M11.3/M11.4.** Sin FK (§5.20): el nombre se casa contra `taller.nombre` en lectura y, si la fila está retirada (`Taller.activo` derivado, filtra también en SQL), se muestra con la marca **«retirado del catálogo»**. Un nombre que no casa con ninguna fila se muestra igual, sin romper | fila pendiente de M12.3, hereda M12.6 (§5.21) |
 
 ## 5. Plan de implementación (sub-módulos de M11)

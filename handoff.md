@@ -7,9 +7,9 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-26 (sesión **D1** — se registra la reunión con IPPU del 2026-08-21; **sólo documentación**)
+> - **Última actualización:** 2026-08-26 (sesión **M12.5** — **HCE-INC implementado**: 42 tablas, 307 tests, migración `aa26917b6e76`; decisiones **§5.50–§5.52**, serie J)
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.7** — **38 tablas**, **240 tests en verde y 0 salteados**, head de Alembic **`9246e659d2c9`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras están verificadas contra el código y la base por el relevamiento R0 del 2026-08-26** (`docs/notas/relevamiento-estado-2026-08-26.md`), no son afirmación de documento. **FALTAN: M12.5 (HCE-INC) y M12.6 (HCE-PAI)**, que van **en paralelo** (uno cada uno, archivos distintos de `app/models/`, y ahí sí **se congela la migración** hasta terminar el paralelo, §5.19), y **M12.8** para cerrar (seed, tests, docs — **una sola persona**). El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.5 no depende de nadie**; **M12.6 arranca con §5.22 y §5.26 ya decididas**. ⚠️ **El backend no cambia desde el 2026-08-15** (R0, D-11): lo que se movió desde entonces es documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
+> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.7** — **42 tablas**, **307 tests en verde y 0 salteados**, head de Alembic **`aa26917b6e76`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se midieron contra el código y la base al cerrar M12.5** (2026-08-26), no son afirmación de documento; el punto de partida lo había verificado el relevamiento **R0** del mismo día (`docs/notas/relevamiento-estado-2026-08-26.md`). **FALTA: M12.6 (HCE-PAI)** —el más grande, y **sigue bloqueado por material que IPPU no entregó** (§5.28)— y **M12.8** para cerrar (seed, tests, docs — **una sola persona**). El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -1285,6 +1285,170 @@ edita desde la aplicación o es fijo**. Va a §6 sin dueño asignado.
 
 ---
 
+## 5.50 → 5.52 · Decisiones de M12.5 (HCE-INC), serie **J** (2026-08-26, Lucas)
+
+> **Ésta sí implementa.** A diferencia de la serie I —que fue registro de la reunión y no tocó `app/`—,
+> las tres entradas de acá se escriben **antes** de modelar y quedan implementadas en la misma sesión:
+> **42 tablas**, **307 tests en verde y 0 salteados**, migración regenerada (`aa26917b6e76`).
+>
+> **Ninguna de las tres deroga nada.** J1 fija una regla nueva que no existía; J2 contesta una pregunta
+> que §5.35 dejó explícitamente abierta; J3 decide algo que el plan M12 dejó marcado como «decidir».
+
+### 5.50 (J1) Cómo se lee una fuente que es **a la vez** especificación y aplicación (2026-08-26, Lucas)
+**Regla general para toda la ronda M12 y lo que venga. La hereda cada sub-módulo que siembre catálogos.**
+
+> Antes de sembrar **cualquier** valor tomado del Prototipo v4 —o de cualquier fuente que sea a la vez
+> especificación normativa y programa ejecutable— se clasifica **por dónde vive el dato dentro de la
+> fuente**, nunca por lo que el dato parece:
+>
+> | Dónde vive en la fuente | Qué es | Qué se hace |
+> |---|---|---|
+> | **Capa de catálogos** — `const NOMBRE = [...]` declarada junto al módulo y consumida por sus propias funciones de render o derivación | contenido normativo | **se siembra** |
+> | **Seed de su base de demostración** — `DB.*`, `GRUPOS_EQUIPO`, objetos con nombres propios de personas o rotulados «(demo)» | relleno | **NO se siembra** |
+> | **Inline dentro de un widget** — literal en un `<select>`, sin nombre de constante | ni una cosa ni la otra | **se clasifica caso por caso y se declara por escrito** |
+> | **Dentro del cuerpo de una función** — tramos calculados en `ideaInterpreta()`, `deltaInterpreta()` | contenido, pero extraído por parsing | se siembra **y se dice de dónde salió** |
+>
+> Lo que **no se pueda clasificar con evidencia entra SIN SEMBRAR**, con pregunta abierta. La evidencia se
+> escribe: dónde está en la fuente, si hay marcadores «(demo)», si hay nombres propios, si hay valores
+> plausiblemente específicos de una institución.
+
+**De dónde sale.** §5.37 (I2) diagnosticó el caso: los cuatro grupos por color entraron al repo como
+afirmación sobre la realidad institucional y eran **datos de demostración** del propio prototipo. Esa
+entrada dejó el criterio dicho en una línea («un catálogo es contenido; el seed de su demo es relleno»);
+esto lo convierte en **procedimiento con evidencia obligatoria**, porque M12.5 tomaba cinco catálogos más
+de la misma fuente y no había forma de saber cuál era cuál sin volver a mirar el HTML.
+
+**La clasificación de los cinco catálogos de M12.5, con la evidencia medida.** Los cinco están declarados
+como `const` **dentro del bloque de HCE-INC** de `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` (offsets
+358251–359700), inmediatamente después del comentario de diseño del módulo, y los consumen sus propias
+funciones (`incChip`, `mInc`, `incAdd`). **Ninguno** trae marcador «(demo)», nombre propio de persona ni
+valor específico de IPPU.
+
+| Catálogo | n | Evidencia | Veredicto |
+|---|---|---|---|
+| `INC_TIPOS` | 10 | Categorías del **sistema educativo nacional** (ANEP, UTU, liceo público/privado), no de IPPU. Cierra con «Otro» | **normativo** → constante |
+| `INC_ESTADOS` | 7 | Cada fila trae **definición propia** («Concurre con regularidad, en horario completo o acordado como suficiente») y clase de semáforo. El módulo la renderiza como tabla de referencia | **normativo** → **tabla** |
+| `INC_TEMAS` | 5 | Clasificación temática; uno de los cinco es el discriminador de `sensible` | **normativo** → constante |
+| `INC_MEDIOS` | 7 | Canales de comunicación genéricos (WhatsApp, Llamada, Correo…). Cierra con «Otro» | **normativo** → constante |
+| `INC_ROLES` | 8 | Roles de interlocutor. El único valor institucional es **«INAU»**, un organismo del Estado ya modelado en HCE-ORG | **normativo** → constante |
+
+⚠️ **La prueba que cierra el caso, y es negativa:** el prototipo **no tiene ni una fila de datos de
+inclusión**. Su plantilla de paciente nace con `inc:{centro:'', tipoCentro:'', …, estado:'Sin registrar',
+bitacora:[]}` (offset 189624) y ninguno de los pacientes de su demo la llena. **Los cinco catálogos no
+pueden ser «filas que la demo necesitaba para renderizar»: la demo no renderiza ninguna.**
+
+**Lo que la regla obligó a declarar, y el plan no tenía.** El campo `at` (asistente personal /
+acompañante terapéutico) tiene un **dominio de tres valores** —`No` · `Sí` · `En trámite (lista de
+espera)`— escrito **inline en el `<select>` de `mInc()`**, sin nombre de constante. No está en la capa de
+catálogos ni en el seed: es el tercer caso de la tabla de arriba. Se clasifica como dominio, se implementa
+con CHECK y **queda dicho acá** porque ni `PLAN-M12 §M12.5` ni `prototipo-v4-referencia.md` §6 lo
+registran — los dos listan `at` como un campo más.
+
+**La regla se aplicó también a NUESTRO propio relleno, y ése es el caso más útil.**
+`catalogo_centro_educativo` **se siembra con CERO filas**. El prototipo no tiene catálogo de centros
+(`centro` es texto libre), así que no hay nada normativo que extraer; y los seis nombres de escuela que sí
+existen —«Escuela pública N.º 87», «Liceo público N.º 12»— están en **`demo/js/inclusion.js`
+(`INC_SEED`)**, que es relleno de nuestra propia demo. Sembrarlos habría puesto seis centros inventados
+por nosotros dentro del sistema de IPPU: **el mecanismo de §5.37 con otro sujeto**. Fijado por
+`test_el_catalogo_de_centros_se_siembra_vacio`.
+
+**Catálogos ya en el repo que NUNCA se verificaron contra esta regla — se listan, NO se re-verifican acá.**
+Es deuda anotada, no trabajo de esta sesión; el lugar natural para saldarla es **M12.8**, que ya tiene que
+tocar `DESDE_LA_DEMO`.
+
+| Catálogo | Entró en | Origen declarado | Por qué queda pendiente |
+|---|---|---|---|
+| `taller` (14) | M12.3 | `CAT_TALLERES` | §5.37 lo nombra como caso correcto **al pasar**, sin la evidencia escrita que esta regla exige |
+| `severidad_nivel` (3) | M12.4 | `SEV_ETQ` · `SEV_CS` · `SEV_CRR` · `SEV_APOYO` | sin verificar |
+| `ATENEO_TIPOS` (4) | M12.7 | `AT_TIPOS` | sin verificar |
+| `idea_ficha` (12) · `idea_ejemplo` (48) · `idea_regla` (9) | M12.1 | `IDEA_FICHAS` · `IDEA_EJ` · `IDEA_REGLAS` | sin verificar |
+| `idea_nivel.descriptor_breve` · `idea_dimension.que_evalua` | M12.1 | `IDEA_DESC` | sin verificar |
+| `banda_idea` (6) · `delta_interpretacion` (6) | M12.1 | `ideaInterpreta()` · `deltaInterpreta()` | ⚠️ **cuarto caso**: no salen de un `const`, se extraen **parseando el cuerpo de una función**. La regla los cubre en su cuarta fila, escrita justamente porque estos dos no entraban en las tres primeras |
+| `grupo` (4) | M12.1 | `GRUPOS_EQUIPO` | **ya verificado y ya está mal** — §5.37. Es el precedente, no deuda |
+
+⚠️ **Y queda en pie la pregunta que §5.37 abrió y el repo no puede contestar solo:** si los cuatro colores
+fueron inventados por una IA y **ya venían adentro del Prototipo v4**, la invención es **anterior a
+nuestro repo** y está en la fuente de **precedencia 1** (§5.10). **Cuánto del Prototipo v4 es material de
+IPPU y cuánto es relleno generado hay que preguntárselo a IPPU.** Esta regla acota el daño; no lo cierra.
+
+### 5.51 (J2) El estado de inclusión es **CONTINUO**, no anual (2026-08-26, Lucas)
+**Una ficha de inclusión por expediente, con estado vigente** (`inclusion`, 0..1, `UNIQUE(hce_id)`) —
+**no** una por año lectivo.
+
+**Contesta la pregunta que §5.35 aisló a propósito** (derivado 1) para que no se perdiera detrás de la del
+IDEA. **IPPU no la contestó**: la reunión del 21/08 respondió que el **IDEA** es anual (I1 · §5.36), que
+es una pregunta distinta — el IDEA es un instrumento con línea base; el estado de inclusión es una
+situación vigente. Mezclarlas haría que una respuesta se leyera como si contestara las dos, que es
+exactamente lo que §5.35 quiso evitar.
+
+**Tres razones, en orden de peso:**
+
+1. **La historia ya está modelada, y no es esa tabla.** El módulo **ya tiene** su serie temporal: la
+   **bitácora**, 1:N y fechada. Anualizar la ficha crearía un segundo lugar donde leer «cómo venía la
+   inclusión en 2025» — **dos fuentes de verdad sobre lo mismo**, que es lo que §5.20, §5.22 y §5.24
+   prohíben tres veces.
+2. **Es lo que describe el instrumento.** `fecha_estado` **se reescribe** en cada cambio
+   (`incEstadoSet` del prototipo) en vez de acumular filas, y `p.inc` es un **objeto**, no un array. El
+   patrón anual del esquema (`protocolo`, `informe_cierre`, `grupo`, y el `idea` que viene) se aplica a
+   **ciclos**; esto es un **estado**.
+3. **Es la dirección reversible**, el mismo criterio con que M12.4 eligió `severidad_dsm` 0..1
+   (`puntos-a-validar.md` §1.10, confirmado por IPPU en §5.48): pasar a 1:N no pierde ninguna fila; el
+   camino inverso obliga a elegir una por expediente y **descartar el resto**.
+
+**Y acá el costo de cambiar es MENOR que en severidad, por una decisión de forma que se tomó por esto.**
+`inclusion` lleva **`id` propio + `UNIQUE(hce_id)`**, y no `hce_id` como PK como hace `severidad_dsm`. El
+motivo es que esta ficha **tiene tabla hija**: con la PK en `hce_id`, anualizar obligaría a repuntar cada
+fila de `inclusion_bitacora` y reconstruir su FK. Con `id` serial, **anualizar es soltar un `UNIQUE`** —
+cero movimiento de datos, y la hija no se entera. **Refina el precedente de M12.4; no lo contradice.**
+
+⚠️ **La contracara, dicha entera:** con una sola fila, **cambiar de centro pisa el centro anterior** y el
+rastro queda sólo en `auditoria` — que hoy es una **aspiración**, porque `app/services/` no existe y nada
+garantiza que un UPDATE escriba `campo`/`valor_ant`/`valor_nuevo`. Es el **mismo hueco** que M12.4 dejó
+anotado para `severidad_dsm`, y el guard **«toda edición de `inclusion` registra auditoría de campo»**
+queda en §4 del esquema junto al de severidad. En la práctica el cambio de centro **sí queda narrado en la
+bitácora**, que es donde el área lo escribe.
+
+**Va como pregunta a IPPU** en `docs/notas/puntos-a-validar.md` §1.15, con el costo de darla vuelta
+escrito: **quitar un `UNIQUE`, agregar `anio`, y decidir qué significa «la ficha vigente» para el
+tablero**. Ninguna fila se pierde.
+
+### 5.52 (J3) `inclusion.centro` es **texto**, no FK al catálogo de centros (2026-08-26, Lucas)
+El plan M12 §M12.5 lo dejó marcado para decidir, con el precedente de M12.3 explícitamente sobre la mesa.
+**Se decide igual que M12.3 —texto sin FK— y el fundamento es distinto y más fuerte.**
+
+**Lo que decidió M12.3 (D5 · §5.14 · §5.20).** `pai_taller.taller_nombre` es texto sin FK para que retirar
+o reordenar un taller nunca arrastre un registro clínico, y para que un taller retirado siga legible,
+marcado.
+
+**Por qué acá no alcanza con repetir ese argumento.** Un taller es **oferta propia de IPPU**: lista
+cerrada de 14 que la institución controla entera. Un centro educativo es una entidad **externa y de mundo
+abierto** — hay miles y IPPU no es dueña de la lista. **El catálogo no puede estar completo de antemano**,
+y ésa es la diferencia que decide:
+
+> Con FK obligatoria, el área **no puede registrar la escuela a la que el NNA ya entró** hasta que alguien
+> la dé de alta en el catálogo. **Y hoy ese «alguien» no existe:** no hay endpoint, servicio ni pantalla
+> que cree filas de catálogo (`puntos-a-validar.md` §2.8 y §2.9, verificado por R0). Con FK, **una
+> pantalla que falta se convierte en un registro clínico bloqueado.**
+
+**Qué se conserva.** `catalogo_centro_educativo` existe igual —lo pide D6 (§5.15) y lo pide el plan— y
+sirve para lo que sí puede: normalizar, autocompletar, resolver `zona` y `contacto` por nombre, y darle a
+coordinación la lista de **centros mencionados que todavía no tienen ficha**, que es una cola de trabajo y
+no un error. Fijado por `test_la_ficha_no_tiene_fk_al_catalogo_de_centros` y
+`test_se_puede_registrar_un_centro_que_no_esta_en_el_catalogo`.
+
+**La asimetría con `estado`, que es la parte que hay que entender para no «arreglarla» después.**
+`inclusion.estado` **sí es FK** (por nombre, `RESTRICT` + `ON UPDATE CASCADE`) contra `estado_inclusion`.
+No es incoherencia: **es de quién es el dominio.** Los 7 estados son una clasificación **cerrada e
+interna** del área —un valor fuera de la lista es un error de tipeo—, mientras que un centro fuera del
+catálogo **es una escuela real que todavía nadie cargó**. La integridad referencial se pone donde el
+universo es cerrado y se saca donde es abierto.
+
+**Se suma a `puntos-a-validar.md` §2.9 y no abre punto nuevo**, como esa entrada ya había previsto por
+escrito: es la tercera decisión de modelo que delega en coordinación una operación que no existe (grupos
+§2.8 · talleres §2.9 · centros educativos, ahora).
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🆕 Pendientes abiertos por la reunión con IPPU del 2026-08-21 (registrada el 2026-08-26, §5.36–§5.49)
@@ -1498,10 +1662,26 @@ edita desde la aplicación o es fijo**. Va a §6 sin dueño asignado.
         alcance institucional — `documento.hce_id` nullable + `ateneo_id` + XOR) y **§5.26** (nomenclatura
         `hce_id` = pertenencia · `hce_<calificador>_id` = referencia, **que M12.6 hereda**).
         **240 tests en verde, 0 salteados**, migración regenerada (`9246e659d2c9`). Ver bitácora §13.
-  - [ ] En paralelo (uno cada uno, archivos distintos de `app/models/`):
-        **M12.5** HCE-INC · **M12.6** HCE-PAI (el más grande). ~~M12.7~~ hecho.
-        ⚠️ **§5.23:** **M12.4 iba antes que M12.6** (dependencia de conocimiento, ya resuelta);
-        **M12.5 no depende de nadie**. M12.6 arranca con §5.22 y **§5.26** ya decididas.
+  - [x] ~~**M12.5** HCE-INC · Inclusión educativa y social~~ → **HECHO** (2026-08-26, Lucas).
+        **42 tablas**: `inclusion` (ficha), `inclusion_bitacora` (gestiones) y **dos catálogos** —
+        `estado_inclusion` (7 filas, con descripción y semáforo) y `catalogo_centro_educativo`
+        (**0 filas, a propósito**). Los otros cuatro vocabularios del módulo (`INC_TIPOS`, `INC_TEMAS`,
+        `INC_MEDIOS`, `INC_ROLES`) entraron como **constantes** con CHECK, no como catálogos: son listas
+        planas sin atributos, y `INC_TEMAS` además es el **discriminador** de `sensible` — el mismo
+        argumento con que `AT_TIPOS` es constante (M12.7). **`sensible` es derivado**
+        (`tema == 'Clínica — sensible'`), con expresión SQL para que la Fase 4 pueda filtrar **en la
+        base**; su docstring dice explícitamente que significa **restringido para COMPARTIR, no para
+        guardar** (I4 · §5.39 / I10 · §5.45) y que **hoy es una clasificación sin efecto**, porque el
+        modelo todavía no representa la divulgación. **Tres decisiones nuevas: §5.50** (regla de lectura
+        de fuentes con demo adentro, **que M12.6 y M12.8 heredan**), **§5.51** (el estado es continuo, no
+        anual — pregunta abierta a IPPU en `puntos-a-validar.md` §1.15) y **§5.52** (`centro` es texto,
+        no FK — se suma a `puntos-a-validar.md` §2.9). **307 tests en verde, 0 salteados**, migración
+        regenerada (`aa26917b6e76`). Ver bitácora §13.
+  - [ ] **M12.6** HCE-PAI — el más grande, y **el único sub-módulo que queda**. ~~M12.5~~ y ~~M12.7~~
+        hechos, así que **ya no hay trabajo en paralelo sobre `app/models/`** y §5.19 no congela nada.
+        ⚠️ **§5.23:** **M12.4 iba antes** (dependencia de conocimiento, ya resuelta). Arranca con §5.22,
+        **§5.26** y **§5.50** ya decididas, y con `inclusion.centro` / `.modalidad` / `.grado` ya
+        construidas y con nombre fijado por contrato (§5.22).
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
@@ -1699,6 +1879,64 @@ Las decisiones se cambian **explícitamente y por escrito** en §5, con fecha y 
 código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
+
+- **2026-08-26 · M12.5 — HCE-INC · Inclusión educativa y social** (Lucas + Claude, rama
+  `backend/M12.5-hce-inc`, **sin mergear y sin pushear**). Primera sesión que **toca el backend desde el
+  2026-08-15**: las tres del medio (limpieza y pivote, pre-reunión, D1) fueron documentación.
+  - **Los números, medidos y no citados.** Antes: **38 tablas · 240 passed / 0 skipped · head
+    `9246e659d2c9`** (verificados al arrancar, no tomados del encabezado). Después: **42 tablas ·
+    307 passed / 0 skipped · head `aa26917b6e76`**. **+4 tablas, +67 tests.** `--check` del generador de
+    catálogos en verde. Reconstrucción limpia hecha: `DROP SCHEMA` → `alembic upgrade head` →
+    `seed_catalogos` (idempotente, corrido dos veces).
+  - **Qué se construyó.** `inclusion` (ficha, 0..1 por expediente) · `inclusion_bitacora` (gestiones) ·
+    `estado_inclusion` (catálogo, 7 filas) · `catalogo_centro_educativo` (catálogo, **0 filas**).
+  - **Tres decisiones, escritas ANTES de modelar** — §5.50 (J1), §5.51 (J2), §5.52 (J3). Las dos primeras
+    la consigna las pidió explícitamente; la tercera la dejó marcada el plan.
+  - **De los 5 catálogos del prototipo, sólo 1 quedó como tabla.** `INC_ESTADOS` tiene atributos propios
+    (descripción + semáforo) y el módulo lo consulta por sí mismo → tabla, como `severidad_nivel`.
+    `INC_TIPOS`, `INC_TEMAS`, `INC_MEDIOS` e `INC_ROLES` son listas planas sin atributos → constantes con
+    CHECK, y los CHECK **se generan desde la constante**, no se transcriben (`_dominio()`), con un test
+    parametrizado que impide que se separen — el recurso que M12.7 dejó probado.
+  - **Un dominio que ningún documento del repo registraba.** `at` (asistente personal) tiene **tres**
+    valores —`No` · `Sí` · `En trámite (lista de espera)`— escritos **inline en el `<select>`** de
+    `mInc()`, sin nombre de constante. Ni `PLAN-M12 §M12.5` ni `prototipo-v4-referencia.md` §6 lo dicen:
+    los dos listan `at` como un campo más. Apareció **porque la regla de §5.50 obliga a clasificar por
+    dónde vive el dato**, y ese caso no entraba en ninguna de las dos categorías de §5.37.
+  - **La prueba negativa que cerró la Decisión A.** El prototipo **no tiene ni una fila de datos de
+    inclusión**: `nuevoPaciente()` crea `inc:{centro:'', …, estado:'Sin registrar', bitacora:[]}` y
+    ninguno de sus pacientes la llena. Los 5 catálogos **no pueden** ser relleno de demo, porque la demo
+    no renderiza ninguno.
+  - **La regla se aplicó contra nuestro propio relleno, y ése fue el caso más útil.**
+    `catalogo_centro_educativo` **se siembra vacío**: los 6 nombres de escuela que existen están en
+    `demo/js/inclusion.js` (`INC_SEED`) y son nuestros, no de IPPU. Sembrarlos era §5.37 otra vez, con
+    otro sujeto. Hay test que lo fija.
+  - **`id` propio en `inclusion` en vez de `hce_id` como PK — y no es cosmético.** `severidad_dsm` usa
+    `hce_id` como PK; acá no, porque **esta ficha tiene tabla hija**. Con la PK en `hce_id`, anualizar
+    obligaría a repuntar cada fila de la bitácora; con `id` serial, anualizar es **soltar un `UNIQUE`**.
+    La decisión de forma la eligió la decisión de fondo (§5.51).
+  - **Divergencias declaradas con la fuente, para que nadie las «arregle»:** (a) `at` **nace NULL**, no
+    en `'No'` como el prototipo — «no tiene acompañante» es una afirmación sobre el NNA y un formulario
+    en blanco no la hace; (b) el semáforo se guarda como `warn`, no como la clase CSS `inc-warn`;
+    (c) `tema` es **NOT NULL**, la única obligación que agregamos sobre lo que valida `incAdd`, porque
+    con NULL la derivación de `sensible` devolvería el valor peligroso por omisión — y es gratis porque
+    la bitácora **no tiene backlog de migración**: los reportes históricos del área van a HCE-DOC, lo
+    dice el propio prototipo; (d) `timestamp` del plan se llama **`registrado_en`** (`timestamp` es un
+    nombre de tipo en SQL).
+  - **`demo/js/inclusion.js` se leyó en modo lectura y no se tocó.** Lo que **IPPU vio el 21/08 fue sólo
+    el tablero**: la demo no implementa la ficha ni la bitácora (lo dice su propio encabezado). Las
+    9 columnas del tablero están todas cubiertas por el modelo. Divergencia anotada: el tablero de la
+    demo filtra `n.activo !== false` y el del prototipo no — **es una decisión de M11.3/M11.4**, no del
+    modelo, y queda escrita para que se tome a propósito.
+  - ⚠️ **Lo que esta sesión NO hizo, a propósito.** No se abrió M12.6. No se implementó el IDEA anual
+    (I1 está escrito; §5.35 pone su puerta antes de M11.3). No se construyó capa de divulgación —es más
+    grande que este módulo y §5.39 la pone antes de M11.3/M11.4—, así que `sensible` queda como
+    **clasificación sin efecto**, dicho en su docstring. No se re-verificaron los catálogos que §5.50
+    lista como deuda: **se listan, no se auditan**.
+  - **Verificación:** `pytest -q` → **307 passed, 0 skipped** · `generar_catalogos_backend.py --check` →
+    OK · `verificar_estado.py --check` → quedan **3 líneas desfasadas y ninguna es de esta sesión**:
+    están en `docs/estructura-repositorio.md`, que **está modificado en el working tree por otra sesión**
+    y que la consigna prohíbe tocar. Las de `README.md` y `backend/README.md` sí se actualizaron.
+
 - **2026-06-30** — Setup inicial: conversión de documentos, lectura de contexto, arquitectura de carpetas, creación de `handoff.md`/`CLAUDE.md`/`README.md`, e inicialización de git + push a repo privado `IPPU-UTEC`. (Lucas + Claude)
 - **2026-06-30** — Demo L1 extendida a v3.1: agregados los módulos Grupos, Usuario, Evaluación por áreas y Evaluación general (las dos evaluaciones, provisionales). JS validado con `node --check`. Commiteado y pusheado (`cbb3119`). (Lucas + Claude)
 - **2026-07-01** — Creado el proyecto **privado** en el **GitLab de UTEC**: `juan.pimentel/IPPU-UTEC` (https://git.utec.edu.uy/juan.pimentel/IPPU-UTEC), vía API v4 con PAT de un solo uso (ya revocable). Agregado remoto local `gitlab` (se mantiene `origin`=GitHub) y push de `main` (`cbb3119`). SSH:22 bloqueado → HTTPS. PAT usado de forma efímera (archivo borrado, no cacheado en `.git/config` ni credential helper). (Lucas + Claude)

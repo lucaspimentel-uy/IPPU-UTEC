@@ -327,6 +327,63 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 ---
 
 ### M12.5 — HCE-INC · Inclusión educativa y social
+
+> ### ✅ HECHO — 2026-08-26 (Lucas). Rama `backend/M12.5-hce-inc`, **sin mergear**.
+>
+> **42 tablas** (38 → 42), **307 tests en verde y 0 salteados** (240 → 307), migración regenerada
+> (`aa26917b6e76`) con `test_la_migracion_coincide_con_los_modelos` pasando. Reconstrucción limpia hecha.
+>
+> **Tres decisiones nuevas, escritas ANTES de modelar** — `handoff.md` **§5.50 · §5.51 · §5.52**:
+>
+> - **§5.50 (J1) — la regla que faltaba después de §5.37, y la heredan M12.6 y M12.8.** Antes de sembrar
+>   cualquier valor del Prototipo v4 se clasifica **por dónde vive el dato en la fuente**: capa de
+>   catálogos = normativo · seed de su demo = relleno · **inline en un widget** o **dentro del cuerpo de
+>   una función** = se clasifica caso por caso **y se declara**. Lo que no se pueda clasificar con
+>   evidencia entra **sin sembrar**. Los cinco catálogos de este módulo resultaron **normativos**, y la
+>   prueba que cierra el caso es negativa: el prototipo **no tiene ni una fila de datos de inclusión**, así
+>   que no pueden ser filas que su demo necesitara. La entrada **lista los catálogos de M12.1–M12.7 que
+>   nunca se verificaron contra esta regla** — deuda de M12.8, no de acá.
+> - **§5.51 (J2) — el estado de inclusión es CONTINUO, no anual.** Contesta la pregunta que §5.35 aisló y
+>   que la reunión **no** contestó (contestó la del IDEA, que es otra). Dirección reversible, y con costo
+>   de vuelta atrás **menor** que en M12.4: `inclusion` lleva `id` propio + `UNIQUE(hce_id)` en vez de
+>   `hce_id` como PK, porque **tiene tabla hija** — anualizar es soltar el `UNIQUE`, sin repuntar una sola
+>   fila de la bitácora. Pregunta a IPPU en `puntos-a-validar.md` **§1.15**.
+> - **§5.52 (J3) — `inclusion.centro` es TEXTO, no FK.** Misma conclusión que M12.3 con fundamento propio
+>   y más fuerte: un taller es oferta **propia** de IPPU (lista cerrada de 14), un centro educativo es una
+>   entidad **externa y de mundo abierto** — el catálogo no puede estar completo de antemano. Y con FK
+>   obligatoria, la pantalla de administración que **no existe** (`puntos-a-validar.md` §2.8/§2.9) se
+>   convertiría en un **registro clínico bloqueado**. Se suma a §2.9, sin abrir punto nuevo.
+>
+> **Cómo quedaron los cinco catálogos.** Sólo **`INC_ESTADOS` es tabla** (`estado_inclusion`, 7 filas):
+> tiene atributos propios —descripción y semáforo— y el módulo **lo consulta por sí mismo**, como
+> `severidad_nivel`. Los otros cuatro son **constantes con CHECK** (`core/constantes.py`): listas planas
+> sin atributos, y `INC_TEMAS` además es el **discriminador** de `sensible` — el argumento de `AT_TIPOS`
+> (M12.7), textual. Los CHECK **se generan desde la constante**, con test parametrizado que impide que se
+> separen. **`catalogo_centro_educativo` se siembra con 0 filas** y hay test que lo fija.
+>
+> **`sensible` es derivado** (`hybrid_property` + expresión SQL, para filtrar en la base). Su docstring
+> dice explícitamente que significa **restringido para COMPARTIR, no para guardar** (I4 · §5.39 / I10 ·
+> §5.45) y que **hoy es una clasificación sin efecto**: R0 verificó que el modelo representa el
+> almacenamiento y no la divulgación. Esa capa **no se construye acá** — §5.39 la pone antes de M11.3/M11.4.
+>
+> **Un dominio que este plan no registraba.** `at` tiene **tres** valores (`No` · `Sí` · `En trámite
+> (lista de espera)`), escritos **inline en el `<select>`** de `mInc()` y sin nombre de constante. Ni este
+> plan ni `prototipo-v4-referencia.md` §6 lo dicen: los dos listan `at` como un campo más. Apareció
+> **porque §5.50 obliga a clasificar por dónde vive el dato**.
+>
+> **Cuatro divergencias declaradas con la fuente:** `at` **nace NULL** y no en `'No'` · el semáforo se
+> guarda como `warn`, no como la clase CSS `inc-warn` · **`tema` es NOT NULL** (única obligación agregada
+> sobre `incAdd`, y gratis porque la bitácora **no tiene backlog de migración**: los reportes históricos
+> del área van a HCE-DOC, lo dice el propio prototipo) · el `timestamp` de este plan se llama
+> **`registrado_en`** (`timestamp` es un nombre de tipo en SQL).
+>
+> **Lo que se surfacea sin resolver.** (a) El plan nombra la tabla `catalogo_centro_educativo` mientras
+> los otros **11 catálogos del esquema no llevan prefijo** (`taller`, `banda_idea`, `severidad_nivel`…):
+> se respetó el nombre del plan y el catálogo de estados se llamó `estado_inclusion` según la convención,
+> así que **el módulo queda con las dos formas** → a unificar en **M12.8**. (b) El tablero de nuestra demo
+> filtra `activo !== false` y el del prototipo **no filtra**: son dos indicadores distintos y para rendir
+> ante INAU no da lo mismo → **M11.3/M11.4**, anotado en §4 del esquema.
+
 - `catalogo_centro_educativo { id, nombre, tipo, zona, contacto }` — **no existe en el prototipo** (ahí
   `centro` es texto libre); lo pide la especificación para el sistema definitivo, así que lo creamos
   nosotros. `tipo` desde `INC_TIPOS` (10).

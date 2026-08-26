@@ -25,8 +25,10 @@ from app.core.database import SessionLocal
 from app.models import (
     BandaIdea,
     BaremoCategoria,
+    CatalogoCentroEducativo,
     CategoriaDocumento,
     DeltaInterpretacion,
+    EstadoInclusion,
     Grupo,
     IdeaDimension,
     IdeaEjemplo,
@@ -131,6 +133,13 @@ CATALOGOS: list[tuple] = [
     # es del instrumento (DSM-5-TR, vía el Manual), no un ajuste institucional:
     # acá el seed manda, igual que en las dimensiones del IDEA.
     (SeveridadNivel, "severidad_nivel", "grado", ()),
+    # M12.5 · HCE-INC: los 7 estados del caso. Sin `solo_al_crear` por el mismo
+    # motivo que severidad — la descripción y el semáforo son el vocabulario del
+    # área tal como lo define la fuente, no un ajuste que IPPU haga por UPDATE.
+    # `inclusion.estado` es FK **por nombre** contra esta tabla: el seed tiene
+    # que correr antes de que exista la primera ficha, cosa que ya garantiza el
+    # arranque documentado (`alembic upgrade head` → `seed_catalogos`).
+    (EstadoInclusion, "estado_inclusion", "nombre", ()),
 ]
 
 #: Catálogos con identidad compuesta. Van después del `flush` de las dimensiones.
@@ -163,6 +172,19 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
         for modelo, tabla, clave, propios in COMPUESTOS:
             nuevas, act = _sincronizar(db, modelo, datos[tabla], clave, propios)
             resumen.append(f"  {tabla:22} {nuevas:3} nuevas · {act:3} actualizadas")
+
+        # M12.5 · el catálogo de centros educativos. **Sección vacía a
+        # propósito** (§5.50): el prototipo no trae ninguna fila y los nombres
+        # de escuela de nuestra demo son relleno propio. Insert-only como
+        # `grupo`: las filas son de coordinación desde el primer día, así que el
+        # seed no puede pisarlas ni siquiera cuando IPPU nos pase su lista.
+        nuevas, act = _sincronizar(
+            db, CatalogoCentroEducativo, datos["catalogo_centro_educativo"],
+            "nombre", solo_insertar=True,
+        )
+        resumen.append(
+            f"  {'catalogo_centro_educ':22} {nuevas:3} nuevas · {act:3} actualizadas"
+        )
 
         # Los 4 grupos por color (D9) como punto de partida del año en curso.
         # Insert-only: de acá en más los administra coordinación.

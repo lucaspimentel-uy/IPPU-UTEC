@@ -188,6 +188,13 @@ class HceDiurna(OrigenMigracionMixin, Base):
     severidad: Mapped["SeveridadDsm | None"] = relationship(  # noqa: F821
         back_populates="hce", cascade="all, delete-orphan", uselist=False
     )
+    # HCE-INC (M12.5). 0..1 como severidad, y por el mismo motivo: el expediente
+    # sin ficha de inclusión es válido. El `UNIQUE(hce_id)` que lo garantiza está
+    # en `Inclusion` y **quitarlo es todo lo que hay que hacer** para pasar a una
+    # ficha por año lectivo, si IPPU contesta que así lo quiere (§5.51).
+    inclusion: Mapped["Inclusion | None"] = relationship(  # noqa: F821
+        back_populates="hce", cascade="all, delete-orphan", uselist=False
+    )
 
     # La participación en talleres **no cuelga del expediente**: `hce_taller`
     # (N:M por `taller_id`) se retiró en M12.3 — `handoff.md` §5.20. Era un resto

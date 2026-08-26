@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.7)
+"""esquema v2 inicial (M12.5)
 
-Revision ID: 9246e659d2c9
+Revision ID: aa26917b6e76
 Revises: 
-Create Date: 2026-08-15 15:19:14.250556
+Create Date: 2026-08-26 19:25:49.884467
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '9246e659d2c9'
+revision: str = 'aa26917b6e76'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -48,6 +48,16 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_baremo_categoria')),
     sa.UniqueConstraint('categoria', name=op.f('uq_baremo_categoria_categoria'))
     )
+    op.create_table('catalogo_centro_educativo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(length=200), nullable=False),
+    sa.Column('tipo', sa.String(length=60), nullable=True),
+    sa.Column('zona', sa.String(length=120), nullable=True),
+    sa.Column('contacto', sa.String(length=200), nullable=True),
+    sa.CheckConstraint("tipo IS NULL OR tipo IN ('Escuela especial (ANEP)', 'Escuela común (ANEP)', 'Educación inicial / jardín', 'Liceo público', 'Liceo privado', 'UTU / educación técnica', 'Taller de continuidad educativa', 'Centro privado especializado', 'Maestra comunitaria / domiciliaria', 'Otro')", name=op.f('ck_catalogo_centro_educativo_tipo_valido')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_catalogo_centro_educativo')),
+    sa.UniqueConstraint('nombre', name=op.f('uq_catalogo_centro_educativo_nombre'))
+    )
     op.create_table('categoria_documento',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nombre', sa.String(length=120), nullable=False),
@@ -70,6 +80,14 @@ def upgrade() -> None:
     sa.CheckConstraint('delta_min IS NULL OR delta_max IS NULL OR delta_min <= delta_max', name=op.f('ck_delta_interpretacion_min_menor_que_max')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_delta_interpretacion')),
     sa.UniqueConstraint('etiqueta', name=op.f('uq_delta_interpretacion_etiqueta'))
+    )
+    op.create_table('estado_inclusion',
+    sa.Column('nombre', sa.String(length=60), nullable=False),
+    sa.Column('orden', sa.SmallInteger(), nullable=False),
+    sa.Column('semaforo', sa.String(length=10), nullable=False),
+    sa.Column('descripcion', sa.Text(), nullable=False),
+    sa.CheckConstraint("semaforo IN ('ok', 'warn', 'danger', 'off')", name=op.f('ck_estado_inclusion_semaforo_valido')),
+    sa.PrimaryKeyConstraint('nombre', name=op.f('pk_estado_inclusion'))
     )
     op.create_table('idea_dimension',
     sa.Column('id', sa.Integer(), autoincrement=False, nullable=False),
@@ -390,6 +408,33 @@ def upgrade() -> None:
     op.create_index(op.f('ix_idea_evaluador_t1_id'), 'idea', ['evaluador_t1_id'], unique=False)
     op.create_index(op.f('ix_idea_evaluador_t2_id'), 'idea', ['evaluador_t2_id'], unique=False)
     op.create_index(op.f('ix_idea_hce_id'), 'idea', ['hce_id'], unique=False)
+    op.create_table('inclusion',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('centro', sa.String(length=200), nullable=True),
+    sa.Column('tipo_centro', sa.String(length=60), nullable=True),
+    sa.Column('grado', sa.String(length=120), nullable=True),
+    sa.Column('modalidad', sa.String(length=200), nullable=True),
+    sa.Column('dias_horas', sa.String(length=120), nullable=True),
+    sa.Column('at', sa.String(length=30), nullable=True),
+    sa.Column('at_nombre', sa.String(length=200), nullable=True),
+    sa.Column('ref_nombre', sa.String(length=200), nullable=True),
+    sa.Column('ref_rol', sa.String(length=120), nullable=True),
+    sa.Column('ref_tel', sa.String(length=60), nullable=True),
+    sa.Column('estado', sa.String(length=60), server_default='Sin registrar', nullable=False),
+    sa.Column('fecha_estado', sa.Date(), nullable=True),
+    sa.Column('obs', sa.Text(), nullable=True),
+    sa.Column('creado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('actualizado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint("at IS NULL OR at IN ('No', 'Sí', 'En trámite (lista de espera)')", name=op.f('ck_inclusion_at_valido')),
+    sa.CheckConstraint("tipo_centro IS NULL OR tipo_centro IN ('Escuela especial (ANEP)', 'Escuela común (ANEP)', 'Educación inicial / jardín', 'Liceo público', 'Liceo privado', 'UTU / educación técnica', 'Taller de continuidad educativa', 'Centro privado especializado', 'Maestra comunitaria / domiciliaria', 'Otro')", name=op.f('ck_inclusion_tipo_centro_valido')),
+    sa.ForeignKeyConstraint(['estado'], ['estado_inclusion.nombre'], name=op.f('fk_inclusion_estado_estado_inclusion'), onupdate='CASCADE', ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_inclusion_hce_id_hce_diurna'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_inclusion')),
+    sa.UniqueConstraint('hce_id', name=op.f('uq_inclusion_hce_id'))
+    )
+    op.create_index(op.f('ix_inclusion_estado'), 'inclusion', ['estado'], unique=False)
+    op.create_index(op.f('ix_inclusion_fecha_estado'), 'inclusion', ['fecha_estado'], unique=False)
     op.create_table('informe_cierre',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -560,6 +605,30 @@ def upgrade() -> None:
     op.create_index(op.f('ix_documento_ateneo_id'), 'documento', ['ateneo_id'], unique=False)
     op.create_index(op.f('ix_documento_categoria_id'), 'documento', ['categoria_id'], unique=False)
     op.create_index(op.f('ix_documento_hce_id'), 'documento', ['hce_id'], unique=False)
+    op.create_table('inclusion_bitacora',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('inclusion_id', sa.Integer(), nullable=False),
+    sa.Column('fecha', sa.Date(), nullable=False),
+    sa.Column('interlocutor', sa.String(length=200), nullable=False),
+    sa.Column('rol', sa.String(length=60), nullable=True),
+    sa.Column('medio', sa.String(length=60), nullable=True),
+    sa.Column('tema', sa.String(length=60), nullable=False),
+    sa.Column('contenido', sa.Text(), nullable=False),
+    sa.Column('acuerdos', sa.Text(), nullable=True),
+    sa.Column('autor_id', sa.Integer(), nullable=True),
+    sa.Column('registrado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint("contenido ~ '[^[:space:]]'", name=op.f('ck_inclusion_bitacora_contenido_no_vacio')),
+    sa.CheckConstraint("interlocutor ~ '[^[:space:]]'", name=op.f('ck_inclusion_bitacora_interlocutor_no_vacio')),
+    sa.CheckConstraint("medio IS NULL OR medio IN ('WhatsApp', 'Llamada', 'Reunión presencial', 'Videollamada', 'Correo', 'Visita al centro', 'Otro')", name=op.f('ck_inclusion_bitacora_medio_valido')),
+    sa.CheckConstraint("rol IS NULL OR rol IN ('Familia', 'Centro educativo', 'Acompañante terapéutico', 'Maestra comunitaria / itinerante', 'INAU', 'Equipo de salud', 'Otra institución', 'Otro')", name=op.f('ck_inclusion_bitacora_rol_valido')),
+    sa.CheckConstraint("tema IN ('Educativa / pedagógica', 'Coordinación interinstitucional', 'Familiar / social', 'Trámite o gestión', 'Clínica — sensible')", name=op.f('ck_inclusion_bitacora_tema_valido')),
+    sa.ForeignKeyConstraint(['autor_id'], ['profesional.id'], name=op.f('fk_inclusion_bitacora_autor_id_profesional')),
+    sa.ForeignKeyConstraint(['inclusion_id'], ['inclusion.id'], name=op.f('fk_inclusion_bitacora_inclusion_id_inclusion'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_inclusion_bitacora'))
+    )
+    op.create_index(op.f('ix_inclusion_bitacora_autor_id'), 'inclusion_bitacora', ['autor_id'], unique=False)
+    op.create_index('ix_inclusion_bitacora_inclusion_fecha', 'inclusion_bitacora', ['inclusion_id', 'fecha'], unique=False)
+    op.create_index(op.f('ix_inclusion_bitacora_tema'), 'inclusion_bitacora', ['tema'], unique=False)
     op.create_table('puntuacion_idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('idea_id', sa.Integer(), nullable=False),
@@ -640,6 +709,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_puntuacion_idea_idea_id'), table_name='puntuacion_idea')
     op.drop_index(op.f('ix_puntuacion_idea_dimension_id'), table_name='puntuacion_idea')
     op.drop_table('puntuacion_idea')
+    op.drop_index(op.f('ix_inclusion_bitacora_tema'), table_name='inclusion_bitacora')
+    op.drop_index('ix_inclusion_bitacora_inclusion_fecha', table_name='inclusion_bitacora')
+    op.drop_index(op.f('ix_inclusion_bitacora_autor_id'), table_name='inclusion_bitacora')
+    op.drop_table('inclusion_bitacora')
     op.drop_index(op.f('ix_documento_hce_id'), table_name='documento')
     op.drop_index(op.f('ix_documento_categoria_id'), table_name='documento')
     op.drop_index(op.f('ix_documento_ateneo_id'), table_name='documento')
@@ -664,6 +737,9 @@ def downgrade() -> None:
     op.drop_table('observacion')
     op.drop_index(op.f('ix_informe_cierre_hce_id'), table_name='informe_cierre')
     op.drop_table('informe_cierre')
+    op.drop_index(op.f('ix_inclusion_fecha_estado'), table_name='inclusion')
+    op.drop_index(op.f('ix_inclusion_estado'), table_name='inclusion')
+    op.drop_table('inclusion')
     op.drop_index(op.f('ix_idea_hce_id'), table_name='idea')
     op.drop_index(op.f('ix_idea_evaluador_t2_id'), table_name='idea')
     op.drop_index(op.f('ix_idea_evaluador_t1_id'), table_name='idea')
@@ -703,8 +779,10 @@ def downgrade() -> None:
     op.drop_table('ippu_item')
     op.drop_table('idea_regla')
     op.drop_table('idea_dimension')
+    op.drop_table('estado_inclusion')
     op.drop_table('delta_interpretacion')
     op.drop_table('categoria_documento')
+    op.drop_table('catalogo_centro_educativo')
     op.drop_table('baremo_categoria')
     op.drop_table('banda_idea')
     # ### end Alembic commands ###
