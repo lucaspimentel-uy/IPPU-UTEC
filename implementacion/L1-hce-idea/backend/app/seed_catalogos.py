@@ -17,6 +17,7 @@ Prototipo v4 de IPPU.
 No incluye datos clínicos: el seed de NNA de ejemplo es M11.5.
 """
 import json
+import sys
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -149,6 +150,55 @@ COMPUESTOS: list[tuple] = [
 ]
 
 
+def _preparar_salida() -> str | None:
+    """Deja `sys.stdout` en condiciones de imprimir el resumen, **una sola vez**.
+
+    El resumen termina imprimiendo `_origen`, que nombra los catálogos tal como
+    los escribe el generador — y ahí hay un **`Δ`** (la interpretación del Δ del
+    Protocolo A→B, M12.1). En la consola por defecto de Windows (**cp1252**) ese
+    caracter no existe y `print()` levanta `UnicodeEncodeError`: el paso 4 del
+    arranque rápido (`handoff.md` §0) mostraba un *traceback* justo donde tenían
+    que ir los conteos, así que quien corría el seed **no podía saber si había
+    corrido**. Y sí había corrido: el `commit()` ya pasó cuando se imprime. El
+    error era sólo de salida, y por eso se arregla **la impresión, no el dato** —
+    ningún texto de catálogo cambia.
+
+    Se decide acá y no línea por línea a propósito: si se reconfigura recién al
+    fallar, las primeras líneas salen en cp1252 y las últimas en UTF-8, y quien
+    redirija la salida a un archivo se lleva **dos codificaciones en el mismo
+    archivo**, que es peor que el traceback porque no se nota.
+
+    Devuelve `None` si la salida ya puede con el texto (nada que hacer), o el
+    nombre de la codificación a la que hay que degradar si no se pudo subir a
+    UTF-8 — ahí `_imprimir` escribe con `backslashreplace`, que **estropea el
+    caracter a la vista pero no aborta** y deja marca de que se estropeó.
+    """
+    codificacion = getattr(sys.stdout, "encoding", None) or "ascii"
+    try:
+        "Δ·".encode(codificacion)
+        return None
+    except (UnicodeEncodeError, LookupError):
+        pass
+
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        try:
+            reconfigure(encoding="utf-8")
+            return None
+        except (ValueError, OSError):
+            pass
+
+    return codificacion
+
+
+def _imprimir(texto: str, degradar_a: str | None) -> None:
+    """`print()` con el resultado de `_preparar_salida()` ya decidido."""
+    if degradar_a is None:
+        print(texto)
+    else:
+        print(texto.encode(degradar_a, "backslashreplace").decode(degradar_a))
+
+
 def run(db: Session | None = None, verboso: bool = True) -> list[str]:
     """Corre el seed completo. Devuelve el resumen por tabla.
 
@@ -199,10 +249,11 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
             db.flush()
 
         if verboso:
-            print("Catálogos sincronizados:")
+            degradar_a = _preparar_salida()
+            _imprimir("Catálogos sincronizados:", degradar_a)
             for linea in sorted(resumen):
-                print(linea)
-            print(f"\nOrigen: {datos['_origen']}")
+                _imprimir(linea, degradar_a)
+            _imprimir(f"\nOrigen: {datos['_origen']}", degradar_a)
         return resumen
     finally:
         if propia:
