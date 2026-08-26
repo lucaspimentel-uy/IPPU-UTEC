@@ -288,8 +288,9 @@ lectura (§10), pero no una migración masiva.
 >
 > ⚠️ **La consecuencia se dice, no se deja implícita:** el **kappa** que exige el **Manual §23** —al que
 > el propio Manual llama el **único requisito metodológico invariante** del instrumento— **NO es
-> calculable** con la práctica actual. Con un solo puntaje de consenso no hay dos series que comparar. **Si
-> el trabajo se presenta a INAU, eso se dice.**
+> calculable** con la práctica actual. Con un solo puntaje de consenso no hay dos series que comparar.
+> **Eso se le dice a IPPU, con todas las letras: el modelo lo soporta y el dato no existe.** Qué hace IPPU
+> con esa información frente a INAU es de IPPU; la obligación nuestra es no dejarlo implícito.
 
 **Qué es.** El Manual de Procedimientos v1.0 establece que los dos técnicos puntúan **por separado** y
 después consensúan, y llama a ese circuito *el único requisito metodológico invariante* del instrumento.

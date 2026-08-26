@@ -22,7 +22,7 @@
    Los originales (PDF/PPTX/DOCX/XLSX) están en **`docs/fuentes/`**.
 4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/index.html`** (abrir en navegador, sin servidor).
    Desde 2026-08-07 está **modularizada**: `index.html` + `css/estilos.css` + `js/*.js` (**14** módulos desde el merge de F1, ver §5.5 y §5.33).
-5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: **`docker compose up -d`** → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` — **una corrida válida es `240 passed, 0 skipped`**; si el contenedor no está arriba, si la base está vacía o si no está en el head, `pytest` **aborta con exit 1** y te dice el comando (guardia de sesión en `tests/conftest.py`, 2026-08-15). Antes se salteaba en silencio y devolvía **exit 0** con la mitad de los tests sin correr.
+5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: **`docker compose up -d`** → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` — **una corrida válida es `307 passed, 0 skipped`**; si el contenedor no está arriba, si la base está vacía o si no está en el head, `pytest` **aborta con exit 1** y te dice el comando (guardia de sesión en `tests/conftest.py`, 2026-08-15). Antes se salteaba en silencio y devolvía **exit 0** con la mitad de los tests sin correr.
 6. **El esquema vigente es `backend/docs/esquema-datos-v2.md`** — es el que se implementa desde M11 y **la única versión citable**. ⚠️ **Corregido el 2026-08-20 (§5.29):** este punto decía que «la versión citable para todos es `backend/docs/esquema-datos.md`», que era el esquema **v1**, del backend **retirado entero en M11.2**; mandaba a Samuel y Victor a citar un modelo muerto. Ese archivo y `ejemplos-endpoints.md` se borraron. El **diagrama ER interactivo** del v1 sigue existiendo como Artifact (https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2) pero es **privado de la cuenta de Lucas** y describe 18 tablas de un esquema que ya no rige: no es referencia para nadie. Si alguna vez hace falta un ER del v2, se genera de nuevo.
 
 ---
@@ -1449,7 +1449,71 @@ escrito: es la tercera decisión de modelo que delega en coordinación una opera
 
 ---
 
+## 5.53 · Decisión de la sesión de higiene (serie **K**, 2026-08-26, Lucas)
+
+### 5.53 (K1) Se retira la designación del Google Doc como artefacto autoritativo: **el registro es el repo** (2026-08-26, Lucas)
+**El Google Doc del equipo está vacío.** Lo confirmó Lucas el **2026-08-26**, mirándolo. Nunca se llenó.
+
+**Qué decía §5.34 y por qué deja de valer.** Esa entrada cerró con «⚠️ **El artefacto autoritativo es un
+Google Doc del equipo, no este repo**», y de ahí colgaban dos pendientes de §6: **pasar a mano las 25
+respuestas al Doc** y **pegar el link del Doc** en la cabecera de `consulta-a-ippu.md`. El razonamiento era
+correcto para lo que se sabía entonces —el `.md` había salido de un Doc que el equipo había editado, así
+que el Doc iba adelante—, pero **la premisa era falsa**: no hay nada del otro lado.
+
+**Lo que se retira es la designación, no §5.34.** §5.34 sigue vigente entera y sigue siendo la referencia
+canónica de la renumeración: **el mapa borrador→enviado no se toca**, ni el hecho de que las tres preguntas
+retiradas nunca se preguntaron, ni que `consulta-a-ippu.md` es el **snapshot palabra por palabra de lo que
+IPPU recibió el 19/08**. Lo único que cae es la última línea de esa entrada: **el artefacto autoritativo es
+este repositorio.**
+
+**Consecuencias, todas de registro:**
+- El pendiente de §6 «pasar las respuestas al Google Doc — a mano, y lo tiene que hacer una persona»
+  **se cierra por inexistencia del destino**, no por haberse hecho.
+- El pendiente «pegar el link del Doc» **se cierra igual**: no hay link que pegar.
+- La condición de retiro de `docs/notas/respuestas-reunion-ippu-2026-08-21.md` tenía **cuatro** pasos y el
+  cuarto era el Doc. **Con esto quedan cumplidos los cuatro** — pero ⚠️ **el archivo sigue sin borrarse**,
+  por la otra razón que §6 ya daba y que no depende del Doc: es lo único que conserva **las dos
+  correcciones de acta** y **los 12 bloques sin respuesta** (§16 del propio archivo).
+- **`consulta-a-ippu.md` no cambia de contenido.** Sigue siendo el snapshot fechado de lo enviado; lo que
+  cambia es que ya no se lo describe como copia de segunda de algo mejor que vive afuera.
+
+⚠️ **Lo que esto NO borra: la lección de §5.34.** La quinta divergencia existió, y existió porque **la otra
+mitad del documento estaba fuera del alcance de cualquier script del repo**. Que el Doc esté vacío hoy no
+prueba que el mecanismo sea seguro: prueba que **esta vez** el riesgo no se materializó porque nadie usó el
+Doc. La regla que queda es la de §12.1 —**el contexto vive en el repo**—, y con ella el límite conocido de
+`verificar_estado.py` (no compara prosa) sigue abierto en §6.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
+
+> ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy
+>
+> **Qué es esta lista y por qué existe** (2026-08-26, sesión de higiene). Una decisión escrita en §5 rige
+> desde que se firma (§12.6), pero **el esquema puede seguir diciendo lo contrario durante semanas**. Esa
+> ventana no está anotada en ningún lado: §5 dice qué se decidió y los bloques de arriba dicen qué falta
+> hacer, pero **nada dice «el código todavía afirma lo contrario de esto»**. Se abre esta lista para que
+> ninguna de las dos se pierda de vista, y con una regla: **una entrada sale de acá cuando la base deja de
+> contradecir la decisión, no cuando alguien la mira.**
+>
+> - [ ] **I1 · El IDEA es ANUAL** (§5.36) — **la tabla `idea` no tiene columna `anio`.** La decisión está
+>   firmada desde el 2026-08-26 y el modelo sigue siendo el de la línea base única del Documento Técnico.
+>   **La puerta está antes de M11.3** (§5.35), no antes de M12.5 ni de M12.6. **El costo está medido dos
+>   veces y coincide** (§5.31 el 20/08 · R0 el 26/08): **puramente aditivo** — `idea` ya es 1:N
+>   (`ix_idea_hce_id … unique=False`), **0 FKs** a reconectar, **0 tests rotos** con `anio` nullable, y el
+>   patrón `UNIQUE(hce_id, anio)` ya se usa tres veces en el esquema. ⚠️ **Lo caro no es la columna: es el
+>   selector de año en la demo** (`nna.flujo.lb` es un objeto único, ~18 usos en 6 módulos) y **la regla de
+>   cuál IDEA rige**, que hoy vive en prosa como «la de mayor `fecha_consenso`» (`app/models/modulos.py:219`)
+>   y con una por año deja de ser la misma pregunta.
+> - [ ] **I2 · Los nombres reales de los grupos** (§5.37) — **el seed sigue plantando los cuatro colores.**
+>   Los grupos de IPPU son **cinco**: Inicial · Escolares · Preadolescentes · Adolescentes · Taller de
+>   Adolescentes. **Asignado a M12.6.** ⚠️ Y no es un `UPDATE`: el seed de `grupo` es **insert-only** a
+>   propósito (§5.18/D9) y **no existe endpoint, servicio, script ni pantalla que cree o renombre un
+>   grupo** — corregir los nombres es exactamente la operación que no se puede hacer. Arrastra además el
+>   dominio de `taller.grupos_orientados` (M12.3), que es un **array de nombres de grupo**.
+>
+> ⚠️ **Las dos entradas tienen su trabajo detallado en los bloques de abajo.** Acá no se duplica el plan:
+> se registra que **hoy la base afirma lo contrario de una decisión firmada**, que es lo que se pierde.
 
 > ### 🆕 Pendientes abiertos por la reunión con IPPU del 2026-08-21 (registrada el 2026-08-26, §5.36–§5.49)
 >
@@ -1491,11 +1555,11 @@ escrito: es la tercera decisión de modelo que delega en coordinación una opera
 >   más consultado es **AYEX**; **va junto con los informes**. Es contenido, no modelo — pero hay que
 >   decidir **si el texto se edita desde la aplicación o es fijo**, y **eso no lo puede decidir quien
 >   escribe el código solo**.
-> - [ ] ⚠️ **Pasar estas respuestas al Google Doc del equipo — a mano, y lo tiene que hacer una persona.**
->   `docs/notas/consulta-a-ippu.md` ya tiene las 25 respuestas bajo su `> _Respuesta:_`, **pero el
->   artefacto autoritativo es el Google Doc** (§5.34), que está fuera de este repo. **Hasta que eso pase,
->   el Doc y el repo están divergidos otra vez** — exactamente la falla que §5.34 documenta. Va junto con
->   el pendiente de **pegar el link del Doc** en la cabecera del archivo.
+> - [x] ~~⚠️ **Pasar estas respuestas al Google Doc del equipo — a mano, y lo tiene que hacer una
+>   persona.**~~ → **CERRADO el 2026-08-26 por §5.53 (K1): el Google Doc está VACÍO** —lo confirmó Lucas
+>   mirándolo— y **se retira su designación como artefacto autoritativo. El registro es el repo.** No se
+>   cierra por haberse hecho: se cierra **porque no hay destino**. `docs/notas/consulta-a-ippu.md` conserva
+>   las 25 respuestas bajo su `> _Respuesta:_` y sigue siendo el snapshot de lo enviado el 19/08.
 > - [ ] ⚠️ **Re-confirmar con IPPU el punto de segunda mano: el consentimiento no traba el flujo**
 >   (§5.38 / I3). Es el **único** ítem de la serie I que no se escuchó en la reunión. **Primero en la
 >   lista del próximo contacto.**
@@ -1526,9 +1590,10 @@ escrito: es la tercera decisión de modelo que delega en coordinación una opera
 > - [ ] **Plegar `docs/notas/respuestas-reunion-ippu-2026-08-21.md`** — ⚠️ **3 de 4 pasos HECHOS el
 >   2026-08-26; el archivo NO se borra.** Hechos: los «sí» pasaron a `puntos-a-validar.md` con fecha, los
 >   «no» abrieron entradas en §5 (serie **I**, §5.36–§5.49) y las respuestas se escribieron bajo su
->   `> _Respuesta:_` en `consulta-a-ippu.md`. **Falta el cuarto: el Google Doc del equipo** (§5.34), que
->   está fuera del repo y lo tiene que actualizar una persona. ⚠️ **Y aunque se cumpla, conviene no
->   borrarlo:** el archivo es lo único que conserva **las dos correcciones de acta** y **los 12 bloques
+>   `> _Respuesta:_` en `consulta-a-ippu.md`. ⚠️ **El cuarto —el Google Doc del equipo— quedó cumplido
+>   el 2026-08-26 por §5.53 (K1): el Doc está vacío y se retiró su designación.** Con eso **los cuatro
+>   pasos están**, y aun así **el archivo NO se borra**, por la razón que este pendiente ya daba y que
+>   nunca dependió del Doc: es lo único que conserva **las dos correcciones de acta** y **los 12 bloques
 >   que quedaron sin respuesta** (§16 del propio archivo).
 >
 > **Nuevos de esta noche:**
@@ -1547,8 +1612,11 @@ escrito: es la tercera decisión de modelo que delega en coordinación una opera
 > - [ ] **`verificar_estado.py` — chequeo de afirmaciones de prosa** (§5.34): contar las secciones
 >   `^### N.N` de los archivos de `docs/notas/` y compararlas con lo que §6 afirma sobre ellos.
 >   **Después de la reunión**, no antes.
-> - [ ] **Pegar el link del Google Doc** en la cabecera de `docs/notas/consulta-a-ippu.md`. Sin eso, el
->   snapshot no tiene contra qué re-sincronizarse y §5.34 se repite.
+> - [x] ~~**Pegar el link del Google Doc** en la cabecera de `docs/notas/consulta-a-ippu.md`.~~ →
+>   **CERRADO el 2026-08-26 por §5.53 (K1): no hay link que pegar.** ⚠️ **Lo que NO se cierra es la
+>   lección de §5.34** — el riesgo de tener media documentación fuera del alcance de cualquier script del
+>   repo sigue existiendo, y su arreglo candidato (que `verificar_estado.py` compare prosa) sigue abierto
+>   más abajo en esta misma sección.
 > - [ ] **Aclararle a IPPU** que la intro del cuestionario apunta a una pregunta que no quedó en el
 >   documento (agenda §1). Treinta segundos, dicho de frente.
 

@@ -381,8 +381,9 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 > los otros **11 catálogos del esquema no llevan prefijo** (`taller`, `banda_idea`, `severidad_nivel`…):
 > se respetó el nombre del plan y el catálogo de estados se llamó `estado_inclusion` según la convención,
 > así que **el módulo queda con las dos formas** → a unificar en **M12.8**. (b) El tablero de nuestra demo
-> filtra `activo !== false` y el del prototipo **no filtra**: son dos indicadores distintos y para rendir
-> ante INAU no da lo mismo → **M11.3/M11.4**, anotado en §4 del esquema.
+> filtra `activo !== false` y el del prototipo **no filtra**: son dos indicadores distintos, y para lo
+> que IPPU rinde ante INAU no da lo mismo cuál de los dos muestre la pantalla → **M11.3/M11.4**, anotado
+> en §4 del esquema.
 
 - `catalogo_centro_educativo { id, nombre, tipo, zona, contacto }` — **no existe en el prototipo** (ahí
   `centro` es texto libre); lo pide la especificación para el sistema definitivo, así que lo creamos
