@@ -11,6 +11,7 @@ IPPU/
 ├── handoff.md
 ├── CLAUDE.md
 ├── README.md
+├── .gitattributes
 ├── .gitignore
 ├── .graphifyignore
 ├── docs/
@@ -27,6 +28,7 @@ IPPU/
 | `handoff.md` | Estado vivo del proyecto entre sesiones (decisiones, pendientes, bitácora). **Se lee primero.** |
 | `CLAUDE.md` | Guía de contexto y reglas operativas para las sesiones de Claude en este repo. |
 | `README.md` | Overview del proyecto para humanos (equipo, líneas de trabajo, cómo retomar). |
+| `.gitattributes` | **Finales de línea.** `text=auto` + `eol=lf` para código y documentación: el repo guarda **siempre LF** y cada uno recibe en el checkout lo que su plataforma espera (las tres máquinas del equipo son Windows con `core.autocrlf=true`). Nació el 2026-08-26 porque `git status` mostraba archivos «modificados» que nadie había tocado y un renombrado aparecía como 574 líneas cambiadas sin haber cambiado ninguna. `.bat`/`.ps1` van al revés (CRLF, es lo que espera el intérprete) y los binarios quedan marcados `binary` para que git no los toque. |
 | `.gitignore` | Exclusiones del repositorio (venvs, caches, temporales, etc.). |
 | `.graphifyignore` | Exclusiones propias del grafo de conocimiento (`/graphify`); se combina con `.gitignore`. |
 | `graphify-out/` | Salida generada por `/graphify` (grafo, caches, reportes). **No se versiona ni se edita a mano:** es un artefacto que se **regenera a demanda al cerrar ronda**. Se desversionó el 2026-08-20 (§5.29) porque 1,6 MB describiendo un repo de dos semanas atrás confunden más de lo que ayudan. |
