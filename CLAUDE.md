@@ -103,7 +103,7 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **240 passed, 0 skipped**: si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **307 passed, 0 skipped** (eran 240 hasta M12.5): si ves «skipped», algo está mal.
 
 **Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
@@ -125,9 +125,19 @@ capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de
   escritos los 5 CHECK; `codigo` y `sensible` son **derivados**). M12.7 dejó además **§5.25** (HCE-DOC
   con alcance institucional: `documento.hce_id` nullable + `ateneo_id` + XOR) y **§5.26** (nomenclatura
   **`hce_id` = pertenencia / `hce_<calificador>_id` = referencia**, que **M12.6 hereda**).
-  **240 tests**. Siguen **M12.5 y M12.6**, que van **en paralelo** (uno cada uno,
-  archivos distintos de `app/models/`) — ahí sí se **congela** la migración hasta terminar el paralelo.
-  El orden **M12.4 → M12.6** ya se cumplió (§5.23); M12.5 no depende de nadie.
+  **240 tests** al cerrar M12.7.
+- **M12.5 HECHO** (2026-08-26): **HCE-INC · inclusión educativa y social**. **42 tablas** — `inclusion`
+  (ficha) + `inclusion_bitacora` (gestiones) + dos catálogos, `estado_inclusion` (7 filas) y
+  `catalogo_centro_educativo` (**0 filas, a propósito**). Los otros cuatro vocabularios (`INC_TIPOS`,
+  `INC_TEMAS`, `INC_MEDIOS`, `INC_ROLES`) son **constantes con CHECK, no catálogos**, y `sensible` es
+  **derivado** de `INC_TEMAS` — significa **restringido para COMPARTIR, no para guardar** (§5.39/§5.45), y
+  hoy es una clasificación **sin efecto**, porque el modelo todavía no representa la divulgación. Tres
+  decisiones nuevas: **§5.50** (cómo se lee una fuente que es a la vez especificación y demo — **M12.6 y
+  M12.8 la heredan**), **§5.51** (el estado de inclusión es **continuo**, no anual) y **§5.52**
+  (`inclusion.centro` es **texto, no FK**). **307 tests**, migración `aa26917b6e76`.
+- **Queda M12.6 (HCE-PAI)** —el más grande— y **M12.8** para cerrar. Con M12.5 y M12.7 hechos **ya no hay
+  trabajo en paralelo sobre `app/models/`**, así que §5.19 no congela nada. El orden **M12.4 → M12.6** ya
+  se cumplió (§5.23); M12.6 arranca con §5.22, §5.26 y §5.50 ya decididas.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,
