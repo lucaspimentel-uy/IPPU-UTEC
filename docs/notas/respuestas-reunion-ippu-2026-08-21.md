@@ -19,7 +19,10 @@
 > es el del borrador anterior. Mapa en `handoff.md` §5.34.
 >
 > - **Agenda que sigue:** `docs/planes/agenda-reunion-ippu-2026-08.md` (mismo orden que este archivo).
-> - **Presentes:** *sin registro* · **Hora inicio / fin:** *sin registro*
+> - **Presentes** *(anotados el 2026-08-26)*: por UTEC-LIDIA **Boris Furtado**, **Victor Uria**,
+>   **Lucas Pimentel** y **Matías López**; por IPPU, la **dirección**. ⚠️ **Boris es una sola persona:**
+>   Boris Furtado firma «Samuel» en la documentación y `Boris Furtado` en los commits (**§5.32**), así que
+>   **no se lo cuenta dos veces**. · **Hora inicio / fin:** *sin registro*
 >
 > ## ✍️ LLENADO EL 2026-08-26 — cinco días después de la reunión, desde el registro de lo que se dijo
 >
@@ -239,8 +242,9 @@ contestada.
 **Consecuencia, sin adornos:** D7 (§5.16) **no queda equivocada, queda latente** — `puntuacion_idea` y
 `puntuacion_protocolo` se modelaron nullable exactamente para este caso, y no se retira nada. Pero **el
 kappa de confiabilidad interjueces que el Manual §23 llama el único requisito metodológico invariante
-del instrumento NO es calculable** con la práctica actual. Eso hay que decirlo en voz alta si el trabajo
-se presenta a INAU. → `handoff.md` **§5.47 (I12)**.
+del instrumento NO es calculable** con la práctica actual. **Eso se le dice a IPPU, y se dice acá: el
+modelo lo soporta y el dato no existe.** No se deja implícito en un «lo soporta».
+→ `handoff.md` **§5.47 (I12)**.
 
 
 **Dispara:**
@@ -699,9 +703,10 @@ Lo que sigue **no tenía pregunta nuestra** y salió igual. Cada punto ya está 
 
 **Sensación general / cosas a no olvidar:**
 
-**Sin registro.** No quedó anotada la sensación general de la reunión, ni presentes, ni horario, ni
-próxima instancia, ni contacto para lo que falta (bloque 15). **Se anota como hueco del acta, no como
-«no hubo».**
+**Sin registro.** No quedó anotada la sensación general de la reunión, ni horario, ni próxima
+instancia, ni contacto para lo que falta (bloque 15). **Se anota como hueco del acta, no como «no hubo».**
+*(Los **presentes** sí se completaron el 2026-08-26, en la cabecera: eran el único dato de este bloque que
+alguien recordaba con certeza.)*
 
 ---
 

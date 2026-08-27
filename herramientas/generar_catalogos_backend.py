@@ -17,6 +17,8 @@ versionado; esto lo reemplaza y queda en el repo.
 | `idea_nivel.descriptor_breve`, `idea_dimension.que_evalua` | `IDEA_DESC` del **Prototipo v4** |
 | `idea_ficha`, `idea_ejemplo`, `idea_regla` | `IDEA_FICHAS`, `IDEA_EJ`, `IDEA_REGLAS` del Prototipo v4 |
 | `banda_idea`, `delta_interpretacion` | `ideaInterpreta()` y `deltaInterpreta()` del HTML del Prototipo v4 |
+| `estado_inclusion` (M12.5) | **`INC_ESTADOS` del Prototipo v4** — los 7 estados con su descripción; el `cls` CSS se guarda como nivel de semáforo |
+| `catalogo_centro_educativo` (M12.5) | **nada que extraer: nace vacío.** El prototipo no tiene catálogo de centros y los nombres de escuela de nuestra demo son relleno propio (§5.50) |
 | `recordatorio`, `grupo` | acá abajo, del Manual y del plan M12 (no hay literal que extraer) |
 
 **Los 60 `descriptor` NO se tocan.** Son el texto literal de la fuente oficial
@@ -272,6 +274,43 @@ def severidad_niveles(proto: dict) -> list[dict]:
     ]
 
 
+def estados_inclusion(proto: dict) -> list[dict]:
+    """Los 7 estados del caso de HCE-INC (M12.5), desde `INC_ESTADOS`.
+
+    **Es el único de los cinco vocabularios de HCE-INC que se siembra como
+    tabla**: los otros cuatro (`INC_TIPOS`, `INC_TEMAS`, `INC_MEDIOS`,
+    `INC_ROLES`) son listas planas sin atributos y viven en
+    `app/core/constantes.py`. El criterio, con la evidencia de cada uno, está en
+    `handoff.md` §5.50 (J1).
+
+    Se extraen `n` (nombre) y `d` (descripción) tal cual, y **`cls` se traduce**:
+    el prototipo guarda ahí una clase CSS (`inc-warn`) y acá va el nivel de
+    semáforo sin prefijo (`warn`). Es el principio de la ronda M12 —se toma el
+    vocabulario, se descarta la implementación—: el nombre de una clase de hoja
+    de estilos no es un dato del dominio.
+    """
+    estados = proto["INC_ESTADOS"]
+    assert len(estados) == 7, f"INC_ESTADOS trae {len(estados)}, se esperaban 7"
+    filas = []
+    for i, e in enumerate(estados):
+        cls = e["cls"]
+        assert cls.startswith("inc-"), f"clase inesperada en INC_ESTADOS: {cls}"
+        semaforo = cls[len("inc-"):]
+        assert semaforo in ("ok", "warn", "danger", "off"), semaforo
+        assert len(e["n"]) <= 60, f"el nombre no entra en estado_inclusion.nombre: {e['n']}"
+        filas.append({
+            "nombre": _cita(e["n"]),
+            "orden": i,
+            "semaforo": semaforo,
+            "descripcion": _cita(e["d"]),
+        })
+    assert filas[-1]["nombre"] == "Sin registrar", (
+        "«Sin registrar» dejó de ser el último de INC_ESTADOS: es el estado "
+        "inicial y el único no asignable (core/constantes.py)"
+    )
+    return filas
+
+
 def reglas(proto: dict) -> list[dict]:
     return [
         {"regla": _cita(r["r"]), "descripcion": _cita(r["d"]),
@@ -313,8 +352,8 @@ def construir() -> dict:
         "_origen": (
             "Generado por herramientas/generar_catalogos_backend.py (M12.1). "
             "Instrumentos y catálogos base: demo v4.1. "
-            "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres y "
-            "niveles de severidad DSM-5-TR: "
+            "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres, "
+            "niveles de severidad DSM-5-TR y estados de inclusión: "
             "Prototipo v4 de IPPU (docs/prototipo-v4/). "
             "Recordatorios y grupos: Manual + plan M12. "
             "NO editar a mano: correr el script."
@@ -333,6 +372,15 @@ def construir() -> dict:
         nivel["descriptor_breve"] = _cita(desc[nivel["dimension_id"] - 1][f"n{nivel['valor']}"])
 
     datos["taller"] = talleres(proto)
+    datos["estado_inclusion"] = estados_inclusion(proto)
+    # M12.5: el catálogo de centros educativos **nace vacío y es correcto que
+    # así sea**. El Prototipo v4 no tiene catálogo de centros (`centro` es texto
+    # libre) y los seis nombres de escuela que se ven en `demo/js/inclusion.js`
+    # son relleno de nuestra propia demo: sembrarlos pondría en el sistema de
+    # IPPU centros inventados por nosotros — el mecanismo de §5.37 con otro
+    # sujeto. La sección se declara igual para que `--check` la cubra y para que
+    # el día que IPPU entregue su lista se vea dónde va.
+    datos["catalogo_centro_educativo"] = []
     datos["severidad_nivel"] = severidad_niveles(proto)
     datos["idea_ficha"] = fichas(proto)
     datos["idea_ejemplo"] = ejemplos(proto)

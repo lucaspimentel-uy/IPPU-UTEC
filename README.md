@@ -63,18 +63,20 @@ IPPU/
   independiente de los dos técnicos** con su registro de consenso (D7) y el **catálogo dinámico de
   talleres** con los 14 reales (D5). El 2026-08-15, **M12.4** (HCE-SEV: severidad DSM-5-TR por juicio
   clínico, dos dominios independientes, y el retiro de la columna `hce_diurna.nivel_soporte`, §5.24) y
-  **M12.7** (ateneos y jornadas de capacitación, con HCE-DOC ganando alcance institucional, §5.25).
-  Estado actual: **38 tablas**, verificadas con **240 tests estructurales** contra Postgres, **0
-  salteados**. ⚠️ **El conteo se movió tres veces y ninguna fue regresión:** bajó de 35 a 34 en M12.3
-  —que no crea tablas y retira `hce_taller`, resto del esquema v1 (§5.20)—, subió a 36 en M12.4 y a 38
-  en M12.7. **Falta M11.3** (los servicios con las reglas
+  **M12.7** (ateneos y jornadas de capacitación, con HCE-DOC ganando alcance institucional, §5.25). El
+  2026-08-26, **M12.5** (HCE-INC: ficha de inclusión educativa y social, bitácora de gestiones con
+  `sensible` derivado del tema, y los catálogos de estados y de centros educativos).
+  Estado actual: **42 tablas**, verificadas con **307 tests estructurales** contra Postgres, **0
+  salteados**. ⚠️ **El conteo se movió cuatro veces y ninguna fue regresión:** bajó de 35 a 34 en M12.3
+  —que no crea tablas y retira `hce_taller`, resto del esquema v1 (§5.20)—, subió a 36 en M12.4, a 38
+  en M12.7 y a 42 en M12.5. **Falta M11.3** (los servicios con las reglas
   clínicas), M11.4 (routers), M11.5 (seed + tests) y M11.6 (docs), que se retoman al cerrar M12. Arranque en
   `implementacion/L1-hce-idea/backend/README.md`; esquema en `backend/docs/esquema-datos-v2.md`.
   ⚠️ **`pytest` exige Docker arriba**: desde el 2026-08-15 una **guardia de sesión** en
   `tests/conftest.py` **aborta con exit 1** si el contenedor no está levantado, si la base de desarrollo
   está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba en
   silencio y devolvía **exit 0** con la mitad de los tests sin correr. Una corrida válida es
-  **240 passed, 0 skipped**.
+  **307 passed, 0 skipped**.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 - **Ronda M12 — absorción del Prototipo v4 (ago-2026), en curso.** IPPU publicó su **Prototipo v4** con el
   Manual de Procedimientos v1.0, que pasa a ser la fuente normativa por encima del Documento Técnico

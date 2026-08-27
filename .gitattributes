@@ -1,0 +1,63 @@
+# .gitattributes — finales de linea, para el repo IPPU x UTEC-LIDIA
+#
+# POR QUE EXISTE (2026-08-26, sesion de higiene). Las tres maquinas del equipo
+# son Windows con `core.autocrlf=true`, pero varios archivos entraron al repo
+# con CRLF y otros con LF. Resultado: `git status` mostraba archivos "modificados"
+# que nadie habia tocado -- el caso que se repetia era
+# `docs/prompts/prompt-sesion-pre-reunion-2026-08-20.md` -- y un renombrado de
+# archivo aparecia como 574 lineas cambiadas cuando no habia cambiado ninguna.
+# Ese ruido esconde los cambios reales, que es exactamente lo que un diff tiene
+# que dejar ver.
+#
+# QUE HACE. `text=auto` deja que git decida que archivo es texto y lo guarda
+# SIEMPRE con LF en el repositorio; en el checkout cada uno lo recibe segun su
+# plataforma (CRLF en Windows, por `core.autocrlf`). Nadie tiene que cambiar su
+# configuracion local: el repo queda normalizado del lado del repo.
+#
+# Aplicado con `git add --renormalize .` en un commit propio, separado de todo
+# lo demas, para que se pueda revertir solo si molesta.
+
+* text=auto
+
+# Codigo y documentacion: LF en el repo y tambien en disco. Son los archivos que
+# leen herramientas que no toleran bien el CRLF (docling, node, alembic) y los
+# que mas se diffean entre sesiones.
+*.md    text eol=lf
+*.py    text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.yml   text eol=lf
+*.ini   text eol=lf
+*.mako  text eol=lf
+*.sql   text eol=lf
+*.txt   text eol=lf
+
+# Scripts de shell: LF obligatorio, si no no corren en Linux ni en Git Bash.
+*.sh    text eol=lf
+
+# Archivos de config sin extension: caen en `text=auto` y quedaban con CRLF en
+# disco. No hacen ruido (el indice ya estaba en LF) pero se declaran igual, que
+# es el punto de este archivo: que no quede nada decidido por la config local.
+.gitattributes   text eol=lf
+.gitignore       text eol=lf
+.graphifyignore  text eol=lf
+.env.example     text eol=lf
+
+# .bat / .ps1 al reves: CRLF obligatorio, es lo que espera el interprete de Windows.
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+
+# Binarios: que git no los toque nunca. `docs/fuentes/` conserva a proposito el
+# .docx del cuestionario respondido por IPPU (prueba primaria, handoff §5.31).
+*.docx  binary
+*.pdf   binary
+*.pptx  binary
+*.xlsx  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary

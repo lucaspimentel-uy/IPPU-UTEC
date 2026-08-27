@@ -17,9 +17,15 @@ vencimiento con el contexto permanente del proyecto le sube el ruido a lo que me
 - No son normativos. Si un prompt y `handoff.md` §5 se contradicen, **gana §5** (regla anti-contradicción,
   §12.6): un prompt es un encargo, una decisión de §5 es un acuerdo del equipo.
 
+### Nombres (normalizados el 2026-08-26)
+
+Los prompts que llegaron con el nombre que tenían en el chat —mayúsculas, espacios, tildes en el nombre de
+archivo, un `.txt`— se renombraron **sin tocar una línea de contenido** a la convención de arriba. Un nombre
+con espacios o con `Ó` obliga a comillas en cualquier comando y no viaja igual entre las tres máquinas del
+equipo. Si buscás uno por el nombre viejo, está en la historia de git: los renombres se hicieron con
+`git mv`, así que `git log --follow` los sigue.
+
 ## Pendiente
 
-- [ ] **Mover `prompt-sesion-demo-F1-ajustes-frontend.md` de la raíz a esta carpeta.** Hoy vive en la raíz
-      **de la rama `demo/F1-navegacion`**, no en `main`. No se movió a propósito: F1 es una ronda abierta
-      y tocar sus archivos ahora fabrica un conflicto de merge que hoy no existe. **Se mueve cuando F1
-      aterrice.**
+- [x] ~~**Mover `prompt-sesion-demo-F1-ajustes-frontend.md` de la raíz a esta carpeta.**~~ → **HECHO**
+      (`281405b`, ver `handoff.md` §6). Se movió cuando F1 aterrizó, como decía este pendiente.

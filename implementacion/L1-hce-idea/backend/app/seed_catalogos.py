@@ -17,6 +17,7 @@ Prototipo v4 de IPPU.
 No incluye datos clínicos: el seed de NNA de ejemplo es M11.5.
 """
 import json
+import sys
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -25,8 +26,10 @@ from app.core.database import SessionLocal
 from app.models import (
     BandaIdea,
     BaremoCategoria,
+    CatalogoCentroEducativo,
     CategoriaDocumento,
     DeltaInterpretacion,
+    EstadoInclusion,
     Grupo,
     IdeaDimension,
     IdeaEjemplo,
@@ -131,6 +134,13 @@ CATALOGOS: list[tuple] = [
     # es del instrumento (DSM-5-TR, vía el Manual), no un ajuste institucional:
     # acá el seed manda, igual que en las dimensiones del IDEA.
     (SeveridadNivel, "severidad_nivel", "grado", ()),
+    # M12.5 · HCE-INC: los 7 estados del caso. Sin `solo_al_crear` por el mismo
+    # motivo que severidad — la descripción y el semáforo son el vocabulario del
+    # área tal como lo define la fuente, no un ajuste que IPPU haga por UPDATE.
+    # `inclusion.estado` es FK **por nombre** contra esta tabla: el seed tiene
+    # que correr antes de que exista la primera ficha, cosa que ya garantiza el
+    # arranque documentado (`alembic upgrade head` → `seed_catalogos`).
+    (EstadoInclusion, "estado_inclusion", "nombre", ()),
 ]
 
 #: Catálogos con identidad compuesta. Van después del `flush` de las dimensiones.
@@ -138,6 +148,55 @@ COMPUESTOS: list[tuple] = [
     (IdeaNivel, "idea_nivel", ("dimension_id", "valor"), ()),
     (IdeaEjemplo, "idea_ejemplo", ("dimension_id", "valor"), ()),
 ]
+
+
+def _preparar_salida() -> str | None:
+    """Deja `sys.stdout` en condiciones de imprimir el resumen, **una sola vez**.
+
+    El resumen termina imprimiendo `_origen`, que nombra los catálogos tal como
+    los escribe el generador — y ahí hay un **`Δ`** (la interpretación del Δ del
+    Protocolo A→B, M12.1). En la consola por defecto de Windows (**cp1252**) ese
+    caracter no existe y `print()` levanta `UnicodeEncodeError`: el paso 4 del
+    arranque rápido (`handoff.md` §0) mostraba un *traceback* justo donde tenían
+    que ir los conteos, así que quien corría el seed **no podía saber si había
+    corrido**. Y sí había corrido: el `commit()` ya pasó cuando se imprime. El
+    error era sólo de salida, y por eso se arregla **la impresión, no el dato** —
+    ningún texto de catálogo cambia.
+
+    Se decide acá y no línea por línea a propósito: si se reconfigura recién al
+    fallar, las primeras líneas salen en cp1252 y las últimas en UTF-8, y quien
+    redirija la salida a un archivo se lleva **dos codificaciones en el mismo
+    archivo**, que es peor que el traceback porque no se nota.
+
+    Devuelve `None` si la salida ya puede con el texto (nada que hacer), o el
+    nombre de la codificación a la que hay que degradar si no se pudo subir a
+    UTF-8 — ahí `_imprimir` escribe con `backslashreplace`, que **estropea el
+    caracter a la vista pero no aborta** y deja marca de que se estropeó.
+    """
+    codificacion = getattr(sys.stdout, "encoding", None) or "ascii"
+    try:
+        "Δ·".encode(codificacion)
+        return None
+    except (UnicodeEncodeError, LookupError):
+        pass
+
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        try:
+            reconfigure(encoding="utf-8")
+            return None
+        except (ValueError, OSError):
+            pass
+
+    return codificacion
+
+
+def _imprimir(texto: str, degradar_a: str | None) -> None:
+    """`print()` con el resultado de `_preparar_salida()` ya decidido."""
+    if degradar_a is None:
+        print(texto)
+    else:
+        print(texto.encode(degradar_a, "backslashreplace").decode(degradar_a))
 
 
 def run(db: Session | None = None, verboso: bool = True) -> list[str]:
@@ -164,6 +223,19 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
             nuevas, act = _sincronizar(db, modelo, datos[tabla], clave, propios)
             resumen.append(f"  {tabla:22} {nuevas:3} nuevas · {act:3} actualizadas")
 
+        # M12.5 · el catálogo de centros educativos. **Sección vacía a
+        # propósito** (§5.50): el prototipo no trae ninguna fila y los nombres
+        # de escuela de nuestra demo son relleno propio. Insert-only como
+        # `grupo`: las filas son de coordinación desde el primer día, así que el
+        # seed no puede pisarlas ni siquiera cuando IPPU nos pase su lista.
+        nuevas, act = _sincronizar(
+            db, CatalogoCentroEducativo, datos["catalogo_centro_educativo"],
+            "nombre", solo_insertar=True,
+        )
+        resumen.append(
+            f"  {'catalogo_centro_educ':22} {nuevas:3} nuevas · {act:3} actualizadas"
+        )
+
         # Los 4 grupos por color (D9) como punto de partida del año en curso.
         # Insert-only: de acá en más los administra coordinación.
         nuevas, act = _sincronizar(
@@ -177,10 +249,11 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
             db.flush()
 
         if verboso:
-            print("Catálogos sincronizados:")
+            degradar_a = _preparar_salida()
+            _imprimir("Catálogos sincronizados:", degradar_a)
             for linea in sorted(resumen):
-                print(linea)
-            print(f"\nOrigen: {datos['_origen']}")
+                _imprimir(linea, degradar_a)
+            _imprimir(f"\nOrigen: {datos['_origen']}", degradar_a)
         return resumen
     finally:
         if propia:

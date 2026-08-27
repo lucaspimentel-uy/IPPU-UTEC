@@ -8,6 +8,8 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
   identidad     §2.1  persona / expediente / grupo / profesional
   modulos       §2.2  el flujo firmable CI → LB → PA → PB → IC
   severidad     §2.2  HCE-SEV (M12.4) — módulo **sin firma**, con su catálogo
+  inclusion     §2.2  HCE-INC (M12.5) — módulo **sin firma**: ficha, bitácora y
+                      sus dos catálogos (estados y centros educativos)
   ateneo        §2.5  Ateneos y jornadas (M12.7) — registro **institucional**,
                       transversal: no cuelga del expediente, lo referencia
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
@@ -30,6 +32,12 @@ from app.models.catalogos import (
     Recordatorio,
     Servicio,
     Taller,
+)
+from app.models.inclusion import (
+    CatalogoCentroEducativo,
+    EstadoInclusion,
+    Inclusion,
+    InclusionBitacora,
 )
 from app.models.identidad import (
     Grupo,
@@ -72,6 +80,8 @@ __all__ = [
     "IppuItem", "Recordatorio", "Servicio", "Taller",
     # identidad
     "Grupo", "HceDiurna", "Persona", "PersonaServicio", "Profesional",
+    # HCE-INC (M12.5)
+    "CatalogoCentroEducativo", "EstadoInclusion", "Inclusion", "InclusionBitacora",
     # módulos del flujo
     "Consentimiento", "Idea", "InformeCierre", "Protocolo",
     "PuntuacionIdea", "PuntuacionProtocolo",

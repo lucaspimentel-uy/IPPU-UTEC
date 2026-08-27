@@ -1,5 +1,5 @@
 {
-  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres y niveles de severidad DSM-5-TR: Prototipo v4 de IPPU (docs/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
+  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres, niveles de severidad DSM-5-TR y estados de inclusión: Prototipo v4 de IPPU (docs/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
   "idea_dimension": [
     {
       "id": 1,
@@ -861,6 +861,51 @@
       "retirado_en": null
     }
   ],
+  "estado_inclusion": [
+    {
+      "nombre": "Inclusión plena",
+      "orden": 0,
+      "semaforo": "ok",
+      "descripcion": "Concurre con regularidad, en horario completo o acordado como suficiente."
+    },
+    {
+      "nombre": "Inclusión parcial (horario reducido)",
+      "orden": 1,
+      "semaforo": "warn",
+      "descripcion": "Concurre de forma sostenida pero con carga horaria reducida."
+    },
+    {
+      "nombre": "En adaptación",
+      "orden": 2,
+      "semaforo": "warn",
+      "descripcion": "Proceso de ingreso o adaptación progresiva en curso."
+    },
+    {
+      "nombre": "En espera de cupo / trámite",
+      "orden": 3,
+      "semaforo": "warn",
+      "descripcion": "Inscripción, pase o cupo pendiente de resolución."
+    },
+    {
+      "nombre": "Desvinculado/a",
+      "orden": 4,
+      "semaforo": "danger",
+      "descripcion": "Dejó de concurrir al centro en el que estaba incluido."
+    },
+    {
+      "nombre": "Sin escolarizar",
+      "orden": 5,
+      "semaforo": "danger",
+      "descripcion": "No asiste a ningún centro educativo ni socioeducativo."
+    },
+    {
+      "nombre": "Sin registrar",
+      "orden": 6,
+      "semaforo": "off",
+      "descripcion": "El área de Inclusión aún no registró la situación."
+    }
+  ],
+  "catalogo_centro_educativo": [],
   "severidad_nivel": [
     {
       "grado": 1,

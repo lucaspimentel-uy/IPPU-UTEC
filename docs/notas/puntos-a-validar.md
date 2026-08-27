@@ -28,6 +28,7 @@
 > | **Abiertos NUEVOS, por la reunión** | **§2.11** usuarios y permisos · **§2.12** el modelo no representa la divulgación · **§2.13** revisión de informes · **§2.14** indicador de ateneos. Y **§2.8 pasó a BLOQUEANTE** |
 > | **Deuda saldada** | **§2.1** — el costo medido del IDEA anual, que §5.31 dejó debiendo el 2026-08-20 |
 > | **Decisiones nuevas** | `handoff.md` **§5.36–§5.49** (serie **I**) |
+> | 🆕 **Abierto NUEVO, por M12.5** (2026-08-26) | **§1.15** — ¿el estado de inclusión es del **año lectivo** o es una **situación vigente**? Es la pregunta que §5.35 aisló a propósito y que **la reunión no contestó**: contestó la del IDEA, que es otra. El módulo está construido en la dirección reversible (§5.51) y **no bloquea**. Con esto los puntos de IPPU pasan a ser **15** |
 >
 > ⚠️ **Un punto de esta ronda es de segunda mano** —que el consentimiento no trabe el flujo (§5.38 /
 > I3)— y está registrado como **CONFIRMABLE, no cerrado**. Va primero en el próximo contacto con IPPU.
@@ -287,8 +288,9 @@ lectura (§10), pero no una migración masiva.
 >
 > ⚠️ **La consecuencia se dice, no se deja implícita:** el **kappa** que exige el **Manual §23** —al que
 > el propio Manual llama el **único requisito metodológico invariante** del instrumento— **NO es
-> calculable** con la práctica actual. Con un solo puntaje de consenso no hay dos series que comparar. **Si
-> el trabajo se presenta a INAU, eso se dice.**
+> calculable** con la práctica actual. Con un solo puntaje de consenso no hay dos series que comparar.
+> **Eso se le dice a IPPU, con todas las letras: el modelo lo soporta y el dato no existe.** Qué hace IPPU
+> con esa información frente a INAU es de IPPU; la obligación nuestra es no dejarlo implícito.
 
 **Qué es.** El Manual de Procedimientos v1.0 establece que los dos técnicos puntúan **por separado** y
 después consensúan, y llama a ese circuito *el único requisito metodológico invariante* del instrumento.
@@ -418,6 +420,43 @@ libro de actas) y el filtro va contra la fecha del hecho. **Consecuencia visible
 
 **Qué preguntar.** Si eso les resulta raro en la práctica, o si prefieren que el número siga al año del
 hecho — que obliga a renumerar cuando alguien corrige la fecha.
+
+### 1.15 El estado de inclusión, ¿es del **año lectivo** o es una **situación vigente**? — abierto por M12.5 (2026-08-26)
+
+**Qué es.** El área de Inclusión registra por cada NNA un **estado** semaforizado —«Inclusión plena», «En
+espera de cupo / trámite», «Desvinculado/a»…— con la fecha en que se fijó. La pregunta es si ese estado
+**pertenece a un año lectivo** (y entonces «cómo estuvo en 2025» es una fila propia, comparable con la de
+2026) o si es la **situación vigente hoy**, que se corrige cuando cambia.
+
+⚠️ **NO es la misma pregunta que la del IDEA, y por eso está separada.** La reunión del 21/08 contestó que
+**el IDEA es anual** (`handoff.md` §5.36 / I1) y **eso no contesta ésta**: el IDEA es un instrumento con
+línea base, que se aplica en una instancia y se compara con la del año anterior; el estado de inclusión es
+una situación que puede cambiar tres veces en marzo. `handoff.md` §5.35 las aisló explícitamente para que
+una respuesta no se leyera como si contestara las dos.
+
+**Por qué importa.** Define si `inclusion` es una fila por expediente o una por expediente y año, y con
+eso qué significa la comparación entre períodos que el tablero del área va a ofrecer.
+
+**Qué elegimos mientras tanto, y por qué** (`handoff.md` **§5.51 / J2**): **una ficha por expediente, con
+estado vigente**. Tres razones, en orden de peso:
+
+1. **La historia del caso ya está modelada, y no es esa tabla:** la **bitácora** de gestiones es 1:N y
+   fechada. Anualizar la ficha daría **dos lugares** donde leer «cómo venía la inclusión en 2025».
+2. **Es lo que describe el instrumento:** el Prototipo v4 **reescribe** la fecha del estado en cada cambio
+   en vez de acumular filas, y modela la ficha como un objeto, no como una lista.
+3. **Es la dirección reversible**, el mismo criterio con que se eligió la forma de HCE-SEV (§1.10, que
+   IPPU ya confirmó).
+
+**Qué costaría darlo vuelta si la respuesta es «es del año lectivo»:** **quitar un `UNIQUE`**, agregar una
+columna `anio` y decidir qué significa «la ficha vigente» para el tablero. **Ninguna fila se pierde** — y
+la bitácora **no se toca**, porque `inclusion` se modeló con `id` propio justamente para eso.
+
+**Qué preguntar, en criollo.** *Cuando un chico cambia de escuela o pasa de «en espera de cupo» a
+«inclusión plena», ¿ustedes necesitan poder mirar después cómo estaba el año pasado, como una foto de ese
+año? ¿O alcanza con ver cómo está hoy y leer en la bitácora cómo se llegó hasta acá?*
+
+**Qué bloquea.** **Nada hoy.** El módulo está construido y funciona en cualquiera de las dos lecturas; lo
+que cambia es si hay que agregar `anio` antes de que existan datos reales.
 
 ---
 
@@ -599,6 +638,35 @@ funciona para leer. Se anota para que no se descubra cuando IPPU pida cambiar la
 > coordinación**: es texto del instrumento, no configuración institucional — por eso se sembró **sin**
 > `solo_al_crear`, y ahí el seed manda. Si M12.5–M12.7 agregan catálogos que coordinación **sí** deba
 > tocar (el de **centros educativos** de M12.5 es el candidato claro), suman a este mismo punto.
+
+> ### 🆕 **M12.5 sí agrega, y era el candidato previsto** (2026-08-26)
+>
+> **`catalogo_centro_educativo` es el tercer caso de esta misma familia**, después de los grupos (§2.8) y
+> los talleres (acá arriba): una decisión de modelo que delega en coordinación una operación que **no
+> existe**. Se anota acá y **no se abre punto nuevo**, tal como el párrafo de arriba lo había previsto por
+> escrito.
+>
+> **Y con dos particularidades que lo hacen distinto de los otros dos:**
+>
+> 1. **Nace con CERO filas, y es correcto que así sea** (`handoff.md` §5.50 / J1). El Prototipo v4 **no
+>    tiene** catálogo de centros —ahí `centro` es texto libre—, así que no hay nada normativo que sembrar;
+>    y los seis nombres de escuela que sí existen («Escuela pública N.º 87», «Liceo público N.º 12») están
+>    en **`demo/js/inclusion.js`** y son **relleno de nuestra propia demo**. Sembrarlos habría puesto seis
+>    centros inventados por nosotros dentro del sistema de IPPU — exactamente el mecanismo de §5.37, con
+>    otro sujeto. A diferencia de talleres y grupos, acá **no hay ni siquiera un punto de partida**.
+> 2. ⚠️ **Pero NO bloquea la carga clínica, y ésa es la diferencia que importa.** `inclusion.centro` es
+>    **texto sin FK** (`handoff.md` §5.52 / J3), decidido con este hueco explícitamente sobre la mesa: con
+>    FK obligatoria, la pantalla que falta se habría convertido en un **registro clínico bloqueado** — el
+>    área no podría anotar la escuela a la que el NNA ya entró. Con texto, el catálogo **mejora la carga
+>    cuando está y no la impide cuando no**.
+>
+> **Qué se pide.** Que **M11.3/M11.4** incluyan la gestión del catálogo de centros junto con la de talleres
+> y el alta de grupos — **es la misma pantalla y el mismo tipo de trabajo**. Y que la vista del área ofrezca
+> la lista de **«centros mencionados en fichas que todavía no tienen ficha de catálogo»**: es una **cola de
+> trabajo** para coordinación, no un error de validación.
+>
+> **Qué bloquea.** **Nada hoy** — por el punto 2. Se anota para que no se descubra el día que IPPU pida
+> los datos de contacto de los centros y no haya dónde ponerlos.
 
 ### 2.10 «Tutor» en el panel de Grupos — término sin fuente normativa (F1-nav, 2026-08-16)
 **Qué es.** Durante F1-nav se pidió agregar «poder asignar tutores» al panel de Grupos. El término

@@ -11,6 +11,7 @@ IPPU/
 ├── handoff.md
 ├── CLAUDE.md
 ├── README.md
+├── .gitattributes
 ├── .gitignore
 ├── .graphifyignore
 ├── docs/
@@ -27,6 +28,7 @@ IPPU/
 | `handoff.md` | Estado vivo del proyecto entre sesiones (decisiones, pendientes, bitácora). **Se lee primero.** |
 | `CLAUDE.md` | Guía de contexto y reglas operativas para las sesiones de Claude en este repo. |
 | `README.md` | Overview del proyecto para humanos (equipo, líneas de trabajo, cómo retomar). |
+| `.gitattributes` | **Finales de línea.** `text=auto` + `eol=lf` para código y documentación: el repo guarda **siempre LF** y cada uno recibe en el checkout lo que su plataforma espera (las tres máquinas del equipo son Windows con `core.autocrlf=true`). Nació el 2026-08-26 porque `git status` mostraba archivos «modificados» que nadie había tocado y un renombrado aparecía como 574 líneas cambiadas sin haber cambiado ninguna. `.bat`/`.ps1` van al revés (CRLF, es lo que espera el intérprete) y los binarios quedan marcados `binary` para que git no los toque. |
 | `.gitignore` | Exclusiones del repositorio (venvs, caches, temporales, etc.). |
 | `.graphifyignore` | Exclusiones propias del grafo de conocimiento (`/graphify`); se combina con `.gitignore`. |
 | `graphify-out/` | Salida generada por `/graphify` (grafo, caches, reportes). **No se versiona ni se edita a mano:** es un artefacto que se **regenera a demanda al cerrar ronda**. Se desversionó el 2026-08-20 (§5.29) porque 1,6 MB describiendo un repo de dos semanas atrás confunden más de lo que ayudan. |
@@ -66,7 +68,11 @@ docs/
 │   │                            #  respuesta. Es un SNAPSHOT de un Google Doc del equipo: el equipo
 │   │                            #  le sacó 3 preguntas al revisarlo y la numeración cambió de §2.7 y
 │   │                            #  §3.2 en adelante (§5.34). Citarlo por SU numeración.
-│   └── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
+│   ├── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
+│   └── borrador-color-y-significado-clinico.md  # borrador SIN FIRMAR de handoff.md §5 (severidad ≠
+│                                #  urgencia, rampa del IDEA, vocabularios de estado). No es regla del
+│                                #  equipo — se borra cuando Lucas lo firme en §5 (banner en el propio
+│                                #  archivo).
 ├── planes/
 │   ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
 │   ├── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
@@ -160,7 +166,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── 9246e659d2c9_esquema_v2_inicial_m12_7.py   # migración única del esquema v2 (38 tablas)
+│       └── aa26917b6e76_esquema_v2_inicial_m12_5.py   # migración única del esquema v2 (42 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -168,15 +174,21 @@ backend/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
 │   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 38 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
+│   ├── models/               # SQLAlchemy — 42 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
 │   │                         #  − hce_taller, retirada en M12.3: handoff §5.20
 │   │                         #  + 2 de M12.4; ahí se retiró la COLUMNA hce_diurna.nivel_soporte,
 │   │                         #    que no mueve el conteo de tablas: handoff §5.24
-│   │                         #  + 2 de M12.7: ateneo + ateneo_acuerdo, handoff §5.25/§5.26)
+│   │                         #  + 2 de M12.7: ateneo + ateneo_acuerdo, handoff §5.25/§5.26
+│   │                         #  + 4 de M12.5: inclusion + inclusion_bitacora + estado_inclusion
+│   │                         #    + catalogo_centro_educativo, handoff §5.50-§5.52)
 │   │   ├── ateneo.py         # Ateneos clínicos y jornadas (M12.7): ateneo + ateneo_acuerdo
 │   │   │                     # AT_TIPOS es CONSTANTE, no catálogo: es el discriminador de los 5 CHECK
 │   │   ├── catalogos.py
 │   │   ├── identidad.py
+│   │   ├── inclusion.py      # HCE-INC (M12.5): inclusion + inclusion_bitacora + los dos catálogos
+│   │   │                     # estado_inclusion (7 filas) y catalogo_centro_educativo (0 filas, §5.52)
+│   │   │                     # INC_TIPOS/TEMAS/MEDIOS/ROLES son CONSTANTES, no catálogos; `sensible`
+│   │   │                     # es derivado de INC_TEMAS y significa restringido para COMPARTIR (§5.39)
 │   │   ├── mixins.py         # OrigenMigracionMixin (metadatos de dato migrado, §10)
 │   │   │                     # (Firma/Evaluadores/PuntuacionConsenso viven en modulos.py)
 │   │   ├── modulos.py
@@ -200,8 +212,10 @@ backend/
 │   ├── test_m12_consenso.py     # M12.2 · D7: puntuación independiente, diferencia, NS tipado
 │   ├── test_m12_talleres.py     # M12.3 · D5: los 14, `activo` derivado, sin FK a taller.id
 │   ├── test_m12_severidad.py    # M12.4: HCE-SEV, aislamiento en las dos direcciones, FKs con índice
-│   └── test_m12_ateneos.py      # M12.7: los 4 tipos, los 5 CHECK, correlativo, codigo/sensible derivados
-│                                # (240 en verde, 0 salteados — requieren el contenedor arriba)
+│   ├── test_m12_ateneos.py      # M12.7: los 4 tipos, los 5 CHECK, correlativo, codigo/sensible derivados
+│   └── test_m12_inclusion.py    # M12.5: ficha + bitácora, los 7 estados, `sensible` derivado en Python
+│                                #  y en SQL, catálogo de centros vacío a propósito
+│                                # (307 en verde, 0 salteados — requieren el contenedor arriba)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
