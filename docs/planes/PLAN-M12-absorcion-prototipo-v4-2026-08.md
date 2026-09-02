@@ -149,8 +149,14 @@ corrido de lugar.
 
 ---
 
-### M12.0 — Decisiones al papel y verificación del punto de partida
+### M12.0 — Decisiones al papel y verificación del punto de partida ✅ **HECHO** (2026-08-14, Lucas)
 Sin código.
+
+> **Cómo quedó** (cifras medidas al cierre de la sesión, 2026-08-14). **Sin código de modelo:** paso 0.
+> D1–D9 escritas en `handoff.md` §5.10–§5.18, cabecera y §3 actualizadas. Repo verificado contra la
+> realidad: head único `f6ca521bcc6a`, **28 tablas**, **21 tests en verde**. Único cambio de código:
+> `backend/pytest.ini` (`pytest -q` no corría sin `PYTHONPATH` a mano). Ningún cambio en modelos,
+> migraciones ni catálogos.
 - Escribir D1–D9 en `handoff.md` §5 (fecha + autor). Actualizar cabecera (fuente normativa) y §3 (bandas).
 - Confirmar D9 con el equipo antes de implementarla.
 - Completar el §1: bajar el HTML, actualizar `docs/estructura-repositorio.md` + `README.md` + `CLAUDE.md`,
@@ -159,8 +165,16 @@ Sin código.
 
 ---
 
-### M12.1 — Correcciones al esquema existente
+### M12.1 — Correcciones al esquema existente ✅ **HECHO** (2026-08-14, Lucas)
 Primero, solo, con los tests de M11.2 corriendo después de cada cambio.
+
+> **Cómo quedó** (cifras al cierre, 2026-08-14). D9 implementada (`grupo` id serial +
+> `UNIQUE(nombre, anio)`) y 5 catálogos nuevos (`banda_idea`, `delta_interpretacion`, `idea_ficha`,
+> `idea_ejemplo`, `idea_regla`): **28 → 33 tablas**. Los 60 descriptores **no** se reemplazaron;
+> entraron `descriptor_breve` y `que_evalua` al lado. Los 6 catálogos sueltos de la demo →
+> `app/core/constantes.py`. **53 tests + 1 salteado a propósito** al cerrar la sesión; la enmienda
+> §5.19 (mismo día) regeneró la migración a las 33 tablas (`46da34fcc64e`) y lo dejó en **54 en verde,
+> 0 salteados**.
 
 - **`banda_idea`** (catálogo paramétrico, 6 tramos): 0–15 Muy leve (Nivel 1) · 16–30 Leve (1) · 31–55 Leve
   a moderado (1–2) · 56–75 Moderado (2) · 76–90 Moderado a severo (2–3) · 91–96 Severo a muy severo (3).
@@ -328,7 +342,10 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ### M12.5 — HCE-INC · Inclusión educativa y social ✅ **HECHO** (2026-08-26, Lucas)
 
-> ### ✅ HECHO — 2026-08-26 (Lucas). Rama `backend/M12.5-hce-inc`, **sin mergear**.
+> ### ✅ HECHO — 2026-08-26 (Lucas). ~~Rama `backend/M12.5-hce-inc`, **sin mergear**.~~
+> **Corregido 2026-09-02 (L6), verificado contra git:** se mergeó a `main` el mismo **2026-08-26** con
+> `d2ea3b3` — el merge de `chore/higiene-2026-08-26`, abierto sobre esta rama, la arrastró (main pasó
+> de 38 a 42 tablas; migración renombrada `9246e659d2c9` → `aa26917b6e76`).
 >
 > **42 tablas** (38 → 42), **307 tests en verde y 0 salteados** (240 → 307), migración regenerada
 > (`aa26917b6e76`) con `test_la_migracion_coincide_con_los_modelos` pasando. Reconstrucción limpia hecha.
