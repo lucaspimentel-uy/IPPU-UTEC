@@ -1980,12 +1980,11 @@ registra en `puntos-a-validar.md` **§2.16**. **Acá no se resuelve.**
         Sigue pendiente y sigue bloqueado por lo mismo — no hay forma de crear ni renombrar un grupo
         (`puntos-a-validar.md` §2.8). **Se sacó del alcance de esta sesión a propósito**, por acuerdo
         previo: es un `UPDATE` + regeneración de catálogos que se costea aparte.
-  - [ ] **Corregir `docs/markdown/prototipo-v4-referencia.md:166`** — dice que «las secciones I, II, VI,
-        XI y XV se renderizan con `ro()` … modelarlas como referencias», y **§5.55 (L2) lo contradice
-        con el código**: siete campos de I y II son columnas propias de `pai`. **El texto correcto ya está
-        en el mismo archivo**, en su línea `:149` («Campos de cabecera (`p.pai`)»), así que es corregir la
-        prosa contra su propia lista, no reinvestigar. **No se hizo en M12.6 a propósito**: ese archivo es
-        material de referencia y la sesión estaba tocando modelo, migración y tests. **Barato, sin dueño.**
+  - [x] ~~**Corregir `docs/markdown/prototipo-v4-referencia.md:166`**~~ → **HECHO (2026-09-02, sesión L5).**
+        La línea decía «las secciones I, II, VI, XI y XV … modelarlas como referencias»; ahora dice
+        **VI, XI y XV**, y una nota ⚠️ remite a **§5.55 (L2)**: los siete campos editables de I y II
+        (`ingresoIppu` + los seis de §II) son **columnas propias de `pai`**. Corregido contra la lista
+        «Campos de cabecera (`p.pai`)» del mismo archivo, sin reinvestigar.
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.

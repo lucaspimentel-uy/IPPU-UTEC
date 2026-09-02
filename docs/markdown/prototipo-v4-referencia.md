@@ -163,8 +163,14 @@ talleres{}, otrasAct, dinamica, ingresos, vivienda, redes, pronostico, circuito{
 - `prest{}` — marcados contra **`PAI_PREST`** (6 prestaciones).
 - `circuito{}` — marcados contra **`PAI_CIRCUITO`** (4 ítems de seguimiento).
 
-**Carga única confirmada:** las secciones I, II, VI, XI y XV se renderizan con `ro()` (input readonly)
-alimentado desde HCE-00/ORG/LB/PA/PB/SEV. No se almacenan de nuevo — modelarlas como referencias.
+**Carga única confirmada:** las secciones **VI, XI y XV** se renderizan con `ro()` (input readonly)
+alimentado desde otros módulos de la HCE (HCE-LB/PA/PB/SEV). No se almacenan de nuevo — modelarlas como
+referencias.
+
+⚠️ **Corregido (handoff §5.55 / L2):** las secciones **I y II NO son carga única** — esta línea las
+incluía. Sus siete campos editables —`ingresoIppu` (§I) y `padronInau, disposicion, judicial,
+expediente, derivadoPor, motivo` (§II)— **son columnas propias de `pai`**, tal como ya los lista
+«Campos de cabecera (`p.pai`)» aquí arriba: HCE-ORG no tiene dónde guardarlos.
 
 ---
 
