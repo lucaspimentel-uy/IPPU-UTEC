@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.5)
+"""esquema v2 inicial (M12.6)
 
-Revision ID: aa26917b6e76
+Revision ID: 72b96030362d
 Revises: 
-Create Date: 2026-08-26 19:25:49.884467
+Create Date: 2026-09-02 09:14:59.954231
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'aa26917b6e76'
+revision: str = '72b96030362d'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -487,6 +487,66 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_organismo_inau_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_organismo_inau'))
     )
+    op.create_table('pai',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('tipo', sa.String(length=40), nullable=True),
+    sa.Column('anio', sa.Integer(), nullable=True),
+    sa.Column('fecha', sa.Date(), nullable=True),
+    sa.Column('ingreso_ippu', sa.Date(), nullable=True),
+    sa.Column('padron_inau', sa.Date(), nullable=True),
+    sa.Column('disposicion', sa.String(length=20), nullable=True),
+    sa.Column('judicial', sa.String(length=10), nullable=True),
+    sa.Column('expediente', sa.String(length=60), nullable=True),
+    sa.Column('derivado_por', sa.String(length=200), nullable=True),
+    sa.Column('motivo', sa.Text(), nullable=True),
+    sa.Column('responsable', sa.String(length=200), nullable=True),
+    sa.Column('tel', sa.String(length=60), nullable=True),
+    sa.Column('nucleo', sa.Text(), nullable=True),
+    sa.Column('referentes', sa.Text(), nullable=True),
+    sa.Column('cobertura', sa.String(length=120), nullable=True),
+    sa.Column('controles', sa.String(length=40), nullable=True),
+    sa.Column('tratamientos', sa.Text(), nullable=True),
+    sa.Column('medicacion', sa.Text(), nullable=True),
+    sa.Column('prest_obs', sa.Text(), nullable=True),
+    sa.Column('apoyos_ed', sa.Text(), nullable=True),
+    sa.Column('otras_ed', sa.Text(), nullable=True),
+    sa.Column('sint_lb', sa.Text(), nullable=True),
+    sa.Column('delta_interp', sa.Text(), nullable=True),
+    sa.Column('fort', sa.Text(), nullable=True),
+    sa.Column('oport', sa.Text(), nullable=True),
+    sa.Column('debil', sa.Text(), nullable=True),
+    sa.Column('amen', sa.Text(), nullable=True),
+    sa.Column('intereses_nna', sa.Text(), nullable=True),
+    sa.Column('voz_nna', sa.Text(), nullable=True),
+    sa.Column('expect_familia', sa.Text(), nullable=True),
+    sa.Column('acuerdo', sa.String(length=30), nullable=True),
+    sa.Column('fecha_devol', sa.Date(), nullable=True),
+    sa.Column('frecuencia', sa.String(length=20), nullable=True),
+    sa.Column('etapa', sa.String(length=60), nullable=True),
+    sa.Column('otras_act', sa.Text(), nullable=True),
+    sa.Column('dinamica', sa.Text(), nullable=True),
+    sa.Column('ingresos', sa.String(length=200), nullable=True),
+    sa.Column('vivienda', sa.String(length=200), nullable=True),
+    sa.Column('redes', sa.Text(), nullable=True),
+    sa.Column('pronostico', sa.Text(), nullable=True),
+    sa.Column('f_rev', sa.Date(), nullable=True),
+    sa.Column('f_anual', sa.Date(), nullable=True),
+    sa.Column('criterios', sa.Text(), nullable=True),
+    sa.Column('creado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('actualizado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint("acuerdo IS NULL OR acuerdo IN ('Sí — acuerdo expreso', 'Sí — informada', 'Parcialmente', 'Pendiente')", name=op.f('ck_pai_pai_acuerdo_valido')),
+    sa.CheckConstraint("controles IS NULL OR controles IN ('Al día', 'Pendientes', 'En regularización')", name=op.f('ck_pai_pai_controles_validos')),
+    sa.CheckConstraint("disposicion IS NULL OR disposicion IN ('INAU', 'Judicial')", name=op.f('ck_pai_pai_disposicion_valida')),
+    sa.CheckConstraint("etapa IS NULL OR etapa IN ('Adaptación / ingreso', 'Proceso en curso', 'Preparación de transición / egreso')", name=op.f('ck_pai_pai_etapa_valida')),
+    sa.CheckConstraint("frecuencia IS NULL OR frecuencia IN ('1 vez', '2 veces', '3 veces', '4 veces', '5 veces')", name=op.f('ck_pai_pai_frecuencia_valida')),
+    sa.CheckConstraint("judicial IS NULL OR judicial IN ('Sí', 'No')", name=op.f('ck_pai_pai_judicial_valido')),
+    sa.CheckConstraint("tipo IS NULL OR tipo IN ('PAI inicial (ingreso)', 'Actualización anual')", name=op.f('ck_pai_pai_tipo_valido')),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_pai_hce_id_hce_diurna'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai'))
+    )
+    op.create_index(op.f('ix_pai_anio'), 'pai', ['anio'], unique=False)
+    op.create_index(op.f('ix_pai_hce_id'), 'pai', ['hce_id'], unique=False)
     op.create_table('protocolo',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
@@ -629,6 +689,94 @@ def upgrade() -> None:
     op.create_index(op.f('ix_inclusion_bitacora_autor_id'), 'inclusion_bitacora', ['autor_id'], unique=False)
     op.create_index('ix_inclusion_bitacora_inclusion_fecha', 'inclusion_bitacora', ['inclusion_id', 'fecha'], unique=False)
     op.create_index(op.f('ix_inclusion_bitacora_tema'), 'inclusion_bitacora', ['tema'], unique=False)
+    op.create_table('pai_circuito',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('item', sa.String(length=120), nullable=False),
+    sa.CheckConstraint("item IN ('Seguimiento de evolución en reuniones mensuales de coordinación', 'Revisión intermedia de objetivos (semestral)', 'Informe anual en diciembre (técnicos de referencia y equipo de coordinación)', 'Registro de evoluciones en la HCE')", name=op.f('ck_pai_circuito_pai_circuito_valido')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_circuito_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_circuito')),
+    sa.UniqueConstraint('pai_id', 'item', name='uq_pai_circuito_pai_item')
+    )
+    op.create_index(op.f('ix_pai_circuito_pai_id'), 'pai_circuito', ['pai_id'], unique=False)
+    op.create_table('pai_coordinacion',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('actor', sa.String(length=120), nullable=False),
+    sa.Column('se_coordina', sa.String(length=10), nullable=True),
+    sa.Column('frecuencia', sa.String(length=120), nullable=True),
+    sa.Column('contenido', sa.Text(), nullable=True),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.CheckConstraint("actor IN ('Familia y/o referentes de hogar', 'Equipo médico tratante', 'Docente de educación formal / informal', 'Equipo de clínica', 'INAU / supervisión de convenio', 'Otros (especificar)')", name=op.f('ck_pai_coordinacion_pai_coordinacion_actor_valido')),
+    sa.CheckConstraint("se_coordina IS NULL OR se_coordina IN ('Sí', 'No')", name=op.f('ck_pai_coordinacion_pai_coordinacion_se_coordina_valido')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_coordinacion_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_coordinacion')),
+    sa.UniqueConstraint('pai_id', 'actor', name='uq_pai_coordinacion_pai_actor')
+    )
+    op.create_index(op.f('ix_pai_coordinacion_pai_id'), 'pai_coordinacion', ['pai_id'], unique=False)
+    op.create_table('pai_equipo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('nombre', sa.String(length=200), nullable=True),
+    sa.Column('rol', sa.String(length=120), nullable=True),
+    sa.Column('participo', sa.String(length=10), nullable=True),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.CheckConstraint("participo IS NULL OR participo IN ('Sí', 'No')", name=op.f('ck_pai_equipo_pai_equipo_participo_valido')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_equipo_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_equipo'))
+    )
+    op.create_index(op.f('ix_pai_equipo_pai_id'), 'pai_equipo', ['pai_id'], unique=False)
+    op.create_table('pai_evaluacion_previa',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('objetivo', sa.Text(), nullable=True),
+    sa.Column('logro', sa.String(length=30), nullable=True),
+    sa.Column('comentario', sa.Text(), nullable=True),
+    sa.Column('decision', sa.String(length=30), nullable=True),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.CheckConstraint("decision IS NULL OR decision IN ('Se cierra', 'Continúa igual', 'Continúa reformulado', 'Se reemplaza')", name=op.f('ck_pai_evaluacion_previa_pai_prev_decision_valida')),
+    sa.CheckConstraint("logro IS NULL OR logro IN ('Logrado', 'Parcialmente logrado', 'No logrado', 'Discontinuado')", name=op.f('ck_pai_evaluacion_previa_pai_prev_logro_valido')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_evaluacion_previa_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_evaluacion_previa'))
+    )
+    op.create_index(op.f('ix_pai_evaluacion_previa_pai_id'), 'pai_evaluacion_previa', ['pai_id'], unique=False)
+    op.create_table('pai_objetivo',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('area', sa.String(length=60), nullable=True),
+    sa.Column('objetivo', sa.Text(), nullable=True),
+    sa.Column('estrategias', sa.Text(), nullable=True),
+    sa.Column('indicador', sa.Text(), nullable=True),
+    sa.Column('responsable_rol', sa.String(length=120), nullable=True),
+    sa.Column('plazo', sa.String(length=20), nullable=True),
+    sa.Column('orden', sa.Integer(), nullable=False),
+    sa.CheckConstraint("area IS NULL OR area IN ('Comunicación y lenguaje', 'Interacción social', 'Desarrollo cognitivo', 'Autonomía y AVD', 'Regulación emocional', 'Flexibilidad y anticipación', 'Juego y simbolización', 'Motricidad', 'Otra')", name=op.f('ck_pai_objetivo_pai_objetivo_area_valida')),
+    sa.CheckConstraint("plazo IS NULL OR plazo IN ('Trimestral', 'Semestral', 'Anual')", name=op.f('ck_pai_objetivo_pai_objetivo_plazo_valido')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_objetivo_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_objetivo'))
+    )
+    op.create_index(op.f('ix_pai_objetivo_area'), 'pai_objetivo', ['area'], unique=False)
+    op.create_index(op.f('ix_pai_objetivo_pai_id'), 'pai_objetivo', ['pai_id'], unique=False)
+    op.create_table('pai_prestacion',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('prestacion', sa.String(length=120), nullable=False),
+    sa.CheckConstraint("prestacion IN ('Pensión por invalidez (BPS)', 'Asignación familiar', 'AYEX — Ayudas Extraordinarias', 'Valoración Funcional (Ley 20.378 / Dec. 72/025)', 'Certificado de discapacidad', 'Otra (detallar en observaciones)')", name=op.f('ck_pai_prestacion_pai_prestacion_valida')),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_prestacion_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_prestacion')),
+    sa.UniqueConstraint('pai_id', 'prestacion', name='uq_pai_prestacion_pai_item')
+    )
+    op.create_index(op.f('ix_pai_prestacion_pai_id'), 'pai_prestacion', ['pai_id'], unique=False)
+    op.create_table('pai_taller',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('pai_id', sa.Integer(), nullable=False),
+    sa.Column('taller_nombre', sa.String(length=80), nullable=False),
+    sa.ForeignKeyConstraint(['pai_id'], ['pai.id'], name=op.f('fk_pai_taller_pai_id_pai'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_pai_taller')),
+    sa.UniqueConstraint('pai_id', 'taller_nombre', name='uq_pai_taller_pai_nombre')
+    )
+    op.create_index(op.f('ix_pai_taller_pai_id'), 'pai_taller', ['pai_id'], unique=False)
+    op.create_index(op.f('ix_pai_taller_taller_nombre'), 'pai_taller', ['taller_nombre'], unique=False)
     op.create_table('puntuacion_idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('idea_id', sa.Integer(), nullable=False),
@@ -709,6 +857,22 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_puntuacion_idea_idea_id'), table_name='puntuacion_idea')
     op.drop_index(op.f('ix_puntuacion_idea_dimension_id'), table_name='puntuacion_idea')
     op.drop_table('puntuacion_idea')
+    op.drop_index(op.f('ix_pai_taller_taller_nombre'), table_name='pai_taller')
+    op.drop_index(op.f('ix_pai_taller_pai_id'), table_name='pai_taller')
+    op.drop_table('pai_taller')
+    op.drop_index(op.f('ix_pai_prestacion_pai_id'), table_name='pai_prestacion')
+    op.drop_table('pai_prestacion')
+    op.drop_index(op.f('ix_pai_objetivo_pai_id'), table_name='pai_objetivo')
+    op.drop_index(op.f('ix_pai_objetivo_area'), table_name='pai_objetivo')
+    op.drop_table('pai_objetivo')
+    op.drop_index(op.f('ix_pai_evaluacion_previa_pai_id'), table_name='pai_evaluacion_previa')
+    op.drop_table('pai_evaluacion_previa')
+    op.drop_index(op.f('ix_pai_equipo_pai_id'), table_name='pai_equipo')
+    op.drop_table('pai_equipo')
+    op.drop_index(op.f('ix_pai_coordinacion_pai_id'), table_name='pai_coordinacion')
+    op.drop_table('pai_coordinacion')
+    op.drop_index(op.f('ix_pai_circuito_pai_id'), table_name='pai_circuito')
+    op.drop_table('pai_circuito')
     op.drop_index(op.f('ix_inclusion_bitacora_tema'), table_name='inclusion_bitacora')
     op.drop_index('ix_inclusion_bitacora_inclusion_fecha', table_name='inclusion_bitacora')
     op.drop_index(op.f('ix_inclusion_bitacora_autor_id'), table_name='inclusion_bitacora')
@@ -730,6 +894,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_protocolo_evaluador_t2_id'), table_name='protocolo')
     op.drop_index(op.f('ix_protocolo_evaluador_t1_id'), table_name='protocolo')
     op.drop_table('protocolo')
+    op.drop_index(op.f('ix_pai_hce_id'), table_name='pai')
+    op.drop_index(op.f('ix_pai_anio'), table_name='pai')
+    op.drop_table('pai')
     op.drop_table('organismo_inau')
     op.drop_table('organismo_bps')
     op.drop_index(op.f('ix_observacion_hce_id'), table_name='observacion')

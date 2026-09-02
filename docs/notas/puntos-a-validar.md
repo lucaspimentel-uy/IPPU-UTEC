@@ -460,6 +460,51 @@ que cambia es si hay que agregar `anio` antes de que existan datos reales.
 
 ---
 
+### 1.16 ¿De qué son las secciones **§4 y §8** del Manual de Procedimientos? — abierto por M12.6 (2026-09-02)
+
+**Qué es.** El Manual de Procedimientos v1.0 tiene **25 secciones en seis Partes**, y **no está en el
+repo**: nunca se entregó. Lo que sí tenemos es la **versión de consulta que el Prototipo v4 embebe**
+(`const MANUAL`, `HCE_IPPU_Prototipo_v4.html:1730`), con 12 entradas agrupadas que cubren **23 de las 25**.
+Faltan exactamente dos, **§4 y §8**, y no hay una sola mención textual a ninguna de las dos en todo el
+archivo — ni `id:'m4'` ni `id:'m8'`.
+
+**Qué sabemos igual, por la estructura.** La numeración no tiene huecos, así que cada sección faltante cae
+dentro de una Parte conocida:
+
+| Parte | Secciones | Qué falta |
+|---|---|---|
+| I — Marco general | §1 propósito · §2 glosario · §3 secuencia longitudinal · **§4** | **§4** |
+| II — IDEA | §5 qué es · §6–7 aplicación y puntuación · **§8** · §9 interpretación del perfil | **§8** |
+| III — Escala IPPU-TEA | §10–15 | — |
+| IV — Informe de Cierre | §16–18 | — |
+| V — HCE | §19–22 | — |
+| VI — Calidad | §23–25 | — |
+
+⚠️ **Ninguna de las dos es del PAI, y eso no es una conjetura: el Manual no tiene una Parte del PAI.** Las
+seis Partes son marco general, IDEA, Escala IPPU-TEA, Informe de Cierre, HCE y Calidad. Por eso M12.6 pudo
+construirse igual (`handoff.md` §5.54): la fuente normativa del PAI es el **Prototipo v4** y el `.md` de
+especificaciones, no el Manual.
+
+**Nuestra mejor inferencia, para que la pregunta sea corta:**
+- **§4** cierra el **Marco general**. **No es el consentimiento** (eso es **§19.1 + Anexo C**, citado en
+  `:731` y `:1229`) ni los **permisos** (**§21.1**). Queda el marco institucional: **roles y habilitación
+  del personal técnico**, y/o **los grupos de referencia** — §1 los nombra («todo el personal técnico
+  habilitado», «todos los grupos de referencia activos») sin que ninguna sección visible los defina.
+- **§8** es un paso **interno del IDEA**, entre *puntuar* (§6–7) e *interpretar el perfil* (§9): lo más
+  probable es **el cálculo de totales por escala / el perfil por dimensiones**. Lo refuerza que el
+  **Anexo A** —«cálculo automático de totales y deltas con verificación visible antes de firmar»— encaje
+  exactamente en esa ranura.
+
+**Qué preguntar, en criollo.** *Del Manual de Procedimientos nos falta ver dos partes: la §4, que cierra
+el marco general, y la §8, que está entre la puntuación del IDEA y la interpretación del perfil.
+¿Nos pasan esas dos, y el Anexo A?*
+
+**Qué bloquea.** **El esquema, nada** — M12.6 se construyó sin ellas. **§8 y el Anexo A sí importan para
+M11.3**, que es donde se implementa el cálculo de totales y la verificación previa a la firma. Si al
+identificarlas resultan tocar el PAI, se revisa lo construido (§5.54 lo dejó dicho).
+
+---
+
 ## 2. Para el equipo (grupo + Matías)
 
 ### 2.1 Ratificar que M11 avanzó sin cruzar su propia puerta
@@ -759,6 +804,47 @@ por grupo ni por año.**
 se descubra cuando alguien pida el número. ⚠️ **Ojo con qué año se cuenta:** el correlativo es del año de
 **registración** (§1.14) y el filtro de la lista va contra la **fecha del hecho** — un indicador anual
 tiene que decir cuál de los dos usa.
+
+### 2.15 Las prestaciones se declaran en dos lugares — **abierto por M12.6** (2026-09-02)
+
+**Qué es.** Después de M12.6 hay **dos sitios** en el modelo que dicen algo sobre prestaciones del NNA, y
+no son el mismo dato:
+
+| | Qué afirma | Forma |
+|---|---|---|
+| `organismo_bps` (HCE-ORG) | **el trámite** que la institución sigue | 0..1 por expediente, **una sola** `prestacion` en texto libre, con `estado` y `vencimiento` |
+| `pai_prestacion` (M12.6) | **qué tiene vigente el NNA** al escribir el PAI | N filas por PAI, contra `PAI_PRESTACIONES` (6, con CHECK) |
+
+**Por qué existe la tensión.** Por el reparto de `handoff.md` **§5.22**, «prestaciones y certificaciones
+vigentes» es **diagnóstico de situación**, y eso **se lee en vivo, no se congela** — es exactamente el
+argumento por el que la sección V del PAI **no** duplica el centro educativo. Si el criterio se aplicara
+igual acá, `pai_prestacion` no debería existir.
+
+**Por qué se modeló igual, dicho como es.** Porque **no hay de dónde leerlo**: `organismo_bps` guarda una
+sola prestación en texto libre, no un conjunto, y **dos de los seis ítems no son prestaciones BPS** —la
+Valoración Funcional (Ley 20.378 / Dec. 72/025) y el certificado de discapacidad—. Leerlo en vivo hoy
+significaría rediseñar HCE-ORG, que está fuera del alcance de M12.6. Se registró la decisión y la deuda en
+**§5.56 (L3)** en vez de resolverla en el código.
+
+**El modo de falla, concreto.** El PAI **se entrega a INAU**. Si una prestación cambia en HCE-ORG y el PAI
+conserva su copia, se entrega **un dato desactualizado a un organismo del Estado** — el mismo modo de
+falla que §5.22 usó para sacar el centro educativo del PAI.
+
+**Las tres salidas, para que el equipo elija una:**
+1. **HCE-ORG pasa a N:1** (una fila por prestación, con estado y vencimiento) y el PAI **lee en vivo**.
+   Es la coherente con §5.22 y la más cara: toca un módulo ya construido.
+2. **Se queda como está** y se acepta que el PAI es una **foto declarada a una fecha** — defendible,
+   porque el PAI *es* un documento fechado, pero hay que escribirlo para que no se lea como descuido.
+3. **Híbrido:** el PAI guarda su declaración y el servicio (M11.3) **avisa** cuando difiere de HCE-ORG.
+
+**Qué bloquea.** **Nada hoy** — el esquema funciona en las tres. Bloquea **M11.3/M11.4**, que es donde se
+decide qué se muestra y qué se imprime en el PAI.
+
+> **Corregido el 2026-09-02:** el texto de arriba dice que **dos** de los seis ítems de
+> `PAI_PRESTACIONES` no son prestaciones administradas por BPS. Son **tres**: al contar la Valoración
+> Funcional y el certificado de discapacidad se omitió el comodín **«Otra (detallar en observaciones)»**,
+> que tampoco lo es —no tiene referente: su detalle va a `pai.prest_obs`—. El resto de la entrada no
+> cambia.
 
 ---
 

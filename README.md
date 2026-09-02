@@ -66,7 +66,7 @@ IPPU/
   **M12.7** (ateneos y jornadas de capacitación, con HCE-DOC ganando alcance institucional, §5.25). El
   2026-08-26, **M12.5** (HCE-INC: ficha de inclusión educativa y social, bitácora de gestiones con
   `sensible` derivado del tema, y los catálogos de estados y de centros educativos).
-  Estado actual: **42 tablas**, verificadas con **307 tests estructurales** contra Postgres, **0
+  Estado actual: **50 tablas**, verificadas con **389 tests estructurales** contra Postgres, **0
   salteados**. ⚠️ **El conteo se movió cuatro veces y ninguna fue regresión:** bajó de 35 a 34 en M12.3
   —que no crea tablas y retira `hce_taller`, resto del esquema v1 (§5.20)—, subió a 36 en M12.4, a 38
   en M12.7 y a 42 en M12.5. **Falta M11.3** (los servicios con las reglas
@@ -76,7 +76,7 @@ IPPU/
   `tests/conftest.py` **aborta con exit 1** si el contenedor no está levantado, si la base de desarrollo
   está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba en
   silencio y devolvía **exit 0** con la mitad de los tests sin correr. Una corrida válida es
-  **307 passed, 0 skipped**.
+  **389 passed, 0 skipped**.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 - **Ronda M12 — absorción del Prototipo v4 (ago-2026), en curso.** IPPU publicó su **Prototipo v4** con el
   Manual de Procedimientos v1.0, que pasa a ser la fuente normativa por encima del Documento Técnico

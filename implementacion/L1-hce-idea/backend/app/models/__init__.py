@@ -12,6 +12,8 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
                       sus dos catálogos (estados y centros educativos)
   ateneo        §2.5  Ateneos y jornadas (M12.7) — registro **institucional**,
                       transversal: no cuelga del expediente, lo referencia
+  pai           §2.2  HCE-PAI (M12.6) — la propuesta y sus 7 tablas hijas.
+                      Módulo **sin firma**; N por expediente, no anual
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
 """
 from app.models.ateneo import (
@@ -54,6 +56,16 @@ from app.models.modulos import (
     PuntuacionIdea,
     PuntuacionProtocolo,
 )
+from app.models.pai import (
+    Pai,
+    PaiCircuito,
+    PaiCoordinacion,
+    PaiEquipo,
+    PaiEvaluacionPrevia,
+    PaiObjetivo,
+    PaiPrestacion,
+    PaiTaller,
+)
 from app.models.severidad import (
     SeveridadDsm,
     SeveridadNivel,
@@ -85,6 +97,9 @@ __all__ = [
     # módulos del flujo
     "Consentimiento", "Idea", "InformeCierre", "Protocolo",
     "PuntuacionIdea", "PuntuacionProtocolo",
+    # HCE-PAI (M12.6)
+    "Pai", "PaiCircuito", "PaiCoordinacion", "PaiEquipo", "PaiEvaluacionPrevia",
+    "PaiObjetivo", "PaiPrestacion", "PaiTaller",
     # HCE-SEV (M12.4)
     "SeveridadDsm", "SeveridadNivel",
     # transversales

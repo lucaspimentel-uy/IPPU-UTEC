@@ -103,7 +103,7 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **307 passed, 0 skipped** (eran 240 hasta M12.5): si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **389 passed, 0 skipped** (eran 307 hasta M12.6): si ves «skipped», algo está mal.
 
 **Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
@@ -135,9 +135,23 @@ capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de
   decisiones nuevas: **§5.50** (cómo se lee una fuente que es a la vez especificación y demo — **M12.6 y
   M12.8 la heredan**), **§5.51** (el estado de inclusión es **continuo**, no anual) y **§5.52**
   (`inclusion.centro` es **texto, no FK**). **307 tests**, migración `aa26917b6e76`.
-- **Queda M12.6 (HCE-PAI)** —el más grande— y **M12.8** para cerrar. Con M12.5 y M12.7 hechos **ya no hay
-  trabajo en paralelo sobre `app/models/`**, así que §5.19 no congela nada. El orden **M12.4 → M12.6** ya
-  se cumplió (§5.23); M12.6 arranca con §5.22, §5.26 y §5.50 ya decididas.
+- **M12.6 HECHO** (2026-09-02) — **HCE-PAI · Propuesta de Atención Individual**, en modo **SOLO
+  ESQUEMA**. **50 tablas**: `pai` (43 campos propios) + siete hijas — `pai_objetivo`,
+  `pai_evaluacion_previa`, `pai_equipo`, `pai_coordinacion`, `pai_taller`, `pai_prestacion` y
+  `pai_circuito`. **389 tests**, migración `72b96030362d`.
+  - **§5.54** reencuadró el bloqueo de §5.28: de las 13 secciones del Manual que se daban por faltantes,
+    **11 están en el `const MANUAL` del Prototipo v4** y el **Anexo A** resultó ser «cálculo de totales y
+    deltas con verificación antes de firmar» — o sea **M11.3, no esquema**. ⚠️ **§4 y §8 siguen sin
+    identificar** (`puntos-a-validar.md` §1.16); son de **Marco general** e **IDEA**, no del PAI.
+  - **§5.55** — la carga única es **por campo, no por sección**: `ingreso_ippu` (§I) y los seis campos
+    editables de §II (`padron_inau`, `disposicion`, `judicial`, `expediente`, `derivado_por`, `motivo`)
+    **son columnas propias de `pai`**, porque HCE-ORG no tiene dónde guardarlas.
+  - **§5.56** — `PAI_AREAS`, `PAI_PREST` y `PAI_CIRCUITO` son **constantes con CHECK, no catálogos**: el
+    prototipo le da 4 funciones de gestión a `CAT_TALLERES` y **cero** a estas tres.
+  - ⚠️ **Ningún guard**: los guards (habilitación de §IX por tipo, Anexo A, «qué IDEA rige») son **M11.3**.
+  - ⚠️ **`pai` NO lleva `UNIQUE(hce_id, anio)`** (§5.22): hay más de un PAI por año.
+- **Queda sólo M12.8** para cerrar la ronda. Con M12.5, M12.6 y M12.7 hechos **ya no hay trabajo en
+  paralelo sobre `app/models/`**, así que §5.19 no congela nada.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

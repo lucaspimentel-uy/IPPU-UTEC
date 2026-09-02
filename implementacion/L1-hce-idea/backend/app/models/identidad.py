@@ -196,6 +196,15 @@ class HceDiurna(OrigenMigracionMixin, Base):
         back_populates="hce", cascade="all, delete-orphan", uselist=False
     )
 
+    # HCE-PAI (M12.6). **Lista y no 0..1**, a diferencia de `severidad` e
+    # `inclusion`: puede haber más de un PAI por año (inicial + actualización
+    # semestral) y por eso `pai` no lleva `UNIQUE(hce_id, anio)` — §5.22.
+    pai: Mapped[list["Pai"]] = relationship(  # noqa: F821
+        back_populates="hce",
+        cascade="all, delete-orphan",
+        order_by="Pai.anio.desc(), Pai.fecha.desc(), Pai.id.desc()",
+    )
+
     # La participación en talleres **no cuelga del expediente**: `hce_taller`
     # (N:M por `taller_id`) se retiró en M12.3 — `handoff.md` §5.20. Era un resto
     # de v1; el modelo que fija la especificación es `pai_taller { pai_id,

@@ -339,3 +339,181 @@ INCLUSION_SEMAFOROS: tuple[str, ...] = ("ok", "warn", "danger", "off")
 #: está sólo como el valor con el que nació, para que el número no quede suelto
 #: en una consulta de M11.3. **No bloquea nada** (§4).
 INCLUSION_ALERTA_DIAS = 60
+
+
+# --------------------------------------------------------------------------
+# HCE-PAI · Propuesta de Atención Individual (M12.6 · Prototipo v4)
+# --------------------------------------------------------------------------
+# Los vocabularios del módulo salen de la **capa de catálogos** del Prototipo v4
+# (`const PAI_* = [...]`, `HCE_IPPU_Prototipo_v4.html:947-996`), que es lo que
+# §5.50 (J1) clasifica como normativo. La decisión tabla-vs-constante de los tres
+# está en `handoff.md` §5.56 (L3); el resumen del criterio, acá.
+#
+# **Los tres son constante, y el prototipo mismo lo dice.** Por el criterio de la
+# cabecera de este archivo, un vocabulario es tabla cuando la institución lo
+# mueve sin que nadie despliegue. `CAT_TALLERES` es ese caso y por eso es tabla
+# (M12.3): el prototipo le da **cuatro funciones de gestión** —`tallerAdd`,
+# `tallerToggle`, `tallerGrupos`, `tallerGestion`—. `PAI_AREAS`, `PAI_PREST` y
+# `PAI_CIRCUITO` **no tienen ninguna**, y cada una aparece exactamente **dos
+# veces** en todo el archivo: la declaración y el único lugar que la consume. La
+# misma fuente que hizo administrable la oferta de talleres dejó estas tres
+# fijas, a propósito.
+#
+# **Se persiste el valor, no el índice.** El prototipo marca las de `checks()`
+# por **posición** (`P[campo][ix]`, `paiChk`), y esa forma no se copia: un índice
+# es un artefacto de cómo se dibujó la lista, no un dato del dominio —el mismo
+# recorte que `INCLUSION_SEMAFOROS` le hizo a las clases CSS del tablero—.
+# Guardar la posición haría que insertar un ítem reescribiera en silencio lo ya
+# registrado, que es exactamente lo que D5 (§5.14) existe para impedir.
+
+#: Áreas de un objetivo del PAI (`PAI_AREAS`, 9).
+#:
+#: **Constante y no catálogo.** No tiene atributos que consultar, nadie la
+#: renderiza como tabla de referencia (a diferencia de `estado_inclusion`, que
+#: sí) y cierra con «Otra», que absorbe el caso no previsto sin bloquear la
+#: carga. Mismo criterio que `INCLUSION_MEDIOS` e `INCLUSION_ROLES`: **CHECK y
+#: no texto libre**, porque «cuántos objetivos por área» es justo el indicador
+#: que el módulo habilita, y con texto libre «Autonomía y AVD», «autonomia» y
+#: «AVD» son tres áreas distintas.
+#:
+#: ⚠️ **No confundir con el «área configurable» de `puntos-a-validar.md` §2.13**,
+#: que IPPU pidió en la reunión: aquello es el **área de generación de
+#: informes** (M11.3/M11.4), no el área de un objetivo. Son dos cosas distintas
+#: con el mismo nombre y no comparten vocabulario.
+PAI_AREAS: tuple[str, ...] = (
+    "Comunicación y lenguaje",
+    "Interacción social",
+    "Desarrollo cognitivo",
+    "Autonomía y AVD",
+    "Regulación emocional",
+    "Flexibilidad y anticipación",
+    "Juego y simbolización",
+    "Motricidad",
+    "Otra",
+)
+
+#: Plazo de un objetivo. Está **inline** en el `<select>` del prototipo, sin
+#: nombre de constante —igual que `INCLUSION_AT_ESTADOS`—, así que se clasifica y
+#: se declara: es un dominio cerrado de tres valores, no texto libre.
+PAI_PLAZOS: tuple[str, ...] = ("Trimestral", "Semestral", "Anual")
+
+#: Prestaciones y certificaciones vigentes que el PAI declara (`PAI_PREST`, 6).
+#:
+#: **Constante y no catálogo**, por el mismo motivo que `INCLUSION_TIPOS_CENTRO`:
+#: el dominio no es de IPPU. Son prestaciones y certificaciones **del Estado**
+#: (BPS, Ley 20.378 / Dec. 72/025) — una nueva la crea la normativa, no
+#: coordinación, así que incorporarla es un cambio de código con revisión.
+#: Cierra con «Otra (detallar en observaciones)», y el detalle tiene dónde ir:
+#: `pai.prest_obs`.
+#:
+#: ⚠️ **No es el vocabulario de `BPS_PRESTACIONES`, y la diferencia importa.**
+#: Aquél describe **el trámite** que HCE-ORG sigue (`organismo_bps.prestacion`,
+#: con su `estado` y su `vencimiento`); éste describe **qué tiene vigente el NNA**
+#: al momento de escribir el PAI, e incluye dos ítems que no son prestaciones
+#: BPS: la Valoración Funcional y el certificado de discapacidad. Son dos
+#: afirmaciones sobre sujetos distintos, como `inclusion.tipo_centro` y
+#: `catalogo_centro_educativo.tipo`. **La tensión que esto deja abierta —dos
+#: lugares que dicen algo sobre prestaciones— está anotada en
+#: `docs/notas/puntos-a-validar.md` §2.15**, no resuelta acá.
+PAI_PRESTACIONES: tuple[str, ...] = (
+    "Pensión por invalidez (BPS)",
+    "Asignación familiar",
+    "AYEX — Ayudas Extraordinarias",
+    "Valoración Funcional (Ley 20.378 / Dec. 72/025)",
+    "Certificado de discapacidad",
+    "Otra (detallar en observaciones)",
+)
+
+#: Circuito institucional de seguimiento del PAI (`PAI_CIRCUITO`, 4).
+#:
+#: **Constante y no catálogo**, y es el más claro de los tres: no son opciones de
+#: una lista sino **el procedimiento institucional escrito en oraciones
+#: completas** («Revisión intermedia de objetivos (semestral)»). Cambiarlo es
+#: cambiar el procedimiento —un acto documentado, con revisión—, no un `UPDATE`
+#: desde una pantalla. **Es el único de los tres que no cierra con «Otra»**: el
+#: circuito es cerrado a propósito.
+#:
+#: Mismo lugar que `CONSENSO_PROCEDIMIENTOS` ocupa para el IDEA: el invariante
+#: metodológico del módulo.
+PAI_CIRCUITO: tuple[str, ...] = (
+    "Seguimiento de evolución en reuniones mensuales de coordinación",
+    "Revisión intermedia de objetivos (semestral)",
+    "Informe anual en diciembre (técnicos de referencia y equipo de coordinación)",
+    "Registro de evoluciones en la HCE",
+)
+
+#: Tipo de propuesta. Discriminador **con consecuencia**: el prototipo habilita
+#: la sección IX (evaluación del PAI anterior) sólo cuando vale
+#: «Actualización anual» (`esAct`). Mismo papel que `ATENEO_TIPOS` en M12.7.
+PAI_TIPOS: tuple[str, ...] = ("PAI inicial (ingreso)", "Actualización anual")
+
+#: El tipo que habilita la sección IX. Se nombra una sola vez, acá.
+PAI_TIPO_ACTUALIZACION = "Actualización anual"
+
+#: Estado de los controles de salud (§IV). Inline en el prototipo.
+PAI_CONTROLES: tuple[str, ...] = ("Al día", "Pendientes", "En regularización")
+
+#: Grado de acuerdo de la familia con la propuesta (§VIII). Inline en el
+#: prototipo. **No es booleano**: «Sí — informada» y «Parcialmente» son estados
+#: intermedios que un `bool` perdería, y la pauta INAU pide constancia del
+#: acuerdo, no sólo de la notificación.
+PAI_ACUERDO_FAMILIA: tuple[str, ...] = (
+    "Sí — acuerdo expreso",
+    "Sí — informada",
+    "Parcialmente",
+    "Pendiente",
+)
+
+#: Frecuencia semanal de concurrencia (§XI). Inline en el prototipo. Se guarda
+#: **la frase, no el número**: el prototipo la escribe así y descomponerla
+#: obligaría a decidir qué significa la asistencia parcial, que ninguna fuente
+#: define. Mismo criterio que `inclusion.dias_horas`.
+PAI_FRECUENCIAS: tuple[str, ...] = ("1 vez", "2 veces", "3 veces", "4 veces", "5 veces")
+
+#: Etapa del proceso de atención (§XI). Inline en el prototipo.
+PAI_ETAPAS: tuple[str, ...] = (
+    "Adaptación / ingreso",
+    "Proceso en curso",
+    "Preparación de transición / egreso",
+)
+
+#: Grado de logro de un objetivo del PAI anterior (§IX). Inline en el prototipo.
+PAI_LOGROS: tuple[str, ...] = (
+    "Logrado",
+    "Parcialmente logrado",
+    "No logrado",
+    "Discontinuado",
+)
+
+#: Qué se decide con ese objetivo de cara al período nuevo (§IX). Inline en el
+#: prototipo. Es la bisagra entre un PAI y el siguiente.
+PAI_DECISIONES: tuple[str, ...] = (
+    "Se cierra",
+    "Continúa igual",
+    "Continúa reformulado",
+    "Se reemplaza",
+)
+
+#: Marco por el que el NNA está en IPPU (§II). Inline en el prototipo.
+PAI_DISPOSICIONES: tuple[str, ...] = ("INAU", "Judicial")
+
+#: Dominio de los dos campos «Sí / No» del formulario (§XIII se coordina, §XV
+#: participó de la elaboración). **Texto y no booleano**: el dominio real tiene
+#: tres estados —«sí», «no» y «todavía no se contestó»— y un `bool` nullable
+#: diría lo mismo peor, obligando a la UI a distinguir `False` de `None` sin
+#: ayuda del dominio.
+PAI_SI_NO: tuple[str, ...] = ("Sí", "No")
+
+#: Los 6 actores con los que el PAI declara si se coordina (§XIII). El prototipo
+#: los **precarga como filas fijas** en cada PAI nuevo (`coords:[…]`) y no ofrece
+#: agregar ni quitar: la pauta INAU pregunta por estos seis, y un PAI que no los
+#: responda está incompleto. De ahí que sean constante y que `pai_coordinacion`
+#: nazca con las seis filas.
+PAI_COORDINACION_ACTORES: tuple[str, ...] = (
+    "Familia y/o referentes de hogar",
+    "Equipo médico tratante",
+    "Docente de educación formal / informal",
+    "Equipo de clínica",
+    "INAU / supervisión de convenio",
+    "Otros (especificar)",
+)

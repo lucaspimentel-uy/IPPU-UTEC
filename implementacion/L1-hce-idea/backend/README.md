@@ -4,7 +4,7 @@ API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Ale
 
 > **Estado: M12.5** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1, la
 > puntuación independiente de M12.2, el catálogo dinámico de talleres de M12.3, **HCE-SEV** (M12.4), los
-> **ateneos y jornadas** de M12.7 y **HCE-INC** (M12.5): **42 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
+> **ateneos y jornadas** de M12.7, **HCE-INC** (M12.5) y **HCE-PAI** (M12.6): **50 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
 > expone `/health`. El esquema está documentado en
 > [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
 >
@@ -18,7 +18,7 @@ API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Ale
 >
 > **Migraciones** (regla enmendada el 2026-08-14, `handoff.md` §5.19): la migración inicial **única** se
 > regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` **en
-> verde** — ya no se saltea, y `alembic upgrade head` crea las **42 tablas** actuales. Se congela sólo si
+> verde** — ya no se saltea, y `alembic upgrade head` crea las **50 tablas** actuales. Se congela sólo si
 > hay trabajo en paralelo real sobre `app/models/`; ahí la descongela y regenera una sola persona al
 > terminar. **Se regenera el mismo archivo de migración, no se apilan revisiones.**
 
@@ -63,7 +63,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **307 passed, 0 skipped**.
+Una corrida válida de hoy es **389 passed, 0 skipped**.
 
 ## Por qué Postgres en Docker
 

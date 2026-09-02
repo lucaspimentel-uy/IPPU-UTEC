@@ -166,7 +166,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── aa26917b6e76_esquema_v2_inicial_m12_5.py   # migración única del esquema v2 (42 tablas)
+│       └── 72b96030362d_esquema_v2_inicial_m12_6.py   # migración única del esquema v2 (50 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -174,7 +174,7 @@ backend/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
 │   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 42 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
+│   ├── models/               # SQLAlchemy — 50 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
 │   │                         #  − hce_taller, retirada en M12.3: handoff §5.20
 │   │                         #  + 2 de M12.4; ahí se retiró la COLUMNA hce_diurna.nivel_soporte,
 │   │                         #    que no mueve el conteo de tablas: handoff §5.24

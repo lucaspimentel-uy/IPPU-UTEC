@@ -7,9 +7,9 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-08-26 (sesión **M12.5** — **HCE-INC implementado**: 42 tablas, 307 tests, migración `aa26917b6e76`; decisiones **§5.50–§5.52**, serie J)
+> - **Última actualización:** 2026-09-02 (sesión **M12.6** — **HCE-PAI implementado en modo solo esquema**: 50 tablas, 389 tests, migración `72b96030362d`; decisiones **§5.54–§5.56**, serie L)
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.7** — **42 tablas**, **307 tests en verde y 0 salteados**, head de Alembic **`aa26917b6e76`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se midieron contra el código y la base al cerrar M12.5** (2026-08-26), no son afirmación de documento; el punto de partida lo había verificado el relevamiento **R0** del mismo día (`docs/notas/relevamiento-estado-2026-08-26.md`). **FALTA: M12.6 (HCE-PAI)** —el más grande, y **sigue bloqueado por material que IPPU no entregó** (§5.28)— y **M12.8** para cerrar (seed, tests, docs — **una sola persona**). El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
+> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.6 · M12.7** — **50 tablas**, **389 tests en verde y 0 salteados**, head de Alembic **`72b96030362d`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se midieron contra el código y la base al cerrar M12.6** (2026-09-02), no son afirmación de documento; el punto de partida lo había verificado el relevamiento **R0** del mismo día (`docs/notas/relevamiento-estado-2026-08-26.md`). **FALTA: sólo M12.8** para cerrar la ronda (seed, tests, docs — **una sola persona**). 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -1485,6 +1485,179 @@ Doc. La regla que queda es la de §12.1 —**el contexto vive en el repo**—, y
 
 ---
 
+## 5.54 · Decisión de la sesión de reconocimiento (serie **L**, 2026-09-02, Lucas)
+
+### 5.54 (L1) El bloqueo de material de IPPU sobre M12.6 **se reencuadra, no se levanta entero** (2026-09-02, Lucas)
+§5.28 (G1) le puso a M12.6 **dos** bloqueos. El primero —la ratificación de §5.8— ya lo movió **§5.35 (H3)**:
+la puerta está **antes de M11.3**, no antes de los sub-módulos de M12. Queda el segundo, y es el que esta
+entrada reencuadra: «falta material de IPPU — el **Anexo A del Manual** y las **13 secciones** que el
+prototipo no muestra (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25)».
+
+**Medido contra el código, no contra los `.md`** (sesión R1, §13):
+
+1. **De las 13 secciones, 11 estaban a la vista.** El Prototipo v4 **embebe una versión de consulta del
+   Manual** (`const MANUAL`, `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html:1730`) con 12 entradas
+   agrupadas: 1 · 2 · 3 · 5 · **6–7** · 9 · 10 · **11–13** · **14–15** · **16–18** · **19–22** · **23–25**.
+   Once de las trece reclamadas —**§7, §12, §13, §15, §17, §18, §20, §21, §22, §24 y §25**— **están ahí en
+   forma condensada**. **Sólo §4 y §8 faltan de verdad:** no existe `id:'m4'` ni `id:'m8'`, y no hay una
+   sola mención textual a «§4» ni a «§8» en todo el archivo. ⚠️ **La premisa de §5.28 no era falsa cuando
+   se escribió: no se había medido.**
+2. **El Anexo A no es material de esquema.** `docs/markdown/apartado-especificaciones-tecnicas-prototipo-v4.md:77`,
+   bajo **§6 Requisitos NO funcionales**, lo cita una sola vez y dice qué es: *«Cálculo automático de
+   totales y deltas con verificación visible por el evaluador antes de firmar (Anexo A del Manual)»*.
+   Es **un cálculo y un control previo a la firma** — ni tabla, ni columna, ni catálogo. Pertenece a
+   **M11.3**, que es donde el plan M12 §5.6 manda esa familia entera. **No bloquea el esquema de M12.6.**
+3. **Lo que M12.6 necesita para modelar, está** — y está en dos lugares distintos, que no se confunden:
+   - Los tres vocabularios del PAI —**`PAI_AREAS` (9), `PAI_PREST` (6) y `PAI_CIRCUITO` (4)**— viven en la
+     **capa de catálogos del prototipo** (`HCE_IPPU_Prototipo_v4.html:947-996`), que es exactamente lo que
+     **§5.50 (J1)** clasifica como normativo.
+   - El **esquema de datos sugerido** está en `apartado-especificaciones-tecnicas-prototipo-v4.md:28-51`,
+     e incluye **`pai_taller { pai_id, taller_nombre }` — «por nombre, robusto a cambios del catálogo»**
+     (`:50`), que es lo que §5.20/§5.21 ya habían decidido por su cuenta.
+   - ⚠️ **Ese esquema sugerido NO define una tabla `pai`.** La cabecera de ~46 campos sale del prototipo y
+     de `docs/markdown/prototipo-v4-referencia.md` §7, no del `.md` de especificaciones.
+
+**Se autoriza M12.6 en modo SOLO ESQUEMA**, con el mismo patrón que M12.1–M12.5 y M12.7: **tablas,
+columnas y catálogos**. **Sin guards de validación** — quedan en **M11.3**, por el plan M12 §5.6.
+
+⚠️ **Esto NO cierra el bloqueo, y no hay que leerlo así.** **§4 y §8 del Manual siguen faltando y no
+sabemos de qué son** — el prototipo no las nombra ni por número. Se anotan en `docs/notas/puntos-a-validar.md`
+hasta identificarlas. Lo que esta entrada dice es que **el esquema no las necesita para escribirse**, no que
+dejen de importar: **si al identificarlas resultan ser de PAI, lo que se construya acá se revisa.**
+
+⚠️ **§5 es append-only (§12.6):** esto es una **entrada nueva** que reencuadra la fila de M12.6 de §5.28
+—precedente exacto: **§5.35 hizo lo mismo con la fila de M12.5**—, **no una edición** de §5.28.
+
+---
+
+## 5.55 → 5.56 · Decisiones de M12.6 (HCE-PAI), serie **L** (2026-09-02, Lucas)
+
+> **Ésta implementa**, como la serie J: las dos entradas se escriben **antes** de
+> modelar y quedan implementadas en la misma sesión — **50 tablas**, **389 tests en verde y 0
+> salteados**, migración regenerada (`72b96030362d`). **Ninguna de las dos deroga nada:** L2 resuelve una
+> contradicción **interna de la fuente** que §5.50 (J1) ya sabía arbitrar, y L3 aplica a tres vocabularios
+> nuevos el criterio que M12.3, M12.5 y M12.7 ya habían fijado.
+
+### 5.55 (L2) Los campos editables de las secciones I y II **son columnas propias de `pai`** (2026-09-02, Lucas)
+La documentación decía que las secciones **I, II, VI, XI y XV** del PAI «se renderizan con `ro()` … hay
+que modelarlas como referencias» (`docs/markdown/prototipo-v4-referencia.md:166`). **Medido contra el
+código, es falso para cuatro de las cinco.**
+
+**Qué muestra el render.** El prototipo usa **dos helpers distintos, uno al lado del otro**:
+
+| Helper | Qué emite | Semántica |
+|---|---|---|
+| `ro(v)` (`:1012`) | `<input readonly>` con **un valor**, sin binding | se lee de otro módulo |
+| `fecha(k)` · `sel(k,…)` · `txt(k)` · `ta(k)` (`:1013-1016`) | `onchange="getP(id).pai.<k>=this.value"` | **escribe en `p.pai`** |
+
+En la sección II conviven los dos: `ro(p.inau.sipi)` y `ro(p.inau.convenio)` (`:1071-1072`) junto a
+**`fecha('padronInau')`**, **`sel('disposicion',…)`**, **`sel('judicial',…)`**, **`txt('expediente')`**,
+**`txt('derivadoPor')`** y **`ta('motivo')`** (`:1073-1078`). La sección I hace lo mismo con
+**`fecha('ingresoIppu')`** (`:1068`).
+
+**La prueba que cierra el caso es negativa: no hay de dónde leerlos.** HCE-ORG no los modela — su objeto
+es `inau:{sipi, convenio, referente, ingreso, obs, envios[]}` (`:447`) y su editor `mOrg()` renderiza
+exactamente esos cinco campos (`:2253-2257`). Modelarlos «como referencia» habría dejado **siete campos
+del formulario sin ningún lugar donde guardarse**.
+
+**La contradicción no era entre dos partes del código: era entre el código y la prosa.** El subtítulo de
+la sección II —*«N.º SIPI y convenio tomados de HCE-ORG»* (`:1069`)— **nombra exactamente los dos campos
+que son `ro()`** y es preciso. Lo que generalizó de más fue la ficha de novedades del prototipo (`:2011`),
+que mete «marco administrativo (II)» entero en la lista de carga única, y
+`prototipo-v4-referencia.md:166` repitió esa prosa **contradiciendo su propia línea `:149`**, que ya
+listaba los cuatro campos bajo «Campos de cabecera (`p.pai`)».
+
+**Se resuelve por §5.50 (J1)** —el código ejecutable manda sobre la prosa de la misma fuente—: los siete
+son **columnas propias**. Lo que sí es referencia en la sección II son **`sipi`, `convenio` y el
+diagnóstico**, nada más.
+
+**Alcance exacto, para que no se lea de más:**
+- **§I** — solo `ingreso_ippu` es propio; nombre, fecha de nacimiento, edad, CI y N.º de HC se leen.
+- **§II** — siete propios; tres referencias.
+- **§VI y §XI** — los **puntajes** se leen (IDEA, A, B, Δ, severidad, grupo) y la **interpretación
+  clínica** se escribe: `sint_lb`, `delta_interp`, `frecuencia`, `etapa`, `otras_act`.
+- **§XV** — es la única enteramente de lectura para los dos técnicos responsables; el resto del equipo se
+  carga a mano en `pai_equipo`.
+- ⚠️ **§V no se toca acá:** la fija §5.22 y sigue igual — `centro`, `modalidad` y `grado` se leen en vivo
+  de `inclusion`, `apoyos_ed` y `otras_ed` son del PAI.
+
+**Corolario de método, que es lo que hay que llevarse.** La categoría «sección de carga única» **no
+existe**: la carga única es **por campo**. Ninguna de las cinco secciones es homogénea, y tratarlas como
+bloque fue lo que produjo el error. Hay `test_los_campos_editables_de_las_secciones_i_y_ii_son_columnas_propias`
+para que no vuelva.
+
+⚠️ **`prototipo-v4-referencia.md:166` queda con prosa que esta entrada contradice.** No se edita en esta
+sesión —es material de referencia, no de decisión—, y se anota en §6 para que lo corrija quien lo tome:
+el texto correcto es el de su propia línea `:149`.
+
+### 5.56 (L3) Los tres vocabularios del PAI son **constante, no catálogo** — y lo dice el prototipo (2026-09-02, Lucas)
+`PAI_AREAS` (9), `PAI_PREST` (6) y `PAI_CIRCUITO` (4) van a `app/core/constantes.py` con CHECK generado
+desde la constante, **no** a tablas de catálogo. Se decide con el criterio ya escrito —tabla si la
+institución lo mueve sin que nadie despliegue; constante si cambiarlo es un cambio de código con
+revisión— y con el mismo razonamiento de `ATENEO_TIPOS` (M12.7) y los cinco `INC_*` (M12.5).
+
+**La evidencia que decide, y es del propio prototipo.** No hace falta razonar sobre la naturaleza de cada
+lista: la fuente ya clasificó, y §5.50 (J1) manda leer su capa ejecutable.
+
+| | Funciones de gestión en el prototipo | Apariciones en todo el archivo | Resultado |
+|---|---|---|---|
+| `CAT_TALLERES` | **4** — `tallerAdd`, `tallerToggle`, `tallerGrupos`, `tallerGestion` | muchas | **tabla** (M12.3) |
+| `PAI_AREAS` | **0** | **2** (declaración + un consumo) | constante |
+| `PAI_PREST` | **0** | **2** | constante |
+| `PAI_CIRCUITO` | **0** | **2** | constante |
+
+**La misma fuente que hizo administrable la oferta de talleres dejó estas tres fijas.** Es la distinción
+que §5.50 pide y no una inferencia nuestra.
+
+**Y cada una lo confirma por su lado:**
+- **`PAI_AREAS`** — lista plana sin atributos, nadie la consulta por sí misma (a diferencia de
+  `estado_inclusion`, que el módulo **renderiza como tabla de referencia**), y cierra con «Otra». CHECK y
+  no texto libre porque «cuántos objetivos por área» es justo el indicador que el módulo habilita.
+  ⚠️ **No confundir con el «área configurable» de `puntos-a-validar.md` §2.13**, que IPPU pidió en la
+  reunión: aquello es el **área de generación de informes** (M11.3/M11.4). Mismo nombre, otra cosa.
+- **`PAI_PREST`** — el dominio **no es de IPPU**: son prestaciones y certificaciones del Estado (BPS,
+  Ley 20.378 / Dec. 72/025). Una nueva la crea la normativa, no coordinación. Mismo argumento que
+  `INCLUSION_TIPOS_CENTRO`.
+- **`PAI_CIRCUITO`** — el más claro: no son opciones, son **el procedimiento institucional escrito en
+  oraciones completas**. Es el único de los tres que **no cierra con «Otra»**, a propósito.
+
+**Decisión de forma que va con esto: se persiste el valor, no el índice.** El prototipo marca las de
+`checks()` por **posición** (`P[campo][ix]`, `paiChk`) y esa forma **no se copia**: un índice es un
+artefacto de cómo se dibujó la lista. Guardar la posición haría que insertar un ítem reescribiera en
+silencio lo ya registrado — exactamente lo que D5 (§5.14) existe para impedir. Mismo recorte que
+`INCLUSION_SEMAFOROS` le hizo a las clases CSS del tablero.
+
+⚠️ **Lo que esta entrada NO resuelve, y queda anotado: `prest` choca con §5.22.** «Prestaciones y
+certificaciones vigentes» es **diagnóstico de situación**, y por el reparto de §5.22 eso se lee en vivo,
+no se congela. **Pero hoy no hay de dónde leerlo:** `organismo_bps` es 0..1 por expediente con **una
+sola** `prestacion` en texto libre —no un conjunto— y dos de los seis ítems (la Valoración Funcional y el
+certificado de discapacidad) **no son prestaciones BPS**. Se modela como `pai_prestacion`, hija propia del
+PAI, y la pregunta —¿unificar con HCE-ORG, y en qué dirección?— va a **`puntos-a-validar.md` §2.15**. No
+se decide de hecho en el código: se decide por escrito cuando haya con qué.
+
+---
+
+## 5.57 · Ratificación posterior a M12.6 (serie **L**, 2026-09-02, el equipo)
+
+### 5.57 (L4) `pai_prestacion` se ratifica como excepción declarada a §5.22, no como lectura en vivo (2026-09-02, ratificado por el equipo)
+Sobre §2.15 (tres salidas, `puntos-a-validar.md`). Medido en la sesión de reconocimiento del
+2026-09-02: ningún módulo del backend implementa lectura en vivo hoy — `app/services/` no
+existe, `app/routers/__init__.py` está vacío; el único otro caso de «leer en vivo» ya
+decidido (§5.22, sección V del PAI contra `inclusion`) está en el mismo estado: ausencia de
+columnas, sin lector todavía. La opción 1 (HCE-ORG → N:1 + lectura en vivo) supondría
+adelantar la arquitectura completa de M11.3/M11.4 sólo para esta tabla — fuera de alcance
+de M12.6/M12.8. La opción 3 (híbrido, avisar cuando difiere) requeriría antes una tabla de
+equivalencias: `BPS_PRESTACIONES` (5) y `PAI_PRESTACIONES` (6) no comparten ninguna cadena
+exacta.
+
+Se ratifica la opción 2: `pai_prestacion` queda como declaración fechada del PAI, no como
+copia sincronizada de `organismo_bps`. No es un descuido: es una foto a la fecha de la
+propuesta, igual que el resto del documento. Se reabre en M11.3/M11.4, cuando exista la
+capa de servicios, si conviene construir ahí el aviso de divergencia (opción 3) contra una
+tabla de equivalencias a definir en ese momento.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy
@@ -1745,11 +1918,23 @@ Doc. La regla que queda es la de §12.1 —**el contexto vive en el repo**—, y
         anual — pregunta abierta a IPPU en `puntos-a-validar.md` §1.15) y **§5.52** (`centro` es texto,
         no FK — se suma a `puntos-a-validar.md` §2.9). **307 tests en verde, 0 salteados**, migración
         regenerada (`aa26917b6e76`). Ver bitácora §13.
-  - [ ] **M12.6** HCE-PAI — el más grande, y **el único sub-módulo que queda**. ~~M12.5~~ y ~~M12.7~~
-        hechos, así que **ya no hay trabajo en paralelo sobre `app/models/`** y §5.19 no congela nada.
-        ⚠️ **§5.23:** **M12.4 iba antes** (dependencia de conocimiento, ya resuelta). Arranca con §5.22,
-        **§5.26** y **§5.50** ya decididas, y con `inclusion.centro` / `.modalidad` / `.grado` ya
-        construidas y con nombre fijado por contrato (§5.22).
+  - [x] ~~**M12.6** HCE-PAI~~ — **HECHO el 2026-09-02, en modo SOLO ESQUEMA** (§5.54). **8 tablas**:
+        `pai` (43 campos propios) + `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` ·
+        `pai_coordinacion` · `pai_taller` · `pai_prestacion` · `pai_circuito`. **50 tablas**, **389 tests**,
+        migración `72b96030362d`. Decisiones **§5.55 (L2)** —los campos editables de las secciones I y II
+        son columnas propias, la carga única es **por campo y no por sección**— y **§5.56 (L3)** —los tres
+        vocabularios del PAI son **constante y no catálogo**, y lo dice el propio prototipo—. El test de
+        participación que §5.21 traspasó desde M12.3 **quedó escrito**. Ver bitácora §13.
+        ⚠️ **Lo que M12.6 NO hizo, a pesar de tenerlo asignado: los nombres reales de los grupos (I2).**
+        Sigue pendiente y sigue bloqueado por lo mismo — no hay forma de crear ni renombrar un grupo
+        (`puntos-a-validar.md` §2.8). **Se sacó del alcance de esta sesión a propósito**, por acuerdo
+        previo: es un `UPDATE` + regeneración de catálogos que se costea aparte.
+  - [ ] **Corregir `docs/markdown/prototipo-v4-referencia.md:166`** — dice que «las secciones I, II, VI,
+        XI y XV se renderizan con `ro()` … modelarlas como referencias», y **§5.55 (L2) lo contradice
+        con el código**: siete campos de I y II son columnas propias de `pai`. **El texto correcto ya está
+        en el mismo archivo**, en su línea `:149` («Campos de cabecera (`p.pai`)»), así que es corregir la
+        prosa contra su propia lista, no reinvestigar. **No se hizo en M12.6 a propósito**: ese archivo es
+        material de referencia y la sesión estaba tocando modelo, migración y tests. **Barato, sin dueño.**
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
@@ -1947,6 +2132,150 @@ Las decisiones se cambian **explícitamente y por escrito** en §5, con fecha y 
 código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
+
+- **2026-09-02 · Sesión M12.6 — HCE-PAI, en modo solo esquema** (Lucas + Claude, rama `main`).
+  **Cierra el sub-módulo más grande de la ronda.** Arranca donde R1 dejó: con la medición hecha, pero sin
+  decisión escrita. **Lo primero de la sesión fue la decisión, no el código.**
+  - **0 — La puerta se abrió por escrito y con confirmación explícita.** §5.28 dijo que el bloqueo lo
+    levanta el equipo, en §5; así que **§5.54 (L1) se propuso y se confirmó antes de tocar un archivo**.
+    Al proponerla se corrigieron **dos errores del borrador**, medidos contra el repo: la fecha era
+    **2026-09-02** (sesión R1) y no 2026-08-26/27, y los tres catálogos del PAI **no están** en
+    `apartado-especificaciones-tecnicas-prototipo-v4.md` sino en la **capa de catálogos del prototipo**
+    (`:947-996`); el `.md` aporta el **esquema sugerido** (`:28-51`), que además **no define ninguna tabla
+    `pai`**. Verificado que la inserción fue **append-only**: `git diff --numstat` → **0 borrados**.
+  - **1 — Qué son §4 y §8 del Manual: se respondió por estructura, no por adivinanza.** El `const MANUAL`
+    agrupa **25 secciones en seis Partes** y **la numeración no tiene huecos**, así que cada faltante cae
+    dentro de una Parte conocida: **§4 cierra Parte I (Marco general)** y **§8 está dentro de Parte II
+    (IDEA)**, entre puntuar (§6–7) e interpretar el perfil (§9). ⚠️ **Y el Manual no tiene ninguna Parte
+    del PAI** —son marco general, IDEA, Escala IPPU-TEA, Informe de Cierre, HCE y Calidad—, así que
+    **ninguna de las dos podía ser material del PAI**. Ése fue el permiso para seguir. Se descartaron dos
+    candidatos de §4 **con cita**: no es el consentimiento (**§19.1 + Anexo C**, `:731`/`:1229`) ni los
+    permisos (**§21.1**). Todo quedó en `puntos-a-validar.md` **§1.16**.
+  - **2 — El módulo: 8 tablas, no 5.** `pai` (**43 campos propios**) + `pai_objetivo`,
+    `pai_evaluacion_previa`, `pai_equipo`, `pai_coordinacion`, `pai_taller` — las cinco previstas — **y dos
+    que la consigna no enumeraba y los datos exigían**: `pai_prestacion` y `pai_circuito`. `prest{}` y
+    `circuito{}` son conjuntos marcados contra un vocabulario cerrado; dejarlos afuera habría **descartado
+    dos campos del formulario**. Se modelan con la misma forma que `pai_taller` (una fila por ítem
+    marcado) en vez de columnas booleanas o un JSONB, por el criterio de `inclusion_bitacora`: son
+    consultas **entre** propuestas.
+  - **El conteo de 43, derivado y no copiado.** 49 claves en `p.pai` **− 3** que se leen en vivo (§5.22)
+    **− 3** que son colecciones y viven en hijas = **43**. El «~46 campos» de la referencia era el paso
+    intermedio. Hay un test que lo fija.
+  - **3 — Dos decisiones escritas antes de modelar.** **§5.55 (L2)**: la carga única es **por campo, no
+    por sección** — `ingreso_ippu` (§I) y los seis editables de §II son columnas propias, y la prueba que
+    cierra el caso es **negativa** (HCE-ORG no tiene dónde guardarlos: su objeto es `inau:{sipi, convenio,
+    referente, ingreso, obs, envios[]}`). **§5.56 (L3)**: los tres vocabularios del PAI son **constante y
+    no catálogo**, y **lo decide el propio prototipo** — le da **4 funciones de gestión** a `CAT_TALLERES`
+    (`tallerAdd`/`tallerToggle`/`tallerGrupos`/`tallerGestion`) y **0** a `PAI_AREAS`, `PAI_PREST` y
+    `PAI_CIRCUITO`, que aparecen **2 veces cada una** en todo el archivo. No hizo falta razonar sobre la
+    naturaleza de cada lista: la fuente ya había clasificado (§5.50).
+  - **4 — El test que M12.3 no pudo escribir, escrito** (§5.21). Carga participación en «Taller de
+    huerta», lo retira del catálogo y afirma que **sigue legible** y **marcada como retirada**. Se le sumó
+    el caso extremo —**borrar** la fila del catálogo tampoco toca la participación, porque no hay FK que
+    propague— y la verificación de que `pai_taller` **no tiene FK a `taller`** ni columna `taller_id`.
+  - **5 — Migración regenerada** (§5.19): `alembic downgrade base` → se borra
+    `aa26917b6e76_esquema_v2_inicial_m12_5.py` → autogenerate → **`72b96030362d`**, un solo archivo en
+    `versions/`, `down_revision = None`. `alembic upgrade head` crea **50 tablas** y el seed vuelve a
+    cargar los catálogos.
+  - **Verificación:** `pytest -q` → **389 passed, 0 skipped** (307 + **82** nuevos; `test_m12_pai.py`).
+    `verificar_estado.py --check` → **`OK`, exit 0** tras poner los `.md` al día. **50 tablas · migración
+    `72b96030362d` · 389 tests**, las tres medidas, no citadas.
+  - ⚠️ **Tres tests propios fallaron primero, y el arreglo no fue cosmético.** `judicial`, `participo` y
+    `se_coordina` son `String(10)`: con `"valor inventado"` Postgres los rechazaba **por largo
+    (`DataError`), antes de llegar al CHECK**. El test del dominio estaba probando la longitud de la
+    columna y **habría seguido en verde con el CHECK borrado**. Se cambió por `FUERA_DE_DOMINIO = "X"`,
+    con el porqué escrito al lado de la constante.
+  - **Lo que esta sesión NO hizo, a propósito y por acuerdo previo:**
+    - **Ningún guard** — habilitación de §IX por tipo, Anexo A, «qué IDEA rige a la fecha del PAI»: todo
+      **M11.3** (§5.54).
+    - **I2, los nombres reales de los grupos**, que §6 tenía **asignado a M12.6**. Sigue pendiente y
+      sigue bloqueado por lo mismo: no hay forma de crear ni renombrar un grupo (§2.8). Se anotó en §6
+      para que el cierre de M12.6 no se lea como que quedó hecho.
+    - **Endpoints de alta/renombre de `grupo`** (§2.8/§2.11 → M11.3/M11.4).
+  - ⚠️ **Dos deudas que la sesión abre y deja escritas, no resueltas:** **`pai_prestacion` choca con
+    §5.22** —«vigente» es diagnóstico y debería leerse en vivo, pero `organismo_bps` guarda **una sola**
+    prestación en texto libre y dos de los seis ítems no son BPS— → `puntos-a-validar.md` **§2.15**, con
+    las tres salidas posibles; y **`prototipo-v4-referencia.md:166` quedó con prosa que §5.55 contradice**
+    —se corrige con lo que dice su propia línea `:149`—, anotado en §6.
+
+- **2026-09-02 · Sesión R1 — reconocimiento previo a M12.6: cuatro preguntas contra el código** (Lucas +
+  Claude, rama `main`, **sin tocar el modelo**). Sesión de sólo lectura para decidir si M12.6 (HCE-PAI)
+  puede arrancar **en modo esquema** o sigue bloqueada. **Alcance respetado:** no se tocó `app/`, ni
+  `tests/`, ni `alembic/`, ni la base; **no se levantó Docker**. El único archivo que cambia es esta
+  entrada.
+  - **1 — Estado medido.** `python herramientas/verificar_estado.py --check` desde el backend →
+    **`OK — la documentación coincide con el repo`, exit 0**. Medido: **42 tablas** (`ateneo` 2 ·
+    `catalogos` 13 · `identidad` 5 · `inclusion` 4 · `modulos` 6 · `severidad` 2 · `transversales` 10) y
+    **un solo head, `aa26917b6e76`** (`aa26917b6e76_esquema_v2_inicial_m12_5.py`, `down_revision = None`,
+    único archivo en `versions/`). ⚠️ **Los 307 tests NO se re-midieron:** el script los reporta como
+    `NO MEDIDO — Docker abajo`, y levantar el contenedor quedaba fuera del alcance. Piso estático, que
+    **no es el mismo número y no se ofrece como tal**: **223 funciones `test_`** en 7 archivos, con
+    `parametrize` en 5 de ellos — la diferencia hasta 307 es expansión de casos, y sólo `pytest` la
+    cuenta. **307 sigue siendo la cifra medida en M12.5, no una medición de hoy.**
+  - **2 — `padronInau`, `disposicion`, `judicial` y `expediente` son campos del propio `pai`. Resuelto
+    contra el código, no repetido como contradicción.** En
+    `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html:450` los cuatro están declarados **dentro del literal
+    `pai:{…}`** de la plantilla de paciente, con `''` de default. En el render de la sección II
+    (`:1069-1076`) el prototipo usa **dos helpers distintos, uno al lado del otro**: `ro()` (`:1012`) es
+    un `<input readonly>` que recibe **un valor**, sin binding — `ro(p.inau.sipi)` y `ro(p.inau.convenio)`
+    (`:1071-1072`); `fecha()`, `sel()` y `txt()` (`:1013-1016`) emiten
+    `onchange="getP(id).pai.<k>=this.value"`, y por ahí entran **`fecha('padronInau')`** (`:1073`),
+    **`sel('disposicion',['INAU','Judicial'])`** (`:1074`), **`sel('judicial',['No','Sí'])`** (`:1075`) y
+    **`txt('expediente')`** (`:1076`). **La prueba que cierra el caso es negativa:** HCE-ORG **no tiene
+    dónde guardarlos** — su objeto es `inau:{sipi, convenio, referente, ingreso, obs, envios[]}` (`:447`)
+    y su editor `mOrg()` renderiza exactamente esos cinco campos (`:2253-2257`). No existe origen del cual
+    leerlos en solo lectura.
+  - **La contradicción existe, pero no es entre dos partes del código: es entre el código y la prosa.**
+    El subtítulo de la sección II dice *«N.º SIPI y convenio tomados de HCE-ORG»* (`:1069`) y **nombra
+    exactamente los dos campos que son `ro()`** — es preciso. Lo que generaliza de más es la ficha de
+    novedades del propio prototipo (`:2011`), que mete *«marco administrativo (II)»* entero en la lista de
+    carga única *«en solo lectura»*. **`docs/markdown/prototipo-v4-referencia.md` repitió esa prosa**
+    (`:166` — «las secciones I, II, VI, XI y XV se renderizan con `ro()` … modelarlas como referencias»)
+    **contradiciendo su propia línea `:149`**, que ya listaba los cuatro campos bajo «Campos de cabecera
+    (`p.pai`)». Por §5.50 (J1) —el código ejecutable manda sobre la prosa de la misma fuente— **los cuatro
+    corresponden a columnas propias de `pai`**, y lo que sí es referencia en la sección II son **`sipi`,
+    `convenio` y el diagnóstico**, nada más. **Queda para decidir por escrito en §5 al abrir M12.6**, no acá.
+  - **3 — Qué se midió sobre el material que falta (evidencia, sin veredicto).** `grep` de «Anexo A» y
+    «Manual de Procedimientos» sobre `app/`, `tests/` y `alembic/`: **«Anexo A» → 0 apariciones**;
+    **«Manual de Procedimientos» → 1 sola**, en `app/models/modulos.py:72`, dentro de
+    `PuntuacionConsensoMixin` — y ahí el Manual se cita como **fundamento de una decisión nuestra (D7,
+    §5.16)**, no como fuente de forma; lo que ese párrafo dice que el Manual §23 pide (kappa) está
+    **explícitamente sin implementar**. Contra eso, **«Prototipo v4» aparece 31 veces en 14 archivos** de
+    `app/` y `tests/` — los siete módulos de modelos, `core/constantes.py` y cinco `test_m12_*`.
+    ⚠️ **Y el Manual no está en el repo:** no hay archivo ni conversión en `docs/markdown/`; sólo lo
+    mencionan otros documentos. **M12.1–M12.5 y M12.7 no pudieron construirse desde él, porque no lo
+    tuvieron.**
+  - **Qué es el Anexo A, medido.** `docs/markdown/apartado-especificaciones-tecnicas-prototipo-v4.md:77`,
+    bajo **§6 Requisitos NO funcionales**: *«Cálculo automático de totales y deltas con verificación
+    visible por el evaluador antes de firmar (Anexo A del Manual)»*. Es **un cálculo y un control previo a
+    la firma** — la misma familia que el plan M12 §5.6 manda a M11.3. Ni tabla, ni columna, ni catálogo.
+  - ⚠️ **Y la lista de «secciones que el prototipo no muestra» está vieja.** El prototipo **embebe una
+    versión de consulta del Manual** (`const MANUAL`, `:1730`) con 12 entradas agrupadas: 1 · 2 · 3 · 5 ·
+    **6–7** · 9 · 10 · **11–13** · **14–15** · **16–18** · **19–22** · **23–25**. De las trece secciones
+    que se reclaman, **once están ahí en forma condensada** (§7, §12, §13, §15, §17, §18, §20, §21, §22,
+    §24, §25) y **sólo §4 y §8 faltan de verdad** — no existe `id:'m4'` ni `id:'m8'`, y no hay una sola
+    mención textual a «§4» ni «§8» en todo el archivo. Además, los tres catálogos del PAI —`PAI_AREAS`
+    (9), `PAI_PREST` (6) y `PAI_CIRCUITO` (4), en `:947-996`— viven en la **capa de catálogos**, que es lo
+    que §5.50 clasifica como normativo, y `apartado-especificaciones…md:28-51` trae el esquema de datos
+    sugerido, incluido `pai_taller { pai_id, taller_nombre }`. **Esto no decide nada:** §5.28 escribió el
+    bloqueo y sólo el equipo lo levanta, por escrito y en §5. Lo que esta sesión aporta es que **la
+    premisa del bloqueo se puede volver a medir**, y medida da distinto.
+  - **4 — Confirmado: sigue sin haber forma de crear ni de renombrar un `grupo`.**
+    `app/routers/__init__.py` pesa **0 bytes** y el directorio no tiene otro `.py`;
+    `app/schemas/__init__.py` pesa **0 bytes**; **`app/services/` no existe**; `app/main.py` sólo expone
+    `/health`. Igual que lo midió R0 el 2026-08-26 — **nada cambió**. La única precisión que agrega esta
+    sesión: **el seed sí crea filas** (`app/seed_catalogos.py:239-244`, las 4 por color, `anio 2026`),
+    pero es **`solo_insertar=True`** con test que lo fija (`tests/test_m12_catalogos.py:68`), y su propio
+    comentario dice *«de acá en más los administra coordinación»* — **coordinación no tiene con qué**.
+    **Renombrar no tiene ningún camino, ni siquiera el seed.** `puntos-a-validar.md` §2.8 sigue
+    bloqueante, como lo dejó §5.37.
+  - ⚠️ **Un hallazgo adyacente que esta sesión NO corrige, a propósito (fuera de alcance):**
+    `tests/test_m12_catalogos.py:60` (`test_el_seed_trae_los_cuatro_grupos_por_color`) todavía **afirma
+    como correctos los cuatro nombres por color** que **§5.37 (I2) declaró datos de demostración**, y
+    `app/data/catalogos_iniciales.json` los sigue sembrando. Es exactamente el `UPDATE` + regeneración que
+    §5.37 dejó costeado y sin hacer. **Queda anotado, no tocado.**
+  - **Verificación:** `python herramientas/verificar_estado.py --check` → **exit 0**. No se corrió
+    `pytest` (Docker abajo, por alcance). No se tocó ninguna tabla, migración ni test.
 
 - **2026-08-26 · Sesión H1 — higiene del repositorio, sin tocar el modelo** (Lucas + Claude, rama
   `chore/higiene-2026-08-26`, **sin mergear y sin pushear**). Sesión de mantenimiento entre M12.5 y M12.6.
