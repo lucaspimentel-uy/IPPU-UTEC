@@ -2183,6 +2183,51 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-02 · Sesión L6 — cierre de cabos sueltos de la ronda M12: la mayoría de las decisiones
+  volvió sin completar** (Lucas + Claude, rama `main`). **Documentación solamente.** No se tocó `app/`
+  salvo un docstring; no se tocaron `alembic/`, `tests/` ni `app/data/`; no se regeneró migración ni
+  catálogos; no se levantó Docker; **no se corrió `pytest`** y las **389** no se re-midieron.
+  - **Punto de partida medido** (no se cita como cifra viva): árbol limpio en `65a0b5a`, los dos remotos
+    (`gitlab`, `origin`) en el mismo hash. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Última entrada existente: `### 5.58` en
+    `handoff.md`, `### 1.16` y `### 2.16` en `puntos-a-validar.md`.
+  - **Hoja de decisiones (SECCIÓN A del prompt, D-1 … D-10): las diez volvieron `SIN COMPLETAR`.** Por
+    §12.6 no se decide ninguna, no se aplica ninguna recomendación y **no se escribe ninguna entrada de
+    §5**. La hoja se re-emitió con la evidencia de repo medida bajo cada punto, para que Lucas la
+    conteste. Consecuencia: **D-2 (nombres reales de los grupos) sigue bloqueando M12.8**; **§2.3
+    («fase») no se cierra**; el criterio de aceptación que reemplaza a §12-A **no se define**; la
+    columna `ateneo.observaciones` y el trailer de commits **quedan pendientes**.
+  - **Lo que sí se hizo, por estar mandado explícitamente y no depender de ninguna decisión:**
+    - **Bitácora L5 escrita en forma retroactiva** (entrada de abajo). L5 había cerrado sin registro.
+    - **`app/models/ateneo.py`** — el docstring de `Ateneo.sensible` seguía llamando «hueco de la
+      fuente» a la visibilidad del ateneo de grupo con «la pregunta va a IPPU». §5.58 la contestó:
+      reescrito a la regla vigente (acceso general, ⚠️ CONFIRMABLE, puntero a §2.16). **Sólo docstring:**
+      derivación, CHECKs y `TIPO_SENSIBLE` intactos.
+    - **`puntos-a-validar.md`** — resumen: §1.12 ya no figura sólo como «cerrado por la reunión» (la
+      reunión lo cerró «por grupo», §5.58 lo re-cerró en dirección opuesta). **No se cerró §2.3** (D-5
+      sin vocabulario); no se cerró ningún punto cuya decisión fuera «sigue abierto».
+    - **`respuestas-reunion-ippu-2026-08-21.md` §16** — 9.a agregado a la lista del próximo contacto:
+      confirmación escrita de la reversión (hoy CONFIRMABLE).
+    - **`PLAN-M12`** — M12.0 y M12.1 marcados `✅ **HECHO**` con cifras al cierre de esas sesiones
+      (2026-08-14); corregido el blockquote de M12.5 que decía «sin mergear» (se mergeó con `d2ea3b3`).
+      **No se tocó lo que M12.8 debe hacer con las decisiones** — la hoja volvió sin completar.
+  - ⚠️ **Hallazgos reportados, NO corregidos (son de M12.8a):**
+    - **`app/models/pai.py:226-232` modela la sección §VII (FODA: `fort`, `oport`, `debil`, `amen`)**
+      con encabezado `── §VII · Análisis estratégico (FODA) ──`, cuando **§5.42 (I7)** y **PLAN-M12
+      §M12.6** dicen que §VII **«SE RETIRA … no lleva columnas ni tabla hija»**. Ni la bitácora de
+      M12.6, ni §5.54–§5.56 registran haberla conservado: los `fort/oport/debil/amen` entraron en los
+      «43 campos propios» sin nota. Es un esquema desalineado con una decisión I-series, no un comentario
+      viejo — para M12.8a / M11.3.
+    - Barrido de comentarios stale bajo `app/` contra las decisiones serie L (§5.54–§5.58): **el único
+      era el de `ateneo.py`**, ya arreglado. Los docstrings de `pai.py` y `constantes.py` citan
+      §5.54/§5.55/§5.56/§5.50 correctamente (se escribieron en la misma sesión M12.6).
+  - **Verificación de cierre:** `verificar_estado.py --check` y `generar_catalogos_backend.py --check`
+    → **exit 0**. §5 intacto (0 entradas tocadas). Commits `a5d4d19` (L5 + cabos), `5bbf6a5` (docstring),
+    `0fbcb16` (plan) y esta entrada, a `gitlab` y `origin`.
+  - ⚠️ **Trailer de commits:** esta sesión commitea **sin** trailer de co-autoría, por
+    `commit-style-ippu.md` y porque **D-3 volvió sin completar**. La divergencia de los dos commits de L5
+    (que sí lo llevan) queda abierta como D-3.
+
 - **2026-09-02 · Sesión L5 — reversión de la visibilidad de los ateneos de grupo + fix de §166**
   (Lucas + Claude, rama `main`). ⚠️ **Entrada escrita en forma retroactiva el 2026-09-02, en la sesión
   L6:** L5 cerró sin bitácora. Se reconstruye acá contra los dos commits que dejó (`a9e2c3d`, `65a0b5a`)
