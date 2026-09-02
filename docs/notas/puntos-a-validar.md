@@ -23,7 +23,7 @@
 >
 > | | |
 > |---|---|
-> | **Cerrados por la reunión** | **10 de los 14 puntos de IPPU**: §1.1 · §1.2 · §1.4 · §1.7 · §1.8 · §1.9 · §1.10 · §1.11 · §1.12 · §1.13 · §1.14 *(§1.3 ya estaba cerrado desde el 2026-08-14)* |
+> | **Cerrados por la reunión** | **10 de los 14 puntos de IPPU**: §1.1 · §1.2 · §1.4 · §1.7 · §1.8 · §1.9 · §1.10 · §1.11 · §1.12 · §1.13 · §1.14 *(§1.3 ya estaba cerrado desde el 2026-08-14; **§1.12 lo cerró la reunión pero lo re-cerró §5.58 el 2026-09-02, en dirección opuesta** — acceso general, no «por grupo»)* |
 > | **Siguen abiertos con IPPU** | **§1.5** (acceso a la HCE — ahora sabemos que está en **Heroku**) y **§1.6** (acuerdo de confidencialidad — **reencuadrado**: ya no bloquea el desarrollo, bloquea que el dato salga) |
 > | **Abiertos NUEVOS, por la reunión** | **§2.11** usuarios y permisos · **§2.12** el modelo no representa la divulgación · **§2.13** revisión de informes · **§2.14** indicador de ateneos. Y **§2.8 pasó a BLOQUEANTE** |
 > | **Deuda saldada** | **§2.1** — el costo medido del IDEA anual, que §5.31 dejó debiendo el 2026-08-20 |

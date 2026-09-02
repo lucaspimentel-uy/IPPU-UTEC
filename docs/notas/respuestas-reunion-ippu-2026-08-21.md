@@ -32,9 +32,14 @@
 >
 > - **Lo que se escribe abajo es el registro de la reunión, no interpretación.** Donde no hubo respuesta,
 >   dice **«sin respuesta»** y no se completa por inferencia.
-> - **Balance en §16, al final:** **12 contestados · 2 a medias · 12 sin respuesta.**
+> - **Balance en §16, al final:** **12 contestados · 2 a medias · 12 sin respuesta · 1 contestado a
+>   confirmar por escrito (9.a).**
 > - ⚠️ **Un punto es de segunda mano** —el del consentimiento (I3, §14)— y está marcado como
 >   **CONFIRMABLE**, no cerrado.
+> - ⚠️ **Un punto contestado fue revertido después por una corrección de segunda mano** —**9.a**, la
+>   visibilidad del ateneo de grupo: la reunión dijo «por grupo» (2026-08-26) y el 2026-09-02 IPPU lo
+>   corrigió a **acceso general** (§5.58 / L5), sin que conste en el acta. Va al próximo contacto para
+>   **confirmación escrita**, junto al del consentimiento.
 > - **El archivo NO se borra todavía:** su condición de retiro exige que las respuestas también estén en
 >   el **Google Doc del equipo**, que está fuera de este repo. Ver §16.
 
@@ -724,7 +729,7 @@ alguien recordaba con certeza.)*
 > `**Respuesta:**`**; R0 (`docs/notas/relevamiento-estado-2026-08-26.md`, D-2) verificó que el
 > **2026-08-26 estaban los 26 vacíos**.
 
-**12 contestados · 2 a medias · 12 sin respuesta.**
+**12 contestados · 2 a medias · 12 sin respuesta · 1 contestado a confirmar por escrito (9.a).**
 
 ### Contestados (12)
 
@@ -750,10 +755,11 @@ alguien recordaba con certeza.)*
 | **12** confidencialidad | El **encuadre**: guardar no, compartir sí (§5.45 / I10) | Quién redacta el documento, quién firma, para cuándo. **El trámite no se movió.** |
 | **13.b** secuencia | El **orden A→B es firme**; los períodos son recordatorios | Si el sistema **traba** o **avisa** (Manual §3 vs. Especificaciones §1) |
 
-### Sin respuesta (12) — la lista que hay que llevar al próximo contacto
+### Sin respuesta (12) + 1 a confirmar — la lista que hay que llevar al próximo contacto
 
 | Bloque | Qué quedó sin preguntar/contestar | Qué sigue bloqueando |
 |---|---|---|
+| **9.a** ⚠️ | **Confirmación escrita** de que el ateneo de grupo es de **acceso general**. La reunión lo cerró «por grupo» (2026-08-26); una corrección de IPPU lo revirtió el 2026-09-02 (§5.58 / L5) pero **no consta en el acta** | Nada del modelo — `Ateneo.sensible` ya da acceso general. Es respaldo de una decisión **CONFIRMABLE**, como §5.38 (I3) |
 | **1.b** | De dónde sale el porcentaje del baremo | Nada. Supuesto nuestro, no confirmado |
 | **2.a** ⚠️ | ¿Quieren registrar participación por taller? | **El alcance de M12.6** (`pai_taller`) y §5.21 |
 | **2.b** | Los 14 talleres de este año / orientación por grupo | `consulta-a-ippu.md` §3.1 |

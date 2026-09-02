@@ -2183,6 +2183,61 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-02 · Sesión L5 — reversión de la visibilidad de los ateneos de grupo + fix de §166**
+  (Lucas + Claude, rama `main`). ⚠️ **Entrada escrita en forma retroactiva el 2026-09-02, en la sesión
+  L6:** L5 cerró sin bitácora. Se reconstruye acá contra los dos commits que dejó (`a9e2c3d`, `65a0b5a`)
+  y su contenido. **Documentación solamente — no se tocó `app/`, `tests/`, `alembic/` ni la base; no se
+  levantó Docker; las 389 no se re-midieron.**
+  - **La reversión (§5.58 / L5).** El **ateneo de grupo pasa a ser de acceso general** del equipo
+    técnico: se revierte **sólo** el párrafo de visibilidad de §5.46 (I11) —«cada técnico ve los de su
+    grupo»— y vuelve a valer el apunte crudo de la reunión del 21/08, «todos los técnicos ven todos los
+    ateneos». **Procedencia:** lo relevó Lucas el 2026-09-02 como corrección de IPPU al registro de esa
+    reunión; **no consta en el acta** (`respuestas-reunion-ippu-2026-08-21.md` no lo recoge) → marcado
+    **⚠️ CONFIRMABLE**, con §5.38 (I3, consentimiento) de precedente para cómo se carga un punto de
+    segunda mano. §5 quedó append-only: **57 → 58 entradas, 0 perdidas** (`git diff --numstat`).
+  - **Costo en código: cero, y medido.** `Ateneo.sensible = (self.tipo == TIPO_SENSIBLE)` con
+    `TIPO_SENSIBLE = "clinico"` (`app/models/ateneo.py:38` · `:310-341`), así que un ateneo `tipo ==
+    'grupo'` ya daba `sensible = False` —acceso general— en Python y en SQL. **No hay en `app/`,
+    `tests/`, `app/data/` ni `backend/docs/` ninguna regla de visibilidad por grupo para ateneos**, ni
+    nada que consuma `ateneo.grupo_id` como regla de acceso: `grupo_id` sólo alimenta los dos CHECK que
+    lo exigen/prohíben por tipo (`:367-379`), la FK RESTRICT, los índices de filtro y la advertencia
+    cross-table `fecha ↔ grupo.anio` (M11.3). Tampoco hay capa que pudiera aplicarla
+    (`app/routers/__init__.py` vacío, sin `app/services/`, `app/main.py` monta sólo `/health`).
+  - **Regla registro-vs-nota de trabajo, aplicada archivo por archivo:**
+    - `handoff.md` **§5.46** y `respuestas-reunion-ippu-2026-08-21.md` **§9.a** — **se conservan como
+      registro**, no se editan: la corrección vive en §5.58 y en una línea fechada bajo el texto
+      original. §5.46 mantiene su título aunque siga diciendo «por grupo».
+    - `handoff.md` **§13** — no se edita: L5 no reescribe entradas viejas.
+    - `puntos-a-validar.md` **§1.12** — **se reescribe** el bloque de cierre (es nota de trabajo): de
+      «CERRADO restrictivo» a «CERRADO en dirección PERMISIVA (2026-09-02)».
+    - `puntos-a-validar.md` **§2.11** — se quita la cláusula de ateneos del bullet de la matriz de
+      permisos; la matriz general sigue en Fase 4.
+    - `puntos-a-validar.md` **§2.16 (nueva)** — tensión técnico↔grupo (§5.41 + Manual §21.1) contra el
+      acceso general: un ateneo de grupo deja leer, a través del acta, material sobre NNA cuya HCE el
+      técnico no abre. No bloquea hoy; condiciona M11.3 y Fase 4.
+    - `consulta-a-ippu.md` §3.12 y `respuestas-reunion-ippu-2026-08-21.md` §9.a + tabla §16 —
+      corrección fechada agregada bajo el registro original, sin reescribirlo.
+  - **Además, aprobado en el prompt de L5 (no es de la reversión):**
+    - `puntos-a-validar.md` **§2.15** — puntero a **§5.57 (L4)**: la salida 2 (`pai_prestacion` como
+      declaración fechada) queda ratificada; la salida 3 (aviso de divergencia) se reabre en M11.3/M11.4.
+    - **PLAN-M12** — se marcó `✅ **HECHO**` en los encabezados de **M12.5** (42 tablas · 307 tests ·
+      head `aa26917b6e76`) y **M12.6** (50 tablas · 389 tests · head `72b96030362d`), con las cifras
+      medidas al cierre de cada sesión.
+  - **Fix de `prototipo-v4-referencia.md:166` (commit `65a0b5a`).** La línea 166 listaba «secciones I,
+    II, VI, XI y XV … modelarlas como referencias». §5.55 (L2) ya había medido que los siete campos
+    editables de §I y §II son columnas propias de `pai`. La línea pasa a decir **«VI, XI y XV»** con una
+    nota ⚠️ a §5.55, corregida contra la propia lista `:149` del archivo, sin reinvestigar. Cierra el
+    pendiente «Barato, sin dueño» de §6.
+  - **Verificación:** `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → exit 0.
+    `pytest` **no se corrió** (nada cambió en `app/`, `tests/` ni `alembic/`).
+  - **Commits:** `a9e2c3d` (§5.58 + cierres) y `65a0b5a` (fix §166), a `gitlab` y `origin`.
+  - ⚠️ **Divergencia abierta:** los dos commits llevan trailers `Co-Authored-By: Claude Sonnet 5` y
+    `Claude-Session:` que `commit-style-ippu.md` dice que el proyecto **no usa**. Un `system-reminder` de
+    sesión los impuso por encima de la convención escrita. **Queda como cabo suelto para el equipo (D-3
+    de la hoja de decisiones de L6):** o la convención gana y los dos commits quedan como excepción
+    registrada, o se adopta el trailer y eso va a §5 con su razón. La historia no se reescribe en
+    ningún caso.
+
 - **2026-09-02 · Sesión M12.6 — HCE-PAI, en modo solo esquema** (Lucas + Claude, rama `main`).
   **Cierra el sub-módulo más grande de la ronda.** Arranca donde R1 dejó: con la medición hecha, pero sin
   decisión escrita. **Lo primero de la sesión fue la decisión, no el código.**
