@@ -322,14 +322,20 @@ class Ateneo(Base):
         alguien corrige `tipo`, y acá la respuesta equivocada no es un bug
         cosmético: es exponer un dato de salud.
 
-        ⚠️ **Hueco de la fuente normativa, no resuelto acá.** El aviso nombra los
-        clínicos (sensibles) y los institucionales y jornadas (acceso general);
-        **no dice qué es un ateneo de grupo**, y el propio seed del prototipo
-        muestra uno («Cierre de ciclo — Grupo Celeste») discutiendo Δ de
-        protocolos de NNA identificables. Bajo la regla tal como está escrita,
-        eso queda **no sensible**. Se implementa lo que dice la fuente y la
-        pregunta va a IPPU (`docs/notas/`). Que esto sea derivado es justo lo que
-        hace que cambiar de criterio cueste una línea y cero migración.
+        **El ateneo de grupo es de acceso general** — §5.58 (L5, 2026-09-02).
+        Antes acá decía que la fuente no lo definía y que la pregunta iba a IPPU;
+        se resolvió revirtiendo la lectura «cada técnico ve los de su grupo» que
+        §5.46 (I11) le había puesto encima — el apunte crudo de la reunión,
+        «todos los técnicos ven todos los ateneos», era el correcto. Con
+        `sensible = (tipo == 'clinico')` el ateneo de grupo ya daba `False`, así
+        que la reversión **no tocó modelo, CHECKs ni `TIPO_SENSIBLE`**: es justo
+        lo que hace que cambiar de criterio cueste una línea y cero migración.
+
+        ⚠️ **CONFIRMABLE, no está en el acta.** Lo relevó Lucas como corrección
+        de IPPU al registro de la reunión del 2026-08-21, que no lo recoge; rige
+        como decisión del equipo (§12.6) a la espera del respaldo escrito. Deja
+        una tensión abierta con la tabla de permisos (§5.41 · Manual §21.1),
+        anotada en `docs/notas/puntos-a-validar.md` §2.16.
 
         El **permiso** es Fase 4; acá está sólo la clasificación.
         """
