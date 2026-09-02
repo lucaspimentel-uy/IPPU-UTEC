@@ -472,6 +472,13 @@ visibilidad **por grupo**. → `handoff.md` **§5.46 (I11)**.
 `hybrid_property`. *«La ve cualquier técnico del grupo»* → queda como está; `puntos-a-validar.md` §1.12
 cerrado.
 
+> **[corrección 2026-09-02]** IPPU revirtió la lectura restrictiva de arriba: **el ateneo de grupo es de
+> acceso general del equipo técnico** — el apunte crudo de la reunión («todos los técnicos ven todos los
+> ateneos») era el correcto. Con eso, la ⚠️ «el derivado implementado no expresa esto» queda **sin
+> objeto**: `sensible = (tipo == 'clinico')` ya da acceso general para el ateneo de grupo, y **no hay
+> cambio de modelo, esquema, migración ni tests**. → `handoff.md` **§5.58 (L5)**. ⚠️ Relevado por Lucas,
+> no consta en el acta (CONFIRMABLE).
+
 ## 9.b — El año del correlativo `AT-2026-001` *(cuestionario §3.13, era §3.14)*
 
 > «¿Es el año en que **se hizo** el ateneo o el año en que **se cargó**?»
@@ -730,7 +737,7 @@ alguien recordaba con certeza.)*
 | **5.a** grupos | Los 4 colores no existen; son otros 5 nombres | §5.37 (I2) |
 | **5.b** técnicos del grupo | Usuario por técnico; ve sólo sus grupos | §5.41 (I6) · consulta §3.5 |
 | **7.a** fotos | Guardar no requiere autorización; compartir sí | §5.39 (I4) · consulta §2.8 |
-| **9.a** ateneo de grupo | Sólo su grupo — **restrictivo** | §5.46 (I11) · §1.12 · consulta §3.12 |
+| **9.a** ateneo de grupo | Sólo su grupo (2026-08-26) → **REVERTIDO 2026-09-02: acceso general** | §5.58 (L5) · §5.46 (I11) · §1.12 · consulta §3.12 |
 | **9.b** año del correlativo | Año de registración (lo implementado) | §1.14 · consulta §3.13 |
 | **9.c** prefijo | Uno solo alcanza; `JC-` si es barato | §1.13 · consulta §3.13 |
 | **10** HCE-SEV | 0..1, revisable, sin cadencia (lo implementado) | §1.10 · consulta §3.10 |

@@ -358,16 +358,18 @@ de generar el PDF en M11.4.
 
 ### 1.12 ~~Los ateneos de grupo, ¿son dato sensible?~~ — **CERRADO** (reunión IPPU 2026-08-21)
 
-> **Cerrado en dirección RESTRICTIVA, y hay que decirlo porque el apunte crudo de la reunión decía lo
-> contrario.** El apunte decía «todos los técnicos ven todos los ateneos». **No es así:** **cada técnico ve
-> los de su propio grupo**, y **la jornada de capacitación es la instancia transversal** — donde varios
-> técnicos se juntan a repasar ateneos. → `handoff.md` **§5.46 (I11)** · `consulta-a-ippu.md` §3.12.
+> **CERRADO en dirección PERMISIVA (2026-09-02).** El **ateneo de grupo es de acceso general del equipo
+> técnico**: el apunte crudo de la reunión —«todos los técnicos ven todos los ateneos»— era el correcto.
+> Se cerró primero en dirección restrictiva el 2026-08-26 («cada técnico ve los de su propio grupo») y se
+> revirtió el 2026-09-02 por una corrección de IPPU. → `handoff.md` **§5.58 (L5)** (⚠️ CONFIRMABLE, no
+> está en el acta), que revierte **sólo** el párrafo de visibilidad de **§5.46 (I11)**; `consulta-a-ippu.md`
+> §3.12.
 >
-> ⚠️ **Lo implementado NO expresa esto.** El derivado es `sensible = (tipo == 'clinico')`
-> (`app/models/ateneo.py:310-326`): una regla de dos valores **sobre el tipo**, cuando lo que IPPU describe
-> es visibilidad **por grupo**. Hay con qué resolverlo —`ateneo.grupo_id` ya existe, exigido en el ateneo
-> de grupo y prohibido en institucional y jornada—, pero **es matriz de permisos: depende de §2.11 y cae en
-> Fase 4.** Cambiar el derivado sigue costando una línea; **construir la visibilidad por grupo, no**.
+> **Lo implementado ya lo expresa.** `Ateneo.sensible = (tipo == 'clinico')` (`app/models/ateneo.py:310-341`):
+> un ateneo de grupo da `sensible = False` = acceso general, que es exactamente lo que ahora rige. Sin
+> cambio de modelo, esquema, migración ni tests. La segmentación fina de permisos —qué HCE abre cada
+> técnico— sigue siendo **matriz de permisos → Fase 4**, y su tensión con este acceso general está en
+> **§2.16**.
 
 **Qué es.** El aviso de confidencialidad del Prototipo v4 dice que los **ateneos clínicos referidos a un
 NNA** contienen datos sensibles de salud (Ley 18.331) y heredan la matriz de acceso de su HCE, y que los
@@ -749,7 +751,8 @@ por CHECK, no una tabla**— y **dos columnas fijas** en `grupo` (`tecnico1_id`,
 2 técnicos por grupo y sin vigencias**. Login: no existe (`app/main.py` monta sólo `/health`).
 
 **Qué bloquea.**
-- **La visibilidad por grupo de §1.12** (ateneos) y, en general, toda la matriz de permisos — **Fase 4**.
+- En general, **toda la matriz de permisos** — **Fase 4**. (La visibilidad de los ateneos de grupo ya no
+  cae acá: §1.12 se cerró en acceso general — §5.58.)
 - **La reconciliación de `grupo`**: F1 puso `responsable1`, `responsable2` y `tecnicosAutorizados` en la
   demo **sin modelo detrás** (`handoff.md` §6).
 - **El residuo de §5.18** (cambio de técnico a mitad de año): la asignación N:M es donde vivirían las
@@ -805,7 +808,7 @@ se descubra cuando alguien pida el número. ⚠️ **Ojo con qué año se cuenta
 **registración** (§1.14) y el filtro de la lista va contra la **fecha del hecho** — un indicador anual
 tiene que decir cuál de los dos usa.
 
-### 2.15 Las prestaciones se declaran en dos lugares — **abierto por M12.6** (2026-09-02)
+### 2.15 Las prestaciones se declaran en dos lugares — **§5.57 ratifica la salida 2** (abierto por M12.6, 2026-09-02)
 
 **Qué es.** Después de M12.6 hay **dos sitios** en el modelo que dicen algo sobre prestaciones del NNA, y
 no son el mismo dato:
@@ -837,6 +840,12 @@ falla que §5.22 usó para sacar el centro educativo del PAI.
    porque el PAI *es* un documento fechado, pero hay que escribirlo para que no se lea como descuido.
 3. **Híbrido:** el PAI guarda su declaración y el servicio (M11.3) **avisa** cuando difiere de HCE-ORG.
 
+**Ratificado el 2026-09-02 — §5.57 (L4):** el equipo elige la **salida 2**. `pai_prestacion` queda como
+**declaración fechada** del PAI (no como lectura en vivo ni copia sincronizada de `organismo_bps`). La
+**salida 3** (aviso de divergencia desde el servicio) **sigue disponible** y se **reabre en M11.3/M11.4**,
+contra una tabla de equivalencias `BPS_PRESTACIONES` ↔ `PAI_PRESTACIONES` a definir entonces. La salida 1
+queda descartada por costo.
+
 **Qué bloquea.** **Nada hoy** — el esquema funciona en las tres. Bloquea **M11.3/M11.4**, que es donde se
 decide qué se muestra y qué se imprime en el PAI.
 
@@ -845,6 +854,25 @@ decide qué se muestra y qué se imprime en el PAI.
 > Funcional y el certificado de discapacidad se omitió el comodín **«Otra (detallar en observaciones)»**,
 > que tampoco lo es —no tiene referente: su detalle va a `pai.prest_obs`—. El resto de la entrada no
 > cambia.
+
+### 2.16 Un ateneo de grupo deja ver NNA cuya HCE el técnico no puede abrir — **abierto por §5.58** (2026-09-02)
+
+**Qué es.** §5.58 (L5) fijó que el **ateneo de grupo es de acceso general del equipo técnico**. Pero
+**§5.41 (I6)** dice que cada técnico ve **sólo los grupos que tiene asignados**, y la tabla de permisos del
+**Manual §21.1** le **niega** «la HCE de otros grupos». Un ateneo de grupo discute NNA identificables de
+ese grupo —el seed del propio Prototipo v4 lo muestra: «Cierre de ciclo — Grupo Celeste» repasa Δ de
+protocolos—. Con acceso general al ateneo, un técnico llega **a través del ateneo** a material clínico
+sobre NNA cuya HCE no tiene permiso de abrir.
+
+**Por qué importa.** Es una contradicción entre dos decisiones escritas (§5.58 vs. §5.41 + Manual §21.1),
+no un hueco. Hay que resolverla antes de construir la capa de permisos: determina qué devuelve el endpoint
+de ateneos según quién consulta —el registro entero, una versión sin identificar, o sólo los del grupo
+propio salvo rol ADMIN—. El `ateneo.sensible` derivado de hoy no alcanza para expresarlo (es de dos
+valores, sobre el tipo).
+
+**Qué bloquea.** **Nada hoy** — no hay login ni capa de permisos (`app/main.py` monta sólo `/health`).
+Condiciona **M11.3** (qué se decide mostrar) y **Fase 4** (la matriz que lo aplica). Va junto con §2.11 y
+§2.12.
 
 ---
 

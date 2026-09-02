@@ -326,7 +326,7 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ---
 
-### M12.5 — HCE-INC · Inclusión educativa y social
+### M12.5 — HCE-INC · Inclusión educativa y social ✅ **HECHO** (2026-08-26, Lucas)
 
 > ### ✅ HECHO — 2026-08-26 (Lucas). Rama `backend/M12.5-hce-inc`, **sin mergear**.
 >
@@ -403,8 +403,14 @@ taller retirado a mano · `HceTaller` no existe ni es importable, y **ninguna ta
 
 ---
 
-### M12.6 — HCE-PAI · **Proyecto de Atención Integral** (INAU) ⚠️ *renombrado el 2026-08-26, §5.42*
+### M12.6 — HCE-PAI · **Proyecto de Atención Integral** (INAU) ✅ **HECHO** (2026-09-02, Lucas) — ⚠️ *renombrado el 2026-08-26, §5.42*
 El más grande. Las 15 secciones y todos los campos están en `docs/markdown/prototipo-v4-referencia.md` §7.
+
+> ### ✅ HECHO — 2026-09-02 (Lucas), rama `main`.
+>
+> **50 tablas** (42 → 50), **389 tests en verde y 0 salteados** (307 → 389), migración regenerada
+> (`72b96030362d`). Cerrado en modo **SOLO ESQUEMA** — los guards son M11.3. Cifras medidas al cerrar la
+> sesión M12.6, no hoy.
 
 > ⚠️ **Tres cosas decididas antes de arrancar (2026-08-15), leerlas primero.**
 > 1. **§5.22 — la sección V no duplica HCE-INC.** `centro`, `modalidad` y `grado` viven en `inclusion`

@@ -1658,6 +1658,57 @@ tabla de equivalencias a definir en ese momento.
 
 ---
 
+## 5.58 · Reversión tras una corrección de IPPU (serie **L**, 2026-09-02, Lucas)
+
+### 5.58 (L5) El ateneo de grupo es de **acceso general**, no «por grupo»: se revierte la visibilidad de §5.46 (I11) — ⚠️ **CONFIRMABLE, no está en el acta** (2026-09-02, Lucas)
+
+**Qué revierte, y sólo eso.** El **párrafo de VISIBILIDAD de §5.46 (I11)** — sus dos partes: el bloque
+«⚠️ VISIBILIDAD — esto CORRIGE el apunte crudo de la reunión» y su sub-párrafo «hay que decirlo porque
+lo implementado no lo expresa». **Todo el resto de §5.46 queda en pie, sin tocar:** los cuatro tipos
+con la jornada de capacitación incluida, el prefijo único (`AT-` para los cuatro, `JC-` opcional), el
+correlativo por año de **registración**, el **indicador institucional de 8 ateneos al año / ≥2 por
+grupo**, y los dos faltantes por construir (campo de **observaciones** y **adjuntos PPTX**). El título
+de §5.46 se deja como está aunque siga diciendo «por grupo»: la corrección vive acá, no se edita §5.46.
+
+**Qué es verdad ahora.** El **ateneo de grupo es de acceso general del equipo técnico**. El apunte
+crudo de la reunión del 2026-08-21 —«todos los técnicos ven todos los ateneos»— **era el correcto**.
+La lectura restrictiva que se le puso encima el 2026-08-26 —«cada técnico ve los de su propio grupo; la
+jornada de capacitación es la instancia transversal»— **se retira**.
+
+**Procedencia.** Lo relevó **Lucas el 2026-09-02**, como corrección de IPPU al registro de la reunión
+del 2026-08-21. **No consta en el acta escrita** (`docs/notas/respuestas-reunion-ippu-2026-08-21.md` no
+lo recoge). Se marca **⚠️ CONFIRMABLE**, igual que §5.38 (consentimiento): rige como decisión del
+equipo desde hoy (§12.6), pero falta el respaldo escrito de IPPU. **No** se escribe como si IPPU lo
+hubiera dicho en la reunión.
+
+**Efecto sobre lo implementado: cero.** El derivado ya trata el ateneo de grupo como acceso general.
+`Ateneo.sensible` es `self.tipo == TIPO_SENSIBLE` con `TIPO_SENSIBLE = "clinico"`
+(`app/models/ateneo.py:38` · `:310-341`), así que un ateneo `tipo == 'grupo'` da `sensible = False`
+—acceso general— tanto en Python (`:336`) como en SQL (`:338-341`). **No hay en `app/`, `tests/`,
+`app/data/` ni `backend/docs/` ninguna regla de visibilidad por grupo para ateneos**, ni nada que
+consuma `ateneo.grupo_id` como regla de acceso: `grupo_id` sólo alimenta los dos CHECK que lo
+exigen/prohíben por tipo (`grupo_requerido_en_ateneo_de_grupo` y `grupo_solo_con_sujeto`, `:367-379`),
+la FK RESTRICT, los índices de filtro y la advertencia cross-table `fecha ↔ grupo.anio` (M11.3). Tampoco existe todavía capa que pudiera aplicarla
+(`app/routers/__init__.py` vacío, sin `app/services/`, `app/main.py` monta sólo `/health`). **Esta
+reversión no toca modelo, esquema, migración ni tests.** Con ella, las **tres ⚠️ «lo implementado NO
+expresa esto»** —handoff §5.46, `puntos-a-validar.md` §1.12, `respuestas-reunion-ippu-2026-08-21.md`
+§9.a— **quedan retiradas por esta entrada, no por borrarlas**: §5.46 y §9.a se conservan como
+registro; la de §1.12 se reescribe porque es nota de trabajo.
+
+**Alcance, explícito.** Esto es **sólo** sobre el ateneo de grupo. El **ateneo clínico (NNA) no se
+toca**: sigue heredando la matriz de acceso por roles de su HCE, según el aviso de confidencialidad
+del Prototipo v4. Los institucionales y las jornadas ya eran de acceso general. **Que nadie extienda
+esta reversión a los cuatro tipos.**
+
+**Qué abre, no qué resuelve.** Queda una tensión sin cerrar con **§5.41 (I6)** —«un usuario por
+técnico, cada uno ve sus grupos»— y con la **tabla de permisos del Manual §21.1**, que le **niega** a
+un técnico «la HCE de otros grupos». Un ateneo de grupo discute NNA identificables de ese grupo —el
+seed del propio prototipo: «Cierre de ciclo — Grupo Celeste» repasa Δ de protocolos—, así que un
+técnico puede ahora leer, **a través del ateneo**, material sobre NNA cuya HCE no puede abrir. Se
+registra en `puntos-a-validar.md` **§2.16**. **Acá no se resuelve.**
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy

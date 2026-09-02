@@ -524,6 +524,11 @@ todo el equipo,** **o sólo quienes trabajan con ese grupo?**
 > **[reunión IPPU 2026-08-21]** **Sólo quienes trabajan con ese grupo.** Cada técnico ve los
 > ateneos de **su propio grupo**; la **jornada de capacitación** es la instancia transversal. → `handoff.md`
 > §5.46.
+>
+> **[corrección 2026-09-02]** IPPU revirtió esto: **el ateneo de grupo es de acceso general del equipo
+> técnico** — el apunte crudo de la reunión era el correcto y la lectura restrictiva del 2026-08-21 se
+> retira. → `handoff.md` **§5.58 (L5)**. ⚠️ Relevado por Lucas, **no** consta en el acta escrita
+> (CONFIRMABLE, como §5.38).
 
 ---
 
