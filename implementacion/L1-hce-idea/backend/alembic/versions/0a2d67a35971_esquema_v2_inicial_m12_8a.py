@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.6)
+"""esquema v2 inicial (M12.8a)
 
-Revision ID: 72b96030362d
+Revision ID: 0a2d67a35971
 Revises: 
-Create Date: 2026-09-02 09:14:59.954231
+Create Date: 2026-09-03 17:24:01.451600
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '72b96030362d'
+revision: str = '0a2d67a35971'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -307,6 +307,7 @@ def upgrade() -> None:
     sa.Column('contenidos', sa.Text(), nullable=True),
     sa.Column('materiales', sa.Text(), nullable=True),
     sa.Column('evaluacion', sa.Text(), nullable=True),
+    sa.Column('observaciones', sa.Text(), nullable=True),
     sa.CheckConstraint("(hce_referida_id IS NOT NULL) = (tipo = 'clinico')", name=op.f('ck_ateneo_nna_solo_en_ateneo_clinico')),
     sa.CheckConstraint("tipo <> 'grupo' OR grupo_id IS NOT NULL", name=op.f('ck_ateneo_grupo_requerido_en_ateneo_de_grupo')),
     sa.CheckConstraint("tipo <> 'jornada' OR NOT (situacion ~ '[^[:space:]]' OR hipotesis ~ '[^[:space:]]' OR recursos ~ '[^[:space:]]' OR seguimiento ~ '[^[:space:]]')", name=op.f('ck_ateneo_desarrollo_clinico_no_va_en_jornada')),
@@ -513,10 +514,6 @@ def upgrade() -> None:
     sa.Column('otras_ed', sa.Text(), nullable=True),
     sa.Column('sint_lb', sa.Text(), nullable=True),
     sa.Column('delta_interp', sa.Text(), nullable=True),
-    sa.Column('fort', sa.Text(), nullable=True),
-    sa.Column('oport', sa.Text(), nullable=True),
-    sa.Column('debil', sa.Text(), nullable=True),
-    sa.Column('amen', sa.Text(), nullable=True),
     sa.Column('intereses_nna', sa.Text(), nullable=True),
     sa.Column('voz_nna', sa.Text(), nullable=True),
     sa.Column('expect_familia', sa.Text(), nullable=True),
