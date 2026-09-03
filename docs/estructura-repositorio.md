@@ -166,7 +166,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── 72b96030362d_esquema_v2_inicial_m12_6.py   # migración única del esquema v2 (50 tablas)
+│       └── 0a2d67a35971_esquema_v2_inicial_m12_8a.py  # migración única del esquema v2 (50 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI

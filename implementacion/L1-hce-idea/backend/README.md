@@ -63,7 +63,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **389 passed, 0 skipped**.
+Una corrida válida de hoy es **390 passed, 0 skipped**.
 
 ## Por qué Postgres en Docker
 
