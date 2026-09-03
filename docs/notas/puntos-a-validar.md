@@ -519,6 +519,29 @@ identificarlas resultan tocar el PAI, se revisa lo construido (§5.54 lo dejó d
 
 ---
 
+### 1.17 Adolescentes con autonomía progresiva: ¿reserva de datos frente a padres/tutores? — abierto por el Protocolo (2026-09-03)
+
+**Qué es.** El **Protocolo de acceso**, en la matriz §5, da a los **adolescentes con autonomía
+progresiva** el *«Derecho a solicitar reserva de determinados datos incluso respecto de sus
+padres/tutores, a criterio fundado del profesional tratante»* (base: Decreto 274/010, reglamentario de la
+Ley 18.335; Ley 17.823). Es un derecho **por entrada**, no por expediente: se reserva *un dato concreto*,
+no toda la HCE, y frente a un actor específico (el representante legal).
+
+**Por qué importa.** **Nada en el modelo expresa una reserva por entrada contra los representantes.**
+Hoy la única clasificación de acceso restringido es `inclusion_bitacora.sensible` (derivada del tema) y
+`ateneo.sensible` (derivada del tipo), las dos **de dos valores y sin destinatario**: dicen «esto es
+sensible», no «esto se reserva **frente a estos**». Un flag «reservado frente a representantes», con
+`profesional_id` y justificación, es otra cosa.
+
+**Qué preguntar, en criollo.** *Cuando un adolescente pide que algo puntual de su historia no lo vean sus
+padres o tutores, ¿cómo lo manejan hoy? ¿Lo decide el técnico tratante y queda anotado en algún lado, o
+es una conversación que no se registra?*
+
+**Qué bloquea.** **Nada hoy** — no hay acceso de familias al sistema. Condiciona **M11.3** (el modelo de
+la reserva por entrada) y **Fase 4** (que el acceso del representante la respete). Va en la lista de IPPU.
+
+---
+
 ## 2. Para el equipo (grupo + Matías)
 
 ### 2.1 ~~Ratificar que M11 avanzó sin cruzar su propia puerta~~ — **CERRADO** (2026-09-03, `handoff.md` §5.60 / L7)
