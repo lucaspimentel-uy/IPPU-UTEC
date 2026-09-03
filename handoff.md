@@ -2257,7 +2257,7 @@ expedientes), que **sigue sin dueño**.
 - [x] ~~**Modularizar la demo**~~ → **HECHO** (2026-08-07, §5.5). La demo dejó de ser recurso exclusivo: **se puede trabajar en paralelo** tomando archivos distintos de `demo/js/`.
 - [x] ~~**Demo — analítica institucional real**~~ → **HECHO** (2026-08-07, demo **v4.1**, ver §3 y bitácora). Los 4 KPIs y los gráficos por escala se calculan del modelo; se agregó la tarjeta de evolución Protocolo A → B. Hallazgo del camino: dos de los indicadores viejos no estaban hardcodeados por comodidad sino que eran **incalculables por diseño** desde M4. **Lo que queda abierto ahí:** el heatmap de talleres sigue con datos de muestra (§5.1.3) y el cruce taller × escala no va a tener sustento hasta que haya varios NNA con el ciclo A → B cerrado — hoy hay **1 de 7**.
 - [x] ~~**Re-indexar el grafo de conocimiento (`graphify-out/`)**~~ → **HECHO** (2026-08-07). Pasó de 572 nodos / 870 aristas / 80 comunidades a **736 / 1.039 / 163**, ya con los 12 módulos de `demo/js/` como comunidades propias. **La extracción semántica de los 25 documentos quedó cacheada**, así que re-correrlo no vuelve a gastar LLM salvo en los archivos que cambien. Dos cosas a saber: el diagnóstico reporta **67 aristas con extremo colgante** (5,8 % — el extractor emitió aristas hacia IDs que no declaró como nodos; artefacto típico de LLM, no corrupción), y `cost.json` **subregistra esta corrida** con 0 tokens porque los subagentes murieron por límite de sesión antes de poder reportar su uso.
-- [ ] **Rama `gitlab/feature/base-datos-hce` (Victor):** aparcada, **no** descartada (§5.3). Decidir en reunión de equipo qué se hace con ella al terminar M11 (mergear lo reutilizable como referencia SQL en `docs/`, o cerrarla dejando constancia). Ver §12.5.
+- [x] ~~**Rama `gitlab/feature/base-datos-hce` (Victor):** aparcada, **no** descartada (§5.3). Decidir en reunión de equipo qué se hace con ella al terminar M11.~~ → **CERRADO el 2026-09-03 (§5.68 / L15):** archivada como tag anotado **`archivo/base-datos-hce`** (sobre `dfb1732`, en los dos remotos) y **borrada de `gitlab`**. Ver §12.5.
 - [x] ~~Elegir un remoto principal~~ → **decidido 2026-08-07: `gitlab` principal, `origin` espejo** (§5.4, ver §12.2).
 - [ ] **Mirar el video demo de la HCE actual:** https://youtube.com/watch?v=dMWfc0JKCC0
 - [ ] **Pedir a IPPU (crítico):** acceso al repositorio de la HCE actual + **esquema de la base de datos** actual.
@@ -2417,19 +2417,20 @@ git push gitlab main && git push origin main
 eso divergió tanto. Si un módulo lleva más, mergeás lo que tengas hecho o al menos pusheás la rama y lo
 anotás en §6 para que los demás lo vean.
 
-### 12.5 Qué hacemos con `feature/base-datos-hce` (Victor)
-Queda **aparcada, no descartada** (§5.3.2). No se adopta porque pone la lógica de negocio en triggers
-PL/pgSQL, y la decisión §5.2 es lógica en el servidor (Pydantic/FastAPI, testeable con pytest). **Pero su
-contenido es material de consulta directo para M11**, en particular:
+### 12.5 Qué hicimos con `feature/base-datos-hce` (Victor) — **ARCHIVADA** (2026-09-03, §5.68 / L15)
+La rama **se archivó como tag anotado `archivo/base-datos-hce`** (sobre `dfb1732`, en los dos remotos) y
+**se borró de `gitlab`**. No se adoptó porque pone la lógica de negocio en triggers PL/pgSQL, y la
+decisión §5.2 es lógica en el servidor (Pydantic/FastAPI, testeable con pytest). Su contenido **sigue
+siendo material de consulta** y ahora vive en el tag:
 - `sql/04_seed_catalogos.sql` — catálogos IDEA / IPPU-TEA / baremo / categorías documentales.
 - `sql/05_seed_demo.sql` — los 4 usuarios demo del §11, con los mismos números que la demo (IDEA 58 · PA 60 · PB 79 · Δ +19).
 - `sql/02_esquema.sql` y `docs/modelo-datos.md` — segunda opinión sobre tablas, constraints e índices.
 - `03_funciones_triggers.sql` — la lista de reglas duras que hay que cubrir; en v2 esas reglas van como
   **guards en servicios Python con test**, no como triggers.
 
-Para consultarla sin cambiar de rama:
+Para consultarla sin cambiar de rama (el tag está en los dos remotos tras `git fetch --tags`):
 ```bash
-git show gitlab/feature/base-datos-hce:implementacion/hce-db/sql/04_seed_catalogos.sql
+git show archivo/base-datos-hce:implementacion/hce-db/sql/04_seed_catalogos.sql
 ```
 
 ### 12.6 Regla anti-contradicción (vale también para las sesiones de Claude)
