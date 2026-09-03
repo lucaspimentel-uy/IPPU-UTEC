@@ -94,12 +94,27 @@ RECORDATORIOS = [
     ("inau", "Informes semestrales de INAU pendientes de envío", "Semestral"),
 ]
 
-#: Los 4 grupos reales de IPPU, por color (D9 · D5). Se siembran para el año en
-#: curso como punto de partida; de ahí en más los administra coordinación desde
-#: la app, y el seed **nunca** los vuelve a tocar (son insert-only).
-#: Los `A..E` que había antes eran invención de la demo: no se migra nada.
+#: Los 5 grupos reales de IPPU (D9 · D5). Los cuatro nombres por color eran
+#: datos de demostración: la reunión del 2026-08-21 dio los nombres reales
+#: (`handoff.md` §5.37) y §5.61 fijó la ejecución del renombrado acá. Se
+#: siembran para el año en curso como punto de partida; de ahí en más los
+#: administra coordinación desde la app, y el seed **nunca** los vuelve a tocar
+#: (son insert-only). Distintos entre sí → `UNIQUE(nombre, anio)` se cumple.
+#:
+#: ⚠️ **«Taller de Adolescentes» se siembra como fila de `grupo`** porque la
+#: reunión lo enumeró como el quinto en la misma lista que los otros cuatro
+#: (`handoff.md` §5.61). Pero el Documento Técnico §1 reserva el servicio de
+#: **Taller Terapéutico** para la Fase 2, con estructura de registro propia; si
+#: IPPU quiere decir eso, «Taller de Adolescentes» no es un grupo y esta fila
+#: sale. Es la pregunta **A5** de `docs/notas/preguntas-ippu.md`.
 GRUPOS_ANIO = 2026
-GRUPOS = ["Grupo Azul", "Grupo Celeste", "Grupo Naranja", "Grupo Verde"]
+GRUPOS = [
+    "Inicial",
+    "Escolares",
+    "Preadolescentes",
+    "Adolescentes",
+    "Taller de Adolescentes",
+]
 
 
 # --------------------------------------------------------------------------

@@ -108,7 +108,7 @@ class Ateneo(Base):
     - Lo **cross-table** no puede ser CHECK sin trigger, y §5.2.2 los prohíbe:
       «una jornada no lleva acuerdos» y la coherencia `fecha` ↔ `grupo.anio` son
       guards de M11.3 (esta última **advertencia, no bloqueo**: un ateneo de
-      febrero-2026 que revisa el ciclo del Grupo Celeste 2025 es legítimo).
+      febrero-2026 que revisa el ciclo del grupo Escolares 2025 es legítimo).
 
     La regla que ordena los cinco CHECK de tipo: **el sujeto del registro es
     obligatorio; el contexto es opcional; las referencias ajenas están

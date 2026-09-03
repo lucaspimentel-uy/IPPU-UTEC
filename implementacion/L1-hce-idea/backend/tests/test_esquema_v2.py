@@ -132,7 +132,7 @@ def test_foto_individual_ok(db):
 
 
 def test_foto_grupal_ok(db):
-    g = Grupo(nombre="Grupo Azul", anio=2026)
+    g = Grupo(nombre="Inicial", anio=2026)
     db.add(g)
     db.flush()
     db.add(Foto(grupo_id=g.id, descripcion="grupal"))
@@ -141,7 +141,7 @@ def test_foto_grupal_ok(db):
 
 def test_foto_rechaza_ambas_referencias(db):
     """Una foto es del NNA o del grupo: las condiciones de autorización difieren."""
-    g = Grupo(nombre="Grupo Celeste", anio=2026)
+    g = Grupo(nombre="Escolares", anio=2026)
     db.add(g)
     db.flush()
     db.add(Foto(hce_id=_hce(db).id, grupo_id=g.id))

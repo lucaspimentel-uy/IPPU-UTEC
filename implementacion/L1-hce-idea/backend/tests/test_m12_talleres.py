@@ -162,43 +162,43 @@ def test_retirar_y_reincorporar_un_taller_es_reversible(db):
 
 
 # --------------------------------------------------------------------------
-# `grupos_orientados`: nombres de color, no FK a `grupo.id`
+# `grupos_orientados`: nombres de grupo en texto, no FK a `grupo.id`
 # --------------------------------------------------------------------------
 def test_un_taller_se_orienta_a_varios_grupos(db):
     t = Taller(
         nombre="Taller de huerta", orden=1,
-        grupos_orientados=["Grupo Azul", "Grupo Naranja"],
+        grupos_orientados=["Inicial", "Preadolescentes"],
     )
     db.add(t)
     db.flush()
     db.expire(t)
-    assert t.grupos_orientados == ["Grupo Azul", "Grupo Naranja"]
+    assert t.grupos_orientados == ["Inicial", "Preadolescentes"]
 
 
 def test_la_orientacion_sobrevive_al_alta_del_grupo_del_ano_siguiente(db):
     """El motivo de no usar FK.
 
-    Desde D9 (§5.18) un grupo es `(nombre, anio)` con id propio, así que «Grupo
-    Azul 2027» es una fila **distinta** de «Grupo Azul 2026». Con `grupo_id` el
+    Desde D9 (§5.18) un grupo es `(nombre, anio)` con id propio, así que
+    «Inicial 2027» es una fila **distinta** de «Inicial 2026». Con `grupo_id` el
     taller quedaría atado al año en que se creó la fila y en enero habría que
     reapuntar los 14 a mano; por nombre, el alta del año siguiente no lo toca.
     """
-    db.add(Grupo(nombre="Grupo Azul", anio=2026))
+    db.add(Grupo(nombre="Inicial", anio=2026))
     db.flush()
-    t = Taller(nombre="Taller de huerta", orden=1, grupos_orientados=["Grupo Azul"])
+    t = Taller(nombre="Taller de huerta", orden=1, grupos_orientados=["Inicial"])
     db.add(t)
     db.flush()
 
-    azul_2027 = Grupo(nombre="Grupo Azul", anio=2027)
-    db.add(azul_2027)
+    inicial_2027 = Grupo(nombre="Inicial", anio=2027)
+    db.add(inicial_2027)
     db.flush()
     db.expire(t)
 
-    assert t.grupos_orientados == ["Grupo Azul"], "el taller no se tocó"
-    assert azul_2027.id != db.query(Grupo).filter_by(anio=2026).one().id
+    assert t.grupos_orientados == ["Inicial"], "el taller no se tocó"
+    assert inicial_2027.id != db.query(Grupo).filter_by(anio=2026).one().id
     assert db.scalars(
-        select(Taller).where(Taller.grupos_orientados.any("Grupo Azul"))
-    ).all() == [t], "sigue orientado a Azul, sea cual sea el año"
+        select(Taller).where(Taller.grupos_orientados.any("Inicial"))
+    ).all() == [t], "sigue orientado a Inicial, sea cual sea el año"
 
 
 def test_un_taller_sin_orientacion_registrada_vale(db):
@@ -263,7 +263,7 @@ def test_el_seed_no_revive_un_taller_que_coordinacion_retiro(db):
     huerta = db.query(Taller).filter_by(nombre="Taller de huerta").one()
     huerta.retirado_en = date(2026, 6, 30)
     huerta.orden = 99
-    huerta.grupos_orientados = ["Grupo Verde"]
+    huerta.grupos_orientados = ["Adolescentes"]
     db.flush()
 
     run(db, verboso=False)
@@ -273,7 +273,7 @@ def test_el_seed_no_revive_un_taller_que_coordinacion_retiro(db):
     assert huerta.retirado_en == date(2026, 6, 30)
     assert huerta.activo is False
     assert huerta.orden == 99
-    assert huerta.grupos_orientados == ["Grupo Verde"]
+    assert huerta.grupos_orientados == ["Adolescentes"]
     assert db.query(Taller).count() == 14, "tampoco lo duplicó"
 
 

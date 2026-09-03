@@ -1563,19 +1563,23 @@
   ],
   "grupo": [
     {
-      "nombre": "Grupo Azul",
+      "nombre": "Inicial",
       "anio": 2026
     },
     {
-      "nombre": "Grupo Celeste",
+      "nombre": "Escolares",
       "anio": 2026
     },
     {
-      "nombre": "Grupo Naranja",
+      "nombre": "Preadolescentes",
       "anio": 2026
     },
     {
-      "nombre": "Grupo Verde",
+      "nombre": "Adolescentes",
+      "anio": 2026
+    },
+    {
+      "nombre": "Taller de Adolescentes",
       "anio": 2026
     }
   ]

@@ -236,8 +236,11 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
             f"  {'catalogo_centro_educ':22} {nuevas:3} nuevas · {act:3} actualizadas"
         )
 
-        # Los 4 grupos por color (D9) como punto de partida del año en curso.
-        # Insert-only: de acá en más los administra coordinación.
+        # Los 5 grupos reales de IPPU (D9 · §5.61) como punto de partida del año
+        # en curso. Insert-only: de acá en más los administra coordinación.
+        # ⚠️ «Taller de Adolescentes» se siembra como grupo por §5.61; si IPPU
+        # lo entiende como el servicio de Taller Terapéutico (Fase 2), esa fila
+        # sale — pregunta A5 de `docs/notas/preguntas-ippu.md`.
         nuevas, act = _sincronizar(
             db, Grupo, datos["grupo"], ("nombre", "anio"), solo_insertar=True
         )

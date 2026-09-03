@@ -118,7 +118,7 @@ class Grupo(Base):
     __tablename__ = "grupo"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    nombre: Mapped[str] = mapped_column(String(60))       # "Grupo Azul", "Grupo Celeste", …
+    nombre: Mapped[str] = mapped_column(String(60))       # "Inicial", "Escolares", … (§5.61)
     anio: Mapped[int] = mapped_column(SmallInteger)
     franja: Mapped[str | None] = mapped_column(String(60))
     dias: Mapped[str | None] = mapped_column(String(60))

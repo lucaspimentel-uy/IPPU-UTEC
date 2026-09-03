@@ -360,8 +360,8 @@ class Taller(Base):
     #: Orden de presentación. La especificación pide poder **reordenar** y hasta
     #: acá no había con qué: el orden era el de inserción.
     orden: Mapped[int] = mapped_column(Integer, default=0)
-    #: Grupos a los que se orienta, como **nombres de color en texto**
-    #: (`Grupo Azul`…), **no** FK a `grupo.id`. Desde D9 (§5.18) un grupo es
+    #: Grupos a los que se orienta, como **nombres de grupo en texto**
+    #: (`Inicial`, `Escolares`… §5.61), **no** FK a `grupo.id`. Desde D9 (§5.18) un grupo es
     #: `(nombre, anio)`: un `grupo_id` ataría el taller al año en que se creó la
     #: fila y en enero habría que reapuntar los 14. Por nombre es robusto al
     #: cambio de año — la misma lógica que D5 aplica a la participación.

@@ -34,34 +34,38 @@ def test_el_mismo_grupo_puede_existir_en_dos_anios(db):
     quiénes fueron sus técnicos— y los expedientes de 2026 pasaban a apuntar al
     grupo nuevo sin aviso.
     """
-    db.add(Grupo(nombre="Grupo Azul", anio=2026, tecnico1_rol="Psicólogo/a"))
-    db.add(Grupo(nombre="Grupo Azul", anio=2027, tecnico1_rol="Maestro/a"))
+    db.add(Grupo(nombre="Inicial", anio=2026, tecnico1_rol="Psicólogo/a"))
+    db.add(Grupo(nombre="Inicial", anio=2027, tecnico1_rol="Maestro/a"))
     db.flush()  # no debe levantar
 
-    filas = db.query(Grupo).filter_by(nombre="Grupo Azul").all()
+    filas = db.query(Grupo).filter_by(nombre="Inicial").all()
     assert len(filas) == 2
     assert len({g.id for g in filas}) == 2, "cada año tiene su propia fila, con id propio"
 
 
 def test_grupo_rechaza_dos_filas_del_mismo_nombre_y_anio(db):
-    """La contracara: el UNIQUE existe para que no haya dos «Azul 2026»."""
-    db.add(Grupo(nombre="Grupo Azul", anio=2026))
+    """La contracara: el UNIQUE existe para que no haya dos «Inicial 2026»."""
+    db.add(Grupo(nombre="Inicial", anio=2026))
     db.flush()
-    db.add(Grupo(nombre="Grupo Azul", anio=2026))
+    db.add(Grupo(nombre="Inicial", anio=2026))
     with pytest.raises(IntegrityError, match="uq_grupo_nombre_anio"):
         db.flush()
 
 
 def test_grupos_distintos_del_mismo_anio_conviven(db):
-    db.add(Grupo(nombre="Grupo Naranja", anio=2026))
-    db.add(Grupo(nombre="Grupo Verde", anio=2026))
+    db.add(Grupo(nombre="Escolares", anio=2026))
+    db.add(Grupo(nombre="Preadolescentes", anio=2026))
     db.flush()
 
 
-def test_el_seed_trae_los_cuatro_grupos_por_color():
-    """`A..E` era invención de la demo; los reales son por color (D9 · D5)."""
+def test_el_seed_trae_los_cinco_grupos_reales():
+    """Los cuatro nombres por color eran datos de demostración; los reales de
+    IPPU son cinco (§5.37, ejecución fijada en §5.61)."""
     nombres = {g["nombre"] for g in CATALOGOS["grupo"]}
-    assert nombres == {"Grupo Azul", "Grupo Celeste", "Grupo Naranja", "Grupo Verde"}
+    assert nombres == {
+        "Inicial", "Escolares", "Preadolescentes", "Adolescentes",
+        "Taller de Adolescentes",
+    }
     assert all(isinstance(g["anio"], int) for g in CATALOGOS["grupo"])
 
 
@@ -74,21 +78,21 @@ def test_el_seed_no_pisa_un_grupo_ya_configurado(db):
     """
     from app.seed_catalogos import _sincronizar
 
-    db.add(Grupo(nombre="Grupo Azul", anio=2026))
+    db.add(Grupo(nombre="Inicial", anio=2026))
     db.flush()
-    g = db.query(Grupo).filter_by(nombre="Grupo Azul", anio=2026).one()
+    g = db.query(Grupo).filter_by(nombre="Inicial", anio=2026).one()
     g.tecnico1_rol = "Psicóloga"
     g.dias = "Lunes a jueves"
     db.flush()
 
     nuevas, act = _sincronizar(
-        db, Grupo, [{"nombre": "Grupo Azul", "anio": 2026}], ("nombre", "anio"),
+        db, Grupo, [{"nombre": "Inicial", "anio": 2026}], ("nombre", "anio"),
         solo_insertar=True,
     )
     db.flush()
 
     assert (nuevas, act) == (0, 0)
-    g = db.query(Grupo).filter_by(nombre="Grupo Azul", anio=2026).one()
+    g = db.query(Grupo).filter_by(nombre="Inicial", anio=2026).one()
     assert g.tecnico1_rol == "Psicóloga"
     assert g.dias == "Lunes a jueves"
 
@@ -318,7 +322,7 @@ def test_el_seed_completo_carga_y_es_idempotente(db):
     assert db.query(IdeaEjemplo).count() == 48
     assert db.query(BandaIdea).count() == 6
     assert db.query(DeltaInterpretacion).count() == 6
-    assert db.query(Grupo).count() == 4
+    assert db.query(Grupo).count() == 5
 
     segunda = run(db, verboso=False)
     for linea in segunda:
@@ -354,7 +358,7 @@ def test_auditoria_registra_el_cambio_de_un_campo(db):
     año sobrescribe la fila: el valor anterior sólo sobrevive acá."""
     reg = Auditoria(
         hce_id=None, modulo="grupo", tipo="edicion", campo="tecnico1_id",
-        valor_ant="3", valor_nuevo="7", detalle="Grupo Azul 2026",
+        valor_ant="3", valor_nuevo="7", detalle="Inicial 2026",
     )
     db.add(reg)
     db.flush()

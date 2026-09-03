@@ -67,7 +67,7 @@ def _hce(db, ci="7.777.777-7"):
     return h
 
 
-def _grupo(db, nombre="Grupo Celeste", anio=2026):
+def _grupo(db, nombre="Escolares", anio=2026):
     g = Grupo(nombre=nombre, anio=anio)
     db.add(g)
     db.flush()
@@ -211,13 +211,13 @@ def test_el_ateneo_clinico_admite_grupo(db):
     """La otra mitad: el grupo es **contexto** del ateneo clínico, y se guarda
     porque es un dato del hecho (el grupo **de ese año**, D9), no una copia de la
     situación actual del NNA."""
-    g = _grupo(db, "Grupo Azul", 2025)
+    g = _grupo(db, "Inicial", 2025)
     assert _ateneo(db, "clinico", grupo_id=g.id).grupo_id == g.id
 
 
 @pytest.mark.parametrize("tipo", ("institucional", "jornada"))
 def test_institucional_y_jornada_no_admiten_grupo(db, tipo):
-    g = _grupo(db, f"Grupo Verde {tipo}", 2026)
+    g = _grupo(db, f"Adolescentes {tipo}", 2026)
     with pytest.raises(IntegrityError):
         _ateneo(db, tipo, grupo_id=g.id)
 
@@ -569,7 +569,7 @@ def test_borrado_el_ateneo_el_expediente_se_puede_borrar(db):
 
 
 def test_borrar_el_grupo_falla_mientras_exista_el_ateneo(db):
-    g = _grupo(db, "Grupo Naranja", 2026)
+    g = _grupo(db, "Preadolescentes", 2026)
     _ateneo(db, "grupo", grupo_id=g.id)
     with pytest.raises(IntegrityError):
         db.delete(g)
@@ -691,8 +691,8 @@ def test_una_jornada_con_acuerdos_hoy_se_guarda(db):
 
 def test_la_fecha_puede_no_coincidir_con_el_anio_del_grupo(db):
     """También cross-table → M11.3, y como **advertencia, no bloqueo**: un
-    ateneo de febrero-2026 que revisa el ciclo del Grupo Celeste **2025** es
+    ateneo de febrero-2026 que revisa el ciclo del grupo Escolares **2025** es
     legítimo."""
-    g = _grupo(db, "Grupo Celeste", 2025)
+    g = _grupo(db, "Escolares", 2025)
     a = _ateneo(db, "grupo", grupo_id=g.id, fecha=date(2026, 2, 10))
     assert a.fecha.year != g.anio
