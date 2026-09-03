@@ -106,6 +106,16 @@ con consolidación histórica, análisis automático y reportes automáticos.
 6. **Git + GitHub:** `git init`, commit inicial en rama `main`, y push a repo **privado** `lucaspimentel-uy/IPPU-UTEC` (https://github.com/lucaspimentel-uy/IPPU-UTEC). `handoff.md`, `CLAUDE.md` y `herramientas/conversor_docling.py` están en `.gitignore` (NO se publican). Se instaló `gh` (GitHub CLI) v2.95.0.
 
 ## 5. Decisiones tomadas
+
+> **Sobre la etiqueta `(L#)` de los títulos (decodificación, §5.77 / L9, 2026-09-03).** Entre §5.10 y
+> §5.69 los títulos llevan un paréntesis `(D1)`, `(I3)`, `(L8)`… Esa letra+número **contaba decisiones
+> dentro de una serie**, no sesiones: la serie **L** llegó a `(L16)` en §5.69. Los **nombres de sesión**
+> de la bitácora (§13) contaron **sesiones** — L5, L6, L7, y ésta, **L9** — y las dos numeraciones
+> **divergieron** (no hay «sesión L8» en §13; la hoja de decisiones que esta sesión ejecuta se armó en una
+> instancia intermedia). **Desde §5.70 las entradas nuevas NO llevan etiqueta:** se citan sólo por
+> `§5.NN`, que es la clave estable y append-only. Las etiquetas ya escritas **se dejan como están** —
+> están citadas en commits (`af98184`, `cd98f67`) y en referencias cruzadas, y renumerar rompería enlaces.
+
 - Proyecto vive en `C:\Proyectos\IPPU`. Workflow: `cd` a la carpeta → `claude`.
 - Originales en `docs/fuentes/`; conversiones en `docs/markdown/`; código por línea en `implementacion/Lx-...`.
 - La demo se renombró de `hce_idea_ippu_demo (1).html` → `hce_idea_ippu_demo.html`.
@@ -1946,6 +1956,301 @@ expedientes), que **sigue sin dueño**.
 
 ---
 
+## 5.70 → 5.78 · Sesión L9 — reconciliación con el Protocolo de acceso y ejecución de la hoja de decisiones (2026-09-03, Lucas)
+
+> **Contexto.** Ingresaron dos documentos de IPPU, los dos **anteriores al acta del 2026-08-26**:
+> `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de acceso,
+> confidencialidad y resguardo de la HC — **nuevo en el repo**) y una reconversión del Documento Técnico
+> (**idéntica en prosa** a `docs/markdown/1_documento-tecnico-utec-lidia.md`; sólo difieren artefactos de
+> Docling — no se tocó). La regla de precedencia quedó en la cabecera de este archivo y en `CLAUDE.md`.
+> **Esta sesión no implementa esquema, seed ni test.** Escribe decisiones (§12.6), cierra puntos de
+> `puntos-a-validar.md` y actualiza `PLAN-M12` §M12.8a. Desde §5.70 las entradas **no llevan etiqueta
+> `(L#)`** (§5.77 / decodificación al inicio de §5).
+
+### 5.70 El ateneo es el canal que el régimen de acceso provee, no un hueco — §2.16 se resuelve contra el Protocolo (2026-09-03, Lucas)
+
+**El hallazgo, verificado en el archivo ingresado.** El **§5** del Protocolo, fila **«Otros técnicos de
+la institución, no tratantes directos del caso»**, dice: *«Acceso restringido, **únicamente mediante
+interconsulta formal, ateneo clínico o pase de caso documentado**, y solo a la información pertinente a
+esa consulta puntual»* (base normativa citada: Ley 18.335 Art. 18 lit. D — «responsables de la atención
+médica» — y principio de finalidad, Ley 18.331 Art. 8). El **§6.1** lo repite como procedimiento: *«Todo
+técnico no tratante que requiera consultar una HC ajena a su caso debe hacerlo mediante interconsulta
+formal o en el marco de un ateneo clínico documentado, **dejando constancia del motivo**. El acceso se
+limita a la información pertinente a esa consulta puntual.»*
+
+**Qué cierra, y por qué no fue eligiendo un bando.** Cierra `puntos-a-validar.md` **§2.16** —«un ateneo
+de grupo deja ver NNA cuya HCE el técnico no puede abrir»—. **No** se resolvió eligiendo entre §5.58/§5.63
+(ateneo de grupo = acceso general del equipo) y §5.41 + Manual §21.1 (el técnico ve sólo sus grupos): la
+pieza que faltaba era **esta fila del Protocolo**. El ateneo no es una fuga del régimen de acceso, **es el
+canal que el régimen provee** para que un técnico no tratante vea lo pertinente de un caso ajeno. Ateneos
+de grupo de acceso general y ateneos clínicos sensibles **conviven**. Cuatro fuentes lo sostienen a la
+vez: **Protocolo §5 + §6.1**, **§5.58/§5.63** (decisión de equipo), **§5.41 (I6)** y **Manual §21.1**.
+
+**Tres condiciones que el Protocolo impone, cada una escrita como lo que M11.3 tiene que construir:**
+
+1. **«Sensible» no puede querer decir «sólo el equipo tratante».** El ateneo clínico es *justamente* cómo
+   un técnico no tratante ve legítimamente lo pertinente de un caso ajeno. El guard es: visible para sus
+   **participantes documentados** + el **equipo tratante** + **dirección/coordinación técnica-clínica** —
+   no «el equipo tratante y nadie más».
+2. **Leer el ateneo no es abrir la HCE.** *«Sólo a la información pertinente a esa consulta puntual»*
+   (Protocolo §5 y §6.1) es la distinción de **enmascaramiento** que la hoja llamó **opción 2**: el
+   endpoint de ateneos devuelve el acta, no el expediente.
+3. **El acceso se registra con su motivo.** Protocolo §8: el registro lleva como mínimo *«fecha, persona
+   que accede, HC consultada, **motivo de la consulta** y firma»*. Todo acceso a un ateneo que toca un
+   caso ajeno deja registro **con motivo**.
+
+**⚠️ El problema de modelado que esto destapa, medido contra el código antes de escribir nada.** La
+condición 1 exige que la lista de **participantes documentados** autorice el acceso. Hoy
+`ateneo.participantes` es **`Mapped[str | None] = mapped_column(Text)`** — prosa libre —
+(`app/models/ateneo.py:257`), y su docstring (`:253-256`) lo dice explícito: *«Se consignan roles, no
+nombres, salvo firma de acuerdos … es una decisión de privacidad, no de formato. Por eso es texto y no
+una tabla de participantes con FK a `profesional`.»* **Con eso, la condición 1 es hoy inimplementable:**
+una lista en prosa no autoriza a nadie. Para que autorice, `participantes` tendría que ser una
+**relación** (`ateneo_participante` N:M a `profesional`), y eso necesita el **modelo de usuarios (§5.72)**
+por debajo. **No se toca `ateneo.participantes` en esta sesión** — es trabajo de M11.3 y va **después** de
+§5.72.
+
+**Qué NO decide.** No diseña la matriz de permisos (Fase 4) ni el registro de accesos con motivo (§5.71
+lo abre como pregunta, no como diseño). No cambia `ateneo.participantes` — sólo deja escrito que tiene que
+dejar de ser prosa cuando M11.3 construya la condición 1. §5.58 y §5.63 quedan **enteras** en pie.
+
+**Ítems residuales de construcción, para que no se pierdan** (todos M11.3 / Fase 4, anotados también en
+`puntos-a-validar.md` §2.16, que cierra apuntando acá): (a) el guard de visibilidad del ateneo clínico =
+participantes documentados + equipo tratante + dirección/coordinación; (b) el endpoint de ateneos
+enmascara a «lo pertinente» según quién consulta; (c) `ateneo.participantes` pasa de `Text` a relación;
+(d) registro de acceso con motivo (§5.71).
+
+### 5.71 §2.12 DIVULGACIÓN — la tabla `divulgacion` entra en M12.8a, y el Protocolo aporta sus columnas (2026-09-03, Lucas)
+
+**Qué cambia respecto de §2.12.** Hasta ahora `divulgacion` era «un concepto ausente que hay que
+inventar». Ya no: **el juego de columnas se deriva del Protocolo §6.2–6.7 y de la matriz §5**, no se
+inventa. La tabla **entra en el delta de esquema de M12.8a** (§5.71 en `PLAN-M12` §M12.8a).
+
+**La tabla, propuesta columna por columna, con el pasaje que la funda:**
+
+| Columna | Qué registra | Fundamento en el Protocolo |
+|---|---|---|
+| `hce_id` (o `ateneo_id`, XOR — §5.25) | de qué expediente / ateneo salió el dato | pertenencia |
+| `destinatario_tipo` | a quién — **las categorías de actor de la matriz §5**: familia / tercero autorizado / INAU / MSP-BPS / Ministerio Público / Poder Judicial / dirección-gobierno / donante / UTEC-LIDIA | matriz §5 (filas de la tabla) |
+| `destinatario_detalle` | nombre o referencia del destinatario concreto | §6.2 («indicando el alcance y la finalidad») |
+| `alcance_dato` | **identificable** / **disociado-anonimizado** / **agregado** | §6.6 (informes a dirección, convenio y **donantes** *deben* ser disociados o anonimizados) · §6.7 (UTEC-LIDIA prioriza disociado/anonimizado) |
+| `autorizacion_escrita` (bool) + `autorizacion_ref` | si hay autorización escrita del titular/representante y su referencia | §6.2 (terceros: «autorización expresa y por escrito») · §6.5 (traslado de HC: «previa autorización expresa») |
+| `canal_formal` | por qué vía formal salió (Unidad Competente Territorial/Programática de INAU; canal de auditoría/habilitación de MSP-BPS; Dirección General para requerimientos judiciales) | §6.3 · §6.4 |
+| `finalidad` / `motivo` | para qué se comunicó el dato | §8 («motivo de la consulta») · §4 (finalidad, minimización) |
+| `fecha` | cuándo | §8 |
+| `responsable_id` | quién hizo la divulgación | §8 («persona que accede») |
+| `obs` | texto libre | — |
+
+**Qué NO hace, dicho en claro.** **No modela un flujo de compartición.** Los guards —quién *puede*
+divulgar según su rol (matriz §5), si un consentimiento *habilita* la salida, la compuerta «revisado por
+dirección → entregado» de §5.40— son **M11.3**. `divulgacion` es **append-only por naturaleza**: registra
+un **hecho** ocurrido, no una solicitud en trámite.
+
+**Por qué acá y no como ajuste puntual: cuatro afirmaciones distintas de IPPU caen sobre este mismo
+concepto ausente** — **§5.39 (I4)** fotos («guardar no requiere autorización; compartir sí»), **§5.45
+(I10)** confidencialidad reencuadrada, **§5.40 (I5)** revisión de informes por dirección antes de
+entregar, y **«a las instituciones se les manda un resumen, no el expediente»**. R0 midió que hoy el
+modelo representa el **almacenamiento** y **no** la **divulgación** (una sola línea en `app/`, y es un
+comentario). Es el momento barato por la misma razón que el IDEA anual: **0 routers, 0 schemas, 0
+servicios**.
+
+**Estado de §2.12.** **Decidido y agendado a M12.8a.** No cierra: lo que queda abierto es el **flujo** y
+los **guards** (M11.3/M11.4). §2.12 se reescribe para reflejarlo.
+
+### 5.72 §2.11 — el modelo de asignación técnico↔grupo entra en M12.8a de forma estructural; el vocabulario de roles queda como propuesta (2026-09-03, Lucas)
+
+**⚠️ Leer la matriz §5 del Protocolo antes de derivar nada: la mayoría de sus filas NO son usuarios de la
+aplicación.** Paciente, padres/tutores, adolescentes con autonomía progresiva, terceros autorizados,
+INAU, MSP/BPS, Ministerio Público, Poder Judicial y los estudiantes/investigadores UTEC-LIDIA son
+**destinatarios** gobernados por los procedimientos §6 — que es exactamente lo que `divulgacion` (§5.71)
+registra. **Sólo un puñado de filas son personas que inician sesión.**
+
+**Lista de roles de aplicación, derivada de la matriz, como PROPUESTA para que Lucas confirme en una
+línea** (⚠️ **no se escribe en un CHECK como si estuviera cerrada**):
+
+| Rol de aplicación propuesto | Pasaje de la matriz §5 que lo funda |
+|---|---|
+| **Equipo técnico-asistencial tratante** | fila «Equipo técnico-asistencial tratante … acceso completo al contenido clínico del/de los usuarios que atiende directamente» |
+| **Otros técnicos de la institución, no tratantes** | fila «Otros técnicos … acceso restringido, únicamente mediante interconsulta / ateneo / pase de caso» (§5.70) |
+| **Dirección / coordinación técnica-clínica** | fila «Dirección/coordinación técnica-clínica … acceso de supervisión clínica … con registro del motivo» |
+| **Personal administrativo vinculado a la atención** | fila «Personal administrativo vinculado … datos identificatorios y logísticos … contenido clínico sólo … puntual» |
+| **Dirección no técnica / administración / gobierno** | fila «Dirección no Técnica … **sin acceso al contenido clínico individual** … sólo información agregada, disociada o anonimizada» + Nota general + §10 |
+
+⚠️ **Un sexto candidato, sin resolver:** «Estudiantes en formación, pasantes, investigadores (incl.
+convenio UTEC-LIDIA)» tiene fila propia («acceso supervisado; datos preferentemente
+disociados/anonimizados»). Puede ser un rol de aplicación supervisado o quedar como destinatario de
+`divulgacion`. **Va a la lista de IPPU.**
+
+**Medido contra el código:**
+- **`profesional.rol`** hoy es `Mapped[str] = mapped_column(String(20), default="tecnico")` con
+  `CheckConstraint("rol IN ('admin','tecnico')", name="rol_valido")` (`app/models/identidad.py:29` y
+  `:35`; en la base, por la convención de nombres, la constraint es `ck_profesional_rol_valido`). **Dos
+  roles fijos por CHECK, no una tabla.**
+- ⚠️ **La conflación que ese CHECK esconde:** nuestro `admin` es el **ADMIN institucional que crea grupos
+  y asigna técnicos** (§5.41 / I6), mientras que la **«Dirección no técnica»** del Protocolo **no tiene
+  acceso al contenido clínico individual** (matriz §5, Nota general, §10). Si en el modelo son el mismo
+  usuario, **el modelo contradice el Protocolo**. Se registra; **no se resuelve acá** — es diseño de
+  M11.3 + Fase 4, con la lista de roles ya confirmada.
+- **La demo trae un «perfil de área de Inclusión»** en su tablero, al lado de «coordinación» y «dirección
+  técnica» — un rol que **no está** ni en la matriz §5 del Protocolo ni en nuestro CHECK. **Va a la lista
+  de IPPU** como pregunta.
+- **`grupo.tecnico1_rol` / `grupo.tecnico2_rol` YA EXISTEN.** Contra lo que la hoja esperaba: son
+  `Mapped[str | None] = mapped_column(String(60))` (`app/models/identidad.py:127` y `:129`), con docstring
+  que cita §5.2.3 (portabilidad). El Documento Técnico §3.1 los especifica como etiqueta de rol
+  configurable por institución (IPPU: «Psicólogo/a» y «Maestro/a del grupo»), y **ya están modelados tal
+  cual**. **El delta de M12.8a NO los agrega** — no hay nada que agregar.
+
+**Qué entra en M12.8a, estructural:** una tabla **`tecnico_grupo`** N:M (`grupo_id`, `profesional_id`,
+`rol` etiqueta, `desde`, `hasta`), **aditiva** — se agrega **al lado** de `grupo.tecnico1_id`/`tecnico2_id`,
+que siguen siendo la fuente de verdad hasta que M11.3 conecte las lecturas. Esto le da **dónde vivir** a
+las vigencias y cierra el lado *estructural* del residuo de §5.18 (técnico que cambia a mitad de año) sin
+tocar permisos ni login.
+
+**Qué NO entra en M12.8a:** el **vocabulario de roles**. `profesional.rol` y su CHECK de dos valores **no
+se tocan**; la lista de cinco (o seis) queda como propuesta; el CHECK ampliado o la tabla `rol` de
+consulta aterriza en **M11.3 / Fase 4** con la lista que Lucas confirme.
+
+**⚠️ Esto agranda el alcance de M12.8, que el plan fijó como «una sola persona».** `tecnico_grupo` es una
+tabla nueva + su seed + revisión de fixtures, encima del retiro de §VII (§5.59), los cinco nombres de
+grupo (§5.61), `ateneo.observaciones` (§5.66) y la tabla `divulgacion` (§5.71). **M12.8a es ahora una
+ronda de esquema sustancial, no una limpieza.** Se dice acá y no se deja crecer en silencio.
+
+**§2.11 NO cierra** — la matriz de permisos es Fase 4. Se actualiza para reflejar lo decidido (la lista
+propuesta, `tecnico_grupo` en M12.8a, la conflación `admin`, el perfil de Inclusión, y que `tecnico?_rol`
+ya existen).
+
+### 5.73 §1.15 — `inclusion` NO se anualiza; la pregunta se reformula alrededor de la bitácora (2026-09-03, Lucas)
+
+**La evidencia.** **Nada** en las fuentes dice que la inclusión sea anual. El tablero de Inclusión del
+Prototipo v4 lista indicadores **calculados desde fechas y desde la bitácora**, no desde una foto anual:
+tasa de escolarización, distribución por tipo de centro, promedio de horas, casos en espera y tiempo de
+ingreso, alerta de **>60 días sin gestión**, y articulaciones **por caso y por período**, descritos como
+**insumo directo de la rendición a INAU**. Esa es la fuente de la decisión.
+
+**Decisión.** `inclusion` **queda 0..1 por expediente, con su bitácora** (`UNIQUE(hce_id)`), y la
+dirección reversible de **§5.51 (J2)** sigue en pie. **`anio` NO entra en M12.8a.**
+
+**La pregunta reformulada, que reemplaza a la actual de §1.15:** ¿la `inclusion_bitacora` registra lo
+suficiente para (a) reconstruir el estado a una fecha arbitraria y (b) calcular esos indicadores para un
+período? **Respondida contra el código** (`app/models/inclusion.py`):
+
+- **Columnas de `inclusion_bitacora`:** `id`, `inclusion_id` (→ `inclusion.id`, no `hce_id`), `fecha`
+  (NOT NULL — cuándo ocurrió la gestión), `interlocutor` (NOT NULL), `rol` (null), `medio` (null), `tema`
+  (NOT NULL), `contenido` (NOT NULL), `acuerdos` (null), `autor_id` (null), `registrado_en`. **Es una
+  serie de *gestiones*, no de *transiciones de estado*.**
+- **Las transiciones de estado NO se registran.** `inclusion.estado` y `inclusion.fecha_estado` son
+  **columnas únicas mutables**: `fecha_estado` «se reescribe en cada cambio» (docstring del modelo). Lo
+  mismo `centro`, `tipo_centro`, `dias_horas`, `modalidad`. **No hay tabla de historial de estado**, y
+  `auditoria` —que sería el único rastro— hoy es **aspiración**: no hay `app/services/` que la escriba.
+
+| Indicador del tablero | ¿Para un período? | ¿Reconstruir a una fecha pasada? |
+|---|---|---|
+| Tasa de escolarización | foto actual sí (desde `inclusion.estado`) | **No** — `estado` se pisa |
+| Distribución por tipo de centro | foto actual sí | **No** — `tipo_centro` se pisa |
+| Promedio de horas | **No** — `dias_horas` es **texto libre** («3 veces por semana · 2 horas»), sin descomponer | **No** |
+| Casos en espera + tiempo de ingreso | «en espera» actual sí | **No** — hace falta *cuándo entró* y *cuándo salió* de «en espera»; `fecha_estado` sólo guarda la última |
+| Alerta >60 días sin gestión | **Sí** — `max(inclusion_bitacora.fecha)` por ficha (el índice `ix_inclusion_bitacora_inclusion_fecha` existe para esto) | n/a |
+| Articulaciones por caso | **Sí** — `count(inclusion_bitacora)` por ficha | n/a |
+| Articulaciones por período | **Sí** — `count(...) WHERE fecha BETWEEN …` | n/a |
+
+**Conclusión.** Para **un período** (indicadores de actividad: alerta 60 días, articulaciones por
+caso/período) **sí alcanza**. Para **reconstruir el estado a una fecha arbitraria** (escolarización,
+distribución por centro, horas, tiempo de ingreso) **no**, y el promedio de horas además está bloqueado
+por el texto libre.
+
+**Qué falta, como trabajo de M11.3/M11.4:**
+- Un **historial de estado fechado** para `inclusion.estado` — tabla `inclusion_estado_historial`, o
+  hacer `auditoria` real y consultable para `campo='estado'`. Necesario para escolarización histórica y
+  tiempo de ingreso.
+- Lo mismo para `centro`/`tipo_centro` si se quiere la distribución por tipo de centro **a lo largo del
+  tiempo**.
+- Un **campo de horas estructurado** (o aceptar que «promedio de horas» no es calculable y derivarlo
+  aproximado).
+- «Tiempo de ingreso» necesita las dos marcas —entró y salió de «en espera»— → depende del historial de
+  estado.
+
+**§1.15 NO cierra:** se reescribe alrededor de esta pregunta, con lo que falta anotado como M11.3/M11.4.
+La confirmación de IPPU sigue en la lista (la de si necesitan «foto del año pasado» o les alcanza con «hoy
++ bitácora»), **pero ya no es candidata a M12.8a**.
+
+### 5.74 §2.14 — el indicador de ateneos cuenta por `ateneo.fecha`, no por `anio_correlativo` (2026-09-03, Lucas)
+
+El indicador institucional de **§5.46 (I11)** —8 ateneos al año, al menos 2 por grupo— **cuenta por
+`ateneo.fecha`**: mide **actividad en un año**, y **§1.14 ya dejó fijado** que el filtro de la lista sigue
+la **fecha del hecho**, no el correlativo (que es de registración y puede caer en otro año). El
+`anio_correlativo` es del año en que se cargó el acta y no sirve para «cuántos ateneos hubo en 2026».
+
+**Costo hoy: cero.** Es una consulta de **M11.3/M11.4**. El denominador («≥2 por grupo») usará los **cinco
+nombres reales** una vez que **§5.61** se ejecute en M12.8a. **§2.14 sigue abierto** como trabajo de
+construcción — ahora con su semántica fijada.
+
+### 5.75 §2.3 — vocabulario de «fase» RATIFICADO como estaba redactado; §2.3 CIERRA (2026-09-03, Lucas)
+
+**Qué ratifica, por nombre: §5.64 (L11)**, que decidió «fijar un vocabulario único» pero dejó la
+redacción pendiente de Lucas. **La redacción se ratifica tal cual la propuesta borrador de §2.3:**
+
+| Sentido | Término |
+|---|---|
+| backend 0–6 (infra → routers → Docker completo) | **etapa** (del backend) |
+| etapas del convenio IPPU×UTEC | **etapa del convenio** |
+| L1–L4 | **línea** (la *numeración* es §2.4 → §5.76) |
+| M0–M12 (rondas de trabajo) | **ronda** |
+| Documento Técnico (Fase 1/2 · A–D · «fase piloto») | **fase** — reservada **sólo** para esto, que es vocabulario de un documento normativo externo que no reescribimos |
+
+**§2.3 CIERRA.** Apunta a esta entrada.
+
+**Documentos que quedan por corregir — NO se corrigen en esta sesión** (es un pase mecánico aparte,
+registrado como bullet en §6). L6 midió **~98 apariciones de «fase» en 17 archivos, cinco sentidos**.
+Conteo por archivo (grep `\bfase`, insensible a mayúsculas), los que más pesan:
+
+| Archivo | apariciones | Sentidos a renombrar |
+|---|---|---|
+| `handoff.md` | 48 | (1) etapa backend, (4) ronda, (5) se deja |
+| `docs/markdown/Documento de trabajo.md` | 14 | material de fuente — **no se toca** (se cita, no se reescribe) |
+| `docs/notas/puntos-a-validar.md` | 10 | (1), (5) |
+| `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md` | 9 | (1) etapa backend |
+| `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` | 9 | (1), (4) |
+| `docs/planes/PLAN-M12-…-2026-08.md` | 3 | (1), (4) |
+| `implementacion/L1-hce-idea/backend/README.md` | 2 | (1) |
+| `README.md` · `CLAUDE.md` | 1 c/u | (2) etapa del convenio |
+
+(Los `docs/prompts/*` y `docs/notas/relevamiento-…` son registro histórico y **no se editan**.)
+
+### 5.76 §2.4 — L1 = HCE es la numeración oficial de las líneas; §2.4 CIERRA (2026-09-03, Lucas)
+
+**L1 = HCE + IDEA + analítica** es la numeración oficial, **consistente en todo el material técnico**: la
+presentación 13.05.2026, la demo y el **Documento Técnico** la usan. Lo confirma §5.1.1 y el propio §7
+(«el foco L1=HCE es consistente en todo el material técnico»).
+
+**§2.4 CIERRA.** Apunta a esta entrada.
+
+**Documentos que divergen — NO se corrigen acá**, van al mismo pase mecánico que §5.75 (bullet en §6): el
+**`docs/markdown/Documento de trabajo.md`** y el **cuestionario Q47** usan numeraciones distintas de las
+líneas. Son material de fuente: se **anota la divergencia**, no se reescribe la fuente; donde el repo cite
+«Línea N» se usa la numeración oficial.
+
+### 5.77 Se retira la etiqueta `(L#)` de las entradas de §5 (2026-09-03, Lucas)
+
+Las decisiones se citan **sólo por `§5.NN`**, que ya es la clave estable y append-only. **Las etiquetas
+`(D#)`, `(I#)`, `(J#)`, `(K#)`, `(L#)` ya escritas se dejan como están** — están citadas en commits
+(`af98184`, `cd98f67`) y en referencias cruzadas, y renumerar rompería enlaces. **Las entradas nuevas no
+llevan etiqueta.** La línea de decodificación —qué contaba la etiqueta (decisiones dentro de una serie) y
+qué contaban los nombres de sesión (sesiones), y que las dos numeraciones divergieron— está **al inicio de
+§5**.
+
+### 5.78 Lucas es el dueño del contacto con IPPU; las preguntas se consolidan en un solo documento (2026-09-03, Lucas)
+
+**Lucas queda como responsable del contacto con IPPU.** Todas las preguntas que hoy viven repartidas se
+consolidan en **`docs/notas/preguntas-ippu.md`** (creado en esta sesión), que es **la** lista para el
+próximo contacto. Consolida: `puntos-a-validar.md` §1 (entradas abiertas) y §3 (los dos supuestos sin
+confirmar), `consulta-a-ippu.md`, `respuestas-reunion-ippu-2026-08-21.md` §16 (los 12 bloques sin
+respuesta + pendientes), `handoff.md` §6, y los ítems **⚠️ CONFIRMABLE** (§5.38 consentimiento;
+§5.58/§5.63 la reversión del ateneo de grupo). Agrupa por: **bloquea ahora** / **bloquea M11.3** / **se
+lleva para el registro**. **No inventa preguntas y no descarta ninguna**; el documento dice qué fuentes
+consolidó y el conteo por fuente.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy
@@ -1997,19 +2302,19 @@ expedientes), que **sigue sin dueño**.
 >   único camino es el seed, que además es *insert-only* sobre `grupo`. **Corregir los nombres es
 >   exactamente la operación que no se puede hacer.** ⚠️ Y son **cinco**, no cuatro: cambia también el
 >   dominio de `taller.grupos_orientados` (M12.3), que es un array de nombres de grupo.
-> - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · `puntos-a-validar.md` §2.11).
->   Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo, asigna y crea otros ADMIN. Hoy
->   no existe `usuario`, ni `rol`, ni tabla de asignación: hay **dos columnas fijas** en `grupo` (techo de
->   2 técnicos, sin vigencias) y `profesional.rol` con un CHECK de dos valores. **Va DESPUÉS de M12.5 y
->   M12.6.** Absorbe el pendiente **«`grupo` — mostrado y no modelado»** de más abajo: F1 puso
->   `responsable1`/`responsable2`/`tecnicosAutorizados` en la demo y la reunión confirmó la práctica, así
->   que **eso ya no es un supuesto a validar: es trabajo de backend con decisión escrita**.
-> - [ ] ⚠️ **Decidir cómo se representa la DIVULGACIÓN, antes de M11.3/M11.4** (§5.39 / I4 y §5.45 / I10 ·
->   `puntos-a-validar.md` §2.12). El modelo tiene **almacenamiento** y **no tiene compartir/exportar/
->   entregar** — R0 lo verificó: **una sola línea en todo `app/`, y es un comentario**. Cuatro cosas que
->   dijo IPPU caen sobre ese concepto ausente (fotos · confidencialidad · revisión de informes · mandar un
->   resumen y no el expediente). **Es el momento barato por la misma razón que el IDEA: 0 routers, 0
->   schemas, 0 servicios.**
+> - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · `puntos-a-validar.md`
+>   §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo, asigna y crea otros
+>   ADMIN. ⚠️ **§5.72 (L9) movió parte a M12.8a:** entra estructural la tabla **`tecnico_grupo`** N:M con
+>   vigencias (aditiva, al lado de `tecnico1_id`/`tecnico2_id`); **`grupo.tecnico?_rol` ya existen** y no se
+>   agregan. **Queda para M11.3 / Fase 4:** el **vocabulario de roles** (lista de 5 propuesta en §5.72, a
+>   confirmar por Lucas — no va todavía a un CHECK), la **conflación `admin` ↔ «dirección no técnica»** del
+>   Protocolo, y toda la **matriz de permisos**. ⚠️ Esto **agranda M12.8** («una sola persona»).
+> - [ ] **DIVULGACIÓN — DECIDIDA Y AGENDADA a M12.8a** (§5.39 / I4, §5.45 / I10, **§5.71** ·
+>   `puntos-a-validar.md` §2.12). La tabla **`divulgacion`** entra en el delta de esquema de M12.8a, con
+>   **columnas derivadas del Protocolo §6.2–6.7 y la matriz §5** (no inventadas). ⚠️ **No** modela un flujo:
+>   los guards (quién puede, si el consentimiento habilita, la compuerta «revisado por dirección →
+>   entregado» de §5.40) son **M11.3/M11.4**, junto con §2.13. Cuatro afirmaciones de IPPU caen sobre este
+>   concepto (fotos · confidencialidad · revisión de informes · resumen y no expediente).
 > - [ ] **Estado de revisión de los informes + área de generación configurable** (§5.40 / I5 ·
 >   `puntos-a-validar.md` §2.13). **Todo informe lo revisa la dirección antes de entregarse**: es un
 >   **estado de flujo**, no un permiso de impresión. Y lo que pidieron es un **área configurable**, no un
