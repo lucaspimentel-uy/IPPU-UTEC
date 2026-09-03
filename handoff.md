@@ -2441,6 +2441,72 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-03 · Sesión L7 — las once decisiones de cierre de la ronda M12** (Lucas + Claude, rama
+  `main`). **Documentación** — más **una** operación git (archivar + borrar una rama) y el cambio de
+  convención de commits. No se tocó `app/`, `alembic/`, `tests/` ni `app/data/`; no se regeneró migración
+  ni catálogos; no se levantó Docker; **no se corrió `pytest`** y las **389** no se re-midieron.
+  - **Punto de partida medido** (no se cita como cifra viva): árbol limpio en `4074e9e`, los dos remotos
+    (`gitlab`, `origin`) en el mismo hash. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Última entrada existente: `### 5.58` en
+    `handoff.md`, `### 1.16` y `### 2.16` en `puntos-a-validar.md`.
+  - **Once decisiones escritas en §5 (serie L).** §5 append-only: **58 → 69 entradas, 0 perdidas.**
+    - **§5.59 (L6) — D-11, el hallazgo.** `app/models/pai.py:226-232` modela la sección **§VII (FODA:
+      `fort/oport/debil/amen`)** cuando **§5.42 (I7)** y `PLAN-M12` §M12.6 mandan retirarla. **Cómo se
+      encontró:** ya lo había flagueado la bitácora de L6; L7 verificó la premisa —grep de
+      `FODA/fort/oport/debil/amen/§VII` sobre §5 y §13 de `handoff.md`, `docs/prompts/` (no hay prompt de
+      M12.6 versionado), `PLAN-M12` y los mensajes de commit de M12.6— y **no existe registro que la
+      conservara a conciencia**: el commit `7d6515f` enumera §5.55/§5.56/§5.57 y la derivación de campos y
+      no menciona FODA; el docstring de `pai.py` razona la forma, no el retiro. **La aritmética:** «43
+      campos propios» se derivó como «49 claves − 3 en vivo − 3 colecciones» y **nunca restó los 4 de
+      FODA**; medido: `Pai` tiene 47 `mapped_column` − 4 técnicas = 43; **sin §VII, 39**. Test que lo
+      fija: `tests/test_m12_pai.py:193/200`. Decisión: sale en **M12.8a**, cifra → 39; **acá no se toca
+      nada ni se corrige la cifra**.
+    - **§5.60 (L7) — D-1:** **§5.8 RATIFICADA** — el equipo ratifica haber arrancado M11 sin la validación
+      previa de IPPU. Ratifica ese arranque puntual, **no** una licencia para saltarse puertas. Cierra
+      `puntos-a-validar.md` §2.1.
+    - **§5.61 (L8) — D-2:** los cinco nombres reales de los grupos (Inicial · Escolares · Preadolescentes ·
+      Adolescentes · Taller de Adolescentes); confirma §5.37. Renombrado (4 → 5 filas) **se ejecuta en
+      M12.8a**. `puntos-a-validar.md` §2.8 **NO cierra** (falta la creación de grupos, no los nombres).
+    - **§5.62 (L9) — D-3:** se adopta el **trailer de co-autoría** como estilo predeterminado. ⚠️ **En la
+      hoja de L6, Lucas marcó «opción a» como etiqueta pero la prosa decía «se adopta CON trailer → nuevo
+      estilo predeterminado»: gobernó la prosa.** Los 2 commits de L5 y el de M12.6 pasan de excepción a
+      precedente. Reescritos `commit-style-ippu.md` y el puntero de `MEMORY.md`. **Los commits de esta
+      sesión llevan el trailer.**
+    - **§5.63 (L10) — D-4:** **§5.58 RATIFICADA** — el ateneo de grupo es de acceso general, como decisión
+      de equipo. La marca **CONFIRMABLE** se mantiene (la decisión rige; falta constancia escrita de
+      IPPU). Reescrito el ítem 9.a de §16 de `respuestas-reunion-ippu-2026-08-21.md`.
+    - **§5.64 (L11) — D-5:** vocabulario de «fase» — se decide fijar uno (opción a), **falta la
+      redacción** → `puntos-a-validar.md` **§2.3 NO cierra**. Propuesta borrador en §2.3, **pendiente de
+      ratificación de Lucas**. Corregido `PLAN-M12`, que decía que M12.8 lo cerraba.
+    - **§5.65 (L12) — D-6:** el criterio §12-A — **M12.8 lo escribe en prosa; su forma ejecutable es de
+      M11.5** (el seed espejo no existe; 58/60/79/Δ+19 nacen en `demo/js/`).
+    - **§5.66 (L13) — D-7:** `ateneo.observaciones` (Text, sin CHECK) entra en **M12.8a**; adjuntos PPTX
+      diferidos a **Fase 6**.
+    - **§5.67 (L14) — D-8:** **Lucas toma M11.3.** Cierra `puntos-a-validar.md` §2.7. Ítem aparte: la
+      primera tarea de M11.3 es un reconocimiento estilo R0 contra el código (→ §6).
+    - **§5.68 (L15) — D-9:** la rama `feature/base-datos-hce` **archivada como tag `archivo/base-datos-hce`
+      (sobre `dfb1732`, en los dos remotos) y borrada de `gitlab`**. Cierra `puntos-a-validar.md` §2.2,
+      antes de lo que pedía, por decisión explícita.
+    - **§5.69 (L16) — D-10:** se decide **versionar un baseline** del harness de `demo/verificacion/`.
+      Deroga el razonamiento de `demo/verificacion/README.md`. ⚠️ **No se genera ni committea acá** —
+      necesita Playwright + una corrida → sesión de demo, sin dueño.
+  - **La operación git (D-9), paso a paso.** `git fetch gitlab` → `gitlab/feature/base-datos-hce` en
+    `dfb17328f2452d8eede3c6e38c389d051b3f4db0`. Tag anotado **`archivo/base-datos-hce`** creado sobre ese
+    commit, pusheado a `gitlab` y `origin`. `git ls-remote` en los dos remotos:
+    `refs/tags/archivo/base-datos-hce^{}` → `dfb1732` en **ambos** → recién ahí
+    `git push gitlab --delete feature/base-datos-hce`; confirmado que no queda ni en `gitlab` ni como
+    remote-tracking local. `handoff.md` §12.5 y el checkbox de §6 reapuntados al tag; §5.3 (registro de
+    2026-08-03) **no se edita** — §5.68 lo supersede.
+  - **Cierres en `puntos-a-validar.md`:** §2.1 (D-1), §2.2 (D-9), §2.7 (D-8). **NO cerraron:** §2.3 (D-5,
+    falta redacción) y §2.8 (D-2, falta la creación de grupos). §6: I7 nuevo en «DECIDIDO, SIN
+    IMPLEMENTAR», I2 reapuntado a M12.8a, M11.3 con dueño (Lucas) + tarea de reconocimiento.
+  - **Commits (con trailer, por §5.62):** `af98184` (D-11 / §5.59), `cd98f67` (§5.60–5.69 + cierres +
+    §16), `b0bc809` (tag/borrado + §12.5 + §6), `f517e41` (PLAN-M12 §M12.8), y esta entrada. A `gitlab` y
+    `origin`.
+  - **Verificación de cierre:** `verificar_estado.py --check` y `generar_catalogos_backend.py --check`
+    → **exit 0**. §5 append-only comprobado (58 → 69, 0 entradas tocadas). `pytest` **no se corrió**
+    (nada cambió de comportamiento).
+
 - **2026-09-02 · Sesión L6 — cierre de cabos sueltos de la ronda M12: la mayoría de las decisiones
   volvió sin completar** (Lucas + Claude, rama `main`). **Documentación solamente.** No se tocó `app/`
   salvo un docstring; no se tocaron `alembic/`, `tests/` ni `app/data/`; no se regeneró migración ni
