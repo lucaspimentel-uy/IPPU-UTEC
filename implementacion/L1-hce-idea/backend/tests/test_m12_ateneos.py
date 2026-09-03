@@ -675,6 +675,20 @@ def test_los_tipos_de_ateneo_no_entraron_como_catalogo():
     assert not [s for s in CATALOGOS if "ateneo" in s]
 
 
+def test_observaciones_es_un_campo_libre_opcional(db):
+    """§5.66 — primer «faltante concreto» de §5.46 (I11).
+
+    Texto opcional, **sin CHECK** (como `participantes`): vale para cualquier
+    tipo y no está en los dos grupos de exclusividad de contenido. Se prueba en
+    una jornada justamente para mostrar que el CHECK de jornada no lo alcanza.
+    """
+    a = _ateneo(db, "jornada", observaciones="  se reprograma la próxima  ")
+    assert a.observaciones == "  se reprograma la próxima  "
+    assert _ateneo(db, "clinico", observaciones=None).observaciones is None
+    assert "observaciones" not in CAMPOS_JORNADA
+    assert "observaciones" not in CAMPOS_DESARROLLO_CLINICO
+
+
 # ==========================================================================
 # K · Huecos conocidos, fijados para que estén escritos
 # ==========================================================================

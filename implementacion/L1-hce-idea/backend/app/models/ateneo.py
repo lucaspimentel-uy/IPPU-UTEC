@@ -269,6 +269,15 @@ class Ateneo(Base):
     materiales: Mapped[str | None] = mapped_column(Text)
     evaluacion: Mapped[str | None] = mapped_column(Text)
 
+    #: Observaciones libres del ateneo — el primero de los dos «faltantes
+    #: concretos» que §5.46 (I11) dejó anotados; entra por §5.66. **Sin CHECK**,
+    #: como `participantes`: el regex `~ '[^[:space:]]'` (`_con_texto`) es sólo
+    #: para columnas obligatorias o mutuamente excluyentes, y ésta es opcional y
+    #: vale para cualquier tipo de ateneo. Los adjuntos PPTX —el segundo
+    #: faltante— quedan diferidos a Fase 6 (§5.66): son infraestructura, no
+    #: esquema.
+    observaciones: Mapped[str | None] = mapped_column(Text)
+
     hce_referida: Mapped["HceDiurna | None"] = relationship()   # noqa: F821
     grupo: Mapped["Grupo | None"] = relationship()              # noqa: F821
     autor: Mapped["Profesional | None"] = relationship()        # noqa: F821
