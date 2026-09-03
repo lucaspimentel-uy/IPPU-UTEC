@@ -1709,6 +1709,67 @@ registra en `puntos-a-validar.md` **§2.16**. **Acá no se resuelve.**
 
 ---
 
+## 5.59 · Hallazgo de la sesión L7: el esquema del PAI modela una sección que IPPU mandó retirar (serie **L**, 2026-09-03, Lucas)
+
+### 5.59 (L6) El esquema de `pai` lleva la sección §VII (FODA), que **§5.42 (I7)** decidió retirar — sale en M12.8a (2026-09-03, Lucas)
+
+**Los hechos, medidos.** `app/models/pai.py:226-232` lleva **cuatro columnas propias** —`fort`, `oport`,
+`debil`, `amen`, las cuatro `Text`— bajo el encabezado `── §VII · Análisis estratégico (FODA) ──`, con un
+docstring que razona «cuatro columnas y no un JSONB». Y **§5.42 (I7)** registra que **IPPU pidió retirar
+la sección VII** («Análisis estratégico de la situación actual»). Esa instrucción está escrita en cuatro
+lugares: `handoff.md` §5.42 (`:1162`), `docs/notas/puntos-a-validar.md` §1.11 (bloque de cierre, `:344`),
+`docs/notas/consulta-a-ippu.md` §3.11 (`:566`) y `docs/notas/respuestas-reunion-ippu-2026-08-21.md` §11
+(`:551`). Y en el plan: **`PLAN-M12` §M12.6** (`:463`) dice *«SE RETIRA … no lleva columnas ni tabla hija»*.
+
+**Se buscó un registro que la conservara a conciencia y no existe.** Grep de
+`FODA|fort|oport|debil|amen|§VII|análisis estratég` sobre §5 y §13 de `handoff.md`, sobre `docs/prompts/`
+(no hay prompt de M12.6 versionado — sólo M12.5, R0, D1 y los del harness), sobre `PLAN-M12` y sobre los
+mensajes de commit de M12.6 (`7d6515f`, más `a9e2c3d` y `65a0b5a`). **Toda** mención de FODA/§VII es (a) la
+instrucción de retiro, o (b) el hallazgo que la bitácora de L6 ya dejó anotado (`handoff.md:2215-2220`). El
+commit `7d6515f` enumera §5.55, §5.56, §5.57, la derivación «43 = 49 − 3 − 3» y «`pai` NO lleva `UNIQUE`»
+y **no dice una palabra sobre FODA**. El docstring de `pai.py:227-228` razona sobre la *forma* (cuatro
+columnas vs. JSONB) y **no menciona §5.42 ni el retiro**. Conclusión: M12.6 no conservó §VII por decisión;
+la escribió sin cruzarla contra la decisión de cliente que ya la había modificado.
+
+**La aritmética que quedó mal.** La cifra «43 campos propios» se presentó en M12.6 como **derivada**: «49
+claves en `p.pai` − 3 que se leen en vivo (§5.22) − 3 que son colecciones = 43» (`tests/test_m12_pai.py:196-197`).
+Esa derivación **nunca restó los cuatro campos de FODA**. Verificado en esta sesión: las 49 claves del
+enunciado (la enumeración de `docs/markdown/prototipo-v4-referencia.md:149-153`, que ya excluye las cuatro
+colecciones-tabla `objetivos`, `prev`, `equipo`, `coords`) **incluyen `fort, oport, debil, amen`**;
+sobreviven a las dos restas y caen en las 43. El modelo lo confirma: la clase `Pai` tiene **47**
+`mapped_column`, menos las cuatro técnicas (`id`, `hce_id`, `creado_en`, `actualizado_en`) = **43**. **Sin
+la sección VII son 39.** Hay un test que fija el 43: `test_la_cabecera_tiene_los_43_campos_propios`
+(`tests/test_m12_pai.py:193`, aserción en `:200`, `len(...) == 43`).
+
+**La decisión (D-11, Lucas, 2026-09-03).** Las cuatro columnas **salen en M12.8a**, la cifra se corrige a
+**39** en todos los lugares donde se afirma, y el test pasa a `== 39`. **No se tocan en esta sesión**
+(§12.6: la decisión se escribe antes que el código).
+
+**Qué dice del proceso, dicho sin dramatismo.** M12.6 construyó contra una decisión de cliente ya escrita
+y ninguna entrada registró la divergencia; el inventario de campos de §5.55 (L2) no lo detectó porque
+trabajó **hacia adelante desde las secciones del prototipo**, no **hacia atrás desde las decisiones que ya
+las habían modificado**. Es el modo de falla que §5.3 existe para atrapar. Se registra como **hallazgo, no
+como reproche** — mismo criterio que §5.37 (I2) con los grupos por color.
+
+**Dónde aparece la cifra, y qué corrige M12.8a.** ⚠️ **Acá no se corrige ninguna:** el número sigue siendo
+43 hasta que las columnas salgan, y corregir la prosa antes que el código es el mismo drift al revés.
+- **Prosa viva (M12.8a la corrige a 39):** `CLAUDE.md:139` · `handoff.md:1973` (bloque «Qué se hizo» de
+  M12.6 en la sección de estado) · `tests/test_m12_pai.py:193` (nombre de la función), `:196-197` (docstring
+  de la derivación) y `:200` (la aserción).
+- **Registro histórico (no se edita):** `handoff.md:2304` y `:2311` (bitácora de M12.6), `handoff.md:2219`
+  (el hallazgo de L6, que ya describe bien el problema).
+- **Referencia:** `docs/markdown/prototipo-v4-referencia.md:149-153` enumera las 49 claves *incluyendo*
+  `fort, oport, debil, amen` — describe el prototipo, que sí las tiene; le falta una nota de que §VII se
+  retira. `PLAN-M12` usa «~46 campos» (`:472`, `:733`), aproximado y pre-M12.6.
+- ⚠️ Los números `handoff.md:1922 / :2154 / :2161` del enunciado de la hoja corresponden, tras el
+  corrimiento que metió la bitácora de L6, a `:1973 / :2304 / :2311`.
+
+**Qué NO decide.** No decide *cómo* se quita más allá de lo que el plan ya fijó («no lleva columnas ni
+tabla hija»). No toca el resto de `pai`. No adelanta ningún guard: todo eso es **M11.3**. Y no corrige la
+cifra en ningún archivo — eso es **M12.8a**.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy
@@ -1735,8 +1796,14 @@ registra en `puntos-a-validar.md` **§2.16**. **Acá no se resuelve.**
 >   propósito (§5.18/D9) y **no existe endpoint, servicio, script ni pantalla que cree o renombre un
 >   grupo** — corregir los nombres es exactamente la operación que no se puede hacer. Arrastra además el
 >   dominio de `taller.grupos_orientados` (M12.3), que es un **array de nombres de grupo**.
+> - [ ] **I7 · Se retira la sección VII del PAI (FODA)** (§5.42, ratificado por **§5.59 / L6**) —
+>   **`app/models/pai.py:226-232` todavía modela `fort`, `oport`, `debil`, `amen`** bajo el encabezado
+>   `── §VII · Análisis estratégico (FODA) ──`. La decisión de retiro está escrita desde el 2026-08-26 en
+>   cuatro documentos + el plan, y M12.6 la construyó igual sin registrar la divergencia. **Sale en
+>   M12.8a**, junto con la corrección de la cifra «43 campos propios» → **39** (`CLAUDE.md:139`,
+>   `handoff.md:1973`, `tests/test_m12_pai.py:193/196-197/200`). Hasta entonces el 43 es correcto.
 >
-> ⚠️ **Las dos entradas tienen su trabajo detallado en los bloques de abajo.** Acá no se duplica el plan:
+> ⚠️ **Las tres entradas tienen su trabajo detallado en los bloques de abajo.** Acá no se duplica el plan:
 > se registra que **hoy la base afirma lo contrario de una decisión firmada**, que es lo que se pierde.
 
 > ### 🆕 Pendientes abiertos por la reunión con IPPU del 2026-08-21 (registrada el 2026-08-26, §5.36–§5.49)
