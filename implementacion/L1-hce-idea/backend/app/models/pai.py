@@ -223,13 +223,12 @@ class Pai(Base):
     #: número, que sí es dato propio del PAI.
     delta_interp: Mapped[str | None] = mapped_column(Text)
 
-    # ── §VII · Análisis estratégico (FODA) ──────────────────────────────────
-    #: Los cuatro cuadrantes van como cuatro columnas y no como un JSONB: son
-    #: cuatro campos fijos que la pauta nombra uno por uno, no una colección.
-    fort: Mapped[str | None] = mapped_column(Text)
-    oport: Mapped[str | None] = mapped_column(Text)
-    debil: Mapped[str | None] = mapped_column(Text)
-    amen: Mapped[str | None] = mapped_column(Text)
+    # ── §VII · Análisis estratégico (FODA) — RETIRADA ─────────────────────
+    # IPPU pidió retirar la sección VII (§5.42 / I7, ratificado por §5.59): no
+    # lleva columnas ni tabla hija. `fort`, `oport`, `debil` y `amen` salieron
+    # en M12.8a y la cabecera pasó de 43 a 39 campos propios. El comentario
+    # queda para que la sección no se «reincorpore» sin cruzar la decisión —
+    # que es exactamente cómo entró en M12.6 (§5.59).
 
     # ── §VIII · Participación del NNA y de su familia ───────────────────────
     #: Intereses, preferencias y motivadores del NNA.

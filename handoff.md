@@ -2556,7 +2556,8 @@ consolidó y el conteo por fuente.
         no FK — se suma a `puntos-a-validar.md` §2.9). **307 tests en verde, 0 salteados**, migración
         regenerada (`aa26917b6e76`). Ver bitácora §13.
   - [x] ~~**M12.6** HCE-PAI~~ — **HECHO el 2026-09-02, en modo SOLO ESQUEMA** (§5.54). **8 tablas**:
-        `pai` (43 campos propios) + `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` ·
+        `pai` (39 campos propios — eran 43 en M12.6; la sección VII/FODA salió en M12.8a, §5.59) +
+        `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` ·
         `pai_coordinacion` · `pai_taller` · `pai_prestacion` · `pai_circuito`. **50 tablas**, **389 tests**,
         migración `72b96030362d`. Decisiones **§5.55 (L2)** —los campos editables de las secciones I y II
         son columnas propias, la carga única es **por campo y no por sección**— y **§5.56 (L3)** —los tres

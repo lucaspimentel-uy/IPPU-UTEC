@@ -190,14 +190,16 @@ def test_los_campos_editables_de_las_secciones_i_y_ii_son_columnas_propias(campo
     assert campo in _columnas(Pai)
 
 
-def test_la_cabecera_tiene_los_43_campos_propios():
+def test_la_cabecera_tiene_los_39_campos_propios():
     """El conteo que queda del «~46 campos» de la referencia.
 
     49 claves en `p.pai` − 3 que se leen en vivo (§5.22) − 3 que son colecciones
-    y viven en tablas hijas (`prest`, `talleres`, `circuito`) = **43**.
+    y viven en tablas hijas (`prest`, `talleres`, `circuito`) − 4 de la sección
+    VII (FODA), que IPPU retiró (§5.42 / I7) y M12.8a sacó del esquema
+    (§5.59) = **39**.
     """
     tecnicas = {"id", "hce_id", "creado_en", "actualizado_en"}
-    assert len(_columnas(Pai) - tecnicas) == 43
+    assert len(_columnas(Pai) - tecnicas) == 39
 
 
 # ==========================================================================

@@ -152,6 +152,12 @@ medicacion, prest{}, prestObs, centroEd, modalidad, grado, apoyosEd, otrasEd, si
 oport, debil, amen, interesesNNA, vozNNA, expectFamilia, acuerdo, fechaDevol, frecuencia, etapa,
 talleres{}, otrasAct, dinamica, ingresos, vivienda, redes, pronostico, circuito{}, fRev, fAnual, criterios`.
 
+⚠️ **`fort, oport, debil, amen` (§VII · FODA) están en el prototipo pero NO en el modelo** (handoff
+§5.42 / I7, ratificado por §5.59; ejecutado en M12.8a). IPPU retiró la sección VII, así que cuatro de
+las 49 claves de arriba **no se modelan como columnas de `pai`**. Este archivo describe el prototipo
+tal cual —que sí las tiene—; la nota es lo que faltaba. Sin ellas, la cabecera de `pai` tiene **39
+campos propios** (49 − 3 leídos en vivo − 3 colecciones-tabla − 4 de §VII).
+
 **Tablas hijas:**
 - `objetivos[]` → `{area, obj, estr, ind, resp, plazo}` — `area` de **`PAI_AREAS`** (9), `plazo` ∈
   Trimestral/Semestral/Anual.

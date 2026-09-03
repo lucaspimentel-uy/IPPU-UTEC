@@ -144,7 +144,8 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
   M12.8 la heredan**), **§5.51** (el estado de inclusión es **continuo**, no anual) y **§5.52**
   (`inclusion.centro` es **texto, no FK**). **307 tests**, migración `aa26917b6e76`.
 - **M12.6 HECHO** (2026-09-02) — **HCE-PAI · Propuesta de Atención Individual**, en modo **SOLO
-  ESQUEMA**. **50 tablas**: `pai` (43 campos propios) + siete hijas — `pai_objetivo`,
+  ESQUEMA**. **50 tablas**: `pai` (39 campos propios — 43 en M12.6; la sección VII/FODA salió en
+  M12.8a, §5.59) + siete hijas — `pai_objetivo`,
   `pai_evaluacion_previa`, `pai_equipo`, `pai_coordinacion`, `pai_taller`, `pai_prestacion` y
   `pai_circuito`. **389 tests**, migración `72b96030362d`.
   - **§5.54** reencuadró el bloqueo de §5.28: de las 13 secciones del Manual que se daban por faltantes,
