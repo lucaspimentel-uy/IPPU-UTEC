@@ -178,6 +178,29 @@ uno por año. ¿Cambia algo en cómo IPPU piensa el reingreso?
 **Dónde aterriza.** `puntos-a-validar.md` §3 · `consulta-a-ippu.md` §2.2.
 ⚠️ **Aparece con redacción distinta en dos fuentes** (ver apéndice).
 
+### B11 · En el registro de divulgación, ¿un dato anonimizado individual cuenta distinto de una estadística agregada?
+**Qué se pregunta.** La tabla de divulgación (M12.8a-3) clasifica cada salida de datos en tres grados:
+**identificable**, **disociado/anonimizado** (un registro de una persona, pero sin poder saber quién) y
+**agregado** (una estadística, sin individuos). El Protocolo §6.6 trata a los dos últimos casi igual
+(«datos disociados o anonimizados»). ¿Para IPPU son lo mismo a efectos de registro y de permiso, o hay
+que poder distinguir «le pasamos el caso anonimizado de un chico» de «le pasamos un número agregado»?
+**Por qué importa.** Define si el guard de §6.6 (informes a dirección / convenio / donantes) mira dos
+valores o tres, y si «anonimizado individual» necesita algún recaudo extra.
+**Qué bloquea.** M11.3 (el guard de alcance del dato).
+**Dónde aterriza.** `puntos-a-validar.md` §2.12 · `handoff.md` §5.80.
+
+### B12 · Dar a la familia una copia de la HC del propio NNA, ¿es una divulgación o sólo un acceso?
+**Qué se pregunta.** La Ley 18.335 Art. 18 **lit. A** le da al paciente (y a su representante) el
+derecho a **acceder a su propia HC y a obtener copia** — es un derecho distinto del lit. D, que regula a
+quién *más* se le puede mostrar. Cuando una familia pide y se lleva una copia de la HC de su hijo, ¿IPPU
+lo vive como una **entrega de datos a un tercero** (que se registra en el log de divulgación, con
+finalidad y responsable) o como un **acceso del titular** (que iría en el registro de accesos, §2.17)?
+**Por qué importa.** Cambia en qué tabla se registra y qué recaudos aplican. Hoy la familia entra en
+`DIVULGACION_DESTINATARIOS` como «Familia / representante legal», pero puede que ese caso no sea una
+divulgación en el sentido del Protocolo §6.
+**Qué bloquea.** M11.3 (dónde se registra la entrega al titular) y el registro de accesos (§2.17).
+**Dónde aterriza.** `puntos-a-validar.md` §2.12 y §2.17 · `handoff.md` §5.80.
+
 ---
 
 ## C · Se lleva para el registro (no bloquea nada hoy)
@@ -259,8 +282,9 @@ lo enviado.
 | `handoff.md` §6 | **4** | §5.38 consentimiento (A3) · §5.49 guía de trámites (C8) · §5.37 relleno del prototipo (C9) · aclaración de la intro (C10) |
 | ⚠️ CONFIRMABLE (`handoff.md` §5.38, §5.58/§5.63) | **2** | consentimiento no traba (A3) · ateneo de grupo = acceso general (A4) — ya contados arriba |
 | Nuevas / afiladas en L9 | **3** | «Taller de Adolescentes» grupo o servicio (A5) · «perfil de área de Inclusión» + lista de 5 roles (B5) · tipos de informe y «área configurable» (B7) |
+| Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 
-**Total de preguntas distintas tras deduplicar: 25** (A1–A5, B1–B10, C1–C10).
+**Total de preguntas distintas tras deduplicar: 27** (A1–A5, B1–B12, C1–C10).
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 

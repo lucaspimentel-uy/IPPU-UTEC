@@ -7,9 +7,9 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-09-03 (sesión **M12.8a-1** — tres deltas de esquema ya decididos: §VII/FODA fuera de `pai` (§5.59), los **cinco** nombres reales de grupo (§5.61), `ateneo.observaciones` (§5.66); migración regenerada. **50 tablas, 390 tests (389 + 1), head `0a2d67a35971`**. Faltan las dos tablas nuevas de M12.8a — `divulgacion` (§5.71) y `tecnico_grupo` (§5.72) — para M12.8a-2)
+> - **Última actualización:** 2026-09-03 (sesión **M12.8a-3** — `divulgacion` construida (§5.80 — registro de divulgación de datos, columnas del Protocolo de acceso, append-only, sin seed) y **`tecnico_grupo` diferida a M11.3** (§5.79 deroga la *ubicación* de §5.72, no la decisión de fondo). **51 tablas, 432 tests (390 + 42), head `559b1a79cb77`**. M12.8a-1 ya había hecho §VII/FODA fuera de `pai` (§5.59), los cinco nombres reales de grupo (§5.61) y `ateneo.observaciones` (§5.66). Queda **M12.8b** (docs) y el resto de M12.8)
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.6 · M12.7 · M12.8a-1** — **50 tablas**, **390 tests en verde y 0 salteados**, head de Alembic **`0a2d67a35971`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se midieron contra el código y la base en M12.8a-1** (2026-09-03), no son afirmación de documento; el punto de partida lo había verificado el relevamiento **R0** del 2026-08-26 (`docs/notas/relevamiento-estado-2026-08-26.md`). **FALTA para cerrar M12.8a:** las dos tablas nuevas, `divulgacion` (§5.71) y `tecnico_grupo` (§5.72) → **M12.8a-2**; después M12.8b (docs) y el resto de M12.8 (seed espejo, tests). 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
+> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3** — **51 tablas**, **432 tests en verde y 0 salteados**, head de Alembic **`559b1a79cb77`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se midieron contra el código y la base en M12.8a-3** (2026-09-03), no son afirmación de documento; el punto de partida lo había verificado el relevamiento **R0** del 2026-08-26 (`docs/notas/relevamiento-estado-2026-08-26.md`). **FALTA para cerrar M12.8a:** nada estructural — `divulgacion` se construyó en M12.8a-3 (§5.80) y `tecnico_grupo` se difirió a M11.3 (§5.79 deroga la ubicación de §5.72). Queda **M12.8b** (docs: `esquema-datos-v2.md` → v3) y el resto de M12.8 (seed espejo, tests). 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **0.** las **decisiones de este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26** (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante ellas donde haya contradicción · **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **1-bis.** `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, Anexo II acuerdo de confidencialidad; ingresado el 2026-09-03 · **anterior al acta**, autoritativo para lo que el acta no tocó) · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -2918,6 +2918,91 @@ Las decisiones se cambian **explícitamente y por escrito** en §5, con fecha y 
 código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
+
+- **2026-09-03 · Sesión M12.8a-3 — `divulgacion` construida; `tecnico_grupo` diferida a M11.3**
+  (Lucas + Claude, rama `main`). **Toca código:** `app/models/` (`divulgacion.py` nuevo + `__init__.py`),
+  `app/core/constantes.py`, `tests/` (`test_m12_divulgacion.py` nuevo), `alembic/versions/` (migración
+  regenerada). Cierra el delta de esquema de M12.8a: **no queda ninguna tabla nueva pendiente de la
+  ronda**.
+  - **La sesión de diseño M12.8a-2, registrada acá porque no dejó otro rastro.** Entre M12.8a-1 y esta
+    sesión hubo una **instancia de diseño** que midió la forma de las dos tablas nuevas contra el código y
+    **no escribió esquema, seed ni test** —igual que la «hoja de L8», no tiene commit ni entrada propia de
+    §13—. Su informe es **la fuente de §5.79 y §5.80**: la forma esbozada de `tecnico_grupo`, la lista de
+    columnas de `divulgacion`, y las dos observaciones que esta sesión ejecutó (agregar `documento_id`,
+    dejar afuera los dos CHECK cruzados). Se deja anotada acá como se hizo con L8.
+  - **Confirmado por Lucas antes de la corrida:** **D-A** `tecnico_grupo` se difiere a M11.3 (deroga la
+    *ubicación* de §5.72, no la decisión); **D-B** `divulgacion.hce_id` es `ON DELETE CASCADE`, con la
+    contra-argumentación registrada en §5.80.
+  - **Punto de partida, medido.** Árbol limpio en `e489a79`, los dos remotos (`gitlab`, `origin`) en el
+    mismo hash. Docker arriba. `pytest -q` → **390 passed, 0 skipped**. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Head de Alembic `0a2d67a35971`, un solo archivo
+    en `versions/`. **50 tablas.** Próxima entrada libre de §5: `### 5.79`.
+  - **§5.79 — `tecnico_grupo` a M11.3.** Deroga por nombre la ubicación «estructural en M12.8a» de §5.72.
+    Motivos (medidos en M12.8a-2): sin consumidor hasta el servicio de asignación (M11.3);
+    `grupo.tecnico1_id`/`tecnico2_id` (+ `_rol`, que ya existen) siguen siendo la fuente de verdad y nada
+    lee una historia hoy; su forma depende de **B5** y **B6** de `preguntas-ippu.md`, sin responder; su
+    único invariante real («≤2 asignaciones vigentes por grupo, sin solape») necesita una `EXCLUDE`
+    constraint con `btree_gist` —**la primera extensión del repo**—, decisión de M11.3, y §5.2.2 cierra la
+    vía de los triggers. **Sin datos de producción**, construirla luego cuesta un archivo de migración
+    incremental. Se registra la forma esbozada como **punto de partida para M11.3**, no como algo hecho.
+    Corrección verificada contra el código: el invariante interjueces **no** vive en `grupo` sino en
+    `idea`/`protocolo` (CHECK `evaluadores_distintos` sobre `evaluador_t1_id`/`t2_id`, `modulos.py`), y el
+    Documento Técnico ya lista `otros_tecnicos[]` en `grupo` (`1_documento-tecnico-utec-lidia.md:118`).
+    `puntos-a-validar.md` §2.11 y el residuo de §5.18 reapuntados a M11.3.
+  - **§5.80 — `divulgacion` como quedó construida.** Nueva tabla en `app/models/divulgacion.py`,
+    **15 columnas** con su pasaje del Protocolo de acceso §6.2–6.7 + matriz §5:
+    - `hce_id` FK `hce_diurna` **CASCADE** (D-B, con la contra-argumentación) · `ateneo_id` FK `ateneo`
+      CASCADE (§5.25) · **`documento_id`** FK `documento` **RESTRICT**, nullable, indexada — *qué* salió;
+      **agregado sobre el diseño de M12.8a-2**: el Protocolo §6.6 gobierna «todo **informe** destinado
+      a…» y §6.5 el traslado de la HC, así que el objeto de la divulgación es parte del hecho.
+    - `destinatario_tipo` NOT NULL · CHECK desde `DIVULGACION_DESTINATARIOS` (9, matriz §5) vía
+      `_dominio()` · `destinatario_detalle` (libre, sin CHECK) · `alcance_dato` NOT NULL · CHECK sobre
+      `DIVULGACION_ALCANCES` (`identificable`/`disociado`/`agregado`) · `autorizacion_escrita` bool NOT
+      NULL `server_default "false"` · `autorizacion_documento_id` FK `documento` RESTRICT ·
+      `autorizacion_ref` · `canal_formal` · `finalidad` NOT NULL · CHECK `~ '[^[:space:]]'` · `fecha`
+      NOT NULL, indexada · `responsable_id` FK `profesional` **RESTRICT** NOT NULL · `obs`.
+    - CHECK de forma: `num_nonnulls(hce_id, ateneo_id) <= 1` —**`<= 1`, no `= 1`**: el informe agregado
+      de §6.6 no pertenece a ningún expediente ni ateneo—.
+    - **Dos CHECK cruzados NO puestos, y escritos en un comentario** para que no se re-deriven como
+      olvido: `alcance_dato <> 'agregado' OR hce_id IS NULL`, y «si `autorizacion_escrita`, apuntá a la
+      autorización». Los dos son guards de M11.3 (§5.71 los difiere).
+    - **Frontera con `registro_organismo`**: prosa, no esquema. **Append-only por postura** (sin endpoint
+      UPDATE/DELETE; `REVOKE` en despliegue anotado para M11.4/Fase 6), **sin trigger** (§5.2.2). **Sin
+      seed** (§5.71). `_dominio()` se copió a `divulgacion.py` (tercera copia, misma nota que en
+      `inclusion.py` y `pai.py`).
+  - **Tests (`tests/test_m12_divulgacion.py`, +42).** Pertenencia (expediente / ateneo / informe agregado
+    sin dueño; rechazo de las dos FK juntas); los dos dominios con el test de divergencia-imposible de
+    M12.7 (`test_el_check_y_la_constante_no_pueden_divergir`); `finalidad` vacía/en-blanco/entre-espacios
+    rechazada y sustantiva aceptada; `fecha` y `responsable_id` obligatorios; **CASCADE** con el
+    expediente, **RESTRICT** al borrar el responsable y al borrar cualquiera de los dos `documento`
+    referenciados, con su contraparte que pasa; `test_la_migracion_coincide_con_los_modelos` en verde.
+  - **Migración regenerada (§5.19).** `0a2d67a35971_…` → **`559b1a79cb77_…_m12_8a.py`**, un solo archivo,
+    `down_revision = None`. Reconstrucción limpia: `DROP SCHEMA public CASCADE` → `alembic upgrade head`
+    → `python -m app.seed_catalogos`. **Diff semántico contra la anterior: exactamente un
+    `op.create_table('divulgacion', …)`** (15 columnas · 4 CHECK · 5 FK · PK) + sus 7 índices, y su
+    simétrico en `downgrade`. **Ninguna de las otras 50 tablas cambia** (verificado tabla por tabla y por
+    conteo de llamadas `op.*`). Git lo detecta como rename al 94 %.
+  - **Verificación de cierre, medida.** `pytest -q` → **432 passed, 0 skipped** — **390 + 42**, todo de
+    `test_m12_divulgacion.py` (conteo por archivo: 118+82+67+42+33+31+21+20+18 = 432). **51 tablas**
+    (50 + `divulgacion`). Head `559b1a79cb77`. Seed: 1ª corrida todo `nuevas` (base recién reconstruida),
+    **2ª corrida 0 nuevas / 0 actualizadas** en las 17 secciones. Verificación `solo_al_crear`: con el
+    `total_min` de una banda pisado por SQL a un valor válido y su `texto` pisado a mano, la 3ª corrida
+    deja `banda_idea 0 nuevas · 1 actualizada` — **`total_min` sobrevive** (protegido) y **`texto` se
+    restaura** (contra-prueba de que el seed comparó); estado restaurado a los valores del JSON
+    (`'Muy leve'` → `total_min 0`, `total_max 15`), 5ª corrida 0/0. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0** tras poner al día las cifras en `README.md`,
+    `CLAUDE.md`, `docs/estructura-repositorio.md`, `backend/README.md` y la cabecera de este archivo
+    (50 → 51 tablas · 390 → 432 passed · migración renombrada).
+  - **`docs/notas/preguntas-ippu.md`:** dos preguntas nuevas en el bloque B (sin renumerar) — **B11**
+    (¿anonimizado individual cuenta distinto de una estadística agregada en el log?) y **B12** (dar a la
+    familia una copia de la HC del propio NNA, ¿divulgación o acceso? — Ley 18.335 Art. 18 lit. A). Total
+    de preguntas: 25 → **27**.
+  - **Commits (con trailer, §5.62):** `6e920a3` (§5.79 + §5.80 + `puntos-a-validar.md`), `c706eb4`
+    (modelo + constantes + tests), `6b9557d` (migración regenerada + sincronización de cifras `.md`), y
+    esta entrada. A `gitlab` y `origin`, mismo hash, árbol limpio.
+  - **Nada contradijo el prompt ni las mediciones de la sesión de diseño.** La única ampliación explícita
+    sobre lo diseñado —`documento_id`— la pedía el propio prompt (Step 2) con su fundamento en el
+    Protocolo §6.5/§6.6.
 
 - **2026-09-03 · Sesión M12.8a-1 — los tres deltas de esquema ya decididos: §VII fuera, los cinco
   nombres de grupo, `ateneo.observaciones`** (Lucas + Claude, rama `main`). **Toca código:** `app/`,
