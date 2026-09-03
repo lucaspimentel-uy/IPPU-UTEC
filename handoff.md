@@ -2853,6 +2853,23 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     decidido-y-agendado» pero la sección Prohibiciones dice «NO cerrar §2.12» — se respetó la
     prohibición (§2.12 cambia, no cierra).
 
+- **2026-09-03 · Sesión L8 — triage de las preguntas abiertas para armar la hoja de decisiones de
+  cierre de la ronda M12** (Lucas + Claude, rama `main`). **Reconocimiento de solo lectura.**
+  ⚠️ **Entrada retroactiva, escrita el 2026-09-03 por la sesión M12.8a-1.** L8 no dejó rastro propio
+  —ni commit, ni entrada de §13—, y en su momento fue lo correcto: la sesión tenía prohibido escribir.
+  Pero §5.70–§5.78 y el prompt de L9 citan «la hoja de L8» sin que hubiera nada a lo que apuntar
+  (la entrada de L9 lo dejó anotado como hueco); esta entrada lo corrige.
+  - **Qué midió.** Las **16 entradas todavía abiertas** de `docs/notas/puntos-a-validar.md` (§1 y §2),
+    triadas **A / B / C / D** por lo que cada una traba: **A** bloquea trabajo ahora · **B** bloquea
+    M11.3 · **C** se lleva para el registro (no bloquea nada) · **D** la puede cerrar o ejecutar el
+    equipo sin depender de IPPU. Agrupadas por eso, con la evidencia de repo debajo de cada una.
+  - **No escribió nada, por diseño.** No tocó `handoff.md` §5, `puntos-a-validar.md`, `app/`,
+    `alembic/`, `tests/` ni `PLAN-M12`; no levantó Docker; no corrió `pytest`.
+  - **Qué produjo.** La hoja de decisiones **A-1 … C-2** que la sesión **L9** ejecutó: sus salidas son
+    **§5.70–§5.78** de `handoff.md` y los cierres / reformulaciones de `puntos-a-validar.md` que L9
+    registró. La numeración `A-N` / `D-N` es de la hoja, no de §5.
+  - **Sin commit propio:** esta entrada viaja en un commit de la sesión M12.8a-1.
+
 - **2026-09-03 · Sesión L7 — las once decisiones de cierre de la ronda M12** (Lucas + Claude, rama
   `main`). **Documentación** — más **una** operación git (archivar + borrar una rama) y el cambio de
   convención de commits. No se tocó `app/`, `alembic/`, `tests/` ni `app/data/`; no se regeneró migración
