@@ -528,9 +528,32 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 
 ### M12.8 — Cierre: seed, tests, docs
 Una sola persona.
+
+> **M12.8a — ajustes de esquema/seed pendientes de la serie L (`handoff.md` §5.59–§5.66).** Van **antes**
+> de regenerar la migración final, porque son los últimos deltas de esquema/seed de la ronda:
+> - **D-11 / §5.59 — se retira la sección §VII (FODA) de `pai`.** Quitar las cuatro columnas
+>   `fort`, `oport`, `debil`, `amen` de `app/models/pai.py:226-232` (§5.42 / I7 lo mandó y M12.6 las
+>   escribió igual). **Corregir la cifra «43 campos propios» → «39»** en `CLAUDE.md:139`,
+>   `handoff.md:1973` y `tests/test_m12_pai.py` (nombre de la función `test_la_cabecera_tiene_los_43_...`,
+>   docstring de la derivación `:196-197` y la aserción `:200` → `== 39`). Actualizar
+>   `docs/markdown/prototipo-v4-referencia.md:149-153` con la nota de que §VII se retira. **No** tocar la
+>   bitácora de M12.6 (registro histórico).
+> - **D-2 / §5.61 — los cinco nombres reales de los grupos.** `UPDATE` de `grupo` (4 → 5 filas: Inicial ·
+>   Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes, todas `anio 2026`) + regenerar
+>   `catalogos_iniciales.json` + actualizar `tests/test_m12_catalogos.py:61-65` + revisar los literales de
+>   fixture (`test_m12_catalogos.py`, `test_esquema_v2.py`, `test_m12_ateneos.py`, `test_m12_talleres.py`)
+>   + el dominio de `taller.grupos_orientados`. La **demo** también los muestra (fuera del alcance del
+>   backend). ⚠️ «Taller de Adolescentes» se toma como fila de `grupo`; si IPPU aclara otra cosa, vuelve.
+> - **D-7 / §5.66 — `ateneo.observaciones`.** Agregar `observaciones: Mapped[str | None] =
+>   mapped_column(Text)` a `app/models/ateneo.py` (sin CHECK — es opcional, como `participantes`). Los
+>   adjuntos PPTX **no** son de acá: van a **Fase 6**.
+> - Después de estos tres, la regeneración de la migración inicial única (abajo) los absorbe en un solo
+>   archivo, con `test_la_migracion_coincide_con_los_modelos` en verde.
+
 - **Regenerar la migración inicial única** una última vez, con la reconstrucción limpia de siempre: drop
   schema → `alembic upgrade head` → `python -m app.seed_catalogos`. ⚠️ Desde la enmienda **§5.19**
-  (2026-08-14) esto **ya se hizo al cerrar cada sub-módulo**, así que acá es confirmación, no puesta al día.
+  (2026-08-14) esto **ya se hizo al cerrar cada sub-módulo**, así que acá es confirmación, no puesta al día
+  — **salvo por los deltas de M12.8a de arriba**, que sí la mueven.
 - **Seed:** terminar de regenerar `app/data/catalogos_iniciales.json` desde
   `docs/prototipo-v4/prototipo-v4-catalogos.json` — la fuente autoritativa cambió.
   **M12.1 ya dejó el generador versionado:** `herramientas/generar_catalogos_backend.py` (con `--check`
@@ -549,8 +572,14 @@ Una sola persona.
   junto con su caso que sí debe pasar.
 - **Docs:** `backend/docs/esquema-datos-v2.md` → **v3** · `backend/README.md` · `CLAUDE.md` (ronda en
   curso) · `handoff.md` §6 y §13 · `docs/estructura-repositorio.md` si aparecieron carpetas nuevas.
-- **Nomenclatura:** cerrar `puntos-a-validar.md` §2.3 — conviven cinco usos de "fase" y esta ronda agrega
-  vocabulario.
+- **Criterio de aceptación (D-6 / §5.65):** escribir **en prosa** el criterio que reemplaza a §12-A ahora
+  que la ronda suma cuatro módulos, seis bandas y catorce talleres. ⚠️ **Su forma ejecutable es de M11.5**,
+  no de acá: hoy el seed espejo no existe (`app/` sólo tiene `seed_catalogos.py`) y los números
+  58 · 60 · 79 · Δ +19 nacen en `demo/js/`. Hasta M11.5, el criterio es declaración de intención.
+- **Nomenclatura (D-5 / §5.64):** ⚠️ **esta ronda NO cierra `puntos-a-validar.md` §2.3.** Lucas decidió
+  fijar un vocabulario único para "fase", pero **falta la redacción**: §2.3 queda con una propuesta
+  borrador **pendiente de ratificación de Lucas**. (El texto anterior de este ítem decía que M12.8 lo
+  cerraba — lo corrige §5.64.)
 
 ---
 
@@ -658,10 +687,11 @@ talleres robusta a cambios de catálogo · `sensible` derivado del tema, nunca c
 
 - **La demo queda descalzada.** Al terminar M12 el backend va a tener cuatro módulos, seis bandas y
   catorce talleres que la demo v4.1 no tiene. El **criterio §12-A** (seed espejo de la demo: IDEA 58 ·
-  PA 60 · PB 79 · Δ +19) deja de alcanzar como prueba de aceptación. Definir uno nuevo en M12.8 **extendiendo
-  nuestro propio seed**, no reemplazándolo por el de ellos: los casos de la demo son nuestros y el
-  fingerprint existe para detectar regresiones en nuestro sistema. Los 5 pacientes del prototipo sirven
-  como contraste para verificar cálculos, no como reemplazo.
+  PA 60 · PB 79 · Δ +19) deja de alcanzar como prueba de aceptación. ⚠️ **D-6 / §5.65 lo reformuló:** M12.8
+  **escribe el criterio nuevo en prosa** (extendiendo el nuestro, no el del prototipo); **su forma
+  ejecutable es de M11.5**, porque el seed espejo que extendería no existe todavía (`app/` sólo tiene
+  `seed_catalogos.py`). Los 5 pacientes del prototipo sirven como contraste para verificar cálculos, no
+  como reemplazo.
 - **Hay fecha de demo con IPPU y esta ronda no produce nada visible.** Ver §8.
 - **§5.8 sigue sin ratificar.** M11 arrancó sin cruzar su puerta de validación y M12 la cruza otra vez,
   con más superficie construida. ~~Ratificarlo o pararlo **antes de M12.5**.~~
