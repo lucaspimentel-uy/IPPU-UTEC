@@ -509,7 +509,14 @@ identificarlas resultan tocar el PAI, se revisa lo construido (§5.54 lo dejó d
 
 ## 2. Para el equipo (grupo + Matías)
 
-### 2.1 Ratificar que M11 avanzó sin cruzar su propia puerta
+### 2.1 ~~Ratificar que M11 avanzó sin cruzar su propia puerta~~ — **CERRADO** (2026-09-03, `handoff.md` §5.60 / L7)
+
+> **D-1 de la hoja de L6.** El equipo **ratifica** §5.8: haber arrancado M11.1 + M11.2 sin la validación
+> de la demo con IPPU. La pregunta de contenido que había detrás —¿el IDEA es anual?— la contestó IPPU
+> (§5.36 / I1) y §5.31 midió que el cambio es aditivo, así que la decisión de criterio quedó confirmada
+> por los hechos. ⚠️ **Ratifica ese arranque puntual, no una licencia para saltarse puertas:** la próxima
+> —«qué IDEA rige a la fecha»— sigue en pie y es de **M11.3** (§5.35, §5.36).
+
 **Qué es.** El documento de esquema v2 (§6) dice que validar la demo con IPPU es «la puerta
 formal de M11». Esa validación no ocurrió, y M11.1 + M11.2 se hicieron igual.
 
@@ -547,24 +554,47 @@ Pero es una decisión que corresponde al equipo, no a quien la tomó solo.
 > el equipo todavía **no ratificó por escrito** es la **decisión de procedimiento**: haber arrancado M11
 > sin cruzar su propia puerta. Eso se ratifica o se para **acá**, no en la reunión (§5.35).
 
-### 2.2 Qué se hace con la rama `feature/base-datos-hce`
+### 2.2 ~~Qué se hace con la rama `feature/base-datos-hce`~~ — **CERRADO** (2026-09-03, `handoff.md` §5.68 / L15)
+
+> **D-9 de la hoja de L6.** Decisión: **archivar como tag anotado `archivo/base-datos-hce`** (sobre
+> `dfb1732`, en los dos remotos) y **borrar la rama** de `gitlab`. Ejecutado en L7 — la rama existía sólo
+> en `gitlab`, estaba 2 commits adelante y 104 detrás de `main`, ningún archivo de `docs/` cita su SQL, y
+> contradecía §5.2.2. El contenido queda accesible por el tag; `handoff.md` §12.5 reapunta ahí.
+> ⚠️ **Se cierra antes de lo que este punto pedía** («al terminar M11»): por decisión explícita — la rama
+> divergía más cada semana y el tag preserva todo.
+
 **Qué es.** La rama de Victor (PostgreSQL + triggers PL/pgSQL, 1.605 líneas, probada
 end-to-end) quedó aparcada porque contradice la decisión §5.2.2 de poner la lógica en el
 servidor. Su SQL se está usando como material de consulta.
 
-**Por qué importa.** Es trabajo real que no se puede dejar en el limbo indefinidamente.
+**Por qué importaba.** Es trabajo real que no se puede dejar en el limbo indefinidamente.
 
-**Qué se pide.** Decidir al terminar M11: mergear lo reutilizable como referencia SQL en
-`docs/`, o cerrarla dejando constancia. Ver `handoff.md` §12.5.
+### 2.3 Nomenclatura de «fases» — **NO cierra: se decide fijar un vocabulario (D-5 / §5.64), falta la redacción**
 
-### 2.3 Nomenclatura de «fases»
-**Qué es.** Hoy conviven **cinco** usos distintos de la palabra: fases del backend (0–6),
-fases del convenio, líneas L1–L4, módulos M0–M11, y las fases del Documento Técnico.
+> **D-5 de la hoja de L6 (2026-09-03).** Lucas eligió **fijar un vocabulario único** (la opción a de la
+> hoja), pero **no lo suministró**. Este punto **queda abierto pendiente de ratificación de Lucas** sobre
+> la redacción. `PLAN-M12` §M12.8 decía que esta ronda lo cierra — **ya no**: lo corrige §5.64.
+
+**Qué es.** Hoy conviven **cinco** usos distintos de la palabra (L6 los midió: ~98 apariciones en 17
+archivos): (1) fases del backend 0–6, (2) fases del convenio, (3) líneas L1–L4, (4) módulos M0–M11/M12,
+(5) las fases del Documento Técnico (Fase 1/2 · A/B/C/D · «fase piloto»).
 
 **Por qué importa.** Ya generó confusión al leer los documentos entre integrantes.
 
-**Qué se pide.** Acordar un vocabulario único y aplicarlo. No bloquea nada, pero cuanto más
-tarde se haga, más documentos hay que corregir.
+**Propuesta borrador — un término por sentido (PENDIENTE DE RATIFICACIÓN DE LUCAS):**
+
+| Sentido | Término propuesto | Qué documentos habría que corregir |
+|---|---|---|
+| (1) backend 0–6 (infra → routers → Docker completo) | **«etapa» del backend** (etapa 0…6) | `PLAN-M12`, `backend/docs/esquema-datos-v2.md`, `backend/README.md`, cabecera de `handoff.md` |
+| (2) etapas del convenio IPPU×UTEC | **«etapa del convenio»** | `README.md`, material de presentación, `handoff.md` §resumen |
+| (3) L1–L4 | **«línea»** (sin cambio) | ninguno por el término; la *numeración* es **§2.4**, sin resolver |
+| (4) M0–M12 (rondas de trabajo) | **«ronda»** (ya es el uso mayoritario: «ronda M12») | `handoff.md`, los `PLAN-M*` |
+| (5) Documento Técnico (Fase 1/2 · A–D · «fase piloto») | **«fase»** — reservada **sólo** para esto, porque es vocabulario de un documento normativo externo que no reescribimos | ninguno (se deja como está) |
+
+**Solape con §2.4.** El sentido (3) es el mismo terreno que §2.4 (qué numeración de líneas es la oficial).
+**Se anota, no se resuelve acá.**
+
+**Qué bloquea.** Nada. Cuanto más tarde se ratifique la redacción, más documentos hay que corregir.
 
 ### 2.4 Numeración de las líneas de trabajo
 **Qué es.** La presentación y la demo usan L1 = HCE. El *Documento de trabajo* y el
@@ -612,14 +642,16 @@ esto.
 posible, y en ese caso sobra la columna `anio`. **No se cambió por cuenta propia** porque modifica el
 documento de esquema. Detectado revisando M11.2; no bloquea M11.3.
 
-### 2.7 Quién sigue con M11.3
-**Qué es.** M11.3 son los servicios con las reglas duras: secuencia del flujo, firma = bloqueo,
-Δ sólo B−A, categoría del baremo sólo desde el porcentaje oficial.
+### 2.7 ~~Quién sigue con M11.3~~ — **CERRADO** (2026-09-03, `handoff.md` §5.67 / L14)
 
-**Por qué importa.** Es el sub-módulo con más contenido de todo M11 y donde está el valor real
-del backend. Desde §5.6 no hay módulos con dueño exclusivo: quien lo toma, avisa.
+> **D-8 de la hoja de L6.** **Lo toma Lucas.** ⚠️ **Ítem aparte, no es decisión:** el estado real de
+> M11.3 no se ha medido — la primera tarea es un **reconocimiento estilo R0 contra el código** (qué
+> existe, qué asumió la puerta de §5.8, y qué cambiaron por debajo la serie L y §5.59 / D-11). Anotado en
+> `handoff.md` §6.
 
-**Qué se pide.** Que alguien lo tome y lo diga, para no duplicar trabajo como pasó en julio.
+**Qué era.** M11.3 son los servicios con las reglas duras: secuencia del flujo, firma = bloqueo,
+Δ sólo dentro del mismo instrumento (reformulado por §5.36), categoría del baremo sólo desde el
+porcentaje oficial.
 
 ### 2.8 No hay forma de «abrir un año nuevo» de grupos — ⚠️ **AHORA BLOQUEA** (2026-08-26)
 
@@ -629,13 +661,19 @@ del backend. Desde §5.6 no hay módulos con dueño exclusivo: quien lo toma, av
 > 1. **ADMIN crea los grupos cuando hace falta** (`handoff.md` **§5.37 / I2** y **§5.41 / I6**). No es una
 >    tarea de marzo de 2027: es **una operación normal del sistema** que hoy no existe.
 > 2. **Los cuatro nombres por color están mal** — los grupos reales son **Inicial · Escolares ·
->    Preadolescentes · Adolescentes · Taller de Adolescentes** (§5.37). Corregirlos **es exactamente la
->    operación que no hay forma de hacer desde la aplicación**.
+>    Preadolescentes · Adolescentes · Taller de Adolescentes** (§5.37).
 >
-> **Qué bloquea, con nombre:** que IPPU pueda usar el sistema con **sus** grupos. Hoy el único camino es un
-> `INSERT` a mano o regenerar el seed — R0 verificó que **no existe endpoint, servicio, script ni pantalla
-> que cree un grupo** (`app/routers/__init__.py` = 0 bytes, `app/services/` no existe), y que el seed es
-> *insert-only* sobre `grupo` con un test que lo fija.
+> ⚠️ **D-2 de la hoja de L6 (2026-09-03, `handoff.md` §5.61 / L8) separa las dos cosas:**
+> - **Los nombres** ya están **ratificados** y su renombrado (4 → 5 filas, `UPDATE` + regenerar catálogos
+>   + el test + los literales de fixture + la demo) se ejecuta en **M12.8a**. **«Taller de Adolescentes»**
+>   se toma como fila de `grupo`; si IPPU quiere decir otra cosa con él, vuelve.
+> - **Lo que este punto pide y NO se cierra** es la **creación** de grupos desde la aplicación: que ADMIN
+>   pueda abrir el año nuevo con sus técnicos. Eso es **M11.3/M11.4** y **sigue abierto**.
+>
+> **Qué bloquea, con nombre:** que IPPU pueda usar el sistema con **sus** grupos año a año. Hoy el único
+> camino es un `INSERT` a mano o regenerar el seed — R0 verificó que **no existe endpoint, servicio,
+> script ni pantalla que cree un grupo** (`app/routers/__init__.py` = 0 bytes, `app/services/` no existe),
+> y que el seed es *insert-only* sobre `grupo` con un test que lo fija.
 >
 > **Va junto con §2.11** (usuarios y asignación técnico↔grupo): es la misma pantalla.
 

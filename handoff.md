@@ -1770,6 +1770,182 @@ cifra en ningún archivo — eso es **M12.8a**.
 
 ---
 
+## 5.60 → 5.69 · Decisiones de cierre de la ronda M12 (serie **L**, 2026-09-03, Lucas)
+
+> Salidas de la hoja de decisiones que L6 volvió a emitir **sin completar** (D-1 … D-10 de ese prompt; la
+> numeración `D-N` es de la hoja, no de §5). **Esta sesión no implementa nada de esquema, seed ni test:**
+> escribe las decisiones (§12.6) y cierra los puntos de `puntos-a-validar.md` que corresponden. Lo único
+> no-documental es el archivado + borrado de la rama `feature/base-datos-hce` (D-9) y el cambio de
+> convención de commits (D-3). Varias **ratifican** decisiones que estaban «a ratificar»; **ninguna deroga
+> esquema**. Donde una deroga un razonamiento anterior, se dice **por nombre**.
+
+### 5.60 (L7) §5.8 **RATIFICADA**: el equipo ratifica haber arrancado M11 sin la validación previa de IPPU (2026-09-03, Lucas)
+La puerta que **§5.35 (H3)** puso **antes de M11.3** queda cruzada. La pregunta que guardaba —¿el IDEA es
+anual?— se hizo y se contestó: **IPPU confirmó que es anual** (§5.36 / I1) y el cambio ya se decidió
+aplicar; **§5.31** había medido antes que el argumento de costo se invirtió (con `idea` ya 1:N
+—`ix_idea_hce_id … unique=False`—, pasar a anual es **aditivo**). No queda nada que decidir sobre *dónde*
+está la puerta ni sobre *qué* respondería IPPU: sólo **aplicar el cambio**, que es trabajo de M11.3.
+
+**Qué ratifica, por nombre: §5.8** («Arranque de M11 sin la validación previa de IPPU», 2026-08-07, que
+estaba **«a ratificar por el equipo»**). Con esto deja de estar pendiente. El razonamiento: era una
+decisión de **criterio** —el riesgo estaba acotado a la tabla `idea` (1 de 38) y frenar todo dejaba la
+ronda parada por tiempo indefinido— y correspondía al equipo, no a quien la tomó solo (`puntos-a-validar.md`
+§2.1). La medición le dio la razón: el cambio resultó aditivo y M12.1–M12.7 encima no lo encarecieron.
+
+**Qué NO decide, explícito.** Ratificar §5.8 ratifica **ese arranque puntual sin validación previa**, **no
+una licencia general para saltarse puertas**. La próxima puerta —«qué IDEA rige a la fecha de un documento
+viejo», que pasa de prosa (`app/models/modulos.py:219`) a guards con test— sigue en pie y es de **M11.3**
+(§5.35, §5.36).
+
+**Cierra `puntos-a-validar.md` §2.1.**
+
+### 5.61 (L8) Los grupos reales son **cinco, con nombre**: se ejecuta el renombrado en M12.8a (2026-09-03, Lucas)
+Los colores eran ejemplos. Los grupos reales de IPPU son cinco: **Inicial · Escolares · Preadolescentes ·
+Adolescentes · Taller de Adolescentes**. **Confirma §5.37 (I2)**, que ya los había registrado como la
+corrección de la reunión del 21/08.
+
+**Costo medido (L6, verificado en L7).** Es **4 → 5 filas** en `grupo`, todas `anio = 2026`, todas
+distintas bajo `UNIQUE(nombre, anio)` (`uq_grupo_nombre_anio`). El único test que afirma los colores
+**como correctos** es `tests/test_m12_catalogos.py:61-65` (`test_el_seed_trae_los_cuatro_grupos_por_color`);
+el resto los usa como **literales de fixture** (`test_m12_catalogos.py:41` y `:46-58`, `test_esquema_v2.py`,
+`test_m12_ateneos.py`, `test_m12_talleres.py`). `hce_diurna.grupo_id` (`transversales.py:124`) y
+`ateneo.grupo_id` (`ateneo.py:230`) apuntan a **`grupo.id` (entero), no a nombres**.
+`taller.grupos_orientados` (`catalogos.py:368`) es un **array de texto** cuyo dominio de nombres válidos
+**cambia con esto**.
+
+**Se ejecuta en M12.8a:** `UPDATE` de las filas + regenerar catálogos (`generar_catalogos_backend.py`) +
+actualizar `test_el_seed_trae_los_cuatro_grupos_por_color` + revisar los literales de fixture + la demo.
+**No en esta sesión.**
+
+**Qué queda abierto.** **«Taller de Adolescentes»** está listado como el quinto en la misma enumeración
+que los otros cuatro y se toma como una fila de `grupo` sobre esa base. **Si IPPU quiere decir otra cosa
+con él** (un taller, no un grupo), vuelve. Se anota en `puntos-a-validar.md` §2.8.
+
+⚠️ **`puntos-a-validar.md` §2.8 NO cierra:** lo que falta ahí es la **creación** de grupos desde la
+aplicación (ADMIN abre el año nuevo), no los nombres. §2.8 se actualiza para separar las dos cosas.
+
+### 5.62 (L9) Se adopta el **trailer de co-autoría** en los commits — nuevo estilo predeterminado (2026-09-03, Lucas)
+⚠️ **En la hoja de L6, Lucas marcó «opción a» como etiqueta pero escribió:** *«se adopta el estilo CON
+trailer de co-autoría → nuevo estilo predeterminado»*. **Manda la prosa; la etiqueta fue un desliz.** Se
+deja anotado el desajuste acá para que nadie relea la hoja y concluya lo contrario.
+
+**Qué decide.** De acá en adelante los commits del repo IPPU llevan trailer
+`Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` + `Claude-Session: <url>`, con conventional
+commits y cuerpo en viñetas en español, como hasta ahora.
+
+**Qué deroga, por nombre.** La línea de `commit-style-ippu.md` (memoria del equipo) y el puntero de
+`MEMORY.md` que decían **«sin trailer de co-autoría»**: se reescriben para el nuevo predeterminado. Los
+**dos commits de L5** (`a9e2c3d`, `65a0b5a`) —y el de M12.6, `7d6515f`— **dejan de ser una excepción
+abierta** (la «divergencia» que anotaron las bitácoras de L5 y L6) y **pasan a ser el precedente**. La
+historia no se reescribe en ningún caso.
+
+**Consecuencia inmediata:** los commits de **esta sesión** llevan el trailer.
+
+### 5.63 (L10) §5.58 **RATIFICADA**: el ateneo de grupo es de acceso general, como decisión de equipo (2026-09-03, Lucas)
+El **ateneo de grupo es de acceso general** del equipo técnico; esto rige ahora como **decisión de equipo
+ratificada**, no provisional. **Ratifica §5.58 (L5)** — que revirtió el párrafo de visibilidad de §5.46
+(I11).
+
+**La distinción que llevaba la marca ⚠️ CONFIRMABLE se mantiene tal como era:** nunca fue sobre si el
+equipo había decidido —lo decidió el 2026-09-02 (§12.6)—, sino sobre que **IPPU no tiene nada por
+escrito**. Así que esta entrada dice **las dos cosas**: la decisión **rige**, y **se sigue pidiendo
+constancia escrita de IPPU** para el registro.
+
+**Consecuencia de registro.** Se reescribe el ítem 9.a de la tabla de §16 de
+`docs/notas/respuestas-reunion-ippu-2026-08-21.md` —hoy planteado como «falta respaldo, la decisión está
+pendiente»— a **«la decisión rige; se pide constancia escrita»**. El ítem **no se borra**.
+
+**Qué NO decide.** No toca `puntos-a-validar.md` §2.16 (la tensión entre acceso general al ateneo y §5.41
++ Manual §21.1), que sigue abierta y es de **M11.3 / Fase 4**.
+
+### 5.64 (L11) Vocabulario de «fase»: se decide **fijar uno solo** (opción a); falta redactarlo — §2.3 NO cierra (2026-09-03, Lucas)
+Lucas eligió **fijar un vocabulario único** para «fase» (la opción a de la hoja). Pero **el vocabulario no
+se suministró**: falta la redacción concreta. **Por eso `puntos-a-validar.md` §2.3 NO cierra en esta
+sesión.**
+
+**Lo que se hace en su lugar:** se deja en §2.3 una **propuesta**, anclada en el uso que L6 midió —~98
+apariciones en 17 archivos, **cinco sentidos**: (1) fases del backend 0–6, (2) fases del convenio, (3)
+líneas L1–L4, (4) módulos M0–M11, (5) las fases del Documento Técnico (Fase 1/2 · A/B/C/D · «fase
+piloto»)—. La propuesta nombra **un término por sentido**, dice **qué documentos normativos habría que
+cambiar** para cada uno, y queda marcada **pendiente de ratificación de Lucas**.
+
+**Solape con §2.4** (numeración de las líneas de trabajo): el sentido (3) es el mismo terreno. **Se anota,
+no se resuelve acá.**
+
+### 5.65 (L12) El criterio de aceptación §12-A: **M12.8 lo escribe en prosa; su forma ejecutable es de M11.5** (2026-09-03, Lucas)
+La instrucción del plan («extender nuestro propio seed» — `PLAN-M12` §7 y §M12.8) **no tiene sujeto**: el
+criterio **§12-A** vive sólo como prosa, en `backend/docs/esquema-datos-v2.md:532-533` (bloque «M11.5 —
+Seed clínico + tests») y en `PLAN-M12` §M12.8; y el **seed espejo que extendería es trabajo de M11.5 que
+no existe** — `app/` no tiene más seed que `seed_catalogos.py`, y los números **58 · 60 · 79 · Δ +19**
+nacen como **datos simulados en `demo/js/`**.
+
+**Decisión: M12.8 escribe el criterio en prosa** y registra que su **forma ejecutable aterriza en M11.5**.
+La redacción de M12.8 dice qué afirma el criterio una vez que estén los **cuatro módulos de la ronda**
+(HCE-INC, HCE-PAI, ateneos/HCE-DOC, HCE-SEV), las **seis bandas** del IDEA y los **catorce talleres**; qué
+**conserva de §12-A** (reproducir por API el ciclo del usuario demo 1 con números idénticos + guards +
+secuencia); y que **nada lo hace cumplir hasta M11.5**.
+
+**Dicho claro:** hasta entonces es una **declaración de intención, no un chequeo**. No cierra ningún punto
+de `puntos-a-validar.md` (§12-A no es un punto).
+
+### 5.66 (L13) `ateneo.observaciones` entra en M12.8a; los adjuntos siguen diferidos a Fase 6 (2026-09-03, Lucas)
+**Forma medida.** `observaciones: Mapped[str | None] = mapped_column(Text)`, **sin CHECK**, siguiendo a
+`participantes` (`app/models/ateneo.py:257-270`). El regex `~ '[^[:space:]]'` es sólo para columnas
+**obligatorias o mutuamente excluyentes**; un campo opcional no lo lleva.
+
+**Por qué los adjuntos NO son problema de esquema.** `documento.archivo_ref` es `varchar(400)` sin
+validación de tipo de archivo, y el almacenamiento real es **Fase 6**. El XOR `documento.hce_id` /
+`ateneo_id` ya lo modeló §5.25 (M12.7); lo que falta —subir el PPTX, validar el tipo— es infraestructura,
+no tabla.
+
+**Qué ratifica.** Cierra el **primero** de los dos «faltantes concretos» que §5.46 (I11) dejó anotados
+para ateneos (**observaciones**). El **segundo** (adjuntos PPTX) queda **explícitamente diferido a Fase
+6**, no pendiente de M12.8a.
+
+### 5.67 (L14) **Lucas toma M11.3** (2026-09-03, Lucas)
+Desde §5.6 no hay módulos con dueño exclusivo: se avisa qué se toma. **Lucas toma M11.3** — servicios y
+guards: secuencia del flujo, firma = bloqueo, **Δ sólo dentro del mismo instrumento** (reformulado por
+§5.36, no «Δ sólo B−A»), baremo sólo desde `pct`, Anexo A del Manual, habilitación de §IX del PAI por
+tipo, «qué IDEA rige a la fecha».
+
+**Cierra `puntos-a-validar.md` §2.7.**
+
+**Ítem aparte, no es decisión.** No se ha medido el estado real de M11.3. **La primera tarea de M11.3 es
+un reconocimiento estilo R0 contra el código** — qué existe, qué asumió la puerta de §5.8, y qué cambiaron
+por debajo las decisiones de la serie L (§5.54–§5.58) y **D-11 (§5.59)**. Se registra en `handoff.md` §6.
+
+### 5.68 (L15) La rama `feature/base-datos-hce` se **archiva como tag y se borra** (2026-09-03, Lucas)
+La operación está en la bitácora §13 y en §12.5. **Lo que registra la decisión:** la rama era trabajo de
+**Victor** (PostgreSQL + triggers PL/pgSQL, ~1.605 líneas en `implementacion/hce-db/`, probada
+end-to-end, reproduce IDEA 58 · PA 60 · PB 79 · Δ +19), **existe sólo en `gitlab`** (no está en `origin`),
+está **2 commits adelante y 104 detrás** de `main`, su último commit es **`dfb1732`** (2026-07-15), **ningún
+archivo de `docs/` cita su SQL**, y **contradice §5.2.2** (lógica en el servidor, sin triggers PL/pgSQL).
+
+**Decisión:** archivar como **tag anotado `archivo/base-datos-hce`** sobre `dfb1732` —empujado a los **dos**
+remotos— y **borrar la rama** de `gitlab`. El contenido queda accesible por el tag; `handoff.md` §12.5 y
+toda referencia al nombre de la rama se reapuntan al tag.
+
+**Cierra `puntos-a-validar.md` §2.2.** ⚠️ **La cierra antes de lo que §2.2 pedía** («decidir al terminar
+M11»): por decisión explícita — la rama diverge más cada semana, nadie la consulta, y el tag preserva todo
+lo que había que preservar.
+
+### 5.69 (L16) Se decide **versionar un baseline** del harness de `demo/verificacion/` (2026-09-03, Lucas)
+Hoy `demo/verificacion/.gitignore:6` excluye `*.json` y los únicos baselines son **tres capturas locales
+del 2026-08-21 en una sola máquina** (§13, entrada «2026-08-21 (tarde)»), así que **la verificación de
+§5.27 no la puede hacer nadie más** — un chequeo diferido que depende de artefactos locales sin versionar
+**no existe** (§12.1).
+
+**Decisión: se versiona un baseline.** ⚠️ Esta entrada **deroga el razonamiento** de
+`demo/verificacion/README.md` —las secciones **«Por qué no hay un baseline versionado»** y **«Opciones para
+un baseline versionado — medidas, no elegidas»**, cuya recomendación es la **opción 2** (sin baseline,
+procedimiento de dos worktrees)—. El README **se reescribe cuando se committee el baseline**.
+
+⚠️ **No se genera ni se committea el baseline en esta sesión.** Necesita Playwright, un navegador y una
+corrida; va a una **sesión de demo** junto con el chequeo visual (Analítica · Grupos · alta de NNA ·
+expedientes), que **sigue sin dueño**.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > ### 🛑 DECIDIDO, SIN IMPLEMENTAR — decisiones de §5 que la base de datos contradice hoy
@@ -1792,10 +1968,13 @@ cifra en ningún archivo — eso es **M12.8a**.
 >   y con una por año deja de ser la misma pregunta.
 > - [ ] **I2 · Los nombres reales de los grupos** (§5.37) — **el seed sigue plantando los cuatro colores.**
 >   Los grupos de IPPU son **cinco**: Inicial · Escolares · Preadolescentes · Adolescentes · Taller de
->   Adolescentes. **Asignado a M12.6.** ⚠️ Y no es un `UPDATE`: el seed de `grupo` es **insert-only** a
->   propósito (§5.18/D9) y **no existe endpoint, servicio, script ni pantalla que cree o renombre un
->   grupo** — corregir los nombres es exactamente la operación que no se puede hacer. Arrastra además el
->   dominio de `taller.grupos_orientados` (M12.3), que es un **array de nombres de grupo**.
+>   Adolescentes. **Asignado a M12.8a** — **§5.61 (L8)** ratificó los nombres y fijó la ejecución ahí;
+>   M12.6 lo tenía asignado y **cerró sin hacerlo**. ⚠️ Y no es sólo un `UPDATE`: el seed de `grupo` es
+>   **insert-only** a propósito (§5.18/D9) y **no existe endpoint, servicio, script ni pantalla que cree o
+>   renombre un grupo** — corregir los nombres es exactamente la operación que no se puede hacer. Arrastra
+>   además el dominio de `taller.grupos_orientados` (M12.3), que es un **array de nombres de grupo**.
+>   ⚠️ **«Taller de Adolescentes»** se toma como fila de `grupo`; si IPPU quiere decir otra cosa, vuelve
+>   (`puntos-a-validar.md` §2.8).
 > - [ ] **I7 · Se retira la sección VII del PAI (FODA)** (§5.42, ratificado por **§5.59 / L6**) —
 >   **`app/models/pai.py:226-232` todavía modela `fort`, `oport`, `debil`, `amen`** bajo el encabezado
 >   `── §VII · Análisis estratégico (FODA) ──`. La decisión de retiro está escrita desde el 2026-08-26 en
@@ -1972,8 +2151,19 @@ cifra en ningún archivo — eso es **M12.8a**.
 - [ ] **M11 · Backend v2 — EN CURSO.** Desde §5.6 no tiene dueño exclusivo — quien lo tome, avisa. Las 3 decisiones de arquitectura están cerradas (§5.2) y el esquema v2 escrito (`backend/docs/esquema-datos-v2.md`).
   - [x] ~~**M11.1** infra Postgres-only~~ → **HECHO** (2026-08-07, rama `feat/m11-backend-v2`). `docker-compose.yml` con Postgres 16 en `127.0.0.1:5440` (§5.9) + base `ippu_test` aparte para pytest; `config.py` **rechaza al arrancar** cualquier URL que no sea Postgres; Alembic sin el batch-mode de SQLite y con `compare_type`; convención de nombres de constraints para que el autogenerate sea reproducible entre las tres máquinas.
   - [x] ~~**M11.2** modelos + migración + catálogos~~ → **HECHO** (2026-08-07). **28 tablas** en 4 módulos (`catalogos` · `identidad` · `modulos` · `transversales`), migración inicial única, y seed idempotente de catálogos **generado desde la demo v4.1** (12 dimensiones IDEA + 60 descriptores, 24 ítems IPPU-TEA, baremo, 12 categorías documentales, 4 recordatorios, 8 talleres, 3 servicios). Se retiró el backend v1 completo (modelos/schemas/routers/seed/tests + 3 migraciones): hablaba del modelo pre-Documento Técnico. **Verificado:** reconstrucción limpia (drop schema → `alembic upgrade head` → seed) + **21 tests estructurales en verde** + API levanta.
-  - [ ] **M11.3** servicios/motor de flujo con guards (§4: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4, histórico inmutable) — **el sub-módulo con más contenido; sin tomar.**
-  - [ ] **M11.4** routers · **M11.5** seed espejo de la demo + pytest (criterio §12-A: usuario demo 1 por API = IDEA 58 · PA 60 · PB 79 · Δ +19) · **M11.6** docs.
+  - [ ] **M11.3** servicios/motor de flujo con guards (§4: secuencia, firma=bloqueo, **Δ sólo dentro del
+    mismo instrumento** —reformulado por §5.36, no «Δ sólo B−A»—, baremo sólo desde `pct`, fotos §8.4,
+    histórico inmutable, Anexo A, habilitación de §IX del PAI por tipo, «qué IDEA rige a la fecha») — **el
+    sub-módulo con más contenido. Lo toma Lucas** (§5.67 / L14, 2026-09-03 — cierra `puntos-a-validar.md`
+    §2.7).
+    - ⚠️ **Primera tarea de M11.3: un reconocimiento estilo R0 contra el código** — el estado real de
+      M11.3 no se ha medido. Qué existe hoy (`app/services/` no existe, `app/routers/__init__.py` vacío),
+      qué asumió la puerta de §5.8, y **qué cambiaron por debajo** las decisiones de la serie L
+      (§5.54–§5.58) y **D-11 / §5.59** (§VII del PAI sale; la cifra de campos baja a 39). Recién después,
+      el diseño.
+  - [ ] **M11.4** routers · **M11.5** seed espejo de la demo + pytest (**forma ejecutable del criterio de
+    aceptación** — §5.65 / L12: hoy §12-A vive sólo como prosa y el seed espejo no existe; usuario demo 1
+    por API = IDEA 58 · PA 60 · PB 79 · Δ +19) · **M11.6** docs.
   - ⚠️ **M11.3–M11.6 están en pausa hasta cerrar M12** (ver abajo): tocan la capa que M12 está por cambiar.
   - Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo: app + NGINX).
 - [ ] **M12 · Absorción del Prototipo v4 — EN CURSO** (arrancó 2026-08-14). Se intercala **entre M11.2 y

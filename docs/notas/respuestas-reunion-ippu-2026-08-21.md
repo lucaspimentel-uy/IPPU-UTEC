@@ -38,8 +38,9 @@
 >   **CONFIRMABLE**, no cerrado.
 > - ⚠️ **Un punto contestado fue revertido después por una corrección de segunda mano** —**9.a**, la
 >   visibilidad del ateneo de grupo: la reunión dijo «por grupo» (2026-08-26) y el 2026-09-02 IPPU lo
->   corrigió a **acceso general** (§5.58 / L5), sin que conste en el acta. Va al próximo contacto para
->   **confirmación escrita**, junto al del consentimiento.
+>   corrigió a **acceso general** (§5.58 / L5). **La decisión rige** —ratificada como decisión de equipo
+>   el 2026-09-03 (§5.63 / L10)—; lo que va al próximo contacto es **constancia escrita** para el
+>   registro, junto al del consentimiento.
 > - **El archivo NO se borra todavía:** su condición de retiro exige que las respuestas también estén en
 >   el **Google Doc del equipo**, que está fuera de este repo. Ver §16.
 
@@ -759,7 +760,7 @@ alguien recordaba con certeza.)*
 
 | Bloque | Qué quedó sin preguntar/contestar | Qué sigue bloqueando |
 |---|---|---|
-| **9.a** ⚠️ | **Confirmación escrita** de que el ateneo de grupo es de **acceso general**. La reunión lo cerró «por grupo» (2026-08-26); una corrección de IPPU lo revirtió el 2026-09-02 (§5.58 / L5) pero **no consta en el acta** | Nada del modelo — `Ateneo.sensible` ya da acceso general. Es respaldo de una decisión **CONFIRMABLE**, como §5.38 (I3) |
+| **9.a** ⚠️ | **La decisión rige** — el ateneo de grupo es de **acceso general**, ratificado como decisión de equipo el 2026-09-03 (`handoff.md` **§5.63 / L10**, sobre §5.58 / L5). Lo que falta es **constancia escrita de IPPU** para el registro: la reunión lo había cerrado «por grupo» (2026-08-26) y una corrección de IPPU lo revirtió el 2026-09-02, sin que conste en el acta | Nada del modelo — `Ateneo.sensible` ya da acceso general. Se pide la constancia como respaldo de un punto **CONFIRMABLE**, igual que §5.38 (I3) |
 | **1.b** | De dónde sale el porcentaje del baremo | Nada. Supuesto nuestro, no confirmado |
 | **2.a** ⚠️ | ¿Quieren registrar participación por taller? | **El alcance de M12.6** (`pai_taller`) y §5.21 |
 | **2.b** | Los 14 talleres de este año / orientación por grupo | `consulta-a-ippu.md` §3.1 |
