@@ -812,7 +812,7 @@ referente por NNA distinto del técnico de grupo —tabla o campo nuevo—, o (3
 
 ---
 
-### 2.11 Usuarios, roles y asignación técnico↔grupo — **abierto; el vocabulario de roles ya tiene fuente y propuesta** (2026-08-26, actualizado 2026-09-03 · `handoff.md` §5.72)
+### 2.11 Usuarios, roles y asignación técnico↔grupo — **abierto; el vocabulario de roles ya tiene fuente y propuesta** (2026-08-26, actualizado 2026-09-03 · `handoff.md` §5.72 y §5.79)
 
 **Qué es.** IPPU confirmó cómo trabajan: **cada técnico tiene su propio usuario**, **ve sólo los grupos
 que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMIN** (`handoff.md`
@@ -832,10 +832,15 @@ que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMI
   matriz §5 y de nuestro CHECK. → lista de IPPU.
 - **`grupo.tecnico1_rol` / `tecnico2_rol` YA EXISTEN** (`String(60)` nullable, `app/models/identidad.py:127`
   / `:129`) — el delta de M12.8a **no** los agrega.
-- **M12.8a agrega, estructural:** una tabla **`tecnico_grupo`** N:M (`grupo_id`, `profesional_id`, `rol`,
-  `desde`, `hasta`), **aditiva** (al lado de `tecnico1_id`/`tecnico2_id`). Le da dónde vivir a las
-  vigencias y cierra el lado estructural del residuo de §5.18. ⚠️ **Esto agranda M12.8**, que era «una
-  sola persona» — dicho en §5.72.
+- ⚠️ **`tecnico_grupo` se difirió a M11.3** (`handoff.md` §5.79, 2026-09-03) — §5.72 la había puesto
+  como delta estructural de M12.8a. Se **deroga esa ubicación, no la decisión de fondo**: la tabla N:M
+  con vigencias (`grupo_id`, `profesional_id`, `rol` sin CHECK, `desde` NOT NULL / `hasta` nullable,
+  `UNIQUE(grupo_id, profesional_id, desde)`, `CHECK(hasta IS NULL OR hasta > desde)`) se construye
+  **junto con el servicio de asignación que la lee**. Motivos en §5.79: no tiene consumidor hasta
+  M11.3, `tecnico1_id`/`tecnico2_id` siguen siendo la fuente de verdad, su forma depende de **B5 y B6**
+  de `preguntas-ippu.md` (sin responder), y su invariante real («≤2 vigentes, sin solape») necesita
+  `EXCLUDE` + `btree_gist` —la primera extensión del repo—, decisión de M11.3. Sin datos de producción,
+  hacerla después cuesta **un archivo de migración incremental**.
 - **M12.8a NO toca** `profesional.rol` ni su CHECK de dos valores: el vocabulario aterriza en M11.3 / Fase
   4 con la lista que Lucas confirme.
 
@@ -843,32 +848,40 @@ que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMI
 - **Toda la matriz de permisos** — **Fase 4**. (Ateneos de grupo: §1.12 cerrado en acceso general — §5.58
   / §5.63; su tensión residual es §2.16, cerrado por §5.70.)
 - **La reconciliación de `grupo`**: F1 puso `responsable1`, `responsable2` y `tecnicosAutorizados` en la
-  demo **sin modelo detrás** — lo resuelve `tecnico_grupo`.
-- **El residuo de §5.18** (cambio de **técnico** a mitad de año). ⚠️ La reunión no contestó esa pregunta.
+  demo **sin modelo detrás** — lo resuelve `tecnico_grupo` **en M11.3** (§5.79).
+- **El residuo de §5.18** (cambio de **técnico** a mitad de año). ⚠️ La reunión no contestó esa
+  pregunta (es **B6** de `preguntas-ippu.md`). La tabla que le da dónde vivir es `tecnico_grupo`, ahora
+  en **M11.3** (§5.79), no en M12.8a.
 
 **Secuencia.** **Enmienda el no-goal del plan M12** («no se toca autenticación»), ya marcado en el plan.
 
-### 2.12 El modelo no representa la DIVULGACIÓN — **DECIDIDO Y AGENDADO a M12.8a; el flujo y los guards son M11.3** (2026-08-26, actualizado 2026-09-03 · `handoff.md` §5.71)
+### 2.12 El modelo no representa la DIVULGACIÓN — **la tabla `divulgacion` YA ESTÁ CONSTRUIDA (M12.8a-3); el flujo y los guards son M11.3** (2026-08-26, construida 2026-09-03 · `handoff.md` §5.71 y §5.80)
 
-**Qué cambia el 2026-09-03 (`handoff.md` §5.71).** La tabla **`divulgacion` entra en el delta de esquema
-de M12.8a**, y **su juego de columnas ya no se inventa: se deriva del Protocolo §6.2–6.7 y de la matriz
-§5**. Columnas propuestas (detalle y pasaje en §5.71): `hce_id`/`ateneo_id` (XOR, §5.25) · `destinatario_tipo`
-(categorías de actor de la matriz §5) · `destinatario_detalle` · `alcance_dato` (identificable /
-disociado-anonimizado / agregado — §6.6 lo *exige* disociado para informes a dirección, convenio y
-**donantes**) · `autorizacion_escrita` + `autorizacion_ref` (§6.2, §6.5) · `canal_formal` (§6.3, §6.4) ·
-`finalidad`/`motivo` (§8) · `fecha` · `responsable_id` · `obs`.
+**Estado al 2026-09-03 (`handoff.md` §5.80).** La tabla **`divulgacion` se construyó en M12.8a-3**, con
+sus columnas derivadas del Protocolo §6.2–6.7 y de la matriz §5. Columnas (detalle y pasaje en §5.80):
+`hce_id` (CASCADE, D-B) · `ateneo_id` (CASCADE, §5.25) · **`documento_id`** (RESTRICT — *qué* salió;
+agregado sobre el diseño) · `destinatario_tipo` (CHECK desde `DIVULGACION_DESTINATARIOS`) ·
+`destinatario_detalle` · `alcance_dato` (`identificable` / `disociado` / `agregado`) ·
+`autorizacion_escrita` (bool, `server_default false`) · `autorizacion_documento_id` (RESTRICT) +
+`autorizacion_ref` · `canal_formal` · `finalidad` (CHECK no vacío) · `fecha` · `responsable_id`
+(RESTRICT) · `obs`. CHECK de forma: `num_nonnulls(hce_id, ateneo_id) <= 1` (**`<= 1`**, no XOR: el
+informe agregado de §6.6 no pertenece a ningún expediente). **Sin seed.** Append-only por postura (sin
+endpoint de UPDATE/DELETE; `REVOKE` en despliegue), no por trigger.
 
 **Qué NO hace.** No modela un **flujo de compartición**. Los guards —quién *puede* divulgar según su rol
 (matriz §5), si un consentimiento *habilita* la salida, la compuerta «revisado por dirección → entregado»
-de §5.40— son **M11.3/M11.4**. `divulgacion` es **append-only por naturaleza**: registra un hecho ocurrido.
+de §5.40, los dos CHECK cruzados que la sesión de diseño marcó como inferencia y §5.80 dejó afuera— son
+**M11.3/M11.4**. `divulgacion` registra un **hecho ocurrido**, no una solicitud en trámite.
 
 **Por qué acá.** Cuatro afirmaciones de IPPU caen sobre este concepto ausente: fotos (§5.39 / I4),
 confidencialidad (§5.45 / I10), revisión de informes por dirección (§5.40 / I5), «mandar un resumen y no el
 expediente». R0 verificó de forma negativa que hoy el modelo tiene **almacenamiento** y no **divulgación**
 (una sola línea en `app/`, y es un comentario). Momento barato: **0 routers, 0 schemas, 0 servicios**.
 
-**Estado.** **NO cierra.** La *representación* está decidida y agendada (M12.8a); lo que queda abierto es
-el **flujo** y los **guards** (M11.3/M11.4), y va junto con §2.13.
+**Estado.** **NO cierra.** La *representación* está construida; lo que queda abierto es el **flujo** y los
+**guards** (M11.3/M11.4), y va junto con §2.13. Dos preguntas nuevas para IPPU (bloque B de
+`preguntas-ippu.md`): anonimizado individual vs. agregado puro en el log; y copia de la HC a la familia
+= ¿divulgación o acceso? (Ley 18.335 Art. 18 lit. A).
 
 ### 2.13 Los informes necesitan un estado de revisión, y un área configurable — **abierto por la reunión** (2026-08-26)
 **Qué es.** Dos cosas de §5.40 (I5): **(a)** todo informe **lo revisa ADMIN antes de entregarse** —

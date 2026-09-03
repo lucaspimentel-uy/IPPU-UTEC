@@ -2249,6 +2249,157 @@ respuesta + pendientes), `handoff.md` §6, y los ítems **⚠️ CONFIRMABLE** (
 lleva para el registro**. **No inventa preguntas y no descarta ninguna**; el documento dice qué fuentes
 consolidó y el conteo por fuente.
 
+## 5.79 → 5.80 · Sesión M12.8a-3 — `tecnico_grupo` a M11.3, `divulgacion` construida (2026-09-03, Lucas)
+
+> **Contexto.** M12.8a-1 dejó tres deltas de esquema hechos y las **dos tablas nuevas de la ronda**
+> pendientes. Entre esa sesión y ésta hubo una **sesión de diseño (M12.8a-2)** que **no dejó rastro
+> por diseño** —no escribió esquema, seed ni test, y no tiene commit ni entrada de §13 propia, igual
+> que pasó con L8—: su informe es la fuente de las dos decisiones de abajo, y esta sesión lo registra
+> en §13. Lucas confirmó antes de la corrida: **`tecnico_grupo` se difiere a M11.3** (D-A) y
+> **`divulgacion.hce_id` es `ON DELETE CASCADE`**, con la contra-argumentación registrada (D-B).
+
+### 5.79 `tecnico_grupo` se difiere a M11.3 — se deroga la *ubicación* de §5.72, no la decisión de construirla (2026-09-03, Lucas)
+
+**Qué deroga, por nombre.** §5.72 puso `tecnico_grupo` como delta **estructural de M12.8a** («una
+tabla `tecnico_grupo` N:M … entra en M12.8a, estructural»). Esta entrada **deroga esa ubicación**: la
+tabla se construye en **M11.3**, junto con el servicio de asignación que la va a leer. **No** cambia lo
+que §5.72 decidió sobre el *fondo* —hace falta modelar la asignación técnico↔grupo con vigencias— ni
+toca su lista propuesta de roles de aplicación, que sigue siendo propuesta para Lucas.
+
+**Por qué se mueve (medido en la sesión de diseño M12.8a-2):**
+- **No tiene consumidor hasta que exista el servicio de asignación**, que es M11.3. Una tabla
+  estructural sin nada que la escriba ni la lea es deuda que hay que mantener sin réditos — el mismo
+  criterio con el que `ateneo.participantes` **no** pasa a relación hasta M11.3 (§5.70).
+- **`grupo.tecnico1_id` / `tecnico2_id` siguen siendo la fuente de verdad**, y **`tecnico1_rol` /
+  `tecnico2_rol` ya existen** (`String(60)` nullable, `app/models/identidad.py:127` y `:129`, decisión
+  §5.2.3). Hoy **nada lee una historia** de asignaciones: no hay endpoint, servicio ni pantalla que la
+  consulte.
+- **Su forma está condicionada a dos preguntas sin respuesta de IPPU:** `docs/notas/preguntas-ippu.md`
+  **B5** (los roles, ¿etiqueta libre o lista cerrada? ¿hay un referente por NNA?) y **B6** (cuando un
+  técnico cambia de grupo a mitad de año, ¿necesitan ver quién estuvo antes?). Construir la tabla ahora
+  es fijar en el esquema una forma que la respuesta puede desarmar.
+- **Su único invariante real —a lo sumo dos asignaciones vigentes por grupo, sin solaparse en el
+  tiempo— no se puede expresar en la DDL** sin una `EXCLUDE` constraint con `btree_gist`, que sería
+  **la primera extensión de Postgres del repo**. Sumar una extensión es una decisión de M11.3, no un
+  efecto colateral de una ronda de cierre, y §5.2.2 cierra la otra vía (los triggers están prohibidos).
+- **No hay datos de producción.** Construirla más tarde cuesta **un archivo de migración incremental**,
+  no una migración de datos. **El cierre de la ronda no es una fecha límite.**
+
+**La forma que la sesión de diseño especificó — se registra como PUNTO DE PARTIDA para M11.3, no como
+algo construido:**
+
+```
+tecnico_grupo
+  id             PK serial
+  grupo_id       FK grupo(id)        ON DELETE CASCADE   -- es parte de la organización del grupo
+  profesional_id FK profesional(id)  ON DELETE RESTRICT  -- dar de baja a alguien no borra el historial
+  rol            text, SIN CHECK     -- etiqueta configurable (§5.2.3); el vocabulario es M11.3/Fase 4 (§5.72)
+  desde          date NOT NULL       -- intervalo semiabierto [desde, hasta)
+  hasta          date NULL           -- NULL = asignación vigente
+  UNIQUE (grupo_id, profesional_id, desde)
+  CHECK (hasta IS NULL OR hasta > desde)
+```
+
+El invariante de «a lo sumo dos vigentes, sin solape» **no** está en este esbozo: es lo que necesita
+`EXCLUDE` / `btree_gist` y lo resuelve M11.3.
+
+**Corrección a una lectura propia, verificada contra el código.** En la revisión se dijo que el
+invariante interjueces (dos evaluadores distintos) tenía que apoyarse en `grupo`. **No es así:** vive
+**a nivel de instrumento**, en el CHECK `evaluadores_distintos` de `idea` y `protocolo` sobre
+`evaluador_t1_id` / `evaluador_t2_id` (`app/models/modulos.py:264-266` y `:377-379`, vía
+`EvaluadoresMixin`). Y el propio **Documento Técnico** ya lista `otros_tecnicos[]` en `grupo` (esquema
+conceptual §7, `docs/markdown/1_documento-tecnico-utec-lidia.md:118`; la entidad en §3.1 habla de «dos
+evaluadores por grupo»). O sea: `grupo` **ya tiene** dónde nombrar a los otros técnicos el día que
+haga falta, y el control de confiabilidad no depende de esta tabla.
+
+**Actualizaciones que arrastra:** `docs/notas/puntos-a-validar.md` §2.11 (sacar `tecnico_grupo` de
+«M12.8a agrega, estructural» → M11.3) y el residuo de §5.18 anotado en §2.11 y en §6 (el cambio de
+técnico a mitad de año: la tabla que le da dónde vivir es M11.3, no M12.8a).
+
+### 5.80 `divulgacion` — la tabla como quedó construida en M12.8a-3 (2026-09-03, Lucas)
+
+**Qué es.** La primera tabla del esquema que representa un **acto de divulgación** —a quién salió un
+dato del expediente, por qué, con qué alcance y bajo qué autorización—. §5.71 la decidió, la agendó y
+derivó su juego de columnas del Protocolo de acceso; esta entrada registra **cómo quedó** al
+construirla, con las diferencias respecto de lo diseñado y por qué.
+
+**La tabla, columna por columna:**
+
+| Columna | Tipo / regla | Procedencia |
+|---|---|---|
+| `id` | PK serial | — |
+| `hce_id` | FK `hce_diurna(id)` **ON DELETE CASCADE**, nullable, indexada | pertenencia; ver la contra-argumentación abajo |
+| `ateneo_id` | FK `ateneo(id)` ON DELETE CASCADE, nullable, indexada | §5.25 (un dato puede salir de un ateneo institucional) |
+| `documento_id` | FK `documento(id)` **ON DELETE RESTRICT**, nullable, indexada | **agregado en esta sesión** — ver abajo |
+| `destinatario_tipo` | NOT NULL · CHECK desde `DIVULGACION_DESTINATARIOS` vía `_dominio()` | matriz §5 (categorías de actor) |
+| `destinatario_detalle` | texto, nullable, **sin CHECK** | §6.2 («indicando el alcance y la finalidad») |
+| `alcance_dato` | NOT NULL · CHECK sobre `identificable` / `disociado` / `agregado` | §6.6 · §6.7 |
+| `autorizacion_escrita` | boolean NOT NULL · `server_default false` | §6.2 · §6.5 |
+| `autorizacion_documento_id` | FK `documento(id)` ON DELETE RESTRICT, nullable | §6.2 / §6.5 (la autorización escrita, cuando está cargada) |
+| `autorizacion_ref` | texto, nullable | §6.2 / §6.5 (referencia cuando no hay documento cargado) |
+| `canal_formal` | texto, nullable | §6.3 · §6.4 |
+| `finalidad` | NOT NULL · CHECK `~ '[^[:space:]]'` | §8 («motivo de la consulta») · §4 (finalidad, minimización) |
+| `fecha` | date NOT NULL, indexada | §8 |
+| `responsable_id` | FK `profesional(id)` **ON DELETE RESTRICT**, NOT NULL | §8 («persona que accede») |
+| `obs` | texto, nullable | — |
+
+**CHECKs de forma:** `num_nonnulls(hce_id, ateneo_id) <= 1` — **`<= 1`, no `= 1`**: el informe
+agregado de §6.6 (una estadística de todo el servicio, «de modo que sea imposible identificar a un
+usuario») **no pertenece a ningún expediente ni ateneo** y tiene que poder registrarse con las dos FK
+en NULL. Más los tres CHECK de dominio (`destinatario_tipo`, `alcance_dato`, `finalidad`).
+
+**`hce_id` CASCADE, con la contra-argumentación registrada (D-B).** `divulgacion` cuelga del
+expediente como **contenido** —es sobre los datos de *ese* expediente— y se va con él (`ON DELETE
+CASCADE`), igual que `severidad_dsm`, `inclusion` y `pai`. **La contra-argumentación, para que quede
+escrita:** un registro de divulgación es rastro de rendición de cuentas —«se comunicó tal dato a INAU
+el tal día»— y ese hecho puede importar *después* de que el expediente físico se borre; por eso
+`ateneo` y `auditoria` **no** cascadean. Se eligió CASCADE igual porque (a) un DELETE físico de
+`hce_diurna` es una corrección administrativa o un borrado por protección de datos —la baja normal es
+lógica (`activo` + `fecha_baja`)— y en un borrado por protección de datos en general se quiere que los
+registros sobre esa persona también se vayan; (b) CASCADE → RESTRICT es una migración sin pérdida y al
+revés no (mismo argumento que M12.4 y `ateneo`). El alcance institucional usa RESTRICT donde el objeto
+referenciado **no** es del expediente (`documento_id`, `autorizacion_documento_id`, `responsable_id`).
+
+**`documento_id` — lo que el diseño no tenía, y por qué se agregó.** La tabla registraba *a quién*,
+*por qué* y *con qué alcance*, pero no **qué salió**. El Protocolo §6.6 gobierna «todo **informe**
+destinado a…» y §6.5 el traslado de la HC completa: **el objeto de la divulgación es parte del
+hecho**. Es nullable porque no todo lo que se divulga es una fila de `documento` cargada (un informe
+agregado al Consejo puede no serlo) y **RESTRICT** porque un documento referenciado por un registro de
+divulgación no puede desaparecer. **No** lleva CHECK que lo ate a `alcance_dato`: eso es territorio de
+guard.
+
+**Los dos CHECK cruzados que NO se pusieron.** La sesión de diseño marcó dos como inferencia propia, y
+esta sesión los dejó afuera a propósito, para que nadie los re-derive como un olvido: (1)
+`alcance_dato <> 'agregado' OR hce_id IS NULL` y (2) «si `autorizacion_escrita` es verdadero, entonces
+`autorizacion_documento_id` o `autorizacion_ref` tiene que estar». Los dos son **guards de M11.3** —
+§5.71 difiere los guards explícitamente—.
+
+**Regla de frontera con `registro_organismo`, en prosa (no en el esquema).** `registro_organismo`
+registra **envíos a INAU y gestiones ante BPS** como parte de HCE-ORG: el trámite que la institución
+sigue con el organismo. `divulgacion` registra el **acto de comunicar un dato a un tercero** bajo el
+régimen del Protocolo. Un envío a INAU puede generar filas en las dos tablas —una en
+`registro_organismo` (el trámite) y otra en `divulgacion` (qué se comunicó, con qué alcance, con qué
+autorización)— y **está bien que así sea**: son dos afirmaciones sobre sujetos distintos. **No hay
+CHECK ni FK entre ellas**; la coordinación es un guard de M11.3. La frontera es escrita, no esquema.
+
+**Append-only es una postura, no una restricción.** No hay endpoint de UPDATE ni DELETE sobre
+`divulgacion`, igual que `auditoria`. En despliegue se recomienda además `REVOKE UPDATE, DELETE ON
+divulgacion FROM rol_app` — un permiso, no lógica de negocio, así que no contradice §5.2.2 (anotado
+para M11.4 / Fase 6). **Sin trigger.**
+
+**Sin seed.** La tabla nace vacía (§5.71).
+
+**Qué NO hace.** No modela un flujo de compartición: quién *puede* divulgar según su rol, si un
+consentimiento *habilita* la salida, la compuerta «revisado por dirección → entregado» de §5.40 —
+todo M11.3/M11.4, junto con §2.13. `divulgacion` registra un **hecho ocurrido**, no una solicitud en
+trámite.
+
+**Dos preguntas que abrió la sesión de diseño**, ahora en `docs/notas/preguntas-ippu.md` (bloque B):
+si un registro individual **anonimizado** necesita distinguirse de una **estadística puramente
+agregada** en el log de divulgación; y si **dar a la familia una copia de la HC del propio NNA** es
+una divulgación o sólo una entrada de acceso (Ley 18.335 Art. 18 lit. A es un derecho distinto del
+lit. D).
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
