@@ -2770,6 +2770,89 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-03 · Sesión L9 — reconciliación con el Protocolo de acceso + hoja de decisiones de la hoja
+  intermedia** (Lucas + Claude, rama `main`). **Documentación solamente.** No se tocó `app/`, `alembic/`,
+  `tests/` ni `app/data/`; no se regeneró migración ni catálogos; no se levantó Docker; **no se corrió
+  `pytest`** y las **389** no se re-midieron. ⚠️ **No hay «sesión L8» en esta bitácora:** el prompt de L9
+  la cita como «la hoja de L8» (la hoja de decisiones A-1…C-2), pero no quedó un commit ni una entrada de
+  §13 con ese nombre; la sesión que armó esa hoja fue una instancia intermedia sin registro propio.
+  - **Punto de partida medido** (no se cita como cifra viva): árbol limpio en `7e2406d`, los dos remotos
+    (`gitlab`, `origin`) en el mismo hash. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Última entrada existente: `### 5.69` en
+    `handoff.md`, `### 1.16` y `### 2.16` en `puntos-a-validar.md`.
+  - **Ingesta de dos documentos de IPPU, los dos anteriores al acta del 2026-08-26:**
+    - **Protocolo de acceso, confidencialidad y resguardo de la HC** — **nuevo en el repo**. Convertido a
+      `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (verbatim; sólo se corrigieron
+      artefactos de Docling — título descolocado, matriz §5 partida en tres, Anexo III con una columna
+      colapsada).
+    - **`1_Documento_Tecnico_UTEC-LIDIA.md`** — **idéntico en prosa** a
+      `docs/markdown/1_documento-tecnico-utec-lidia.md`. Diff normalizado (sin markup, sin whitespace):
+      difieren sólo artefactos de reconversión (`**x**` vs `## x`, reflow de tablas por salto de página,
+      `excepcional :` vs `excepcional:`); ninguna sección, regla, número ni entidad del modelo cambió.
+      **No se tocó.**
+    - **Regla de precedencia** escrita en la cabecera de `handoff.md` (nivel «1-bis» + un nivel «0» para
+      las decisiones §5 y el acta) y en `CLAUDE.md`: donde estos documentos contradigan la reunión
+      (§5.36–§5.49) o algo posterior, gana la reunión y lo posterior.
+  - **§5 append-only: 69 → 78 entradas, 0 tocadas** (verificado: el `git diff` de `handoff.md` no borra
+    ninguna línea `### 5.` ni ningún `---` de separación). Desde **§5.70 sin etiqueta `(L#)`** (§5.77 +
+    línea de decodificación al inicio de §5: la etiqueta contaba decisiones dentro de una serie, los
+    nombres de sesión contaban sesiones, y las dos numeraciones divergieron).
+    - **§5.70 — el hallazgo sustantivo.** El Protocolo §5 (fila «otros técnicos … no tratantes») y §6.1
+      dan al técnico no tratante acceso «únicamente mediante interconsulta formal, **ateneo clínico** o
+      pase de caso documentado». **El ateneo no es una fuga del régimen: es el canal que el régimen
+      provee.** §2.16 se cierra apuntando acá. Tres condiciones para M11.3 (visibilidad = participantes
+      documentados + equipo tratante + dirección/coord.; leer el ateneo ≠ abrir la HCE; acceso con
+      motivo). ⚠️ **`ateneo.participantes` es hoy `Text`** (prosa, `app/models/ateneo.py:257`, decisión
+      de privacidad) → la condición 1 es **inimplementable**; pasa a relación en M11.3, **NO se toca**.
+    - **§5.71 (A-1) — `divulgacion` a M12.8a.** Columnas **derivadas** del Protocolo §6.2–6.7 + matriz §5
+      (destinatario, alcance identificable/disociado/agregado, autorización escrita + ref, canal formal,
+      motivo, fecha, responsable). Append-only por naturaleza. No modela flujo; guards en M11.3. §2.12 NO
+      cierra (decidido y agendado).
+    - **§5.72 (A-2) — `tecnico_grupo` N:M a M12.8a, aditiva.** ⚠️ **`grupo.tecnico1_rol/tecnico2_rol` YA
+      EXISTEN** (`String(60)` nullable, `app/models/identidad.py:127`/`:129`) — la hoja esperaba que no.
+      El vocabulario de roles (5 perfiles de la matriz §5) es **PROPUESTA para Lucas**, NO va a un CHECK.
+      ⚠️ conflación `admin` (crea grupos) ↔ «dirección no técnica» del Protocolo (sin acceso clínico):
+      reportada, no resuelta. ⚠️ **agranda M12.8** («una sola persona»). §2.11 NO cierra.
+    - **§5.73 (A-3) — `inclusion` NO se anualiza; §1.15 reformulado.** Medido contra
+      `app/models/inclusion.py`: `inclusion_bitacora` (gestiones fechadas) permite **actividad por
+      período** (alerta 60 días, articulaciones por caso/período); **no** permite reconstruir el estado a
+      una fecha pasada (`estado`, `fecha_estado`, `centro`, `tipo_centro`, `dias_horas` son columnas
+      únicas mutables; no hay historial de estado; `auditoria` es aspiración). Falta un historial de
+      estado fechado (M11.3/M11.4). `anio` NO entra en M12.8a.
+    - **§5.74 (B-1)** — el indicador de ateneos cuenta por `ateneo.fecha`. **§5.75 (B-2)** — vocabulario
+      de «fase» ratificado; **§2.3 CIERRA**; pase mecánico de corrección → §6. **§5.76 (B-3)** — L1 = HCE
+      oficial; **§2.4 CIERRA**. **§5.77 (B-4)** — se retira la etiqueta `(L#)`. **§5.78 (C-1)** — Lucas
+      dueño del contacto; preguntas consolidadas.
+  - **`puntos-a-validar.md` §2.17 (nuevo)** — HCE-LOG (`auditoria`) registra **cambios** (campo/valor
+    ant/nuevo); el Protocolo §8 exige registrar **lecturas con motivo y firma** y §7 el registro
+    automático con credencial individual. `tipo='acceso'` está en el CHECK pero no hay `motivo`, ni firma,
+    ni nada que lo escriba. Requisito **legal**. Condiciona M11.3 y Fase 4. **No se diseña.**
+  - **`docs/notas/preguntas-ippu.md` (nuevo)** — la lista consolidada, dueño Lucas. **25 preguntas**
+    distintas (A bloquea ahora · B bloquea M11.3 · C registro), con apéndice de conteo por fuente y tres
+    solapamientos con redacción divergente (reingreso; anualización del estado de inclusión; roles de los
+    técnicos). Nuevas de L9: «Taller de Adolescentes» ¿grupo o servicio? (Documento Técnico §1 reserva
+    Taller Terapéutico/Clínica para Fase 2), «perfil de área de Inclusión», la firma del acuerdo.
+    `puntos-a-validar.md` §1.17 (nuevo): autonomía progresiva — reserva por entrada frente a
+    representantes, ausente del modelo.
+  - **Cierres / cambios en `puntos-a-validar.md`:** **CERRADOS** §2.16 (→ §5.70), §2.3 (→ §5.75), §2.4
+    (→ §5.76). **CAMBIAN, no cierran:** §1.6 (estrechado — falta la firma, no la redacción: el Anexo II
+    trae el modelo), §1.15 (reformulado), §2.11, §2.12, §2.14. **Higiene:** §2.15 marcado resuelto por
+    §5.57, §2.10 reencuadrado (se pliega a §2.11), §2.9 con bullet propio en §6.
+  - **`PLAN-M12` §M12.8a** — delta final: §5.59 (§VII/FODA out, 43→39) · §5.61 (5 grupos) · §5.66
+    (`ateneo.observaciones`) · §5.71 (`divulgacion`) · §5.72 (`tecnico_grupo`) · **NO** `anio` en
+    `inclusion`. Dicho explícito: M12.8a dejó de ser limpieza.
+  - **Commits (con trailer, §5.62):** `511113d` (ingesta + precedencia), `4f85d4d` (§5.70–5.78 + §2.16 +
+    §2.17 + cierres), `edae3ec` (`preguntas-ippu.md` + §1.17), `ea1969c` (PLAN-M12 §M12.8a + §6), y esta
+    entrada. A `gitlab` y `origin`.
+  - **Verificación de cierre:** `verificar_estado.py --check` y `generar_catalogos_backend.py --check`
+    → **exit 0**. §5 append-only comprobado (69 → 78, 0 entradas tocadas). `pytest` **no se corrió**
+    (nada cambió de comportamiento). ⚠️ **Prohibición del prompt cumplida** salvo una desviación anotada:
+    las «commits (2)» y «(3)» del plan del prompt (§2.16 solo, y luego las decisiones) se **fusionaron**
+    en `4f85d4d` porque §5.70 y §5.71–§5.78 son un único hunk contiguo de inserción y separarlos exigía
+    fabricar cabeceras de hunk sobre `handoff.md`. También: la hoja pedía «§2.12 cierra como
+    decidido-y-agendado» pero la sección Prohibiciones dice «NO cerrar §2.12» — se respetó la
+    prohibición (§2.12 cambia, no cierra).
+
 - **2026-09-03 · Sesión L7 — las once decisiones de cierre de la ronda M12** (Lucas + Claude, rama
   `main`). **Documentación** — más **una** operación git (archivar + borrar una rama) y el cambio de
   convención de commits. No se tocó `app/`, `alembic/`, `tests/` ni `app/data/`; no se regeneró migración
