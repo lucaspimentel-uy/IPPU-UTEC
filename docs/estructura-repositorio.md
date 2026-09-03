@@ -166,7 +166,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── 0a2d67a35971_esquema_v2_inicial_m12_8a.py  # migración única del esquema v2 (50 tablas)
+│       └── 559b1a79cb77_esquema_v2_inicial_m12_8a.py  # migración única del esquema v2 (51 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -174,16 +174,21 @@ backend/
 │   │   ├── config.py        # settings; rechaza cualquier DATABASE_URL que no sea Postgres
 │   │   ├── constantes.py    # texto fijo que NO es catálogo (Likert, VF, prestaciones, vocabulario)
 │   │   └── database.py
-│   ├── models/               # SQLAlchemy — 50 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
+│   ├── models/               # SQLAlchemy — 51 tablas (28 de M11.2 + 5 de M12.1 + 2 de M12.2
 │   │                         #  − hce_taller, retirada en M12.3: handoff §5.20
 │   │                         #  + 2 de M12.4; ahí se retiró la COLUMNA hce_diurna.nivel_soporte,
 │   │                         #    que no mueve el conteo de tablas: handoff §5.24
 │   │                         #  + 2 de M12.7: ateneo + ateneo_acuerdo, handoff §5.25/§5.26
 │   │                         #  + 4 de M12.5: inclusion + inclusion_bitacora + estado_inclusion
-│   │                         #    + catalogo_centro_educativo, handoff §5.50-§5.52)
+│   │                         #    + catalogo_centro_educativo, handoff §5.50-§5.52
+│   │                         #  + 8 de M12.6: pai + sus 7 hijas (sólo esquema), handoff §5.54-§5.56
+│   │                         #  + 1 de M12.8a: divulgacion, handoff §5.80)
 │   │   ├── ateneo.py         # Ateneos clínicos y jornadas (M12.7): ateneo + ateneo_acuerdo
 │   │   │                     # AT_TIPOS es CONSTANTE, no catálogo: es el discriminador de los 5 CHECK
 │   │   ├── catalogos.py
+│   │   ├── divulgacion.py    # HCE-DIV (M12.8a): divulgacion — registro de divulgación de datos a
+│   │   │                     # terceros; columnas del Protocolo de acceso §6.2-6.7. Append-only,
+│   │   │                     # sin seed. DIVULGACION_DESTINATARIOS/ALCANCES son CONSTANTES. handoff §5.80
 │   │   ├── identidad.py
 │   │   ├── inclusion.py      # HCE-INC (M12.5): inclusion + inclusion_bitacora + los dos catálogos
 │   │   │                     # estado_inclusion (7 filas) y catalogo_centro_educativo (0 filas, §5.52)

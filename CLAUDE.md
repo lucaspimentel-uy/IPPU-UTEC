@@ -144,10 +144,10 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
   M12.8 la heredan**), **§5.51** (el estado de inclusión es **continuo**, no anual) y **§5.52**
   (`inclusion.centro` es **texto, no FK**). **307 tests**, migración `aa26917b6e76`.
 - **M12.6 HECHO** (2026-09-02) — **HCE-PAI · Propuesta de Atención Individual**, en modo **SOLO
-  ESQUEMA**. **50 tablas**: `pai` (39 campos propios — 43 en M12.6; la sección VII/FODA salió en
+  ESQUEMA**. `pai` (39 campos propios — 43 en M12.6; la sección VII/FODA salió en
   M12.8a, §5.59) + siete hijas — `pai_objetivo`,
   `pai_evaluacion_previa`, `pai_equipo`, `pai_coordinacion`, `pai_taller`, `pai_prestacion` y
-  `pai_circuito`. **389 tests**, migración `72b96030362d`.
+  `pai_circuito`. Cerró en 50 tablas · 389 tests · migración `72b96030362d` (2026-09-02).
   - **§5.54** reencuadró el bloqueo de §5.28: de las 13 secciones del Manual que se daban por faltantes,
     **11 están en el `const MANUAL` del Prototipo v4** y el **Anexo A** resultó ser «cálculo de totales y
     deltas con verificación antes de firmar» — o sea **M11.3, no esquema**. ⚠️ **§4 y §8 siguen sin
@@ -159,7 +159,13 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
     prototipo le da 4 funciones de gestión a `CAT_TALLERES` y **cero** a estas tres.
   - ⚠️ **Ningún guard**: los guards (habilitación de §IX por tipo, Anexo A, «qué IDEA rige») son **M11.3**.
   - ⚠️ **`pai` NO lleva `UNIQUE(hce_id, anio)`** (§5.22): hay más de un PAI por año.
-- **Queda sólo M12.8** para cerrar la ronda. Con M12.5, M12.6 y M12.7 hechos **ya no hay trabajo en
+- **M12.8a EN CURSO** — deltas de esquema/seed de la serie L + L9 antes de la regeneración final. **HECHO:**
+  M12.8a-1 (§VII/FODA fuera de `pai`, cinco nombres reales de grupo, `ateneo.observaciones`) y M12.8a-3
+  (`divulgacion` §5.80 — registro de divulgación de datos, append-only, sin seed). ⚠️ **`tecnico_grupo`
+  se difirió a M11.3** (§5.79 deroga la ubicación de §5.72, no la decisión). Estado hoy: **51 tablas**,
+  **432 tests en verde y 0 salteados**, migración `559b1a79cb77`.
+- **Queda M12.8b** (docs: `esquema-datos-v2.md` → v3, README, `estructura-repositorio.md`) y el resto de
+  M12.8 (seed espejo, tests). Con M12.5, M12.6, M12.7 y M12.8a hechos **ya no hay trabajo en
   paralelo sobre `app/models/`**, así que §5.19 no congela nada.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
