@@ -110,6 +110,14 @@ Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa 
 Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
 capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
+
+**Precedencia normativa — enmienda del 2026-09-03 (L9, `handoff.md` §5.10).** Dos documentos de IPPU
+ingresados el 2026-09-03: `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo
+de acceso — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, modelo de acuerdo de
+confidencialidad Anexo II) y una reconversión del Documento Técnico (idéntica a la del repo). **Los dos
+son ANTERIORES al acta de la reunión con IPPU del 2026-08-26:** donde contradigan una decisión de la
+reunión (`handoff.md` §5.36–§5.49 / serie I) o cualquier decisión posterior, **gana la reunión y lo
+posterior**. Son autoritativos para todo lo que la reunión no tocó.
 - **M12.0 a M12.4 y M12.7 HECHOS** (2026-08-15): **38 tablas**, 6 catálogos nuevos, D9 (`grupo`) implementada, la
   **puntuación independiente de los dos técnicos** con su registro de consenso (D7, §5.16 — ⚠️ **agregado
   nuestro, no del prototipo**; el guard de «diferencia ≥2 exige documentación» va a **M11.3**, y kappa
@@ -168,6 +176,9 @@ capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de
 
 ## Reglas importantes
 - **Solo datos simulados/anonimizados** hasta que exista acuerdo de confidencialidad firmado con IPPU.
+  Esta regla la respalda ahora el **propio protocolo de IPPU**: `protocolo-…-hce.md` §6.7 exige acuerdo
+  de confidencialidad previo para trabajar con datos identificables en el marco del convenio UTEC-LIDIA, y
+  su Anexo II trae el modelo de acuerdo. Lo que falta es la **firma** (`puntos-a-validar.md` §1.6).
 - Datos de NNA = sensibles: nunca subir identificadores/imágenes reales a servicios externos sin evaluación.
 - La IA **apoya**, no reemplaza, el juicio clínico.
 - **Al terminar una sesión con cambios relevantes, actualizar `handoff.md`** (§5 decisiones, §6 pendientes, §13 bitácora) y pushear a los dos remotos.
