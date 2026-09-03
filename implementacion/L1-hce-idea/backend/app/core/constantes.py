@@ -517,3 +517,44 @@ PAI_COORDINACION_ACTORES: tuple[str, ...] = (
     "INAU / supervisión de convenio",
     "Otros (especificar)",
 )
+
+
+# --------------------------------------------------------------------------
+# HCE-DIV · Divulgación de datos (M12.8a · Protocolo de acceso)
+# --------------------------------------------------------------------------
+# Los dos vocabularios de `divulgacion` (M12.8a-3) salen del **Protocolo
+# institucional de acceso, confidencialidad y resguardo de la HC** —matriz §5 y
+# procedimientos §6.2–6.7—, no del Prototipo v4, que no modela la divulgación.
+# La decisión de crear la tabla y de dónde salen sus columnas está en
+# `handoff.md` §5.71; cómo quedó construida, en §5.80.
+#
+# **Constante con CHECK, no catálogo**, por el criterio de la cabecera de este
+# archivo: son categorías normativas —las fija la ley y el Protocolo, no
+# coordinación con un UPDATE—, no tienen atributos propios que consultar, y el
+# módulo existe para poder auditar la divulgación (Protocolo §8), cosa que con
+# texto libre se vuelve ruido. Mismo lugar que `INCLUSION_MEDIOS` /
+# `INCLUSION_ROLES` / `PAI_AREAS`. **Se persiste el valor**, no un índice.
+
+#: A quién se comunicó el dato — las **categorías de actor de la matriz §5** del
+#: Protocolo (`handoff.md` §5.71). No es una lista de la aplicación: el paciente,
+#: la familia, los organismos y los terceros son **destinatarios** gobernados por
+#: los procedimientos §6, no usuarios que inician sesión (§5.72).
+DIVULGACION_DESTINATARIOS: tuple[str, ...] = (
+    "Familia / representante legal",
+    "Tercero autorizado por escrito",
+    "INAU",
+    "MSP / BPS",
+    "Ministerio Público",
+    "Poder Judicial",
+    "Dirección institucional / gobierno / Consejo de Administración",
+    "Organismo convenio / donante",
+    "Equipo de investigación (convenio UTEC-LIDIA)",
+)
+
+#: Con qué grado de identificación salió el dato. **Tokens cortos y estables**
+#: (como `INCLUSION_SEMAFOROS`) porque este es el valor contra el que M11.3 va a
+#: escribir el guard del Protocolo §6.6 —informes a dirección, convenio y
+#: **donantes** *deben* ser disociados o anonimizados— y §6.7 —UTEC-LIDIA
+#: prioriza disociado/anonimizado—. `"disociado"` abarca «disociado o
+#: anonimizado» del §6.6; `"agregado"` es la estadística sin individuos.
+DIVULGACION_ALCANCES: tuple[str, ...] = ("identificable", "disociado", "agregado")

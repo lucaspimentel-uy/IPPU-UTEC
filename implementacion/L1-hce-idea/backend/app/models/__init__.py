@@ -14,11 +14,16 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
                       transversal: no cuelga del expediente, lo referencia
   pai           §2.2  HCE-PAI (M12.6) — la propuesta y sus 7 tablas hijas.
                       Módulo **sin firma**; N por expediente, no anual
+  divulgacion   §2.3  HCE-DIV (M12.8a) — registro de divulgación de datos a
+                      terceros. Append-only por postura; sin seed
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
 """
 from app.models.ateneo import (
     Ateneo,
     AteneoAcuerdo,
+)
+from app.models.divulgacion import (
+    Divulgacion,
 )
 from app.models.catalogos import (
     BandaIdea,
@@ -86,6 +91,8 @@ from app.models.transversales import (
 __all__ = [
     # ateneos y jornadas (M12.7)
     "Ateneo", "AteneoAcuerdo",
+    # HCE-DIV · divulgación (M12.8a)
+    "Divulgacion",
     # catálogos
     "BandaIdea", "BaremoCategoria", "CategoriaDocumento", "DeltaInterpretacion",
     "IdeaDimension", "IdeaEjemplo", "IdeaFicha", "IdeaNivel", "IdeaRegla",
