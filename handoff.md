@@ -2348,6 +2348,30 @@ consolidó y el conteo por fuente.
 >   pasó una vez, la **fuente normativa de precedencia 1** (§5.10) necesita el mismo escrutinio que le
 >   hicimos al cuestionario.
 >
+> ### 🆕 Abiertos / movidos por la sesión L9 (2026-09-03, §5.70–§5.78)
+>
+> - [ ] **Pase mecánico de vocabulario: «fase» y numeración de líneas** (§5.75 / §2.3 y §5.76 / §2.4). Las
+>   dos decisiones están cerradas; falta **renombrar las apariciones en los documentos vivos** — un término
+>   por sentido (**etapa** backend · **etapa del convenio** · **línea** · **ronda** · **fase** sólo para el
+>   Documento Técnico) y citar siempre «L1 = HCE». Conteo por archivo en §2.3. **No** se tocan las fuentes
+>   (`Documento de trabajo.md`, cuestionario Q47, `docs/prompts/*`, `relevamiento-*`): se anota la
+>   divergencia. Es un pase aparte, sin dueño.
+> - [ ] **Administración de los catálogos de talleres y de centros educativos** (`puntos-a-validar.md` §2.9).
+>   Hoy vivía sólo dentro de §2.9 y se perdía. D5 (§5.14) y M12.5 dejaron `taller` (14 filas, sin gestión) y
+>   `catalogo_centro_educativo` (0 filas) **sin endpoint ni pantalla** para alta / orden / orientación a
+>   grupos / retiro. **Misma pantalla y mismo tipo de trabajo que el alta de grupos (§2.8)** → **M11.3 /
+>   M11.4**, con registro en HCE-LOG y `hce_id NULL`.
+> - [ ] **Registro de accesos con motivo (HCE-LOG)** (`puntos-a-validar.md` §2.17, abierto por el Protocolo).
+>   `auditoria` registra **cambios** (`campo`/`valor_ant`/`valor_nuevo`); el Protocolo §8 exige registrar
+>   **lecturas con motivo y firma**, y §7 el registro automático de accesos con credencial individual. El
+>   `tipo='acceso'` está en el CHECK pero **no hay `motivo`, ni firma, ni nada que lo escriba**. Requisito
+>   **legal**. Condiciona **M11.3** (guards que escriben `auditoria`) y **Fase 4** (login). No se diseña.
+> - [ ] **Guards del acceso al ateneo** (`puntos-a-validar.md` §2.16 cerrado por §5.70 → residuo M11.3):
+>   (a) visibilidad del ateneo clínico = participantes documentados + equipo tratante + dirección/coord.;
+>   (b) el endpoint de ateneos enmascara a «lo pertinente» según quién consulta; (c) `ateneo.participantes`
+>   pasa de `Text` a **relación** (`ateneo_participante` N:M) — necesita el modelo de usuarios (§5.72)
+>   debajo. **No se toca `ateneo.participantes` hasta M11.3.**
+>
 > ### 📌 Pendientes abiertos por la Fase B del 2026-08-20 (F1 aterrizó — estos ya no esperan a nada)
 >
 > **Los que decían «cuando aterrice F1» y ahora se deben por nombre:**

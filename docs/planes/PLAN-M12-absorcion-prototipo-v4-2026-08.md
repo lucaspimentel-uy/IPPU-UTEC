@@ -529,25 +529,44 @@ El más grande. Las 15 secciones y todos los campos están en `docs/markdown/pro
 ### M12.8 — Cierre: seed, tests, docs
 Una sola persona.
 
-> **M12.8a — ajustes de esquema/seed pendientes de la serie L (`handoff.md` §5.59–§5.66).** Van **antes**
-> de regenerar la migración final, porque son los últimos deltas de esquema/seed de la ronda:
-> - **D-11 / §5.59 — se retira la sección §VII (FODA) de `pai`.** Quitar las cuatro columnas
+> **M12.8a — ajustes de esquema/seed pendientes de la serie L (`handoff.md` §5.59–§5.66) y de L9
+> (§5.71–§5.72).** Van **antes** de regenerar la migración final, porque son los últimos deltas de
+> esquema/seed de la ronda. ⚠️ **L9 agrandó M12.8a: ya no es una limpieza, es una ronda de esquema
+> sustancial** — `divulgacion` y `tecnico_grupo` son tablas nuevas, no ajustes. `PLAN-M12` §M12.8 sigue
+> diciendo «una sola persona»; quien lo tome, que lo sepa.
+> - **§5.59 — se retira la sección §VII (FODA) de `pai`.** Quitar las cuatro columnas
 >   `fort`, `oport`, `debil`, `amen` de `app/models/pai.py:226-232` (§5.42 / I7 lo mandó y M12.6 las
 >   escribió igual). **Corregir la cifra «43 campos propios» → «39»** en `CLAUDE.md:139`,
 >   `handoff.md:1973` y `tests/test_m12_pai.py` (nombre de la función `test_la_cabecera_tiene_los_43_...`,
 >   docstring de la derivación `:196-197` y la aserción `:200` → `== 39`). Actualizar
 >   `docs/markdown/prototipo-v4-referencia.md:149-153` con la nota de que §VII se retira. **No** tocar la
 >   bitácora de M12.6 (registro histórico).
-> - **D-2 / §5.61 — los cinco nombres reales de los grupos.** `UPDATE` de `grupo` (4 → 5 filas: Inicial ·
+> - **§5.61 — los cinco nombres reales de los grupos.** `UPDATE` de `grupo` (4 → 5 filas: Inicial ·
 >   Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes, todas `anio 2026`) + regenerar
 >   `catalogos_iniciales.json` + actualizar `tests/test_m12_catalogos.py:61-65` + revisar los literales de
 >   fixture (`test_m12_catalogos.py`, `test_esquema_v2.py`, `test_m12_ateneos.py`, `test_m12_talleres.py`)
 >   + el dominio de `taller.grupos_orientados`. La **demo** también los muestra (fuera del alcance del
 >   backend). ⚠️ «Taller de Adolescentes» se toma como fila de `grupo`; si IPPU aclara otra cosa, vuelve.
-> - **D-7 / §5.66 — `ateneo.observaciones`.** Agregar `observaciones: Mapped[str | None] =
+> - **§5.66 — `ateneo.observaciones`.** Agregar `observaciones: Mapped[str | None] =
 >   mapped_column(Text)` a `app/models/ateneo.py` (sin CHECK — es opcional, como `participantes`). Los
 >   adjuntos PPTX **no** son de acá: van a **Fase 6**.
-> - Después de estos tres, la regeneración de la migración inicial única (abajo) los absorbe en un solo
+> - **§5.71 (L9) — tabla `divulgacion`.** Nueva tabla, **append-only por naturaleza**. Columnas derivadas
+>   del Protocolo de acceso (`docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` §6.2–6.7 +
+>   matriz §5), detalladas en `handoff.md` §5.71: `hce_id` / `ateneo_id` (XOR, §5.25) · `destinatario_tipo`
+>   (categorías de actor de la matriz §5) · `destinatario_detalle` · `alcance_dato` (identificable /
+>   disociado-anonimizado / agregado) · `autorizacion_escrita` (bool) + `autorizacion_ref` · `canal_formal`
+>   · `finalidad` / `motivo` · `fecha` · `responsable_id` · `obs`. ⚠️ **No** modela un flujo de
+>   compartición: los guards son M11.3/M11.4. Sin seed (nace vacía).
+> - **§5.72 (L9) — tabla `tecnico_grupo`** N:M **aditiva**. `grupo_id` · `profesional_id` · `rol`
+>   (etiqueta) · `desde` · `hasta`. Se agrega **al lado de** `grupo.tecnico1_id`/`tecnico2_id`, que siguen
+>   siendo la fuente de verdad hasta que M11.3 conecte las lecturas. Le da dónde vivir a las vigencias
+>   (residuo de §5.18). Sin seed obligatorio (se puede poblar desde `tecnico1_id`/`tecnico2_id` o dejar
+>   vacía). ⚠️ **NO se toca `profesional.rol` ni su CHECK de dos valores** — el vocabulario de roles
+>   (lista de 5 propuesta en §5.72, a confirmar por Lucas) es **M11.3 / Fase 4**. ⚠️ **NO se agregan
+>   `grupo.tecnico1_rol` / `tecnico2_rol`: ya existen** (`String(60)` nullable).
+> - **⚠️ NO entra: `anio` en `inclusion`** (§5.73 / L9). `inclusion` queda 0..1 por expediente; la
+>   anualización no se hace (§5.51 sigue como dirección reversible).
+> - Después de estos deltas, la regeneración de la migración inicial única (abajo) los absorbe en un solo
 >   archivo, con `test_la_migracion_coincide_con_los_modelos` en verde.
 
 - **Regenerar la migración inicial única** una última vez, con la reconstrucción limpia de siempre: drop
