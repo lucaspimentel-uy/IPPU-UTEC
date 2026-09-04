@@ -1,11 +1,22 @@
 # Esquema de datos v2 — HCE IPPU (M11 · backend v2)
 
-> **Estado: IMPLEMENTADO en M11.2** (2026-08-07, 28 tablas + migración inicial única) y **en curso de
-> ampliación por la ronda M12** (absorción del Prototipo v4). Lo marcado «M12.1» y «M12.2» ya está en los
-> modelos **y en la migración**: por la enmienda §5.19 (2026-08-14) la migración inicial única se regenera
-> al cerrar **cada** sub-módulo, con `test_la_migracion_coincide_con_los_modelos` en verde. Al cerrar
-> M12.3 son **34 tablas** — ⚠️ **bajó de 35 y no es una regresión**: M12.3 no crea tablas (`taller` ya
-> existía) y **retira `hce_taller`** (§5.20). Este documento pasa a **v3** en M12.8.
+> **Versión del documento: v3** — 2026-09-03, sesión M12.8b-1. Refleja el esquema tras **M12.0–M12.7 y
+> M12.8a** (hasta M12.8a-3). ⚠️ **El archivo sigue llamándose `esquema-datos-v2.md` y no cambia**
+> (`handoff.md` §5.81): «esquema v2» nombra la arquitectura del backend v2 —incluida la migración
+> `559b1a79cb77_esquema_v2_inicial_m12_8a.py`—; lo que se versiona acá es el **documento**. No hay ningún
+> archivo `esquema-datos-v3.md`.
+>
+> **Estado medido** (2026-09-03, contra `Base.metadata` y la base de desarrollo): **51 tablas** en
+> `app/models/` (ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 · inclusion 4 · modulos 6 · pai 8 ·
+> severidad 2 · transversales 10). Migración inicial **única** `559b1a79cb77` (`down_revision = None`, un
+> solo archivo en `alembic/versions/`, 51 `op.create_table`). **432 tests en verde, 0 salteados.** Por la
+> enmienda §5.19 (2026-08-14) la migración se regenera al cerrar **cada** sub-módulo, con
+> `test_la_migracion_coincide_con_los_modelos` en verde. Origen histórico: **IMPLEMENTADO en M11.2**
+> (2026-08-07, 28 tablas).
+>
+> ⚠️ **Cobertura de este documento: describe 43 de las 51 tablas.** **NO** describe todavía las **8 de
+> HCE-PAI** (`pai` + 7 hijas, M12.6) — hay un marcador en §2.2 y §3, y el trabajo está en `handoff.md` §6
+> (M12.8b-1b). El diagrama ER de §1 está incompleto por lo mismo.
 >
 > Deriva del **Documento Técnico IPPU v1.0** (§6 modelo sugerido) y del **modelo clínico ya
 > validado en la demo v4.0** (ronda M0–M10). Toma `docs/markdown/modelo-datos.md` como punto de
@@ -16,6 +27,16 @@
 >
 > **Fuente normativa desde ago-2026 (§5.10 / D1):** Manual de Procedimientos v1.0 + Prototipo v4 de
 > IPPU, por encima del Documento Técnico. Decisiones de la ronda: `handoff.md` §5.10–§5.18.
+
+## Registro de versiones del documento
+
+El **archivo** (`esquema-datos-v2.md`) no se renombra nunca — «esquema v2» es la arquitectura del backend
+v2, no un número de este texto (`handoff.md` §5.81). Lo que sigue es la versión del **documento**.
+
+| Versión | Fecha | Qué refleja |
+|---|---|---|
+| v2 | 2026-07-30 → 2026-08-15 | Documento inicial del esquema v2 (propuesta del 2026-07-30, commit `d8d6533`), ampliado en los modelos y la migración por M12.0–M12.4 y M12.7. La última cabecera de estado quedó en M12.3 (**34 tablas**). |
+| **v3** | **2026-09-03** (sesión **M12.8b-1**) | Puesta al día tras **M12.5** (HCE-INC), **M12.6** (HCE-PAI, solo esquema), **M12.7** (ateneos) y **M12.8a** (`ateneo.observaciones`, cinco nombres reales de grupo, `divulgacion`). Cambios de este pase, todos de **documentación** —no se tocó `app/`, `alembic/`, `tests/`—: cabecera y §3 al estado medido (**51 tablas**, migración `559b1a79cb77`); `grupo` con los **cinco nombres reales** (§5.61) en vez de los colores; `idea` descrito **como está en el modelo** (sin `anio`) con aviso explícito de I1 / §5.36 (el IDEA es anual por decisión, el modelo aún no); `ateneo.observaciones` (§5.66); **`divulgacion`** nueva en §2.3 + §1 + §4 (§5.80); esbozo de **`tecnico_grupo` como NO CONSTRUIDO** (§5.79); §12-A del plan reescrito en prosa (§5.65); **marcador de HCE-PAI** en §2.2 y §3. ⚠️ **Pendiente para M12.8b-1b:** la sección HCE-PAI completa (**8 tablas / 81 columnas** medidas). |
 
 ## 0. Decisiones de arquitectura aplicadas (cierran el Anexo A del plan)
 
@@ -45,7 +66,10 @@ erDiagram
     SERVICIO    ||--o{ PERSONA_SERVICIO : ""
     HCE_DIURNA  ||--o| CONSENTIMIENTO : "HCE-CI (1:1)"
     HCE_DIURNA  ||--o| AUTORIZACION_IMAGEN : "§8.4 (0..1)"
-    HCE_DIURNA  ||--o{ IDEA : "HCE-LB (1:N por reingreso >12m)"
+    HCE_DIURNA  ||--o{ IDEA : "HCE-LB (1:N; hoy por reingreso >12m)"
+    %% ⚠️ I1 (§5.36): el IDEA es ANUAL por decisión desde 2026-08-26 y el modelo
+    %% aún no lo refleja (falta `idea.anio`). Ver la fila `idea` en §2.2 y la lista
+    %% «DECIDIDO, SIN IMPLEMENTAR» de `handoff.md` §6.
     HCE_DIURNA  ||--o{ PROTOCOLO : "HCE-PA/PB (A|B × año)"
     HCE_DIURNA  ||--o{ INFORME_CIERRE : "HCE-IC (1 por año — bug A corregido)"
     HCE_DIURNA  ||--o{ DOCUMENTO : "HCE-DOC (XOR)"
@@ -103,6 +127,16 @@ erDiagram
     %% Mismo criterio que `taller` (M12.3) y que `idea` respecto de `banda_idea`.
     DOCUMENTO   ||--o| CONSENTIMIENTO : "adjunto"
     DOCUMENTO   ||--o| AUTORIZACION_IMAGEN : "copia firmada"
+    HCE_DIURNA  ||--o{ DIVULGACION : "HCE-DIV — acto de divulgación (CASCADE)"
+    ATENEO      ||--o{ DIVULGACION : "un dato puede salir de un ateneo (§5.25)"
+    DOCUMENTO   ||--o{ DIVULGACION : "qué salió · y la autorización escrita (RESTRICT)"
+    PROFESIONAL ||--o{ DIVULGACION : "responsable (RESTRICT)"
+    %% `DIVULGACION` (M12.8a-3, §5.80): `hce_id` CASCADE con contra-argumentación
+    %% registrada; el CHECK de pertenencia es num_nonnulls(hce_id, ateneo_id) <= 1
+    %% (y no = 1) porque el informe agregado de §6.6 del Protocolo no pertenece a
+    %% ningún expediente ni ateneo. Append-only por postura (sin UPDATE/DELETE),
+    %% sin trigger, sin seed. Ver §2.3 y §4.
+    %% ⚠️ Diagrama incompleto: faltan `PAI` y sus 7 hijas (M12.6) — ver §2.2 / §3.
 ```
 
 ## 2. Tablas
@@ -114,25 +148,28 @@ erDiagram
 | `persona` | id, nombre, apellido, ci **UK**, fecha_nac, sexo, localidad, referente, telefono, **+ metadatos de origen** | Identidad única transversal (§3.1). La edad se calcula. |
 | `servicio` | id, clave (`atencion_diurna\|taller_terapeutico\|clinica`), activo | Los dos últimos reservados para Fase 2 (§0.3). |
 | `persona_servicio` | persona_id FK, servicio_id FK, fecha_alta, fecha_baja | **UK**(persona, servicio). |
-| `grupo` | **id serial** (identificador sin significado), **nombre** (`Grupo Azul\|Celeste\|Naranja\|Verde`), **anio SMALLINT**, **UK(nombre, anio)**, franja, dias, horario, tecnico1_id FK, **tecnico1_rol** (texto), tecnico2_id FK, **tecnico2_rol**, obs | **D9 (§5.18), confirmada 2026-08-14.** Un grupo por color **y por año**: «Azul 2026» y «Azul 2027» son dos filas. Roles = etiqueta configurable como dato (decisión 3 / §0.5). Ver la nota de abajo. |
+| `grupo` | **id serial** (identificador sin significado), **nombre** `varchar(60)` NOT NULL — **texto libre, sin CHECK** (valores reales: **Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes**, §5.61; el seed planta esas cinco filas), **anio SMALLINT**, **UK(nombre, anio)**, franja, dias, horario, tecnico1_id FK, **tecnico1_rol** (texto), tecnico2_id FK, **tecnico2_rol**, obs | **D9 (§5.18), confirmada 2026-08-14.** Un grupo por nombre **y por año**: «Escolares 2026» y «Escolares 2027» son dos filas. Roles = etiqueta configurable como dato (decisión 3 / §0.5). Ver la nota de abajo. ⚠️ **«Taller de Adolescentes»** se siembra como fila de `grupo` (§5.61); si IPPU lo entiende como el servicio de Taller Terapéutico (Fase 2) y no como un grupo, esa fila se retira — pregunta **A5** de `docs/notas/preguntas-ippu.md`. |
 
 > **`grupo` — por qué el id es propio y la unicidad es `(nombre, anio)`** (D9, `handoff.md` §5.18;
 > confirmada por el equipo el 2026-08-14, implementada en M12.1).
 >
 > Hasta M11.2 la PK era la letra (`A..E`), así que **un grupo existía una sola vez en toda la historia**:
-> en 2027, crear el Grupo Azul obligaba a sobrescribir la fila de 2026 —se perdía quiénes fueron sus
+> en 2027, crear el Grupo Escolares obligaba a sobrescribir la fila de 2026 —se perdía quiénes fueron sus
 > técnicos ese año— y los expedientes de 2026 (`hce_diurna.grupo_id`) pasaban a apuntar silenciosamente
-> al grupo del año nuevo. Con **id propio sin significado**, «Azul 2026» y «Azul 2027» son dos filas
-> distintas y el vínculo de cada expediente no se mueve nunca. El `UNIQUE(nombre, anio)` impide el
-> problema opuesto: dos filas «Azul 2026» por error.
+> al grupo del año nuevo. Con **id propio sin significado**, «Escolares 2026» y «Escolares 2027» son dos
+> filas distintas y el vínculo de cada expediente no se mueve nunca. El `UNIQUE(nombre, anio)` impide el
+> problema opuesto: dos filas «Escolares 2026» por error.
 >
-> **Granularidad anual, no por fecha.** Con fecha completa, «Azul 2026-03-01» y «Azul 2026-08-15» serían
-> dos filas válidas y volvería a haber dos grupos Azul en el mismo año. Además `anio` es la granularidad
-> que este mismo documento ya usa en `protocolo` e `informe_cierre` para los ciclos anuales.
+> **Granularidad anual, no por fecha.** Con fecha completa, «Escolares 2026-03-01» y «Escolares 2026-08-15»
+> serían dos filas válidas y volvería a haber dos grupos Escolares en el mismo año. Además `anio` es la
+> granularidad que este mismo documento ya usa en `protocolo` e `informe_cierre` para los ciclos anuales.
 >
-> **Los nombres por color van en la fila, sin catálogo aparte.** Los grupos de IPPU son Azul · Celeste ·
-> Naranja · Verde (Prototipo v4); `A..E` era invención nuestra. Si en 2028 dejan de usar «Naranja», la
-> fila de 2026 lo sigue diciendo, y un catálogo de colores sólo sería una tabla más que mantener.
+> **Los nombres van en la fila, sin catálogo aparte.** Los grupos reales de IPPU son **Inicial · Escolares
+> · Preadolescentes · Adolescentes · Taller de Adolescentes** (§5.61, que confirma §5.37 / I2; los colores
+> «Azul · Celeste · Naranja · Verde» eran ejemplos del Prototipo v4 y `A..E` era invención nuestra). Si en
+> 2028 dejan de usar «Preadolescentes», la fila de 2026 lo sigue diciendo, y un catálogo de nombres sólo
+> sería una tabla más que mantener. ⚠️ El alta / renombrado de grupos **desde la aplicación** (ADMIN abre
+> el año nuevo) no existe todavía — `docs/notas/puntos-a-validar.md` §2.8.
 >
 > ⚠️ **Límite aceptado:** con granularidad anual, un **cambio de técnico a mitad de año** sobrescribe la
 > fila y sólo queda rastro en `auditoria`. Modelar vigencias por técnico es bastante más caro y depende
@@ -182,7 +219,7 @@ que la demo, M1).
 | Tabla | Campos propios | Notas |
 |---|---|---|
 | `consentimiento` | **PK = hce_id**, firmante, fecha, **autorizaciones JSONB** (`{evaluacion, registro, comunicacion}`), documento_id FK (adjunto) | Único bloqueo sin excepción (§4.2): lo impone el servidor. |
-| `idea` (HCE-LB) | id, hce_id FK, **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **evaluador_t1_id / evaluador_t2_id FK** (M12.2), **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) | 1:N — reingreso >12 meses = instancia nueva; la vigente es la de mayor `fecha_consenso`. `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. **`evaluador_tN_id`** (M12.2 · D7): los dos técnicos que puntuaron por separado, con `CHECK` de que no sean la misma persona. |
+| `idea` (HCE-LB) | id, hce_id FK, **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **evaluador_t1_id / evaluador_t2_id FK** (M12.2), **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) — **23 columnas medidas, SIN `anio`** | 1:N — hoy: reingreso >12 meses = instancia nueva; la vigente es la de mayor `fecha_consenso` (`app/models/modulos.py`, docstring de `Idea`). `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. **`evaluador_tN_id`** (M12.2 · D7): los dos técnicos que puntuaron por separado, con `CHECK` de que no sean la misma persona. <br>⚠️ **I1 · el IDEA es ANUAL por decisión desde el 2026-08-26 (§5.36) y el modelo todavía NO lo refleja** — no hay columna `idea.anio`. Está en la lista «🛑 DECIDIDO, SIN IMPLEMENTAR» de `handoff.md` §6; la puerta es **antes de M11.3** (§5.35). El costo está medido (§5.31 / R0): aditivo, `idea` ya es 1:N, 0 FKs a reconectar, 0 tests rotos con `anio` nullable. Lo caro no es la columna: es el selector de año en la demo y **la regla de «qué IDEA rige»**, que hoy vive en prosa como «la de mayor `fecha_consenso`» y con una instancia por año deja de ser la misma pregunta. **No inventar acá la columna: describir el modelo como está.** |
 | `protocolo` (HCE-PA/PB) | id, hce_id FK, **tipo CHECK ('A','B')**, **anio**, fecha, semanas, **items JSONB** (24 × `{valor 1–5, obs}`), sint_tec1, sint_tec2, otros, ajustes (sólo B), **deltas JSONB** (sólo B; escribe el servidor al firmar B), **evaluador_t1_id / evaluador_t2_id FK** (M12.2), `total`, `esc_1..esc_4` | **UK**(hce_id, tipo, anio). `CHECK(total BETWEEN 24 AND 120)`. `CHECK(tipo='B' OR deltas IS NULL)`. `CHECK` de evaluadores distintos. |
 | **`puntuacion_idea`** (M12.2 · D7) | id, idea_id FK, dimension_id FK, **valor_t1 / valor_t2** (0–8, nullable), **ns_t1 / ns_t2 bool**, **diferencia** (columna **generada**: `abs(valor_t1 - valor_t2)`), documentacion | **UK**(idea_id, dimension_id). Puntuación **independiente** de cada técnico, previa al consenso. El consenso **no se movió**: sigue en `idea.dim`. `NS` se representa con `ns_tN=true` + `valor_tN NULL` (`CHECK` de exclusión mutua), que lo distingue de «todavía no puntuó». |
 | **`puntuacion_protocolo`** (M12.2 · D7) | id, protocolo_id FK, item_id FK, **valor_t1 / valor_t2** (1–5, nullable), **diferencia** (generada), documentacion | **UK**(protocolo_id, item_id). Igual que la anterior pero **sin `NS`**: la escala IPPU-TEA es Likert 1–5. |
@@ -349,6 +386,40 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 > que salen la columna «última gestión» y la alerta de **60 días sin gestiones** — cuyo umbral ya vive
 > como fila de `recordatorio` (clave `inc`, M12.1) y **no bloquea nada** (§4).
 
+#### HCE-PAI · Propuesta de Atención Individual (M12.6) — ⚠️ EXISTE EN EL MODELO, ESTE DOCUMENTO NO LA DESCRIBE TODAVÍA
+
+M12.6 (2026-09-02, **solo esquema**, `handoff.md` §5.54) construyó **8 tablas** en `app/models/pai.py`
+que este documento **aún no inventaría**. Medidas contra `Base.metadata` (2026-09-03):
+
+| Tabla | Columnas |
+|---|---|
+| `pai` | 43 |
+| `pai_objetivo` | 9 |
+| `pai_evaluacion_previa` | 7 |
+| `pai_equipo` | 6 |
+| `pai_coordinacion` | 7 |
+| `pai_taller` | 3 |
+| `pai_prestacion` | 3 |
+| `pai_circuito` | 3 |
+| **total** | **8 tablas · 81 columnas** |
+
+Lo que ya se puede decir, y el resto es de la sección pendiente:
+- Módulo **sin firma**; **N por expediente, no anual**: `pai` **tiene** columna `anio` pero **NO** lleva
+  `UNIQUE(hce_id, anio)` (§5.22) — hay más de un PAI por año.
+- **Ningún guard.** La habilitación de la §IX por tipo de PAI, el Anexo A del Manual y «qué IDEA rige»
+  son **M11.3** (`handoff.md` §5.54, §5.67).
+- §VII / FODA (`fort`/`oport`/`debil`/`amen`) **se retiró** de `pai` en M12.8a-1 (§5.59): la cifra de
+  «campos propios» bajó a **39**; la tabla tiene **43 columnas** medidas = 39 propias + `id` + `hce_id`
+  + `creado_en` + `actualizado_en` (el conteo de columnas y el de «campos propios» no coinciden).
+- `pai_taller` guarda la participación **por nombre** (`taller_nombre`), sin FK a `taller` (§5.20, que
+  M12.6 hereda, §5.21).
+- `PAI_AREAS`, `PAI_PREST` y `PAI_CIRCUITO` son **constantes con CHECK, no catálogos** (§5.56).
+
+📌 **La sección completa de HCE-PAI se escribe en M12.8b-1b** (split aprobado en la sesión M12.8b-1).
+Está registrada como pendiente sin dueño en `handoff.md` §6. Hasta entonces la fuente para estas 8
+tablas es `app/models/pai.py`, la bitácora de M12.6 en `handoff.md` §13 y las decisiones §5.22, §5.26,
+§5.54–§5.56, §5.59.
+
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
 |---|---|---|
@@ -362,6 +433,51 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 | `auditoria` (HCE-LOG) | id, **hce_id FK nullable**, ts, usuario_id FK, **modulo**, **tipo CHECK** (`edicion\|firma\|excepcion\|addenda\|alerta\|carga\|acceso`), **campo**, **valor_ant**, **valor_nuevo**, detalle | **Solo inserción**: sin endpoints de UPDATE/DELETE; refuerzo recomendado sin triggers: `REVOKE UPDATE, DELETE ON auditoria FROM rol_app` (permiso, no lógica). **M12.1 — granularidad de campo:** antes alcanzaba para «alguien editó HCE-LB», no para «qué cambió y de qué a qué». Importa para D9: con granularidad anual del grupo, un cambio de técnico a mitad de año sobrescribe la fila y **el único rastro del valor anterior es esta tabla**. `hce_id` pasa a nullable porque hay eventos institucionales (cambiar los técnicos de un grupo, retirar un taller) que no son de ningún expediente. |
 | `observacion` | id, hce_id FK, fecha, autor_id FK, texto | Igual que v1 (pestaña de seguimiento). |
 | `evento` | id, hce_id FK, tipo (`alta\|baja`), fecha, titulo, descripcion, autor_id FK | Igual que v1 (línea de tiempo). |
+| **`divulgacion`** (HCE-DIV · M12.8a-3, §5.80 · **15 columnas** medidas) | id · **hce_id FK `hce_diurna` `ON DELETE CASCADE`, nullable, index** (pertenencia) · **ateneo_id FK `ateneo` CASCADE, nullable, index** (§5.25) · **documento_id FK `documento` `RESTRICT`, nullable, index** (*qué* salió) · `destinatario_tipo` **NOT NULL** · CHECK desde `DIVULGACION_DESTINATARIOS` (9, matriz §5 del Protocolo) vía `_dominio()` · `destinatario_detalle` (texto, nullable, **sin CHECK**) · `alcance_dato` **NOT NULL** · CHECK `identificable\|disociado\|agregado` · `autorizacion_escrita` **bool NOT NULL `server_default false`** · `autorizacion_documento_id` FK `documento` `RESTRICT`, nullable · `autorizacion_ref` (texto) · `canal_formal` (texto) · `finalidad` **NOT NULL** · CHECK `~ '[^[:space:]]'` · `fecha` **date NOT NULL, index** · `responsable_id` FK `profesional` `RESTRICT` **NOT NULL** · `obs` | **Primer registro del esquema que representa un ACTO DE DIVULGACIÓN** —a quién salió un dato del expediente, con qué alcance, bajo qué autorización—. Columnas derivadas del **Protocolo de acceso §6.2–6.7 + matriz §5** (§5.71 lo decidió, §5.80 registra cómo quedó), **no** inventadas. Ver la nota de abajo. |
+
+> **HCE-DIV · `divulgacion` (M12.8a-3, `handoff.md` §5.80).** Se construyó en la sesión M12.8a-3;
+> este documento la describe, no la decidió.
+>
+> - **CHECK de pertenencia: `num_nonnulls(hce_id, ateneo_id) <= 1` — `<= 1`, NO `= 1`.** Distinto de
+>   `documento` (que usa `= 1`): el **informe agregado** de §6.6 del Protocolo —una estadística de todo el
+>   servicio, «de modo que sea imposible identificar a un usuario»— **no pertenece a ningún expediente ni
+>   ateneo** y tiene que poder registrarse con las dos FK en NULL. Más los tres CHECK de dominio
+>   (`destinatario_tipo`, `alcance_dato`, `finalidad`).
+> - **`hce_id` es CASCADE, y la contra-argumentación viaja con la decisión (§5.80 · D-B).** `divulgacion`
+>   cuelga del expediente como **contenido** —es sobre los datos de *ese* expediente— y se va con él,
+>   como `severidad_dsm`, `inclusion` y `pai`. ⚠️ **En contra:** un registro de divulgación es rastro de
+>   **rendición de cuentas** («se comunicó tal dato a INAU el tal día») y ese hecho puede importar
+>   *después* de que el expediente se borre — por eso `ateneo` y `auditoria` **no** cascadean. Se eligió
+>   CASCADE igual porque (a) un DELETE físico de `hce_diurna` es una corrección administrativa o un
+>   borrado por protección de datos —la baja normal es lógica (`activo` + `fecha_baja`)— y en un borrado
+>   por protección de datos se quiere en general que los registros sobre esa persona también se vayan;
+>   (b) CASCADE → RESTRICT es una migración sin pérdida y al revés no. Las FK a objetos que **no** son del
+>   expediente usan `RESTRICT` (`documento_id`, `autorizacion_documento_id`, `responsable_id`).
+> - **`documento_id` — agregado en M12.8a-3 sobre el diseño previo (§5.80).** La tabla registraba *a
+>   quién*, *por qué* y *con qué alcance*, pero no **qué salió**. El Protocolo §6.6 gobierna «todo
+>   **informe** destinado a…» y §6.5 el traslado de la HC completa: el objeto de la divulgación es parte
+>   del hecho. Nullable (no todo lo divulgado es una fila de `documento` cargada) y **RESTRICT** (un
+>   documento referenciado por un registro de divulgación no puede desaparecer). **Sin** CHECK que lo ate
+>   a `alcance_dato`: eso es guard.
+> - **Los dos CHECK cruzados que NO se pusieron** están en §4, no acá, para que nadie los re-derive como
+>   olvido: `alcance_dato <> 'agregado' OR hce_id IS NULL`, y «si `autorizacion_escrita` es verdadero,
+>   entonces `autorizacion_documento_id` o `autorizacion_ref` tiene que estar». Los dos son **guards de
+>   M11.3** (§5.71 difiere los guards).
+> - **Append-only es una POSTURA, no una restricción.** No hay endpoint de UPDATE ni DELETE, como
+>   `auditoria`. En despliegue se recomienda además `REVOKE UPDATE, DELETE ON divulgacion FROM rol_app`
+>   —un permiso, no lógica, así que no contradice la decisión 2 / §5.2.2—. **Sin trigger.**
+> - **Sin seed.** Nace vacía (§5.71).
+> - **Frontera con `registro_organismo` — en prosa, no en el esquema.** `registro_organismo` registra
+>   **envíos a INAU y gestiones ante BPS** como parte de HCE-ORG: el trámite que la institución sigue con
+>   el organismo. `divulgacion` registra el **acto de comunicar un dato a un tercero** bajo el régimen del
+>   Protocolo. Un envío a INAU puede generar filas en **las dos** tablas —una en `registro_organismo` (el
+>   trámite) y otra en `divulgacion` (qué se comunicó, con qué alcance, con qué autorización)— y está
+>   bien que así sea: son afirmaciones sobre sujetos distintos. **No hay CHECK ni FK entre ellas**; la
+>   coordinación es un guard de M11.3.
+> - **Qué NO hace.** No modela un flujo de compartición: quién *puede* divulgar según su rol, si un
+>   consentimiento *habilita* la salida, la compuerta «revisado por dirección → entregado» de §5.40 —todo
+>   M11.3/M11.4, junto con `puntos-a-validar.md` §2.13. `divulgacion` registra un **hecho ocurrido**, no
+>   una solicitud en trámite.
 
 ### 2.4 Catálogos paramétricos (decisión 3, **ampliada por D6 / §5.15**)
 | Tabla | Contenido | Por qué es dato |
@@ -409,7 +525,7 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 
 | Tabla | Campos clave | Notas |
 |---|---|---|
-| **`ateneo`** | id, **anio_correlativo SMALLINT**, **numero SMALLINT `CHECK 1–999`**, **UK(anio_correlativo, numero)**, **tipo `CHECK IN ('clinico','grupo','institucional','jornada')`**, fecha, titulo (`CHECK` no vacío), **hce_referida_id FK `RESTRICT`**, grupo_id FK `RESTRICT`, autor_id FK `RESTRICT`, participantes, · *desarrollo clínico:* situacion, hipotesis, recursos, seguimiento · *jornada:* capacitador, modalidad, contenidos, materiales, evaluacion. **`codigo` y `sensible` son derivados**, no columnas | **Una sola entidad con campos según tipo**, como el Prototipo v4 (`DB.ateneos[]`), no cuatro tablas. Índices para los filtros: `tipo`, `fecha` (año + orden), `grupo_id`, `titulo` (btree — la búsqueda de texto quedó como deuda, ver §4). |
+| **`ateneo`** (**20 columnas** medidas) | id, **anio_correlativo SMALLINT**, **numero SMALLINT `CHECK 1–999`**, **UK(anio_correlativo, numero)**, **tipo `CHECK IN ('clinico','grupo','institucional','jornada')`**, fecha, titulo (`CHECK` no vacío), **hce_referida_id FK `RESTRICT`**, grupo_id FK `RESTRICT`, autor_id FK `RESTRICT`, participantes, **observaciones** (`Text`, nullable, **sin CHECK** — §5.66), · *desarrollo clínico:* situacion, hipotesis, recursos, seguimiento · *jornada:* capacitador, modalidad, contenidos, materiales, evaluacion. **`codigo` y `sensible` son derivados**, no columnas | **Una sola entidad con campos según tipo**, como el Prototipo v4 (`DB.ateneos[]`), no cuatro tablas. Índices para los filtros: `tipo`, `fecha` (año + orden), `grupo_id`, `titulo` (btree — la búsqueda de texto quedó como deuda, ver §4). **`observaciones`** (M12.8a-1, §5.66) cierra el primero de los dos «faltantes concretos» de §5.46 / I11; el segundo —adjuntos PPTX— queda **diferido a Fase 6**, no pendiente de M12.8. |
 | **`ateneo_acuerdo`** | id, ateneo_id FK **CASCADE**, acuerdo (`CHECK` no vacío), responsable_rol (**texto, no FK**), plazo, orden | Tabla hija y no JSONB: «acuerdos vencidos sin cumplir» es una consulta **entre** ateneos. Sin `UNIQUE(ateneo_id, orden)`: el empate lo desempata `id` (orden de inserción, la semántica del array del prototipo) y un `UNIQUE` no diferido rompería el `UPDATE` que intercambia dos filas. |
 
 > **Los 5 CHECK de tipo, y el criterio que los ordena.** *El sujeto del registro es obligatorio; el
@@ -444,18 +560,59 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 > El techo de 999 no es cosmético — `f"{n:03d}"` ensancha y `lpad(t,3,'0')` **trunca**, así que con
 > `numero=1000` las dos mitades de `codigo` devolverían códigos distintos y colisionantes.
 
+### 2.6 NO construido — esbozos registrados para M11.3
+
+> **`tecnico_grupo` — asignación técnico↔grupo con vigencias. NO EXISTE en el modelo** (`handoff.md`
+> §5.79). §5.72 la había puesto como delta **estructural de M12.8a**; §5.79 **derogó esa ubicación** (no
+> la decisión de construirla) y la movió a **M11.3**, junto con el servicio de asignación que la va a
+> leer. **No está en el inventario de §2 a propósito.**
+>
+> **Por qué se movió** (medido en la sesión de diseño M12.8a-2): (1) **sin consumidor** hasta que exista
+> el servicio de asignación (M11.3) — una tabla estructural que nada escribe ni lee es deuda sin réditos;
+> (2) `grupo.tecnico1_id` / `tecnico2_id` **siguen siendo la fuente de verdad** y `tecnico1_rol` /
+> `tecnico2_rol` **ya existen** (`String(60)` nullable); nada lee hoy una *historia* de asignaciones;
+> (3) su forma depende de dos preguntas sin responder de IPPU — `docs/notas/preguntas-ippu.md` **B5**
+> (roles: ¿etiqueta libre o lista cerrada? ¿referente por NNA?) y **B6** (¿hace falta ver quién estuvo
+> antes cuando un técnico cambia de grupo a mitad de año?); (4) su único invariante real —**a lo sumo
+> dos asignaciones vigentes por grupo, sin solaparse en el tiempo**— no se expresa en la DDL sin una
+> `EXCLUDE` con `btree_gist`, que sería **la primera extensión de Postgres del repo** (decisión de M11.3,
+> y §5.2.2 cierra la vía de los triggers); (5) **sin datos de producción**, construirla luego cuesta un
+> archivo de migración incremental, no una migración de datos.
+>
+> **Esbozo — PUNTO DE PARTIDA para M11.3, no algo construido** (§5.79):
+>
+> ```
+> tecnico_grupo
+>   id             PK serial
+>   grupo_id       FK grupo(id)        ON DELETE CASCADE
+>   profesional_id FK profesional(id)  ON DELETE RESTRICT
+>   rol            text, SIN CHECK        -- etiqueta configurable (§5.2.3); vocabulario = M11.3/Fase 4
+>   desde          date NOT NULL          -- intervalo semiabierto [desde, hasta)
+>   hasta          date NULL              -- NULL = vigente
+>   UNIQUE (grupo_id, profesional_id, desde)
+>   CHECK (hasta IS NULL OR hasta > desde)
+> ```
+>
+> El invariante «a lo sumo dos vigentes, sin solape» **no** está en el esbozo: es lo que necesita
+> `EXCLUDE` / `btree_gist` y lo resuelve M11.3. **Corrección verificada contra el código (§5.79):** el
+> invariante interjueces (dos evaluadores distintos) **no** se apoya en `grupo` — vive a nivel de
+> instrumento, en el CHECK `evaluadores_distintos` de `idea` y `protocolo` (`EvaluadoresMixin`,
+> `app/models/modulos.py`).
+
 ## 3. Qué cambia respecto del esquema v1 (Fases 0–2)
 
 | v1 (pre-Doc. Técnico) | v2 |
 |---|---|
 | `terapeuta` | `profesional` (rename + campos igual) |
 | `nna` (todo junto) | `persona` + `hce_diurna` + `persona_servicio` (identidad ≠ expediente) |
-| `evaluacion_idea` **anual** + `dimension_idea` (filas) | `idea` **línea base única** con `dim JSONB` (el detalle por fila ya no paga su costo: el instrumento se lee/escribe entero) |
+| `evaluacion_idea` **anual** + `dimension_idea` (filas) | `idea` con `dim JSONB`, **1:N** (el detalle por fila ya no paga su costo: el instrumento se lee/escribe entero). ⚠️ La lectura original de v2 era **«línea base única»** (instancia nueva sólo por reingreso >12 m); **§5.36 (2026-08-26) la revirtió a anual** y el modelo todavía no lo refleja — falta `idea.anio`. Ver §2.2 e **I1** de `handoff.md` §6. |
 | `evaluacion_likert` + `item_likert` (intermedia 3×12) | **Se elimina** → `protocolo` A/B (Escala IPPU-TEA, 24 ítems JSONB) |
 | `evaluacion_area/general` + ítems (provisionales) | **Se eliminan** → `documento` con `es_registro_historico` (§10, como en la demo M7) |
 | `anamnesis` (tabla 1:1) | `hce_diurna.anamnesis` JSONB (HCE-00) |
 | — | Nuevos: `consentimiento`, `informe_cierre`, `documento`, `foto`, `autorizacion_imagen`, `organismo_*`, `registro_organismo`, `valoracion_funcional`, `auditoria`, `baremo_categoria`, `categoria_documento`, `recordatorio`, `servicio`, `persona_servicio` |
 | — | Nuevos de M12.1: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla` · de **M12.2**: `puntuacion_idea`, `puntuacion_protocolo` · de **M12.4**: `severidad_dsm`, `severidad_nivel` |
+| — | Nuevos de **M12.5** (HCE-INC): `inclusion`, `inclusion_bitacora`, `estado_inclusion`, `catalogo_centro_educativo` · de **M12.7** (ateneos): `ateneo`, `ateneo_acuerdo` · de **M12.8a** (HCE-DIV): `divulgacion` |
+| — | ⚠️ Nuevos de **M12.6** (HCE-PAI, 2026-09-02, solo esquema): **8 tablas** — `pai` + `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` · `pai_coordinacion` · `pai_taller` · `pai_prestacion` · `pai_circuito` (**81 columnas** medidas). **Este documento aún no las describe** — ver el marcador en §2.2 y `handoff.md` §6 (M12.8b-1b). |
 | `hce_taller` · `hce_diurna.nivel_soporte` | **Retirados** en M12.3 (§5.20) y M12.4 (§5.24): dos fuentes de verdad que sobrevivieron al rewrite v1 → v2 sin revisarse contra las decisiones nuevas |
 | `observacion`, `evento`, `grupo`, `taller`, catálogo IDEA | Se conservan (ajustes menores: FK a `hce_diurna`) |
 | Migraciones incrementales SQLite-compatibles | **Migración inicial única** contra Postgres (v1 sin datos reales; los 12 tests v1 se reescriben como tests v2 — el plan §M11.4 ya preveía tests nuevos al mover lógica) |
@@ -501,7 +658,7 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 | **M12.7 · Ateneos — las 4 consecuencias de UI de que el registro nazca completo** (D6) | **Pendiente — M11.4.** `tipo`, `fecha` y `titulo` son NOT NULL, así que: (1) **«+ Nuevo registro» no puede crear una fila vacía y navegar**, como hace `atNuevo()` — abre un formulario y hace **un POST completo**; (2) **el correlativo lo asigna el servidor**, nunca el cliente y nunca `length+1`; (3) **«+ Agregar acuerdo» agrega la fila en el cliente**, no en la base (`acuerdo` es NOT NULL y no vacío); (4) **corregir un tipo mal cargado exige limpiar `hce_referida_id` en la misma sentencia** — el CHECK `(hce_referida_id IS NOT NULL) = (tipo='clinico')` rechaza el estado intermedio. Es correcto que lo haga (no puede quedar un institucional con un NNA colgado ni un instante), pero la UI tiene que enterarse | `test_cambiar_el_tipo_de_un_clinico_exige_limpiar_el_nna` (y su caso que pasa) fijan (4); (1)–(3) son de M11.4 |
 | **M12.7 · `''` y `NULL` significan lo mismo y la base ya no los distingue** (C1) | **Pendiente — M11.3.** El CHECK usa `~ '[^[:space:]]'` en vez de `num_nonnulls()`, que es lo correcto (ver §2.5), pero el efecto es que la base **acepta las dos representaciones del vacío**. **`NULL` es la canónica**: el servicio normaliza al guardar (`'' → NULL`, y `btrim` unicode → `NULL` si queda vacío) en los 17 campos de texto de `ateneo` y en `ateneo_acuerdo.responsable_rol`. Hasta que esa línea exista, **cualquier `WHERE situacion IS NOT NULL` está mal** y hay que escribir `WHERE situacion ~ '[^[:space:]]'`. Vale para todo campo de texto opcional del esquema, no sólo para este módulo | insertar `''` y leerlo como ausente; después de normalizar, `IS NOT NULL` y el regex coinciden |
 | **M12.7 · una jornada no lleva acuerdos** | **Pendiente — M11.3.** El bloque de acuerdos vive en la rama **no**-jornada del prototipo. Es cross-table (`ateneo` ↔ `ateneo_acuerdo`): un CHECK no alcanza y §5.2.2 prohíbe los triggers | `test_una_jornada_con_acuerdos_hoy_se_guarda` deja el hueco fijado |
-| **M12.7 · `ateneo.fecha` ↔ `grupo.anio`: advertencia, NUNCA bloqueo** | **Pendiente — M11.3.** Con D9 un grupo es `(nombre, anio)`, así que un ateneo puede apuntar al grupo de otro año. **No se prohíbe:** un ateneo de febrero-2026 que revisa el ciclo del Grupo Celeste **2025** es legítimo. Se avisa, como los recordatorios del §4 | `test_la_fecha_puede_no_coincidir_con_el_anio_del_grupo` |
+| **M12.7 · `ateneo.fecha` ↔ `grupo.anio`: advertencia, NUNCA bloqueo** | **Pendiente — M11.3.** Con D9 un grupo es `(nombre, anio)`, así que un ateneo puede apuntar al grupo de otro año. **No se prohíbe:** un ateneo de febrero-2026 que revisa el ciclo del Grupo Escolares **2025** es legítimo. Se avisa, como los recordatorios del §4 | `test_la_fecha_puede_no_coincidir_con_el_anio_del_grupo` |
 | **M12.7 · asignación del correlativo** (C7) | **Pendiente — M11.3.** La BD sólo garantiza `UNIQUE(anio_correlativo, numero)`. El servicio asigna dentro de la transacción y tiene que resolver las dos cosas que el `length+1` del prototipo hace mal: **race condition** (dos usuarios sacan el mismo número) y **reuso tras un rollback** (el número vuelve a estar libre y se reasigna a otro registro). Opciones: `SELECT max(numero) … FOR UPDATE` sobre el año, o una secuencia por año | dos altas concurrentes del mismo año no comparten número |
 | **M12.7 · búsqueda de texto** (C3) | **Pendiente — M11.3/M11.4.** Hoy hay un **btree en `titulo`**, que sirve para igualdad y prefijo. `vAteneos` busca **subcadena** (`lowercase includes`) sobre título + situación + contenidos, y las dos salidas no son equivalentes: **`tsvector` + GIN** matchea *lexemas*, así que «capacit» **no** encuentra «capacitación» y, sin `unaccent`, «capacitacion» tampoco; **`pg_trgm`** sí da subcadena real, pero sería **la primera extensión del repo**. Se decide cuando exista la consulta, no antes — una columna generada de búsqueda congela la semántica de entrada | — |
 | **M12.7 · autoría y timestamps: falta convención de esquema** (R3) | **Pendiente — M11.3/M11.4.** `ateneo.autor_id` copia la forma de los tres registros fechados transversales (nullable, FK, index), pero **no hay mixin**, y `creado_en`/`actualizado_en` existen en **1 de las 38 tablas** (`hce_diurna`). Que un registro institucional no tenga marca temporal propia es un problema real; se resuelve con una convención de **todo** el esquema, no estrenándola en el módulo más chico. Mientras tanto el rastro es `auditoria` | — |
@@ -511,6 +668,10 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 | **M12.5 · `centro` se resuelve contra el catálogo al mostrar, y no casar NO es un error** | **Pendiente — M11.3/M11.4.** Sin FK (§5.52): el nombre se casa contra `catalogo_centro_educativo.nombre` para resolver `zona` y `contacto`. Un centro que no casa **se muestra igual**, y la lista de «mencionados sin ficha» es una **cola de trabajo para coordinación**, no una validación que falla. Misma forma que `pai_taller.taller_nombre` contra `taller` | — |
 | **M12.5 · `''` y `NULL` en los campos de texto de la ficha** | **Pendiente — M11.3.** Aplica textual lo que dejó escrito M12.7 (C1): el prototipo nace con `''` en `centro`, `grado`, `modalidad`, `dias_horas`, `at_nombre`, `ref_*` y `obs`. **`NULL` es la representación canónica** y el servicio normaliza al guardar. Hasta entonces, `WHERE centro IS NOT NULL` está mal — va el regex | insertar `''` y leerlo como ausente |
 | **`pai_taller.taller_nombre` se resuelve contra el catálogo al mostrar** (M12.3 → M12.6) | **Pendiente — M11.3/M11.4.** Sin FK (§5.20): el nombre se casa contra `taller.nombre` en lectura y, si la fila está retirada (`Taller.activo` derivado, filtra también en SQL), se muestra con la marca **«retirado del catálogo»**. Un nombre que no casa con ninguna fila se muestra igual, sin romper | fila pendiente de M12.3, hereda M12.6 (§5.21) |
+| **HCE-DIV · `divulgacion` — CHECK cruzado 1: un registro `agregado` no cuelga de un expediente** (M12.8a-3 · §5.80) | **Pendiente — M11.3.** El invariante `alcance_dato <> 'agregado' OR hce_id IS NULL` **NO está en la DDL** a propósito (§5.71 difiere los guards). La base hoy acepta una fila `alcance_dato='agregado'` con `hce_id` puesto; el servicio de M11.3 lo rechaza. Escrito acá para que no se re-derive como un CHECK olvidado | `test` de M11.3: `POST` de divulgación `agregado` con `hce_id` → 422 |
+| **HCE-DIV · `divulgacion` — CHECK cruzado 2: autorización escrita exige apuntar a ella** (M12.8a-3 · §5.80) | **Pendiente — M11.3.** El invariante «si `autorizacion_escrita` es verdadero, entonces `autorizacion_documento_id` **o** `autorizacion_ref` no es NULL» **NO está en la DDL** (mismo motivo). `autorizacion_escrita` tiene `server_default false`; el guard de M11.3 valida la coherencia al guardar | `test` de M11.3: `autorizacion_escrita=true` sin documento ni ref → 422 |
+| **HCE-DIV · `divulgacion` es append-only por POSTURA, no por restricción** (M12.8a-3 · §5.80) | **Pendiente — M11.4 / Fase 6.** No hay endpoint de UPDATE ni DELETE (como `auditoria`). Refuerzo recomendado sin trigger: `REVOKE UPDATE, DELETE ON divulgacion FROM rol_app` — permiso, no lógica (no contradice la decisión 2 / §5.2.2) | sin endpoints de mutación; `REVOKE` aplicado en el rol de la app |
+| **HCE-DIV · coordinación `divulgacion` ↔ `registro_organismo` — en el servicio, no en el esquema** (M12.8a-3 · §5.80) | **Pendiente — M11.3.** Un envío a INAU genera legítimamente una fila en cada tabla (el trámite en `registro_organismo`, el acto de comunicar en `divulgacion`). **No hay CHECK ni FK entre ellas** y está bien; si M11.3 decide encadenarlas, es lógica de servicio | — |
 
 ## 5. Plan de implementación (sub-módulos de M11)
 
@@ -529,9 +690,34 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
      necesita materializarlo, que sea una decisión suya y quede escrita.
    - **`severidad_dsm` no admite guardado parcial** (los dos dominios son NOT NULL y el módulo no tiene
      borrador ni firma). Resolverlo en la UI o en el schema, con las tres opciones planteadas en §2.2.
-5. **M11.5 — Seed clínico + tests:** seed espejo de la demo v4.0 (8 NNA, 4 arquetipos §11) y
-   pytest contra Postgres. **Criterio de aceptación (§12-A):** reproducir por API el ciclo del
-   usuario demo 1 con números idénticos (IDEA 58 · PA 60 · PB 79 · Δ +19) + guards + secuencia.
+5. **M11.5 — Seed clínico + tests:** seed espejo de la demo (8 NNA, 4 arquetipos §11) y pytest
+   contra Postgres.
+
+   **Criterio de aceptación §12-A — su forma es PROSA hasta M11.5; su forma ejecutable es de M11.5**
+   (§5.65). Lo que afirma, una vez que estén en pie las cuatro piezas de la ronda M12 —**HCE-INC**,
+   **HCE-PAI**, **ateneos / HCE-DOC institucional** y **HCE-SEV**—, las **6 bandas del IDEA**
+   (`banda_idea`) y los **14 talleres** (`taller`): que el **ciclo completo del usuario demo 1** de la
+   demo, cargado por la API, se reproduce **con los mismos números y respetando los mismos guards y la
+   misma secuencia** (CI → LB → PA → PB → IC, firma = bloqueo, Δ sólo dentro del mismo instrumento).
+
+   **Los cuatro números, medidos en `demo/js/` en la sesión M12.8b-1** (lectura directa, sin correr la
+   demo): el usuario demo 1 es **Martín, expediente 102** (`demo/js/flujo.js:418`, «Arquetipo 1 …
+   usuario demo 1 del prototipo»). Su seed:
+   - `flujo.lb.dim = [6,6,6, 6,4,4, 4,6,4, 4,4,4]` → `lbTotales()` (`demo/js/catalogos.js:28`, suma
+     las 12 dimensiones) = **58 / 96**, escalas **18 / 14 / 14 / 12** (coincide con `handoff.md` §13,
+     entrada del 2026-07-15 / demo M4: «Martín(102) = usuario demo 1 → total 58, escalas 18/14/14/12»).
+   - `flujo.pa.item` (24 ítems 1–5) → `protTotales()` (`catalogos.js:70`) = **60 / 120**.
+   - `flujo.pb.item` (24 ítems) → `protTotales()` = **79 / 120**; `flujo.pb.deltas.total = 19` y
+     `calcularDelta(pa, pb)` (`catalogos.js:77`) = 79 − 60 = **Δ +19**.
+
+   O sea: **los números `IDEA 58 · PA 60 · PB 79 · Δ +19` SÍ son datos simulados que viven en
+   `demo/js/` y son internamente consistentes.** (La sesión M12.8b-1 corrigió una medición previa que
+   los daba por ausentes: se había grepeado `datos.js`/`evaluaciones.js` y no `flujo.js` — ver la
+   bitácora de M12.8b-1 en `handoff.md` §13. `§5.65` y su decisión quedan intactas.)
+
+   ⚠️ **Hoy NADA hace cumplir este criterio: es un enunciado de intención, no un chequeo.** El seed
+   espejo de la demo **no existe** en `app/` (sólo hay `app/seed_catalogos.py`) y ningún test lo
+   verifica. Se vuelve ejecutable en M11.5, y no antes.
 6. **M11.6 — Cierre:** actualizar este doc al estado "implementado", escribir `ejemplos-endpoints.md` v2 (el v1 se borró, §5.29),
    handoff. Después (rondas siguientes): **Fase 3** conectar la demo a la API → **Fase 4** JWT/roles (§9) → **Fase 6** resto de Docker (app + NGINX).
 
@@ -539,5 +725,7 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 - **Cortes del baremo**: confirmar con IPPU contra el anexo del Decreto 72/025 (ya parametrizado).
 - **Kappa interjueces (§9)**: `firmas JSONB` ya admite puntuaciones por evaluador; el cálculo queda
   para fase piloto (§12-D), fuera de M11.
-- **Validación de la demo v4.0 con IPPU** (puerta formal de M11): si IPPU pide cambios en la línea
-  base única, se ajusta `idea` antes de M11.2.
+- **Validación de la demo con IPPU** (era la puerta formal de M11): ⚠️ **ya ocurrió** — la reunión del
+  2026-08-21 respondió que **el IDEA es anual** (§5.36), o sea que la «línea base única» de este
+  documento estaba equivocada. El ajuste de `idea` (columna `anio`) es **I1** de `handoff.md` §6 y va
+  antes de M11.3, no antes de M11.2 (que ya está hecho). Ver la fila `idea` en §2.2.

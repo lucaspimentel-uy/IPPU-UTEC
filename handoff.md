@@ -2400,6 +2400,34 @@ agregada** en el log de divulgación; y si **dar a la familia una copia de la HC
 una divulgación o sólo una entrada de acceso (Ley 18.335 Art. 18 lit. A es un derecho distinto del
 lit. D).
 
+### 5.81 El **documento** `esquema-datos-v2.md` pasa a v3; el **archivo NO se renombra** (2026-09-03, Lucas)
+
+**Decisión.** `backend/docs/esquema-datos-v2.md` incorpora un **encabezado de versión** (versión del
+documento, fecha, ronda que refleja) y un **registro de cambios**, y su versión pasa a **v3**. **El
+nombre del archivo sigue siendo `esquema-datos-v2.md` y no cambia.**
+
+**Por qué el archivo no se toca.** «Esquema v2» nombra la **arquitectura del backend v2** en todo el
+repo —no un número de ese texto—, y en particular es el nombre de la migración inicial única
+`559b1a79cb77_esquema_v2_inicial_m12_8a.py`. Renombrar el `.md` a `-v3` implicaría un esquema v3 que no
+existe (el esquema es el mismo; lo que avanzó es la ronda de sub-módulos M12). Lo que se versiona es el
+**documento**, que venía con la cabecera de estado congelada en M12.3 (34 tablas) mientras el modelo ya
+tenía 51.
+
+**Aclara por nombre tres lugares que instalaron por escrito la expectativa «→ v3»**, para que nadie
+salga a buscar un `esquema-datos-v3.md`: (a) la **cabecera de `handoff.md`** («Queda **M12.8b** (docs:
+`esquema-datos-v2.md` → v3)»); (b) **`CLAUDE.md:167`** (mismo texto); (c) **`esquema-datos-v2.md` líneas
+3-8** («Este documento pasa a **v3** en M12.8»). Los tres se leen ahora como **versión del documento**,
+no como cambio de archivo. El pase mecánico de esas menciones en `CLAUDE.md` y la cabecera queda para
+**M12.8b-2** (junto con el resto de la sincronización de prosa).
+
+**Costo de un renombrado, medido esta sesión (`git grep esquema-datos-v2`):** **79 referencias en 24
+archivos**. **8** están en `app/` y `tests/` (rutas importables y docstrings de test:
+`app/models/__init__.py`, `identidad.py`, `modulos.py`, `ateneo.py`, `severidad.py`,
+`app/core/constantes.py`, `app/main.py`, más `tests/test_m12_{ateneos,consenso,severidad}.py` — 11 hits
+en esos 8 archivos), el resto en Markdown (`handoff.md` 29, `PLAN-M12` 5, los dos `README.md`,
+`CLAUDE.md`, `docs/notas/*`, `docs/prompts/*`). Un renombrado obligaría a barrer las 24 y arriesgar
+enlaces rotos en registros congelados; no lo paga.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -2723,6 +2751,28 @@ lit. D).
   - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
         ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
         (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
+    - [x] ~~**M12.8b-1** — `backend/docs/esquema-datos-v2.md` al día, pase acotado~~ → **HECHO
+          (2026-09-03/04, sesión M12.8b-1, solo documentación).** El documento pasa a **v3** (encabezado
+          de versión + registro de cambios); **el archivo no se renombra** (§5.81). Puesto al día:
+          cabecera y §3 al estado medido (**51 tablas**, migración `559b1a79cb77`), `grupo` con los cinco
+          nombres reales (§5.61), `idea` descrito como está + aviso **I1 / §5.36**, `ateneo.observaciones`
+          (§5.66), **`divulgacion`** completa en §2.3 + §1 + §4 (§5.80), esbozo de `tecnico_grupo` **NO
+          construido** (§5.79), bloque §12-A reescrito en prosa (§5.65). ⚠️ El criterio §12-A: los cuatro
+          números `IDEA 58 · PA 60 · PB 79 · Δ +19` **se verificaron presentes y consistentes** en
+          `demo/js/flujo.js` (Arquetipo 1 / Martín / 102) — el checkpoint previo los había dado por
+          ausentes por un grep incompleto; §5.65 y su premisa quedan intactas (ver bitácora §13).
+    - [ ] **M12.8b-1b** — la **sección HCE-PAI** del documento del esquema. **Sin dueño.** Las 8 tablas
+          de M12.6 (`pai` + 7 hijas) existen en `app/models/pai.py` y el documento **no las describe**;
+          hoy sólo tienen un marcador en §2.2 y §3. Contadas contra `Base.metadata` (2026-09-03): `pai`
+          43 · `pai_objetivo` 9 · `pai_evaluacion_previa` 7 · `pai_equipo` 6 · `pai_coordinacion` 7 ·
+          `pai_taller` 3 · `pai_prestacion` 3 · `pai_circuito` 3 = **8 tablas / 81 columnas**. Escribir a
+          la profundidad de las secciones HCE-INC y ateneos, apoyándose en §5.22, §5.26, §5.54–§5.56,
+          §5.59; agregar `pai` + hijas al ER de §1 y los guards de PAI (§IX por tipo, Anexo A) a §4.
+    - [ ] **M12.8b-2** — pase mecánico de prosa en el resto de los documentos vivos (no toca el esquema).
+          Lista medida en la bitácora §13 de M12.8b-1: `CLAUDE.md:106/167/180`,
+          `docs/estructura-repositorio.md:223`, `docs/notas/preguntas-ippu.md` B5/B6, este archivo §6
+          (bullets `tecnico_grupo` y DIVULGACIÓN de la reunión) y §9 («18 talleres»), y los conteos de
+          `puntos-a-validar.md` que declara §6 (medido: §1 = 17, §2 = 17, §3 = 6). **Sin dueño.**
 - [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4. §1.1 ganó cita de fuente primaria (cuestionario 15/06, P10/P12) y se corrigió el plan M12 §4, que la daba por cerrada por error — ver bitácora 2026-08-17.
 - [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
@@ -2918,6 +2968,88 @@ Las decisiones se cambian **explícitamente y por escrito** en §5, con fecha y 
 código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
+
+- **2026-09-03/04 · Sesión M12.8b-1 — `esquema-datos-v2.md` al día (pase acotado), DOCUMENTACIÓN
+  solamente** (Lucas + Claude, rama `main`). **NO toca código:** los únicos archivos modificados son
+  `backend/docs/esquema-datos-v2.md` y `handoff.md` (§5.81 nueva, §13, §6). `app/`, `alembic/`,
+  `tests/`, `app/data/`, `herramientas/` y `demo/` (solo lectura en el Paso 3) **no se tocaron**.
+  Continúa la sesión que había parado en su propio checkpoint (el split está aprobado): **HCE-PAI queda
+  para M12.8b-1b**, este pase hace todo lo demás.
+  - **Punto de partida, medido.** Árbol limpio en `60ecb63`, los dos remotos (`gitlab`, `origin`) en el
+    mismo hash. Docker arriba. `pytest -q` → **432 passed, 0 skipped**. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Head de Alembic `559b1a79cb77`, un solo archivo
+    en `versions/` (`down_revision = None`, 51 `op.create_table`). **51 tablas** (`Base.metadata`:
+    ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 · inclusion 4 · modulos 6 · pai 8 · severidad
+    2 · transversales 10). Próxima entrada libre de §5: `### 5.81`.
+  - **§5.81 — el documento a v3, el archivo no.** El `.md` gana encabezado de versión + registro de
+    cambios y pasa a **v3**; **`esquema-datos-v2.md` no se renombra** (el nombre es la arquitectura del
+    backend v2, incluida la migración `559b1a79cb77_esquema_v2_inicial_m12_8a.py`). Aclara por nombre los
+    tres lugares que instalaron el «→ v3» (cabecera de este archivo, `CLAUDE.md:167`,
+    `esquema-datos-v2.md:3-8`). Costo de un renombrado, medido (`git grep`): **79 referencias en 24
+    archivos**, 8 en `app/`+`tests/`. El pase mecánico de esas menciones a «versión del documento» en
+    `CLAUDE.md` y la cabecera es **M12.8b-2**.
+  - **Qué se editó en `esquema-datos-v2.md`** (todo documentación): cabecera reescrita al estado medido
+    + sección «Registro de versiones» nueva · §3 con las tablas de M12.5/M12.6/M12.7/M12.8a · `grupo`
+    con los **cinco nombres reales** (Inicial · Escolares · Preadolescentes · Adolescentes · Taller de
+    Adolescentes, §5.61) y `nombre` descrito como `varchar(60)` **sin CHECK**; los ejemplos «Azul 20XX»
+    de la nota pasaron a «Escolares», y se conservó la historia en pasado de `A..E` · `idea` descrito
+    **como está en el modelo** (23 columnas, **sin `anio`**) + aviso explícito de **I1 / §5.36** (el
+    IDEA es anual por decisión, el modelo aún no) en la fila de §2.2, en el ER de §1 y en el §3 ·
+    `ateneo.observaciones` agregada (§5.66), fila anotada como **20 columnas** medidas · **`divulgacion`
+    nueva**: fila en §2.3 (15 columnas, con su procedencia del Protocolo §6.2–6.7 tomada de §5.80),
+    nota en prosa (el CHECK de pertenencia es `num_nonnulls(hce_id, ateneo_id) <= 1` **y no `= 1`**;
+    `hce_id` CASCADE con su contra-argumentación; append-only por **postura**, sin trigger, sin seed;
+    frontera con `registro_organismo`), 4 aristas en el ER de §1 y **4 filas en §4** (los dos CHECK
+    cruzados diferidos a M11.3, el append-only, la coordinación con `registro_organismo`) · **`§2.6` NO
+    construido**: esbozo de `tecnico_grupo` como punto de partida para M11.3 (§5.79), **fuera del
+    inventario de §2** · **marcador de HCE-PAI** en §2.2 (subsección propia con las 8 tablas y sus
+    columnas medidas — `pai` 43, `pai_objetivo` 9, `pai_evaluacion_previa` 7, `pai_equipo` 6,
+    `pai_coordinacion` 7, `pai_taller` 3, `pai_prestacion` 3, `pai_circuito` 3 = **8 tablas / 81
+    columnas**) y en §3, diciendo que el documento aún no las describe · el bloque «M11.5 — Criterio de
+    aceptación §12-A» reescrito en prosa (§5.65): qué afirma con la ronda M12 en pie, qué preserva de
+    §12-A, y **que hoy nada lo hace cumplir — es un enunciado de intención, no un chequeo** hasta M11.5.
+  - **Corrección de una medición de la sesión anterior — registrada acá, sin entrada §5 (decisión de
+    Lucas).** El informe del checkpoint de M12.8b-1 afirmó que los números `IDEA 58 · PA 60 · PB 79 · Δ
+    +19` **no estaban** en `demo/js/`. **Es falso.** Están en `demo/js/flujo.js` (Arquetipo 1 — Martín,
+    expediente 102, comentado «usuario demo 1 del prototipo», `flujo.js:418`): `flujo.lb.dim =
+    [6,6,6,6,4,4,4,6,4,4,4,4]` → `lbTotales()` = **58/96**, escalas **18/14/14/12**; `flujo.pa.item` →
+    `protTotales()` = **60/120**; `flujo.pb.item` → **79/120**; `flujo.pb.deltas.total = 19` y
+    `calcularDelta(pa,pb)` = 79 − 60 = **Δ +19**. Consistentes, y coinciden con `handoff.md` §13 entrada
+    demo M4 (2026-07-15). El grep previo miró `datos.js`/`evaluaciones.js` y **no** `flujo.js`. **La
+    premisa de §5.65 era correcta y queda intacta.** La otra afirmación de §5.65 —que `app/` no tiene
+    seed más allá de `seed_catalogos.py`— **se verificó y se sostiene** (`seed.py` era de v1, sin
+    trackear desde M11.2; sólo queda un `.pyc` viejo). El bloque §12-A del documento ahora escribe los
+    números **como medidos y coincidentes**.
+  - **Dos apartamientos de la letra del prompt, declarados.** (1) El prompt pedía una segunda entrada §5
+    («los números no están en `demo/js/`»); al medir se comprobó que la premisa era falsa y Lucas
+    decidió **no abrir esa entrada** — la corrección va sólo acá. (2) Se marcó una segunda aparición de
+    «línea base única» que el prompt no listaba: está en el bullet «Validación de la demo» de §6 del
+    documento, **partida en dos líneas**, y por eso el grep de la sesión anterior no la había visto. Es
+    un marcado de una frase, coherente con la instrucción del Paso 2(d) («no dejar “línea base única” en
+    pie sin marcar»).
+  - **Contradicciones encontradas en otros documentos vivos — NO corregidas, son de M12.8b-2** (con
+    archivo y línea): `CLAUDE.md:106` «389 passed» vs `:166` «432» (y `:136` «240», `:145` «307» son
+    hitos históricos en contexto) · `CLAUDE.md:167` «`esquema-datos-v2.md` → v3» — aclarado por §5.81,
+    falta el pase mecánico · `CLAUDE.md:180` «Δ sólo B−A» — §5.36 lo reformuló a «Δ sólo dentro del
+    mismo instrumento» · `docs/estructura-repositorio.md:223` «307 en verde» · `docs/notas/preguntas-ippu.md`
+    **B5** (línea ~128) y **B6** (línea ~139) dicen «la tabla `tecnico_grupo` la crea M12.8a» — derogado
+    por §5.79 · **§6 de este archivo:** el bullet de la reunión dice «§5.72 movió parte a M12.8a: entra
+    estructural la tabla `tecnico_grupo`» (derogado por §5.79) y el bullet **DIVULGACIÓN** sigue en `[ ]`
+    con «la tabla entra en el delta de esquema de M12.8a» (ya construida, §5.80) · **§9** «18 talleres»
+    (son 14 desde M12.3 — ya anotado en §6) · **§6** declara conteos viejos de `puntos-a-validar.md`
+    («9 para IPPU / 8 para el equipo / 6 supuestos»); **medido hoy: §1 tiene 17 subsecciones, §2 tiene
+    17, §3 tiene 6** · `esquema-datos-v2.md:664` (nota §4 de M12.7, fuera del set de edición) «`creado_en`/
+    `actualizado_en` en 1 de las 38 tablas» — **medido: 3 de 51** (`hce_diurna`, `inclusion`, `pai`) ·
+    `esquema-datos-v2.md:490` (fila `taller`) «array de nombres de color» — §5.61 cambió el dominio de
+    `grupos_orientados` a los cinco nombres reales · docstrings de código sin tocar (`app/` fuera de
+    alcance): `models/identidad.py:~90-107` (docstring de `Grupo` dice «Azul · Celeste · Naranja ·
+    Verde») y `models/modulos.py:~210` (docstring de `Idea` dice «línea base única»).
+  - **Verificación de cierre, medida.** `pytest -q` → **432 passed, 0 skipped** (idéntico al punto de
+    partida). `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**
+    (ninguno mira el documento del esquema). Único archivo del repo modificado además de `handoff.md`:
+    `backend/docs/esquema-datos-v2.md` (~+215 / −27 líneas).
+  - **Commits (con trailer, §5.62):** `<pendiente>` (`esquema-datos-v2.md` v3 + `handoff.md` §5.81/§13/§6).
+    A `gitlab` y `origin`, mismo hash, árbol limpio.
 
 - **2026-09-03 · Sesión M12.8a-3 — `divulgacion` construida; `tecnico_grupo` diferida a M11.3**
   (Lucas + Claude, rama `main`). **Toca código:** `app/models/` (`divulgacion.py` nuevo + `__init__.py`),
