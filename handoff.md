@@ -3048,8 +3048,8 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     partida). `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**
     (ninguno mira el documento del esquema). Único archivo del repo modificado además de `handoff.md`:
     `backend/docs/esquema-datos-v2.md` (~+215 / −27 líneas).
-  - **Commits (con trailer, §5.62):** `<pendiente>` (`esquema-datos-v2.md` v3 + `handoff.md` §5.81/§13/§6).
-    A `gitlab` y `origin`, mismo hash, árbol limpio.
+  - **Commits (con trailer, §5.62):** `a6fdaf1` (`esquema-datos-v2.md` v3 + `handoff.md` §5.81/§13/§6) +
+    esta corrección de bitácora. A `gitlab` y `origin`, mismo hash, árbol limpio.
 
 - **2026-09-03 · Sesión M12.8a-3 — `divulgacion` construida; `tecnico_grupo` diferida a M11.3**
   (Lucas + Claude, rama `main`). **Toca código:** `app/models/` (`divulgacion.py` nuevo + `__init__.py`),
