@@ -22,7 +22,7 @@
    Los originales (PDF/PPTX/DOCX/XLSX) están en **`docs/fuentes/`**.
 4. La demo (front) de la L1 está en **`implementacion/L1-hce-idea/demo/index.html`** (abrir en navegador, sin servidor).
    Desde 2026-08-07 está **modularizada**: `index.html` + `css/estilos.css` + `js/*.js` (**14** módulos desde el merge de F1, ver §5.5 y §5.33).
-5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: **`docker compose up -d`** → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` — **una corrida válida es `307 passed, 0 skipped`**; si el contenedor no está arriba, si la base está vacía o si no está en el head, `pytest` **aborta con exit 1** y te dice el comando (guardia de sesión en `tests/conftest.py`, 2026-08-15). Antes se salteaba en silencio y devolvía **exit 0** con la mitad de los tests sin correr.
+5. El **backend** está en **`implementacion/L1-hce-idea/backend/`** (ver su `README.md`). Correr: **`docker compose up -d`** → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` — **una corrida válida es `432 passed, 0 skipped`**; si el contenedor no está arriba, si la base está vacía o si no está en el head, `pytest` **aborta con exit 1** y te dice el comando (guardia de sesión en `tests/conftest.py`, 2026-08-15). Antes se salteaba en silencio y devolvía **exit 0** con la mitad de los tests sin correr.
 6. **El esquema vigente es `backend/docs/esquema-datos-v2.md`** — es el que se implementa desde M11 y **la única versión citable**. ⚠️ **Corregido el 2026-08-20 (§5.29):** este punto decía que «la versión citable para todos es `backend/docs/esquema-datos.md`», que era el esquema **v1**, del backend **retirado entero en M11.2**; mandaba a Samuel y Victor a citar un modelo muerto. Ese archivo y `ejemplos-endpoints.md` se borraron. El **diagrama ER interactivo** del v1 sigue existiendo como Artifact (https://claude.ai/code/artifact/0f0d9484-aa6a-437b-9608-4499ab0ef5b2) pero es **privado de la cuenta de Lucas** y describe 18 tablas de un esquema que ya no rige: no es referencia para nadie. Si alguna vez hace falta un ER del v2, se genera de nuevo.
 
 ---
@@ -34,8 +34,12 @@ firmado en 2025, con implementación en 2026. Objetivo: aplicar IA y ciencia de 
 
 - **IPPU** = Instituto/Fundación Psico-Pedagógico Uruguayo. Montevideo. Fundada en 1980; Fundación desde 1983;
   estatus consultivo ONU (2008); convenio INAU (2017). HCE propia desde ~2020 (`fundacionippu.uy`, sistema React).
-- **Población:** ~120 NNA en total (convenio INAU: 30 · BPS: 108), en **5 grupos de referencia** por edad/modalidad.
-  ~40 expedientes activos en la HCE. **18 talleres especializados**. ~20 personas usan la HCE.
+- **Población:** las fuentes dan **~120 NNA en total** y a la vez **convenio INAU: 30 · BPS: 108** (que
+  suman **138**; ⚠️ discrepancia sin reconciliar — `docs/notas/preguntas-ippu.md` C11), en **5 grupos de
+  referencia** por edad/modalidad — Inicial · Escolares · Preadolescentes · Adolescentes · Taller de
+  Adolescentes (§5.61; ⚠️ el último podría ser el servicio de Taller Terapéutico de Fase 2 y no un grupo,
+  `preguntas-ippu.md` A5). ~40 expedientes activos en la HCE. **14 talleres especializados** (§5.14).
+  ~20 personas usan la HCE.
 
 ## 2. Las 4 líneas de trabajo
 | Línea | Nombre | En una frase |
@@ -2478,19 +2482,24 @@ enlaces rotos en registros congelados; no lo paga.
 >   único camino es el seed, que además es *insert-only* sobre `grupo`. **Corregir los nombres es
 >   exactamente la operación que no se puede hacer.** ⚠️ Y son **cinco**, no cuatro: cambia también el
 >   dominio de `taller.grupos_orientados` (M12.3), que es un array de nombres de grupo.
-> - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · `puntos-a-validar.md`
->   §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo, asigna y crea otros
->   ADMIN. ⚠️ **§5.72 (L9) movió parte a M12.8a:** entra estructural la tabla **`tecnico_grupo`** N:M con
->   vigencias (aditiva, al lado de `tecnico1_id`/`tecnico2_id`); **`grupo.tecnico?_rol` ya existen** y no se
->   agregan. **Queda para M11.3 / Fase 4:** el **vocabulario de roles** (lista de 5 propuesta en §5.72, a
->   confirmar por Lucas — no va todavía a un CHECK), la **conflación `admin` ↔ «dirección no técnica»** del
->   Protocolo, y toda la **matriz de permisos**. ⚠️ Esto **agranda M12.8** («una sola persona»).
-> - [ ] **DIVULGACIÓN — DECIDIDA Y AGENDADA a M12.8a** (§5.39 / I4, §5.45 / I10, **§5.71** ·
->   `puntos-a-validar.md` §2.12). La tabla **`divulgacion`** entra en el delta de esquema de M12.8a, con
->   **columnas derivadas del Protocolo §6.2–6.7 y la matriz §5** (no inventadas). ⚠️ **No** modela un flujo:
->   los guards (quién puede, si el consentimiento habilita, la compuerta «revisado por dirección →
->   entregado» de §5.40) son **M11.3/M11.4**, junto con §2.13. Cuatro afirmaciones de IPPU caen sobre este
->   concepto (fotos · confidencialidad · revisión de informes · resumen y no expediente).
+> - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · **§5.79** ·
+>   `puntos-a-validar.md` §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo,
+>   asigna y crea otros ADMIN. ⚠️ **§5.79 derogó la ubicación de §5.72:** la tabla **`tecnico_grupo`** N:M
+>   con vigencias (aditiva, al lado de `tecnico1_id`/`tecnico2_id`) **NO entra en M12.8a — se construye en
+>   M11.3**, junto con el servicio de asignación que la va a leer; §5.79 deroga la *ubicación*, no la
+>   decisión de fondo. **`grupo.tecnico?_rol` ya existen** y no se agregan. **Queda también para M11.3 /
+>   Fase 4:** el **vocabulario de roles** (lista de 5 propuesta en §5.72, a confirmar por Lucas — no va
+>   todavía a un CHECK), la **conflación `admin` ↔ «dirección no técnica»** del Protocolo, y toda la
+>   **matriz de permisos**. Con `tecnico_grupo` fuera de M12.8a, esta pieza ya **no agranda M12.8**.
+> - [x] ~~**DIVULGACIÓN — DECIDIDA Y AGENDADA a M12.8a** (§5.39 / I4, §5.45 / I10, **§5.71** ·
+>   `puntos-a-validar.md` §2.12)~~ → **RESUELTO en M12.8a-3 (2026-09-03, §5.80).** La tabla
+>   **`divulgacion`** se construyó en `app/models/divulgacion.py` (15 columnas derivadas del Protocolo
+>   §6.2–6.7 y la matriz §5, append-only por postura, sin seed), migración `559b1a79cb77`. ⚠️ **Sigue
+>   abierto, y §5.80 no lo toca:** los guards (quién puede divulgar, si el consentimiento habilita, los dos
+>   CHECK cruzados diferidos), el **flujo** de compartición y la compuerta «revisado por dirección →
+>   entregado» de §5.40 son **M11.3 / M11.4** (§5.71 los difiere), junto con `puntos-a-validar.md` §2.13.
+>   Cuatro afirmaciones de IPPU caen sobre este concepto (fotos · confidencialidad · revisión de informes ·
+>   resumen y no expediente).
 > - [ ] **Estado de revisión de los informes + área de generación configurable** (§5.40 / I5 ·
 >   `puntos-a-validar.md` §2.13). **Todo informe lo revisa la dirección antes de entregarse**: es un
 >   **estado de flujo**, no un permiso de impresión. Y lo que pidieron es un **área configurable**, no un
@@ -2586,7 +2595,10 @@ enlaces rotos en registros congelados; no lo paga.
 >   La decisión está en **§5.41 (I6)** y el pendiente vivo, arriba, en el bloque de la reunión.
 > - [ ] **`verificar_estado.py` — chequeo de afirmaciones de prosa** (§5.34): contar las secciones
 >   `^### N.N` de los archivos de `docs/notas/` y compararlas con lo que §6 afirma sobre ellos.
->   **Después de la reunión**, no antes.
+>   **Después de la reunión**, no antes. ⚠️ **Lección de M12.8b-1:** la ocurrencia de «línea base única»
+>   que casi se pasó por alto estaba **partida en dos líneas**, así que un grep por línea es ciego a las
+>   frases envueltas — el chequeo tiene que **normalizar los espacios en blanco** (unir el texto en un solo
+>   flujo) antes de buscar.
 > - [x] ~~**Pegar el link del Google Doc** en la cabecera de `docs/notas/consulta-a-ippu.md`.~~ →
 >   **CERRADO el 2026-08-26 por §5.53 (K1): no hay link que pegar.** ⚠️ **Lo que NO se cierra es la
 >   lección de §5.34** — el riesgo de tener media documentación fuera del alcance de cualquier script del
@@ -2628,6 +2640,7 @@ enlaces rotos en registros congelados; no lo paga.
 - [x] ~~**Validar la demo v4.0 con IPPU** (puerta de entrada a M11 según el plan; en especial el cambio de IDEA a línea base única).~~ → **La reunión fue el 2026-08-21** y contestó lo que hacía a este pendiente: **el IDEA es ANUAL** (§5.36) — o sea que **el cambio a línea base única estaba equivocado**. ⚠️ **Lo que NO quedó validado** sigue anotado: 6 bandas del IDEA, 7 estados de inclusión, lista de talleres del año, anualización del estado de inclusión (ver `respuestas-reunion-ippu-2026-08-21.md` §16). Ritmo sugerido por el Doc. Técnico §12: revisiones quincenales.
 - [ ] **F1-nav · ajustes de navegación del frontend · rama `demo/F1-navegacion`, ⚠️ CON 4 COMMITS SIN PUSHEAR** (Lucas · Samuel + Claude, 2026-08-16 → 2026-08-19, ver §13). Cuatro rondas sobre la misma rama: **F1-nav** (4 cambios de navegación + nómina §21.1, 2026-08-16) · **F1-nav2** (vista Grupos = **listado + detalle**, alineando con `vGrupos`/`vGrupoDetalle`; detalle con 3 cards — Integrantes con tabla NNA/CIE-11+Soporte/CI·LB·PA·PB·IC/Uso de imagen, Técnicos autorizados condicional al permiso §21.1, Fotografía grupal — 2026-08-17) · **F1-nav3** (tablero de Inclusión, 2026-08-18, `648cb04`) · **F1-nav4** (sección **Ateneos y capacitación**: `js/ateneos.js` + `#view-ateneos` + panel en el expediente, 2026-08-19). **Pusheado hasta `648cb04` (F1-nav3); quedan locales 4 commits:** `4f29bc9` F1-nav4 · `230b4c0` **merge de `main`** (traía `684c4f5`, el cruce que reabre §2.1 — la rama había quedado atrás) · `554ff37` corrección de `consulta-a-ippu.md` §3.1. **Falta:** **(a)** **pushear los 4 commits** — ⚠️ y antes decidir a qué remotos: el clone de esta sesión tiene **sólo `origin`** (`git.utec.edu.uy`), no el `gitlab` que pide `CLAUDE.md` §4; **(b)** verificar visualmente en navegador (ninguna de las 4 rondas lo hizo: Claude Code no controla browser); **(c)** re-baseline del fingerprint Playwright (no está instalado, y F1-nav2/3/4 rompen pasos a propósito); **(d)** decidir si se mergea a `main` o queda como PR abierto. **Deudas nuevas:** cambio de responsable sin HCE-LOG (§5.18 y §7); matriz de roles §21.1 pendiente con IPPU (§7 F1-nav2); formato oficial del Nº de HCE por confirmar (§7 F1-nav2); **de F1-nav4** — ateneos **sin HCE-LOG** (el de la demo es por NNA y un ateneo es transversal, misma limitación que §5.18), **sin adjuntos** (HCE-DOC en la demo es por expediente; §5.25 ya modeló el XOR) y sin los guards de M11.3; **`.hint` no existe como clase global** (sólo `.field .hint`), así que Grupos e Inclusión la usan suelta y sin estilo — F1-nav4 no la tocó y definió `.at-hint` propia. **Preguntas abiertas:** «tutor» (2026-08-16, §7), permisos §21.1 y formato HC (2026-08-17, §7). **F1-nav4 no abrió ninguna:** sus dos divergencias respecto del prototipo ya estaban decididas y documentadas en `puntos-a-validar.md` §1.13 (prefijo único `AT-`) y §1.14 (correlativo de registración), y `consulta-a-ippu.md` **§3.12 y §3.13** ya las preguntan (eran §3.13/§3.14 antes de la revisión del equipo del 19/08 — §5.34). **⚠️ F1-nav3 sigue sin entrada en §13 ni acá**: la tiene que completar quien la hizo.
 - [ ] **Cuatro inconsistencias detectadas en el cruce del 2026-08-19 y NO corregidas** (ver §13, segunda entrada del día). Ninguna bloquea, todas son de documentación: **(1)** **§9 «Datos clave» quedó pre-M12** y se contradice con §5 y §7 de este mismo archivo — dice «**5 grupos**» (§5.18/D9: son **4** por color) y «**18 talleres**» (§7 Resueltas: son **14**, y el «8 vs 18» **era falso**); además `30 INAU + 108 BPS` = 138, no los «~120 NNA» de la misma línea. **(2)** Los conteos de `puntos-a-validar.md` que declara §6 están viejos: dice «9 puntos para IPPU / 8 para el equipo», el archivo tiene **14** y **10** (los 6 supuestos sí dan). **(3)** Dos preguntas de §7 que nunca entraron a `consulta-a-ippu.md`: **catálogo de centros educativos** —y P31 del cuestionario ya confirmó que el Área de Inclusión existe y está «todo en Drive, sin planilla estructurada», así que hay contexto para preguntarlo— y **«tutor»** (`puntos-a-validar.md` §2.10; está clasificada como punto de equipo, pero el fondo —si hay un referente por NNA distinto del técnico responsable— sólo lo contesta IPPU). **(4)** La deuda de registro de F1-nav3. Se dejaron anotadas y sin tocar porque §9 y los conteos son cambios sobre decisiones que §5 manda modificar por escrito, y la bitácora de F1-nav3 tiene dueño.
+  - ⚠️ **Actualización M12.8b-2 (2026-09-09):** **(1) y (2) aplicadas.** §9 y §1 corregidos contra medición — 5 grupos con nombre (§5.61), 14 talleres (§5.14), y la discrepancia `30 + 108 = 138` vs «~120» marcada y ruteada a IPPU (`preguntas-ippu.md` C11); el conteo de `puntos-a-validar.md` que declara §6 se remidió (§1 = 17 subsecciones / 5 abiertas · §2 = 17 / 8 · §3 = 6 supuestos). El argumento de «§5 manda modificar por escrito» ya no aplica: §5.14 y §5.61 están escritas y esta sesión sólo las aplicó. **Siguen abiertas (3)** —las dos preguntas que nunca entraron a `consulta-a-ippu.md`; «tutor» ya está absorbido en `preguntas-ippu.md` B5— **y (4)** —la deuda de registro de F1-nav3—.
 - [ ] **Ronda de alineación de la demo v4.1 con el Prototipo v4 · COMMITEADA, pendientes de verificación** (Samuel + Lucas, 2026-08-16, §5.27). **6 alineaciones aplicadas** (cita Rivière · bandas IDEA 6 tramos · Δ con acción · 14 talleres · grupos por color · vocabulario ya cumplido) + 2 fixes de layout (heatmap, ancho de main). **Commiteada en `main` el 2026-08-16** por Lucas para desbloquear la sesión F1-nav que arrancó a continuación (`demo/F1-navegacion`). **Falta post-commit (migradas de pre-commit):** **(a)** verificar visualmente en navegador (doble clic en `demo/index.html`, recorrer Analítica · Grupos · alta de NNA · expedientes) — solapa parcialmente con la verificación de §6 de F1-nav; **(b)** re-baseline del **fingerprint Playwright** (`demo/verificacion/`) — 3 pasos rompen a propósito (bandas, talleres, grupos); Playwright no estaba instalado en el clone al momento del commit. **Deudas nuevas:** el catálogo de talleres ahora tiene los 14 pero **sin gestión** (retirar/agregar, orientación a grupos) — la demo carga nombres, no administra; anotado como absorción parcial de D5 (§5.14). Cuando la demo incorpore HCE-SEV en una ronda futura, `p.apoyo` de `datos.js` pasa a derivarse (deuda que ya venía de §5.24).
   - **Notas de Samuel al cerrar sesión (2026-08-16) para la próxima ronda:**
     - **FALTA agregar como módulos nuevos** (no entraron en las alineaciones, requieren ronda propia):
@@ -2768,12 +2781,24 @@ enlaces rotos en registros congelados; no lo paga.
           `pai_taller` 3 · `pai_prestacion` 3 · `pai_circuito` 3 = **8 tablas / 81 columnas**. Escribir a
           la profundidad de las secciones HCE-INC y ateneos, apoyándose en §5.22, §5.26, §5.54–§5.56,
           §5.59; agregar `pai` + hijas al ER de §1 y los guards de PAI (§IX por tipo, Anexo A) a §4.
-    - [ ] **M12.8b-2** — pase mecánico de prosa en el resto de los documentos vivos (no toca el esquema).
-          Lista medida en la bitácora §13 de M12.8b-1: `CLAUDE.md:106/167/180`,
-          `docs/estructura-repositorio.md:223`, `docs/notas/preguntas-ippu.md` B5/B6, este archivo §6
-          (bullets `tecnico_grupo` y DIVULGACIÓN de la reunión) y §9 («18 talleres»), y los conteos de
-          `puntos-a-validar.md` que declara §6 (medido: §1 = 17, §2 = 17, §3 = 6). **Sin dueño.**
-- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **9 puntos para IPPU** (los críticos: **validar la demo v4.1** y **acceso a la HCE actual + su esquema de BD**; el §1.9 lo agregó M12.2: **¿los técnicos ya puntúan de forma independiente?**), **8 para el equipo** (incl. **ratificar §5.8** y el §2.8 de M12.2: **no hay forma de abrir un año nuevo de grupos**) y 6 supuestos a confirmar. Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4. §1.1 ganó cita de fuente primaria (cuestionario 15/06, P10/P12) y se corrigió el plan M12 §4, que la daba por cerrada por error — ver bitácora 2026-08-17.
+    - [x] ~~**M12.8b-2** — pase mecánico de prosa en el resto de los documentos vivos (no toca el
+          esquema)~~ → **HECHO (2026-09-09, sesión M12.8b-2, sólo documentación + 2 docstrings de `app/`).**
+          Corregidos: `CLAUDE.md` (432 tests · «documento v3, el archivo no» · «Δ sólo dentro del mismo
+          instrumento» + dueño de M11.3 y §12-A→M11.5), `handoff.md` §0.5 (307→432 — **no estaba en la
+          lista de M12.8b-1**), §6 (bullet `tecnico_grupo` → §5.79 · bullet DIVULGACIÓN → RESUELTO §5.80),
+          §9/§1 (14 talleres §5.14 · 5 grupos con nombre §5.61 · discrepancia 138 vs ~120 → `preguntas-ippu.md`
+          C11), `docs/estructura-repositorio.md:223` (307→432 · + 2 tests que faltaban en la lista),
+          `preguntas-ippu.md` B5/B6 (`tecnico_grupo` a M11.3) + **C11** nueva, `esquema-datos-v2.md`
+          (`grupos_orientados` = nombres §5.61 sin CHECK · `creado_en/actualizado_en` «1 de 38» → **3 de
+          51**), y las docstrings de `Grupo` (`identidad.py`: cuatro colores → cinco nombres reales) e
+          `Idea` (`modulos.py`: marca I1 / §5.36). Conteo de `puntos-a-validar.md` remedido: §1 = 17
+          subsecciones / 5 abiertas · §2 = 17 / 8 · §3 = 6. Ver bitácora §13.
+    - [ ] **M12.8b-3** — pase mecánico de **vocabulario**: «fase» → un término por sentido y «L1 = HCE»
+          para la numeración de líneas (§5.75 / §2.3 · §5.76 / §2.4). **Sin dueño.** Detalle y conteo por
+          archivo en el bullet «Pase mecánico de vocabulario» de esta misma sección y en
+          `puntos-a-validar.md` §2.3. **M12.8b-2 no lo tocó** (alcance explícito: sólo cifras/afirmaciones
+          falsas, sin pase de vocabulario).
+- [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **Medido el 2026-09-09 (M12.8b-2):** §1 (para IPPU) = **17 subsecciones `### 1.N`, 5 abiertas** (§1.5 · §1.6 · §1.15 · §1.16 · §1.17 — coincide con la tabla por fuente de `preguntas-ippu.md`); §2 (para el equipo) = **17 subsecciones `### 2.N`, 8 abiertas** (§2.5 · §2.8 · §2.9 · §2.11 · §2.12 · §2.13 · §2.14 · §2.17; el conteo de «abiertas» hace un juicio sobre §2.10 —plegada a §2.11— y §2.12/§2.15 —parcialmente resueltas—); §3 (supuestos) = **6 filas** (la reunión del 21/08 confirmó 4 y dejó 2 para revisar), sin subsecciones `### 3.N`. Lo abierto y crítico: **acceso a la HCE actual + su esquema de BD** (§1.5) y **la firma del acuerdo de confidencialidad** (§1.6); del lado del equipo, **no hay forma de abrir un año nuevo de grupos** (§2.8). La lista consolidada para el próximo contacto con IPPU es `docs/notas/preguntas-ippu.md` (§5.78). Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4. §1.1 ganó cita de fuente primaria (cuestionario 15/06, P10/P12) y se corrigió el plan M12 §4, que la daba por cerrada por error — ver bitácora 2026-08-17.
 - [x] ~~**DECISIÓN TÉCNICA PENDIENTE — la tabla `grupo` no admite más de un año.**~~ → **CERRADA**
   (2026-08-14, **§5.18 / D9**): opción (b), **id propio + `UNIQUE(nombre, anio)`**, y el nombre pasa a ser el
   **color** (Azul · Celeste · Naranja · Verde), que es el dominio real de IPPU. **Confirmada por el equipo
@@ -2858,7 +2883,13 @@ enlaces rotos en registros congelados; no lo paga.
 - **IPPU:** Fernando Sierra — Director.
 
 ## 9. Datos clave (cifras)
-- ~120 NNA total · 30 INAU + 108 BPS · 5 grupos · 18 talleres · ~40 expedientes activos · ~150 evaluaciones IDEA históricas (sin consolidar).
+- **NNA:** las fuentes dan **~120 en total** y a la vez **30 INAU + 108 BPS**, que suman **138**. ⚠️ **No
+  cuadra**, y la discrepancia no se reconcilia acá: va a IPPU (`docs/notas/preguntas-ippu.md` C11).
+- **5 grupos** (§5.61): Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes. ⚠️
+  «Taller de Adolescentes» podría ser el servicio de **Taller Terapéutico** (Fase 2) y no un grupo —
+  `preguntas-ippu.md` A5.
+- **14 talleres** (§5.14 / D5; antes acá decía «18» — el «8 vs 18» era falso).
+- ~40 expedientes activos · ~150 evaluaciones IDEA históricas (sin consolidar).
 
 ## 10. Glosario
 - **NNA**: niños, niñas y adolescentes. · **TEA**: Trastorno del Espectro Autista.

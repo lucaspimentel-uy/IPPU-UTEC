@@ -103,7 +103,7 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **389 passed, 0 skipped** (eran 307 hasta M12.6): si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **432 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6): si ves «skipped», algo está mal.
 
 **Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
@@ -164,8 +164,8 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
   (`divulgacion` §5.80 — registro de divulgación de datos, append-only, sin seed). ⚠️ **`tecnico_grupo`
   se difirió a M11.3** (§5.79 deroga la ubicación de §5.72, no la decisión). Estado hoy: **51 tablas**,
   **432 tests en verde y 0 salteados**, migración `559b1a79cb77`.
-- **Queda M12.8b** (docs: `esquema-datos-v2.md` → v3, README, `estructura-repositorio.md`) y el resto de
-  M12.8 (seed espejo, tests). Con M12.5, M12.6, M12.7 y M12.8a hechos **ya no hay trabajo en
+- **Queda M12.8b** (docs: el **documento** `esquema-datos-v2.md` pasa a **v3** —el nombre del archivo **no**
+  cambia, §5.81—, README, `estructura-repositorio.md`) y el resto de M12.8 (seed espejo, tests). Con M12.5, M12.6, M12.7 y M12.8a hechos **ya no hay trabajo en
   paralelo sobre `app/models/`**, así que §5.19 no congela nada.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
@@ -177,7 +177,7 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
 
 **M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
 - **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: **21 tests estructurales**.
-- **FALTA:** **M11.3** servicios y guards (§4 del esquema: secuencia, firma=bloqueo, Δ sólo B−A, baremo sólo desde `pct`, fotos §8.4) → **M11.4** routers → **M11.5** seed espejo de la demo + pytest → **M11.6** docs. Después: Fase 3 (demo↔API), Fase 4 (JWT), Fase 6 (Docker completo).
+- **FALTA:** **M11.3** servicios y guards (§4 del esquema: secuencia, firma=bloqueo, **Δ sólo dentro del mismo instrumento** —reformulado por §5.36; «Δ sólo B−A», como estaba escrito, bloqueaba una comparación que IPPU pidió explícitamente; la reformulación ya está en `handoff.md` §6—, baremo sólo desde `pct`, fotos §8.4) → **M11.4** routers → **M11.5** seed espejo de la demo + pytest → **M11.6** docs. **M11.3 lo toma Lucas** (§5.67) y su primera tarea es un **reconocimiento estilo R0 contra el código** (qué existe, qué asumió la puerta de §5.8, qué cambió la serie L) antes de diseñar (`handoff.md` §6). **M11.5 es la forma ejecutable del criterio de aceptación §12-A** (§5.65: hoy §12-A vive sólo como prosa). Después: Fase 3 (demo↔API), Fase 4 (JWT), Fase 6 (Docker completo).
 - **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan** con `herramientas/generar_catalogos_backend.py`, no se editan a mano.
 - **Antes de dar algo por definido, mirar `docs/notas/puntos-a-validar.md`**: hay supuestos tomados por nosotros que IPPU todavía no confirmó.
 

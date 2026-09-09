@@ -125,8 +125,8 @@ datos agregados)— ¿refleja cómo trabajan? ¿Y el **«perfil de área de Incl
 tablero es un perfil propio?
 **Por qué importa.** Define el modelo de usuarios y asignación técnico↔grupo (`tecnico_grupo`) y la matriz
 de permisos.
-**Qué bloquea.** El vocabulario de roles de M11.3 / Fase 4 (la tabla de asignación es M12.8a; los
-permisos, Fase 4).
+**Qué bloquea.** El vocabulario de roles de M11.3 / Fase 4 (la tabla de asignación `tecnico_grupo` se
+difirió a M11.3 por `handoff.md` §5.79; los permisos, Fase 4).
 **Dónde aterriza.** `puntos-a-validar.md` §2.11 (absorbe §2.10) · `consulta-a-ippu.md` §2.4 ·
 `respuestas-reunion-ippu-2026-08-21.md` §16 (5.d) · `handoff.md` §5.72.
 
@@ -136,7 +136,8 @@ otro caso: cuando **cambia el técnico** a cargo de un grupo a mitad de año, ¿
 quién estuvo antes?
 **Por qué importa.** Si pasa seguido, la asignación técnico↔grupo tiene que guardar **vigencias** (desde /
 hasta), no un solo valor.
-**Qué bloquea.** El detalle de la tabla `tecnico_grupo` (M12.8a la crea; las vigencias las usa M11.3).
+**Qué bloquea.** El detalle de la tabla `tecnico_grupo` (se construye en M11.3 —`handoff.md` §5.79 la
+difirió desde M12.8a—, junto con el servicio de asignación que usa las vigencias).
 **Dónde aterriza.** `puntos-a-validar.md` §2.11 · `respuestas-reunion-ippu-2026-08-21.md` §16 (5.c) ·
 `handoff.md` §5.18.
 
@@ -266,6 +267,15 @@ el mismo escrutinio: ¿qué partes del Prototipo v4 son contenido de IPPU y cuá
 lo enviado.
 **Dónde aterriza.** `handoff.md` §6 · agenda §1.
 
+### C11 · La población total: ¿son ~120 NNA o 138 (30 INAU + 108 BPS)?
+**Qué.** Nuestras notas arrastran dos cifras para lo mismo: **~120 NNA en total** y, a la vez, **30 del
+convenio INAU + 108 de BPS**, que suman **138**. No sabemos cuál es la buena ni de dónde salió cada una
+(pueden ser cortes distintos: matriculados vs. activos, un año vs. otro, con o sin Taller Terapéutico /
+Clínica).
+**Por qué importa.** No bloquea nada —son datos de contexto, no del modelo— pero la discrepancia aparece
+en varios lugares del repo y conviene tener un número único con su definición.
+**Dónde aterriza.** `handoff.md` §9 y §1.
+
 ---
 
 ## Apéndice — conteo por fuente y solapamientos
@@ -283,8 +293,9 @@ lo enviado.
 | ⚠️ CONFIRMABLE (`handoff.md` §5.38, §5.58/§5.63) | **2** | consentimiento no traba (A3) · ateneo de grupo = acceso general (A4) — ya contados arriba |
 | Nuevas / afiladas en L9 | **3** | «Taller de Adolescentes» grupo o servicio (A5) · «perfil de área de Inclusión» + lista de 5 roles (B5) · tipos de informe y «área configurable» (B7) |
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
+| Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 27** (A1–A5, B1–B12, C1–C10).
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11).
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 

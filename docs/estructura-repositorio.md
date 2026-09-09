@@ -218,9 +218,11 @@ backend/
 │   ├── test_m12_talleres.py     # M12.3 · D5: los 14, `activo` derivado, sin FK a taller.id
 │   ├── test_m12_severidad.py    # M12.4: HCE-SEV, aislamiento en las dos direcciones, FKs con índice
 │   ├── test_m12_ateneos.py      # M12.7: los 4 tipos, los 5 CHECK, correlativo, codigo/sensible derivados
-│   └── test_m12_inclusion.py    # M12.5: ficha + bitácora, los 7 estados, `sensible` derivado en Python
-│                                #  y en SQL, catálogo de centros vacío a propósito
-│                                # (307 en verde, 0 salteados — requieren el contenedor arriba)
+│   ├── test_m12_inclusion.py    # M12.5: ficha + bitácora, los 7 estados, `sensible` derivado en Python
+│   │                            #  y en SQL, catálogo de centros vacío a propósito
+│   ├── test_m12_pai.py          # M12.6: HCE-PAI, las 8 tablas (sólo esquema), §5.54–§5.56
+│   └── test_m12_divulgacion.py  # M12.8a: HCE-DIV, pertenencia expediente/ateneo/agregado, append-only (§5.80)
+│                                # (432 en verde, 0 salteados — requieren el contenedor arriba)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
