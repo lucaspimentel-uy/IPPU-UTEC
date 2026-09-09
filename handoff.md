@@ -3000,6 +3000,90 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-09 · Sesión M12.8b-2 — sincronización de prosa: corregir las afirmaciones falsas (sin pase de
+  vocabulario)** (Lucas + Claude, rama `main`). **Documentación + 2 docstrings de `app/`** (sólo
+  comentarios: sin columnas, constraints, defaults, imports ni nombres). Ejecuta la lista de
+  contradicciones que M12.8b-1 dejó anotada para M12.8b-2, más las que la lista no incluía. **No** hace el
+  pase de «fase» / numeración de líneas (§5.75/§5.76 → **M12.8b-3**, registrado en §6), **no** escribe la
+  sección HCE-PAI del esquema (M12.8b-1b) ni arranca el reconocimiento de M11.3. **No abre entrada §5.**
+  - **Punto de partida, medido.** Árbol limpio en `4b73726`, los dos remotos (`gitlab`, `origin`) en el
+    mismo hash. Docker **estaba apagado** — se levantó (Docker Desktop + `docker compose up -d`), Postgres
+    sano. `pytest -q` → **432 passed, 0 skipped**. `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Head de Alembic `559b1a79cb77`, un solo archivo
+    en `versions/`. **51 tablas** (`Base.metadata`). Catálogo: `taller` **14 filas**, `grupo` **5**
+    (Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes).
+  - **Rama `demo/F1-navegacion` — medición para la próxima sesión, sin actuar.** **No existe** ni local ni
+    en `gitlab` ni en `origin`. **Está mergeada a `main`** (merge `d94b102`, «merge: integrar
+    demo/F1-navegacion a main», 2026-08-20 22:34), y ese merge está en los tres (`main`, `gitlab/main`,
+    `origin/main`). Commits que la rama tenga y `main` no: **0**. Sin pushear: n/a — la ref ya no existe.
+    El registro de §13 del 2026-08-19 («4 commits locales») quedó viejo: la rama se mergeó al día
+    siguiente y desde entonces se borró de este clone y de los dos remotos. **No hay nada que borrar.**
+  - **`CLAUDE.md`** (Paso 1). (a) `:106` «389 passed» → **432 passed, 0 skipped** (medido; se contradecía
+    con `:166`), con el rastro histórico «307 al cerrar M12.5, 389 al cerrar M12.6». (b) `:167`
+    «`esquema-datos-v2.md` → v3» → «el **documento** pasa a v3, el nombre del archivo **no** cambia
+    (§5.81)». (c) `:180` «Δ sólo B−A» → «**Δ sólo dentro del mismo instrumento**» (§5.36; tal cual estaba
+    bloqueaba una comparación que IPPU pidió; la reformulación ya vivía en §6). (d) mismo bullet FALTA:
+    **M11.3 lo toma Lucas** (§5.67), primera tarea = reconocimiento estilo R0 contra el código; **M11.5 es
+    la forma ejecutable del criterio §12-A** (§5.65). ⚠️ Línea confirmada: «Δ sólo B−A» está en `:180`, no
+    en `:184` (una lectura previa la había puesto mal).
+  - **`handoff.md` §0, `estructura-repositorio.md`, `README.md`s** (Paso 2). §0 punto 5 «307 passed, 0
+    skipped» → **432** — ⚠️ **este NO estaba en la lista de M12.8b-2 en §6**, y sin embargo lo dice el
+    mismo archivo que en su cabecera declara 432. `estructura-repositorio.md:223` «307 en verde» → **432**;
+    de paso se agregaron `test_m12_pai.py` y `test_m12_divulgacion.py`, que faltaban en la lista del árbol
+    (`└──` estaba en `inclusion`). Aritmética del conteo de tablas (líneas ~177-185): **suma 51**,
+    correcta —contempla el retiro de `hce_taller` (M12.3) y de la columna `hce_diurna.nivel_soporte`
+    (M12.4)—, no se tocó. `README.md` y `backend/README.md`: grepeados, **ya estaban al día** (432 tests ·
+    51 tablas · 14 talleres · `esquema-datos-v2.md` sin «→ v3») — los actualizó M12.8a-3.
+  - **`handoff.md` §6 y §9/§1** (Paso 3). §6: bullet de usuarios/roles reescrito — `tecnico_grupo` **no**
+    entra en M12.8a, se construye en M11.3 (§5.79 deroga la ubicación de §5.72, no la decisión). Bullet
+    DIVULGACIÓN → **RESUELTO en M12.8a-3 (§5.80)** con strike-through (convención de I2/I7), dejando en pie
+    guards/flujo/compuerta como M11.3/M11.4. Bullet «Cuatro inconsistencias del 2026-08-19»: nota fechada
+    de que (1) y (2) se aplicaron; (3) y (4) siguen. §9 partido en viñetas y §1 corregido: **14 talleres**
+    (§5.14; decía «18»), **5 grupos con nombre** (§5.61), y la **discrepancia de población** `30 + 108 =
+    138 ≠ ~120` marcada en su lugar y ruteada a IPPU **sin reconciliar**. Bullet «Puntos a validar»
+    remedido contra el archivo: **§1 = 17 subsecciones / 5 abiertas** (§1.5·§1.6·§1.15·§1.16·§1.17 —
+    coincide con la tabla por fuente de `preguntas-ippu.md`), **§2 = 17 / 8** (el «abiertas» de §2 hace un
+    juicio sobre §2.10/§2.12/§2.15), **§3 = 6 supuestos**. Al pendiente de `verificar_estado.py`
+    chequeo-de-prosa se le agregó la **lección de M12.8b-1**: la ocurrencia de «línea base única» que casi
+    se pasa por alto estaba **partida en dos líneas**, así que un grep por línea es ciego a las frases
+    envueltas y el chequeo tiene que **normalizar los espacios en blanco** antes de buscar.
+  - **`docs/notas/preguntas-ippu.md`** (Paso 4). **B5** y **B6** decían «la tabla de asignación es M12.8a»
+    / «M12.8a la crea» → **se construye en M11.3** (§5.79); lo que la pregunta *pide* no cambió. ⚠️ **La
+    lista «actualizaciones que arrastra» de §5.79 nombró `puntos-a-validar.md` §2.11 y §6 y se olvidó de
+    este archivo** — segundo hallazgo del tipo «la lista de arrastre estaba incompleta» en la sesión.
+    Nueva pregunta **C11** (población ~120 vs. 138) en el bloque C —no la cubría ninguna existente—; total
+    de preguntas 27 → **28** (A1–A5, B1–B12, C1–C11), tabla por fuente y apéndice al día.
+  - **`esquema-datos-v2.md`** (Paso 5). Fila `taller`: `grupos_orientados` «array de nombres de color» →
+    «nombres de grupo en texto (§5.61), `ARRAY(String(60))` **sin CHECK** — dominio de documentación»
+    (verificado contra `catalogos.py:368`: no hay CheckConstraint); se conservó la razón de §5.14 de por
+    qué es nombre y no FK. Nota §4 de M12.7: `creado_en`/`actualizado_en` «1 de las 38 tablas» → **3 de
+    las 51** (`hce_diurna` en `identidad.py:178`, `inclusion.py:361`, `pai.py:276`).
+  - **Docstrings de `app/`** (Paso 6, sólo comentarios). `identidad.py` docstring de `Grupo`: los cuatro
+    colores («Azul · Celeste · Naranja · Verde, dominio real de IPPU») → los **cinco nombres reales**
+    (§5.37/§5.61), con los colores registrados como datos de demo del Prototipo v4 leídos como fuente y
+    corregidos por la reunión; se conservó la historia en pasado de `A..E` y el fundamento D9; ejemplos
+    «Azul 20XX» → «Escolares» (precedente de M12.8b-1). `modulos.py` docstring de `Idea`: **marca**
+    añadida —no se reescribió la regla— de que §5.36 hizo el IDEA anual, que el modelo aún no tiene `anio`
+    (I1, §6 «DECIDIDO, SIN IMPLEMENTAR»), y de que la regla «la vigente es la de mayor `fecha_consenso`»
+    queda para reformular en M11.3.
+  - ⚠️ **Hallazgo — un registro «lo hicimos» que no coincide con el código (primero de la serie).** La
+    entrada §13 de **M12.8a-1** dice que barrió «cuatro comentarios de `app/` que decían «4 grupos por
+    color» (`seed_catalogos.py`, `identidad.py`, `catalogos.py`, `ateneo.py`)». Medido hoy:
+    `seed_catalogos.py` y `catalogos.py` **sin colores** (OK); pero en **`identidad.py` el barrido tocó el
+    comentario de la columna (`:121`) y NO la docstring de la clase `Grupo` (`:86-117`)**, que seguía con
+    los cuatro colores y la afirmación de que eran «el dominio real de IPPU»; y **`ateneo.py:220-225` sigue
+    con «Grupo Celeste **de 2025**»** como ejemplo. §13 no se reescribe: el hallazgo queda acá. Esta
+    sesión arregló la docstring de `Grupo`; **`ateneo.py:222` queda sin tocar** (fuera de los dos
+    docstrings del Paso 6) — es un comentario `#:` de una línea, disponible para el próximo pase.
+  - **Verificación de cierre, medida.** `pytest -q` → **432 passed, 0 skipped** (idéntico al inicio).
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0** (ninguno mira
+    prosa; `verificar_estado.py` no cambió de estado). Sólo documentación y 2 docstrings: **ningún cambio
+    de comportamiento**.
+  - **Commits (con trailer, §5.62):** `705a59f` (docstrings de `Grupo` e `Idea`), `da5d78c`
+    (sincronización de prosa: `CLAUDE.md` · `handoff.md` §0/§6/§9/§1 · `estructura-repositorio.md` ·
+    `preguntas-ippu.md` · `esquema-datos-v2.md`), y esta entrada. A `gitlab` y `origin`, mismo hash,
+    árbol limpio.
+
 - **2026-09-03/04 · Sesión M12.8b-1 — `esquema-datos-v2.md` al día (pase acotado), DOCUMENTACIÓN
   solamente** (Lucas + Claude, rama `main`). **NO toca código:** los únicos archivos modificados son
   `backend/docs/esquema-datos-v2.md` y `handoff.md` (§5.81 nueva, §13, §6). `app/`, `alembic/`,
