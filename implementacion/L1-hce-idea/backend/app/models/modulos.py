@@ -210,13 +210,27 @@ class Consentimiento(FirmaMixin, Base):
 class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     """HCE-LB — el IDEA como **línea base única**, no como evaluación anual.
 
+    ⚠️ **Desactualizado por decisión, no por implementar — I1 (`handoff.md` §5.36,
+    2026-08-26; §6 «DECIDIDO, SIN IMPLEMENTAR»).** IPPU confirmó que el IDEA es
+    **anual** y que el de cada año se compara con el del anterior; cae la «línea
+    base única» del Documento Técnico. El modelo **todavía no lo refleja**: `idea`
+    no tiene columna `anio` y sigue como se describe abajo. El cambio está medido
+    y es aditivo (`anio` nullable + `UNIQUE(hce_id, anio)`, el patrón que el
+    esquema ya usa tres veces); su puerta está **antes de M11.3** y lo implementa
+    M11.3 (§5.67), no esta capa. Lo que sigue describe el modelo **vigente en el
+    código**, no la decisión.
+
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
     una fila por dimensión). Ahora hay una instancia por línea base y las 12
     dimensiones van en `dim` JSONB: el instrumento se lee y se escribe entero,
     así que el detalle por fila no pagaba su costo.
 
     Es 1:N y no 1:1 porque un reingreso a más de 12 meses genera una **línea base
-    nueva**; la vigente es la de mayor `fecha_consenso`.
+    nueva**; la vigente es la de mayor `fecha_consenso`. ⚠️ **Esa regla —«la
+    vigente es la de mayor `fecha_consenso`»— también queda para reformular en
+    M11.3** (§5.36 / §5.35): con un IDEA por año, «la más reciente» y «la de este
+    año» dejan de ser la misma pregunta, y qué IDEA rige a una fecha pasada es un
+    guard todavía sin escribir.
 
     `dim` = 12 × `{valor: 0..8 | "NS", obs}`. "NS" (no sabe / no corresponde)
     excluye la dimensión del total y **bloquea la firma** — regla del servicio.

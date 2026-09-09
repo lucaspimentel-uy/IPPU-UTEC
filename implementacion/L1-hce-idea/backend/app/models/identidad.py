@@ -87,25 +87,30 @@ class Grupo(Base):
     """Grupo de Atención Diurna de **un año**, con hasta 2 técnicos a cargo.
 
     **D9 (`handoff.md` §5.18), confirmada por el equipo el 2026-08-14.** El `id`
-    es un entero autoincremental **sin significado**: no es la letra ni el color.
-    La identidad real del grupo es `UNIQUE(nombre, anio)`.
+    es un entero autoincremental **sin significado**: no es la letra ni el
+    nombre. La identidad real del grupo es `UNIQUE(nombre, anio)`.
 
     Antes la PK era la letra (`A..E`), y eso hacía que un grupo existiera **una
     sola vez en toda la historia**: crear el de 2027 obligaba a sobrescribir la
     fila de 2026 —se perdía quiénes fueron sus técnicos ese año— y los
     expedientes de 2026 (`hce_diurna.grupo_id`) pasaban a apuntar al grupo nuevo
-    sin aviso. Con id propio, "Azul 2026" y "Azul 2027" son dos filas distintas
-    y el vínculo de cada expediente no se mueve nunca; el `UNIQUE` impide el
-    problema opuesto, dos filas "Azul 2026" por error.
+    sin aviso. Con id propio, "Escolares 2026" y "Escolares 2027" son dos filas
+    distintas y el vínculo de cada expediente no se mueve nunca; el `UNIQUE`
+    impide el problema opuesto, dos filas "Escolares 2026" por error.
 
-    **`nombre` es el color** — Azul · Celeste · Naranja · Verde, que es el
-    dominio real de IPPU (Prototipo v4); `A..E` era invención nuestra. Va en la
-    fila y no en un catálogo aparte: si en 2028 dejan de usar "Naranja", la fila
-    de 2026 lo sigue diciendo.
+    **`nombre` es el nombre real del grupo** — Inicial · Escolares ·
+    Preadolescentes · Adolescentes · Taller de Adolescentes (`handoff.md`
+    §5.37 / §5.61). Los colores "Azul · Celeste · Naranja · Verde" que estuvieron
+    acá eran **datos de demostración del Prototipo v4** leídos como si fueran el
+    dominio de IPPU, corregidos por la reunión del 2026-08-21; `A..E` era una
+    invención nuestra anterior. Va en la fila y no en un catálogo aparte: si en
+    2028 dejan de usar "Preadolescentes", la fila de 2026 lo sigue diciendo.
+    (⚠️ "Taller de Adolescentes" podría ser el servicio de Taller Terapéutico y
+    no un grupo — `docs/notas/preguntas-ippu.md` A5.)
 
     **Granularidad anual, no por fecha**: con fecha completa volverían a existir
-    dos grupos Azul en el mismo año, y `anio` es además la granularidad que ya
-    usan `protocolo` e `informe_cierre`.
+    dos grupos "Escolares" en el mismo año, y `anio` es además la granularidad
+    que ya usan `protocolo` e `informe_cierre`.
 
     ⚠️ **Límite aceptado:** si un técnico cambia a mitad de año, la fila se
     sobrescribe y sólo queda rastro en `auditoria`. Ver la nota de
