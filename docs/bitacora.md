@@ -20,6 +20,102 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-09 · Sesión M12.8b-4 — higiene: la bitácora deja `handoff.md`** (Lucas + Claude, rama
+  `main`). **Primera entrada nativa de este archivo.** `handoff.md` había llegado a 5.081 líneas y §13
+  era el 39,6 % de un archivo que `CLAUDE.md` manda leer entero al arrancar. Esta sesión saca §13 a
+  `docs/bitacora.md` **byte-idéntica**, escribe dos decisiones (§5.84 la mudanza, §5.85 F1-nav3 perdida),
+  **mide** el costo de mover también §5, y aclara una ambigüedad de alcance. **No toca código.** No
+  escribe la sección HCE-PAI del esquema (M12.8b-1b), no hace el pase de vocabulario (M12.8b-3), no toca
+  la ubicación de §5, no arranca el reconocimiento de M11.3.
+  - **Punto de partida, medido.** Árbol limpio en `fd7ab76`, los dos remotos (`gitlab`, `origin`) en el
+    mismo hash. Docker arriba, Postgres sano. `pytest -q` → **432 passed, 0 skipped**.
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**. Head de Alembic
+    `559b1a79cb77`, **un solo archivo** en `versions/`. **51 tablas** (`Base.metadata`). `handoff.md`:
+    **5.081 líneas · 79.153 palabras (`wc -w`) · 537.389 bytes**; §13 = de la línea `## 13.` a EOF =
+    **2.014 líneas / 266.246 bytes**.
+  - **§5.84 y §5.85 — transcritas (decisión de Lucas, acuerdo del equipo), escritas antes de mover nada**
+    (§12.6). Número libre medido: la última entrada era §5.83.
+    - **§5.84** — §13 se muda a `docs/bitacora.md`, completa y sin modificar. Cinco cláusulas: (i) se
+      conserva el encabezado `## 13.` acá y en el archivo nuevo, para que las ~100 citas «§13» sigan
+      resolviendo; (ii) `handoff.md` = estado + decisiones + pendientes, `docs/bitacora.md` = el
+      registro; (iii) §5.82 sigue: quien escribe bitácora actualiza la cabecera; (iv) la regla 3 viaja
+      con el archivo (nunca se corrige); (v) **no decide nada sobre §5**, sólo se mide.
+    - **§5.85** — la deuda de registro de F1-nav3 (`648cb04`, rama borrada) se declara **PERDIDA** y su
+      pendiente se cierra **por declaración** (misma forma que §5.53): no se reconstruye por inferencia
+      (§5.83); el registro que queda es el commit y el bullet de §6.
+  - **La mudanza, verificada byte-idéntica (Paso 2).** (a) Se extrajo el bloque §13 (`## 13.` → EOF) a un
+    scratch fuera del repo: **2.014 líneas / 266.246 bytes**, sha256
+    `b0f98e1d3454c027087cb080bf3a1119ee742c59a6d3f5f5cc68de4f8ed6ac89`; `head + bloque == handoff.md`
+    original (`cmp` idéntico). (b) `docs/bitacora.md` = encabezado nuevo (20 líneas: qué es, que no se
+    corrige, que se mudó por §5.84, entradas newest-first) + el bloque **verbatim** → verificado `cmp`
+    byte-idéntico contra el §13 del último commit (`fd7ab76:handoff.md`), mismo sha256 `b0f98e1d…`. (c) En
+    `handoff.md`, el bloque se reemplazó por un **stub de 6 líneas** (mismo `## 13.`, dice que el registro
+    vive en `docs/bitacora.md`, que las citas «§13» resuelven acá). (d) Al **prepender la entrada nativa**
+    de esta sesión encima del bloque, la edición **se comió la primera línea del encabezado de la entrada
+    M12.8b-2b**; lo detectó el re-chequeo (`grep` de encabezados de entrada), se **restauró textual** desde
+    `fd7ab76:handoff.md` y se **re-verificó**: el tramo «entrada M12.8b-2b → EOF» quedó **`cmp`
+    byte-idéntico**, 2.012 líneas / 266.216 bytes, sha256
+    `3e25b66172b720a3be6e903c5868e99ad5f8ab4c4e7b29c8b68d714953b2fb1f` en las dos copias. El registro se
+    movió sin tocar un byte. (e) `handoff.md`: **5.081 → 3.139 líneas (−38 %) · 537 KB → 278 KB (−48 %)**
+    (incluye §5.84/§5.85, el stub, y las notas de §6 de esta sesión).
+  - **`verificar_estado.py` — antes y después (regla 4).** Lee `handoff.md` **por ruta**
+    (`herramientas/verificar_estado.py:59`) y **corta en el encabezado `## 5.`**
+    (`FIN_DE_LO_VIGENTE`, `:90`; `SOLO_CABECERA`, `:91`): sólo escanea cabecera + §0–§4, nunca llega a
+    §13. `--check` → **exit 0 antes y después** de la mudanza. **Es el único lector programático de
+    `handoff.md`**: nada más en `app/`, `tests/` ni `herramientas/` lo abre (el resto son citas
+    `§5.NN` en comentarios).
+  - **Documentos que describen dónde vive la bitácora (Paso 3).** `CLAUDE.md`: «Arranque §4» y el
+    recordatorio del final ya no mandan la bitácora a `handoff.md §13` → a `docs/bitacora.md` (§5.84), con
+    §5.82 para la cabecera; `docs/bitacora.md` agregado al mapa del repo. `docs/estructura-repositorio.md`:
+    fila `handoff.md` («decisiones §5, pendientes §6», bitácora mudada) + fila nueva `docs/bitacora.md` +
+    la mención de `docs/planes/` corregida. `PLAN-M12` §M12.8 «Docs:» ahora nombra `docs/bitacora.md`.
+    `README.md`: **ya estaba bien** — describe `handoff.md` como «estado + decisiones + flujo» y nunca
+    mandó a leer §13. **Instrucciones vs citas:** se corrigieron las **instrucciones** (§12.4/§12.5 de
+    `handoff.md`, `PLAN-M12`); las **citas** («ver §13», «handoff.md §13 del 2026-08-15» en
+    `demo/js/ateneos.js`, etc.) se dejan — el stub las hace resolver. **`docs/prompts/` no se tocó.**
+  - **Precio de mover también §5 (Paso 4 — medición, sin decidir).** En §6, pendiente «Partir
+    `handoff.md`». `handoff.md` sin §13 son **3.139 líneas**, de las que **§5 = 2.411 (77 %)**, §6 = 441
+    (14 %), estado (§0–§4, §7–§12) + stub = 281 (9 %) — sacar §5 dejaría el archivo en **~700 líneas**.
+    Citas que **nombran el archivo** pegadas a `§5.NN` (`handoff.md` + hasta 4 separadores + `§5.NN`):
+    **181** fuera de `docs/prompts/` (+6 dentro, históricas); mayores: `puntos-a-validar.md` 29 ·
+    `preguntas-ippu.md` 21 · `esquema-datos-v2.md` 13 · `estructura-repositorio.md` 13 · `PLAN-M12` 11 ·
+    `consulta-a-ippu.md` 10 · `CLAUDE.md` 10 · `README.md` 6; en `app/`+`tests/` ≈ **29**. Total `§5.NN`
+    en el repo: **1.886**; las otras **~1.705 (90 %)** son la forma escueta «§5.NN» sin ruta, que no se
+    rompe vivan donde vivan las decisiones. Con la **misma técnica del stub**, incluso las 181 resuelven;
+    el costo mecánico baja a **un stub + una línea** en `verificar_estado.py:90` (`^##\s*5\.\s` →
+    `^##\s*6\.\s`). Lo no-mecánico: §5 es append-only y lo consultan las sesiones para §12.6 — decisión
+    de Lucas.
+  - **Ambigüedad de alcance resuelta (Paso 5).** «seed espejo» aparecía con dos sentidos. Leído
+    `PLAN-M12` §M12.8 («Seed:», líneas 576–586), §7 y §M12.8 «Criterio de aceptación» (líneas 595–598,
+    709–713), y `esquema-datos-v2.md:693`: **son dos artefactos distintos y el plan lo resuelve.** El
+    **seed de M12.8** = regenerar `app/data/catalogos_iniciales.json` desde
+    `docs/prototipo-v4/prototipo-v4-catalogos.json` con `herramientas/generar_catalogos_backend.py`
+    (vaciar `DESDE_LA_DEMO`), respetando `solo_al_crear` — **datos de catálogo**. El **seed espejo de
+    M11.5** = seed **clínico**: NNA + evaluaciones IDEA/PA/PB que reproducen los arquetipos de la demo
+    (8 NNA, §11; 58 · 60 · 79 · Δ +19), la **forma ejecutable del criterio §12-A** (§5.65), y **no
+    existe**. La cabecera de `handoff.md` y `CLAUDE.md` decían «el resto de M12.8 (seed espejo, tests)»
+    — palabra de M11.5 usada de más; corregido en la cabecera y anotado en §6 para que la próxima sesión
+    no haga el seed clínico creyendo que cierra M12.
+  - **§6: open vs resuelto (Paso 6 — medición, sin archivar nada).** §6 = **441 líneas**. Medido en el
+    Paso 6, antes de cerrar «Cuatro inconsistencias» en el Paso 7: **41 bullets `[ ]` abiertos**
+    (≈255 líneas) · **39 bullets `[x]` resueltos** (≈174 líneas, todos con `~~tachado~~`). Al cierre de
+    la sesión, con esa bullet cerrada: **40 / 40**. La cola de resueltos es casi la mitad de los bullets
+    y ~40 % de las líneas de §6 — es la próxima pregunta de higiene después de §13 y **merece su propia
+    decisión**; esta sesión no archiva nada.
+  - **§6 cerrado esta sesión.** F1-nav3 → declarada perdida (§5.85), y con eso **las cuatro
+    inconsistencias del 2026-08-19 quedan cerradas** (1 y 2 en M12.8b-2, 3 en M12.8b-2b, 4 acá).
+    «Partir `handoff.md`»: mitad hecha (§13) + mitad medida (§5). M12.8b-1b y M12.8b-3 siguen como
+    pendientes con nombre y **sin dueño**; **M12.8b como conjunto NO se marca hecho**.
+  - **Verificación de cierre, medida.** `pytest -q` → **432 passed, 0 skipped** (idéntico al inicio;
+    esta sesión no toca código). `verificar_estado.py --check` y `generar_catalogos_backend.py --check`
+    → **exit 0**. Archivos tocados: `handoff.md` (§5.84/§5.85, stub de §13, §6, cabecera, §12),
+    `docs/bitacora.md` (**nuevo**), `CLAUDE.md`, `docs/estructura-repositorio.md`, `PLAN-M12`. **Cero
+    archivos de código.**
+  - **Commits (con trailer, §5.62):** `261e192` (`handoff.md` §5.84/§5.85), `a4e6942` (la
+    mudanza de §13 + stub + `handoff.md` §6/cabecera/§12 + `CLAUDE.md` + `estructura-repositorio.md` +
+    `PLAN-M12`), esta entrada (primera nativa de `docs/bitacora.md`). A `gitlab` y
+    `origin`, mismo hash, árbol limpio.
+
 - **2026-09-09 · Sesión M12.8b-2b — cierre de puntas sueltas de M12.8b-2: dos reglas de proceso en §5,
   cabecera y §6 al día, y medido el costo de partir este archivo** (Lucas + Claude, rama `main`).
   **Documentación + 1 comentario de `app/`** (`ateneo.py`, un solo `#:`: sin columnas, constraints,
