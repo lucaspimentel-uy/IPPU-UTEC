@@ -20,6 +20,94 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-10 · Sesión M12.8b-1b + R1 — la sección HCE-PAI del esquema, y el reconocimiento previo a
+  M11.3** (Lucas + Claude, rama `main`). **Tres partes que no comparten más que la medición de arranque, y
+  ninguna toca código.** PARTE A (M12.8b-1b): escribe un documento. PARTE B (R1): lee y produce un
+  informe. PARTE C: mide el archivo de §6, sin mover nada. `pytest` y los dos `--check` **idénticos al
+  inicio y al cierre**.
+  - **Punto de partida, medido.** Árbol limpio en `bdca401` salvo el prompt de sesión sin trackear; los
+    dos remotos (`gitlab`, `origin`) en `bdca401`. Docker arriba, Postgres sano (`ippu-postgres`, 17 h
+    healthy). `pytest -q` → **432 passed, 0 skipped** (36 s). `verificar_estado.py --check` y
+    `generar_catalogos_backend.py --check` → **exit 0**. Head de Alembic `559b1a79cb77`, **un solo
+    archivo** en `versions/`. **51 tablas** en `Base.metadata` y **51** físicas en la base de dev.
+    **274** funciones `def test_` (432 casos tras `parametrize`).
+  - **PARTE A — M12.8b-1b · la sección HCE-PAI de `esquema-datos-v2.md`.** El documento tenía un marcador
+    donde va HCE-PAI (M12.6, solo esquema, §5.54). Medidas **contra los modelos y la migración
+    `559b1a79cb77`** (no heredadas): `pai` 43 · `pai_objetivo` 9 · `pai_evaluacion_previa` 7 · `pai_equipo`
+    6 · `pai_coordinacion` 7 · `pai_taller` 3 · `pai_prestacion` 3 · `pai_circuito` 3 = **8 tablas / 81
+    columnas** — coincide con el 8 / 81 que reportó M12.8b-1. **16 CHECK de dominio** (7 en `pai`, 9 en las
+    hijas), **4 UNIQUE compuestos**, `pai` **sin `UNIQUE(hce_id, anio)`** (§5.22). `creado_en`/
+    `actualizado_en` sólo en `pai` (1 de las 3 tablas del esquema que las llevan). Sin patrón XOR ni
+    polimórfico. Todo dominio enum-like tiene CHECK generado con `_dominio()` — **no** hay dominios
+    sólo-documentación.
+    - **§2.2:** tabla de las 8 tablas con campos propios en orden del modelo, al estilo de HCE-INC/ateneos,
+      con las decisiones §5.14, §5.20–§5.23, §5.26, §5.54–§5.57, §5.59 y tres recuadros: **NO GUARDS**
+      (§5.54 · M11.3, Lucas §5.67); **§4 y §8 del Manual sin identificar** (`puntos-a-validar.md` §1.16 /
+      B1); **`pai_prestacion` como excepción declarada a §5.22** (§5.57 / L4, salida 2).
+    - **Nombre oficial.** Se agregó que el nombre INAU es **«Proyecto de Atención Integral»**, no
+      «Propuesta de Atención Individual» del prototipo (§5.42 / I7, `puntos-a-validar.md` §1.11 CERRADO) —
+      la tabla se llama `pai` igual; importa para el PDF de M11.4.
+    - **§1 (ER):** `pai` + 7 hijas agregadas al diagrama; retirado el aviso «diagrama incompleto».
+    - **§4:** dos filas de guards de PAI — §IX del PAI sólo con `tipo` «Actualización anual» (guard, M11.3)
+      y **Anexo A** (M11.3, **bloqueado por fuera**: el Anexo A y el Manual §8 no están en el repo).
+    - **Versionado (§5.81):** el documento sigue en **v3** y el archivo no se renombra; se amplió la fila
+      v3 del registro de versiones y la cabecera. **Cobertura 43/51 → 51/51**; §3 y el registro de
+      versiones al día. Grep de «HCE-PAI pendiente/placeholder»: corregidos todos menos
+      `agenda-reunion-ippu-2026-08.md` (registro de una reunión pasada, no se toca).
+  - **PARTE B — R1 · reconocimiento para M11.3** (`handoff.md` §5.67 / L14: primera tarea de M11.3).
+    `docs/notas/relevamiento-M11.3-2026-09-10.md`, **solo lectura**, formato R0 (BLOQUES), hallazgos
+    **R1-01…R1-10** citables desde §5/§6. Es un `relevamiento-*` → registro desde que nace, no se corrige
+    (dicho en su cabecera). ⚠️ El nombre usa la fecha real de sesión (2026-09-10); la hoja proponía
+    `-09-09`.
+    - **Qué existe hoy:** la capa de servicios sigue **en cero** — `app/services/` no existe,
+      `routers/__init__.py` y `schemas/__init__.py` = 0 bytes, único endpoint `/health` (`main.py:33`).
+      Ninguna regla §4 vive en código: se reparten entre CHECK estructural, `hybrid_property` derivado y
+      **prosa** (docstrings del modelo + la tabla §4 del esquema, con 8 filas «Pendiente — M11.3»).
+    - **El bloque central de M11.3 es construible hoy** con el modelo que existe: secuencia,
+      firma=bloqueo, validaciones §4.3, `categoria_baremo(pct)`, fotos §8.4 (individual y grupal),
+      histórico inmutable, auditoría de campo, guard de consenso D7. **Lo bloqueado es periférico y
+      agrupado:** Anexo A (**B1** / §1.16), «qué IDEA rige» (**B2b** + I1), usuarios + `tecnico_grupo`
+      (**B5** + **B6**), informes + divulgación (**B7** + **B11** + **B12**).
+    - **Hallazgos que necesitan a Lucas:** **R1-01** — la regla del Δ está a medio reformular:
+      `esquema-datos-v2.md` §4 fila 4 y `backend/README.md:131` dicen todavía «Δ sólo B−A», que §5.36
+      cambió a «Δ sólo dentro del mismo instrumento» para no bloquear la comparación IDEA-año que IPPU
+      pidió; el mismo documento ya usa la nueva en §2.2 → se contradice. **NO se corrigió** (parte B es
+      solo lectura; roza M12.8b-3). **R1-02** — «qué IDEA rige» vive sólo en prosa (`modulos.py:228-233`) y
+      para el modelo de línea base única. **R1-07** — `puntos-a-validar.md` §2.8 (abrir año de grupos) **no
+      bloquea** el arranque de M11.3 (su propia letra chica lo dice); es feature de M11.3/M11.4.
+    - **I1 (`idea.anio`) re-medido:** backend **puramente aditivo** — `idea` tiene 23 columnas sin `anio`,
+      **0** UNIQUE sobre `hce_id`, **1** FK entrante (`puntuacion_idea`, por instancia → 0 a reconectar),
+      **9** construcciones `Idea(` en tests, **0** rotas con `anio` nullable; el patrón `UNIQUE(hce_id,
+      anio)` ya está 3 veces. Demo: **17** accesos `(flujo|fl).lb` en 6 módulos (+1 indirecto en
+      `ui-core.js`) — verifica el «~18 en 6» de §5.31/R0. **Recomendación (no decisión):** I1 **antes** de
+      M11.3, porque el guard «qué IDEA rige» no es escribible sin la columna; el costo caro (selector de
+      año en la demo) no es trabajo de M11.3.
+    - **7 preguntas para Lucas** en el BLOQUE 6.4 del relevamiento (I1 antes o dentro de M11.3; corregir
+      la fila 4 del §4 en M12.8b-3 o al arrancar M11.3; default del motor de flujo pendiente de B4;
+      `tecnico_grupo` con B5/B6 sin responder; `btree_gist` sí/no; alcance del alta de grupo/catálogos;
+      registro de accesos con motivo en M11.3 o Fase 4).
+  - **PARTE C — el archivo de §6, medido sin mover nada.** Lucas aprobó archivar la cola resuelta de §6
+    **a condición de que no cause rework**. Medido: §6 = **441 líneas**, **40 `[ ]` abiertos / 40 `[x]`
+    resueltos**, el grupo resuelto ocupa **≈173 líneas ≈ 39 %** (coincide con «40/40 y ~40 %»). **Ningún
+    archivo de fuera de §6 cita un bullet resuelto por su posición** — las citas a `§6` son punteros
+    genéricos o apuntan a bullets **abiertos** (I1, A3/C8/C9/C10); la única que toca uno resuelto es
+    `relevamiento-estado-2026-08-26.md:1260` (D-10 / F1-nav), y R0 es un registro congelado. `verificar_
+    estado.py` **no lee §6** (corta en `## 5.`). **La técnica del stub cubre el caso y apenas hace falta.
+    Rework de archivar la cola: cero.** Registrado en §6, bullet «Partir `handoff.md`». **RECOMENDACIÓN:
+    ninguna** — si es una sesión o tres lo decide Lucas.
+  - **Verificación de cierre, medida (regla 4 — después de la última escritura).** `pytest -q` → **432
+    passed, 0 skipped**. `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit
+    0**. **51 tablas**, head `559b1a79cb77`, un solo archivo en `versions/` — **todo idéntico al arranque;
+    esta sesión no toca código.** Archivos tocados: `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md`
+    (§1, §2.2, §3, §4, cabecera, registro de versiones), `docs/notas/relevamiento-M11.3-2026-09-10.md`
+    (**nuevo**), `handoff.md` (cabecera §5.82, §6), `docs/bitacora.md` (esta entrada). **Cero archivos de
+    código.** §5 **no se tocó** (esta sesión no abrió ninguna entrada — los hallazgos que piden decisión
+    están en el relevamiento, para que los escriba Lucas).
+  - **Commits (con trailer, §5.62):** `a93eea3` (PARTE A — sección HCE-PAI + ER + cabecera/versiones/§3),
+    `99048f1` (PARTE B — el relevamiento R1), `474d93b` (PARTE A — filas de guards de PAI en §4), y el
+    commit de cierre (cabecera de `handoff.md`, §6, esta entrada). A `gitlab` y `origin`, mismo hash,
+    árbol limpio.
+
 - **2026-09-09 · Sesión M12.8b-4 — higiene: la bitácora deja `handoff.md`** (Lucas + Claude, rama
   `main`). **Primera entrada nativa de este archivo.** `handoff.md` había llegado a 5.081 líneas y §13
   era el 39,6 % de un archivo que `CLAUDE.md` manda leer entero al arrancar. Esta sesión saca §13 a
