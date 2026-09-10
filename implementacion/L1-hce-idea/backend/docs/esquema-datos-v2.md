@@ -1,22 +1,23 @@
 # Esquema de datos v2 — HCE IPPU (M11 · backend v2)
 
-> **Versión del documento: v3** — 2026-09-03, sesión M12.8b-1. Refleja el esquema tras **M12.0–M12.7 y
-> M12.8a** (hasta M12.8a-3). ⚠️ **El archivo sigue llamándose `esquema-datos-v2.md` y no cambia**
+> **Versión del documento: v3** — 2026-09-03 (M12.8b-1); **completada el 2026-09-10 (M12.8b-1b): sección
+> HCE-PAI (§2.2) + diagrama ER de §1**. Refleja el esquema tras **M12.0–M12.7 y M12.8a** (hasta M12.8a-3).
+> ⚠️ **El archivo sigue llamándose `esquema-datos-v2.md` y no cambia**
 > (`handoff.md` §5.81): «esquema v2» nombra la arquitectura del backend v2 —incluida la migración
 > `559b1a79cb77_esquema_v2_inicial_m12_8a.py`—; lo que se versiona acá es el **documento**. No hay ningún
 > archivo `esquema-datos-v3.md`.
 >
-> **Estado medido** (2026-09-03, contra `Base.metadata` y la base de desarrollo): **51 tablas** en
-> `app/models/` (ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 · inclusion 4 · modulos 6 · pai 8 ·
-> severidad 2 · transversales 10). Migración inicial **única** `559b1a79cb77` (`down_revision = None`, un
-> solo archivo en `alembic/versions/`, 51 `op.create_table`). **432 tests en verde, 0 salteados.** Por la
-> enmienda §5.19 (2026-08-14) la migración se regenera al cerrar **cada** sub-módulo, con
-> `test_la_migracion_coincide_con_los_modelos` en verde. Origen histórico: **IMPLEMENTADO en M11.2**
-> (2026-08-07, 28 tablas).
+> **Estado medido** (2026-09-03, contra `Base.metadata` y la base de desarrollo; **re-medido 2026-09-10 sin
+> cambios**): **51 tablas** en `app/models/` (ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 ·
+> inclusion 4 · modulos 6 · pai 8 · severidad 2 · transversales 10). Migración inicial **única**
+> `559b1a79cb77` (`down_revision = None`, un solo archivo en `alembic/versions/`, 51 `op.create_table`).
+> **432 tests en verde, 0 salteados.** Por la enmienda §5.19 (2026-08-14) la migración se regenera al
+> cerrar **cada** sub-módulo, con `test_la_migracion_coincide_con_los_modelos` en verde. Origen histórico:
+> **IMPLEMENTADO en M11.2** (2026-08-07, 28 tablas).
 >
-> ⚠️ **Cobertura de este documento: describe 43 de las 51 tablas.** **NO** describe todavía las **8 de
-> HCE-PAI** (`pai` + 7 hijas, M12.6) — hay un marcador en §2.2 y §3, y el trabajo está en `handoff.md` §6
-> (M12.8b-1b). El diagrama ER de §1 está incompleto por lo mismo.
+> ✅ **Cobertura: las 51 tablas.** La sección **HCE-PAI** (`pai` + 7 hijas, M12.6 · §2.2) se escribió en
+> **M12.8b-1b** (2026-09-10) y el diagrama ER de §1 quedó completo. Antes de ese pase el documento describía
+> 43 de 51.
 >
 > Deriva del **Documento Técnico IPPU v1.0** (§6 modelo sugerido) y del **modelo clínico ya
 > validado en la demo v4.0** (ronda M0–M10). Toma `docs/markdown/modelo-datos.md` como punto de
@@ -36,7 +37,7 @@ v2, no un número de este texto (`handoff.md` §5.81). Lo que sigue es la versi�
 | Versión | Fecha | Qué refleja |
 |---|---|---|
 | v2 | 2026-07-30 → 2026-08-15 | Documento inicial del esquema v2 (propuesta del 2026-07-30, commit `d8d6533`), ampliado en los modelos y la migración por M12.0–M12.4 y M12.7. La última cabecera de estado quedó en M12.3 (**34 tablas**). |
-| **v3** | **2026-09-03** (sesión **M12.8b-1**) | Puesta al día tras **M12.5** (HCE-INC), **M12.6** (HCE-PAI, solo esquema), **M12.7** (ateneos) y **M12.8a** (`ateneo.observaciones`, cinco nombres reales de grupo, `divulgacion`). Cambios de este pase, todos de **documentación** —no se tocó `app/`, `alembic/`, `tests/`—: cabecera y §3 al estado medido (**51 tablas**, migración `559b1a79cb77`); `grupo` con los **cinco nombres reales** (§5.61) en vez de los colores; `idea` descrito **como está en el modelo** (sin `anio`) con aviso explícito de I1 / §5.36 (el IDEA es anual por decisión, el modelo aún no); `ateneo.observaciones` (§5.66); **`divulgacion`** nueva en §2.3 + §1 + §4 (§5.80); esbozo de **`tecnico_grupo` como NO CONSTRUIDO** (§5.79); §12-A del plan reescrito en prosa (§5.65); **marcador de HCE-PAI** en §2.2 y §3. ⚠️ **Pendiente para M12.8b-1b:** la sección HCE-PAI completa (**8 tablas / 81 columnas** medidas). |
+| **v3** | **2026-09-03** (M12.8b-1) → **2026-09-10** (M12.8b-1b) | Puesta al día tras **M12.5** (HCE-INC), **M12.6** (HCE-PAI, solo esquema), **M12.7** (ateneos) y **M12.8a** (`ateneo.observaciones`, cinco nombres reales de grupo, `divulgacion`). Cambios de este pase, todos de **documentación** —no se tocó `app/`, `alembic/`, `tests/`—: cabecera y §3 al estado medido (**51 tablas**, migración `559b1a79cb77`); `grupo` con los **cinco nombres reales** (§5.61) en vez de los colores; `idea` descrito **como está en el modelo** (sin `anio`) con aviso explícito de I1 / §5.36 (el IDEA es anual por decisión, el modelo aún no); `ateneo.observaciones` (§5.66); **`divulgacion`** nueva en §2.3 + §1 + §4 (§5.80); esbozo de **`tecnico_grupo` como NO CONSTRUIDO** (§5.79); §12-A del plan reescrito en prosa (§5.65). **M12.8b-1b (2026-09-10)** agregó la **sección HCE-PAI completa** (§2.2 — 8 tablas / 81 columnas, medidas contra el modelo y la migración) y completó el **diagrama ER** de §1; también documentación pura. |
 
 ## 0. Decisiones de arquitectura aplicadas (cierran el Anexo A del plan)
 
@@ -109,6 +110,19 @@ erDiagram
     %% obligatoria una pantalla de administración que falta se convierte en un
     %% registro clínico bloqueado. Mismo criterio que `pai_taller.taller_nombre`
     %% (§5.20), con fundamento propio.
+    HCE_DIURNA  ||--o{ PAI : "HCE-PAI (0..N, sin firma — N por año)"
+    PAI         ||--o{ PAI_OBJETIVO : "§X (cascada)"
+    PAI         ||--o{ PAI_EVALUACION_PREVIA : "§IX — sólo actualizaciones (cascada)"
+    PAI         ||--o{ PAI_EQUIPO : "§XV (cascada)"
+    PAI         ||--o{ PAI_COORDINACION : "§XIII — 6 filas fijas (cascada)"
+    PAI         ||--o{ PAI_TALLER : "§XI — por nombre, sin FK a TALLER (cascada)"
+    PAI         ||--o{ PAI_PRESTACION : "§IV (cascada)"
+    PAI         ||--o{ PAI_CIRCUITO : "§XIV (cascada)"
+    %% `PAI` es pertenencia (`hce_id`, CASCADE, §5.26): N por expediente y **por
+    %% año** (sin `UNIQUE(hce_id, anio)`, §5.22 — inicial + actualización semestral).
+    %% El centro educativo/modalidad/grado (§V) y los puntajes de los instrumentos
+    %% se leen EN VIVO de `INCLUSION` y de los módulos del flujo — no hay arista de
+    %% copia. Módulo sin firma y SIN GUARDS (§5.54); los guards son M11.3. Ver §2.2.
     HCE_DIURNA  ||--o| VALORACION_FUNCIONAL : "HCE-VF (0..1)"
     HCE_DIURNA  ||--o{ AUDITORIA : "HCE-LOG (solo inserción)"
     HCE_DIURNA  ||--o{ OBSERVACION : "seguimiento"
@@ -136,7 +150,6 @@ erDiagram
     %% (y no = 1) porque el informe agregado de §6.6 del Protocolo no pertenece a
     %% ningún expediente ni ateneo. Append-only por postura (sin UPDATE/DELETE),
     %% sin trigger, sin seed. Ver §2.3 y §4.
-    %% ⚠️ Diagrama incompleto: faltan `PAI` y sus 7 hijas (M12.6) — ver §2.2 / §3.
 ```
 
 ## 2. Tablas
@@ -386,39 +399,113 @@ migración**, que es lo que permite que `tema` sea NOT NULL.
 > que salen la columna «última gestión» y la alerta de **60 días sin gestiones** — cuyo umbral ya vive
 > como fila de `recordatorio` (clave `inc`, M12.1) y **no bloquea nada** (§4).
 
-#### HCE-PAI · Propuesta de Atención Individual (M12.6) — ⚠️ EXISTE EN EL MODELO, ESTE DOCUMENTO NO LA DESCRIBE TODAVÍA
+#### HCE-PAI · Propuesta de Atención Individual (M12.6) — módulo **sin firma**
 
-M12.6 (2026-09-02, **solo esquema**, `handoff.md` §5.54) construyó **8 tablas** en `app/models/pai.py`
-que este documento **aún no inventaría**. Medidas contra `Base.metadata` (2026-09-03):
+Va en `app/models/pai.py`, archivo propio, por el mismo motivo que `severidad.py` e `inclusion.py`: no es
+parte del flujo firmable, no es catálogo y no es un transversal del expediente. Digitaliza el **Formulario
+PAI de IPPU**, escrito contra la pauta de INAU —quince secciones, de la identificación del NNA al equipo
+que elabora la propuesta—. Es **el documento que se entrega a un organismo del Estado**, y de ahí sale casi
+toda la forma del módulo.
 
-| Tabla | Columnas |
-|---|---|
-| `pai` | 43 |
-| `pai_objetivo` | 9 |
-| `pai_evaluacion_previa` | 7 |
-| `pai_equipo` | 6 |
-| `pai_coordinacion` | 7 |
-| `pai_taller` | 3 |
-| `pai_prestacion` | 3 |
-| `pai_circuito` | 3 |
-| **total** | **8 tablas · 81 columnas** |
+⚠️ **Nombre oficial: «Proyecto de Atención Integral»** (el de INAU), no «Propuesta de Atención Individual»
+del prototipo (§5.42 / I7, `puntos-a-validar.md` §1.11 CERRADO). La tabla se llama `pai` en cualquier caso
+—el nombre no toca el esquema—, pero **va impreso en lo que se entrega a INAU**: importa para el PDF de
+M11.4.
 
-Lo que ya se puede decir, y el resto es de la sección pendiente:
-- Módulo **sin firma**; **N por expediente, no anual**: `pai` **tiene** columna `anio` pero **NO** lleva
-  `UNIQUE(hce_id, anio)` (§5.22) — hay más de un PAI por año.
-- **Ningún guard.** La habilitación de la §IX por tipo de PAI, el Anexo A del Manual y «qué IDEA rige»
-  son **M11.3** (`handoff.md` §5.54, §5.67).
-- §VII / FODA (`fort`/`oport`/`debil`/`amen`) **se retiró** de `pai` en M12.8a-1 (§5.59): la cifra de
-  «campos propios» bajó a **39**; la tabla tiene **43 columnas** medidas = 39 propias + `id` + `hce_id`
-  + `creado_en` + `actualizado_en` (el conteo de columnas y el de «campos propios» no coinciden).
-- `pai_taller` guarda la participación **por nombre** (`taller_nombre`), sin FK a `taller` (§5.20, que
-  M12.6 hereda, §5.21).
-- `PAI_AREAS`, `PAI_PREST` y `PAI_CIRCUITO` son **constantes con CHECK, no catálogos** (§5.56).
+Construido en **M12.6** (2026-09-02) en **modo solo esquema** (§5.54): tablas, columnas y dominios; **sin un
+solo guard** (ver el recuadro al final). En el orden de la ficha del Prototipo v4 (`FICHA_TABS`) va **entre
+HCE-ORG y HCE-VF** (`… org · pai · vf · log`); ese orden **no está modelado** y no se inventa una tabla para
+él — es **M11.4**, como en HCE-SEV.
 
-📌 **La sección completa de HCE-PAI se escribe en M12.8b-1b** (split aprobado en la sesión M12.8b-1).
-Está registrada como pendiente sin dueño en `handoff.md` §6. Hasta entonces la fuente para estas 8
-tablas es `app/models/pai.py`, la bitácora de M12.6 en `handoff.md` §13 y las decisiones §5.22, §5.26,
-§5.54–§5.56, §5.59.
+**8 tablas · 81 columnas** (medidas contra `Base.metadata` y la migración `559b1a79cb77`, 2026-09-10): la
+cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE` — `pai_objetivo` (9),
+`pai_evaluacion_previa` (7), `pai_equipo` (6), `pai_coordinacion` (7), `pai_taller` (3), `pai_prestacion`
+(3), `pai_circuito` (3).
+
+| Tabla | Campos propios | Notas |
+|---|---|---|
+| **`pai`** | `id` PK · **`hce_id` FK `hce_diurna` `CASCADE`, index** (pertenencia, §5.26) · *cabecera:* `tipo` (`PAI_TIPOS`), `anio` (**Integer**, index), `fecha` · *§I:* `ingreso_ippu` · *§II:* `padron_inau`, `disposicion` (`PAI_DISPOSICIONES`), `judicial` (`PAI_SI_NO`), `expediente`, `derivado_por`, `motivo` · *§III:* `responsable`, `tel`, `nucleo`, `referentes` · *§IV:* `cobertura`, `controles` (`PAI_CONTROLES`), `tratamientos`, `medicacion`, `prest_obs` · *§V:* `apoyos_ed`, `otras_ed` · *§VI:* `sint_lb`, `delta_interp` · *§VIII:* `intereses_nna`, `voz_nna`, `expect_familia`, `acuerdo` (`PAI_ACUERDO_FAMILIA`), `fecha_devol` · *§XI:* `frecuencia` (`PAI_FRECUENCIAS`), `etapa` (`PAI_ETAPAS`), `otras_act` · *§XII:* `dinamica`, `ingresos` (**texto**), `vivienda`, `redes`, `pronostico` · *§XIV:* `f_rev`, `f_anual`, `criterios` · `creado_en`, `actualizado_en` | **N por expediente, NO anual**: tiene `anio` pero **sin `UNIQUE(hce_id, anio)`** (§5.22) — conviven el PAI inicial y su actualización semestral, que es lo que evalúa la §IX. **7 CHECK** de dominio (`tipo`, `disposicion`, `judicial`, `controles`, `acuerdo`, `frecuencia`, `etapa`), generados desde la constante con `_dominio()`. **39 «campos propios»** = 43 − `id` − `hce_id` − `creado_en` − `actualizado_en`. Todo lo demás **nullable**: un PAI en elaboración es un estado real. **`ingresos` es texto y no número** (el formulario los describe en prosa). Única tabla del módulo con `creado_en`/`actualizado_en`. |
+| **`pai_objetivo`** (§X) | `id` PK · `pai_id` FK `CASCADE`, index · `area` (`PAI_AREAS`, **index**) · `objetivo` · `estrategias` · `indicador` · `responsable_rol` (**texto, no FK**) · `plazo` (`PAI_PLAZOS`) · `orden` (default 0) | **El corazón del módulo**: lo que el PAI compromete, congelado por instancia (§5.22). Tabla y no JSONB porque «objetivos por área», «qué vence este trimestre» y «PAIs sin objetivo de comunicación» son consultas **entre** propuestas. `responsable_rol` es rol y no FK a `profesional`: un objetivo sobrevive a que la persona deje la institución. **2 CHECK** (`area`, `plazo`). |
+| **`pai_evaluacion_previa`** (§IX) | `id` PK · `pai_id` FK `CASCADE`, index · `objetivo` (**texto transcrito, no FK a `pai_objetivo`**) · `logro` (`PAI_LOGROS`) · `comentario` · `decision` (`PAI_DECISIONES`) · `orden` (default 0) | La bisagra entre un PAI y el siguiente. `objetivo` es **texto y no FK a propósito**: el documento entregado a INAU tiene que conservar el objetivo *como se evaluó*, no como diga hoy la fila apuntada (mismo criterio de robustez que `pai_taller`, §5.20). Que sólo aplique a «Actualización anual» **es un guard** (el prototipo la esconde con `esAct`) → M11.3. **2 CHECK** (`logro`, `decision`). |
+| **`pai_equipo`** (§XV) | `id` PK · `pai_id` FK `CASCADE`, index · `nombre` (**texto, no FK**) · `rol` (texto libre) · `participo` (`PAI_SI_NO`) · `orden` (default 0) | Los dos técnicos responsables **no se guardan acá** (se leen de HCE-00 con `ro()`). Esta tabla es para el resto del equipo y el propio NNA, que la pauta pide incluir «en lo posible» — puede no ser usuario del sistema, de ahí `nombre` texto. **1 CHECK** (`participo`). |
+| **`pai_coordinacion`** (§XIII) | `id` PK · `pai_id` FK `CASCADE`, index · **`actor` NOT NULL** (`PAI_COORDINACION_ACTORES`) · `se_coordina` (`PAI_SI_NO`) · `frecuencia` (frase libre) · `contenido` · `orden` (default 0) · **`UNIQUE(pai_id, actor)`** | **Seis filas fijas**, no lista abierta: el prototipo precarga los seis actores y no deja agregar ni quitar — la tabla registra **respuestas a un cuestionario cerrado**. `actor` es el único CHECK NOT NULL del módulo, y puede serlo porque el valor viene precargado, no lo elige el usuario. Crear las seis al abrir el PAI es trabajo del servicio (M11.3). **2 CHECK** (`actor`, `se_coordina`). |
+| **`pai_taller`** (§XI) | `id` PK · `pai_id` FK `CASCADE`, index · **`taller_nombre` NOT NULL, `String(80)`, index** · **`UNIQUE(pai_id, taller_nombre)`** | Participación en talleres **por nombre, sin FK a `taller`** (§5.20 / §5.21, que M12.6 hereda; forma fijada por `apartado-especificaciones-tecnicas-prototipo-v4.md:50`). D5 (§5.14): agregar, reordenar o **retirar** un taller no puede alterar lo registrado. `pai_id` y no `hce_id`: la oferta cambia por período, así que «en qué talleres participa» sólo tiene respuesta dentro de un PAI. `String(80)` = el largo de `taller.nombre`. **Sin CHECK**: poner uno derrotaría la robustez que es el punto — no es un dominio «sólo-documentación», es una ausencia deliberada. |
+| **`pai_prestacion`** (§IV) | `id` PK · `pai_id` FK `CASCADE`, index · **`prestacion` NOT NULL** (`PAI_PRESTACIONES`) · **`UNIQUE(pai_id, prestacion)`** | Una fila por ítem marcado. **El valor, no el índice**: el prototipo marca por posición (`P.prest[ix]`) y esa forma no se copia. **1 CHECK** (`prestacion`). Ver el recuadro sobre la tensión con HCE-ORG (§5.57). |
+| **`pai_circuito`** (§XIV) | `id` PK · `pai_id` FK `CASCADE`, index · **`item` NOT NULL** (`PAI_CIRCUITO`) · **`UNIQUE(pai_id, item)`** | Una fila por ítem del circuito institucional de seguimiento que la propuesta se compromete a cumplir. Mismo criterio de forma que `pai_prestacion`; **compromiso, no diagnóstico** → se congela por instancia (§5.22). **1 CHECK** (`item`). |
+
+- **`hce_id` es pertenencia** (§5.26): sin calificador, `ondelete="CASCADE"` — el PAI es contenido del
+  expediente y muere con él. Las hijas cuelgan de `pai_id` (no de `hce_id`): son contenido **de esta
+  propuesta**. `test_toda_hija_cuelga_del_pai_y_no_del_expediente` lo fija.
+- **`pai` NO lleva `UNIQUE(hce_id, anio)`** (§5.22), y es la diferencia deliberada con `informe_cierre`: el
+  PAI de INAU es un documento dinámico con revisión semestral, así que un mismo año tiene el PAI inicial y
+  su actualización. Un `UNIQUE` haría que la actualización **pisara** el documento contra el cual la §IX
+  evalúa. `test_conviven_dos_pai_del_mismo_anio_en_el_mismo_expediente`.
+- **Reparto congelado / en vivo** (§5.22): lo que la propuesta **compromete** se congela por instancia
+  (objetivos, coordinaciones, circuito, talleres del período; la firma marca el inicio de esos
+  compromisos); lo que es **diagnóstico de situación** se lee en vivo y **no es columna de acá** — el
+  centro educativo, `modalidad` y `grado` (§V) se leen de `inclusion` (M12.5, contrato de nombres en su
+  docstring, `test_el_contrato_de_nombres_con_m12_6_se_mantiene`); los puntajes de los instrumentos, el Δ,
+  la severidad y el grupo se leen de sus módulos. `test_pai_no_copia_ningun_dato_que_se_lee_en_vivo`.
+- **«Sección de carga única» no existe: la carga es por campo** (§5.55 / L2, que arbitra por §5.50 / J1 —
+  el código ejecutable manda sobre la prosa de la misma fuente). La prosa de
+  `prototipo-v4-referencia.md:166` generalizaba que las secciones I, II, VI, XI y XV «se renderizan con
+  `ro()`» y hay que modelarlas como referencia; medido contra el código es **falso para cuatro de las
+  cinco**. Son columnas propias de `pai`: `ingreso_ippu` (§I); `padron_inau`, `disposicion`, `judicial`,
+  `expediente`, `derivado_por`, `motivo` (§II — HCE-ORG no tiene dónde guardarlos: su objeto es
+  `inau:{sipi, convenio, referente, ingreso, obs, envios[]}`); `sint_lb`, `delta_interp`, `frecuencia`,
+  `etapa`, `otras_act` (§VI y §XI — los puntajes se leen, la interpretación clínica se escribe). Sólo son
+  referencia `sipi`, `convenio` y el diagnóstico (§II), y la §XV entera para los dos técnicos
+  responsables. `test_los_campos_editables_de_las_secciones_i_y_ii_son_columnas_propias`.
+- **§VII (FODA) se retiró** (§5.42 / I7, ratificado por §5.59): IPPU pidió sacar el «Análisis
+  estratégico». M12.6 la había escrito igual (`fort`/`oport`/`debil`/`amen`, cuatro `Text`) sin cruzarla
+  contra la decisión de cliente; las cuatro columnas salieron en **M12.8a-1** y la cifra de campos propios
+  pasó de 43 a **39**. El comentario `── §VII · … RETIRADA ──` queda en el modelo para que la sección no se
+  reincorpore sin volver a cruzar la decisión.
+- **Dominios enum-like: todos con CHECK generado desde la constante** (`_dominio()` en `pai.py`,
+  `test_el_check_y_la_constante_no_pueden_divergir`). **No hay dominios sólo-documentación** como el
+  `grupos_orientados` de `taller` (§2.4): las **16 restricciones de dominio** del módulo (7 en `pai`, 9 en
+  las hijas) están todas en la DDL. Las únicas columnas «de vocabulario» sin CHECK son texto libre por
+  decisión de la fuente (`pai_equipo.rol`, `pai_coordinacion.frecuencia`, `pai_objetivo.responsable_rol`)
+  y `pai_taller.taller_nombre`, cuya falta de CHECK **es** el diseño (§5.20).
+- **`PAI_AREAS` (9), `PAI_PRESTACIONES` (6) y `PAI_CIRCUITO` (4) son constantes con CHECK, no catálogos**
+  (§5.56 / L3 — ahí `PAI_PRESTACIONES` se cita con el nombre `PAI_PREST`). Criterio ya escrito y evidencia
+  del propio prototipo: `CAT_TALLERES` tiene 4 funciones de gestión, estas tres tienen **cero**. Viven en
+  `app/core/constantes.py`.
+- **Sin patrón XOR ni polimórfico, sin timestamps en las hijas.** `pai` tiene una sola FK (`hce_id`) y cada
+  hija una sola (`pai_id`); no hay `num_nonnulls()` en el módulo. `creado_en`/`actualizado_en` están **sólo
+  en `pai`** — es 1 de las 3 tablas del esquema que las llevan (con `hce_diurna` e `inclusion`); las siete
+  hijas no tienen marca temporal propia (la deuda de convención de timestamps de todo el esquema está en
+  §4, fila «M12.7 · autoría y timestamps»).
+
+> ⚠️ **HCE-PAI NO IMPONE NADA — ningún guard** (§5.54, modo solo esquema; los guards son **M11.3**, que
+> toma Lucas, §5.67). Hoy la base **no** hace cumplir: la secuencia respecto de los instrumentos; que la
+> §IX («Evaluación del PAI anterior») sólo exista en un PAI de tipo «Actualización anual»; el **Anexo A**
+> del Manual (cálculo de totales y deltas con verificación previa a la firma — es M11.3, no esquema,
+> §5.54); **«qué IDEA rige»** a la fecha del PAI (§5.35 pone esa regla antes de M11.3); las seis filas de
+> `pai_coordinacion` precargadas al abrir; la compuerta «revisado por dirección → entregado» para lo que se
+> entrega a un organismo (§2.13, junto con §5.71). El módulo **no tiene firma** —no lleva `FirmaMixin`—
+> porque el objeto `pai` del Prototipo v4 es el único del expediente sin `estado`, y las tres líneas de
+> firma de la §XV son rótulos de impresión. **Un lector no debe concluir de esta sección que el módulo
+> valida secuencia, completitud ni bloqueo.**
+
+> **Dos secciones del Manual siguen sin identificar: §4 y §8** (`docs/notas/puntos-a-validar.md` §1.16). El
+> Manual de Procedimientos v1.0 tiene 25 secciones y **no está en el repo**; se trabaja con la versión de
+> consulta que el Prototipo v4 embebe (`const MANUAL`), que cubre 23. **Ninguna de las dos es del PAI** —el
+> Manual no tiene una Parte del PAI; §4 cierra «Marco general» y §8 es un paso interno del IDEA— y por eso
+> M12.6 pudo escribirse (§5.54). Es un **hueco conocido**, no una omisión de esta sección: si al
+> identificarlas resultaran tocar el PAI, se revisa lo construido.
+
+> **`pai_prestacion` es una excepción declarada a §5.22, no un descuido** (§5.57 / L4). Por el reparto de
+> §5.22, «prestaciones y certificaciones vigentes» es diagnóstico de situación y debería leerse en vivo;
+> pero **no hay de dónde**: `organismo_bps` guarda **una sola** `prestacion` en texto libre (0..1 por
+> expediente), no un conjunto, y dos de los seis ítems —la Valoración Funcional y el certificado de
+> discapacidad— **no son prestaciones BPS**. El equipo ratificó la **salida 2**: `pai_prestacion` queda
+> como **declaración fechada** del PAI, no como copia sincronizada. El aviso de divergencia contra una
+> tabla de equivalencias `BPS_PRESTACIONES` ↔ `PAI_PRESTACIONES` se reabre en M11.3/M11.4 si conviene.
+
+> **Fuente para estas 8 tablas:** `app/models/pai.py` (docstrings por clase), `tests/test_m12_pai.py`, la
+> bitácora de M12.6 en `docs/bitacora.md`, y las decisiones `handoff.md` §5.14, §5.20–§5.23, §5.26,
+> §5.54–§5.57, §5.59.
 
 ### 2.3 Transversales (DOC · ORG · VF · LOG)
 | Tabla | Campos clave | Notas |
@@ -612,7 +699,7 @@ tablas es `app/models/pai.py`, la bitácora de M12.6 en `handoff.md` §13 y las 
 | — | Nuevos: `consentimiento`, `informe_cierre`, `documento`, `foto`, `autorizacion_imagen`, `organismo_*`, `registro_organismo`, `valoracion_funcional`, `auditoria`, `baremo_categoria`, `categoria_documento`, `recordatorio`, `servicio`, `persona_servicio` |
 | — | Nuevos de M12.1: `banda_idea`, `delta_interpretacion`, `idea_ficha`, `idea_ejemplo`, `idea_regla` · de **M12.2**: `puntuacion_idea`, `puntuacion_protocolo` · de **M12.4**: `severidad_dsm`, `severidad_nivel` |
 | — | Nuevos de **M12.5** (HCE-INC): `inclusion`, `inclusion_bitacora`, `estado_inclusion`, `catalogo_centro_educativo` · de **M12.7** (ateneos): `ateneo`, `ateneo_acuerdo` · de **M12.8a** (HCE-DIV): `divulgacion` |
-| — | ⚠️ Nuevos de **M12.6** (HCE-PAI, 2026-09-02, solo esquema): **8 tablas** — `pai` + `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` · `pai_coordinacion` · `pai_taller` · `pai_prestacion` · `pai_circuito` (**81 columnas** medidas). **Este documento aún no las describe** — ver el marcador en §2.2 y `handoff.md` §6 (M12.8b-1b). |
+| — | Nuevos de **M12.6** (HCE-PAI, 2026-09-02, solo esquema): **8 tablas** — `pai` + `pai_objetivo` · `pai_evaluacion_previa` · `pai_equipo` · `pai_coordinacion` · `pai_taller` · `pai_prestacion` · `pai_circuito` (**81 columnas** medidas). Descritas en **§2.2** (sección escrita en M12.8b-1b, 2026-09-10). |
 | `hce_taller` · `hce_diurna.nivel_soporte` | **Retirados** en M12.3 (§5.20) y M12.4 (§5.24): dos fuentes de verdad que sobrevivieron al rewrite v1 → v2 sin revisarse contra las decisiones nuevas |
 | `observacion`, `evento`, `grupo`, `taller`, catálogo IDEA | Se conservan (ajustes menores: FK a `hce_diurna`) |
 | Migraciones incrementales SQLite-compatibles | **Migración inicial única** contra Postgres (v1 sin datos reales; los 12 tests v1 se reescriben como tests v2 — el plan §M11.4 ya preveía tests nuevos al mover lógica) |
