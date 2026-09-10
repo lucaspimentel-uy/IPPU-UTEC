@@ -2432,6 +2432,51 @@ en esos 8 archivos), el resto en Markdown (`handoff.md` 29, `PLAN-M12` 5, los do
 `CLAUDE.md`, `docs/notas/*`, `docs/prompts/*`). Un renombrado obligaría a barrer las 24 y arriesgar
 enlaces rotos en registros congelados; no lo paga.
 
+## 5.82 → 5.83 · Sesión M12.8b-2b — la cabecera la mueve toda sesión; los barridos dejan evidencia (2026-09-09, Lucas)
+
+> **Contexto.** Las dos entradas de abajo son de Lucas, tomadas con el acuerdo de los tres integrantes
+> del equipo. Esta sesión sólo las **transcribe** (§12.6: la decisión se escribe antes del cambio). Salen
+> de un patrón que se repitió tres veces en las sesiones de sincronización de prosa (M12.8b-1, M12.8b-2):
+> un registro dice «lo hicimos» y el código —o la cabecera, o una lista de arrastre— dice otra cosa.
+> Ninguna reabre §5.34 ni la deroga: la acotan. Se usan los dos números libres siguientes a §5.81,
+> medidos en el archivo.
+
+### 5.82 La cabecera de `handoff.md` la actualiza **toda** sesión que escribe una entrada de §13, incluidas las de sólo documentación (2026-09-09, Lucas)
+
+**Qué se decide.** La cabecera —«Última actualización» más el resumen de estado de las primeras
+viñetas— es lo primero que lee cualquier sesión y lo que una sesión nueva cree con menos reservas. Hasta
+ahora las sesiones de sólo documentación la dejaban quieta por precedente (M12.8b-1 no la tocó; M12.8b-2
+siguió ese precedente y lo marcó), y así la cabecera podía quedar varias sesiones atrás del registro
+mientras se presentaba como el estado.
+
+**Desde ahora:** **cualquier** sesión que agregue una entrada a §13 actualiza también la cabecera —la
+fecha, el nombre de la sesión y las cifras medidas—. Si una sesión no cambia ninguna cifra, igual mueve
+la fecha y se nombra.
+
+**Alcance.** Lo acuerdan los tres integrantes del equipo. **Sustituye el precedente** de las sesiones de
+documentación, no una decisión escrita. Esta misma sesión la aplica (§13).
+
+### 5.83 Los registros de sesión sobredeclaran lo que se barrió; un barrido tiene que dejar evidencia medida (2026-09-09, Lucas)
+
+**Qué se decide.** Se registraron tres instancias del mismo defecto dentro de una sola sesión, y nada en
+el repo lo detecta:
+
+1. La entrada de §13 de **M12.8a-1** afirma que barrió cuatro archivos de `app/` por el comentario «4
+   grupos por color». M12.8b-2 midió que `seed_catalogos.py` y `catalogos.py` estaban limpios, que el
+   barrido tocó un comentario de columna en `identidad.py` y **se salteó la docstring de la clase
+   `Grupo`**, y que `ateneo.py` seguía con «Grupo Celeste de 2025».
+2. El pendiente de M12.8b-2 en §6 listó los archivos que arrastró y **omitió `handoff.md` §0 punto 5**,
+   que llevaba la misma cifra vieja que ese pendiente existía para arreglar.
+3. La propia lista «actualizaciones que arrastra» de §5.79 nombró `puntos-a-validar.md` §2.11 y §6 y
+   **omitió `preguntas-ippu.md` B5/B6**.
+
+**La regla, desde ahora:** cuando una sesión afirma haber barrido N archivos o N ocurrencias, su entrada
+de §13 registra **el comando y su resultado**, no la afirmación; y cuando una decisión declara qué
+arrastra, esa lista se produce con `grep`, no de memoria.
+
+**Qué no cambia.** No reabre el pendiente de §5.34 (que `verificar_estado.py` compare prosa) — **acota**
+lo que ese chequeo tendría que atrapar, y ese pendiente queda abierto y sin dueño.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
