@@ -260,6 +260,16 @@ lado del equipo: falta quién la arma.
 venían **dentro del Prototipo v4**. Si eso pasó una vez, la fuente normativa que más peso tiene necesita
 el mismo escrutinio: ¿qué partes del Prototipo v4 son contenido de IPPU y cuáles son datos de demostración?
 **Dónde aterriza.** `handoff.md` §5.37 / §6.
+⚠️ **Nota — 2026-09-09.** En septiembre de 2026 IPPU compartió un **segundo artefacto alojado en Netlify**:
+un «Catálogo de puertas — orientación y derivación» de **96 entradas en 12 áreas**. Lucas confirmó con
+Fernando Sierra que **lo generó con IA**. Es material de la **línea L3** (el asistente conversacional),
+**no de L1**; sus archivos fuente no están disponibles y queda **deliberadamente fuera del alcance** de
+estas sesiones. Por qué toca a C9: el **Prototipo v4** —fuente normativa de precedencia 1, **por encima
+del Documento Técnico**— vino del **mismo autor y por la misma vía de publicación**, y §5.37 ya encontró
+relleno generado adentro, leído como fuente (los cuatro nombres de grupo por color). Esto **no reabre
+nada de lo ya construido**: sube la vara de escrutinio para cualquier cosa nueva que llegue por esta vía.
+Es una advertencia dentro de una nota de trabajo — no abre entrada de §5 y no cambia ninguna decisión;
+§5.10 (precedencia) no se toca.
 
 ### C10 · Numeración de las líneas de trabajo (aclaración de 30 segundos)
 **Qué.** La intro del cuestionario que les enviamos apunta a preguntas con una numeración vieja (habla de

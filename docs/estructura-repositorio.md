@@ -197,6 +197,8 @@ backend/
 │   │   ├── mixins.py         # OrigenMigracionMixin (metadatos de dato migrado, §10)
 │   │   │                     # (Firma/Evaluadores/PuntuacionConsenso viven en modulos.py)
 │   │   ├── modulos.py
+│   │   ├── pai.py            # HCE-PAI (M12.6): pai + sus 7 hijas — SÓLO ESQUEMA, sin guards
+│   │   │                     # PAI_AREAS/PAI_PREST/PAI_CIRCUITO son CONSTANTES, no catálogos. handoff §5.54-§5.56
 │   │   ├── severidad.py      # HCE-SEV (M12.4): severidad_dsm + su catálogo severidad_nivel
 │   │   │                     # archivo propio: no es flujo firmable ni catálogo paramétrico
 │   │   └── transversales.py
