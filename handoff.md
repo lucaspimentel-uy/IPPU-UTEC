@@ -2477,6 +2477,47 @@ arrastra, esa lista se produce con `grep`, no de memoria.
 **Qué no cambia.** No reabre el pendiente de §5.34 (que `verificar_estado.py` compare prosa) — **acota**
 lo que ese chequeo tendría que atrapar, y ese pendiente queda abierto y sin dueño.
 
+## 5.84 → 5.85 · Sesión M12.8b-4 — la bitácora sale de `handoff.md`; F1-nav3 se declara perdida (2026-09-09, Lucas)
+
+> **Contexto.** Las dos entradas son de Lucas, con el acuerdo de los tres integrantes del equipo, y esta
+> sesión sólo las **transcribe** (§12.6: la decisión se escribe antes del cambio). Número libre medido en
+> el archivo: la última entrada era §5.83.
+
+### 5.84 La bitácora (§13) se muda a `docs/bitacora.md`; `handoff.md` queda como estado, decisiones y pendientes (2026-09-09, Lucas)
+
+**Qué se decide.** `handoff.md` llegó a **5.081 líneas** y del orden de **140k–160k tokens** (≈ 537 KB,
+~79.000 palabras), y `CLAUDE.md` manda **leerlo entero al arrancar cualquier sesión**. **§13 es el
+39,6 % de ese peso** y es un **registro**: hace falta para reconstruir *por qué* se hizo algo y **nunca**
+para *hacer* el trabajo. Dos sesiones seguidas cuyo propósito declarado era higiene documental
+(**M12.8b-2 y M12.8b-2b**) **sumaron 279 líneas netas** al archivo, porque §13 es append-only y **nada
+sale nunca**. Por eso **§13 se muda a `docs/bitacora.md`**, completa y sin modificar.
+
+**Las cinco cláusulas —importan más que la mudanza:**
+
+- **(i)** `handoff.md` **conserva el encabezado `## 13. Bitácora de sesiones`** como stub de redirección,
+  y `docs/bitacora.md` **conserva ese mismo encabezado de sección**, para que **toda cita «§13» del repo
+  —unas 100, casi todas en `docs/prompts/`— siga siendo verdadera** y no se reescriba ninguna.
+- **(ii)** Desde ahora `handoff.md` es **estado, decisiones y pendientes**; `docs/bitacora.md` es **el
+  registro**. Cada sesión escribe su entrada en el archivo nuevo.
+- **(iii)** **§5.82 sigue rigiendo sin cambios:** una sesión que escribe una entrada de bitácora —ahora
+  en `docs/bitacora.md`— **también actualiza la cabecera de `handoff.md`**. La regla se escribió sobre el
+  acto, no sobre el archivo.
+- **(iv)** La regla 3 viaja con el archivo: **`docs/bitacora.md` nunca se corrige**, cifras viejas
+  incluidas.
+- **(v)** Esto **no decide nada sobre §5**, que se queda en `handoff.md`. Su mudanza se **mide** aparte
+  en esta sesión y se decide después.
+
+### 5.85 La deuda de registro de F1-nav3 se declara PERDIDA y su pendiente se cierra (2026-09-09, Lucas)
+
+**Qué se decide.** F1-nav3 (tablero de Inclusión, 2026-08-18, commit `648cb04`, sobre la rama
+`demo/F1-navegacion` —mergeada por `d94b102` y borrada de los dos remotos—) **nunca tuvo entrada de
+§13**. Tres sesiones seguidas la reportaron abierta; la rama ya no existe; pasaron tres semanas; quien la
+hizo no la escribió. El equipo la declara **PERDIDA** y **cierra el pendiente**. **No se va a escribir
+una entrada a posteriori por reconstrucción:** un registro armado por inferencia es peor que un hueco
+reconocido —es el argumento entero de §5.83—. Lo que queda como registro es **el propio commit
+`648cb04`** y **el bullet de F1-nav en §6**. Este pendiente **cierra no por haberse hecho, sino por
+declaración** — la misma forma que §5.53 (el Google Doc que se cerró porque no había destino).
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
