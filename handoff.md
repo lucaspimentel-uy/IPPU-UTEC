@@ -3159,10 +3159,10 @@ código. Esto es exactamente lo que evita el escenario de §5.3.
     `generar_catalogos_backend.py --check` → **exit 0** (ninguno mira prosa). Cuatro archivos tocados:
     `handoff.md`, `docs/estructura-repositorio.md`, `docs/notas/preguntas-ippu.md`, `app/models/ateneo.py`
     (un `#:`). **Ningún cambio de comportamiento.**
-  - **Commits (con trailer, §5.62):** `PENDIENTE-1` (`handoff.md` §5.82/§5.83 — las dos reglas escritas
-    antes de aplicarlas), `PENDIENTE-2` (sincronización de documentación: `handoff.md` cabecera/§6/§13 ·
-    `estructura-repositorio.md` · `preguntas-ippu.md`), `PENDIENTE-3` (`ateneo.py`, el `#:`). A `gitlab`
-    y `origin`, mismo hash, árbol limpio.
+  - **Commits (con trailer, §5.62):** `5628a22` (`handoff.md` §5.82/§5.83 — las dos reglas escritas antes
+    de aplicarlas), `d453291` (sincronización de documentación: `handoff.md` cabecera/§6/§13 ·
+    `estructura-repositorio.md` · `preguntas-ippu.md`), `132c272` (`ateneo.py`, el `#:`), más esta
+    corrección de bitácora. A `gitlab` y `origin`, mismo hash, árbol limpio.
 
 - **2026-09-09 · Sesión M12.8b-2 — sincronización de prosa: corregir las afirmaciones falsas (sin pase de
   vocabulario)** (Lucas + Claude, rama `main`). **Documentación + 2 docstrings de `app/`** (sólo
