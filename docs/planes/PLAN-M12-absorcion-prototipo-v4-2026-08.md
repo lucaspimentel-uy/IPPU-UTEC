@@ -590,7 +590,8 @@ Una sola persona.
   verde (ya reactivado el 2026-08-14 por §5.19; no hay nada que "volver a activar"). Cada rechazo probado
   junto con su caso que sí debe pasar.
 - **Docs:** `backend/docs/esquema-datos-v2.md` → **v3** · `backend/README.md` · `CLAUDE.md` (ronda en
-  curso) · `handoff.md` §6 y §13 · `docs/estructura-repositorio.md` si aparecieron carpetas nuevas.
+  curso) · `handoff.md` §6 + cabecera · **`docs/bitacora.md`** (la §13 se mudó ahí, `handoff.md` §5.84) ·
+  `docs/estructura-repositorio.md` si aparecieron carpetas nuevas.
 - **Criterio de aceptación (D-6 / §5.65):** escribir **en prosa** el criterio que reemplaza a §12-A ahora
   que la ronda suma cuatro módulos, seis bandas y catorce talleres. ⚠️ **Su forma ejecutable es de M11.5**,
   no de acá: hoy el seed espejo no existe (`app/` sólo tiene `seed_catalogos.py`) y los números

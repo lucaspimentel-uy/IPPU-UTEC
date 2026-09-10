@@ -14,8 +14,11 @@
 3. **La demo está modularizada** (`demo/index.html` + `demo/css/` + `demo/js/*.js`, 2026-08-07): se puede
    trabajar en paralelo **siempre que cada uno tome archivos distintos** de `demo/js/`. Avisar qué archivo
    se toma (§12.3). `index.html` y `js/utils.js` los tocan todos → coordinar antes.
-4. Al terminar: verificar (pytest / Playwright), **actualizar `handoff.md`** (§5 si hubo decisión, §6, §13
-   bitácora) y commit + push **a los dos remotos** (`gitlab` y `origin`).
+4. Al terminar: verificar (pytest / Playwright), **actualizar `handoff.md`** (§5 si hubo decisión, §6) y
+   escribir la entrada de bitácora en **`docs/bitacora.md`** (la §13 se mudó ahí el 2026-09-09, `handoff.md`
+   §5.84; en `handoff.md` quedó un stub). Por §5.82, la sesión que escribe bitácora **también actualiza la
+   cabecera de `handoff.md`** (fecha, nombre de sesión, cifras). Después, commit + push **a los dos
+   remotos** (`gitlab` y `origin`).
 
 ## Regla anti-contradicción
 Si algo que se está por implementar **contradice una decisión ya registrada en `handoff.md` §5**, no se
@@ -35,10 +38,11 @@ La fuente de verdad del estado del proyecto es `handoff.md`.
 ## Mapa del repositorio
 ```
 IPPU/
-├── handoff.md                 # Estado del proyecto entre sesiones (LEER PRIMERO)
+├── handoff.md                 # Estado, decisiones (§5) y pendientes (§6) — LEER PRIMERO. §13 bitácora → docs/bitacora.md
 ├── CLAUDE.md                  # Este archivo
 ├── README.md                  # Overview para humanos
 ├── docs/
+│   ├── bitacora.md            # Bitácora de sesiones — EL REGISTRO (era §13 de handoff.md; mudada 2026-09-09, §5.84). NO se corrige.
 │   ├── estructura-repositorio.md  # Mapa detallado de carpetas y rutas del repo
 │   ├── fuentes/               # Sólo 2 archivos desde la purga del 2026-08-20 (handoff.md §5.29):
 │   │                          #  el Prototipo v1 (sin conversión, es app JS) y el cuestionario
@@ -188,4 +192,4 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
   su Anexo II trae el modelo de acuerdo. Lo que falta es la **firma** (`puntos-a-validar.md` §1.6).
 - Datos de NNA = sensibles: nunca subir identificadores/imágenes reales a servicios externos sin evaluación.
 - La IA **apoya**, no reemplaza, el juicio clínico.
-- **Al terminar una sesión con cambios relevantes, actualizar `handoff.md`** (§5 decisiones, §6 pendientes, §13 bitácora) y pushear a los dos remotos.
+- **Al terminar una sesión con cambios relevantes, actualizar `handoff.md`** (§5 decisiones, §6 pendientes) + la **cabecera** (§5.82), y escribir la entrada de bitácora en **`docs/bitacora.md`** (§5.84). Pushear a los dos remotos.
