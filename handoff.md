@@ -2686,7 +2686,9 @@ declaración** — la misma forma que §5.53 (el Google Doc que se cerró porque
 >     archivar la cola `[x]` de §6 **a condición de que no cause rework**; esta medición es esa condición.
 >     - §6 son **441 líneas** (2523–2963). Checkboxes: **40 abiertos `[ ]` / 40 resueltos `[x]`** (a
 >       cualquier indentación). El grupo resuelto ocupa **≈173 líneas ≈ 39 %** de §6 (asignando cada línea
->       al último bullet abierto hasta el siguiente bullet o encabezado). Coincide con «40 / 40 y ~40 % de
+>       al último bullet abierto hasta el siguiente bullet o encabezado). ⚠️ **Medido al abrir la PARTE C;
+>       el cierre de esta misma sesión marcó `[x]` dos bullets más (M12.8b-1b y el reconocimiento de
+>       M11.3), así que al terminar son ~38 / ~42.** Coincide con «40 / 40 y ~40 % de
 >       líneas» de la última medición.
 >     - **Ningún archivo de fuera de §6 cita un bullet resuelto por su posición.** `grep` de
 >       `handoff.md §6` / `§6` sobre `docs/` + `app/` + `tests/` + `demo/` + `CLAUDE.md` + `docs/bitacora.md`:
