@@ -218,8 +218,8 @@ class Ateneo(Base):
         ForeignKey("hce_diurna.id", ondelete="RESTRICT"), index=True
     )
     #: El grupo **de ese año** (D9). Es un dato del hecho, no una copia de la
-    #: situación actual del NNA: el ateneo del 2025-11-20 fue sobre el Grupo
-    #: Celeste **de 2025**, con los técnicos de 2025. Leerlo «en vivo» en 2027
+    #: situación actual del NNA: el ateneo del 2025-11-20 fue sobre el grupo
+    #: Escolares **de 2025**, con los técnicos de 2025. Leerlo «en vivo» en 2027
     #: daría el grupo equivocado — por eso acá sí se guarda el vínculo, y no
     #: contradice §5.22 (el PAI es un documento vivo; un ateneo es un hecho
     #: cerrado y fechado).
