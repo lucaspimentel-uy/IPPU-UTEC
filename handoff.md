@@ -7,28 +7,29 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-09-11 (sesión **M12.8b-3a** — no tocó `app/services/`, no regeneró el
->   seed de catálogos, no implementó I1; sólo docstrings/comentarios + documentación). **Tres decisiones
->   de Lucas transcritas a §5.86–§5.88** (respuestas a las preguntas 3, 4 y 7 del BLOQUE 6.4 de R1): el
->   motor de flujo arranca con **409 duro** por default (§5.86); **`tecnico_grupo`** se parte — la tabla es
->   M11.3, el servicio de asignación espera a B5/B6 (§5.87); el **registro de accesos con motivo (§2.17)**
->   es explícitamente **Fase 4**, dueño Lucas (§5.88). **R1-01 registrado como prerrequisito nombrado de
->   I1** (verificado: `esquema-datos-v2.md:723` vs. `:790`, se contradice a sí mismo). **Hallazgo nuevo,
->   medido, no decidido:** el invariante «≤2 asignaciones vigentes» de `tecnico_grupo` (§5.79) **no es
->   expresable como está descrito** — un `EXCLUDE` es pairwise y expresa «a lo sumo 1», no 2; queda como
->   punto abierto en §6. **Barrido retroactivo de §5.83:** una ocurrencia LIVE nueva de la fórmula
->   derogada de §5.61 en `demo/js/grupos-usuario.js:14-16` (no corregida, fuera de alcance). **Fixes de
->   docstring/comentario (R1-04, R1-05, R1-10):** `modulos.py:211` (Idea), `pai.py:146,568`
->   (`pai_prestacion`, puntero a §2.15 corregido a la resolución de §5.57) y `backend/README.md:131`
->   (conteo: **44 reglas** en §4, no 4). **Archivada la cola resuelta de §6** a
->   `docs/pendientes-resueltos.md` (**42 bullets `[x]`, 199 líneas, verbatim, checksum verificado**); §6
->   queda con los **39 `[ ]`** que siguen abiertos. `pytest -q` → **432 passed, 0 skipped**; ambos
->   `--check` → exit 0 (`generar_catalogos_backend.py --check` **ya decía que el catálogo está al día**
->   antes de tocar nada); **51 tablas**; head `559b1a79cb77` — **idénticos al inicio.** Bitácora en
->   `docs/bitacora.md`. **Queda de M12.8b:** **M12.8b-3b** (pase de vocabulario §5.75/§5.76, **diferido
->   hasta que cierre M12** — decidido en esta sesión); más el resto de M12.8 (regenerar
->   `app/data/catalogos_iniciales.json` — hoy **ya sincronizado**, según `--check` — + tests + docs; **no**
->   el seed espejo, que es M11.5). **M12.8b-3a HECHO** (esta sesión). Después: cierre de M12.8 → I1 → M11.3.
+> - **Última actualización:** 2026-09-11 (sesión **M12.8b-3a-bis** — **no toca código en absoluto**; existe
+>   porque tres decisiones de Lucas de la misma ronda que produjo §5.86–§5.88 se habían quedado en un chat
+>   y nunca llegaron al repo — el patrón de §5.83 aplicado al propio método de trabajo). **Tres decisiones
+>   más, transcritas a §5.89–§5.91:** `btree_gist` **no entra** — el invariante «≤2 asignaciones vigentes»
+>   de `tecnico_grupo` queda **indefinido** hasta B5/B6, porque un `EXCLUDE` pairwise no puede expresarlo
+>   tal como está redactado (§5.89, reemplaza el planteo de §5.79 hacia adelante); la **administración**
+>   (crear/renombrar grupos, catálogos, usuarios) es su **propio sub-módulo, después del núcleo de M11.3**
+>   (§5.90, reemplaza la etiqueta «AHORA BLOQUEA» de R0 sobre §2.8 — su letra chica ya decía que no
+>   bloqueaba nada, verificado contra la base: los 5 grupos reales, `anio=2026`); **I1 aterriza antes de
+>   abrir `app/services/`** (§5.91, verificado de nuevo: `idea` 23 columnas, 0 `anio`, 0 UNIQUE, 1 FK
+>   entrante, 9 `Idea(` exactas en tests). **El bullet de §6 sobre crear grupos, corregido** (no sólo
+>   re-leído): la etiqueta BLOQUEANTE y la nota de `grupos_orientados` estaban stale, partido en un `[x]`
+>   con lo resuelto (preserva que el seed sigue siendo *insert-only*) y un `[ ]` con lo que de verdad
+>   queda, apuntando a §5.90. **Registrado con dueño (Lucas) el hallazgo de la demo** que M12.8b-3a había
+>   encontrado y no registrado: `demo/js/grupos-usuario.js:14-16` afirma los 4 colores derogados por
+>   §5.61 — la única ocurrencia sobreviviente que IPPU puede ver — sumado como 4.º punto al bullet de
+>   presentación desincronizada, **sin corregir** (riesgo de que los nombres sean lookup keys). `pytest -q`
+>   → **432 passed, 0 skipped**; ambos `--check` → exit 0; **51 tablas**; head `559b1a79cb77` —
+>   **idénticos al inicio, esta sesión no tocó código.** Bitácora en `docs/bitacora.md`. **Queda de
+>   M12.8b:** **M12.8b-3b** (pase de vocabulario §5.75/§5.76, diferido hasta el cierre de M12); más el
+>   resto de M12.8 (regenerar `app/data/catalogos_iniciales.json` — **ya sincronizado**, según `--check` —
+>   + tests + docs; **no** el seed espejo, que es M11.5). **M12.8b-3a-bis HECHO** (esta sesión). Después:
+>   cierre de M12.8 → I1 (antes de `app/services/`, §5.91) → M11.3.
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a** — **51 tablas**, **432 tests en verde y 0 salteados**, head de Alembic **`559b1a79cb77`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se remidieron contra el código y la base en M12.8b-1b** (2026-09-10) y siguen iguales tras M12.8b-3a (2026-09-11, sólo documentación); el punto de partida lo había verificado el relevamiento **R0** del 2026-08-26 (`docs/notas/relevamiento-estado-2026-08-26.md`) y luego **R1** (`docs/notas/relevamiento-M11.3-2026-09-10.md`). **FALTA para cerrar M12.8a:** nada estructural — `divulgacion` se construyó en M12.8a-3 (§5.80) y `tecnico_grupo` se difirió a M11.3 (§5.79 deroga la ubicación de §5.72). **De M12.8b** ya están hechos M12.8b-1 (`esquema-datos-v2.md` a documento v3, §5.81), **M12.8b-1b** (la sección HCE-PAI del esquema), M12.8b-2 (sincronización de prosa) y **M12.8b-3a** (esta sesión: §5.86–§5.88, R1-01 registrado, hallazgo del invariante de `tecnico_grupo`, fixes R1-04/05/10, archivo de la cola de §6); **queda M12.8b-3b** (el pase de vocabulario §5.75/§5.76, **diferido hasta el cierre de M12**), más el resto de M12.8 (regenerar `app/data/catalogos_iniciales.json` — **ya sincronizado hoy** según `--check` — + tests + docs; **no** el seed espejo, que es M11.5). **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **0.** las **decisiones de este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26** (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante ellas donde haya contradicción · **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **1-bis.** `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, Anexo II acuerdo de confidencialidad; ingresado el 2026-09-03 · **anterior al acta**, autoritativo para lo que el acta no tocó) · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
@@ -2584,6 +2585,76 @@ como responsable, y cualquier diseño de Fase 4 que lo omita está incompleto.
 
 ---
 
+## 5.89 → 5.91 · Sesión M12.8b-3a-bis — tres decisiones de Lucas que no habían llegado al repo (2026-09-11, Lucas)
+
+> **Contexto.** Las tres entradas son decisiones de Lucas, tomadas en la misma ronda que produjo §5.86–5.88
+> pero que quedaron sólo en un chat y nunca llegaron al repo — el patrón de §5.83 aplicado al propio método
+> de trabajo. Esta sesión sólo las **transcribe** (§12.6). Número libre medido en el archivo: la última
+> entrada era §5.88.
+
+### 5.89 `btree_gist` NO entra — el invariante de `tecnico_grupo` queda indefinido hasta B5/B6 (2026-09-11, Lucas)
+
+**Qué se decide.** §5.79 dejó planteado que el invariante «a lo sumo dos asignaciones vigentes por grupo,
+sin solaparse» requería un `EXCLUDE` con `btree_gist` —la primera extensión de Postgres del repo— y lo dejó
+como decisión de M11.3. R1 arrastró la afirmación (BLOQUE 3.2, 6.1, 6.3, pregunta 5). La decisión es que
+**`btree_gist` NO entra, ni ahora ni como pendiente de M11.3**, y el motivo no es de costo: el invariante,
+tal como está redactado, no es expresable con el mecanismo que se le proponía. Un `EXCLUDE` se evalúa **de a
+pares**, así que `EXCLUDE (grupo_id WITH =, periodo WITH &&)` expresa «a lo sumo UNA asignación vigente», no
+dos, y no hay una formulación de `EXCLUDE` que exprese «a lo sumo 2» directamente. Un discriminador de slot
+sí daría exactamente dos, pero el propio esbozo de §5.79 define `rol` como texto libre sin CHECK, así que
+tres filas con tres etiquetas distintas lo satisfarían igual. Además `grupo.tecnico1_id`/`tecnico2_id`
+siguen siendo la fuente de verdad (§5.79), así que el «a lo sumo 2» ya está garantizado estructuralmente por
+que `grupo` tiene exactamente dos columnas; `tecnico_grupo` es la **historia**, y una historia tiene que
+poder registrar a A en marzo, a B en junio y a A saliendo — exactamente lo que una restricción de no-solape
+prohibiría. **El invariante queda INDEFINIDO hasta que B5** (roles: ¿lista cerrada o etiqueta libre?) **y
+B6** (¿hace falta historia de asignaciones?) se respondan, porque son las que determinan si la tabla tiene
+slots nombrados o es un N:M plano, y por lo tanto qué invariante le corresponde. Si las respuestas producen
+slots nombrados, `EXCLUDE (grupo_id WITH =, slot WITH =, periodo WITH &&)` con `btree_gist` pasa a ser la
+herramienta correcta y entra entonces, ya bien planteado. Se registra como pendiente nombrado para la sesión
+que procese B5/B6.
+
+⚠️ Esto **no corrige** §5.79 ni R1 —los dos son registros—: reemplaza el planteo de §5.79 **hacia adelante**.
+M12.8b-3a ya dejó registrado dónde propagó la afirmación sin verificar.
+
+### 5.90 La administración (§2.8/§2.9/§2.11) es su propio sub-módulo, después del núcleo de M11.3 (2026-09-11, Lucas)
+
+**Qué se decide.** R0 había marcado `puntos-a-validar.md` §2.8 («no hay forma de abrir un año nuevo de
+grupos») como «⚠️ AHORA BLOQUEA». R1 lo remidió y la etiqueta no se sostiene: la propia letra chica de §2.8
+(`puntos-a-validar.md:735`) ya decía que no bloquea nada hoy, los cinco grupos reales están sembrados con
+`anio=2026`, y el renombre 4→5 lo hizo M12.8a-1 (§5.61). Lo que queda de §2.8 es **crear y renombrar grupos
+DESDE LA APLICACIÓN**, que R1 ubica en la misma pantalla que §2.9 (catálogos de talleres y centros
+educativos) y §2.11 (usuarios). La decisión: **esa pantalla es su propio sub-módulo, construido DESPUÉS del
+núcleo de M11.3.** Es administración, no trabajo clínico, y depende del modelo de usuarios y roles, que es
+Fase 4. R1 (BLOQUE 5.1) midió que ninguna de las doce preguntas del bloque B bloquea el núcleo de M11.3
+(secuencia, firma=bloqueo, validaciones §4.3, baremo desde `pct`, fotos §8.4, histórico inmutable, auditoría
+de campo, guard de consenso D7), así que el núcleo arranca sin esto. Se deja anotado qué tiene que llevar el
+sub-módulo cuando se construya: alta/renombre de grupo, asignación de técnicos, administración de catálogos
+(§2.9), usuarios (§2.11), y entradas de HCE-LOG con `hce_id NULL` para acciones que no cuelgan de un NNA. Su
+número y su ubicación relativa a M11.4 no se deciden acá.
+
+⚠️ R0 es un registro y no se corrige; esto reemplaza su etiqueta hacia adelante.
+
+### 5.91 I1 (`idea.anio`) aterriza ANTES de abrir `app/services/` (2026-09-11, Lucas)
+
+**Qué se decide.** §5.35 puso la puerta de I1 antes de M11.3 y §5.36 estableció que el IDEA es anual, pero
+I1 seguía siendo la única entrada viva bajo «DECIDIDO, SIN IMPLEMENTAR». El BLOQUE 4 de R1 remidió el costo
+contra `Base.metadata` y los tests, y esta sesión lo verificó de nuevo: `idea` tiene **23 columnas** y no
+tiene `anio`, **0 UNIQUE** sobre `hce_id`, **1 FK entrante** (`puntuacion_idea`, 0 a reconectar), **9**
+construcciones `Idea(` en tests (grep exacto, no substring) y **0** romperían con `anio` nullable — puramente
+aditivo. También confirmó que el guard «qué IDEA rige a la fecha» **NO SE PUEDE ESCRIBIR** sin la columna, y
+que §5.8 había sobreestimado el costo (`idea` ya era 1:N sin UNIQUE sobre `hce_id`). Decisión: **la mitad de
+backend de I1 aterriza como trabajo propio, ANTES de abrir `app/services/`**, y se lleva consigo la
+corrección de la regla del Δ en `esquema-datos-v2.md` §4 fila 4 y `backend/README.md:131`, ya registrada en
+§6 como su prerrequisito nombrado (R1-01).
+
+Dos cosas quedan explícitamente FUERA de I1, para que no se absorban por error: **(a)** la mitad de demo —17
+usos directos + 1 indirecto en 6 módulos, medido por R1— va a la ronda de demo; **(b)** la reformulación de
+«la vigente es la de mayor `fecha_consenso`» que §5.36 asignó a M11.3 se queda asignada ahí, porque depende
+de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marcador en
+`app/models/modulos.py`; no reescribe la regla.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -2624,13 +2695,27 @@ como responsable, y cualquier diseño de Fase 4 que lo omita está incompleto.
 > **Ninguno de estos existía antes de la reunión. Todos tienen decisión escrita detrás y ninguno tiene
 > dueño.** El detalle de cada uno está en `docs/notas/puntos-a-validar.md`.
 >
-> - [ ] ⚠️ **Crear grupos desde la aplicación — pasó de hueco anotado a BLOQUEANTE** (§5.37 / I2 ·
->   `puntos-a-validar.md` §2.8). **Los cuatro nombres por color están mal**: los grupos reales de IPPU son
->   **Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes**, y **ADMIN los crea
->   cuando hace falta**. Hoy **no existe endpoint, servicio, script ni pantalla que cree un grupo** — el
->   único camino es el seed, que además es *insert-only* sobre `grupo`. **Corregir los nombres es
->   exactamente la operación que no se puede hacer.** ⚠️ Y son **cinco**, no cuatro: cambia también el
->   dominio de `taller.grupos_orientados` (M12.3), que es un array de nombres de grupo.
+> - [x] ~~**Los nombres de grupo — pasaron de hueco anotado a BLOQUEANTE**~~ → **La etiqueta
+>   «BLOQUEANTE» era falsa — corregida en M12.8b-3a-bis (2026-09-11), medido, no sólo re-leído.**
+>   **RE-MEDIDO contra la base** (`SELECT nombre, anio FROM grupo`): los **cinco** nombres reales
+>   —**Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes**— ya están sembrados,
+>   todos con `anio = 2026` (M12.8a-1, §5.61). **El dominio de `taller.grupos_orientados`** (M12.3) ya está
+>   documentado contra los cinco nombres reales, **sin CHECK** (documentación, no restricción) —
+>   `esquema-datos-v2.md:577`, corregido por M12.8b-2 —. Lo que sí sigue siendo cierto y **es el único
+>   registro de esto**: el seed es ***insert-only*** sobre `grupo` — no hay endpoint, servicio, script ni
+>   pantalla que cree o renombre un grupo desde la aplicación.
+>   - **Observación de por qué la etiqueta duró tanto:** «corregir los nombres es exactamente la operación
+>     que no se puede hacer» era cierto de **la base** (el seed es insert-only) y se sobregeneralizó a
+>     todo. Es plausible que por eso tres barridos seguidos saltearan `demo/`, donde los nombres están
+>     *hardcodeados* y sí son editables — ver el bullet nuevo de `demo/js/grupos-usuario.js` más abajo.
+> - [ ] **Crear y renombrar grupos desde la aplicación** (§5.37 / I2 · `puntos-a-validar.md` §2.8 ·
+>   **§5.90**, 2026-09-11). Lo que queda, sin la etiqueta de bloqueo: **hoy no existe endpoint, servicio,
+>   script ni pantalla** que cree o renombre un grupo — el único camino sigue siendo el seed. **§5.90
+>   decide que esto es su propio sub-módulo de administración, construido DESPUÉS del núcleo de M11.3**
+>   (depende del modelo de usuarios, que es Fase 4; R1 BLOQUE 5.1 midió que nada de esto bloquea el núcleo
+>   clínico). Va en la misma pantalla que §2.9 (catálogos de talleres/centros) y §2.11 (usuarios): alta/
+>   renombre de grupo, asignación de técnicos, administración de catálogos, usuarios, y HCE-LOG con
+>   `hce_id NULL` para lo que no cuelga de un NNA. Número y ubicación relativa a M11.4: **no decididos**.
 > - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · **§5.79** ·
 >   `puntos-a-validar.md` §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo,
 >   asigna y crea otros ADMIN. ⚠️ **§5.79 derogó la ubicación de §5.72:** la tabla **`tecnico_grupo`** N:M
@@ -2796,7 +2881,7 @@ como responsable, y cualquier diseño de Fase 4 que lo omita está incompleto.
 > - [ ] **Aclararle a IPPU** que la intro del cuestionario apunta a una pregunta que no quedó en el
 >   documento (agenda §1). Treinta segundos, dicho de frente.
 
-- [ ] ⚠️ **Tres puntos donde la capa de presentación se desincronizó de una decisión ya tomada —**
+- [ ] ⚠️ **Cuatro puntos donde la capa de presentación se desincronizó de una decisión ya tomada —**
   **próxima sesión de demo, antes que cualquier otra cosa (verificados contra un harness que ya funciona,
   no a ciegas):**
   1. **`ui-core.js:257-268` pinta el total del IDEA en vivo con los cortes DEROGADOS.** No es un problema
@@ -2818,12 +2903,20 @@ como responsable, y cualquier diseño de Fase 4 que lo omita está incompleto.
      escribe ahora para que no se pierda una segunda vez.
   3. **El detalle de Ateneos (`ateneos.js:416`) duplica título** — el `h1` del registro contra el
      `h1.pagetitle` estático de `index.html`, mismo defecto, mismo commit que lo prometió sin cumplirlo.
-  - **Por qué van juntos:** los tres son la misma familia — la presentación quedó un paso atrás de una
-    decisión ya tomada (§5.13 en el primero, la limpieza de `8fbb629` en los otros dos) — y **son
-    exactamente el primer cambio que corresponde verificar contra el harness recién arreglado**, no
-    contra la pantalla a ojo. **No se tocan en la sesión que escribe esto** (alcance explícito: sólo mide
-    y documenta). Borrador de la regla de dominio que motivó encontrar el punto 1:
-    `docs/notas/borrador-color-y-significado-clinico.md` (sin firmar — ver banner del archivo).
+  4. ⚠️ **`grupos-usuario.js:14-16` (verificado línea a línea) afirma los cuatro colores derogados por
+     §5.61 como si fueran los nombres reales:** *«§5.18 / D9: los grupos reales de IPPU son por color
+     (Azul · Celeste · Naranja · Verde). … el prototipo v4 confirma los 4 colores.»* Es la **única
+     ocurrencia sobreviviente de la fórmula derogada que IPPU PUEDE VER** — está en la demo, no en un
+     comentario de backend (hallada por el barrido retroactivo de M12.8b-3a, registrada acá recién en
+     M12.8b-3a-bis). **NO SE CORRIGE ACÁ:** esos nombres pueden ser *claves de búsqueda* (lookup keys) y
+     no sólo etiquetas de pantalla — cambiarlos sin verificación visual en navegador arriesga romper la
+     vista. **Dueño: Lucas.**
+  - **Por qué van juntos:** los cuatro son la misma familia — la presentación quedó un paso atrás de una
+    decisión ya tomada (§5.13 en el primero, la limpieza de `8fbb629` en el segundo y el tercero, §5.61
+    en el cuarto) — y **son exactamente el primer cambio que corresponde verificar contra el harness
+    recién arreglado**, no contra la pantalla a ojo. **No se tocan en la sesión que escribe esto**
+    (alcance explícito: sólo mide y documenta). Borrador de la regla de dominio que motivó encontrar el
+    punto 1: `docs/notas/borrador-color-y-significado-clinico.md` (sin firmar — ver banner del archivo).
 
 - [ ] **F1-nav · lo que quedó abierto → pasa a la próxima ronda de demo:**
   - **(b) verificación visual en navegador** — ninguna de las 4 rondas la hizo (Claude Code no controla browser): recorrer Analítica · Grupos · alta de NNA · expedientes · Inclusión · Ateneos.
