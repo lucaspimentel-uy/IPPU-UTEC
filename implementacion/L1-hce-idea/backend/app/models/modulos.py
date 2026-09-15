@@ -208,7 +208,8 @@ class Consentimiento(FirmaMixin, Base):
 
 
 class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
-    """HCE-LB — el IDEA como **línea base única**, no como evaluación anual.
+    """HCE-LB — el IDEA es **ANUAL** (§5.36); el modelo de abajo todavía implementa
+    la **línea base única** del Documento Técnico, no la anualidad decidida — ver I1.
 
     ⚠️ **Desactualizado por decisión, no por implementar — I1 (`handoff.md` §5.36,
     2026-08-26; §6 «DECIDIDO, SIN IMPLEMENTAR»).** IPPU confirmó que el IDEA es

@@ -138,12 +138,14 @@ class Pai(Base):
     se lee en vivo (el centro educativo, los puntajes de los instrumentos, la
     severidad, el grupo).
 
-    ⚠️ **`prest` es el caso que no cierra limpio con esa regla**, y queda
-    anotado en vez de resuelto: «prestaciones y certificaciones vigentes» es
-    diagnóstico de situación —debería leerse en vivo—, pero hoy **no hay de dónde
-    leerlo**: `organismo_bps` es 0..1 por expediente con **una sola**
-    `prestacion` en texto libre, no un conjunto. Se modela como hija propia del
-    PAI y la tensión va a `docs/notas/puntos-a-validar.md` §2.15.
+    ⚠️ **`prest` es el caso que no cierra limpio con esa regla**, y quedó
+    **resuelto por §5.57 (salida 2)**, no abierto: «prestaciones y certificaciones
+    vigentes» sería diagnóstico de situación —debería leerse en vivo—, pero hoy
+    **no hay de dónde leerlo**: `organismo_bps` es 0..1 por expediente con **una
+    sola** `prestacion` en texto libre, no un conjunto. Se modela como hija propia
+    del PAI, **declaración fechada, no copia sincronizada**; el residuo de
+    construcción —si conviene un aviso de divergencia— queda para M11.3/M11.4
+    (`docs/notas/puntos-a-validar.md` §2.15, puntero de construcción, opcional).
     """
     __tablename__ = "pai"
 
@@ -559,13 +561,15 @@ class PaiPrestacion(Base):
     se copia — insertar un ítem en la constante reescribiría en silencio lo ya
     registrado.
 
-    ⚠️ **Es la tabla con la tensión abierta del módulo.** Por §5.22, «vigente» es
-    diagnóstico de situación y debería leerse en vivo; pero no hay de dónde:
-    `organismo_bps` guarda **una sola** `prestacion` en texto libre (0..1 por
-    expediente), no un conjunto, y dos de los seis ítems —la Valoración Funcional
-    y el certificado de discapacidad— **no son prestaciones BPS**. Se modela acá
-    como declaración del PAI y la pregunta —¿unificar con HCE-ORG, y en qué
-    dirección?— queda en `docs/notas/puntos-a-validar.md` §2.15.
+    ⚠️ **Fue la tabla con la tensión abierta del módulo — resuelta por §5.57
+    (salida 2).** Por §5.22, «vigente» sería diagnóstico de situación y debería
+    leerse en vivo; pero no hay de dónde: `organismo_bps` guarda **una sola**
+    `prestacion` en texto libre (0..1 por expediente), no un conjunto, y dos de
+    los seis ítems —la Valoración Funcional y el certificado de discapacidad—
+    **no son prestaciones BPS**. Se modela acá como **declaración fechada del
+    PAI, no copia sincronizada de `organismo_bps`**; el residuo de construcción
+    —¿unificar con HCE-ORG, y en qué dirección?— queda para M11.3/M11.4
+    (`docs/notas/puntos-a-validar.md` §2.15, puntero de construcción, opcional).
     """
     __tablename__ = "pai_prestacion"
 
