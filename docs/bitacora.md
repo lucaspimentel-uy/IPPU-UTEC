@@ -20,6 +20,59 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-11 · Sesión M12.8b-3a-bis — tres decisiones que se habían quedado en el chat** (Lucas +
+  Claude, rama `main`). **No toca código en absoluto.** Existe porque tres decisiones que Lucas tomó en
+  la misma ronda que produjo §5.86–§5.88 nunca llegaron al repo — el prompt de M12.8b-3a se escribió
+  antes de que existieran. **Es el patrón de §5.83 (una redacción/decisión sobrevive fuera del registro)
+  aplicado al propio método de trabajo de la sesión**, no al contenido de un documento: vale la pena
+  nombrarlo así, en vez de tratarlo como tres entradas sueltas.
+  - **Punto de partida, medido.** Árbol limpio en `8f3a8aa` salvo el prompt de sesión sin trackear; los
+    dos remotos (`gitlab`, `origin`) en `8f3a8aa`. Docker ya arriba, `ippu-postgres` healthy. `pytest -q`
+    → **432 passed, 0 skipped** (30 s). `verificar_estado.py --check` y `generar_catalogos_backend.py
+    --check` → **exit 0**. Head de Alembic `559b1a79cb77`, un solo archivo en `versions/`. **51 tablas**.
+    Última entrada de §5: **§5.88**.
+  - **Paso 1 — tres entradas de §5, transcritas.** Números medidos: **§5.89, §5.90, §5.91**. **§5.89** —
+    `btree_gist` **no entra**: el invariante «≤2 asignaciones vigentes» de `tecnico_grupo` queda
+    **indefinido** hasta que B5/B6 se respondan, porque el mecanismo propuesto (un `EXCLUDE` pairwise) no
+    puede expresar «a lo sumo 2» tal como está redactado — reemplaza el planteo de §5.79 hacia adelante,
+    sin corregirlo (es un registro). **§5.90** — la administración (crear/renombrar grupos, catálogos,
+    usuarios; §2.8/§2.9/§2.11) es su **propio sub-módulo**, construido **después** del núcleo de M11.3 —
+    reemplaza la etiqueta «AHORA BLOQUEA» que R0 le había puesto a §2.8 (R0 no se corrige). **§5.91** — I1
+    (`idea.anio`) aterriza **antes** de abrir `app/services/`, arrastrando consigo la corrección de la
+    regla del Δ (ya prerrequisito nombrado de I1 vía R1-01); la mitad de demo y la reformulación de «cuál
+    IDEA rige» quedan explícitamente **fuera** de I1.
+  - **Verificación propia, no heredada de R1/el prompt.** Antes de escribir §5.91 se corrió el conteo
+    real: `idea` tiene **23 columnas**, **0** `UNIQUE` sobre `hce_id`, **1** FK entrante (`puntuacion_idea`),
+    y **9** construcciones `Idea(` exactas en `tests/*.py` (grep con borde de palabra, no substring — la
+    cifra del prompt/R1 coincidió). Antes de tocar el bullet de §6 se corrió `SELECT nombre, anio FROM
+    grupo`: los cinco nombres reales, los cinco con `anio=2026`.
+  - **Paso 2 — el bullet de §6 sobre crear grupos, corregido, no sólo re-leído.** Estaba mal en tres
+    puntos: la etiqueta «BLOQUEANTE» (superada por §5.90), la afirmación de que corregir los nombres «es
+    exactamente la operación que no se puede hacer» (cierto de la base en su momento, resuelto por
+    M12.8a-1/§5.61, verificado ahora contra la base) y la nota de que `taller.grupos_orientados` todavía
+    tenía que cambiar de dominio (ya corregido por M12.8b-2, `esquema-datos-v2.md:577`, sin CHECK). Se
+    partió en dos bullets: uno **`[x]`** con lo resuelto —preservando el único hecho que este bullet
+    registraba y que sigue siendo cierto, que el seed es *insert-only* sobre `grupo`— y uno **`[ ]`** con
+    lo que de verdad queda, apuntando a §5.90. **Observación de por qué duró tanto:** la frase «es la
+    operación que no se puede hacer» era cierta de **la base** y se sobregeneralizó a todo — lectura
+    plausible de por qué tres barridos seguidos saltearon `demo/`, donde los nombres están hardcodeados y
+    sí son editables.
+  - **Paso 3 — el hallazgo de la demo, registrado con dueño.** `demo/js/grupos-usuario.js:14-16`
+    (verificado línea a línea) afirma en presente los cuatro colores derogados por §5.61 — la **única
+    ocurrencia sobreviviente que IPPU puede ver**, no un comentario interno. M12.8b-3a la había encontrado
+    en el barrido retroactivo y la había reportado sin registrarla; esta sesión la suma como **cuarto
+    punto** al bullet «Tres puntos donde la capa de presentación se desincronizó», con **Lucas** como
+    dueño y explícitamente **sin corregir**: esos nombres pueden ser claves de búsqueda, no sólo etiquetas
+    de pantalla, y cambiarlos sin verificación visual en navegador arriesga romper la vista.
+  - **Verificación de cierre, medida (regla 4).** `pytest -q` → **432 passed, 0 skipped**.
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**. **51 tablas**,
+    head `559b1a79cb77` — **idéntico al arranque; esta sesión no tocó código**. Archivos tocados:
+    `handoff.md` (§5.89–§5.91, §6, cabecera), `docs/bitacora.md` (esta entrada),
+    `docs/prompts/Session M12.8b-3a-bis.md` (guardado verbatim).
+  - **Commits (con trailer, §5.62):** ver el commit inmediatamente anterior a este en `git log` para el de
+    §5/§6 de esta sesión, y el de cierre (cabecera + bitácora + prompt). A `gitlab` y `origin`, mismo
+    hash, árbol limpio.
+
 - **2026-09-11 · Sesión M12.8b-3a — tres decisiones de Lucas, R1-01 registrado, el invariante de
   `tecnico_grupo` puesto en duda, la cola de §6 archivada** (Lucas + Claude, rama `main`). **No toca
   `app/services/`, no implementa I1, no regenera el seed de catálogos; sólo docstrings/comentarios de
