@@ -20,6 +20,91 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-11 · Sesión M12.8b-3a — tres decisiones de Lucas, R1-01 registrado, el invariante de
+  `tecnico_grupo` puesto en duda, la cola de §6 archivada** (Lucas + Claude, rama `main`). **No toca
+  `app/services/`, no implementa I1, no regenera el seed de catálogos; sólo docstrings/comentarios de
+  `app/` (Paso 3) y documentación.** Alcance recortado a propósito respecto del M12.8b-3 original: el
+  pase de vocabulario (§5.75/§5.76) se difiere a **M12.8b-3b**, porque cinco sesiones seguidas no habían
+  tocado código y es el único pendiente que no desbloquea nada.
+  - **Punto de partida, medido.** Árbol limpio en `12cee57` salvo el prompt de sesión sin trackear; los
+    dos remotos (`gitlab`, `origin`) en `12cee57`. Docker Desktop no estaba arriba — se levantó y el
+    contenedor `ippu-postgres` quedó healthy. `pytest -q` → **432 passed, 0 skipped** (32 s).
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0** (el segundo ya
+    decía «al día» antes de tocar nada). Head de Alembic `559b1a79cb77`, **un solo archivo** en
+    `versions/`. **51 tablas** en `Base.metadata`. `consulta-a-ippu.md` presente.
+  - **Paso 1 — tres entradas de §5, transcritas (Lucas decidió, la sesión transcribe).** Números libres
+    medidos: **§5.86, §5.87, §5.88**. **§5.86** — el motor de flujo arranca con **409 duro** por default
+    (responde la pregunta 3 del BLOQUE 6.4 de R1); no cierra B4 con IPPU. **§5.87** — `tecnico_grupo` se
+    parte: la tabla N:M es M11.3 (estructural, sin discusión), el servicio de asignación y sus reglas
+    esperan a B5/B6 (pregunta 4); el invariante «≤2 vigentes» queda explícitamente **no decidido ni
+    construido** acá. **§5.88** — el registro de accesos con motivo (§2.17) es explícitamente **Fase 4**
+    (pregunta 7), dueño **Lucas**, para que no se evapore. Las preguntas 1, 2, 5 y 6 del mismo bloque
+    **no** se decidieron.
+  - **Paso 2(a) — R1-01 registrado donde no se pierde.** Verificado, no copiado de R1: la redacción
+    derogada «Δ sólo B−A» vive en `esquema-datos-v2.md:723` (R1 decía `:723`, correcto) y la redacción
+    nueva «mismo instrumento» en `esquema-datos-v2.md:790` (R1 y el prompt de sesión decían `:788` —
+    **desactualizado en 2 líneas**, corregido acá). `backend/README.md:131` también con la vieja. Se
+    registra en §6 (bullet I1) como **prerrequisito nombrado de I1**; no se corrige (Lucas decidió que
+    viaja con I1).
+  - **Paso 2(b) — el invariante de `tecnico_grupo` puesto en duda, medido, NO decidido.** §5.79 afirma
+    que «≤2 asignaciones vigentes, sin solape» necesita un `EXCLUDE` con `btree_gist`. Cierto pero
+    **incompleto y nunca verificado**: un `EXCLUDE` es **pairwise** — `EXCLUDE (grupo_id WITH =, periodo
+    WITH &&)` expresa «a lo sumo UNA vigente», no dos; no hay formulación de `EXCLUDE` que exprese «a lo
+    sumo DOS» directamente (un discriminador de slot sí daría exactamente dos, pero el esbozo de §5.79
+    tiene `rol text, SIN CHECK` — verificado, tres roles distintos lo violarían igual). Verificado contra
+    el modelo: `grupo.tecnico1_id`/`tecnico2_id` siguen existiendo (`identidad.py:131,133`) y son la
+    fuente de verdad — el «a lo sumo 2» ya está garantizado ahí, estructuralmente; `tecnico_grupo` es la
+    **historia**, no el invariante. Propagó sin verificar a §5.79, y a R1 BLOQUE 3.2 (línea 253), 6.1
+    (430–431), 6.3 (471) y la pregunta 5 del 6.4 (496) — **el primer hallazgo de esta serie que es una
+    afirmación técnica nunca verificada**, no una redacción derogada que sobrevivió (§5.83). Registrado en
+    §6 como punto abierto para M11.3, sin corregir §5.79 ni R1 (son registros).
+  - **Paso 2(c) — barrido retroactivo de §5.83, medido, no aplicado.** Comandos: `grep -rn "Δ sólo B"`,
+    `grep -rn "Azul.*Celeste.*Naranja.*Verde\|cuatro grupos por color"`, `grep -rn
+    "tecnico_grupo.*M12.8a\|M12.8a.*tecnico_grupo"` (repo completo, sin `node_modules`/`graphify-out`).
+    **§5.36:** sin sobrevivientes nuevos, coincide con R1-01. **§5.61:** ⚠️ **una ocurrencia LIVE no
+    detectada antes** — `demo/js/grupos-usuario.js:14-16` afirma en presente que los grupos reales son
+    por color, contradiciendo §5.61. **§5.79:** sin sobrevivientes — las apariciones en `handoff.md` son
+    registro histórico correcto (§5.72 tal como decía antes de derogarse) o la propia derogación citándola.
+    Registrado en §6 como pendiente costado (3 líneas de `demo/js/`, fuera de alcance de esta sesión).
+  - **Paso 3 — fixes de docstring/comentario, DENTRO del límite duro (sólo texto, ni una columna).**
+    **R1-04** — `app/models/modulos.py:211`: la primera línea del docstring de `Idea` decía «línea base
+    única», contradiciendo el aviso de I1 dos líneas abajo; reescrita para decir que el IDEA **es anual**
+    por decisión y que el modelo de abajo todavía implementa línea base única. **R1-05** —
+    `app/models/pai.py:146` y `:568`: los dos punteros a `puntos-a-validar.md` §2.15 como «tensión
+    abierta» se corrigieron para citar la resolución (**§5.57**, salida 2 — declaración fechada, no copia
+    sincronizada), dejando el residuo de construcción como puntero opcional a M11.3/M11.4. **R1-10** —
+    `backend/README.md:131`: contaba sólo 4 reglas como si fueran todas; medido contra la tabla real de §4
+    (`esquema-datos-v2.md`) → **44 filas** (incluye las dos de guards de PAI que sumó M12.8b-1b). Se
+    corrigió el conteo y se dejó la fila del Δ **sin tocar su redacción**, con puntero a R1-01. `pytest`
+    idéntico después (432 passed).
+  - **Paso 4 — archivada la cola resuelta de §6.** Extracción programática (no manual): cada bullet con
+    checkbox —a cualquier indentación, dentro y fuera de blockquote— es una unidad; su extensión va de su
+    línea de inicio a la línea anterior al próximo bullet **o encabezado de subsección** (cinco
+    encabezados identificados y protegidos para que no se absorbieran en el bullet anterior, que era el
+    bug de la primera pasada del script). Resultado: **81 bullets totales, 42 `[x]` (199 líneas) → movidos
+    verbatim a `docs/pendientes-resueltos.md`**, **39 `[ ]` quedan en §6**. Verificado con **sha256** del
+    contenido movido, idéntico entre lo extraído y lo escrito en el archivo nuevo. Verificado además que
+    §7 en adelante de `handoff.md` quedó **byte-idéntico** a `12cee57`, y que el prefijo de §5 (antes del
+    Paso 1) también. §6 queda con un stub que nombra el archivo, la fecha y la condición verificada en
+    M12.8b-1b (ningún archivo cita un bullet resuelto por posición). Antes: §6 = 477 líneas / 81 bullets.
+    Después: §6 = 286 líneas / 39 bullets abiertos.
+  - **Paso 5 — dos mediciones, sin acción.** (a) Grep de «Heroku» en el repo: **cero** afirmaciones lo
+    presentan como destino asentado — todas dicen «dónde vive hoy, no el destino» (§5.44), incluida la
+    única entrada de §5. (b) Lo que queda de M12: cierre de M12.8 (regenerar
+    `app/data/catalogos_iniciales.json` — **ya sincronizado hoy**, `--check` en verde antes de tocar nada
+    — + tests + docs) y el pase de vocabulario, ahora **M12.8b-3b**, diferido.
+  - **Verificación de cierre, medida (regla 4).** `pytest -q` → **432 passed, 0 skipped**.
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**. **51 tablas**,
+    head `559b1a79cb77`, un solo archivo en `versions/` — **idéntico al arranque**. Archivos tocados:
+    `handoff.md` (§5.86–§5.88, §6, cabecera), `docs/pendientes-resueltos.md` (**nuevo**),
+    `implementacion/L1-hce-idea/backend/app/models/modulos.py`,
+    `implementacion/L1-hce-idea/backend/app/models/pai.py`,
+    `implementacion/L1-hce-idea/backend/README.md`, `docs/bitacora.md` (esta entrada),
+    `docs/prompts/Session M12.8b-3a.md` (guardado verbatim, register desde que nace).
+  - **Commits (con trailer, §5.62):** ver el commit inmediatamente anterior a este en `git log` para los
+    tres de esta sesión (§5 · fixes de Paso 3 · archivo de §6) y el de cierre (cabecera + §6 + esta
+    entrada + el prompt). A `gitlab` y `origin`, mismo hash, árbol limpio.
+
 - **2026-09-10 · Sesión M12.8b-1b + R1 — la sección HCE-PAI del esquema, y el reconocimiento previo a
   M11.3** (Lucas + Claude, rama `main`). **Tres partes que no comparten más que la medición de arranque, y
   ninguna toca código.** PARTE A (M12.8b-1b): escribe un documento. PARTE B (R1): lee y produce un
