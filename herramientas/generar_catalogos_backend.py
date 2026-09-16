@@ -9,9 +9,20 @@ versionado; esto lo reemplaza y queda en el repo.
 
 **De dónde sale cada sección.**
 
+⚠️ **2026-09-16 (decisión de Lucas, pendiente de asentar en `handoff.md` §5):** el Prototipo v4
+**dejó de ser fuente normativa** — es un insumo a consultar, no una especificación a la que haya
+que converger. Por eso mover una sección de la demo al prototipo **ya no tiene la justificación
+que tenía** ("la fuente autoritativa cambió", M12.1–M12.8 tal como estaba escrito): los dos
+artefactos tienen la misma procedencia (son de IPPU, uno más nuevo que el otro) y mover datos
+entre ellos sólo arriesga cambiarlos sin ganar fidelidad. **Regla vigente:** una sección se
+regenera desde el prototipo únicamente cuando el prototipo trae el dato **igual, verbatim** —
+ahí regenerar es sólo declarar la fuente correcta, no un cambio de dato. Si el prototipo lo trae
+distinto o incompleto, la sección **se queda** donde estaba, con el motivo anotado.
+
 | Sección | Fuente |
 |---|---|
-| `idea_dimension`, `idea_nivel.descriptor`, `ippu_item`, `baremo_categoria`, `categoria_documento`, `servicio` | lo ya generado desde la **demo v4.1** (se preserva tal cual) |
+| `idea_dimension`, `idea_nivel`, `ippu_item`, `baremo_categoria`, `servicio` | lo ya generado desde la **demo v4.1** (se preserva tal cual — ver `DESDE_LA_DEMO` para el motivo de cada una) |
+| `categoria_documento` | **inline en `mDocs()` del Prototipo v4** (array `cats`, no es catálogo estructurado — caso "inline en un widget" de §5.50/J1). Los 12 nombres y los 4 marcados "Registro histórico" ya eran éstos en la demo: cambia la fuente declarada, no el dato — verificado verbatim antes de mover. |
 | `taller` (M12.3 · D5) | **`CAT_TALLERES` del Prototipo v4** — los 14 reales, en reemplazo de los 8 de la demo |
 | `severidad_nivel` (M12.4) | `SEV_ETQ`, `SEV_CS`, `SEV_CRR` y `SEV_APOYO` del Prototipo v4, en una fila por grado |
 | `idea_nivel.descriptor_breve`, `idea_dimension.que_evalua` | `IDEA_DESC` del **Prototipo v4** |
@@ -48,11 +59,23 @@ SALIDA = (
 )
 
 #: Secciones que vienen de la demo v4.1 y que este script **no** regenera: las
-#: copia del archivo existente. M12.8 las regenera desde el prototipo, que pasó
-#: a ser la fuente autoritativa; hasta entonces tocarlas sería trabajo perdido.
+#: copia del archivo existente, verbatim. **No son items pendientes** — cada
+#: una tiene un motivo permanente (2026-09-16, ver el aviso de arriba: el
+#: Prototipo v4 no es fuente normativa, así que no hay "hasta que se regeneren"):
+#:   - `idea_nivel` — el `descriptor` es el texto oficial de Rivière (1997/2002);
+#:     el `IDEA_DESC` del prototipo es una paráfrasis condensada de otra fuente
+#:     (decisión de M12.1, "los 60 descriptores NO se reemplazan"). Nunca va a
+#:     salir de acá — no es un `descriptor_breve`, que sí viene del prototipo.
+#:   - `servicio` — el prototipo sólo nombra los tres servicios en prosa
+#:     (§HCE_IPPU_Prototipo_v4.html:1637,1976); no trae `clave`/`activo` en
+#:     ninguna estructura. Inventar esos valores sería el mecanismo de §5.37.
+#:   - `idea_dimension`, `ippu_item`, `baremo_categoria` — el prototipo SÍ trae
+#:     algo parecido (`IDEA_DIMS`, `IPPU_ITEMS`, `BUND_CATS`), pero no idéntico:
+#:     `idea_dimension` exigiría **derivar** `codigo`/`escala` (generar dato, no
+#:     leerlo) y los otros dos son "parecidos", no verbatim. Se quedan hasta que
+#:     alguien verifique campo por campo que no cambia nada — no antes.
 DESDE_LA_DEMO = (
-    "idea_dimension", "idea_nivel", "ippu_item", "baremo_categoria",
-    "categoria_documento", "servicio",
+    "idea_dimension", "idea_nivel", "ippu_item", "baremo_categoria", "servicio",
 )
 
 #: La cita del instrumento va **siempre** "1997/2002" (regla de M12.1): la
@@ -326,6 +349,34 @@ def estados_inclusion(proto: dict) -> list[dict]:
     return filas
 
 
+def categorias_documento(js: str) -> list[dict]:
+    """Las 12 categorías de HCE-DOC, del array `cats` embebido en `mDocs()`.
+
+    No es un catálogo estructurado del JSON extraído (como `taller` o
+    `INC_ESTADOS`): es un array plano de literales, **inline en el cuerpo de
+    la función** que arma la tabla del módulo — el caso "inline en un widget"
+    de §5.50 (J1). Se extrae con el mismo mecanismo que bandas/delta (parsear
+    el cuerpo de la función), no porque el dato haya cambiado: los 12 nombres
+    y los 4 marcados "Registro histórico" ya eran exactamente éstos en la
+    demo v4.1 — verificado verbatim antes de mover. Cambia sólo qué fuente
+    declara el generador, no el contenido.
+    """
+    cuerpo = _cuerpo(js, "mDocs")
+    m = re.search(r"const cats=\[(.*?)\];", cuerpo, re.DOTALL)
+    assert m, "no se encontró el array `cats` en mDocs()"
+    crudos = re.findall(r"'(" + _CAMPO + r")'", m.group(1))
+    assert len(crudos) == 12, f"cats trae {len(crudos)}, se esperaban 12"
+    nombres = [_limpiar(c) for c in crudos]
+    return [
+        {
+            "nombre": n,
+            "es_registro_historico": n.startswith("Registro histórico"),
+            "orden": i,
+        }
+        for i, n in enumerate(nombres, start=1)
+    ]
+
+
 def reglas(proto: dict) -> list[dict]:
     return [
         {"regla": _cita(r["r"]), "descripcion": _cita(r["d"]),
@@ -368,8 +419,8 @@ def construir() -> dict:
             "Generado por herramientas/generar_catalogos_backend.py (M12.1). "
             "Instrumentos y catálogos base: demo v4.1. "
             "Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres, "
-            "niveles de severidad DSM-5-TR y estados de inclusión: "
-            "Prototipo v4 de IPPU (docs/prototipo-v4/). "
+            "niveles de severidad DSM-5-TR, estados de inclusión y categorías "
+            "de documento: Prototipo v4 de IPPU (docs/prototipo-v4/). "
             "Recordatorios y grupos: Manual + plan M12. "
             "NO editar a mano: correr el script."
         ),
@@ -386,6 +437,7 @@ def construir() -> dict:
     for nivel in datos["idea_nivel"]:
         nivel["descriptor_breve"] = _cita(desc[nivel["dimension_id"] - 1][f"n{nivel['valor']}"])
 
+    datos["categoria_documento"] = categorias_documento(js)
     datos["taller"] = talleres(proto)
     datos["estado_inclusion"] = estados_inclusion(proto)
     # M12.5: el catálogo de centros educativos **nace vacío y es correcto que

@@ -107,13 +107,18 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **432 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6): si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **434 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6, 432 al cerrar M12.8a): si ves «skipped», algo está mal.
 
-**Ronda en curso — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.**
-Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`; fuente normativa nueva: Manual de
-Procedimientos v1.0 + Prototipo v4 (`handoff.md` §5.10, por encima del Documento Técnico). Toca la misma
-capa que M11.2 —modelos, migración inicial, catálogos— por eso va antes de escribir servicios. Leer también
-`docs/markdown/prototipo-v4-referencia.md`. **M11.3–M11.6 se retoman al cerrar M12.**
+**Ronda M12 (absorción del Prototipo v4) — CERRADA el 2026-09-16**, intercalada entre M11.2 y M11.3.
+Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Toca la misma capa que M11.2 —modelos,
+migración inicial, catálogos— por eso fue antes de escribir servicios. Leer también
+`docs/markdown/prototipo-v4-referencia.md`. **Sigue ahora M11.3** — única excepción registrada de M12:
+**M12.8b-3b** (pase de vocabulario, diferido, sin dueño, no bloquea M11.3). ⚠️ **Cambio de alcance,
+2026-09-16 (Lucas, sesión M12.8-cierre+I1):** el Prototipo v4 **dejó de ser fuente normativa** — pasa a
+ser insumo a consultar, no especificación a la que converger. La entrada de `handoff.md` §5 que asienta
+esto formalmente la escribe Lucas aparte; el párrafo de "Precedencia normativa" más abajo, que todavía
+nombra al Prototipo v4 como fuente autoritativa, queda **desactualizado hasta esa entrada** — no se
+reescribe acá porque la decisión no es de esta sesión.
 
 **Precedencia normativa — enmienda del 2026-09-03 (L9, `handoff.md` §5.10).** Dos documentos de IPPU
 ingresados el 2026-09-03: `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo
@@ -163,14 +168,17 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
     prototipo le da 4 funciones de gestión a `CAT_TALLERES` y **cero** a estas tres.
   - ⚠️ **Ningún guard**: los guards (habilitación de §IX por tipo, Anexo A, «qué IDEA rige») son **M11.3**.
   - ⚠️ **`pai` NO lleva `UNIQUE(hce_id, anio)`** (§5.22): hay más de un PAI por año.
-- **M12.8a EN CURSO** — deltas de esquema/seed de la serie L + L9 antes de la regeneración final. **HECHO:**
-  M12.8a-1 (§VII/FODA fuera de `pai`, cinco nombres reales de grupo, `ateneo.observaciones`) y M12.8a-3
-  (`divulgacion` §5.80 — registro de divulgación de datos, append-only, sin seed). ⚠️ **`tecnico_grupo`
-  se difirió a M11.3** (§5.79 deroga la ubicación de §5.72, no la decisión). Estado hoy: **51 tablas**,
-  **432 tests en verde y 0 salteados**, migración `559b1a79cb77`.
-- **Queda M12.8b** (docs: el **documento** `esquema-datos-v2.md` pasa a **v3** —el nombre del archivo **no**
-  cambia, §5.81—, README, `estructura-repositorio.md`) y el resto de M12.8 (seed espejo, tests). Con M12.5, M12.6, M12.7 y M12.8a hechos **ya no hay trabajo en
-  paralelo sobre `app/models/`**, así que §5.19 no congela nada.
+- **M12.8a HECHO** (2026-09-03) — deltas de esquema/seed de la serie L + L9. M12.8a-1 (§VII/FODA fuera de
+  `pai`, cinco nombres reales de grupo, `ateneo.observaciones`) y M12.8a-3 (`divulgacion` §5.80 — registro
+  de divulgación de datos, append-only, sin seed). ⚠️ **`tecnico_grupo` se difirió a M11.3** (§5.79 deroga
+  la ubicación de §5.72, no la decisión).
+- **M12.8b HECHO** (2026-09-16, sesión M12.8-cierre+I1) — docs (`esquema-datos-v2.md` a **v3**, §5.81;
+  README; `estructura-repositorio.md`), el seed de **catálogos** (`categoria_documento` re-sembrado desde
+  el Prototipo v4 verbatim; el resto de `DESDE_LA_DEMO` se queda, con motivo anotado en el código — el
+  Prototipo v4 dejó de ser fuente normativa, ver arriba) y los guards de M12.1–M12.7 auditados (un hueco
+  real corregido en `puntuacion_idea`). **No** es el seed espejo (eso es M11.5). Estado final: **51
+  tablas**, **434 tests en verde y 0 salteados**, migración `559b1a79cb77`, un solo archivo en `versions/`.
+  **Única excepción registrada: M12.8b-3b** (pase de vocabulario, diferido).
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

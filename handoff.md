@@ -7,31 +7,35 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-09-11 (sesión **M12.8b-3a-bis** — **no toca código en absoluto**; existe
->   porque tres decisiones de Lucas de la misma ronda que produjo §5.86–§5.88 se habían quedado en un chat
->   y nunca llegaron al repo — el patrón de §5.83 aplicado al propio método de trabajo). **Tres decisiones
->   más, transcritas a §5.89–§5.91:** `btree_gist` **no entra** — el invariante «≤2 asignaciones vigentes»
->   de `tecnico_grupo` queda **indefinido** hasta B5/B6, porque un `EXCLUDE` pairwise no puede expresarlo
->   tal como está redactado (§5.89, reemplaza el planteo de §5.79 hacia adelante); la **administración**
->   (crear/renombrar grupos, catálogos, usuarios) es su **propio sub-módulo, después del núcleo de M11.3**
->   (§5.90, reemplaza la etiqueta «AHORA BLOQUEA» de R0 sobre §2.8 — su letra chica ya decía que no
->   bloqueaba nada, verificado contra la base: los 5 grupos reales, `anio=2026`); **I1 aterriza antes de
->   abrir `app/services/`** (§5.91, verificado de nuevo: `idea` 23 columnas, 0 `anio`, 0 UNIQUE, 1 FK
->   entrante, 9 `Idea(` exactas en tests). **El bullet de §6 sobre crear grupos, corregido** (no sólo
->   re-leído): la etiqueta BLOQUEANTE y la nota de `grupos_orientados` estaban stale, partido en un `[x]`
->   con lo resuelto (preserva que el seed sigue siendo *insert-only*) y un `[ ]` con lo que de verdad
->   queda, apuntando a §5.90. **Registrado con dueño (Lucas) el hallazgo de la demo** que M12.8b-3a había
->   encontrado y no registrado: `demo/js/grupos-usuario.js:14-16` afirma los 4 colores derogados por
->   §5.61 — la única ocurrencia sobreviviente que IPPU puede ver — sumado como 4.º punto al bullet de
->   presentación desincronizada, **sin corregir** (riesgo de que los nombres sean lookup keys). `pytest -q`
->   → **432 passed, 0 skipped**; ambos `--check` → exit 0; **51 tablas**; head `559b1a79cb77` —
->   **idénticos al inicio, esta sesión no tocó código.** Bitácora en `docs/bitacora.md`. **Queda de
->   M12.8b:** **M12.8b-3b** (pase de vocabulario §5.75/§5.76, diferido hasta el cierre de M12); más el
->   resto de M12.8 (regenerar `app/data/catalogos_iniciales.json` — **ya sincronizado**, según `--check` —
->   + tests + docs; **no** el seed espejo, que es M11.5). **M12.8b-3a-bis HECHO** (esta sesión). Después:
->   cierre de M12.8 → I1 (antes de `app/services/`, §5.91) → M11.3.
+> - **Última actualización:** 2026-09-16 (sesión **M12.8-cierre+I1**, Parte A — **cierra M12.8 y con él la
+>   ronda M12**). ⚠️ **Cambio de alcance decidido por Lucas durante la sesión, sin §5 propia todavía** (la
+>   escribe él aparte): **el Prototipo v4 dejó de ser fuente normativa** — pasa a ser insumo a consultar,
+>   no especificación a la que converger. La línea de "fuente normativa vigente" de abajo **sigue
+>   nombrándolo precedencia 1**: queda **desactualizada hasta que Lucas la corrija con su propia entrada
+>   de §5** — no se tocó acá porque no es esta sesión la que decide. Consecuencia concreta ya aplicada:
+>   `DESDE_LA_DEMO` (`generar_catalogos_backend.py`) **no se vació** como pedía el plan — se movió
+>   **sólo `categoria_documento`** (inline en `mDocs()` del prototipo, verificado verbatim contra los 12
+>   valores existentes: cambió la fuente declarada, no el dato); `idea_nivel` y `servicio` se quedan
+>   **permanentemente** (motivo anotado en el código: sin fuente extraíble, o el dato oficial no debe
+>   ceder ante la paráfrasis del prototipo); `idea_dimension`/`ippu_item`/`baremo_categoria` se quedan
+>   **por ahora** (el prototipo trae algo "parecido", no verbatim). Detalle completo en §6, bullet M12.8.
+>   **Auditados los guards de M12.1–M12.7** (8 archivos de modelos, CHECK constraints): un solo hueco real
+>   — `puntuacion_idea.rango_t2`/`ns_t2_sin_valor` sin el caso de rechazo probado — corregido con 2 tests
+>   nuevos en `tests/test_m12_consenso.py`. `solo_al_crear`, índices de FK, `Numeric`→`Decimal` y el
+>   criterio §12-A: medidos, **ya estaban completos/correctos**, nada que hacer. `pytest -q` → **434
+>   passed, 0 skipped** (432 + 2); ambos `--check` → exit 0; **51 tablas**; head `559b1a79cb77`, un solo
+>   archivo en `versions/` (**sin cambios de modelo esta sesión** — el rebuild limpio explícito lo bloqueó
+>   el sandbox, no hacía falta). **M12 CERRADO, con la única excepción registrada: M12.8b-3b** (pase de
+>   vocabulario §5.75/§5.76, diferido, sin dueño — no bloquea M11.3). Bitácora en `docs/bitacora.md`.
+>   Después: Parte B de esta misma sesión (**I1**, §5.91) → M11.3.
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4), intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a** — **51 tablas**, **432 tests en verde y 0 salteados**, head de Alembic **`559b1a79cb77`** (un solo archivo en `versions/`). ⚠️ **Las tres cifras se remidieron contra el código y la base en M12.8b-1b** (2026-09-10) y siguen iguales tras M12.8b-3a (2026-09-11, sólo documentación); el punto de partida lo había verificado el relevamiento **R0** del 2026-08-26 (`docs/notas/relevamiento-estado-2026-08-26.md`) y luego **R1** (`docs/notas/relevamiento-M11.3-2026-09-10.md`). **FALTA para cerrar M12.8a:** nada estructural — `divulgacion` se construyó en M12.8a-3 (§5.80) y `tecnico_grupo` se difirió a M11.3 (§5.79 deroga la ubicación de §5.72). **De M12.8b** ya están hechos M12.8b-1 (`esquema-datos-v2.md` a documento v3, §5.81), **M12.8b-1b** (la sección HCE-PAI del esquema), M12.8b-2 (sincronización de prosa) y **M12.8b-3a** (esta sesión: §5.86–§5.88, R1-01 registrado, hallazgo del invariante de `tecnico_grupo`, fixes R1-04/05/10, archivo de la cola de §6); **queda M12.8b-3b** (el pase de vocabulario §5.75/§5.76, **diferido hasta el cierre de M12**), más el resto de M12.8 (regenerar `app/data/catalogos_iniciales.json` — **ya sincronizado hoy** según `--check` — + tests + docs; **no** el seed espejo, que es M11.5). **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
+> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4) CERRADA** (2026-09-16, sesión M12.8-cierre+I1
+>   Parte A), **intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 · M12.5 ·
+>   M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a ·
+>   M12.8b-3a-bis · M12.8** — **51 tablas**, **434 tests en verde y 0 salteados**, head de Alembic
+>   **`559b1a79cb77`** (un solo archivo en `versions/`, sin cambios de modelo en M12.8). **Única excepción
+>   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76, diferido, sin dueño — no bloquea M11.3).
+>   **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.10):** **0.** las **decisiones de este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26** (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante ellas donde haya contradicción · **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **1-bis.** `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, Anexo II acuerdo de confidencialidad; ingresado el 2026-09-03 · **anterior al acta**, autoritativo para lo que el acta no tocó) · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
@@ -2959,22 +2963,55 @@ de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marca
     por API = IDEA 58 · PA 60 · PB 79 · Δ +19) · **M11.6** docs.
   - ⚠️ **M11.3–M11.6 están en pausa hasta cerrar M12** (ver abajo): tocan la capa que M12 está por cambiar.
   - Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo: app + NGINX).
-- [ ] **M12 · Absorción del Prototipo v4 — EN CURSO** (arrancó 2026-08-14). Se intercala **entre M11.2 y
-  M11.3**. Decisiones D1–D9 escritas en **§5.10–§5.18**. Plan:
-  `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Sin dueño exclusivo (§5.6).
-  - [ ] **M12.8** cierre: seed desde el JSON del prototipo, tests y docs. **Una sola persona.**
-        ⚠️ Ya **no** es el único momento en que se toca la migración: desde la enmienda **§5.19**
-        (2026-08-14) se regenera al cerrar **cada** sub-módulo, con el test de coincidencia en verde.
-        - ⚠️ **El "seed" de M12.8 NO es el "seed espejo" de M11.5 — son dos artefactos distintos**
-          (verificado contra `PLAN-M12` §M12.8 «Seed:» y §7, y `esquema-datos-v2.md:693`, en M12.8b-4).
-          **M12.8** = el **seed de catálogos**: regenerar `app/data/catalogos_iniciales.json` desde
-          `docs/prototipo-v4/prototipo-v4-catalogos.json` con `herramientas/generar_catalogos_backend.py`
-          (pasar las secciones `DESDE_LA_DEMO` al prototipo y vaciar esa lista), respetando `solo_al_crear`.
-          **M11.5** = el **seed clínico espejo**: NNA + evaluaciones IDEA/PA/PB que reproducen los
-          arquetipos de la demo (8 NNA, §11; números 58 · 60 · 79 · Δ +19), y que es **la forma ejecutable
-          del criterio §12-A** (§5.65). **No existe** (`app/` sólo tiene `seed_catalogos.py`). La cabecera
-          y `CLAUDE.md` dicen «el resto de M12.8 (seed espejo, tests)» — es la palabra de M11.5 usada de
-          más; lo que le queda a M12.8 es el seed de **catálogos** + tests + docs.
+- [x] **M12 · Absorción del Prototipo v4 — CERRADO** (arrancó 2026-08-14, cerrado 2026-09-16 en la sesión
+  **M12.8-cierre**). Se intercaló **entre M11.2 y M11.3**. Decisiones D1–D9 escritas en **§5.10–§5.18**.
+  Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **Única excepción registrada:**
+  **M12.8b-3b** (pase de vocabulario, ver abajo), diferido y sin dueño — no bloquea M11.3.
+  - [x] **M12.8** cierre — **HECHO (2026-09-16).**
+        ⚠️ **Cambio de alcance decidido por Lucas en esta misma sesión, escrito acá porque §6 es lo que se
+        toca; la entrada de §5 la asienta él aparte:** el Prototipo v4 **dejó de ser fuente normativa** —
+        es insumo a consultar, no especificación a la que converger. Por eso "vaciar `DESDE_LA_DEMO`
+        pasando todo al prototipo" (como decían el plan y la cabecera de este archivo) **ya no es el
+        criterio**: mover un dato de un artefacto de IPPU a otro, ambos con la misma procedencia, no gana
+        fidelidad y arriesga cambiarlo sin querer. **Criterio con el que se cerró:** una sección migra
+        **sólo si el prototipo la trae verbatim** (declarar la fuente correcta sin tocar el dato); si no,
+        se queda donde estaba, **con el motivo anotado en el código, no como pendiente**.
+        - **Movido:** `categoria_documento` — estaba inline en `mDocs()` del prototipo (array `cats`, no
+          catálogo estructurado), verificado **verbatim** contra los 12 valores existentes antes de mover
+          (diff del JSON generado: cambia sólo `_origen`, cero cambio de dato).
+        - **Se queda, con motivo permanente anotado en `generar_catalogos_backend.py`:** `idea_nivel`
+          (el `descriptor` es el texto oficial de Rivière, no la paráfrasis del prototipo — decisión de
+          M12.1, no reabierta) y `servicio` (el prototipo sólo nombra los tres servicios en prosa, sin
+          `clave`/`activo` extraíble — inventarlos sería §5.37 de nuevo).
+        - **Se queda, con motivo distinto:** `idea_dimension`, `ippu_item`, `baremo_categoria` — el
+          prototipo trae algo parecido (`IDEA_DIMS`, `IPPU_ITEMS`, `BUND_CATS`) pero no idéntico:
+          `idea_dimension` exigiría **derivar** `codigo`/`escala` (generar dato) y los otros dos son
+          "parecidos", no verbatim. Quedan hasta que alguien verifique campo por campo.
+        - **`solo_al_crear` (M12.3–M12.7):** medido, **ya estaba completo** — cada catálogo tiene el
+          tratamiento correcto desde que se construyó (`taller` protegido, `severidad_nivel`/
+          `estado_inclusion` deliberadamente sin protección por ser texto de instrumento,
+          `catalogo_centro_educativo`/`grupo` con `solo_insertar`; M12.6/M12.7 no agregaron catálogos —
+          `PAI_AREAS`/`PAI_PREST`/`PAI_CIRCUITO`/`AT_TIPOS` son constantes). Nada que extender.
+        - **Índices de FK / `Numeric`→`Decimal`:** medidos, ya en 0 y ya correctos (test
+          `test_ninguna_fk_del_esquema_queda_sin_indice` en verde; único `Numeric` del esquema,
+          `valoracion_funcional.pct`, ya `Decimal`).
+        - **Guards M12.1–M12.7, rechazo probado junto al caso que pasa:** auditados los 8 archivos de
+          modelos con CHECK; **un solo hueco real** — `puntuacion_idea.rango_t2`/`ns_t2_sin_valor` (M12.2)
+          no tenían el caso de rechazo probado (sólo `_t1`, su gemelo). Agregados
+          `test_idea_rechaza_puntuacion_de_t2_fuera_de_0_8` y
+          `test_ns_t2_y_valor_numerico_a_la_vez_se_rechazan` en `tests/test_m12_consenso.py`. El resto de
+          lo que parecía sin probar (`rango_dimension`, `escala_valida`, `rango_item`, `clave_valida`…) es
+          de catálogos M11.2, fuera del alcance de esta ronda.
+        - **Criterio §12-A (D-6/§5.65):** ya estaba escrito en prosa (`esquema-datos-v2.md:785-809`) y ya
+          nombraba los cuatro módulos, las 6 bandas y los 14 talleres — verificado que sigue coincidiendo
+          con la ronda tal como quedó construida. Nada que reescribir.
+        - Migración: sin cambios de modelo en esta sesión, así que nada que regenerar; `alembic current`
+          sigue en head `559b1a79cb77`, un solo archivo en `versions/`,
+          `test_la_migracion_coincide_con_los_modelos` en verde. El rebuild limpio explícito (drop schema →
+          upgrade head → seed) no se corrió — bloqueado por el sandbox de la sesión — pero no hacía falta:
+          no hubo deriva de modelos que recoger.
+        - `pytest -q`: **434 passed, 0 skipped** (432 + los 2 tests nuevos del hueco de consenso). Ambos
+          `--check` en 0.
     - [x] ~~**M12.8b-3a**~~ → **HECHO (2026-09-11).** Ver bitácora. Escribió §5.86–§5.88 (tres respuestas
           de Lucas a BLOQUE 6.4 de R1), registró R1-01 y R1-05 como punteros vivos, midió y registró el
           hallazgo del invariante de `tecnico_grupo` y el barrido retroactivo de §5.83, corrigió los

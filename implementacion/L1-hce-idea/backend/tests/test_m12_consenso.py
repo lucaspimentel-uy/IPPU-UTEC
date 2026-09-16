@@ -230,6 +230,17 @@ def test_ns_y_valor_numerico_a_la_vez_se_rechazan(db):
         db.flush()
 
 
+def test_ns_t2_y_valor_numerico_a_la_vez_se_rechazan(db):
+    """Simétrico al de arriba, para el segundo evaluador — `rango_t1`/`ns_t1_sin_valor`
+    tenían su rechazo probado; `rango_t2`/`ns_t2_sin_valor` no (Step A4, M12.8)."""
+    p = PuntuacionIdea(
+        idea_id=_idea(db).id, dimension_id=_dimension(db).id, ns_t2=True, valor_t2=4,
+    )
+    db.add(p)
+    with pytest.raises(IntegrityError, match="ns_t2_sin_valor"):
+        db.flush()
+
+
 # --------------------------------------------------------------------------
 # Integridad estructural
 # --------------------------------------------------------------------------
@@ -238,6 +249,15 @@ def test_idea_rechaza_puntuacion_fuera_de_0_8(db):
     _puntuar(db, ev, dimension=1, valor_t1=8)          # el máximo válido pasa
     db.add(PuntuacionIdea(idea_id=ev.id, dimension_id=_dimension(db, 2).id, valor_t1=9))
     with pytest.raises(IntegrityError, match="rango_t1"):
+        db.flush()
+
+
+def test_idea_rechaza_puntuacion_de_t2_fuera_de_0_8(db):
+    """Simétrico al de arriba, para el segundo evaluador (Step A4, M12.8)."""
+    ev = _idea(db)
+    _puntuar(db, ev, dimension=1, valor_t2=8)          # el máximo válido pasa
+    db.add(PuntuacionIdea(idea_id=ev.id, dimension_id=_dimension(db, 2).id, valor_t2=9))
+    with pytest.raises(IntegrityError, match="rango_t2"):
         db.flush()
 
 

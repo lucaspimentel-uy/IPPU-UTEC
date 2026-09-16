@@ -1,5 +1,5 @@
 {
-  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres, niveles de severidad DSM-5-TR y estados de inclusión: Prototipo v4 de IPPU (docs/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
+  "_origen": "Generado por herramientas/generar_catalogos_backend.py (M12.1). Instrumentos y catálogos base: demo v4.1. Bandas, Δ, fichas, ejemplos, reglas, descriptor_breve, talleres, niveles de severidad DSM-5-TR, estados de inclusión y categorías de documento: Prototipo v4 de IPPU (docs/prototipo-v4/). Recordatorios y grupos: Manual + plan M12. NO editar a mano: correr el script.",
   "idea_dimension": [
     {
       "id": 1,
@@ -696,6 +696,23 @@
       "orden": 5
     }
   ],
+  "servicio": [
+    {
+      "clave": "atencion_diurna",
+      "nombre": "Atención Diurna",
+      "activo": true
+    },
+    {
+      "clave": "taller_terapeutico",
+      "nombre": "Taller Terapéutico",
+      "activo": false
+    },
+    {
+      "clave": "clinica",
+      "nombre": "Clínica",
+      "activo": false
+    }
+  ],
   "categoria_documento": [
     {
       "nombre": "Informe médico externo",
@@ -756,23 +773,6 @@
       "nombre": "Otro",
       "es_registro_historico": false,
       "orden": 12
-    }
-  ],
-  "servicio": [
-    {
-      "clave": "atencion_diurna",
-      "nombre": "Atención Diurna",
-      "activo": true
-    },
-    {
-      "clave": "taller_terapeutico",
-      "nombre": "Taller Terapéutico",
-      "activo": false
-    },
-    {
-      "clave": "clinica",
-      "nombre": "Clínica",
-      "activo": false
     }
   ],
   "taller": [

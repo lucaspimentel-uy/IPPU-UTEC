@@ -227,7 +227,7 @@ backend/
 │   │                            #  y en SQL, catálogo de centros vacío a propósito
 │   ├── test_m12_pai.py          # M12.6: HCE-PAI, las 8 tablas (sólo esquema), §5.54–§5.56
 │   └── test_m12_divulgacion.py  # M12.8a: HCE-DIV, pertenencia expediente/ateneo/agregado, append-only (§5.80)
-│                                # (432 en verde, 0 salteados — requieren el contenedor arriba)
+│                                # (434 en verde, 0 salteados — requieren el contenedor arriba)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado
