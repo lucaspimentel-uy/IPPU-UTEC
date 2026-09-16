@@ -107,7 +107,7 @@ Detalle completo en `handoff.md` §3 y en `docs/markdown/escala-del-inventario-d
 ## Stack objetivo de L1
 React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · PostgreSQL · Docker.
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **434 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6, 432 al cerrar M12.8a): si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **435 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6, 432 al cerrar M12.8a, 434 al cerrar M12.8): si ves «skipped», algo está mal.
 
 **Ronda M12 (absorción del Prototipo v4) — CERRADA el 2026-09-16**, intercalada entre M11.2 y M11.3.
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Toca la misma capa que M11.2 —modelos,
@@ -177,8 +177,14 @@ posterior**. Son autoritativos para todo lo que la reunión no tocó.
   el Prototipo v4 verbatim; el resto de `DESDE_LA_DEMO` se queda, con motivo anotado en el código — el
   Prototipo v4 dejó de ser fuente normativa, ver arriba) y los guards de M12.1–M12.7 auditados (un hueco
   real corregido en `puntuacion_idea`). **No** es el seed espejo (eso es M11.5). Estado final: **51
-  tablas**, **434 tests en verde y 0 salteados**, migración `559b1a79cb77`, un solo archivo en `versions/`.
-  **Única excepción registrada: M12.8b-3b** (pase de vocabulario, diferido).
+  tablas**, **435 tests en verde y 0 salteados** (434 al cerrar M12.8, +1 de I1), migración
+  `b99294aec85c`, un solo archivo en `versions/`. **Única excepción registrada: M12.8b-3b** (pase de
+  vocabulario, diferido).
+- **I1 HECHO** (2026-09-16, mismo sesión que cierra M12.8, §5.36/§5.91) — `idea.anio` **SmallInteger NOT
+  NULL** (mismo tipo que `grupo.anio`) + `UniqueConstraint(hce_id, anio)` (`uq_idea_hce_anio`, mismo patrón
+  que `protocolo`/`informe_cierre`). También fija la fila de `esquema-datos-v2.md` §4 y `backend/README.md`
+  que seguían con «Δ sólo B−A» (derogada por §5.36). **No** tocó la demo, ni la regla de «cuál IDEA rige»,
+  ni abrió `app/services/` — eso sigue siendo M11.3.
 - ⚠️ **Regla de migraciones de la ronda, enmendada el 2026-08-14 (`handoff.md` §5.19):** la migración
   inicial **única** se regenera **al cerrar cada sub-módulo**, con `test_la_migracion_coincide_con_los_modelos`
   **en verde** (ya no se saltea). Se congela **sólo si hay trabajo en paralelo real** sobre `app/models/`,

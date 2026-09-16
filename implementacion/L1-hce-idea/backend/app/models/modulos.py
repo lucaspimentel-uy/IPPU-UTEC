@@ -208,18 +208,16 @@ class Consentimiento(FirmaMixin, Base):
 
 
 class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
-    """HCE-LB — el IDEA es **ANUAL** (§5.36); el modelo de abajo todavía implementa
-    la **línea base única** del Documento Técnico, no la anualidad decidida — ver I1.
+    """HCE-LB — el IDEA es **ANUAL** (§5.36).
 
-    ⚠️ **Desactualizado por decisión, no por implementar — I1 (`handoff.md` §5.36,
-    2026-08-26; §6 «DECIDIDO, SIN IMPLEMENTAR»).** IPPU confirmó que el IDEA es
-    **anual** y que el de cada año se compara con el del anterior; cae la «línea
-    base única» del Documento Técnico. El modelo **todavía no lo refleja**: `idea`
-    no tiene columna `anio` y sigue como se describe abajo. El cambio está medido
-    y es aditivo (`anio` nullable + `UNIQUE(hce_id, anio)`, el patrón que el
-    esquema ya usa tres veces); su puerta está **antes de M11.3** y lo implementa
-    M11.3 (§5.67), no esta capa. Lo que sigue describe el modelo **vigente en el
-    código**, no la decisión.
+    ⚠️ **M12.8b-2 dejó este marcador; I1 (2026-09-16, `handoff.md` §5.36/§5.91)
+    lo cierra a medias — actualizado sólo para decirlo.** IPPU confirmó que el
+    IDEA es **anual** y que el de cada año se compara con el del anterior; cae
+    la «línea base única» del Documento Técnico. **La columna `anio` ya existe**
+    (NOT NULL, `UNIQUE(hce_id, anio)` — ver abajo). Lo que I1 **no** tocó, a
+    propósito, es la regla de abajo («la vigente es la de mayor
+    `fecha_consenso`») ni el guard de «qué IDEA rige»: siguen para M11.3
+    (§5.36 / §5.35), que además necesita B2(b)/B10 antes de reformularla.
 
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
     una fila por dimensión). Ahora hay una instancia por línea base y las 12
@@ -248,6 +246,11 @@ class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     hce_id: Mapped[int] = mapped_column(
         ForeignKey("hce_diurna.id", ondelete="CASCADE"), index=True
     )
+    # I1 (§5.36 / §5.91): el IDEA es anual. Mismo tipo que `grupo.anio` y NOT
+    # NULL como los otros dos `*_anio` del esquema (`protocolo`, `informe_cierre`)
+    # — con el UNIQUE de abajo, nullable habría dejado la fila justamente menos
+    # protegida (Postgres no trata dos NULL como iguales).
+    anio: Mapped[int] = mapped_column(SmallInteger)
     dim: Mapped[dict | None] = mapped_column(JSONB)
     fecha_consenso: Mapped[date | None] = mapped_column(Date)
     sesiones: Mapped[int | None] = mapped_column(Integer)
@@ -274,6 +277,7 @@ class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     )
 
     __table_args__ = (
+        UniqueConstraint("hce_id", "anio", name="uq_idea_hce_anio"),
         CheckConstraint("total IS NULL OR total BETWEEN 0 AND 96", name="rango_total"),
         CheckConstraint(
             "evaluador_t1_id IS NULL OR evaluador_t2_id IS NULL "

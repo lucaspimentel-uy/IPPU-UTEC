@@ -66,7 +66,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **434 passed, 0 skipped**.
+Una corrida válida de hoy es **435 passed, 0 skipped**.
 
 ## Por qué Postgres en Docker
 
@@ -128,7 +128,7 @@ base.** Sin triggers PL/pgSQL.
 | | Dónde | Ejemplos |
 |---|---|---|
 | Integridad **estructural** | PostgreSQL (CHECK, UNIQUE, FK) | total IDEA 0–96 · un solo protocolo A por año · foto individual **o** grupal, nunca ambas |
-| Reglas **clínicas** | Servicios Python + Pydantic, con pytest | **44 reglas** en la tabla de §4 (medido 2026-09-11, M12.8b-3a — incluye las dos filas de guards del PAI que sumó M12.8b-1b). Ejemplos: secuencia CI→LB→PA→PB→IC · firma = bloqueo · Δ sólo B−A ⚠️ (redacción derogada por §5.36 — ver `handoff.md` R1-01, se corrige junto con I1) · categoría del baremo sólo desde el % oficial |
+| Reglas **clínicas** | Servicios Python + Pydantic, con pytest | **44 reglas** en la tabla de §4 (medido 2026-09-11, M12.8b-3a — incluye las dos filas de guards del PAI que sumó M12.8b-1b). Ejemplos: secuencia CI→LB→PA→PB→IC · firma = bloqueo · Δ sólo dentro del mismo instrumento (§5.36; corregido junto con I1, 2026-09-16) · categoría del baremo sólo desde el % oficial |
 
 Las reglas clínicas se implementan en **M11.3**. El detalle de cada una y su test
 previsto está en [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md) §4.

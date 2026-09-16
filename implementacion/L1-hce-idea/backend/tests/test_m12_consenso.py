@@ -37,7 +37,7 @@ def _hce(db, ci="2.222.222-2"):
 
 
 def _idea(db, ci="2.222.222-2"):
-    ev = Idea(hce_id=_hce(db, ci).id, fecha_consenso=date(2026, 3, 1))
+    ev = Idea(hce_id=_hce(db, ci).id, anio=2026, fecha_consenso=date(2026, 3, 1))
     db.add(ev)
     db.flush()
     return ev
@@ -311,10 +311,12 @@ def test_los_dos_evaluadores_no_pueden_ser_la_misma_persona(db):
     otra = _profesional(db, "otra@ippu.uy")
     hce = _hce(db)
 
-    db.add(Idea(hce_id=hce.id, evaluador_t1_id=uno.id, evaluador_t2_id=otra.id))
+    db.add(Idea(hce_id=hce.id, anio=2026, evaluador_t1_id=uno.id, evaluador_t2_id=otra.id))
     db.flush()   # dos personas distintas: pasa
 
-    db.add(Idea(hce_id=hce.id, evaluador_t1_id=uno.id, evaluador_t2_id=uno.id))
+    # `anio` distinto del de arriba: aísla el CHECK que se prueba del UNIQUE de I1
+    # (mismo `hce_id`, mismo `anio`, también rebotaría, pero no es lo que se mide).
+    db.add(Idea(hce_id=hce.id, anio=2025, evaluador_t1_id=uno.id, evaluador_t2_id=uno.id))
     with pytest.raises(IntegrityError, match="evaluadores_distintos"):
         db.flush()
 
@@ -322,7 +324,7 @@ def test_los_dos_evaluadores_no_pueden_ser_la_misma_persona(db):
 def test_un_solo_evaluador_cargado_es_valido(db):
     """La contracara del CHECK anterior: cargar uno y todavía no el otro."""
     uno = _profesional(db, "solo@ippu.uy")
-    db.add(Idea(hce_id=_hce(db).id, evaluador_t1_id=uno.id))
+    db.add(Idea(hce_id=_hce(db).id, anio=2026, evaluador_t1_id=uno.id))
     db.flush()
 
 

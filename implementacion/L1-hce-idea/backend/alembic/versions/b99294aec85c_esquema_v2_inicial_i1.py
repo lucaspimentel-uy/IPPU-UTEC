@@ -1,8 +1,8 @@
-"""esquema v2 inicial (M12.8a)
+"""esquema v2 inicial (i1)
 
-Revision ID: 559b1a79cb77
+Revision ID: b99294aec85c
 Revises: 
-Create Date: 2026-09-03 18:58:02.814138
+Create Date: 2026-09-16 12:49:13.467044
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '559b1a79cb77'
+revision: str = 'b99294aec85c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -378,6 +378,7 @@ def upgrade() -> None:
     op.create_table('idea',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('anio', sa.SmallInteger(), nullable=False),
     sa.Column('dim', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('fecha_consenso', sa.Date(), nullable=True),
     sa.Column('sesiones', sa.Integer(), nullable=True),
@@ -404,7 +405,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['evaluador_t1_id'], ['profesional.id'], name=op.f('fk_idea_evaluador_t1_id_profesional')),
     sa.ForeignKeyConstraint(['evaluador_t2_id'], ['profesional.id'], name=op.f('fk_idea_evaluador_t2_id_profesional')),
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_idea_hce_id_hce_diurna'), ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_idea'))
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_idea')),
+    sa.UniqueConstraint('hce_id', 'anio', name='uq_idea_hce_anio')
     )
     op.create_index(op.f('ix_idea_evaluador_t1_id'), 'idea', ['evaluador_t1_id'], unique=False)
     op.create_index(op.f('ix_idea_evaluador_t2_id'), 'idea', ['evaluador_t2_id'], unique=False)

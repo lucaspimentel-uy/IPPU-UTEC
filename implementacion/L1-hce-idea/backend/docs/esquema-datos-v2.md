@@ -1,19 +1,19 @@
 # Esquema de datos v2 — HCE IPPU (M11 · backend v2)
 
-> **Versión del documento: v3** — 2026-09-03 (M12.8b-1); **completada el 2026-09-10 (M12.8b-1b): sección
-> HCE-PAI (§2.2) + diagrama ER de §1**. Refleja el esquema tras **M12.0–M12.7 y M12.8a** (hasta M12.8a-3).
-> ⚠️ **El archivo sigue llamándose `esquema-datos-v2.md` y no cambia**
-> (`handoff.md` §5.81): «esquema v2» nombra la arquitectura del backend v2 —incluida la migración
-> `559b1a79cb77_esquema_v2_inicial_m12_8a.py`—; lo que se versiona acá es el **documento**. No hay ningún
+> **Versión del documento: v3** — 2026-09-03 (M12.8b-1); completada el 2026-09-10 (M12.8b-1b: sección
+> HCE-PAI §2.2 + diagrama ER de §1); **re-medida el 2026-09-16 (sesión M12.8-cierre+I1) tras cerrar M12.8 e
+> I1** (`idea.anio`). ⚠️ **El archivo sigue llamándose `esquema-datos-v2.md` y no cambia**
+> (`handoff.md` §5.81): «esquema v2» nombra la arquitectura del backend v2 —incluida la migración,
+> `b99294aec85c_esquema_v2_inicial_i1.py`—; lo que se versiona acá es el **documento**. No hay ningún
 > archivo `esquema-datos-v3.md`.
 >
-> **Estado medido** (2026-09-03, contra `Base.metadata` y la base de desarrollo; **re-medido 2026-09-10 sin
-> cambios**): **51 tablas** en `app/models/` (ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 ·
-> inclusion 4 · modulos 6 · pai 8 · severidad 2 · transversales 10). Migración inicial **única**
-> `559b1a79cb77` (`down_revision = None`, un solo archivo en `alembic/versions/`, 51 `op.create_table`).
-> **432 tests en verde, 0 salteados.** Por la enmienda §5.19 (2026-08-14) la migración se regenera al
-> cerrar **cada** sub-módulo, con `test_la_migracion_coincide_con_los_modelos` en verde. Origen histórico:
-> **IMPLEMENTADO en M11.2** (2026-08-07, 28 tablas).
+> **Estado medido** (2026-09-16, contra `Base.metadata` y la base de desarrollo): **51 tablas** en
+> `app/models/` (ateneo 2 · catalogos 13 · divulgacion 1 · identidad 5 · inclusion 4 · modulos 6 · pai 8 ·
+> severidad 2 · transversales 10). Migración inicial **única** `b99294aec85c` (`down_revision = None`, un
+> solo archivo en `alembic/versions/`, 51 `op.create_table`). **435 tests en verde, 0 salteados.** Por la
+> enmienda §5.19 (2026-08-14) la migración se regenera al cerrar **cada** sub-módulo, con
+> `test_la_migracion_coincide_con_los_modelos` en verde. Origen histórico: **IMPLEMENTADO en M11.2**
+> (2026-08-07, 28 tablas).
 >
 > ✅ **Cobertura: las 51 tablas.** La sección **HCE-PAI** (`pai` + 7 hijas, M12.6 · §2.2) se escribió en
 > **M12.8b-1b** (2026-09-10) y el diagrama ER de §1 quedó completo. Antes de ese pase el documento describía
@@ -232,7 +232,7 @@ que la demo, M1).
 | Tabla | Campos propios | Notas |
 |---|---|---|
 | `consentimiento` | **PK = hce_id**, firmante, fecha, **autorizaciones JSONB** (`{evaluacion, registro, comunicacion}`), documento_id FK (adjunto) | Único bloqueo sin excepción (§4.2): lo impone el servidor. |
-| `idea` (HCE-LB) | id, hce_id FK, **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **evaluador_t1_id / evaluador_t2_id FK** (M12.2), **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) — **23 columnas medidas, SIN `anio`** | 1:N — hoy: reingreso >12 meses = instancia nueva; la vigente es la de mayor `fecha_consenso` (`app/models/modulos.py`, docstring de `Idea`). `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. **`evaluador_tN_id`** (M12.2 · D7): los dos técnicos que puntuaron por separado, con `CHECK` de que no sean la misma persona. <br>⚠️ **I1 · el IDEA es ANUAL por decisión desde el 2026-08-26 (§5.36) y el modelo todavía NO lo refleja** — no hay columna `idea.anio`. Está en la lista «🛑 DECIDIDO, SIN IMPLEMENTAR» de `handoff.md` §6; la puerta es **antes de M11.3** (§5.35). El costo está medido (§5.31 / R0): aditivo, `idea` ya es 1:N, 0 FKs a reconectar, 0 tests rotos con `anio` nullable. Lo caro no es la columna: es el selector de año en la demo y **la regla de «qué IDEA rige»**, que hoy vive en prosa como «la de mayor `fecha_consenso`» y con una instancia por año deja de ser la misma pregunta. **No inventar acá la columna: describir el modelo como está.** |
+| `idea` (HCE-LB) | id, hce_id FK, **anio SmallInteger NOT NULL** (I1), **dim JSONB** (12 × `{valor 0–8\|"NS", obs}`), fecha_consenso, sesiones, sintesis, objetivos, **manual_version**, **evaluador_t1_id / evaluador_t2_id FK** (M12.2), **+ metadatos de origen**, `total`, `esc_a..esc_d` (materializados) — **24 columnas**, `UNIQUE(hce_id, anio)` (`uq_idea_hce_anio`) | 1:N por año — reingreso o año nuevo = instancia nueva; **la vigente sigue siendo la de mayor `fecha_consenso`** (`app/models/modulos.py`, docstring de `Idea`) — I1 **no** reformuló esa regla ni el guard de «qué IDEA rige a la fecha»: siguen para M11.3 (§5.36/§5.35), que necesita además B2(b)/B10. `CHECK(total BETWEEN 0 AND 96)`. **`manual_version`** (M12.1) persiste con qué manual se aplicó la evaluación (`core/constantes.py::IDEA_MANUAL_VERSION`); sin eso, corregir un descriptor reescribiría el criterio de todo lo ya firmado. **`evaluador_tN_id`** (M12.2 · D7): los dos técnicos que puntuaron por separado, con `CHECK` de que no sean la misma persona. <br>✅ **I1 HECHO (2026-09-16, §5.36/§5.91):** `idea.anio` **NOT NULL**, como los otros dos `*_anio` del esquema (`protocolo`, `informe_cierre`) — no nullable como preveía la medición original: el costo de exigirlo era sólo `anio=` en 9 construcciones `Idea(` de test, y con `UNIQUE(hce_id, anio)` puesto, nullable habría dejado sin proteger justamente las filas cargadas sin año (Postgres no iguala dos `NULL`). I1 **no** tocó el selector de año en la demo (mitad de demo round, 17 usos + 1 indirecto en 6 módulos) ni abrió `app/services/`. |
 | `protocolo` (HCE-PA/PB) | id, hce_id FK, **tipo CHECK ('A','B')**, **anio**, fecha, semanas, **items JSONB** (24 × `{valor 1–5, obs}`), sint_tec1, sint_tec2, otros, ajustes (sólo B), **deltas JSONB** (sólo B; escribe el servidor al firmar B), **evaluador_t1_id / evaluador_t2_id FK** (M12.2), `total`, `esc_1..esc_4` | **UK**(hce_id, tipo, anio). `CHECK(total BETWEEN 24 AND 120)`. `CHECK(tipo='B' OR deltas IS NULL)`. `CHECK` de evaluadores distintos. |
 | **`puntuacion_idea`** (M12.2 · D7) | id, idea_id FK, dimension_id FK, **valor_t1 / valor_t2** (0–8, nullable), **ns_t1 / ns_t2 bool**, **diferencia** (columna **generada**: `abs(valor_t1 - valor_t2)`), documentacion | **UK**(idea_id, dimension_id). Puntuación **independiente** de cada técnico, previa al consenso. El consenso **no se movió**: sigue en `idea.dim`. `NS` se representa con `ns_tN=true` + `valor_tN NULL` (`CHECK` de exclusión mutua), que lo distingue de «todavía no puntuó». |
 | **`puntuacion_protocolo`** (M12.2 · D7) | id, protocolo_id FK, item_id FK, **valor_t1 / valor_t2** (1–5, nullable), **diferencia** (generada), documentacion | **UK**(protocolo_id, item_id). Igual que la anterior pero **sin `NS`**: la escala IPPU-TEA es Likert 1–5. |
@@ -720,7 +720,7 @@ cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE
 | Secuencia CI→LB→PA→PB→IC; CI **no exceptuable** (§4.2) | Servicio `flujo.py`: `modulo_habilitado()` / `estado_modulo()` (derivado, sin drift) | firmar PA sin LB → 409; excepción con constancia → OK + auditoría; nada sin CI |
 | Firma = bloqueo; corrección por addenda (§4.1) | Servicio: `firmar_modulo()` (transacción: firma + totales + auditoría); PUT sobre módulo firmado → 409; endpoint `/addendas` | editar firmado → 409; addenda queda en JSONB + LOG |
 | Validaciones de integridad §4.3 por módulo | Schemas Pydantic + servicio (12 dim sin NS, obs obligatoria en ítems 1/5, síntesis, fechas…) | firma incompleta → 422 con detalle |
-| **Δ sólo B−A, jamás entre instrumentos** (§5.2) | `calcular_delta(protocolo_a, protocolo_b)` tipado: sólo acepta dos `Protocolo`; el servidor lo ejecuta al firmar B | pasar `Idea` → TypeError/422; delta correcto al firmar B; alerta Δ≤−7 → auditoría |
+| **Δ sólo dentro del mismo instrumento** (§5.36, reformula «Δ sólo B−A, jamás entre instrumentos» de §5.2 — la redacción vieja bloqueaba comparar un `Idea` contra el `Idea` del año anterior, que IPPU pidió explícitamente; I1 aterrizó `idea.anio`, el prerrequisito) | `calcular_delta(...)` tipado: acepta dos instancias del **mismo** modelo (`Protocolo` A/B del mismo año, o `Idea` de dos años) | pasar un `Idea` y un `Protocolo` juntos → TypeError/422; delta correcto entre A/B o entre años; alerta Δ≤−7 → auditoría |
 | **Categoría del baremo sólo desde `pct` oficial** (§7.5) | `categoria_baremo(pct)` en servicio VF; ningún camino recibe instrumentos clínicos | intentar derivar desde puntajes → error; pct 58 → Severo |
 | Protección de imagen individual/grupal (§8.4) | Servicio `foto.py`: exige `autorizacion_imagen` del NNA / de todas las familias activas del grupo | carga sin autorización → 403 con detalle de quiénes faltan |
 | Registro histórico inmutable (§10) | Servicio `documento.py`: UPDATE/DELETE sobre `es_registro_historico` → 403 | |

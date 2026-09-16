@@ -169,7 +169,7 @@ backend/
 │   ├── env.py
 │   ├── script.py.mako
 │   └── versions/
-│       └── 559b1a79cb77_esquema_v2_inicial_m12_8a.py  # migración única del esquema v2 (51 tablas)
+│       └── b99294aec85c_esquema_v2_inicial_i1.py  # migración única del esquema v2 (51 tablas)
 │           # se regenera —el mismo archivo, sin apilar revisiones— al cerrar cada sub-módulo de M12
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
@@ -227,7 +227,7 @@ backend/
 │   │                            #  y en SQL, catálogo de centros vacío a propósito
 │   ├── test_m12_pai.py          # M12.6: HCE-PAI, las 8 tablas (sólo esquema), §5.54–§5.56
 │   └── test_m12_divulgacion.py  # M12.8a: HCE-DIV, pertenencia expediente/ateneo/agregado, append-only (§5.80)
-│                                # (434 en verde, 0 salteados — requieren el contenedor arriba)
+│                                # (435 en verde, 0 salteados — requieren el contenedor arriba)
 ├── requirements.txt
 ├── .venv/                       # entorno virtual local, no versionado
 └── .pytest_cache/               # no versionado

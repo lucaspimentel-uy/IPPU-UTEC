@@ -20,6 +20,101 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-16 · Sesión M12.8-cierre+I1 — cierra M12.8/M12 y aterriza I1** (Lucas + Claude, rama `main`).
+  Dos partes con checkpoint entre medio, tal como pedía el prompt de sesión.
+  - **Punto de partida, medido (Paso 0).** HEAD y ambos remotos (`gitlab`, `origin`) en `dad05ef`, árbol
+    limpio salvo el prompt de sesión sin trackear. Docker arriba (`ippu-postgres` healthy). `pytest -q` →
+    **432 passed, 0 skipped**. Ambos `--check` → exit 0. **51 tablas**, head `559b1a79cb77`, un solo
+    archivo en `versions/`. Última entrada de §5 confirmada: **§5.91**.
+  - **PARTE A — cierre de M12.8/M12.**
+    - **Paso A1, checklist medido antes de tocar nada.** `DESDE_LA_DEMO` (6 secciones) contra
+      `docs/prototipo-v4/`: `idea_dimension`/`ippu_item`/`baremo_categoria` tienen algo parecido en el
+      JSON del prototipo (`IDEA_DIMS`/`IPPU_ITEMS`/`BUND_CATS`) pero no idéntico; `categoria_documento`
+      tiene fuente exacta pero **inline** en `mDocs()` (array `cats`), no en el JSON; `idea_nivel` y
+      `servicio` no tienen fuente extraíble en absoluto. `solo_al_crear`: ya extendido correctamente a
+      cada catálogo de M12.3–M12.7 desde que se construyó (nada pendiente). Índices de FK: ya en 0, ya
+      probado. `Numeric`→`Decimal`: único caso del esquema, ya correcto. Criterio §12-A: ya escrito en
+      prosa y coincidiendo con la ronda construida.
+    - **Cambio de alcance, decidido por Lucas en el chat, no medido por la sesión.** El Prototipo v4
+      **dejó de ser fuente normativa** — insumo a consultar, no especificación a converger. Consecuencia:
+      "vaciar `DESDE_LA_DEMO` pasando todo al prototipo" pierde su justificación (mover datos entre dos
+      artefactos de la misma procedencia no gana fidelidad). Se acotó a: mover **sólo** lo verbatim
+      (`categoria_documento`, verificado campo por campo antes de mover — el diff del JSON generado
+      cambia únicamente `_origen`); todo lo demás se queda, **con el motivo anotado en el código**, no
+      como pendiente. La entrada de §5 que asienta esto formalmente la escribe Lucas aparte; esta sesión
+      no abrió ninguna.
+    - **Auditoría de guards M12.1–M12.7 (Paso A4).** 80 `CheckConstraint` en 8 archivos de modelos.
+      Verificados por muestreo dirigido (no exhaustivo uno a uno): `talleres`, `catalogos`, `pai`,
+      `ateneo`, `inclusion` y el XOR de `documento` (M12.7) — todos con rechazo **y** caso que pasa
+      probados, casi siempre vía tests parametrizados (por eso un grep por `match="<constraint>"` daba
+      falsos positivos: no detecta parametrización). **Un hueco real, en `modulos.py`/M12.2:**
+      `puntuacion_idea.rango_t2` y `ns_t2_sin_valor` no tenían el caso de rechazo probado, a diferencia de
+      sus gemelos `_t1`. Corregido con `test_idea_rechaza_puntuacion_de_t2_fuera_de_0_8` y
+      `test_ns_t2_y_valor_numerico_a_la_vez_se_rechazan` en `tests/test_m12_consenso.py`. El resto de lo
+      que el grep marcaba como "sin probar" (`rango_dimension`, `escala_valida`, `rango_item`,
+      `clave_valida`…) es de catálogos M11.2, fuera del alcance de esta ronda; `identidad.py::rol_valido`
+      también es M11.2 y su vocabulario está explícitamente diferido a M11.3/Fase 4 (§5.72).
+    - **Cierre de Parte A.** `pytest -q` → **434 passed, 0 skipped** (432 + 2). Ambos `--check` → exit 0.
+      **51 tablas**, head `559b1a79cb77` sin cambios de modelo (el rebuild limpio explícito lo bloqueó el
+      sandbox de la sesión; no hacía falta, no hubo deriva de modelos). Docs actualizados:
+      `esquema-datos-v2.md`, `handoff.md` (cabecera + §6), `CLAUDE.md`, los dos `README.md`,
+      `docs/estructura-repositorio.md` (conteos de tests desincronizados que `verificar_estado.py --check`
+      encontró y que no eran de esta sesión). **M12 CERRADO**, única excepción registrada: **M12.8b-3b**
+      (pase de vocabulario, diferido). Commit `19ab29b`, pusheado a `gitlab` y `origin` — checkpoint del
+      prompt cumplido antes de abrir Parte B.
+  - **CHECKPOINT.** Reportado a Lucas; confirmó seguir con Parte B en la misma sesión.
+  - **PARTE B — I1: `idea.anio`.**
+    - **Re-medido antes de confiar en R1 (Paso B1).** `idea` seguía en 23 columnas, 0 `anio`, 0 UNIQUE
+      sobre `hce_id`, 1 FK entrante, 9 construcciones `Idea(` exactas en `tests/*.py` — coincide con lo
+      que traía el prompt.
+    - **Nullabilidad, resuelta explícitamente.** Los tres `*_anio` existentes del esquema (`grupo`,
+      `protocolo`, `informe_cierre`) son **todos NOT NULL** — patrón de la casa unánime. El costo de
+      seguirlo era agregar `anio=` a las 9 construcciones `Idea(` de test (ninguna del seed: no hay filas
+      de `idea` sembradas). **Decisión: NOT NULL** — es la forma que realmente describe «una vez al año,
+      siempre», y con `UNIQUE(hce_id, anio)` puesto, nullable habría dejado sin proteger justamente las
+      filas cargadas sin año (Postgres no iguala dos `NULL`).
+    - **Columna y UNIQUE (Paso B1).** `anio: SmallInteger` — mismo tipo que `grupo.anio` (medido, no
+      inventado; `protocolo`/`informe_cierre` usan `Integer` liso, pero el prompt pedía seguir a `grupo`).
+      `UniqueConstraint("hce_id", "anio", name="uq_idea_hce_anio")` — mismo patrón de nombre que
+      `uq_informe_cierre_hce_anio`.
+    - **Lo que I1 no tocó (Paso B2), verificado que sigue así.** La regla «la vigente es la de mayor
+      `fecha_consenso`» (`app/models/modulos.py`, docstring de `Idea`) — el marcador de M12.8b-2 se
+      actualizó sólo para decir que la columna ya existe, sin reformular la regla. La demo, sin tocar.
+      `app/services/` sigue sin abrirse; ningún router nuevo.
+    - **La regla del Δ (Paso B3, R1-01).** `esquema-datos-v2.md` línea **723** (no 788, verificado) seguía
+      con «Δ sólo B−A, jamás entre instrumentos»; el propio documento ya usaba la redacción nueva en la
+      línea **790**. Corregida la fila completa (nombre + descripción) a «Δ sólo dentro del mismo
+      instrumento» (§5.36), sin restructurar la tabla. `backend/README.md:131` también corregido.
+    - **Tests y migración (Paso B4).** Agregado `test_idea_rechaza_dos_del_mismo_anio`; los 9 sitios
+      `Idea(` existentes recibieron `anio=` (dos de ellos con `anio` distinto entre sí a propósito, para
+      no confundir el CHECK que prueban con el UNIQUE nuevo). Migración regenerada: `DROP SCHEMA public
+      CASCADE` vía `docker compose exec db psql` (el sandbox había bloqueado el engine de SQLAlchemy
+      directo y `alembic downgrade base` en Parte A; esta vía sí pasó), se borró
+      `alembic/versions/559b1a79cb77_esquema_v2_inicial_m12_8a.py` y se generó
+      `b99294aec85c_esquema_v2_inicial_i1.py` con `alembic revision --autogenerate`: detectó exactamente
+      las 51 tablas esperadas, ninguna diferencia de más. `alembic upgrade head` + `python -m
+      app.seed_catalogos` sin errores. `test_la_migracion_coincide_con_los_modelos` en verde.
+    - **Cierre de Parte B.** `pytest -q` → **435 passed, 0 skipped** (434 + 1). Ambos `--check` → exit 0.
+      **51 tablas**, head `b99294aec85c`, un solo archivo en `versions/`. Docs actualizados:
+      `esquema-datos-v2.md` (cabecera + fila de `idea` en §2 + fila del Δ en §4), `handoff.md` (cabecera +
+      §6, cerrando la entrada de I1 bajo «DECIDIDO, SIN IMPLEMENTAR» — **esa sección queda vacía**),
+      `CLAUDE.md`, los dos `README.md`, `docs/estructura-repositorio.md`.
+  - **Verificación de cierre final, medida (regla 4).** `pytest -q` → **435 passed, 0 skipped**.
+    `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → **exit 0**. **51 tablas**,
+    head `b99294aec85c`, un solo archivo en `versions/`. Archivos tocados en total: modelos
+    (`app/models/modulos.py`), generador de catálogos (`herramientas/generar_catalogos_backend.py`),
+    catálogos generados (`app/data/catalogos_iniciales.json`), 4 archivos de tests, la migración, y los
+    documentos de estado (`handoff.md`, `CLAUDE.md`, ambos `README.md`, `esquema-datos-v2.md`,
+    `docs/estructura-repositorio.md`, `docs/bitacora.md` — esta entrada,
+    `docs/prompts/Session M12.8-cierre+I1.md` guardado verbatim).
+  - **Observación para quien lea esto después.** El Paso A1 de esta sesión existe porque una sesión
+    anterior concluyó de `generar_catalogos_backend.py --check` devolviendo "al día" que M12.8 no
+    necesitaba trabajo de catálogos — una verificación real (el JSON coincide con lo que el generador
+    produce hoy) sobregeneralizada a una afirmación que no prueba (que `DESDE_LA_DEMO` esté vacía). Mismo
+    patrón que el bullet que M12.8b-3a-bis corrigió en §6: una inferencia razonable, verificada de menos.
+  - **Commits (con trailer, §5.62):** `19ab29b` (Parte A: cierre de M12.8/M12) y el commit de cierre de
+    esta sesión (Parte B + bitácora + cabecera). A `gitlab` y `origin`, mismo hash, árbol limpio.
+
 - **2026-09-11 · Sesión M12.8b-3a-bis — tres decisiones que se habían quedado en el chat** (Lucas +
   Claude, rama `main`). **No toca código en absoluto.** Existe porque tres decisiones que Lucas tomó en
   la misma ronda que produjo §5.86–§5.88 nunca llegaron al repo — el prompt de M12.8b-3a se escribió

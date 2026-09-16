@@ -385,7 +385,7 @@ def test_severidad_e_idea_conviven_sin_tocarse(db):
     """Los dos registros coexisten en el mismo expediente y ninguno depende del
     otro: es la forma verificable de «instrumentos no homologables»."""
     hce = _hce(db)
-    db.add(Idea(hce_id=hce.id, total=91, esc_a=24, esc_b=23, esc_c=22, esc_d=22))
+    db.add(Idea(hce_id=hce.id, anio=2026, total=91, esc_a=24, esc_b=23, esc_c=22, esc_d=22))
     _severidad(db, hce=hce, nivel_cs=1, nivel_crr=1)
     db.flush()  # un IDEA de 91/96 con severidad Grado 1 es representable
 

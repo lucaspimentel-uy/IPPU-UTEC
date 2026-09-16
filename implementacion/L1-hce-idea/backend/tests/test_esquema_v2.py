@@ -41,12 +41,12 @@ def _hce(db, ci="1.111.111-1"):
 # --------------------------------------------------------------------------
 def test_idea_acepta_total_en_rango(db):
     """0–96: 12 dimensiones × 0–8."""
-    db.add(Idea(hce_id=_hce(db).id, total=58, esc_a=18, esc_b=14, esc_c=14, esc_d=12))
+    db.add(Idea(hce_id=_hce(db).id, anio=2026, total=58, esc_a=18, esc_b=14, esc_c=14, esc_d=12))
     db.flush()  # no debe levantar
 
 
 def test_idea_rechaza_total_fuera_de_rango(db):
-    db.add(Idea(hce_id=_hce(db).id, total=97))
+    db.add(Idea(hce_id=_hce(db).id, anio=2026, total=97))
     with pytest.raises(IntegrityError, match="rango_total"):
         db.flush()
 
@@ -54,9 +54,20 @@ def test_idea_rechaza_total_fuera_de_rango(db):
 def test_idea_admite_varias_lineas_base_por_expediente(db):
     """1:N a propósito: un reingreso a más de 12 meses abre una línea base nueva."""
     hce = _hce(db)
-    db.add(Idea(hce_id=hce.id, fecha_consenso=date(2024, 3, 1), total=60))
-    db.add(Idea(hce_id=hce.id, fecha_consenso=date(2026, 3, 1), total=52))
+    db.add(Idea(hce_id=hce.id, anio=2024, fecha_consenso=date(2024, 3, 1), total=60))
+    db.add(Idea(hce_id=hce.id, anio=2026, fecha_consenso=date(2026, 3, 1), total=52))
     db.flush()  # no debe levantar
+
+
+def test_idea_rechaza_dos_del_mismo_anio(db):
+    """I1 (§5.36/§5.91): mismo patrón que `protocolo`/`informe_cierre` — a lo sumo
+    un IDEA por año."""
+    hce = _hce(db)
+    db.add(Idea(hce_id=hce.id, anio=2026, total=60))
+    db.flush()
+    db.add(Idea(hce_id=hce.id, anio=2026, total=52))
+    with pytest.raises(IntegrityError, match="uq_idea_hce_anio"):
+        db.flush()
 
 
 # --------------------------------------------------------------------------
