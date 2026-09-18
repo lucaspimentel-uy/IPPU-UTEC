@@ -20,6 +20,50 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-09-18 · Sesión M12.9 — el Prototipo v4 deja de ser fuente normativa** (Lucas + Claude, rama
+  `main`). Sesión corta, sin tocar código: cerraba un cabo suelto de M12.8-cierre+I1 (la decisión se tomó
+  mid-sesión el 2026-09-16 y quedó sin su entrada de §5, con el párrafo de precedencia de `CLAUDE.md` y
+  `handoff.md` todavía nombrando al Prototipo v4 como precedencia 1).
+  - **Punto de partida, medido (Paso 0).** HEAD y ambos remotos (`gitlab`, `origin`) en `339a726`, árbol
+    limpio salvo el prompt de sesión sin trackear. Docker arriba (`ippu-postgres` healthy). `pytest -q` →
+    **435 passed, 0 skipped**. Ambos `--check` → exit 0. **51 tablas**, head `b99294aec85c`, un solo
+    archivo en `versions/`. Última entrada de §5 confirmada: **§5.91** → se usó **§5.92**.
+  - **Paso 1 — §5.92.** Transcrita la decisión de Lucas: el Prototipo v4 y la demo v4.1 pasan de
+    especificación a insumo, por relleno generado encontrado en el propio prototipo (§5.37) y por
+    confirmarse que Fernando Sierra genera estos artefactos con IA (Prototipo v4 y el «Catálogo de
+    puertas» de L3). Fija el alcance del 26/11 (prototipo presentable sin datos reales; §2.17, hosting y
+    Fase 4 explícitamente fuera del camino crítico) y deroga por escrito el orden de precedencia de §5.10
+    (append-only, no se edita). Verificado sin contradicción contra §5.10, §5.37 y §5.50 antes de escribir.
+  - **Paso 2 — párrafo de precedencia.**
+    - `handoff.md` (línea del header, antes bajo «Fuente normativa vigente (orden de precedencia,
+      §5.10)»): listaba Manual + Prototipo v4 en el nivel 1. Reescrito citando §5.92: nivel 0 igual (§5 +
+      acta), 1 el cuestionario del 15/06, 2 el Protocolo, 3 el Manual, 4 el Documento Técnico, 5 la
+      presentación; Prototipo v4 y demo v4.1 explícitamente fuera de la lista, como insumo.
+    - `CLAUDE.md` (párrafo «Precedencia normativa — enmienda del 2026-09-03», L9/§5.10): mismo contenido
+      viejo (Manual + Prototipo v4 por encima del Documento Técnico); mismo reemplazo que en `handoff.md`,
+      citando §5.92 y derogando a §5.10/L9. También se cerró ahí mismo el aviso de «cambio de alcance sin
+      §5 propia» que había dejado M12.8-cierre.
+    - **Grep del resto del repo** (Paso 2c) — instrucciones que afirmaban precedencia vigente, fuera de
+      registros: `README.md:85-86` (decía «Ronda M12 ... en curso» y «pasa a ser la fuente normativa por
+      encima del Documento Técnico» — corregido: M12 CERRADA, cita a §5.92) y
+      `implementacion/L1-hce-idea/backend/docs/esquema-datos-v2.md:29` («Fuente normativa desde ago-2026
+      (§5.10/D1): ... por encima del Documento Técnico» — corregido, cita a §5.92). **Revisadas y dejadas
+      sin tocar** por ser cita/registro o alcance ya acotado a una ronda cerrada: `CLAUDE.md:54` y
+      `docs/estructura-repositorio.md:49` («fuente normativa M12» / «de la ronda M12», ambas ciertas como
+      historia de una ronda ya cerrada); `docs/notas/puntos-a-validar.md:499` (nota de trabajo explicando
+      por qué M12.6 pudo construirse sin el Manual, no una instrucción a futuro); las entradas §5.10,
+      §5.20, §5.37, §5.50 de `handoff.md` (append-only, no se tocan) y el §6 abierto sobre C9 (ya cubierto
+      en `preguntas-ippu.md`, verificado, no requería entrada nueva).
+  - **Paso 3 — los tres marcadores.** Exactamente tres, ni más ni menos: el header de `handoff.md`
+    (resuelto al reescribir la cabecera en el Paso 4), el párrafo de `CLAUDE.md` (resuelto en el Paso 2) y
+    el `[x] M12.8` de §6 (resuelto: la frase «la entrada de §5 la asienta él aparte» ahora cita §5.92).
+  - **Paso 4 — cierre.** `pytest -q` y ambos `--check` re-corridos, idénticos al Paso 0 (435 passed / 0
+    skipped, ambos exit 0) — **no se tocó código**. §6: **M12.8b-3b pasa de diferida a CANCELADA** (no
+    desbloquea nada y no hay margen para trabajo que no desbloquee) y **el sub-módulo de administración
+    (§2.8/§2.9/§2.11, §5.90) queda explícitamente fuera del alcance del 26/11** (los cinco grupos ya
+    sembrados alcanzan para un prototipo presentable). Cabecera de `handoff.md` actualizada (§5.82).
+    Prompt de sesión guardado en `docs/prompts/`. Después: **M11.3**.
+
 - **2026-09-16 · Sesión M12.8-cierre+I1 — cierra M12.8/M12 y aterriza I1** (Lucas + Claude, rama `main`).
   Dos partes con checkpoint entre medio, tal como pedía el prompt de sesión.
   - **Punto de partida, medido (Paso 0).** HEAD y ambos remotos (`gitlab`, `origin`) en `dad05ef`, árbol

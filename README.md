@@ -82,12 +82,15 @@ IPPU/
   silencio y devolvía **exit 0** con la mitad de los tests sin correr. Una corrida válida es
   **435 passed, 0 skipped**.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
-- **Ronda M12 — absorción del Prototipo v4 (ago-2026), en curso.** IPPU publicó su **Prototipo v4** con el
-  Manual de Procedimientos v1.0, que pasa a ser la fuente normativa por encima del Documento Técnico
-  (`handoff.md` §5.10). Se intercala entre M11.2 y M11.3 porque toca la misma capa (modelos, migración,
+- **Ronda M12 — absorción del Prototipo v4 (ago-2026), CERRADA el 2026-09-16.** IPPU había publicado su
+  **Prototipo v4**, que se intercaló entre M11.2 y M11.3 porque tocaba la misma capa (modelos, migración,
   catálogos): 6 bandas del IDEA, 14 talleres reales, y cuatro módulos nuevos — **HCE-SEV** (severidad
   DSM-5-TR), **HCE-INC** (inclusión educativa), **HCE-PAI** (propuesta de atención individual de INAU) y
-  **ateneos/jornadas**. Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`.
+  **ateneos/jornadas**. Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. ⚠️ **El Prototipo
+  v4 y la demo v4.1 dejaron de ser fuente normativa** (`handoff.md` §5.92, deroga a §5.10): son insumo a
+  consultar, no especificación a la que converger. Lo normativo es lo que IPPU dijo sobre sí misma — acta
+  de la reunión del 2026-08-26, cuestionario del 15/06, Protocolo de acceso/resguardo, Manual
+  institucional y Documento Técnico.
 - **Qué falta definir con IPPU** (validar la demo, cortes del baremo, acceso a la HCE actual…) está en
   `docs/notas/puntos-a-validar.md` — versión interna, con lo que bloquea cada punto. La versión **no
   técnica**, en formato de cuestionario, es `docs/notas/consulta-a-ippu.md`: **se envió el 2026-08-19**

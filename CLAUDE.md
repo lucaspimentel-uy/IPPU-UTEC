@@ -113,20 +113,23 @@ React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · P
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Toca la misma capa que M11.2 —modelos,
 migración inicial, catálogos— por eso fue antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **Sigue ahora M11.3** — única excepción registrada de M12:
-**M12.8b-3b** (pase de vocabulario, diferido, sin dueño, no bloquea M11.3). ⚠️ **Cambio de alcance,
-2026-09-16 (Lucas, sesión M12.8-cierre+I1):** el Prototipo v4 **dejó de ser fuente normativa** — pasa a
-ser insumo a consultar, no especificación a la que converger. La entrada de `handoff.md` §5 que asienta
-esto formalmente la escribe Lucas aparte; el párrafo de "Precedencia normativa" más abajo, que todavía
-nombra al Prototipo v4 como fuente autoritativa, queda **desactualizado hasta esa entrada** — no se
-reescribe acá porque la decisión no es de esta sesión.
+**M12.8b-3b, CANCELADA** (pase de vocabulario, `handoff.md` §6). ⚠️ **Cambio de alcance, 2026-09-16
+(Lucas, sesión M12.8-cierre+I1), asentado en `handoff.md` §5.92:** el Prototipo v4 y la demo v4.1
+**dejaron de ser fuente normativa** — son insumo a consultar, no especificación a la que converger.
+Motivo: §5.37 encontró relleno generado dentro del propio prototipo, leído como fuente, y se confirmó que
+el mismo autor genera con IA el material de la línea L3. El párrafo de "Precedencia normativa" de abajo
+ya refleja esto.
 
-**Precedencia normativa — enmienda del 2026-09-03 (L9, `handoff.md` §5.10).** Dos documentos de IPPU
-ingresados el 2026-09-03: `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo
-de acceso — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, modelo de acuerdo de
-confidencialidad Anexo II) y una reconversión del Documento Técnico (idéntica a la del repo). **Los dos
-son ANTERIORES al acta de la reunión con IPPU del 2026-08-26:** donde contradigan una decisión de la
-reunión (`handoff.md` §5.36–§5.49 / serie I) o cualquier decisión posterior, **gana la reunión y lo
-posterior**. Son autoritativos para todo lo que la reunión no tocó.
+**Precedencia normativa — enmendada el 2026-09-16 (`handoff.md` §5.92, deroga a §5.10/L9).** Normativo es
+lo que IPPU dijo sobre sí misma: el acta de la reunión del 2026-08-26 (`handoff.md` §5.36–§5.49 / serie
+I), el cuestionario respondido por escrito el 15/06, el Protocolo de acceso/confidencialidad/resguardo de
+la HC (`docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` — matriz de roles §5,
+procedimientos de divulgación §6, trazabilidad §8, Anexo II acuerdo de confidencialidad), el Manual de
+Procedimientos institucional y el Documento Técnico. **En conflicto, gana el acta del 2026-08-26 y
+cualquier decisión posterior**; los demás son autoritativos para todo lo que el acta no tocó. **El
+Prototipo v4 y la demo v4.1 (IPPU, ago-2026) NO están en esta lista**: se consultan como insumo —se les
+extrae información útil— pero no se modela ni se siembra nada sólo porque aparece ahí; la verificación
+real de los catálogos propios de IPPU la da IPPU, no el prototipo.
 - **M12.0 a M12.4 y M12.7 HECHOS** (2026-08-15): **38 tablas**, 6 catálogos nuevos, D9 (`grupo`) implementada, la
   **puntuación independiente de los dos técnicos** con su registro de consenso (D7, §5.16 — ⚠️ **agregado
   nuestro, no del prototipo**; el guard de «diferencia ≥2 exige documentación» va a **M11.3**, y kappa

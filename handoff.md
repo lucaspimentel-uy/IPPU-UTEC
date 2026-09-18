@@ -7,41 +7,51 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-09-16 (sesión **M12.8-cierre+I1**, Partes A+B — **cierra M12.8/M12 y
->   aterriza I1**). ⚠️ **Cambio de alcance decidido por Lucas durante la sesión, sin §5 propia todavía** (la
->   escribe él aparte): **el Prototipo v4 dejó de ser fuente normativa** — pasa a ser insumo a consultar,
->   no especificación a la que converger. La línea de "fuente normativa vigente" de abajo **sigue
->   nombrándolo precedencia 1**: queda **desactualizada hasta que Lucas la corrija con su propia entrada
->   de §5** — no se tocó acá porque no es esta sesión la que decide. **Parte A** — consecuencia concreta ya
->   aplicada: `DESDE_LA_DEMO` (`generar_catalogos_backend.py`) **no se vació** como pedía el plan — se movió
->   **sólo `categoria_documento`** (inline en `mDocs()` del prototipo, verificado verbatim contra los 12
->   valores existentes: cambió la fuente declarada, no el dato); `idea_nivel` y `servicio` se quedan
->   **permanentemente** (motivo anotado en el código: sin fuente extraíble, o el dato oficial no debe
->   ceder ante la paráfrasis del prototipo); `idea_dimension`/`ippu_item`/`baremo_categoria` se quedan
->   **por ahora** (el prototipo trae algo "parecido", no verbatim). **Auditados los guards de M12.1–M12.7**
->   (8 archivos de modelos, CHECK constraints): un solo hueco real — `puntuacion_idea.rango_t2`/
->   `ns_t2_sin_valor` sin el caso de rechazo probado — corregido con 2 tests nuevos. `solo_al_crear`,
->   índices de FK, `Numeric`→`Decimal` y el criterio §12-A: medidos, **ya estaban completos/correctos**.
->   **M12 CERRADO, con la única excepción registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76,
->   diferido, sin dueño — no bloquea M11.3). **Parte B (I1) — `idea.anio`**: columna **SmallInteger NOT
->   NULL** (mismo tipo que `grupo.anio`; NOT NULL porque el costo medido era sólo `anio=` en 9
->   construcciones `Idea(` de test y los otros dos `*_anio` del esquema ya son NOT NULL — con el UNIQUE de
->   abajo, nullable habría dejado sin proteger justamente las filas sin año) + `UNIQUE(hce_id, anio)`
->   (`uq_idea_hce_anio`, mismo patrón que `protocolo`/`informe_cierre`). Corregida también la fila del Δ en
->   `esquema-datos-v2.md` §4 y `backend/README.md` («Δ sólo B−A» → «Δ sólo dentro del mismo instrumento»,
->   §5.36). **No** tocó la demo ni la regla de «cuál IDEA rige»: siguen para M11.3. Migración regenerada
->   ambas veces (Parte A no tocó modelos; Parte B sí) — head final `b99294aec85c`, un solo archivo en
->   `versions/`. `pytest -q` final → **435 passed, 0 skipped**; ambos `--check` → exit 0; **51 tablas**.
->   Bitácora en `docs/bitacora.md`. Después: **M11.3**.
+> - **Última actualización:** 2026-09-18 (sesión **M12.9** — el Prototipo v4 deja de ser fuente
+>   normativa). Sesión corta, **sin tocar código**: cerraba el cabo suelto que dejó M12.8-cierre+I1
+>   (2026-09-16) — la decisión la había tomado Lucas mid-sesión, sin su entrada de §5 y con el párrafo de
+>   precedencia de `CLAUDE.md`/`handoff.md` todavía nombrando al Prototipo v4 como precedencia 1. Escrita
+>   **§5.92** (deroga a §5.10, append-only, no se edita): el Prototipo v4 y la demo v4.1 pasan de
+>   especificación a insumo — se consultan, no se modela ni siembra nada sólo porque aparece ahí — por el
+>   relleno generado que ya encontró §5.37 y porque se confirmó que Fernando Sierra genera estos
+>   artefactos con IA. Fija también el alcance del 26/11: prototipo presentable **sin datos reales**,
+>   §2.17/hosting/Fase 4 fuera del camino crítico. Reescritos ambos párrafos de «Fuente normativa vigente»
+>   (`handoff.md` de abajo y `CLAUDE.md`) para que dejen de nombrar al Prototipo v4 como precedencia 1; el
+>   grep del resto del repo encontró y corrigió dos instrucciones más en el mismo sentido (`README.md`,
+>   `esquema-datos-v2.md`) y dejó sin tocar lo que era cita o registro. Cerrados los tres marcadores
+>   pendientes que había dejado M12.8-cierre+I1 (header, `CLAUDE.md`, `[x] M12.8` de §6). **Dos decisiones
+>   de alcance para el 26/11, registradas como decisión y no como pendiente:** **M12.8b-3b (pase de
+>   vocabulario) — CANCELADA**, no diferida (no desbloquea nada y no hay margen para lo que no desbloquee);
+>   y el **sub-módulo de administración (§2.8/§2.9/§2.11, §5.90) fuera del alcance del 26/11** (los cinco
+>   grupos ya sembrados alcanzan). `pytest -q` → **435 passed, 0 skipped**; ambos `--check` → exit 0;
+>   **51 tablas**; head de Alembic **`b99294aec85c`** (un solo archivo en `versions/`) — idéntico al punto
+>   de partida, porque la sesión no tocó código. Bitácora en `docs/bitacora.md`. Después: **M11.3**.
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — M12 (absorción del Prototipo v4) CERRADA + I1 HECHO** (2026-09-16, sesión
 >   M12.8-cierre+I1), **intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 ·
 >   M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a ·
 >   M12.8b-3a-bis · M12.8 · I1** — **51 tablas**, **435 tests en verde y 0 salteados**, head de Alembic
 >   **`b99294aec85c`** (un solo archivo en `versions/`). **Única excepción
->   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76, diferido, sin dueño — no bloquea M11.3).
+>   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76) — **CANCELADA el 2026-09-16** (sesión M12.9,
+>   §5.92), no diferida: no desbloqueaba nada de cara al 26/11.
 >   **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
-> - **Fuente normativa vigente (orden de precedencia, §5.10):** **0.** las **decisiones de este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26** (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante ellas donde haya contradicción · **1.** Manual de Procedimientos v1.0 + **Prototipo v4** (IPPU, ago-2026) → `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/` · **1-bis.** `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6, trazabilidad §8, Anexo II acuerdo de confidencialidad; ingresado el 2026-09-03 · **anterior al acta**, autoritativo para lo que el acta no tocó) · **2.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0, jul-2026) · **3.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** Planes de ronda: `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, vigente). Referencia previa de UX/reglas: `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
+> - **Fuente normativa vigente (orden de precedencia, §5.92 deroga a §5.10):** **0.** las **decisiones de
+>   este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26**
+>   (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante
+>   ellas donde haya contradicción · **1.** el **cuestionario respondido por escrito el 15/06** (prueba
+>   primaria, `docs/fuentes/Cuestionario IPPU UTEC, respuestas.docx`) · **2.**
+>   `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de
+>   acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6,
+>   trazabilidad §8, Anexo II acuerdo de confidencialidad) · **3.** el **Manual de Procedimientos
+>   institucional** · **4.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0,
+>   jul-2026) · **5.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** ⚠️ **El Prototipo
+>   v4 y la demo v4.1 (IPPU, ago-2026) dejaron de ser fuente normativa (§5.92, 2026-09-16): son insumo a
+>   consultar con cuidado, no especificación a la que converger** — §5.37 encontró relleno generado
+>   adentro, leído como fuente, y el mismo autor genera con IA el material de L3. Se consultan igual:
+>   `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/`. Planes de ronda:
+>   `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y
+>   `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, cerrada). Referencia previa de UX/reglas:
+>   `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
 
 ---
 
@@ -2662,6 +2672,47 @@ usos directos + 1 indirecto en 6 módulos, medido por R1— va a la ronda de dem
 de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marcador en
 `app/models/modulos.py`; no reescribe la regla.
 
+### 5.92 El Prototipo v4 y la demo v4.1 dejan de ser fuentes normativas (2026-09-16, Lucas)
+
+§5.10 puso al Prototipo v4 en precedencia 1, por encima del Documento Técnico, y toda la ronda M12 se hizo
+conforme a eso. Dos hechos posteriores le sacan esa base. **§5.37** encontró relleno generado dentro del
+propio prototipo, leído como fuente — los cuatro nombres de grupo por color. Y en septiembre se confirmó
+que **Fernando Sierra genera estos artefactos con IA**: tanto el Prototipo v4 como el «Catálogo de
+puertas» de la línea L3. Prototipo y demo son entonces dos artefactos del mismo autor y el mismo método,
+no una fuente y su versión mejorada.
+
+**Decisión.** El Prototipo v4 y la demo v4.1 pasan de **especificación** a **insumo**: se consultan, se
+extrae información útil, y **no se modela ni se siembra nada sólo porque aparece ahí**. Normativo es lo
+que IPPU dijo sobre sí misma — el acta de la reunión del 2026-08-26, el cuestionario respondido por
+escrito el 15/06, el Protocolo de acceso y resguardo, el Manual institucional y el Documento Técnico. El
+desarrollo avanza desde lo que sabemos y tenemos documentado sobre cómo trabaja IPPU y qué quiere.
+
+**Método de validación.** Se valida contra IPPU, no contra artefactos. Cuando algo funciona, se les manda
+para que lo prueben, y su devolución vuelve. La devolución es fuente; el prototipo no.
+
+**Alcance del 26/11.** La primera línea (HCE) vence el 26/11 como **prototipo funcional y presentable SIN
+datos reales** — no listo para producción. Consecuencias a registrar: §2.17 (registro de accesos con
+motivo) es requisito para producción con historias clínicas reales, no bloqueante para el 26/11; el
+hosting es un despliegue de demostración y no se decide acá; y la Fase 4 (usuarios, login, roles) queda
+fuera del camino crítico, reemplazada por un login mínimo de demostración.
+
+**Qué NO reabre esto.** Nada de lo ya construido. Los catálogos y módulos de M12 se verificaron cruzando
+otras fuentes en su momento, y §5.50 ya fijó cómo se lee una fuente que es a la vez especificación y demo.
+Esto rige de acá en adelante.
+
+**Qué cambia, en concreto:**
+- El criterio de cierre de `DESDE_LA_DEMO` se enmienda: de «la lista queda vacía» a **«cada sección tiene
+  una fuente nombrada, y nada se re-referencia sin un diff verificado-vacío»**. Con el prototipo
+  degradado, re-referenciar es un movimiento lateral y sólo se hace cuando es demostrablemente sin
+  pérdida. `idea_nivel` (una paráfrasis, no el texto oficial de Rivière — M12.1) y `servicio` (sólo
+  menciones en prosa) se quedan **por decisión, no como deuda**. M12.8-cierre ya aplicó esto.
+- La verificación real de los catálogos propios de IPPU — sobre todo `ippu_item` y `baremo_categoria` —
+  sólo puede venir de IPPU. Va a `preguntas-ippu.md` si no está cubierta ya (**medido: ya está cubierta,
+  en C9**).
+- `PLAN-M12` §M12.8 se enmienda en su justificación («cambió la fuente autoritativa» ya no aplica).
+- ⚠️ **Esto reemplaza el orden de precedencia de §5.10.** §5.10 es append-only y no se edita; esta entrada
+  deja asentado que el Prototipo v4 sale del nivel 1 y que las fuentes normativas son las listadas arriba.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -2727,6 +2778,10 @@ de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marca
 >   clínico). Va en la misma pantalla que §2.9 (catálogos de talleres/centros) y §2.11 (usuarios): alta/
 >   renombre de grupo, asignación de técnicos, administración de catálogos, usuarios, y HCE-LOG con
 >   `hce_id NULL` para lo que no cuelga de un NNA. Número y ubicación relativa a M11.4: **no decididos**.
+>   ⚠️ **Fuera del alcance del 26/11 (2026-09-16, sesión M12.9, §5.92).** Decisión nombrada de Lucas, no
+>   pendiente que siga presionando en noviembre: los **cinco grupos ya sembrados** (§5.61) alcanzan para
+>   un prototipo presentable sin datos reales; este sub-módulo entero —§2.8/§2.9/§2.11— queda para después
+>   del 26/11.
 > - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · **§5.79** ·
 >   `puntos-a-validar.md` §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo,
 >   asigna y crea otros ADMIN. ⚠️ **§5.79 derogó la ubicación de §5.72:** la tabla **`tecnico_grupo`** N:M
@@ -2973,11 +3028,13 @@ de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marca
 - [x] **M12 · Absorción del Prototipo v4 — CERRADO** (arrancó 2026-08-14, cerrado 2026-09-16 en la sesión
   **M12.8-cierre**). Se intercaló **entre M11.2 y M11.3**. Decisiones D1–D9 escritas en **§5.10–§5.18**.
   Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **Única excepción registrada:**
-  **M12.8b-3b** (pase de vocabulario, ver abajo), diferido y sin dueño — no bloquea M11.3.
+  **M12.8b-3b, CANCELADA** (pase de vocabulario, ver abajo, §5.92) — no bloqueaba nada y no hay margen
+  para trabajo que no desbloquee de cara al 26/11.
   - [x] **M12.8** cierre — **HECHO (2026-09-16).**
         ⚠️ **Cambio de alcance decidido por Lucas en esta misma sesión, escrito acá porque §6 es lo que se
-        toca; la entrada de §5 la asienta él aparte:** el Prototipo v4 **dejó de ser fuente normativa** —
-        es insumo a consultar, no especificación a la que converger. Por eso "vaciar `DESDE_LA_DEMO`
+        toca; la entrada de §5 quedó asentada en la sesión M12.9 (§5.92):** el Prototipo v4 y la demo v4.1
+        **dejaron de ser fuente normativa** — son insumo a consultar, no especificación a la que
+        converger. Por eso "vaciar `DESDE_LA_DEMO`
         pasando todo al prototipo" (como decían el plan y la cabecera de este archivo) **ya no es el
         criterio**: mover un dato de un artefacto de IPPU a otro, ambos con la misma procedencia, no gana
         fidelidad y arriesga cambiarlo sin querer. **Criterio con el que se cerró:** una sección migra
@@ -3028,13 +3085,14 @@ de B2(b) y B10, que IPPU no respondió. I1 agrega la columna y conserva el marca
           hallazgo del invariante de `tecnico_grupo` y el barrido retroactivo de §5.83, corrigió los
           docstrings de R1-04/R1-05 y el conteo de `backend/README.md:131` (R1-10), y archivó la cola
           resuelta de §6 a `docs/pendientes-resueltos.md`.
-    - [ ] **M12.8b-3b** — pase mecánico de **vocabulario**: «fase» → un término por sentido y «L1 = HCE»
-          para la numeración de líneas (§5.75 / §2.3 · §5.76 / §2.4). **DIFERIDO hasta que cierre M12**
-          (decidido en M12.8b-3a, 2026-09-11): cinco sesiones seguidas no tocaron código y éste es el único
-          pendiente que no desbloquea nada; se prioriza lo que sí desbloquea o abarata sesiones futuras.
-          **Sin dueño.** Detalle y conteo por archivo en el bullet «Pase mecánico de vocabulario» de esta
-          misma sección y en `puntos-a-validar.md` §2.3. **M12.8b-2 no lo tocó** (alcance explícito: sólo
-          cifras/afirmaciones falsas, sin pase de vocabulario).
+    - [x] **M12.8b-3b — CANCELADA (2026-09-16, sesión M12.9, §5.92).** Pase mecánico de **vocabulario**:
+          «fase» → un término por sentido y «L1 = HCE» para la numeración de líneas (§5.75 / §2.3 · §5.76 /
+          §2.4). Estaba **diferida** desde M12.8b-3a (2026-09-11); con el alcance del 26/11 fijado en
+          §5.92, Lucas la cancela **como decisión nombrada, no como pendiente que siga esperando**: no
+          desbloquea nada y no hay margen para trabajo que no desbloquee de cara al 26/11. **Sin dueño**,
+          y ya no lo necesita. Detalle y conteo por archivo, si algún día se retoma: bullet «Pase mecánico
+          de vocabulario» de esta misma sección y `puntos-a-validar.md` §2.3. **M12.8b-2 no lo tocó**
+          (alcance explícito: sólo cifras/afirmaciones falsas, sin pase de vocabulario).
     - [ ] **Barrido retroactivo de §5.83 — MEDIDO en M12.8b-3a (2026-09-11), no aplicado.** §5.83 exige que
           un barrido deje evidencia de grep; nunca se corrió retroactivamente contra las tres formulaciones
           derogadas que ya tienen entrada de §5 propia. Comandos corridos (repo completo, excluyendo

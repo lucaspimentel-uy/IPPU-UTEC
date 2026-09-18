@@ -26,8 +26,11 @@
 > `ejemplos-endpoints.md`: describían el backend v1, retirado entero en M11.2 (`handoff.md` §5.29).
 > Este documento es la única fuente citable del esquema.
 >
-> **Fuente normativa desde ago-2026 (§5.10 / D1):** Manual de Procedimientos v1.0 + Prototipo v4 de
-> IPPU, por encima del Documento Técnico. Decisiones de la ronda: `handoff.md` §5.10–§5.18.
+> **Fuente normativa (`handoff.md` §5.92, deroga a §5.10/D1):** el acta de la reunión con IPPU del
+> 2026-08-26, el cuestionario respondido por escrito el 15/06, el Protocolo de acceso/resguardo, el Manual
+> de Procedimientos institucional y el Documento Técnico. ⚠️ **El Prototipo v4 y la demo v4.1 (IPPU,
+> ago-2026) dejaron de ser fuente normativa** (§5.92) — insumo a consultar, no especificación a la que
+> converger. Decisiones de la ronda M12 (absorción del Prototipo v4, cerrada): `handoff.md` §5.10–§5.18.
 
 ## Registro de versiones del documento
 
