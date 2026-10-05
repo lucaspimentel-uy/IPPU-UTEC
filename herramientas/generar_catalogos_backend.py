@@ -124,12 +124,9 @@ RECORDATORIOS = [
 #: administra coordinación desde la app, y el seed **nunca** los vuelve a tocar
 #: (son insert-only). Distintos entre sí → `UNIQUE(nombre, anio)` se cumple.
 #:
-#: ⚠️ **«Taller de Adolescentes» se siembra como fila de `grupo`** porque la
-#: reunión lo enumeró como el quinto en la misma lista que los otros cuatro
-#: (`handoff.md` §5.61). Pero el Documento Técnico §1 reserva el servicio de
-#: **Taller Terapéutico** para la Fase 2, con estructura de registro propia; si
-#: IPPU quiere decir eso, «Taller de Adolescentes» no es un grupo y esta fila
-#: sale. Es la pregunta **A5** de `docs/notas/preguntas-ippu.md`.
+#: ✅ **«Taller de Adolescentes» es un grupo**: se siembra como fila de `grupo`
+#: (`handoff.md` §5.61) y **IPPU lo confirmó el 2026-10-05** (pregunta **A5**,
+#: `handoff.md` §5.107). Taller Terapéutico y Clínica son otros servicios.
 GRUPOS_ANIO = 2026
 GRUPOS = [
     "Inicial",

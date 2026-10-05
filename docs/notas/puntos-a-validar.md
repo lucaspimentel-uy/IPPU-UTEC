@@ -38,7 +38,7 @@
 > `docs/notas/respuestas-ippu-2026-10-05.txt` · decisiones en `handoff.md` **§5.93–§5.106** · estado ítem
 > por ítem en `preguntas-ippu.md`. **Qué cambió acá:** **§1.5** y **§1.6** respondidas (no hay acceso a la
 > HCE; no hay acuerdo firmado) · **§1.9** ratificado · **§1.16** (B1) sigue abierto y re-preguntado, **ya
-> no bloquea el 26/11** · **§1.17** (B9) respondido, diferido · **§2.8** (A5) sigue abierto · **§2.11**
+> no bloquea el 26/11** · **§1.17** (B9) respondido, diferido · **§2.8** (A5) **cerrada el mismo día: «Taller de Adolescentes» es un grupo** · **§2.11**
 > `tecnico_grupo` **CANCELADA** · **§2.12/§2.13/§2.17** (B11/B12/B7) respondidos con alcance acotado · **§3**
 > dos supuestos cerrados. El punto de **segunda mano** del consentimiento (§5.38) quedó **CONFIRMADO por
 > escrito** (A3, §5.94).
@@ -505,8 +505,8 @@ falta el historial de estado de arriba (que igual conviene para el tablero).
 ### 1.16 ¿De qué son las secciones **§4 y §8** del Manual de Procedimientos? — abierto por M12.6 (2026-09-02)
 
 > **⚠️ SIGUE ABIERTO — RE-PREGUNTADO el 2026-10-05 (B1, `handoff.md` §5.105).** IPPU contestó «No entendí
-> exactamente qué querés, especifícamelo mejor». La pregunta se reformuló (borrador en `preguntas-ippu.md`
-> B1). **Ya NO bloquea el 26/11:** los totales del IDEA son las sumas definidas (12 dimensiones → 0–96 y
+> exactamente qué querés, especifícamelo mejor». La pregunta se reformuló (texto definitivo en
+> `preguntas-ippu.md` B1, §5.107). **Ya NO bloquea el 26/11:** los totales del IDEA son las sumas definidas (12 dimensiones → 0–96 y
 > 4 escalas; 24 ítems → 24–120) y el Δ va dentro del mismo instrumento. Si el Anexo A o §8 dicen otra
 > cosa, se revisa cuando lleguen.
 
@@ -737,11 +737,10 @@ porcentaje oficial.
 
 ### 2.8 No hay forma de «abrir un año nuevo» de grupos — ⚠️ **AHORA BLOQUEA** (2026-08-26)
 
-> **⚠️ A5 (2026-10-05, `handoff.md` §5.104) — respuesta AMBIGUA, sigue abierta.** IPPU dijo que Taller
-> Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, y que «no son nombres de grupos»;
-> **no dijo** si «Taller de Adolescentes» es uno de ellos. Se re-pregunta (`preguntas-ippu.md` A5) y
-> **los cinco grupos sembrados (§5.61) se quedan** hasta que conteste. Además, §5.92 ya sacó del 26/11
-> la creación de grupos desde la aplicación.
+> **✅ A5 CERRADA el 2026-10-05 (`handoff.md` §5.107): «Taller adolescentes es el nombre de un grupo».** La primera
+> respuesta escrita (§5.104) era ambigua; re-preguntada, IPPU confirmó que es un grupo. **§5.61 queda
+> confirmada: los cinco grupos sembrados se quedan.** Además, §5.92 ya sacó del 26/11 la creación de grupos
+> desde la aplicación.
 
 
 > ### ⚠️ Dejó de ser un hueco anotado: es un hueco bloqueante (reunión IPPU 2026-08-21)

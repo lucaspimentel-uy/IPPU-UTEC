@@ -16,8 +16,8 @@
 >   en la HCE el firmado de mayor `anio`) · **puntaje único** (ratifica §5.47) · fotos sin trabas ·
 >   **`tecnico_grupo` CANCELADA** (supera §5.79/§5.87, cierra §5.89) · login mínimo `admin` \| `tecnico` para
 >   el 26/11 · informes configurables y divulgación fuera del 26/11 · el Anexo A **ya no bloquea** (B1 se
->   re-pregunta) · **M11.4 se disuelve en rebanadas verticales** (§5.106). **Siguen abiertas A5 y B1**
->   (respuesta ambigua / no entendida; re-preguntadas). Reescritos: `esquema-datos-v2.md` §2.2, §2.3, §2.6,
+>   re-pregunta) · **M11.4 se disuelve en rebanadas verticales** (§5.106). **Seguía abierta B1**
+>   (no entendida; re-preguntada). **Actualización de la misma fecha (sesión M11.3-0b, §5.107): A5 contestada — «Taller de Adolescentes» es un grupo; §5.61 confirmada. B1 sigue abierta, con su texto definitivo.** Reescritos: `esquema-datos-v2.md` §2.2, §2.3, §2.6,
 >   §4, §5 y §6; `preguntas-ippu.md` (estado de cada ítem); `puntos-a-validar.md`; el bullet M11 de §6;
 >   `CLAUDE.md`; nota de superseded en `PLAN-modular-adaptacion-HCE-2026-07.md`. Barrido de vigencia con
 >   evidencia (§5.83) en `docs/bitacora.md`. **Medido:** `pytest -q` → **435 passed, 0 skipped**; ambos
@@ -76,8 +76,7 @@ firmado en 2025, con implementación en 2026. Objetivo: aplicar IA y ciencia de 
 - **Población:** las fuentes dan **~120 NNA en total** y a la vez **convenio INAU: 30 · BPS: 108** (que
   suman **138**; ⚠️ discrepancia sin reconciliar — `docs/notas/preguntas-ippu.md` C11), en **5 grupos de
   referencia** por edad/modalidad — Inicial · Escolares · Preadolescentes · Adolescentes · Taller de
-  Adolescentes (§5.61; ⚠️ el último podría ser el servicio de Taller Terapéutico de Fase 2 y no un grupo,
-  `preguntas-ippu.md` A5). ~40 expedientes activos en la HCE. **14 talleres especializados** (§5.14).
+  Adolescentes (§5.61, **confirmados por IPPU el 2026-10-05**, §5.107). ~40 expedientes activos en la HCE. **14 talleres especializados** (§5.14).
   ~20 personas usan la HCE.
 
 ## 2. Las 4 líneas de trabajo
@@ -2942,6 +2941,27 @@ reduce: **Swagger reemplaza a `ejemplos-endpoints.md`**. Orden:
 
 ---
 
+## 5.107 · Sesión M11.3-0b — A5 contestada; B1 queda con su texto definitivo (2026-10-05, Lucas)
+
+### 5.107 «Taller de Adolescentes» ES UN GRUPO — A5 cerrada, §5.61 confirmada (2026-10-05, Lucas)
+
+**IPPU (A5, respuesta a la pregunta reformulada, transmitida por Lucas):** «Taller adolescentes es el
+nombre de un grupo». **Cierra A5 y confirma §5.61**: los **cinco grupos sembrados** —Inicial · Escolares ·
+Preadolescentes · Adolescentes · Taller de Adolescentes— son correctos, y la fila de «Taller de
+Adolescentes» **no sale**. **Resuelve la ambigüedad que §5.93 y §5.104 dejaron registrada** (la respuesta
+escrita del 2026-10-05 sólo decía que Taller Terapéutico y Clínica no son grupos); esas dos entradas **no se
+editan**, las supera ésta. Taller Terapéutico y Clínica siguen fuera de Atención Diurna (§5.12 / D3).
+**Sin trabajo de esquema ni de seed.** Los comentarios y docstrings que seguían diciendo «podría ser el
+servicio Taller Terapéutico» se corrigen en esta misma sesión.
+
+**B1 sigue ABIERTA**, ahora con su **texto definitivo** (reemplaza el borrador de la sesión M11.3-0): se
+pide el Manual completo (Word o PDF) y, si no lo tienen a mano, si al terminar de puntuar el IDEA y antes de
+firmar hacen alguna cuenta o revisión además de sumar las 12 dimensiones y los totales por escala (p. ej.
+que no quede ninguna dimensión sin puntuar, o compararlo con el IDEA del año anterior). El texto completo
+está en `preguntas-ippu.md` B1. **Sigue sin bloquear el 26/11** (§5.105).
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -3057,7 +3077,7 @@ reduce: **Swagger reemplaza a `ejemplos-endpoints.md`**. Orden:
 > - [x] ✅ **CERRADO el 2026-10-05 (A3, §5.94): IPPU lo confirmó por escrito.** ~~⚠️ **Re-confirmar con IPPU el punto de segunda mano: el consentimiento no traba el flujo**~~
 >   (§5.38 / I3). Es el **único** ítem de la serie I que no se escuchó en la reunión. **Primero en la
 >   lista del próximo contacto.**
-> - [ ] ⚠️ **2026-10-05: las A1–A5 y B1–B12 de `preguntas-ippu.md` se contestaron por escrito (§5.93); siguen abiertas A5 y B1 (re-preguntadas), más el bloque C.** **Llevar al próximo contacto los 12 bloques que quedaron SIN respuesta** — la lista completa está
+> - [ ] ⚠️ **2026-10-05: las A1–A5 y B1–B12 de `preguntas-ippu.md` se contestaron por escrito (§5.93); sigue abierta B1 (re-preguntada con su texto definitivo; A5 se cerró el mismo día, §5.107), más el bloque C.** **Llevar al próximo contacto los 12 bloques que quedaron SIN respuesta** — la lista completa está
 >   en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` §16. Los tres que más cuestan: **2.a**
 >   (¿quieren registrar participación por taller? — decide el alcance de M12.6), **8.a/8.b/8.c** (la
 >   planilla de Inclusión, los 7 estados y si el estado se anualiza — **M12.5 arranca sin eso**) y
@@ -3441,9 +3461,8 @@ reduce: **Swagger reemplaza a `ejemplos-endpoints.md`**. Orden:
 ## 9. Datos clave (cifras)
 - **NNA:** las fuentes dan **~120 en total** y a la vez **30 INAU + 108 BPS**, que suman **138**. ⚠️ **No
   cuadra**, y la discrepancia no se reconcilia acá: va a IPPU (`docs/notas/preguntas-ippu.md` C11).
-- **5 grupos** (§5.61): Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes. ⚠️
-  «Taller de Adolescentes» podría ser el servicio de **Taller Terapéutico** (Fase 2) y no un grupo —
-  `preguntas-ippu.md` A5.
+- **5 grupos** (§5.61): Inicial · Escolares · Preadolescentes · Adolescentes · Taller de Adolescentes (✅ confirmados por IPPU
+  el 2026-10-05: «Taller de Adolescentes» **es un grupo**, §5.107).
 - **14 talleres** (§5.14 / D5; antes acá decía «18» — el «8 vs 18» era falso).
 - ~40 expedientes activos · ~150 evaluaciones IDEA históricas (sin consolidar).
 

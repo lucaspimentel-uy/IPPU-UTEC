@@ -238,9 +238,8 @@ def run(db: Session | None = None, verboso: bool = True) -> list[str]:
 
         # Los 5 grupos reales de IPPU (D9 · §5.61) como punto de partida del año
         # en curso. Insert-only: de acá en más los administra coordinación.
-        # ⚠️ «Taller de Adolescentes» se siembra como grupo por §5.61; si IPPU
-        # lo entiende como el servicio de Taller Terapéutico (Fase 2), esa fila
-        # sale — pregunta A5 de `docs/notas/preguntas-ippu.md`.
+        # «Taller de Adolescentes» es un grupo (§5.61): IPPU lo confirmó el
+        # 2026-10-05 (pregunta A5, `handoff.md` §5.107).
         nuevas, act = _sincronizar(
             db, Grupo, datos["grupo"], ("nombre", "anio"), solo_insertar=True
         )

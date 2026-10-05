@@ -105,8 +105,8 @@ class Grupo(Base):
     dominio de IPPU, corregidos por la reunión del 2026-08-21; `A..E` era una
     invención nuestra anterior. Va en la fila y no en un catálogo aparte: si en
     2028 dejan de usar "Preadolescentes", la fila de 2026 lo sigue diciendo.
-    (⚠️ "Taller de Adolescentes" podría ser el servicio de Taller Terapéutico y
-    no un grupo — `docs/notas/preguntas-ippu.md` A5.)
+    ("Taller de Adolescentes" es un grupo: IPPU lo confirmó el 2026-10-05,
+    `handoff.md` §5.107, pregunta A5.)
 
     **Granularidad anual, no por fecha**: con fecha completa volverían a existir
     dos grupos "Escolares" en el mismo año, y `anio` es además la granularidad

@@ -22,9 +22,9 @@
 > ## 🗓️ Respuestas escritas de IPPU — 2026-10-05 (sesión M11.3-0, `handoff.md` §5.93–§5.106)
 >
 > IPPU contestó **A1–A5 y B1–B12** por escrito (`docs/notas/respuestas-ippu-2026-10-05.txt`, verbatim).
-> Cada ítem de abajo lleva su **estado** y **dónde aterrizó**. Resumen: **15 respondidos** (A1 A2 A3 A4 B2
-> B3 B4 B5 B6 B7 B8 B9 B10, y B11/B12 por remisión al Protocolo con lectura de Lucas) de 17 · **2 siguen
-> ABIERTOS y reformulados: A5 y B1**. El bloque **C** no se preguntó en esta vuelta y sigue como estaba.
+> Cada ítem de abajo lleva su **estado** y **dónde aterrizó**. Resumen: **16 respondidos** de 17 (A1 A2 A3 A4 **A5**
+> —cerrada el mismo día—, B2 B3 B4 B5 B6 B7 B8 B9 B10, y B11/B12 por remisión al Protocolo con lectura de Lucas) · **1 sigue
+> ABIERTO y reformulado: B1**. El bloque **C** no se preguntó en esta vuelta y sigue como estaba.
 > Los archivos que son registro —el acta de la reunión (`respuestas-reunion-ippu-2026-08-21.md`) y el
 > snapshot enviado (`consulta-a-ippu.md`)— **no se editan**: el aterrizaje vive en `handoff.md` §5 y en
 > `puntos-a-validar.md`.
@@ -90,10 +90,8 @@ Protocolo prevé — `handoff.md` §5.70).
 
 ### A5 · «Taller de Adolescentes»: ¿es un **grupo** o es el **servicio de Taller Terapéutico**?
 
-> **Estado (2026-10-05): ⚠️ ABIERTA — RESPUESTA AMBIGUA, REFORMULADA.** IPPU contestó que Taller Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, y que «no son nombres de grupos». **No dijo** si «Taller de Adolescentes» es uno de esos servicios o un grupo. Los cinco grupos sembrados (§5.61) se quedan hasta que conteste.
->
-> **Pregunta reformulada (para el próximo contacto):** «Para confirmar: «Taller de Adolescentes», ¿es un grupo de Atención Diurna (como Inicial, Escolares, Preadolescentes y Adolescentes) o es parte del servicio Taller Terapéutico? Alcanza con responder «grupo» o «Taller Terapéutico».»
-> **Aterrizó en:** `handoff.md` §5.104 · `puntos-a-validar.md` §2.8. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+> **Estado (2026-10-05): ✅ RESPONDIDA — «grupo».** Primera respuesta (por escrito): Taller Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, «no son nombres de grupos» — ambigua. Re-preguntada con la pregunta reformulada, IPPU contestó: **«Taller adolescentes es el nombre de un grupo»**. Confirma los cinco grupos sembrados (§5.61); la fila no sale.
+> **Aterrizó en:** `handoff.md` §5.107 (confirma §5.61; supera lo que dejaron §5.93/§5.104) · `puntos-a-validar.md` §2.8. Respuesta verbatim de la primera vuelta en `respuestas-ippu-2026-10-05.txt`; la segunda llegó por Lucas y consta en §5.107.
 
 **Qué se pregunta.** IPPU dio cinco nombres de grupo: Inicial · Escolares · Preadolescentes · Adolescentes
 · **Taller de Adolescentes**. Pero el Documento Técnico §1 dice: *«Los servicios de **Taller Terapéutico**
@@ -112,10 +110,10 @@ manda, `handoff.md` §5.61), pero hay que preguntarlo.
 
 ### B1 · Las secciones §4 y §8 del Manual de Procedimientos, y el Anexo A
 
-> **Estado (2026-10-05): ⚠️ ABIERTA — REFORMULADA.** IPPU contestó «No entendí exactamente qué querés, especifícamelo mejor». **Ya no bloquea el 26/11**: para esa fecha los totales son las sumas ya definidas (`handoff.md` §5.105).
+> **Estado (2026-10-05): ⚠️ ABIERTA — REFORMULADA, texto definitivo.** IPPU contestó «No entendí exactamente qué querés, especifícamelo mejor». **Ya no bloquea el 26/11**: para esa fecha los totales son las sumas ya definidas (`handoff.md` §5.105). Se re-pregunta con el texto definitivo de abajo (aportado por Lucas; **reemplaza el borrador anterior**). **Pendiente de respuesta.**
 >
-> **Pregunta reformulada — ⚠️ BORRADOR de la sesión M11.3-0: el texto definitivo no vino con el pedido de la sesión y lo fija Lucas antes de enviarla.** «En el Manual de Procedimientos que tenemos, la numeración salta: no vemos la sección 4 (viene después de la secuencia longitudinal, sección 3) ni la sección 8 (viene entre «aplicación y puntuación del IDEA» y «interpretación del perfil»). Tampoco tenemos el Anexo A, que entendemos explica cómo se calculan los totales del IDEA y cómo se revisan antes de firmar. ¿Nos pueden pasar esas tres partes? Si no las tienen a mano, alcanza con que nos cuenten en una o dos frases qué dice cada una.»
-> **Aterrizó en:** `handoff.md` §5.105 · `puntos-a-validar.md` §1.16. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+> **Pregunta reformulada:** «Sobre el Manual de Procedimientos (B1). En la copia que tenemos del Manual faltan la sección 4, la sección 8 y el Anexo A. ¿Nos pueden mandar el archivo completo del Manual (Word o PDF)? Si no lo tienen a mano, nos alcanza con esto: cuando terminan de puntuar el IDEA, antes de firmar, ¿hacen alguna cuenta o revisión además de sumar las 12 dimensiones y los totales por escala? Por ejemplo, controlar que no quede ninguna dimensión sin puntuar, o compararlo con el IDEA del año anterior.»
+> **Aterrizó en:** `handoff.md` §5.105 y §5.107 · `puntos-a-validar.md` §1.16. Primera respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
 
 **Qué se pregunta.** Del Manual nos falta ver **dos partes**: la **§4** (cierra el marco general) y la
 **§8** (está entre la puntuación del IDEA y la interpretación del perfil). ¿Nos pasan esas dos y el

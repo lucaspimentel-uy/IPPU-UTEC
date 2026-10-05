@@ -20,6 +20,17 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-05 · Sesión M11.3-0b — A5 contestada, B1 con texto definitivo** (Lucas + Claude, rama `main`).
+  Continuación corta de M11.3-0; sin cambios de código (sólo comentarios y docstrings).
+  - **A5:** IPPU respondió «Taller adolescentes es el nombre de un grupo» → **§5.107** (confirma §5.61; supera
+    la ambigüedad de §5.93/§5.104, que no se editan). Corregidos los textos vivos que decían «podría ser el
+    servicio Taller Terapéutico»: `handoff.md` (§1, §9, cabecera, §6), `preguntas-ippu.md`, `puntos-a-validar.md`
+    §2.8, `esquema-datos-v2.md` fila `grupo`, y los comentarios de `generar_catalogos_backend.py`,
+    `seed_catalogos.py` e `identidad.py` (AST contra `HEAD`: sólo docstrings/comentarios).
+  - **B1:** sigue abierta; el borrador de M11.3-0 se reemplazó por el texto de Lucas (Manual completo o, si no, qué
+    revisión hacen antes de firmar el IDEA). Sin bloquear el 26/11 (§5.105).
+  - **Medido:** `pytest -q` → 435 passed, 0 skipped; ambos `--check` → 0; head `b99294aec85c`, 1 archivo.
+
 - **2026-10-05 · Sesión M11.3-0 — respuestas escritas de IPPU (A1–B12) registradas** (Lucas + Claude, rama
   `main`). **Sólo documentación**: ningún cambio de código, modelo, migración, seed ni test.
   - **Fuente.** `docs/notas/respuestas-ippu-2026-10-05.txt` (verbatim; su duplicado
