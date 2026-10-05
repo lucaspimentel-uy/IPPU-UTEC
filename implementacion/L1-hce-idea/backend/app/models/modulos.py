@@ -48,9 +48,13 @@ class FirmaMixin:
     (dos técnicos), de la familia para el CI.
 
     `excepcion` guarda la habilitación excepcional (`{motivo, texto,
-    profesional_id, fecha}`) — permite firmar un módulo salteando la secuencia,
-    dejando constancia. **El CI es el único que no la admite** (§4.2); esa regla
-    la impone el servicio.
+    profesional_id, fecha}`) — constancia de una escritura o firma fuera de
+    secuencia. **La secuencia sólo avisa** (`handoff.md` §5.95, B4): se acepta, la
+    respuesta lleva `warnings[]` y se escribe una fila de `auditoria` con
+    `tipo='excepcion'`; no hay 409 por secuencia. **El CI tampoco traba**
+    (§5.94, A3): su falta es el estado derivado «CI pendiente». Si este campo se
+    usa o alcanza con `auditoria` lo decide M11.3-b. Firma = bloqueo es otra regla
+    y sigue devolviendo 409 al editar un módulo firmado.
     """
     firmado: Mapped[bool] = mapped_column(Boolean, default=False)
     firmas: Mapped[list | None] = mapped_column(JSONB)
@@ -93,11 +97,13 @@ class PuntuacionConsensoMixin:
        (ver `PuntuacionIdea`).
 
     ── Qué NO está acá ─────────────────────────────────────────────────────
-    - **El guard.** «Diferencia ≥2 exige documentación» es lógica de negocio y
-      va al servicio de firma en M11.3 (§5.2.2: la BD no lleva reglas clínicas).
-      Acá está el campo y el marcador, no el rechazo.
+    - **El guard.** «Diferencia ≥2 exige documentación» **salió de M11.3 el
+      2026-10-05** (§5.98): IPPU registra **un solo número de consenso**, así que
+      no hay dos series que comparar. Las tablas se quedan, la API no las expone
+      y no se retiran; acá están el campo y el marcador, y no hay rechazo.
     - **El cálculo de kappa.** Se guardan los datos que lo hacen posible y nada
-      más; el cálculo es de la fase piloto.
+      más. ⚠️ **Con la práctica de IPPU kappa no es calculable** (§5.47 / §5.98):
+      el modelo lo soporta, el dato no existe.
     - **La obligatoriedad.** Todo es nullable: una evaluación con sólo el
       consenso es válida. Hace falta para los históricos migrados y para el seed
       espejo de la demo, donde el consenso es lo único que existe — y porque
@@ -191,7 +197,12 @@ class EvaluadoresMixin:
 
 
 class Consentimiento(FirmaMixin, Base):
-    """HCE-CI. El único bloqueo sin excepción posible de todo el flujo (§4.2).
+    """HCE-CI. **No traba el flujo** (`handoff.md` §5.94, A3, cierra §5.38).
+
+    Ningún paso de la secuencia exige el CI: su falta es el estado derivado y
+    visible «CI pendiente», con notificación. Se hace **una vez por HCE**
+    (§5.96). Antes de 2026-10-05 este docstring decía «el único bloqueo sin
+    excepción posible» (§4.2): IPPU lo desmintió por escrito.
 
     PK = hce_id: hay a lo sumo uno por expediente, y no necesita id propio.
     """
@@ -210,26 +221,30 @@ class Consentimiento(FirmaMixin, Base):
 class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     """HCE-LB — el IDEA es **ANUAL** (§5.36).
 
-    ⚠️ **M12.8b-2 dejó este marcador; I1 (2026-09-16, `handoff.md` §5.36/§5.91)
-    lo cierra a medias — actualizado sólo para decirlo.** IPPU confirmó que el
-    IDEA es **anual** y que el de cada año se compara con el del anterior; cae
-    la «línea base única» del Documento Técnico. **La columna `anio` ya existe**
-    (NOT NULL, `UNIQUE(hce_id, anio)` — ver abajo). Lo que I1 **no** tocó, a
-    propósito, es la regla de abajo («la vigente es la de mayor
-    `fecha_consenso`») ni el guard de «qué IDEA rige»: siguen para M11.3
-    (§5.36 / §5.35), que además necesita B2(b)/B10 antes de reformularla.
+    IPPU confirmó que el IDEA es **anual** y que el de cada año se compara con el
+    del anterior; cae la «línea base única» del Documento Técnico. **La columna
+    `anio` existe desde I1** (2026-09-16, `handoff.md` §5.36/§5.91): NOT NULL,
+    `UNIQUE(hce_id, anio)` — ver abajo.
 
     Este es el cambio de M4 que rompe con la v1 (`evaluacion_idea` era anual con
-    una fila por dimensión). Ahora hay una instancia por línea base y las 12
+    una fila por dimensión). Ahora hay una instancia **por año** y las 12
     dimensiones van en `dim` JSONB: el instrumento se lee y se escribe entero,
     así que el detalle por fila no pagaba su costo.
 
-    Es 1:N y no 1:1 porque un reingreso a más de 12 meses genera una **línea base
-    nueva**; la vigente es la de mayor `fecha_consenso`. ⚠️ **Esa regla —«la
-    vigente es la de mayor `fecha_consenso`»— también queda para reformular en
-    M11.3** (§5.36 / §5.35): con un IDEA por año, «la más reciente» y «la de este
-    año» dejan de ser la misma pregunta, y qué IDEA rige a una fecha pasada es un
-    guard todavía sin escribir.
+    Es 1:N y no 1:1 porque hay **uno por año**. Un reingreso **no** abre ninguna
+    instancia especial (`handoff.md` §5.96, B10: «no cambia nada»).
+
+    **Qué IDEA rige** (`handoff.md` §5.97, B2b — reemplaza la regla vieja «la
+    vigente es la de mayor `fecha_consenso`», escrita para un modelo de línea base
+    con reingresos): un documento o informe muestra el IDEA **de su propio año**; la
+    vista de la HCE muestra el **IDEA firmado de mayor `anio`**; un IDEA **sin
+    firmar del año en curso** se muestra aparte como «en curso». Es un guard de
+    servicio (M11.3), no una restricción de la base.
+
+    **El puntaje es uno solo, de consenso** (§5.98, ratifica §5.47): los dos
+    técnicos acuerdan y registran un número. `evaluador_t1_id`/`evaluador_t2_id`
+    identifican a los dos técnicos; las puntuaciones independientes de
+    `PuntuacionIdea` quedan dormidas.
 
     `dim` = 12 × `{valor: 0..8 | "NS", obs}`. "NS" (no sabe / no corresponde)
     excluye la dimensión del total y **bloquea la firma** — regla del servicio.

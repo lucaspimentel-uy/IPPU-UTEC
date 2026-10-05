@@ -33,6 +33,16 @@
 > ⚠️ **Un punto de esta ronda es de segunda mano** —que el consentimiento no trabe el flujo (§5.38 /
 > I3)— y está registrado como **CONFIRMABLE, no cerrado**. Va primero en el próximo contacto con IPPU.
 >
+> ## 🗓️ Actualizado el 2026-10-05 con las **respuestas escritas de IPPU** (A1–B12)
+>
+> `docs/notas/respuestas-ippu-2026-10-05.txt` · decisiones en `handoff.md` **§5.93–§5.106** · estado ítem
+> por ítem en `preguntas-ippu.md`. **Qué cambió acá:** **§1.5** y **§1.6** respondidas (no hay acceso a la
+> HCE; no hay acuerdo firmado) · **§1.9** ratificado · **§1.16** (B1) sigue abierto y re-preguntado, **ya
+> no bloquea el 26/11** · **§1.17** (B9) respondido, diferido · **§2.8** (A5) sigue abierto · **§2.11**
+> `tecnico_grupo` **CANCELADA** · **§2.12/§2.13/§2.17** (B11/B12/B7) respondidos con alcance acotado · **§3**
+> dos supuestos cerrados. El punto de **segunda mano** del consentimiento (§5.38) quedó **CONFIRMADO por
+> escrito** (A3, §5.94).
+>
 > ⚠️ **12 de los 26 bloques del registro de la reunión quedaron SIN respuesta.** La lista está en
 > `respuestas-reunion-ippu-2026-08-21.md` §16 — es la agenda del próximo contacto.
 >
@@ -206,6 +216,13 @@ instrumento.
 
 ### 1.5 Acceso a la HCE actual — 🔴 crítico
 
+> **✅ RESPONDIDA el 2026-10-05 (A2, `handoff.md` §5.104): NO tienen acceso a la HCE ni a la demo actuales.**
+> Sí tienen **un video** donde la recorren (youtube.com/watch?v=dMWfc0JKCC0) y la instrucción es
+> **reconstruir el esquema de base de datos a partir del video**. Eso queda **después del 26/11**, y la
+> **migración de datos queda fuera del 26/11**. Sin acceso al sistema, lo de abajo se entiende como
+> «no hay acceso»: no se espera más.
+
+
 > **Actualizado el 2026-08-26 con lo que aportó la reunión — sigue ABIERTO.**
 > Lo único nuevo: **la HCE actual de IPPU está alojada en Heroku** (`handoff.md` **§5.44 / I9**). Es
 > **dónde vive hoy**, dato de entrada para saber desde dónde se migra. ⚠️ **No es una decisión de
@@ -225,6 +242,12 @@ respecto del sistema con el que hay que convivir.
 integración real con la HCE de IPPU no.
 
 ### 1.6 Acuerdo de confidencialidad — **SE ESTRECHA: la redacción existe, falta la FIRMA para UTEC-LIDIA** (2026-09-03)
+
+> **✅ RESPONDIDA el 2026-10-05 (A1, `handoff.md` §5.104): NO EXISTE ningún acuerdo firmado** y IPPU pide
+> dejar de preguntarlo («olvídate de esto»). **Rige, sin cambios, la regla de `CLAUDE.md` / §5.45: sólo
+> datos simulados o anonimizados.** Deja de ser un trámite que perseguimos; vuelve a ser una condición:
+> **si algún día hace falta un dato real, antes tiene que existir el acuerdo.**
+
 
 > **ESTRECHADO el 2026-09-03 con el Protocolo de acceso ingresado — sigue ABIERTO.**
 > El Protocolo `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` trae en su **Anexo II un
@@ -285,6 +308,11 @@ lectura (§10), pero no una migración masiva.
 **Qué bloquea.** Nada del desarrollo actual. Hay que decidirlo antes de un piloto.
 
 ### 1.9 ~~¿Los dos técnicos ya puntúan de forma independiente?~~ — **CERRADO** (reunión IPPU 2026-08-21)
+
+> **✅ RATIFICADO por escrito el 2026-10-05 (B2a, `handoff.md` §5.98):** «Consenso del puntaje. Se
+> requiere un campo en donde los técnicos registrarán un solo número». D7 sigue dormida, las tablas
+> `puntuacion_*` **se quedan y la API no las expone**, y el kappa **sigue sin ser calculable**.
+
 
 > **No: la puntuación es conjunta.** Los dos técnicos **acuerdan en persona** y registran **un solo
 > número, un solo campo**. → `handoff.md` **§5.47 (I12)** · `consulta-a-ippu.md` §3.8.
@@ -476,6 +504,13 @@ falta el historial de estado de arriba (que igual conviene para el tablero).
 
 ### 1.16 ¿De qué son las secciones **§4 y §8** del Manual de Procedimientos? — abierto por M12.6 (2026-09-02)
 
+> **⚠️ SIGUE ABIERTO — RE-PREGUNTADO el 2026-10-05 (B1, `handoff.md` §5.105).** IPPU contestó «No entendí
+> exactamente qué querés, especifícamelo mejor». La pregunta se reformuló (borrador en `preguntas-ippu.md`
+> B1). **Ya NO bloquea el 26/11:** los totales del IDEA son las sumas definidas (12 dimensiones → 0–96 y
+> 4 escalas; 24 ítems → 24–120) y el Δ va dentro del mismo instrumento. Si el Anexo A o §8 dicen otra
+> cosa, se revisa cuando lleguen.
+
+
 **Qué es.** El Manual de Procedimientos v1.0 tiene **25 secciones en seis Partes**, y **no está en el
 repo**: nunca se entregó. Lo que sí tenemos es la **versión de consulta que el Prototipo v4 embebe**
 (`const MANUAL`, `HCE_IPPU_Prototipo_v4.html:1730`), con 12 entradas agrupadas que cubren **23 de las 25**.
@@ -520,6 +555,12 @@ identificarlas resultan tocar el PAI, se revisa lo construido (§5.54 lo dejó d
 ---
 
 ### 1.17 Adolescentes con autonomía progresiva: ¿reserva de datos frente a padres/tutores? — abierto por el Protocolo (2026-09-03)
+
+> **✅ RESPONDIDA el 2026-10-05 (B9, `handoff.md` §5.104), y se DIFIERE.** IPPU: «es un derecho de la
+> persona según la Ley 18.331. No pensamos modelarlo ahora. Se deja para después». **Sale de M11.3** y de
+> la lista de lo que condiciona al 26/11; la reserva por entrada contra el representante legal queda
+> para una ronda posterior.
+
 
 **Qué es.** El **Protocolo de acceso**, en la matriz §5, da a los **adolescentes con autonomía
 progresiva** el *«Derecho a solicitar reserva de determinados datos incluso respecto de sus
@@ -696,6 +737,13 @@ porcentaje oficial.
 
 ### 2.8 No hay forma de «abrir un año nuevo» de grupos — ⚠️ **AHORA BLOQUEA** (2026-08-26)
 
+> **⚠️ A5 (2026-10-05, `handoff.md` §5.104) — respuesta AMBIGUA, sigue abierta.** IPPU dijo que Taller
+> Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, y que «no son nombres de grupos»;
+> **no dijo** si «Taller de Adolescentes» es uno de ellos. Se re-pregunta (`preguntas-ippu.md` A5) y
+> **los cinco grupos sembrados (§5.61) se quedan** hasta que conteste. Además, §5.92 ya sacó del 26/11
+> la creación de grupos desde la aplicación.
+
+
 > ### ⚠️ Dejó de ser un hueco anotado: es un hueco bloqueante (reunión IPPU 2026-08-21)
 >
 > **Dos cosas de la reunión lo cambian de categoría:**
@@ -814,6 +862,15 @@ referente por NNA distinto del técnico de grupo —tabla o campo nuevo—, o (3
 
 ### 2.11 Usuarios, roles y asignación técnico↔grupo — **abierto; el vocabulario de roles ya tiene fuente y propuesta** (2026-08-26, actualizado 2026-09-03 · `handoff.md` §5.72 y §5.79)
 
+> **⛔ `tecnico_grupo` CANCELADA el 2026-10-05 (`handoff.md` §5.100).** B6 «No» (no hace falta ver quién
+> estuvo antes) y B5(b) «No» (no hay referente por NNA) → **la tabla no se construye**; supera §5.79 y
+> §5.87, y la pregunta de `btree_gist` se cierra (§5.89). **B5(a): los roles son texto libre.** **Para el
+> 26/11** (§5.101): login mínimo con `admin` | `tecnico` — el `tecnico` ve sólo los grupos donde es
+> tecnico1/tecnico2, el `admin` ve todo. **El resto de la matriz, la conflación `admin` ↔ «dirección no
+> técnica» y el «perfil de área de Inclusión» quedan para después del 26/11.** Lo de abajo se conserva
+> como historia de cómo se llegó acá.
+
+
 **Qué es.** IPPU confirmó cómo trabajan: **cada técnico tiene su propio usuario**, **ve sólo los grupos
 que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMIN** (`handoff.md`
 **§5.41 / I6**). El **Protocolo de acceso §5** aporta ahora la **matriz de roles** con base normativa.
@@ -832,8 +889,8 @@ que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMI
   matriz §5 y de nuestro CHECK. → lista de IPPU.
 - **`grupo.tecnico1_rol` / `tecnico2_rol` YA EXISTEN** (`String(60)` nullable, `app/models/identidad.py:127`
   / `:129`) — el delta de M12.8a **no** los agrega.
-- ⚠️ **`tecnico_grupo` se difirió a M11.3** (`handoff.md` §5.79, 2026-09-03) — §5.72 la había puesto
-  como delta estructural de M12.8a. Se **deroga esa ubicación, no la decisión de fondo**: la tabla N:M
+- ⛔ **`tecnico_grupo`: historia — hoy CANCELADA (§5.100).** Se había diferido a M11.3 (`handoff.md` §5.79,
+  2026-09-03) — §5.72 la había puesto como delta estructural de M12.8a. Se **deroga esa ubicación, no la decisión de fondo**: la tabla N:M
   con vigencias (`grupo_id`, `profesional_id`, `rol` sin CHECK, `desde` NOT NULL / `hasta` nullable,
   `UNIQUE(grupo_id, profesional_id, desde)`, `CHECK(hasta IS NULL OR hasta > desde)`) se construye
   **junto con el servicio de asignación que la lee**. Motivos en §5.79: no tiene consumidor hasta
@@ -848,14 +905,24 @@ que tiene asignados**, y **ADMIN ve todo, asigna grupos y puede crear otros ADMI
 - **Toda la matriz de permisos** — **Fase 4**. (Ateneos de grupo: §1.12 cerrado en acceso general — §5.58
   / §5.63; su tensión residual es §2.16, cerrado por §5.70.)
 - **La reconciliación de `grupo`**: F1 puso `responsable1`, `responsable2` y `tecnicosAutorizados` en la
-  demo **sin modelo detrás** — lo resuelve `tecnico_grupo` **en M11.3** (§5.79).
-- **El residuo de §5.18** (cambio de **técnico** a mitad de año). ⚠️ La reunión no contestó esa
-  pregunta (es **B6** de `preguntas-ippu.md`). La tabla que le da dónde vivir es `tecnico_grupo`, ahora
-  en **M11.3** (§5.79), no en M12.8a.
+  demo **sin modelo detrás** — la resuelven `grupo.tecnico1_id` / `tecnico2_id` como fuente de verdad
+  (§5.100), no una tabla nueva.
+- **El residuo de §5.18** (cambio de **técnico** a mitad de año): **CERRADO el 2026-10-05** — B6 contestó
+  «No» (no hace falta ver quién estuvo antes) y el cambio se rastrea por la **auditoría de campo**
+  (§5.100). No hay tabla que construir.
 
 **Secuencia.** **Enmienda el no-goal del plan M12** («no se toca autenticación»), ya marcado en el plan.
 
 ### 2.12 El modelo no representa la DIVULGACIÓN — **la tabla `divulgacion` YA ESTÁ CONSTRUIDA (M12.8a-3); el flujo y los guards son M11.3** (2026-08-26, construida 2026-09-03 · `handoff.md` §5.71 y §5.80)
+
+> **✅ B11 y B12 respondidas el 2026-10-05 (por remisión al Protocolo; lectura de Lucas, `handoff.md`
+> §5.103).** **B11:** para el guard de §6.6, `disociado` y `agregado` son **equivalentes** (2 valores
+> efectivos; la columna conserva 3, sin cambio de esquema). **B12:** darle a la familia una copia de la HC
+> es un **acceso del titular/representante** (Ley 18.335 art. 18 lit. A), **no una divulgación**: va al
+> registro de accesos (§2.17), no a `divulgacion`; «Familia / representante legal» sigue en
+> `DIVULGACION_DESTINATARIOS` como **deuda conocida** (el catálogo no se cambia). **Los guards de
+> divulgación quedan fuera del 26/11.**
+
 
 **Estado al 2026-09-03 (`handoff.md` §5.80).** La tabla **`divulgacion` se construyó en M12.8a-3**, con
 sus columnas derivadas del Protocolo §6.2–6.7 y de la matriz §5. Columnas (detalle y pasaje en §5.80):
@@ -884,6 +951,13 @@ expediente». R0 verificó de forma negativa que hoy el modelo tiene **almacenam
 = ¿divulgación o acceso? (Ley 18.335 Art. 18 lit. A).
 
 ### 2.13 Los informes necesitan un estado de revisión, y un área configurable — **abierto por la reunión** (2026-08-26)
+
+> **✅ B7 respondida el 2026-10-05 (`handoff.md` §5.102): es secundario y queda fuera del 26/11.** IPPU
+> lo describió como una pestaña de generación de informes con plantillas de los recurrentes, «no es
+> crítico, pensado a futuro». El **estado «revisado por dirección»** y el **área configurable** se
+> posponen (§5.40 sigue siendo la regla; se pospone implementarla). **Sí entra al 26/11:** el IC firmado
+> exportable a PDF, como exportación de demostración.
+
 **Qué es.** Dos cosas de §5.40 (I5): **(a)** todo informe **lo revisa ADMIN antes de entregarse** —
 *borrador → revisado por dirección → entregado*, que es un **estado de flujo**, no un permiso de
 impresión; **(b)** lo que IPPU pidió es un **área de generación de informes configurable**, no un catálogo
@@ -992,6 +1066,11 @@ decide qué se muestra y qué se imprime en el PAI.
 
 ### 2.17 HCE-LOG registra CAMBIOS, no ACCESOS con motivo — abierto por el Protocolo (2026-09-03)
 
+> **2026-10-05 (B12, `handoff.md` §5.103):** a este registro de accesos va **también la entrega a la
+> familia de una copia de la HC** (acceso del titular, no divulgación). Sigue siendo **posterior al 26/11**
+> (§5.88 · §5.101).
+
+
 **Qué es.** El **Documento Técnico** define HCE-LOG (`auditoria`) como *«quién, cuándo, **qué campo, valor
 anterior y nuevo**»* (§3.2) — un **registro de cambios**. El **Protocolo de acceso** exige algo distinto y
 adicional: su **§8** manda registrar **accesos (lecturas)** *«indicando como mínimo: fecha, persona que
@@ -1040,9 +1119,9 @@ barato corregirla ahora:
 >
 > | Supuesto | Estado |
 > |---|---|
-> | Roles de los técnicos = **texto libre** | **Sin respuesta.** `consulta-a-ippu.md` §2.4 sigue abierta |
+> | Roles de los técnicos = **texto libre** | ✅ **CONFIRMADO el 2026-10-05** (B5a: «texto libre», `handoff.md` §5.100). Antes: sin respuesta |
 > | «Por áreas» y «general» = archivo histórico | **CONFIRMADO** — quedaron **reemplazadas por los Protocolos A y B** (consulta §2.5) |
 > | Informe de cierre **anual**, uno por año | **CONFIRMADO** (consulta §2.3 · `handoff.md` §5.40) |
 > | Una persona puede existir **sin** expediente de Atención Diurna | **CONFIRMADO**, y con un caso concreto: un NNA puede **dejar la diurna y seguir en clínica** (consulta §2.6) |
-> | Reingreso >12 meses = **línea base nueva** | ⚠️ **HAY QUE REVISARLO.** Con el IDEA **anual** (§1.1) ya hay uno por año igual; «reingreso» deja de ser lo que abre una instancia nueva. **No se resuelve acá** — va con la implementación de §5.36 |
+> | Reingreso >12 meses = **línea base nueva** | ✅ **CERRADO el 2026-10-05** (B10: «no, no cambia nada», `handoff.md` §5.96). Con el IDEA anual hay uno por año igual y un reingreso no abre ninguna instancia especial. Antes: «hay que revisarlo» |
 > | Taller Terapéutico y Clínica **fuera de alcance** | ⚠️ **Tensión, no contradicción.** §5.12 / D3 sigue en pie, pero la **transición** diurna → clínica **tiene que poder registrarse**: es un hecho del expediente de diurna |

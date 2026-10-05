@@ -20,6 +20,31 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-05 · Sesión M11.3-0 — respuestas escritas de IPPU (A1–B12) registradas** (Lucas + Claude, rama
+  `main`). **Sólo documentación**: ningún cambio de código, modelo, migración, seed ni test.
+  - **Fuente.** `docs/notas/respuestas-ippu-2026-10-05.txt` (verbatim; su duplicado
+    `respuestas_hasta_B12_…txt` es byte-idéntico y no se versiona). La copia subida del Protocolo
+    (`protocolo-acceso-subido-2026-10-05.md`) es **byte-idéntica** (sha256 `53f7b509…`) a la de `HEAD`: **0
+    diferencias**. ⚠️ `docs/markdown/protocolo-acceso-…-hce.md` aparece **borrado sin commitear** en el árbol
+    desde antes de la sesión; no se restauró ni se incluyó en el commit.
+  - **Hecho.** §5.93–§5.106 (14 entradas; la última previa era §5.92) · `preguntas-ippu.md`: 17 ítems con
+    estado y destino (15 respondidos; **A5 y B1 abiertos y re-preguntados** — el texto de B1 es un
+    borrador mío porque el pedido remitía a un texto que no vino) · `esquema-datos-v2.md` §2.2/§2.3/§2.6/§4/§5/§6
+    · `puntos-a-validar.md` · bullet M11 de §6 + cabecera · `CLAUDE.md` · nota en `PLAN-modular…` · docstrings de
+    `Consentimiento`, `FirmaMixin`, `Idea`, `PuntuacionConsensoMixin`, `Foto`, `AutorizacionImagen`, `pai.py`.
+  - **Verificación.** Docker estaba apagado: se levantó Docker Desktop + `docker compose up -d`. `pytest -q`
+    → **435 passed, 0 skipped**. Ambos `--check` → exit 0. `alembic heads` = `current` = `b99294aec85c`; 1
+    archivo en `versions/`. `app/`: sólo 3 archivos de `models/`; comparación por AST contra `HEAD` con los
+    docstrings anulados → **idénticos** (sólo cambian docstrings).
+  - **Barrido (§5.83).** `grep -rIni` de los 10 términos, excluyendo `node_modules`, `graphify-out`, `.git`,
+    `.venv`, `bitacora.md`, `relevamiento-*`, `docs/prompts/`: **corregidos** los vivos en `handoff.md`
+    (cabecera, §6, §7), `esquema-datos-v2.md`, `puntos-a-validar.md`, `CLAUDE.md`, 3 docstrings de `app/`;
+    **sin tocar** (cita/registro/fuente): §5 de `handoff.md`, actas, snapshots, `PLAN-M12`, `agenda`,
+    `pendientes-resueltos`, `docs/markdown`, `docs/prototipo-v4`, `docs/fuentes`, tests, `verificacion/*.json`.
+    **Vivo y sin tocar por alcance:** textos de la demo (`flujo.js:58,194,259`) → pendiente en §6.
+  - **Dudas que quedan para M11.3-b** (§5.94/§5.95): si la falta de CI avisa; contenido de `warnings[]`; uso
+    del campo `excepcion`. Commit y push a `gitlab` y `origin` (ver `git log`).
+
 - **2026-09-18 · Sesión M12.9 — el Prototipo v4 deja de ser fuente normativa** (Lucas + Claude, rama
   `main`). Sesión corta, sin tocar código: cerraba un cabo suelto de M12.8-cierre+I1 (la decisión se tomó
   mid-sesión el 2026-09-16 y quedó sin su entrada de §5, con el párrafo de precedencia de `CLAUDE.md` y

@@ -90,7 +90,11 @@ class Documento(Base):
 
 
 class AutorizacionImagen(Base):
-    """§8.4 — condición previa para poder cargar fotos del NNA.
+    """§8.4 — registro de la autorización de imagen del NNA.
+
+    **Ya no es condición para guardar una foto** (`handoff.md` §5.99, 2026-10-05):
+    guardar nunca exige autorización. Queda como el registro que se consultará
+    cuando existan las reglas de **compartir** (fuera del alcance del 26/11).
 
     PK = hce_id: es a lo sumo una por expediente.
     """
@@ -110,10 +114,12 @@ class Foto(Base):
     El `CHECK` con `num_nonnulls` es el XOR estructural: exactamente una de las
     dos FK tiene valor. Es integridad de forma, así que sí va en la BD.
 
-    Lo que **no** va en la BD es el permiso: una foto individual exige la
-    autorización del NNA, y una grupal la de **todas** las familias activas del
-    grupo. Eso lo verifica el servicio, que además puede devolver *quiénes*
-    faltan — un CHECK sólo podría decir que no.
+    **Guardar una foto no requiere autorización y no produce aviso ni bloqueo**
+    (`handoff.md` §5.99, §5.39): ni la individual ni la grupal. Lo que sí requiere
+    autorización es **compartirla** (la del NNA, o la de todas las familias activas
+    del grupo si es grupal): esa regla sigue vigente pero **queda fuera del alcance
+    del 26/11**, y cuando exista la escribirá el servicio, no la base. Antes de
+    2026-10-05 este docstring le atribuía al servicio un 403 al *cargar*.
     """
     __tablename__ = "foto"
 

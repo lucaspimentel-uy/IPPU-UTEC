@@ -54,8 +54,10 @@ la misma fuente— gana la lista. Registrado en `handoff.md` §5.55 (L2).
 ── Lo que este módulo NO construye ─────────────────────────────────────────
 - **Ningún guard de validación.** Sesión de solo esquema (§5.54). El cálculo de
   totales y deltas con verificación previa a la firma —el **Anexo A** del
-  Manual— es M11.3, y también lo son la habilitación de la sección IX por tipo
-  y la resolución de «qué IDEA rige a la fecha de este PAI» (§5.35, derivado 2).
+  Manual— es M11.3 (y **ya no bloquea el 26/11**, §5.105: los totales son las
+  sumas definidas), y también lo son la habilitación de la sección IX por tipo
+  y la resolución de «qué IDEA rige a la fecha de este PAI» (§5.35, derivado 2;
+  regla definida el 2026-10-05 en §5.97).
 - **La sección V.** `centro`, `modalidad` y `grado` **no son columnas de acá**:
   se leen en vivo de `inclusion` (M12.5). Es §5.22, y el contrato de nombres
   está escrito en el docstring de `Inclusion`.

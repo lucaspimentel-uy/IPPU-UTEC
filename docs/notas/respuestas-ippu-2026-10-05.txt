@@ -1,0 +1,43 @@
+A1 · Acuerdo de confidencialidad firmado para UTEC-LIDIA
+NO EXISTE NINGUN ACUERDO FIRMADO, olvídate de esto
+
+A2 · Acceso a la HCE actual
+Respuesta: No tenemos acceso a la demo, pero si tenemos un video en donde la recorren: youtube.com/watch?v=dMWfc0JKCC0 tenemos que reconstruir el esquema de base de datos a partir del video. 
+
+### A3 · ⚠️ Confirmar por escrito: el consentimiento no traba el proceso de evaluación
+Respuesta: Así es, el CI no traba el proceso de evaluación
+
+### A4 · ⚠️ Confirmar por escrito: el ateneo de grupo es de acceso general
+Respuesta: Así es, el ateneo de grupo es de acceso general
+
+### A5 · «Taller de Adolescentes»: ¿es un **grupo** o es el **servicio de Taller Terapéutico**?
+Respuesta: Taller Terapeutico y Clinica son otros servicios que no entran en Atención Diurna. No son nombres de grupos. 
+
+
+## B · Bloquea M11.3 (los servicios y guards del backend)
+
+### B1 Respuesta: No entendí exactamente que queres, especifícamelo mejor. 
+
+### B2 Respuesta: Consenso del puntaje. Se requiere un campo en donde los técnicos registraran un solo numero. 
+b) Los informes van a ser exportados en pdf, cuando se ve un informe viejo, se mostrara el idea de ese año, cuando se entra a un NNA en el apartado hce y se ven los datos del NNA se deberá mostrar lo mas actual. Se entiende?
+
+### B3 Respuesta: Se registra la participación de cada NNA en cada taller con la condición de que sea viable y no complique mucho. En caso contrario, basta con el catalogo de talleres. 
+
+### B4 Respuesta: Solo avisa. 
+
+### B5 Respuesta: a) Texto libre. b) No. c)Revisar documento denominado "Protocolo de Acceso.md". Cuidado con el alcance, no es necesario modelar todos los usuarios que aparecen aca, solo los críticos para 26/11. 
+
+### B6 Respuesta: No.
+
+### B7 Respuesta: Significa que, se pensó en una pestaña en especificio para la generación de informes, con algunos templates ya definidos de informes que se generan recurrentemente en la institución. Este punto no es critico y esta pensado a futuro. Podemos dejarlo como punto secundario. 
+
+### B8 Respuesta: Todos entran igual
+
+### B9 Respuesta: Es un derecho de la persona según la Ley 18.331. No pensamos modelarlo ahora. Se deja para después. 
+
+### B10 Respuesta: No, no cambia nada.
+
+### B11 Ver "Protocolo de Acceso.md"
+
+### B12 Ver "Protocolo de Acceso.md" 
+

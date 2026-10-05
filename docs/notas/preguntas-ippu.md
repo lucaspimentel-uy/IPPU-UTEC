@@ -19,11 +19,25 @@
 > ⚠️ **Esta lista reemplaza la costumbre de tener las preguntas dispersas.** Cuando IPPU responda algo, la
 > respuesta se escribe en el archivo que dice «dónde aterriza», y el ítem se marca acá.
 
+> ## 🗓️ Respuestas escritas de IPPU — 2026-10-05 (sesión M11.3-0, `handoff.md` §5.93–§5.106)
+>
+> IPPU contestó **A1–A5 y B1–B12** por escrito (`docs/notas/respuestas-ippu-2026-10-05.txt`, verbatim).
+> Cada ítem de abajo lleva su **estado** y **dónde aterrizó**. Resumen: **15 respondidos** (A1 A2 A3 A4 B2
+> B3 B4 B5 B6 B7 B8 B9 B10, y B11/B12 por remisión al Protocolo con lectura de Lucas) de 17 · **2 siguen
+> ABIERTOS y reformulados: A5 y B1**. El bloque **C** no se preguntó en esta vuelta y sigue como estaba.
+> Los archivos que son registro —el acta de la reunión (`respuestas-reunion-ippu-2026-08-21.md`) y el
+> snapshot enviado (`consulta-a-ippu.md`)— **no se editan**: el aterrizaje vive en `handoff.md` §5 y en
+> `puntos-a-validar.md`.
+
 ---
 
 ## A · Bloquea trabajo ahora
 
 ### A1 · Acuerdo de confidencialidad firmado para UTEC-LIDIA
+
+> **Estado (2026-10-05): RESPONDIDA (negativa).** No existe ningún acuerdo firmado: «olvídate de esto». Rige la regla de `CLAUDE.md`: sólo datos simulados o anonimizados.
+> **Aterrizó en:** `handoff.md` §5.104 (y §5.45) · `puntos-a-validar.md` §1.6. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** El Protocolo de acceso de IPPU ya trae el **modelo** de acuerdo (su Anexo II) y la
 regla (§6.7: para trabajar con datos identificables hace falta acuerdo previo firmado). **Falta la
 instancia firmada** para el equipo UTEC-LIDIA: ¿quién lo firma de cada lado y para cuándo?
@@ -33,6 +47,10 @@ anonimizados** — y eso ahora lo respalda el propio protocolo de IPPU, no sólo
 **Dónde aterriza.** `puntos-a-validar.md` §1.6.
 
 ### A2 · Acceso a la HCE actual (está en Heroku) — 🔴 crítico
+
+> **Estado (2026-10-05): RESPONDIDA.** No tienen acceso a la HCE/demo actual; sí un video donde la recorren (youtube.com/watch?v=dMWfc0JKCC0). El esquema legado se reconstruye desde el video, **después del 26/11**; la migración de datos queda fuera del 26/11.
+> **Aterrizó en:** `handoff.md` §5.104 · `puntos-a-validar.md` §1.5. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Sabemos que la HCE actual de IPPU está alojada en **Heroku**. Falta: ¿en qué estado
 está el trámite para darnos acceso, con quién hay que hablar, y podemos ver el **esquema de su base de
 datos**?
@@ -42,6 +60,10 @@ que ya existen (IPPU confirmó que **migran todos**, activos y archivados).
 **Dónde aterriza.** `puntos-a-validar.md` §1.5 · `consulta-a-ippu.md` §3.2.
 
 ### A3 · ⚠️ Confirmar por escrito: el consentimiento no traba el proceso de evaluación
+
+> **Estado (2026-10-05): RESPONDIDA — CONFIRMADO por escrito.** «Así es, el CI no traba el proceso de evaluación». Cierra la marca CONFIRMABLE de §5.38.
+> **Aterrizó en:** `handoff.md` §5.94 (cierra §5.38) · `puntos-a-validar.md` (nota de cabecera). Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Nos llegó, **de segunda mano** (no se escuchó en la reunión), que IPPU quiere que la
 falta de consentimiento firmado **no detenga** la evaluación del NNA — que el expediente avance con un
 aviso de «CI pendiente» en vez de un bloqueo. ¿Es así?
@@ -53,6 +75,10 @@ en un solo lugar de la demo), pero condiciona lo que se le mostró a IPPU.
 **Dónde aterriza.** `handoff.md` §5.38 (⚠️ CONFIRMABLE) · `respuestas-reunion-ippu-2026-08-21.md` §16.
 
 ### A4 · ⚠️ Confirmar por escrito: el ateneo de grupo es de acceso general
+
+> **Estado (2026-10-05): RESPONDIDA — CONFIRMADO por escrito.** «Así es, el ateneo de grupo es de acceso general». Cierra la marca CONFIRMABLE de §5.58 y §5.63.
+> **Aterrizó en:** `handoff.md` §5.104 (cierra §5.58/§5.63). Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** En la reunión del 21/08 se anotó «todos los técnicos ven todos los ateneos»; el
 26/08 se registró lo contrario («cada técnico ve los de su grupo»); una corrección de IPPU del 02/09 lo
 volvió a **acceso general**. Esa última corrección **no consta en ningún acta escrita**. ¿La confirman?
@@ -63,6 +89,12 @@ Protocolo prevé — `handoff.md` §5.70).
 **Dónde aterriza.** `handoff.md` §5.58/§5.63 · `respuestas-reunion-ippu-2026-08-21.md` §16 (9.a).
 
 ### A5 · «Taller de Adolescentes»: ¿es un **grupo** o es el **servicio de Taller Terapéutico**?
+
+> **Estado (2026-10-05): ⚠️ ABIERTA — RESPUESTA AMBIGUA, REFORMULADA.** IPPU contestó que Taller Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, y que «no son nombres de grupos». **No dijo** si «Taller de Adolescentes» es uno de esos servicios o un grupo. Los cinco grupos sembrados (§5.61) se quedan hasta que conteste.
+>
+> **Pregunta reformulada (para el próximo contacto):** «Para confirmar: «Taller de Adolescentes», ¿es un grupo de Atención Diurna (como Inicial, Escolares, Preadolescentes y Adolescentes) o es parte del servicio Taller Terapéutico? Alcanza con responder «grupo» o «Taller Terapéutico».»
+> **Aterrizó en:** `handoff.md` §5.104 · `puntos-a-validar.md` §2.8. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** IPPU dio cinco nombres de grupo: Inicial · Escolares · Preadolescentes · Adolescentes
 · **Taller de Adolescentes**. Pero el Documento Técnico §1 dice: *«Los servicios de **Taller Terapéutico**
 y **Clínica** quedan reservados en la arquitectura de navegación y permisos para la **Fase 2**, con
@@ -79,6 +111,12 @@ manda, `handoff.md` §5.61), pero hay que preguntarlo.
 ## B · Bloquea M11.3 (los servicios y guards del backend)
 
 ### B1 · Las secciones §4 y §8 del Manual de Procedimientos, y el Anexo A
+
+> **Estado (2026-10-05): ⚠️ ABIERTA — REFORMULADA.** IPPU contestó «No entendí exactamente qué querés, especifícamelo mejor». **Ya no bloquea el 26/11**: para esa fecha los totales son las sumas ya definidas (`handoff.md` §5.105).
+>
+> **Pregunta reformulada — ⚠️ BORRADOR de la sesión M11.3-0: el texto definitivo no vino con el pedido de la sesión y lo fija Lucas antes de enviarla.** «En el Manual de Procedimientos que tenemos, la numeración salta: no vemos la sección 4 (viene después de la secuencia longitudinal, sección 3) ni la sección 8 (viene entre «aplicación y puntuación del IDEA» y «interpretación del perfil»). Tampoco tenemos el Anexo A, que entendemos explica cómo se calculan los totales del IDEA y cómo se revisan antes de firmar. ¿Nos pueden pasar esas tres partes? Si no las tienen a mano, alcanza con que nos cuenten en una o dos frases qué dice cada una.»
+> **Aterrizó en:** `handoff.md` §5.105 · `puntos-a-validar.md` §1.16. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Del Manual nos falta ver **dos partes**: la **§4** (cierra el marco general) y la
 **§8** (está entre la puntuación del IDEA y la interpretación del perfil). ¿Nos pasan esas dos y el
 **Anexo A**?
@@ -88,6 +126,10 @@ totales del IDEA y la verificación previa a la firma**, que es justo lo que M11
 **Dónde aterriza.** `puntos-a-validar.md` §1.16.
 
 ### B2 · Los dos técnicos, ¿puntúan por separado o consensúan de entrada? (y qué IDEA rige)
+
+> **Estado (2026-10-05): RESPONDIDA.** **(a)** Consenso: un solo número, en un solo campo (ratifica §5.47). **(b)** Un informe viejo muestra el IDEA de **su** año; el apartado HCE del NNA muestra lo más actual. Reemplaza «mayor `fecha_consenso`».
+> **Aterrizó en:** `handoff.md` §5.98 (a) y §5.97 (b) · `puntos-a-validar.md` §1.9. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Dos cosas relacionadas: **(a)** ¿los dos técnicos puntúan cada uno por su lado y
 después acuerdan, o acuerdan en persona y anotan un solo número? (IPPU dijo lo segundo en la reunión, se
 pide ratificar); **(b)** cuando un documento viejo muestra un IDEA, ¿el sistema debe mostrar el IDEA **de
@@ -99,6 +141,10 @@ latente; (b) es un guard de M11.3 que hoy vive sólo en prosa.
 `respuestas-reunion-ippu-2026-08-21.md` §16 (3.b).
 
 ### B3 · ¿Quieren registrar la **participación de cada NNA en cada taller**?
+
+> **Estado (2026-10-05): RESPONDIDA (condicional).** Se registra la participación de cada NNA en cada taller **si es viable y no complica mucho**; si no, alcanza el catálogo. `pai_taller` se queda y se expone sólo si se conecta la pantalla del PAI.
+> **Aterrizó en:** `handoff.md` §5.104. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** ¿El sistema tiene que llevar qué talleres hace cada NNA, o alcanza con tener el
 **catálogo** de talleres del año?
 **Por qué importa.** Decide si la tabla `pai_taller` (participación por PAI, por nombre de taller) tiene
@@ -107,6 +153,10 @@ sentido o sobra.
 **Dónde aterriza.** `respuestas-reunion-ippu-2026-08-21.md` §16 (2.a) · `handoff.md` §5.21.
 
 ### B4 · La secuencia de instrumentos, ¿**traba** o sólo **avisa**?
+
+> **Estado (2026-10-05): RESPONDIDA.** «Solo avisa». Enmienda el «409 duro» de §5.86.
+> **Aterrizó en:** `handoff.md` §5.95 (enmienda §5.86). Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** El Manual §3 dice «ningún instrumento se aplica sin que el anterior esté completo y
 firmado»; las Especificaciones dicen «flujo guiado, **no impuesto**». El orden A→B es firme y los períodos
 son recordatorios — eso ya está claro. La duda es: si alguien intenta saltear un paso, ¿el sistema **lo
@@ -116,6 +166,10 @@ impide** o **lo deja pasar con una advertencia y una constancia**?
 **Dónde aterriza.** `respuestas-reunion-ippu-2026-08-21.md` §16 (13.b).
 
 ### B5 · Roles de los técnicos: ¿etiqueta libre o lista cerrada? ¿Hay un «referente por NNA»?
+
+> **Estado (2026-10-05): RESPONDIDA (c por remisión; alcance acotado por Lucas).** **(a)** Texto libre. **(b)** No hay referente por NNA. **(c)** «Revisar Protocolo de Acceso.md. Cuidado con el alcance: sólo los críticos para 26/11». Para el 26/11: login mínimo con los roles `admin` | `tecnico`. El resto de la matriz y el «perfil de área de Inclusión» quedan **sin contestar y fuera del 26/11**.
+> **Aterrizó en:** `handoff.md` §5.100 y §5.101 · `puntos-a-validar.md` §2.11 y §3. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Tres cosas de la misma familia: **(a)** los roles «Psicólogo/a», «Maestro/a del
 grupo», ¿son texto que cada institución escribe, o una lista cerrada?; **(b)** ¿además del técnico
 responsable **del grupo**, hay un **referente por cada NNA** distinto?; **(c)** la lista de perfiles de
@@ -131,6 +185,10 @@ difirió a M11.3 por `handoff.md` §5.79; los permisos, Fase 4).
 `respuestas-reunion-ippu-2026-08-21.md` §16 (5.d) · `handoff.md` §5.72.
 
 ### B6 · Cuando un **técnico** cambia de grupo a mitad de año
+
+> **Estado (2026-10-05): RESPONDIDA.** «No»: no hace falta ver quién estuvo antes cuando un técnico cambia. **`tecnico_grupo` se cancela**; el cambio se rastrea por auditoría de campo.
+> **Aterrizó en:** `handoff.md` §5.100 (supera §5.79 y §5.87) · `puntos-a-validar.md` §2.11. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** En la reunión se preguntó por el **NNA** que cambia de grupo (contestado). Falta el
 otro caso: cuando **cambia el técnico** a cargo de un grupo a mitad de año, ¿necesitan poder ver después
 quién estuvo antes?
@@ -142,6 +200,10 @@ difirió desde M12.8a—, junto con el servicio de asignación que usa las vigen
 `handoff.md` §5.18.
 
 ### B7 · Los informes: tipos y qué significa «área configurable»
+
+> **Estado (2026-10-05): RESPONDIDA.** Una pestaña para generar informes con plantillas de los recurrentes. «No es crítico, pensado a futuro»: secundario, fuera del 26/11. El IC firmado sí se exporta a PDF.
+> **Aterrizó en:** `handoff.md` §5.102 · `puntos-a-validar.md` §2.13. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** IPPU pidió un **área de generación de informes configurable**, no una lista fija de
 tipos. ¿Qué tiene que poder configurar el usuario (destinatario, contenido, formato)? ¿Y qué informes
 existen además del de cierre anual (BPS a fin de año completo, INAU a pedido por un solo chico…)?
@@ -152,6 +214,10 @@ generación de PDF.
 **Dónde aterriza.** `puntos-a-validar.md` §2.13 · `respuestas-reunion-ippu-2026-08-21.md` §16.
 
 ### B8 · Datos históricos con la «Guía del aplicador» corrida (dimensiones 3, 4, 6 y 12)
+
+> **Estado (2026-10-05): RESPONDIDA.** «Todos entran igual»: sin marca especial para los puntajes con la guía corrida.
+> **Aterrizó en:** `handoff.md` §5.104. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** El Prototipo v4 dice que corrigió un corrimiento de niveles en una «Guía del
 aplicador» previa, en las dimensiones **3, 4, 6 y 12**. Si IPPU aplicó IDEA con esa guía, ¿qué se hace con
 esos puntajes al migrarlos? (Con «migran todos», entran igual.)
@@ -161,6 +227,10 @@ registros al migrarlos.
 **Dónde aterriza.** `respuestas-reunion-ippu-2026-08-21.md` §16 (13.a) · `handoff.md` §7.
 
 ### B9 · Adolescentes con autonomía progresiva: reserva de datos frente a padres/tutores
+
+> **Estado (2026-10-05): RESPONDIDA (diferida).** Es un derecho de la persona según la Ley 18.331; «no pensamos modelarlo ahora, se deja para después». Sale de M11.3.
+> **Aterrizó en:** `handoff.md` §5.104 · `puntos-a-validar.md` §1.17. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** El Protocolo (matriz §5) da al adolescente con autonomía progresiva el derecho a
 pedir **reserva de datos puntuales incluso respecto de sus padres o tutores**, a criterio del técnico
 tratante. ¿Cómo lo manejan hoy? ¿Lo decide el técnico y queda anotado, o es una conversación que no se
@@ -171,6 +241,10 @@ representante legal). Es distinto de «esto es sensible».
 **Dónde aterriza.** `puntos-a-validar.md` §1.17.
 
 ### B10 · Qué IDEA abre una instancia nueva, ahora que el IDEA es anual
+
+> **Estado (2026-10-05): RESPONDIDA.** «No, no cambia nada»: el reingreso no abre una instancia especial.
+> **Aterrizó en:** `handoff.md` §5.96 · `puntos-a-validar.md` §3. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** Asumimos que un **reingreso a más de 12 meses** genera un IDEA de línea base nuevo.
 Con el IDEA **anual** (ya confirmado), «reingreso» deja de ser lo que abre una instancia nueva — ya hay
 uno por año. ¿Cambia algo en cómo IPPU piensa el reingreso?
@@ -180,6 +254,10 @@ uno por año. ¿Cambia algo en cómo IPPU piensa el reingreso?
 ⚠️ **Aparece con redacción distinta en dos fuentes** (ver apéndice).
 
 ### B11 · En el registro de divulgación, ¿un dato anonimizado individual cuenta distinto de una estadística agregada?
+
+> **Estado (2026-10-05): RESPONDIDA POR REMISIÓN — lectura de Lucas.** «Ver Protocolo de Acceso.md». Lectura de Lucas sobre el Protocolo §6.6: `disociado` y `agregado` equivalen para el guard (2 valores efectivos; la columna conserva 3). Guards fuera del 26/11.
+> **Aterrizó en:** `handoff.md` §5.103 · `puntos-a-validar.md` §2.12. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** La tabla de divulgación (M12.8a-3) clasifica cada salida de datos en tres grados:
 **identificable**, **disociado/anonimizado** (un registro de una persona, pero sin poder saber quién) y
 **agregado** (una estadística, sin individuos). El Protocolo §6.6 trata a los dos últimos casi igual
@@ -191,6 +269,10 @@ valores o tres, y si «anonimizado individual» necesita algún recaudo extra.
 **Dónde aterriza.** `puntos-a-validar.md` §2.12 · `handoff.md` §5.80.
 
 ### B12 · Dar a la familia una copia de la HC del propio NNA, ¿es una divulgación o sólo un acceso?
+
+> **Estado (2026-10-05): RESPONDIDA POR REMISIÓN — lectura de Lucas.** «Ver Protocolo de Acceso.md». Lectura de Lucas (matriz §5, Ley 18.335 art. 18 lit. A): la copia a la familia es un **acceso del titular**, no una divulgación → registro de accesos, posterior al 26/11. «Familia» queda en `DIVULGACION_DESTINATARIOS` como deuda conocida.
+> **Aterrizó en:** `handoff.md` §5.103 · `puntos-a-validar.md` §2.12 y §2.17. Respuesta verbatim en `respuestas-ippu-2026-10-05.txt`.
+
 **Qué se pregunta.** La Ley 18.335 Art. 18 **lit. A** le da al paciente (y a su representante) el
 derecho a **acceder a su propia HC y a obtener copia** — es un derecho distinto del lit. D, que regula a
 quién *más* se le puede mostrar. Cuando una familia pide y se lleva una copia de la HC de su hijo, ¿IPPU

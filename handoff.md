@@ -7,25 +7,22 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-09-18 (sesión **M12.9** — el Prototipo v4 deja de ser fuente
->   normativa). Sesión corta, **sin tocar código**: cerraba el cabo suelto que dejó M12.8-cierre+I1
->   (2026-09-16) — la decisión la había tomado Lucas mid-sesión, sin su entrada de §5 y con el párrafo de
->   precedencia de `CLAUDE.md`/`handoff.md` todavía nombrando al Prototipo v4 como precedencia 1. Escrita
->   **§5.92** (deroga a §5.10, append-only, no se edita): el Prototipo v4 y la demo v4.1 pasan de
->   especificación a insumo — se consultan, no se modela ni siembra nada sólo porque aparece ahí — por el
->   relleno generado que ya encontró §5.37 y porque se confirmó que Fernando Sierra genera estos
->   artefactos con IA. Fija también el alcance del 26/11: prototipo presentable **sin datos reales**,
->   §2.17/hosting/Fase 4 fuera del camino crítico. Reescritos ambos párrafos de «Fuente normativa vigente»
->   (`handoff.md` de abajo y `CLAUDE.md`) para que dejen de nombrar al Prototipo v4 como precedencia 1; el
->   grep del resto del repo encontró y corrigió dos instrucciones más en el mismo sentido (`README.md`,
->   `esquema-datos-v2.md`) y dejó sin tocar lo que era cita o registro. Cerrados los tres marcadores
->   pendientes que había dejado M12.8-cierre+I1 (header, `CLAUDE.md`, `[x] M12.8` de §6). **Dos decisiones
->   de alcance para el 26/11, registradas como decisión y no como pendiente:** **M12.8b-3b (pase de
->   vocabulario) — CANCELADA**, no diferida (no desbloquea nada y no hay margen para lo que no desbloquee);
->   y el **sub-módulo de administración (§2.8/§2.9/§2.11, §5.90) fuera del alcance del 26/11** (los cinco
->   grupos ya sembrados alcanzan). `pytest -q` → **435 passed, 0 skipped**; ambos `--check` → exit 0;
->   **51 tablas**; head de Alembic **`b99294aec85c`** (un solo archivo en `versions/`) — idéntico al punto
->   de partida, porque la sesión no tocó código. Bitácora en `docs/bitacora.md`. Después: **M11.3**.
+> - **Última actualización:** 2026-10-05 (sesión **M11.3-0** — respuestas escritas de IPPU A1–B12).
+>   Sesión **sólo de documentación**: no tocó código, migración, seed ni tests; únicamente docstrings de
+>   `app/models/`. IPPU contestó por escrito las 17 preguntas de `preguntas-ippu.md` A y B
+>   (`docs/notas/respuestas-ippu-2026-10-05.txt`, registradas como fuente de nivel 0, **§5.93**). Escritas
+>   **§5.93–§5.106**: el CI **no traba** (A3, cierra §5.38) · la secuencia **sólo avisa** (B4, enmienda
+>   §5.86: `warnings[]` + fila `auditoria` `tipo='excepcion'`) · cadena por año · qué IDEA rige (el de su año;
+>   en la HCE el firmado de mayor `anio`) · **puntaje único** (ratifica §5.47) · fotos sin trabas ·
+>   **`tecnico_grupo` CANCELADA** (supera §5.79/§5.87, cierra §5.89) · login mínimo `admin` \| `tecnico` para
+>   el 26/11 · informes configurables y divulgación fuera del 26/11 · el Anexo A **ya no bloquea** (B1 se
+>   re-pregunta) · **M11.4 se disuelve en rebanadas verticales** (§5.106). **Siguen abiertas A5 y B1**
+>   (respuesta ambigua / no entendida; re-preguntadas). Reescritos: `esquema-datos-v2.md` §2.2, §2.3, §2.6,
+>   §4, §5 y §6; `preguntas-ippu.md` (estado de cada ítem); `puntos-a-validar.md`; el bullet M11 de §6;
+>   `CLAUDE.md`; nota de superseded en `PLAN-modular-adaptacion-HCE-2026-07.md`. Barrido de vigencia con
+>   evidencia (§5.83) en `docs/bitacora.md`. **Medido:** `pytest -q` → **435 passed, 0 skipped**; ambos
+>   `--check` → exit 0; **51 tablas**; head de Alembic **`b99294aec85c`** (un solo archivo en `versions/`) —
+>   idéntico al punto de partida. **Próximo:** **M11.3-a** (cimientos + persona/HCE).
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — M12 (absorción del Prototipo v4) CERRADA + I1 HECHO** (2026-09-16, sesión
 >   M12.8-cierre+I1), **intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 ·
@@ -34,11 +31,12 @@
 >   **`b99294aec85c`** (un solo archivo en `versions/`). **Única excepción
 >   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76) — **CANCELADA el 2026-09-16** (sesión M12.9,
 >   §5.92), no diferida: no desbloqueaba nada de cara al 26/11.
->   **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M11.3–M11.6 se retoman al cerrar M12.** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
+>   **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M12 cerró el 2026-09-16 y M11.3 se retoma en rebanadas verticales (§5.106).** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
 > - **Fuente normativa vigente (orden de precedencia, §5.92 deroga a §5.10):** **0.** las **decisiones de
->   este archivo §5** y el **acta de la reunión con IPPU del 2026-08-26**
->   (`respuestas-reunion-ippu-2026-08-21.md`) — todo documento normativo anterior a esa fecha cede ante
->   ellas donde haya contradicción · **1.** el **cuestionario respondido por escrito el 15/06** (prueba
+>   este archivo §5**, el **acta de la reunión con IPPU del 2026-08-26**
+>   (`respuestas-reunion-ippu-2026-08-21.md`) y las **respuestas escritas de IPPU del 2026-10-05**
+>   (`docs/notas/respuestas-ippu-2026-10-05.txt`, §5.93) — todo documento normativo anterior a esa fecha
+>   cede ante ellas donde haya contradicción · **1.** el **cuestionario respondido por escrito el 15/06** (prueba
 >   primaria, `docs/fuentes/Cuestionario IPPU UTEC, respuestas.docx`) · **2.**
 >   `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de
 >   acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6,
@@ -129,7 +127,7 @@ con consolidación histórica, análisis automático y reportes automáticos.
   (3 ítems/dimensión, escala 1–5). Conversión a equivalente IDEA: `(5 − promedio) × 2`.
 
 ### Arquitectura técnica objetivo (según presentación 13.05.2026)
-- **Frontend:** React + React Router + Tailwind CSS. Módulo: Formulario IDEA (12 dim), Form Likert (3 ítems/dim), Informe final + BarChart (recharts).
+- **Frontend:** React + React Router + Tailwind CSS. Módulo: Formulario IDEA (12 dim), Form Likert (3 ítems/dim), Informe final + BarChart (recharts). *(Arquitectura objetivo de la presentación; **para el 26/11 el frontend es la demo HTML conectada a la API**, React es posterior — §5.106.)*
 - **API REST:** Node.js **o** Python **FastAPI** · **9 endpoints CRUD** · **autenticación JWT por terapeuta** · validación Zod/Pydantic · OpenAPI/Swagger.
 - **Base de datos:** PostgreSQL (o MariaDB). Tablas: `nna`, `evaluaciones_idea`, `dimensiones_idea`, `items_likert`, `terapeutas`, `roles`. Prisma ORM / `pg_dump` backup.
 - **Integración con la HCE existente:** vía **iframe** (mínimo viable) **o** módulo nativo con API propia.
@@ -2715,6 +2713,235 @@ Esto rige de acá en adelante.
 
 ---
 
+## 5.93 → 5.106 · Sesión M11.3-0 — respuestas escritas de IPPU (A1–B12), 2026-10-05 (Lucas)
+
+> **Contexto.** IPPU contestó por escrito las preguntas A1–A5 y B1–B12 de `docs/notas/preguntas-ippu.md`
+> (`docs/notas/respuestas-ippu-2026-10-05.txt`, verbatim). Las 14 entradas de abajo son decisiones de
+> **Lucas, 2026-10-05**; esta sesión **sólo las transcribe** (§12.6: la decisión se escribe antes del
+> código) y **no toca código ni esquema** — únicamente docstrings de `app/models/`. Número libre medido en
+> el archivo: la última entrada era §5.92. §5 es append-only: donde una entrada corrige una anterior, la
+> anterior **no se edita** y esta dice cuál supera.
+>
+> | § | Tema | Pregunta | Relación con lo anterior |
+> |---|---|---|---|
+> | 5.93 | Respuestas escritas = fuente (nivel 0) | A1–B12 | amplía §5.92 |
+> | 5.94 | El CI no traba | A3 | **cierra** §5.38 (CONFIRMABLE → confirmado) |
+> | 5.95 | La secuencia sólo avisa | B4 | **enmienda** §5.86 |
+> | 5.96 | Cadena por año | B10 | precisa §5.36 |
+> | 5.97 | Qué IDEA rige | B2b | **reemplaza** «mayor `fecha_consenso`» (§5.36 / §5.91 b) |
+> | 5.98 | Puntaje único | B2a | **ratifica** §5.47 |
+> | 5.99 | Fotos: guardar sin trabas | §5.39 | precisa §5.39 |
+> | 5.100 | `tecnico_grupo` CANCELADA | B5b · B6 | **supera** §5.79 y §5.87; **cierra** §5.89 |
+> | 5.101 | Usuarios para el 26/11 | B5 | **refina** §5.92 («login mínimo») |
+> | 5.102 | Informes | B7 | acota §5.40 al 26/11 |
+> | 5.103 | Divulgación y copia a la familia | B11 · B12 | acota §5.80 |
+> | 5.104 | Resto de A y B | A1 A2 A4 A5 B3 B8 B9 | **cierra** §5.58/§5.63 como confirmados |
+> | 5.105 | Anexo A ya no bloquea el 26/11 | B1 | **acota** §5.54 y §5.67 |
+> | 5.106 | Entrega en rebanadas verticales | — | **reemplaza** el orden M11.3→M11.6 de `esquema-datos-v2.md` §5 |
+
+### 5.93 Las respuestas escritas de IPPU del 2026-10-05 se registran como fuente, nivel 0 (2026-10-05, Lucas)
+
+**Qué se decide.** `docs/notas/respuestas-ippu-2026-10-05.txt` es **fuente normativa de nivel 0**, junto al
+acta de la reunión del 2026-08-26 (§5.92): es lo que IPPU dijo sobre sí misma, por escrito. Donde
+contradiga una decisión anterior de §5, rige una entrada nueva que la supere —las §5.94–§5.106 de esta
+serie—, no una edición de la vieja.
+
+**Cómo se lee.** Las respuestas son cortas y **dos quedan sin cerrar**: **A5** (contesta sobre «Taller
+Terapéutico» y «Clínica» pero no dice qué es «Taller de Adolescentes») y **B1** (IPPU dice que no entendió
+qué se le pide). Ninguna de las dos se interpreta como sí o no: se re-preguntan (`preguntas-ippu.md`).
+B11 y B12 contestan «ver Protocolo de Acceso.md»: la lectura de esas dos es de Lucas, sobre el Protocolo
+(§5.103), y consta como lectura, no como cita de IPPU.
+
+**Evidencia.** El archivo `docs/notas/respuestas_hasta_B12_preguntas_a_ippu.txt` es **byte-idéntico** al
+anterior (`diff` sin salida) y no se versiona. `docs/notas/protocolo-acceso-subido-2026-10-05.md` es
+**byte-idéntico** (mismo sha256 `53f7b509…`) a `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md`
+tal como está en `HEAD`: **no hay diferencias que reportar**.
+
+**Qué cambia en las listas de fuentes.** La «Fuente normativa vigente» de la cabecera y de `CLAUDE.md` suma
+estas respuestas en el nivel 0.
+
+### 5.94 El consentimiento NO traba el proceso de evaluación — §5.38 queda confirmada (2026-10-05, Lucas)
+
+**IPPU (A3):** «Así es, el CI no traba el proceso de evaluación». **Cierra §5.38 como confirmada**: la marca
+⚠️ CONFIRMABLE ya no aplica y el ítem «re-confirmar con IPPU» de §6 se cierra.
+
+**Regla.** **Ningún paso de la secuencia exige el CI.** «CI pendiente» es un **estado derivado y visible**
+del expediente (no se almacena, como el estado visible de los módulos), con la notificación que §5.38 ya
+describía. El registro del consentimiento en sí no cambia (referente familiar, fecha, firma).
+
+**Qué dejan desmentido, y se corrige en esta sesión:** el docstring de `Consentimiento` («el único bloqueo
+sin excepción posible») y el de `FirmaMixin` («el CI es el único que no la admite»); la fila 1 de
+`esquema-datos-v2.md` §4 («nada sin CI», «CI no exceptuable») y la nota de `consentimiento` en §2.2.
+`consulta-a-ippu.md` §1.3 —que IPPU tiene— dice lo contrario y es snapshot: no se edita, lo supera esta
+respuesta. **La demo no está corregida** (`demo/js/flujo.js:54-64` sigue bloqueando): se anota en §6.
+
+**Detalle NO decidido** (queda para M11.3-b): si la **falta** de CI, además de verse como «CI pendiente»,
+agrega un ítem a `warnings[]` (§5.95) o una fila de `auditoria`. La regla de arriba sólo dice que no traba
+y que es un estado visible.
+
+### 5.95 La secuencia SÓLO AVISA — enmienda a §5.86 (2026-10-05, Lucas)
+
+**IPPU (B4):** «Solo avisa». **Enmienda §5.86** (el default «409 duro»): §5.86 ya preveía suavizarlo «en
+una entrada nueva» si IPPU pedía una habilitación registrada; es esta.
+
+**Regla.** Una **escritura o firma fuera de secuencia se ACEPTA**. La respuesta lleva `warnings[]`, y se
+escribe una fila de `auditoria` con **`tipo='excepcion'`** (el valor ya está en el CHECK,
+`app/models/transversales.py:269`). El motor de flujo no devuelve 409 por secuencia.
+
+**Qué NO cambia.** **Firma = bloqueo es otra regla y sigue en pie** (esquema §4.1): editar un módulo
+firmado devuelve **409**; la corrección va por addenda. Tampoco cambia la regla de no-triggers (§5.2.2): el
+aviso y la auditoría los escribe el servicio.
+
+**Detalle NO decidido** (M11.3-b): el contenido de cada aviso, si el mecanismo es el campo `excepcion` JSONB
+del módulo o sólo `auditoria`, y si el aviso pide un motivo. Esta entrada fija únicamente `warnings[]` y la
+fila `tipo='excepcion'`.
+
+### 5.96 Cadena por año: CI una vez por HCE, LB → PA → PB → IC dentro de cada año (2026-10-05, Lucas)
+
+**IPPU (B10, sobre el reingreso):** «No, no cambia nada». **Regla.** El **CI** se hace **una vez por HCE**.
+Cada año corre la cadena **LB(año) → PA(año) → PB(año) → IC(año)**, **sin dependencia entre años**: LB(2027)
+no espera a IC(2026). Un reingreso no abre ninguna instancia especial.
+
+**Qué cierra.** El supuesto «reingreso a más de 12 meses = línea base nueva» (`puntos-a-validar.md` §3, ya
+marcado «hay que revisarlo» por §5.36): **deja de ser un supuesto**, el IDEA anual lo hace innecesario. Y
+queda **precisada** la parte de §5.36 que decía que «reingreso» deja de ser lo que abre una instancia; el
+CI no forma parte de la cadena como prerrequisito (§5.94). Esto es lo que M11.3-b usa para decidir qué es
+«fuera de secuencia» (§5.95).
+
+### 5.97 Qué IDEA rige: el de **su propio año**; en la HCE, el **firmado de mayor `anio`** (2026-10-05, Lucas)
+
+**IPPU (B2b):** los informes se exportan a PDF; al ver un informe viejo se muestra **el IDEA de ese año**;
+al entrar a un NNA en el apartado HCE se muestra **lo más actual**. **Reemplaza** la regla «la vigente es la
+de mayor `fecha_consenso`» (docstring de `Idea`; `esquema-datos-v2.md` §2.2 y §4; §5.36; marcador de §5.91
+b), que se escribió para un modelo de línea base con reingresos.
+
+**Regla, tres vistas:**
+1. **Un documento o informe** muestra el IDEA **de su propio año**.
+2. **La vista de la HCE** muestra el **IDEA firmado de mayor `anio`**.
+3. **Un IDEA sin firmar del año en curso** se muestra **aparte, como «en curso»**; no desplaza al firmado.
+
+Esto **define el guard «qué IDEA rige a la fecha»** que §5.35/§5.36 dejaron en prosa; lo implementa M11.3 (en qué rebanada, se decide al diseñarla).
+
+### 5.98 Puntaje único: D7 y «NS contra número» salen de M11.3; kappa sigue sin ser calculable (2026-10-05, Lucas)
+
+**IPPU (B2a):** «Consenso del puntaje. Se requiere un campo en donde los técnicos registrarán un solo
+número». **Ratifica §5.47 (I12).** Consecuencias:
+- **El guard D7** («diferencia ≥2 exige documentar el consenso») y la pregunta **«`NS` de un técnico contra
+  número del otro»** **salen de M11.3**: no tienen sujeto con un solo puntaje.
+- **`puntuacion_idea` y `puntuacion_protocolo` se quedan en el esquema**, la API **no los expone**, y **no
+  se retiran** (siguen nullable, D7 sigue dormida; los tests de `test_m12_consenso.py` no se tocan).
+- ⚠️ **Se sigue diciendo:** el **kappa interjueces** (Manual §23) **no es calculable** con la práctica de
+  IPPU. Quien presente el trabajo a INAU debe decirlo; no se deja implícito en que el modelo «lo soporta».
+
+### 5.99 Fotos: guardar no requiere autorización y no produce aviso ni bloqueo (2026-10-05, Lucas)
+
+**Regla (§5.39 + decisión de equipo).** **Guardar una foto nunca exige autorización** y **no produce ni
+aviso ni bloqueo**, ni individual ni grupal. **Supera** la fila de `esquema-datos-v2.md` §4 «carga sin
+autorización → 403 con detalle de quiénes faltan» y el docstring de `Foto`. Las reglas de **compartir** una
+foto quedan **fuera del alcance del 26/11** (siguen vigentes como regla: §5.39/§5.45).
+
+**Qué no se decide.** `autorizacion_imagen` **no se retira**: sigue siendo el registro de la autorización.
+La demo todavía **bloquea el guardado** (`demo/js/hce-doc-org-vf.js:117-124`, `recordatorios.js:39-55`) — se
+anota en §6, no se toca acá.
+
+### 5.100 `tecnico_grupo` se CANCELA; `btree_gist` queda cerrado (2026-10-05, Lucas)
+
+**IPPU:** B6 «No» (no hace falta ver quién estuvo antes cuando un técnico cambia de grupo) y B5(b) «No» (no
+hay referente por NNA). **Supera §5.79 y §5.87** (la tabla N:M con vigencias: ya no se construye) y **cierra
+§5.89**: sin tabla no hay invariante que expresar, así que **`btree_gist` no entra** y la pregunta queda
+cerrada.
+
+**Fuente de verdad:** `grupo.tecnico1_id` / `tecnico2_id` (+ `tecnico1_rol` / `tecnico2_rol`). **Cómo se
+rastrea un cambio de técnico:** por la **auditoría de campo** (esquema §4: «cambiar el técnico de un grupo
+deja el valor anterior legible»). **B5(a):** las etiquetas de rol son **texto libre** — confirma el
+supuesto de `puntos-a-validar.md` §3 y el diseño de §5.2.3. El esbozo de `esquema-datos-v2.md` §2.6 se
+**conserva como historia**, marcado cancelado. Esta entrada **no** decide nada sobre el techo de dos
+técnicos por grupo.
+
+### 5.101 Usuarios para el 26/11: login mínimo con los dos roles existentes (2026-10-05, Lucas)
+
+**IPPU (B5c):** «Revisar "Protocolo de Acceso.md". Cuidado con el alcance, no es necesario modelar todos los
+usuarios … solo los críticos para 26/11». **Refina el «login mínimo» de §5.92.**
+
+**Alcance 26/11.** **Login JWT mínimo sobre `profesional`**, con los roles que ya existen —**`admin` |
+`tecnico`**, `ck_profesional_rol_valido`—: el **`tecnico` ve sólo los grupos en los que es tecnico1/tecnico2**;
+el **`admin` ve todo**. **Posterior al 26/11:** el resto de la matriz de roles del Protocolo §5 (los 5
+perfiles de §5.72, la conflación `admin` ↔ «dirección no técnica», el «perfil de área de Inclusión») y el
+**registro de accesos con motivo** (§2.17 / §5.88).
+
+### 5.102 Informes: área configurable y estado «revisado por dirección» son secundarios (2026-10-05, Lucas)
+
+**IPPU (B7):** una pestaña para generar informes con plantillas de los que se hacen recurrentemente; «no es
+crítico y está pensado a futuro». **Acota §5.40 al 26/11:** el **área de informes configurable** y el
+**estado «revisado por dirección»** quedan **fuera del 26/11**. **Sí entra:** el **IC firmado exportable a
+PDF**.
+
+⚠️ **§5.40 sigue siendo la regla** (todo informe pasa por revisión de dirección antes de entregarse); lo que
+se pospone es **implementarla**. El PDF del 26/11 es una exportación de **demostración con datos simulados**
+(§5.92), no una entrega; antes de que salga un informe con datos reales, el estado de revisión tiene que
+existir.
+
+### 5.103 Divulgación: `disociado` ≡ `agregado` para el guard §6.6; la copia a la familia es acceso, no divulgación (2026-10-05, Lucas)
+
+**IPPU (B11, B12):** «Ver Protocolo de Acceso.md». **Lectura de Lucas sobre el Protocolo §5 y §6.6:**
+- **B11.** Para el guard de §6.6 (informes a dirección, convenio, donantes: «datos disociados o
+  anonimizados», con ejemplos todos agregados), **`disociado` y `agregado` son equivalentes**: **dos valores
+  efectivos**. La columna `alcance_dato` **conserva los tres** para el registro; **sin cambio de esquema**.
+- **B12.** Entregar a la familia una copia de la HC del propio NNA es un **acceso del titular o su
+  representante** (Ley 18.335 art. 18 lit. A; matriz §5, filas «Paciente» y «Padres, tutores»), **no una
+  divulgación**: corresponde al **registro de accesos** (§2.17), no a `divulgacion`.
+
+**Alcance.** Los **guards de divulgación quedan fuera del 26/11**, y el registro de accesos es posterior
+(§5.88/§5.101). **Deuda conocida:** `DIVULGACION_DESTINATARIOS` incluye «Familia / representante legal»
+(`app/core/constantes.py`), que bajo B12 no es una divulgación. **No se cambia el catálogo**; queda
+anotado para cuando se escriba el guard.
+
+### 5.104 Resto de A y B: confidencialidad, acceso a la HCE actual, ateneo, talleres, histórico, reserva (2026-10-05, Lucas)
+
+- **A1 — no existe acuerdo de confidencialidad firmado** («olvídate de esto»). **Rige** la regla de
+  `CLAUDE.md` / §5.45: **sólo datos simulados o anonimizados**. Deja de ser un trámite que perseguimos.
+- **A2 — sin acceso a la HCE actual**; sólo un video donde la recorren. **Reconstruir el esquema legado
+  desde el video queda después del 26/11**; la **migración de datos queda fuera del 26/11**.
+- **A4 — el ateneo de grupo es de acceso general.** **Cierra §5.58 y §5.63 como confirmados** (se acaba
+  su ⚠️ CONFIRMABLE).
+- **A5 — SIGUE ABIERTA** (respuesta ambigua, §5.93). IPPU dice que Taller Terapéutico y Clínica son otros
+  servicios, fuera de Atención Diurna, y «no son nombres de grupos». **No dice** si «Taller de
+  Adolescentes» es uno de ellos. **§5.61 no se toca**: los cinco grupos sembrados quedan hasta que conteste.
+- **B3 — participación por NNA y taller:** se registra «con la condición de que sea viable y no complique
+  mucho»; si no, **basta el catálogo**. **`pai_taller` se queda**, y se **expone sólo si se conecta la
+  pantalla del PAI** (no es requisito de ninguna rebanada).
+- **B8 — los históricos con la «Guía del aplicador» corrida entran igual**, sin marca (§5.43).
+- **B9 — reserva de datos del adolescente:** IPPU la ubica como derecho de la persona (Ley 18.331) y
+  **no piensa modelarla ahora**. **Se difiere** más allá del 26/11; sale de M11.3.
+
+### 5.105 El Anexo A ya no bloquea el 26/11 (2026-10-05, Lucas)
+
+**IPPU (B1):** «No entendí exactamente qué querés, especificámelo mejor» → **B1 se re-pregunta** y sigue
+abierta. **Pero deja de bloquear el 26/11.** **Acota §5.54 y §5.67 y levanta el «BLOQUEADO por fuera»** de la
+fila de `esquema-datos-v2.md` §4 sobre el Anexo A. **Regla para el 26/11:** los totales son las **sumas ya
+definidas** —12 dimensiones → **total 0–96** y las 4 escalas; 24 ítems → **total 24–120**— y el Δ se calcula
+**sólo dentro del mismo instrumento** (§5.36). Si el Anexo A o el Manual §8 dicen algo distinto, se revisa
+cuando lleguen.
+
+### 5.106 La entrega se corta en rebanadas verticales; el frontend del 26/11 es la demo HTML conectada (2026-10-05, Lucas)
+
+**Reemplaza** el orden M11.3 → M11.4 → M11.5 → M11.6 de `esquema-datos-v2.md` §5. **M11.4 se disuelve** en
+rebanadas verticales (servicio + schema + router + tests por dominio). **M11.5** (seed espejo vía API, la
+forma ejecutable de §12-A, §5.65) pasa **justo después de la rebanada del ciclo clínico**. **M11.6** se
+reduce: **Swagger reemplaza a `ejemplos-endpoints.md`**. Orden:
+
+1. **M11.3-a** — cimientos + persona/HCE.
+2. **M11.3-b** — estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA.
+3. **M11.3-c** — PA/PB/IC + Δ + alerta + datos del IC para el PDF.
+4. **M11.5-a** — seed espejo vía API como test ejecutable de §12-A.
+5. **M11.3-d** — VF/baremo, SEV, INC, documento histórico, foto · login (2 roles) · routers restantes que
+   necesiten las pantallas conectadas · **M11.6 reducido**.
+
+**Frontend del 26/11:** la **demo HTML existente conectada a la API** (Fase 3). **React + Tailwind**
+(`CLAUDE.md`, «Stack objetivo») es **posterior al 26/11**. **M11.3 sigue siendo de Lucas** (§5.67).
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -2751,7 +2978,9 @@ Esto rige de acá en adelante.
 >   backend) y **la regla de «cuál IDEA rige»**, que sigue en prosa como «la de mayor `fecha_consenso`»
 >   (`app/models/modulos.py`, docstring de `Idea`) — su reformulación es de **M11.3** (§5.36/§5.35), que
 >   además necesita **B2(b)/B10** (`docs/notas/relevamiento-M11.3-2026-09-10.md`) antes de escribirse. No
->   se abrió `app/services/` ni se escribió ningún router.
+>   se abrió `app/services/` ni se escribió ningún router. ✅ **[Actualizado el 2026-10-05: B2(b)/B10
+>   respondidas y la regla DEFINIDA en §5.97 («su año» / «firmado de mayor `anio`»); el docstring de `Idea`
+>   ya no dice «mayor `fecha_consenso`». La implementa M11.3.]**
 > ### 🆕 Pendientes abiertos por la reunión con IPPU del 2026-08-21 (registrada el 2026-08-26, §5.36–§5.49)
 >
 > **Ninguno de estos existía antes de la reunión. Todos tienen decisión escrita detrás y ninguno tiene
@@ -2782,17 +3011,18 @@ Esto rige de acá en adelante.
 >   pendiente que siga presionando en noviembre: los **cinco grupos ya sembrados** (§5.61) alcanzan para
 >   un prototipo presentable sin datos reales; este sub-módulo entero —§2.8/§2.9/§2.11— queda para después
 >   del 26/11.
-> - [ ] **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · **§5.79** ·
+> - [ ] ⚠️ **ACOTADO el 2026-10-05 (§5.100/§5.101): `tecnico_grupo` CANCELADA; para el 26/11 sólo login mínimo `admin` \| `tecnico`; el resto de la matriz es posterior.** **Modelar usuarios, roles y asignación técnico↔grupo** (§5.41 / I6 · **§5.72** · **§5.79** ·
 >   `puntos-a-validar.md` §2.11). Un usuario por técnico · el técnico ve sólo sus grupos · ADMIN ve todo,
 >   asigna y crea otros ADMIN. ⚠️ **§5.79 derogó la ubicación de §5.72:** la tabla **`tecnico_grupo`** N:M
 >   con vigencias (aditiva, al lado de `tecnico1_id`/`tecnico2_id`) **NO entra en M12.8a — se construye en
 >   M11.3**, junto con el servicio de asignación que la va a leer; §5.79 deroga la *ubicación*, no la
->   decisión de fondo. **`grupo.tecnico?_rol` ya existen** y no se agregan. **Queda también para M11.3 /
+>   decisión de fondo. ⛔ **[Superado el 2026-10-05: §5.100 CANCELA la tabla.]** **`grupo.tecnico?_rol` ya existen** y no se agregan. **Queda también para M11.3 /
 >   Fase 4:** el **vocabulario de roles** (lista de 5 propuesta en §5.72, a confirmar por Lucas — no va
 >   todavía a un CHECK), la **conflación `admin` ↔ «dirección no técnica»** del Protocolo, y toda la
 >   **matriz de permisos**. Con `tecnico_grupo` fuera de M12.8a, esta pieza ya **no agranda M12.8**. Ver
->   §5.87 (2026-09-11): la tabla es M11.3, el servicio de asignación espera a B5/B6.
-> - [ ] ⚠️ **El invariante «≤2 asignaciones vigentes por grupo, sin solaparse» de `tecnico_grupo` (§5.79)
+>   §5.87 (2026-09-11): la tabla es M11.3, el servicio de asignación espera a B5/B6. ⛔ **[Superado el
+>   2026-10-05: §5.100 cancela la tabla; §5.101 fija el alcance del 26/11.]**
+> - [x] ⛔ **CERRADO el 2026-10-05 (§5.100): `tecnico_grupo` se CANCELA y `btree_gist` no entra** — sin tabla no hay invariante que expresar (B6 «No», B5b «No»). *Se conserva el hallazgo como historia:* ⚠️ **El invariante «≤2 asignaciones vigentes por grupo, sin solaparse» de `tecnico_grupo` (§5.79)
 >   NO es expresable como está descrito — hallazgo de M12.8b-3a, verificado contra el modelo, NO decidido
 >   ni construido.** §5.79 afirma que hace falta un `EXCLUDE` con `btree_gist`; eso es cierto pero
 >   insuficiente: un `EXCLUDE` se evalúa **de a pares** (`EXCLUDE (grupo_id WITH =, periodo WITH &&)`
@@ -2809,7 +3039,7 @@ Esto rige de acá en adelante.
 >   BLOQUE 6.3 (línea 471) y la pregunta 5 del BLOQUE 6.4 (línea 496). **No se corrige acá** (R1 y §5.79
 >   son registros, no se corrigen): queda como punto abierto nombrado para quien diseñe el servicio de
 >   asignación en M11.3.
-> - [ ] **Estado de revisión de los informes + área de generación configurable** (§5.40 / I5 ·
+> - [ ] ⚠️ **ACOTADO el 2026-10-05 (§5.102, B7): secundario y FUERA del 26/11** (el IC firmado sí se exporta a PDF; §5.40 sigue siendo la regla). **Estado de revisión de los informes + área de generación configurable** (§5.40 / I5 ·
 >   `puntos-a-validar.md` §2.13). **Todo informe lo revisa la dirección antes de entregarse**: es un
 >   **estado de flujo**, no un permiso de impresión. Y lo que pidieron es un **área configurable**, no un
 >   catálogo cerrado de tipos. Hoy no existe ningún estado de aprobación, ni destinatario, ni generación de
@@ -2824,10 +3054,10 @@ Esto rige de acá en adelante.
 >   más consultado es **AYEX**; **va junto con los informes**. Es contenido, no modelo — pero hay que
 >   decidir **si el texto se edita desde la aplicación o es fijo**, y **eso no lo puede decidir quien
 >   escribe el código solo**.
-> - [ ] ⚠️ **Re-confirmar con IPPU el punto de segunda mano: el consentimiento no traba el flujo**
+> - [x] ✅ **CERRADO el 2026-10-05 (A3, §5.94): IPPU lo confirmó por escrito.** ~~⚠️ **Re-confirmar con IPPU el punto de segunda mano: el consentimiento no traba el flujo**~~
 >   (§5.38 / I3). Es el **único** ítem de la serie I que no se escuchó en la reunión. **Primero en la
 >   lista del próximo contacto.**
-> - [ ] **Llevar al próximo contacto los 12 bloques que quedaron SIN respuesta** — la lista completa está
+> - [ ] ⚠️ **2026-10-05: las A1–A5 y B1–B12 de `preguntas-ippu.md` se contestaron por escrito (§5.93); siguen abiertas A5 y B1 (re-preguntadas), más el bloque C.** **Llevar al próximo contacto los 12 bloques que quedaron SIN respuesta** — la lista completa está
 >   en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` §16. Los tres que más cuestan: **2.a**
 >   (¿quieren registrar participación por taller? — decide el alcance de M12.6), **8.a/8.b/8.c** (la
 >   planilla de Inclusión, los 7 estados y si el estado se anualiza — **M12.5 arranca sin eso**) y
@@ -2850,7 +3080,7 @@ Esto rige de acá en adelante.
 >   `catalogo_centro_educativo` (0 filas) **sin endpoint ni pantalla** para alta / orden / orientación a
 >   grupos / retiro. **Misma pantalla y mismo tipo de trabajo que el alta de grupos (§2.8)** → **M11.3 /
 >   M11.4**, con registro en HCE-LOG y `hce_id NULL`.
-> - [ ] **Registro de accesos con motivo (HCE-LOG)** (`puntos-a-validar.md` §2.17, abierto por el Protocolo).
+> - [ ] **Registro de accesos con motivo (HCE-LOG)** (`puntos-a-validar.md` §2.17, abierto por el Protocolo). ⚠️ **2026-10-05 (§5.103, B12):** acá cae también la **copia de la HC a la familia** (acceso del titular, no divulgación). Posterior al 26/11.
 >   `auditoria` registra **cambios** (`campo`/`valor_ant`/`valor_nuevo`); el Protocolo §8 exige registrar
 >   **lecturas con motivo y firma**, y §7 el registro automático de accesos con credencial individual. El
 >   `tipo='acceso'` está en el CHECK pero **no hay `motivo`, ni firma, ni nada que lo escriba**. Requisito
@@ -3014,17 +3244,41 @@ Esto rige de acá en adelante.
         `index.html` y `js/ui-core.js`.
       - **Pestaña Analítica Institucional**: también tiene la misma referencia a Eval. intermedia,
         corregir en el mismo pasaje.
-- [ ] **M11 · Backend v2 — EN CURSO.** Desde §5.6 no tiene dueño exclusivo — quien lo tome, avisa. Las 3 decisiones de arquitectura están cerradas (§5.2) y el esquema v2 escrito (`backend/docs/esquema-datos-v2.md`).
-  - [ ] **M11.3** servicios/motor de flujo con guards (§4: secuencia, firma=bloqueo, **Δ sólo dentro del
-    mismo instrumento** —reformulado por §5.36, no «Δ sólo B−A»—, baremo sólo desde `pct`, fotos §8.4,
-    histórico inmutable, Anexo A, habilitación de §IX del PAI por tipo, «qué IDEA rige a la fecha») — **el
-    sub-módulo con más contenido. Lo toma Lucas** (§5.67 / L14, 2026-09-03 — cierra `puntos-a-validar.md`
-    §2.7).
-  - [ ] **M11.4** routers · **M11.5** seed espejo de la demo + pytest (**forma ejecutable del criterio de
-    aceptación** — §5.65 / L12: hoy §12-A vive sólo como prosa y el seed espejo no existe; usuario demo 1
-    por API = IDEA 58 · PA 60 · PB 79 · Δ +19) · **M11.6** docs.
-  - ⚠️ **M11.3–M11.6 están en pausa hasta cerrar M12** (ver abajo): tocan la capa que M12 está por cambiar.
-  - Después: Fase 3 (demo↔API) → Fase 4 (JWT) → Fase 6 (Docker completo: app + NGINX).
+- [ ] **M11 · Backend v2 — EN CURSO, en REBANADAS VERTICALES** (§5.106, 2026-10-05; reemplaza el orden
+  M11.3 → M11.4 → M11.5 → M11.6). Sin dueño exclusivo (§5.6); **M11.3 lo toma Lucas** (§5.67). Decisiones
+  de arquitectura cerradas (§5.2); esquema en `backend/docs/esquema-datos-v2.md` (§4 reglas, **§5 = este
+  plan**). **Meta: prototipo presentable SIN datos reales el 2026-11-26** (§5.92), con la **demo HTML
+  existente conectada a la API**; React + Tailwind es posterior. **M12 cerró el 2026-09-16: ya no hay
+  pausa.** Cada rebanada = servicio + schema + router + tests de su dominio:
+  - [ ] **M11.3-a** cimientos + persona/HCE.
+  - [ ] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
+    §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda.
+  - [ ] **M11.3-c** PA/PB/IC + **Δ sólo dentro del mismo instrumento** (§5.36) + alerta + datos del IC
+    para el PDF (§5.102). Totales = las sumas definidas (§5.105). **Sin guard de consenso** (§5.98).
+  - [ ] **M11.5-a** seed espejo **vía API** = el criterio **§12-A ejecutable** (§5.65): usuario demo 1 →
+    **IDEA 58 · PA 60 · PB 79 · Δ +19**. Va justo después de la rebanada del ciclo clínico.
+  - [ ] **M11.3-d** VF/baremo (sólo desde `pct`), SEV, INC, documento histórico, **foto sin trabas**
+    (§5.99) · **login con 2 roles** (§5.101) · routers restantes que necesiten las pantallas conectadas ·
+    **M11.6 reducido** (Swagger reemplaza `ejemplos-endpoints.md`).
+  - ⚠️ **Reglas nuevas que la implementación tiene que respetar (todas de 2026-10-05):** §5.94 el CI no
+    traba · §5.95 la secuencia sólo avisa (`warnings[]` + `auditoria` `tipo='excepcion'`) · §5.96 cadena
+    por año · §5.97 qué IDEA rige · §5.98 puntaje único (D7 y «NS contra número» salen de M11.3) · §5.99
+    guardar una foto no requiere nada. **Detalles que §5.94/§5.95 dejan para M11.3-b** y hay que decidir al
+    diseñar: si la falta de CI también avisa, el contenido de los avisos, y si se usa el campo `excepcion`.
+  - [ ] **Realinear la demo con las reglas nuevas** (hoy la demo las contradice; no es la base, pero se
+    conecta a la API en Fase 3): `demo/js/flujo.js:54-64` (`moduloHabilitado`) **bloquea** por CI y por
+    secuencia → debe avisar (§5.94/§5.95), y sus textos al usuario —`flujo.js:58` «único requisito no
+    exceptuable», `:194` y `:259` «único bloqueo sin excepción posible (§4.2)»— afirman lo que IPPU
+    desmintió; `demo/js/hce-doc-org-vf.js:117-124` y
+    `demo/js/recordatorios.js:39-55` **bloquean el guardado de fotos** sin autorización → no deben
+    (§5.99). Se suma a los cuatro puntos de presentación de más arriba. Sin dueño.
+  - **Fuera del 26/11** (decidido; ver los pendientes respectivos): guards de divulgación y de compartir
+    (§5.103) · registro de accesos con motivo y copia a la familia (§5.88/§5.103) · reserva de datos del
+    adolescente (§5.104/B9) · área de informes configurable + «revisado por dirección» (§5.102) · matriz de
+    roles completa (§5.101) · administración de grupos/catálogos/usuarios (§5.90/§5.92) · `pai_taller`
+    salvo pantalla del PAI conectada (§5.104/B3) · reconstrucción del esquema legado y migración de datos
+    (§5.104/A2).
+  - Después: Fase 4 completa (roles, matriz) → Fase 6 (Docker completo: app + NGINX) → React + Tailwind.
 - [x] **M12 · Absorción del Prototipo v4 — CERRADO** (arrancó 2026-08-14, cerrado 2026-09-16 en la sesión
   **M12.8-cierre**). Se intercaló **entre M11.2 y M11.3**. Decisiones D1–D9 escritas en **§5.10–§5.18**.
   Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. **Única excepción registrada:**
@@ -3120,12 +3374,12 @@ Esto rige de acá en adelante.
             sesión — Paso 3 sólo autoriza docstrings/comentarios de `app/`, no de `demo/js/`).
 - [ ] **Puntos a validar con IPPU y el equipo** → `docs/notas/puntos-a-validar.md` (2026-08-07, **interno**). **Medido el 2026-09-09 (M12.8b-2):** §1 (para IPPU) = **17 subsecciones `### 1.N`, 5 abiertas** (§1.5 · §1.6 · §1.15 · §1.16 · §1.17 — coincide con la tabla por fuente de `preguntas-ippu.md`); §2 (para el equipo) = **17 subsecciones `### 2.N`, 8 abiertas** (§2.5 · §2.8 · §2.9 · §2.11 · §2.12 · §2.13 · §2.14 · §2.17; el conteo de «abiertas» hace un juicio sobre §2.10 —plegada a §2.11— y §2.12/§2.15 —parcialmente resueltas—); §3 (supuestos) = **6 filas** (la reunión del 21/08 confirmó 4 y dejó 2 para revisar), sin subsecciones `### 3.N`. Lo abierto y crítico: **acceso a la HCE actual + su esquema de BD** (§1.5) y **la firma del acuerdo de confidencialidad** (§1.6); del lado del equipo, **no hay forma de abrir un año nuevo de grupos** (§2.8). La lista consolidada para el próximo contacto con IPPU es `docs/notas/preguntas-ippu.md` (§5.78). Salió de M11.2: varios se detectaron construyendo el esquema (ej. las referencias documentales de los 24 ítems no están verificadas). **§1.3 (catálogo de talleres) quedó CERRADO en M12.3**: el «8 vs 18» era falso y la lista real la trae el propio Prototipo v4. §1.1 ganó cita de fuente primaria (cuestionario 15/06, P10/P12) y se corrigió el plan M12 §4, que la daba por cerrada por error — ver bitácora 2026-08-17.
 - [ ] ~~**la tabla `grupo` no admite más de un año**~~ (contexto histórico): Su PK es sólo la letra (`A..E`) pero lleva columna `anio`, así que **el grupo A existe para un único año en toda la historia**: crear el de 2027 obliga a sobrescribir el de 2026 (se pierde quiénes fueron sus técnicos) y los expedientes viejos, que en `grupo_id` guardan sólo la letra, pasan a apuntar al grupo nuevo **sin aviso**. Contradice cómo `protocolo` e `informe_cierre` resuelven los ciclos anuales con `(hce_id, …, anio)`. Detectado al revisar M11.2; **se implementó tal cual lo especifica `esquema-datos-v2.md` §2.1, sin corregirlo por cuenta propia** (cambiarlo modifica ese documento). Opciones: (a) PK compuesta `(id, anio)` · (b) id propio con `UNIQUE(letra, anio)` · (c) dejarlo y **quitar la columna `anio`**, si los grupos no se reconfiguran año a año. Anotado en los 3 lugares donde se va a mirar: `esquema-datos-v2.md` §2.1, el docstring de `Grupo` y `docs/notas/puntos-a-validar.md` §2.6. **No bloquea M11.3.**
-- [ ] **Mirar el video demo de la HCE actual:** https://youtube.com/watch?v=dMWfc0JKCC0
-- [ ] **Pedir a IPPU (crítico):** acceso al repositorio de la HCE actual + **esquema de la base de datos** actual.
-- [ ] **Resolver confidencialidad:** documento legal a firmar por quienes accedan a datos sensibles (lo planteó el Director).
+- [ ] **Mirar el video demo de la HCE actual:** https://youtube.com/watch?v=dMWfc0JKCC0 — ⚠️ **2026-10-05 (A2, §5.104): no hay acceso a la HCE; reconstruir el esquema legado desde el video es POSTERIOR al 26/11.**
+- [x] **Pedir a IPPU (crítico):** acceso al repositorio de la HCE actual + **esquema de la base de datos** actual. → **RESPONDIDO el 2026-10-05 (A2, §5.104): no tienen acceso; sí un video.** Ver el pendiente de arriba.
+- [x] **Resolver confidencialidad:** documento legal a firmar por quienes accedan a datos sensibles (lo planteó el Director). → **RESPONDIDO el 2026-10-05 (A1, §5.104): no existe acuerdo firmado y IPPU pide dejarlo.** Rige la regla de `CLAUDE.md`: sólo datos simulados o anonimizados.
 - [ ] Definir **integración**: iframe (MVP) vs módulo nativo con API propia.
-- [ ] **Fase 3:** conectar la demo HTML a la API (reemplazar el array `NNA` por `fetch`) → persistencia real.
-- [ ] **Fase 4:** auth JWT por terapeuta + roles. · **Fase 5:** tests + docs. · **Fase 6:** Docker + PostgreSQL.
+- [ ] **Fase 3:** conectar la demo HTML a la API (reemplazar el array `NNA` por `fetch`) → persistencia real. ⚠️ **ENTRA en el 26/11** (§5.106): el frontend del 26/11 es la demo HTML conectada.
+- [ ] **Fase 4:** auth JWT por terapeuta + roles. · **Fase 5:** tests + docs. · **Fase 6:** Docker + PostgreSQL. ⚠️ **Del 26/11 entra sólo el login mínimo `admin` \| `tecnico`** (§5.101, rebanada M11.3-d); roles y matriz completos son posteriores.
 - [ ] **Micro-tarea:** importar a `nivel_idea` los descriptores oficiales (texto largo por nivel) desde `docs/markdown/escala-...idea.md`.
 - [ ] **Con IPPU:** definir el protocolo real de "áreas" y "general" (hoy modeladas como provisionales, indicadores en texto libre).
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
@@ -3142,12 +3396,15 @@ Esto rige de acá en adelante.
   aplicó evaluaciones con la Guía corrida, ¿qué se hace con esos puntajes históricos? Va a
   `puntos-a-validar.md` y a la reunión.
 - **¿Los dos técnicos ya puntúan de forma independiente, o es práctica a introducir?** De la respuesta
-  depende si §5.16 (D7, kappa) sirve desde el día uno o queda latente.
+  depende si §5.16 (D7, kappa) sirve desde el día uno o queda latente. ✅ **CERRADA** (§5.47, ratificada
+  por escrito el 2026-10-05, §5.98): registran **un solo número de consenso**; D7 queda latente y el kappa
+  **no es calculable**.
 - **Catálogo de centros educativos:** ¿lo arma coordinación o sale de la planilla del área de inclusión?
 - **Contradicción del prototipo: secuencia dura vs. guiada.** Manual §3 ("ningún instrumento puede aplicarse
   sin que el anterior esté completo y firmado") vs. Especificaciones §1 ("flujo guiado, **no impuesto**").
   Su código implementa la guiada; nosotros también. Confirmar. (Anexo B del plan M12 tiene las otras cinco.)
-- **Sigue faltando material de IPPU:** el Anexo A del Manual, las secciones que el prototipo no muestra
+  ✅ **CONFIRMADA el 2026-10-05 (B4, §5.95): «solo avisa».**
+- **Sigue faltando material de IPPU** (⚠️ el Anexo A y §8 **ya no bloquean el 26/11**, §5.105; B1 re-preguntada): el Anexo A del Manual, las secciones que el prototipo no muestra
   (§4, §7, §8, §12, §13, §15, §17, §18, §20–22, §24, §25), la **matriz de 14 roles** (mencionada en sus
   pendientes, ausente del prototipo), el **anexo del Decreto 72/025** y la verificación de las 24 citas
   bibliográficas de la Escala IPPU-TEA.

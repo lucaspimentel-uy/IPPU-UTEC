@@ -1,5 +1,12 @@
 # Plan modular — Adaptar la demo L1 al Documento Técnico IPPU (julio 2026)
 
+> ⚠️ **NOTA (2026-10-05, sesión M11.3-0) — la sección «M11» de este plan está SUPERADA.** El orden M11.3 →
+> M11.4 → M11.5 → M11.6 y las decisiones de entrada de M11 (la «puerta» de validar con IPPU, la línea base
+> única) ya no rigen: **manda `backend/docs/esquema-datos-v2.md` §5** (plan en rebanadas verticales) y las
+> entradas **`handoff.md` §5.93–§5.106** (respuestas escritas de IPPU del 2026-10-05; §5.106 reemplaza el
+> orden de M11). El resto del plan (M0–M10) es el registro de una ronda de demo ya cerrada. **El cuerpo no
+> se reescribe**: se deja como registro de lo que se pensó en julio de 2026.
+
 > **Para Claude Code.** Este documento se lee junto con `handoff.md` y `CLAUDE.md`. Fuente normativa
 > de esta ronda: `docs/markdown/1_documento-tecnico-utec-lidia.md` (convertir desde
 > `1_Documento_Tecnico_UTEC-LIDIA.md` si no está aún) y, como referencia de UX/interacción,
