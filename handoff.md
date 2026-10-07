@@ -7,10 +7,10 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> **Estado al 2026-10-06 · sesión M11.3-a3** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
+> **Estado al 2026-10-06 · sesión M11.3-b** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
 >
-> - **Qué funciona:** backend FastAPI + Postgres · **51 tablas** · head `dcc838486407` · **539 tests, 0 salteados**. API: `POST/GET/PATCH /hce` (búsqueda por CI · N.º de HC · grupo del año · nombre), `GET /grupos?anio=`, `GET /profesionales?activo=`. Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request, los GET no commitean, el 500 conserva el sobre (§5.108, §5.115). N.º de HC asignado por el servidor desde 1001 (§5.109) · CI canónica (§5.110) · auditoría `carga`/`edicion` (§5.112).
-> - **Próxima rebanada:** **M11.3-b** (hereda las convenciones de §5.115) — estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA; después M11.3-c → M11.5-a → M11.3-d (§5.106). **Meta: prototipo presentable sin datos reales el 2026-11-26** (demo HTML conectada a la API; React + Tailwind es posterior).
+> - **Qué funciona:** backend FastAPI + Postgres · **51 tablas** · head `dcc838486407` · **600 tests, 0 salteados**. API: `POST/GET/PATCH /hce` (búsqueda por CI · N.º de HC · grupo del año · nombre), `GET /grupos?anio=`, `GET /profesionales?activo=`, **`GET /hce/{id}/flujo?anio=`** (CI + LB/PA/PB/IC derivados, §5.116), **consentimiento** (`/hce/{id}/consentimiento`) e **IDEA** (alta/PATCH/`firmar`/`addendas`/`vigente`, totales, banda desde `banda_idea`, firma = bloqueo 409). Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request, los GET no commitean, el 500 conserva el sobre (§5.108, §5.115). N.º de HC asignado por el servidor desde 1001 (§5.109) · CI canónica (§5.110) · auditoría `carga`/`edicion`/`firma`/`addenda`/`excepcion` (§5.112, §5.116).
+> - **Próxima rebanada:** **M11.3-c** (PA/PB/IC + Δ + alerta + datos del IC; reusa `flujo.avisos_de_secuencia`, `firma.firmar_modulo` e `idea.idea_de_anio`) → M11.5-a → M11.3-d (§5.106). **Meta: prototipo presentable sin datos reales el 2026-11-26** (demo HTML conectada a la API; React + Tailwind es posterior).
 > - **Bloqueado / abierto (responsable):** Manual completo de IPPU, pregunta B1 — espera respuesta de **IPPU**, no bloquea el 26/11 (§5.105) · baja/reingreso del expediente — **Lucas**, M11.3-d · administración de grupos desde la app — **sin responsable**, fuera del 26/11 (§5.90/§5.92) · migración de datos — acceso a la HCE actual de **IPPU**, posterior al 26/11 (§5.104, §5.113).
 > - **Equipo:** Lucas Pimentel (UTEC-LIDIA, responsable del documento) · Samuel · Victor — sin dueño exclusivo de módulos (§5.6). Precedencia de fuentes: `CLAUDE.md`, «Precedencia normativa».
 
@@ -3013,6 +3013,18 @@ Salen de la revisión de conformidad de M11.3-a/a2. **Las heredan M11.3-b en ade
 - **(d) Los GET no commitean:** usan `sesion_lectura`; sólo las mutaciones pasan por `sesion_transaccional`. Un `commit()` que falla tiene que salir como error, lo que depende de que FastAPI corra la salida de las dependencias **antes** de enviar la respuesta (0.115.x): `fastapi` queda fijado con el motivo en `requirements.txt` y un test se rompe si cambia.
 - **(e) Elecciones de M11.3-a2 que no estaban escritas:** `anio` fuera de 1..32767 → **422** · la auditoría de `persona.ci` guarda el valor **canónico** (§5.110) · `GET /grupos` → `[{id, nombre, anio}]` y `GET /profesionales` → `[{id, nombre, especialidad, rol, activo}]` (sin email ni hash), ambos **sin sobre**.
 
+## 5.116 · Sesión M11.3-b — motor de flujo, firma y IDEA (2026-10-06, Lucas)
+
+### 5.116 Decisiones a–e de M11.3-b: cierran los «detalles no decididos» de §5.94 y §5.95 (2026-10-06, Lucas)
+Sin cambio de DDL (head `dcc838486407`). Código: `services/{flujo,firma,idea,consentimiento}.py`.
+- **(a) Una sola firma del IDEA.** Firmar exige `evaluador_t1_id` y `evaluador_t2_id` cargados, **distintos y activos**; `firmas` guarda a los dos `{profesional_id, rol, fecha}`; `usuario_id` de la fila `firma` queda `NULL` hasta el login (§5.101). Razón: §5.98 (un único puntaje de consenso, acordado en persona). Dos iguales también son 422 **al guardar** (el CHECK `evaluadores_distintos` lo daría como 500).
+- **(b) Totales.** `total` y `esc_a..esc_d` se recalculan en **cada guardado sin firmar** (las `NS` y las vacías, afuera) y **se congelan al firmar**. Escalas = tríos consecutivos (A D1–D3 · B D4–D6 · C D7–D9 · D D10–D12), **verificado** contra Documento Técnico §5.1 y contra `idea_dimension.escala`: coincide. *(Fijado:)* sin ninguna dimensión numérica el total es `NULL`, no 0.
+- **(c) La banda se deriva al leer** desde `banda_idea` (nunca guardada ni con cortes en el código): mover un corte cambia la banda devuelta, también para un IDEA firmado.
+- **(d) Auditoría de campo de `dim`:** una fila `edicion` por dimensión que cambió, `campo='dim.Dn'`; el alta es una sola fila `carga`.
+- **(e) Avisos.** La **falta de CI no produce aviso ni fila**: es sólo el estado «CI pendiente». Una creación o firma **fuera de secuencia** agrega `{code: "fuera_de_secuencia", mensaje, modulo, anio, faltan[]}` a `warnings` y escribe **una** fila `auditoria` `tipo='excepcion'`, **sólo al crear y al firmar** (no en cada guardado). **`FirmaMixin.excepcion` no se usa** (docstring actualizado; la columna queda sin migración). Hoy ninguna operación del IDEA puede salir de secuencia (LB es el primer eslabón); la lógica es genérica para PA/PB/IC (M11.3-c).
+- **Fijado por la implementación sin que estuviera dicho:** (1) **Integridad para firmar el IDEA** = Documento Técnico §4.3, fila HCE-LB: 12 dimensiones puntuadas sin `NS` ni vacías · **fecha de consenso** · **síntesis clínica** · **objetivos del período** (422 con un detalle por campo, todo junto). (2) El consentimiento exige `firmante` y `fecha` al registrarse; `autorizaciones`, si viene, trae las tres. (3) `firmas[].rol` = `profesional.especialidad`. (4) PATCH de `dim` fusiona **dimensión por dimensión** y, dentro de una, sólo las claves que vinieron. (5) `GET /hce/{id}/idea/vigente` → `{vigente, en_curso}`; `idea_de_anio` devuelve el IDEA de ese año **firmado o no** (quien lo usa mira `.firmado`). (6) Las filas se bloquean (`FOR UPDATE`) en PATCH/firma/addenda. (7) Un solo lugar lee el reloj: `fechas.hoy()`.
+- **No se implementó (queda para decidir):** los «recomendados» de §4.3 para el IDEA —≥ 5 sesiones previas, extensión de la síntesis (≈200 palabras)—: el documento dice «advierten y **piden constancia**» pero no define el mecanismo, y (e) sólo prevé `fuera_de_secuencia`. `idea.sesiones` ya se guarda.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -3340,8 +3352,11 @@ Salen de la revisión de conformidad de M11.3-a/a2. **Las heredan M11.3-b en ade
     `anio` · auditoría `carga` en el alta · `GET /grupos` y `GET /profesionales` · migración regenerada
     (head `dcc838486407`) · 20 tests nuevos (**521 passed, 0 skipped**).
   - [x] **M11.3-a3** convenciones transversales (JSONB `NULL`, vacío en fecha/entero/FK, 500 con sobre, GET sin commit) — **HECHO 2026-10-06** (§5.115). 18 tests nuevos (**539 passed, 0 skipped**); sin cambio de DDL.
-  - [ ] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
-    §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda.
+  - [x] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
+    §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda — **HECHO
+    2026-10-06** (§5.116). `GET /hce/{id}/flujo` · CI mínimo (`/hce/{id}/consentimiento`) · IDEA
+    (`/hce/{id}/idea`, `/idea/{id}`, `firmar`, `addendas`, `vigente`) · 61 tests nuevos (**600 passed, 0
+    skipped**); sin cambio de DDL. **Falta decidir:** los «recomendados» de §4.3 para el IDEA (§5.116).
   - [ ] **M11.3-c** PA/PB/IC + **Δ sólo dentro del mismo instrumento** (§5.36) + alerta + datos del IC
     para el PDF (§5.102). Totales = las sumas definidas (§5.105). **Sin guard de consenso** (§5.98).
   - [ ] **M11.5-a** seed espejo **vía API** = el criterio **§12-A ejecutable** (§5.65): usuario demo 1 →
@@ -3352,8 +3367,8 @@ Salen de la revisión de conformidad de M11.3-a/a2. **Las heredan M11.3-b en ade
   - ⚠️ **Reglas nuevas que la implementación tiene que respetar (todas de 2026-10-05):** §5.94 el CI no
     traba · §5.95 la secuencia sólo avisa (`warnings[]` + `auditoria` `tipo='excepcion'`) · §5.96 cadena
     por año · §5.97 qué IDEA rige · §5.98 puntaje único (D7 y «NS contra número» salen de M11.3) · §5.99
-    guardar una foto no requiere nada. **Detalles que §5.94/§5.95 dejan para M11.3-b** y hay que decidir al
-    diseñar: si la falta de CI también avisa, el contenido de los avisos, y si se usa el campo `excepcion`.
+    guardar una foto no requiere nada. (Los detalles que §5.94/§5.95 dejaban para M11.3-b —aviso por falta
+    de CI, contenido de los avisos, campo `excepcion`— **se decidieron en §5.116**.)
   - [ ] **Realinear la demo con las reglas nuevas** (hoy la demo las contradice; no es la base, pero se
     conecta a la API en Fase 3): `demo/js/flujo.js:54-64` (`moduloHabilitado`) **bloquea** por CI y por
     secuencia → debe avisar (§5.94/§5.95), y sus textos al usuario —`flujo.js:58` «único requisito no

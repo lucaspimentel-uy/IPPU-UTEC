@@ -73,6 +73,32 @@ def registrar_cambios(
     return filas
 
 
+def registrar_evento(
+    db: Session,
+    *,
+    modulo: str,
+    hce_id: int | None,
+    tipo: str,
+    detalle: str,
+    usuario_id: int | None = None,
+) -> Auditoria:
+    """Escribe **una** fila de un evento que no es la edición de un campo: `carga`,
+    `firma`, `addenda` o `excepcion` (el CHECK de la tabla admite además `alerta` y
+    `acceso`, de otras rebanadas).
+
+    `campo`, `valor_ant` y `valor_nuevo` quedan `NULL`; `detalle` nombra el registro.
+    **Sin datos personales** en el texto: el rastro dice *qué* pasó, no *a quién* (la
+    persona se lee en la propia HCE). Es el único punto por el que pasan esos eventos
+    —firma y addenda lo usan a través de él—, así que un test puede interceptarlo.
+    """
+    fila = Auditoria(
+        hce_id=hce_id, usuario_id=usuario_id, modulo=modulo, tipo=tipo, detalle=detalle,
+    )
+    db.add(fila)
+    db.flush()
+    return fila
+
+
 def registrar_carga(
     db: Session,
     *,
@@ -81,16 +107,8 @@ def registrar_carga(
     detalle: str,
     usuario_id: int | None = None,
 ) -> Auditoria:
-    """Escribe **una** fila `tipo='carga'`: se creó un registro (§5.112).
-
-    `campo`, `valor_ant` y `valor_nuevo` quedan `NULL` (no cambió un campo); `detalle`
-    nombra el registro creado. **Sin datos personales** en el texto: el rastro dice
-    *qué* se creó, no *a quién* (la persona se lee en la propia HCE).
-    """
-    fila = Auditoria(
-        hce_id=hce_id, usuario_id=usuario_id, modulo=modulo,
-        tipo=AUDITORIA_TIPO_CARGA, detalle=detalle,
+    """Escribe **una** fila `tipo='carga'`: se creó un registro (§5.112)."""
+    return registrar_evento(
+        db, modulo=modulo, hce_id=hce_id, tipo=AUDITORIA_TIPO_CARGA,
+        detalle=detalle, usuario_id=usuario_id,
     )
-    db.add(fila)
-    db.flush()
-    return fila

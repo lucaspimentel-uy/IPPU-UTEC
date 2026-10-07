@@ -26,6 +26,22 @@ IDEA_MANUAL_VERSION = "Manual Unificado IDEA v1.0 (07/2026)"
 #: es la que circula y la que citan los materiales de IPPU.
 IDEA_CITA = "Rivière, Á. (1997/2002). IDEA — Inventario de Espectro Autista."
 
+#: Las 12 dimensiones, en el orden del instrumento. Son las claves de `idea.dim`.
+IDEA_DIMENSIONES: tuple[str, ...] = tuple(f"D{n}" for n in range(1, 13))
+#: Escala → sus dimensiones: tríos consecutivos (Documento Técnico §5.1: Relación
+#: Social D1–D3 · Comunicación y Lenguaje D4–D6 · Anticipación y Flexibilidad D7–D9
+#: · Simbolización D10–D12; coincide con `idea_dimension.escala` del catálogo). **Es
+#: constante y no catálogo**: son 4 grupos fijos del instrumento, no algo que IPPU
+#: mueva sin desplegar (a diferencia de las bandas, que sí salen de `banda_idea`).
+IDEA_ESCALAS: dict[str, tuple[str, ...]] = {
+    letra: IDEA_DIMENSIONES[i * 3:(i + 1) * 3] for i, letra in enumerate("ABCD")
+}
+#: Rango de la puntuación de una dimensión (pares 0·2·4·6·8 e impares «intermedios»).
+IDEA_VALOR_MIN = 0
+IDEA_VALOR_MAX = 8
+#: «No sabe / observación insuficiente»: excluye la dimensión del total y **impide firmar**.
+IDEA_NS = "NS"
+
 # --------------------------------------------------------------------------
 # Consenso interjueces (D7 · `handoff.md` §5.16 · M12.2)
 # --------------------------------------------------------------------------
@@ -591,6 +607,28 @@ AUDITORIA_TIPO_EDICION = "edicion"
 #: Valor de `auditoria.tipo` para la **creación** de un registro (§5.112): una fila,
 #: `campo` NULL, `detalle` con el nombre del registro creado.
 AUDITORIA_TIPO_CARGA = "carga"
+#: Un módulo se firmó (una fila; `detalle` nombra el módulo y el año, sin datos personales).
+AUDITORIA_TIPO_FIRMA = "firma"
+#: Se agregó una addenda a un módulo firmado (una fila por addenda).
+AUDITORIA_TIPO_ADDENDA = "addenda"
+#: Se creó o firmó un módulo **fuera de secuencia** (§5.95): se acepta, avisa y deja esta fila.
+AUDITORIA_TIPO_EXCEPCION = "excepcion"
+
+# --------------------------------------------------------------------------
+# Flujo clínico (M11.3-b · §5.96)
+# --------------------------------------------------------------------------
+#: La cadena **por año**: LB(año) → PA(año) → PB(año) → IC(año). El CI no es un
+#: eslabón (§5.94: una vez por HCE y no traba). Sin dependencia entre años.
+CADENA_FLUJO: tuple[str, ...] = (MODULO_HCE_LB, MODULO_HCE_PA, MODULO_HCE_PB, MODULO_HCE_IC)
+#: Estados derivados de un eslabón (nunca se almacenan).
+ESTADO_SIN_INICIAR = "sin_iniciar"
+ESTADO_EN_CURSO = "en_curso"
+ESTADO_FIRMADO = "firmado"
+#: Estados derivados del consentimiento por HCE.
+CI_PENDIENTE = "pendiente"
+CI_REGISTRADO = "registrado"
+#: `code` del aviso de `warnings[]` por escribir o firmar fuera de secuencia (§5.95).
+AVISO_FUERA_DE_SECUENCIA = "fuera_de_secuencia"
 
 #: N.º de HC institucional (`hce_diurna.hc_historico`, §5.109): entero desde 1000,
 #: hasta lo que cabe en un `integer` de Postgres.

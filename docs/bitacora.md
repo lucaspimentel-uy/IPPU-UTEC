@@ -20,6 +20,14 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-06 · Sesión M11.3-b — motor de flujo, consentimiento mínimo, firma = bloqueo e IDEA** (Lucas + Claude, rama `main`). Decisiones **§5.116** (a–e + lo fijado). Sin cambio de DDL: head sigue **`dcc838486407`**, un archivo en `versions/`.
+  - **Servicios nuevos:** `flujo.py` (estado derivado `sin_iniciar|en_curso|firmado`, `faltantes`, CI `pendiente|registrado`, `avisos_de_secuencia` genérico), `firma.py` (`firmar_modulo`, `agregar_addenda`, candado 409 para todo `FirmaMixin`), `idea.py` (totales, banda desde `banda_idea`, validaciones de firma, `idea_vigente`, `idea_de_anio`), `consentimiento.py`.
+  - **Endpoints:** `GET /hce/{id}/flujo` · `GET/POST/PATCH /hce/{id}/consentimiento` · `POST/GET /hce/{id}/idea` · `GET /hce/{id}/idea/vigente` · `GET/PATCH /idea/{id}` · `POST /idea/{id}/firmar` · `POST /idea/{id}/addendas`. Swagger con ejemplos, incluido `warnings` con `fuera_de_secuencia`.
+  - **§4.3 del IDEA (Documento Técnico, `1_documento-tecnico-utec-lidia.md:82`):** integridad = 12 dimensiones sin NS ni vacías · fecha de consenso · síntesis · objetivos → implementado (422 por campo). Recomendados (≥ 5 sesiones, ≈200 palabras) **no implementados**: «piden constancia» sin mecanismo definido.
+  - **Medido:** `pytest -q` → **600 passed, 0 skipped** (539 + 61; cada rechazo con su par que pasa; la falla simulada tras escribir en la firma deja IDEA sin firmar y sin fila); `alembic check` limpio; ambos `--check` → exit 0 (docs de «539» actualizados a 600).
+  - **Smoke `uvicorn` contra la base de desarrollo:** HCE → CI → IDEA de Martín (total 58, banda «Moderado») → firma (2 firmas, `manual_version`) → PATCH 409 → flujo `CI registrado · LB firmado`; filas borradas, conteos iguales a los de antes.
+  - Anotado, no hecho: el aviso `fuera_de_secuencia` no se puede ejercitar por API hasta M11.3-c (se prueba con filas armadas por los modelos); `puntuacion_*` sigue sin exponerse (§5.98).
+
 - **2026-10-06 · Sesión M11.3-a3 — convenciones transversales tras la revisión de M11.3-a/a2** (Lucas + Claude, rama `main`). Decisiones **§5.115**. Sin cambio de DDL: head sigue **`dcc838486407`**.
   - **(a) JSONB:** `JSONB(none_as_null=True)` en las 13 columnas nullable. Antes, `anamnesis: null` (alta o PATCH) se guardaba como JSON `null`: el test nuevo falló con `assert _anamnesis_es_sql_null(...) is True` → `False`.
   - **(b) Vacío en fecha/entero/FK opcionales → `None`:** `FechaOpcional`/`EnteroOpcional` en `schemas/comunes.py`; aplicado a `dx_fecha`, `grupo_id`, `hc_historico`, `fecha_nac` (PATCH).

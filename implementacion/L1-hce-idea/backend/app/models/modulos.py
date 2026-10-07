@@ -47,14 +47,15 @@ class FirmaMixin:
     `firmas` es una lista de `{profesional_id, rol, fecha}`: doble para LB/PA/PB/IC
     (dos técnicos), de la familia para el CI.
 
-    `excepcion` guarda la habilitación excepcional (`{motivo, texto,
-    profesional_id, fecha}`) — constancia de una escritura o firma fuera de
-    secuencia. **La secuencia sólo avisa** (`handoff.md` §5.95, B4): se acepta, la
-    respuesta lleva `warnings[]` y se escribe una fila de `auditoria` con
-    `tipo='excepcion'`; no hay 409 por secuencia. **El CI tampoco traba**
-    (§5.94, A3): su falta es el estado derivado «CI pendiente». Si este campo se
-    usa o alcanza con `auditoria` lo decide M11.3-b. Firma = bloqueo es otra regla
-    y sigue devolviendo 409 al editar un módulo firmado.
+    **`excepcion` NO SE USA** (decidido en M11.3-b, `handoff.md` §5.116 e). **La
+    secuencia sólo avisa** (§5.95, B4): una creación o firma fuera de secuencia se
+    acepta, la respuesta lleva `warnings[]` y el único rastro es **una fila de
+    `auditoria` con `tipo='excepcion'`** (al crear y al firmar, no en cada guardado);
+    no hay 409 por secuencia ni constancia en esta columna. Se deja en el esquema
+    —sin migración— por si IPPU pide más adelante una habilitación con motivo. **El
+    CI tampoco traba** (§5.94, A3): su falta es el estado derivado «CI pendiente», sin
+    aviso ni fila. Firma = bloqueo es otra regla y sigue devolviendo 409 al editar un
+    módulo firmado (`app/services/firma.py`).
     """
     firmado: Mapped[bool] = mapped_column(Boolean, default=False)
     firmas: Mapped[list | None] = mapped_column(JSONB(none_as_null=True))

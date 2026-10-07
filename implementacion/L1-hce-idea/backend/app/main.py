@@ -3,10 +3,12 @@
 Levantar con:  uvicorn app.main:app --reload
 Docs (Swagger): http://127.0.0.1:8000/docs
 
-Estado: **M11.3-a** — cimientos de la capa de servicios (errores, sobre de
-respuesta `{data, warnings}`, una transacción por request, auditoría de campo) y
-la primera rebanada vertical: persona + expediente (`/hce`) y, desde M11.3-a2, las
-listas de sólo lectura `/grupos` y `/profesionales`. Los routers se
+Estado: **M11.3-b** sobre los cimientos de M11.3-a (errores, sobre de respuesta
+`{data, warnings}`, una transacción por request, auditoría de campo): persona +
+expediente (`/hce`), las listas de sólo lectura `/grupos` y `/profesionales`
+(M11.3-a2) y, desde M11.3-b, el estado de flujo y el consentimiento
+(`/hce/{id}/flujo`, `/hce/{id}/consentimiento`) y el IDEA con su firma, addendas
+y «cuál rige» (`/hce/{id}/idea`, `/idea/{id}`). Los routers se
 entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
 se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
 backend/docs/esquema-datos-v2.md §3). El contrato de respuesta está en el
@@ -16,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import hce, referencias
+from app.routers import flujo, hce, idea, referencias
 from app.routers.errores import registrar_manejadores
 from app.schemas.comunes import RESPUESTA_500
 
@@ -39,6 +41,9 @@ app = FastAPI(
 
 registrar_manejadores(app)
 app.include_router(hce.router)
+app.include_router(flujo.router)
+app.include_router(idea.router_hce)
+app.include_router(idea.router)
 app.include_router(referencias.router_grupos)
 app.include_router(referencias.router_profesionales)
 
