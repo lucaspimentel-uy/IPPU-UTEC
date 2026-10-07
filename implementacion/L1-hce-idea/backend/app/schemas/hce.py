@@ -16,7 +16,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.comunes import EnteroOpcional, FechaOpcional
-from app.schemas.flujo import EstadoEslabon
+from app.schemas.flujo import EstadoCi, EstadoEslabon
 
 # ── Ejemplos para Swagger ────────────────────────────────────────────────────
 _PERSONA_EJEMPLO = {
@@ -42,6 +42,7 @@ EJEMPLO_RESUMEN_HCE = [
     {"id": 3, "hc_historico": 1001, "activo": True,
      "grupo": {"id": 2, "nombre": "Escolares", "anio": 2026},
      "persona": {"id": 7, "nombre": "Martín", "apellido": "Rodríguez", "ci": "5.789.123-4", "fecha_nac": "2016-04-12"},
+     "ci": "registrado",
      "flujo": [
          {"modulo": "HCE-LB", "estado": "firmado"}, {"modulo": "HCE-PA", "estado": "en_curso"},
          {"modulo": "HCE-PB", "estado": "sin_iniciar"}, {"modulo": "HCE-IC", "estado": "sin_iniciar"},
@@ -205,6 +206,9 @@ class HceResumen(BaseModel):
     activo: bool
     grupo: GrupoResumen | None
     persona: PersonaResumen
+    ci: EstadoCi = Field(
+        description="Estado del consentimiento (HCE-CI), el mismo valor y derivación que `ci` de `GET /hce/{id}/flujo`: `pendiente` · `registrado`.",
+    )
     flujo: list[EstadoEslabon] = Field(
         description=(
             "Estado de los cuatro módulos del **año en curso**, en el orden de la cadena y con la misma forma "

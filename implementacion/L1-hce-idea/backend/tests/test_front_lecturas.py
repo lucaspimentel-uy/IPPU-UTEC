@@ -121,24 +121,42 @@ def _consultas(db_api_engine_conexion, llamada) -> int:
     return contador["n"]
 
 
-def test_la_lista_hace_la_misma_cantidad_de_consultas_con_2_o_con_12_filas(client, conexion_api, grupos, equipo):
-    """El `flujo` se arma en bloque: las consultas no crecen con las filas (nada de un request por fila)."""
+#: Sentencias de un `GET /hce` (B-front-fix), medidas en la conexión de test: SAVEPOINT + usuario del token +
+#: total + página (con persona y grupo) + 3 de flujo (IDEA, protocolos, informes) + 1 de CI + ROLLBACK TO
+#: SAVEPOINT. El número no depende de las filas ni de los grupos: si alguien agrega una consulta por fila,
+#: o una más a la lista, este test lo dice.
+CONSULTAS_GET_HCE = 9
+
+
+def test_la_lista_hace_exactamente_las_mismas_consultas_con_pocas_o_muchas_filas_en_varios_grupos(
+    client, conexion_api, grupos, equipo,
+):
+    """El `flujo` y el `ci` se arman en bloque: las consultas no crecen con las filas (nada de un request por fila)."""
+    propio, ajeno = grupos
     anio = anio_actual()
-    for i in range(2):
-        hce = _alta(client, grupos[0].id, nombre=f"N{i}")
+    for i, grupo in enumerate((propio, ajeno)):
+        hce = _alta(client, grupo.id, nombre=f"N{i}")
         _idea(client, hce, equipo, anio, firmar=True)
     pocas = _consultas(conexion_api, lambda: client.get("/hce"))
 
     for i in range(10):
-        hce = _alta(client, grupos[0].id, nombre=f"M{i}")
+        hce = _alta(client, (propio, ajeno)[i % 2].id, nombre=f"M{i}")
         _idea(client, hce, equipo, anio, firmar=bool(i % 2))
         _protocolo_en_curso(client, hce, anio)
+        if i % 3 == 0:
+            assert client.post(f"/hce/{hce}/consentimiento", json={"firmante": "Marta", "fecha": f"{anio}-03-02"}).status_code == 201
     muchas = _consultas(conexion_api, lambda: client.get("/hce"))
 
     assert len(client.get("/hce").json()) == 12
-    assert pocas == muchas
-    # y es un número fijo y chico: autenticación + total + página + 3 de flujo (+ la transacción)
-    assert muchas <= 12, muchas
+    assert pocas == muchas == CONSULTAS_GET_HCE
+
+
+def test_la_lista_trae_el_ci_con_el_vocabulario_del_flujo(client, grupos):
+    sin, con = _alta(client, grupos[0].id, nombre="Sin"), _alta(client, grupos[0].id, nombre="Con")
+    assert client.post(f"/hce/{con}/consentimiento", json={"firmante": "Marta", "fecha": "2026-03-02"}).status_code == 201
+    filas = {f["id"]: f for f in client.get("/hce").json()}
+    assert (filas[sin]["ci"], filas[con]["ci"]) == ("pendiente", "registrado")
+    assert {f["ci"] for f in filas.values()} <= set(client.get("/openapi.json").json()["components"]["schemas"]["FlujoDetalle"]["properties"]["ci"]["enum"])
 
 
 def test_el_tecnico_ve_en_la_lista_solo_sus_filas_con_su_flujo_y_el_admin_todas(client, grupos, equipo, tecnico, token_de):
@@ -252,3 +270,15 @@ def test_los_origenes_se_configuran_por_cors_origins(monkeypatch):
     assert Settings().cors_origins == ["http://demo.local:8080"]
     monkeypatch.delenv("CORS_ORIGINS")
     assert "http://localhost:5500" in Settings().cors_origins
+
+
+@pytest.mark.parametrize("metodo", ["POST", "PATCH"])
+def test_cors_preflight_de_escritura_con_content_type_json_desde_la_demo(client, metodo):
+    pedido = {"Access-Control-Request-Method": metodo, "Access-Control-Request-Headers": "content-type,authorization"}
+    ok = client.options("/hce" if metodo == "POST" else "/hce/1", headers={"Origin": "http://localhost:5500", **pedido})
+    assert ok.status_code == 200
+    assert ok.headers["access-control-allow-origin"] == "http://localhost:5500"
+    assert metodo in ok.headers["access-control-allow-methods"] or ok.headers["access-control-allow-methods"] == "*"
+    assert "content-type" in ok.headers["access-control-allow-headers"].lower()
+    ajeno = client.options("/hce", headers={"Origin": "http://localhost:9999", **pedido})
+    assert ajeno.status_code == 400

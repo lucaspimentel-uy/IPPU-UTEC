@@ -34,7 +34,7 @@ _INTERPRETACION = {
 }
 EJEMPLO_PROTOCOLO = {
     "id": 21, "hce_id": 3, "tipo": "B", "anio": 2026, "modulo": "HCE-PB", "items": _ITEMS_PB,
-    "fecha": "2026-12-11", "semanas": 17,
+    "fecha": "2026-11-06", "semanas": 17,
     "sint_tec1": "Generalización parcial de la comunicación al hogar…",
     "sint_tec2": "Participa de rutinas grupales completas…",
     "otros": "Psicomotricidad: mejora en regulación ante estímulos sonoros.",
@@ -44,8 +44,8 @@ EJEMPLO_PROTOCOLO = {
     "deltas": _DELTAS_MARTIN, "interpretacion": _INTERPRETACION, "alertas": [],
     "estado": "firmado", "firmado": True,
     "firmas": [
-        {"profesional_id": 1, "rol": "Psicología", "fecha": "2026-12-11"},
-        {"profesional_id": 2, "rol": "Psicopedagogía", "fecha": "2026-12-11"},
+        {"profesional_id": 1, "rol": "Psicología", "fecha": "2026-11-06"},
+        {"profesional_id": 2, "rol": "Psicopedagogía", "fecha": "2026-11-06"},
     ],
     "addendas": [],
 }

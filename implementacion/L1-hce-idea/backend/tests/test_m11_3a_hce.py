@@ -584,10 +584,10 @@ def test_un_filtro_vacio_se_ignora_y_sin_filtros_devuelve_todos_ordenados(client
 
 def test_la_lista_trae_el_resumen_sin_sobre(client, legajos):
     fila = client.get("/hce", params={"ci": "5789"}).json()[0]
-    assert set(fila) == {"id", "hc_historico", "activo", "grupo", "persona", "flujo"}  # B-front: + flujo
+    assert set(fila) == {"id", "hc_historico", "activo", "grupo", "persona", "ci", "flujo"}  # B-front: + ci, flujo
     assert fila["persona"] == {
         "id": fila["persona"]["id"], "nombre": "Martín", "apellido": "Núñez", "ci": "57891234",
-        "fecha_nac": fila["persona"]["fecha_nac"],  # B-front: + fecha_nac (su valor lo prueba test_front_lecturas)
+        "fecha_nac": "2016-04-12",  # B-front: + fecha_nac (la de `_persona()`)
     }
     assert fila["grupo"]["nombre"] == "Escolares"
 

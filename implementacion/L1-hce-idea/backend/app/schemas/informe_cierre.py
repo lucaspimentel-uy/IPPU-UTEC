@@ -16,16 +16,16 @@ _SINT_ESCALA = {
     "esc_4": "Progreso leve (Δ +5 sobre una base muy descendida)…",
 }
 _FIRMAS = [
-    {"profesional_id": 1, "rol": "Psicología", "fecha": "2026-12-19"},
-    {"profesional_id": 2, "rol": "Psicopedagogía", "fecha": "2026-12-19"},
+    {"profesional_id": 1, "rol": "Psicología", "fecha": "2026-11-13"},
+    {"profesional_id": 2, "rol": "Psicopedagogía", "fecha": "2026-11-13"},
 ]
 EJEMPLO_IC = {
-    "id": 31, "hce_id": 3, "anio": 2026, "fecha": "2026-12-19", "sint_escala": _SINT_ESCALA,
+    "id": 31, "hce_id": 3, "anio": 2026, "fecha": "2026-11-13", "sint_escala": _SINT_ESCALA,
     "val_tec1": "Año de progreso clínicamente significativo…",
     "val_tec2": "La incorporación de apoyos visuales sistemáticos…",
     "recomendaciones": "1) Profundizar el uso funcional del sistema aumentativo…",
     "orientaciones": "Sostener la agenda visual en el hogar…",
-    "recibi": {"firmante": "Marta R. (madre)", "fecha": "2026-12-19"},
+    "recibi": {"firmante": "Marta R. (madre)", "fecha": "2026-11-13"},
     "estado": "firmado", "firmado": True, "firmas": _FIRMAS, "addendas": [],
 }
 EJEMPLO_RESULTADO_IC = {"data": EJEMPLO_IC, "warnings": []}
@@ -39,7 +39,7 @@ EJEMPLO_DOCUMENTO = {
     "idea": EJEMPLO_IDEA,
     "protocolos": {
         "a": {**_RESUMEN, "id": 20, "tipo": "A", "total": 60, "esc_1": 16, "esc_2": 15, "esc_3": 16, "esc_4": 13},
-        "b": {**_RESUMEN, "id": 21, "tipo": "B", "fecha": "2026-12-11", "total": 79, "esc_1": 20, "esc_2": 21, "esc_3": 20, "esc_4": 18},
+        "b": {**_RESUMEN, "id": 21, "tipo": "B", "fecha": "2026-11-06", "total": 79, "esc_1": 20, "esc_2": 21, "esc_3": 20, "esc_4": 18},
         "deltas": {"total": 19, "esc_1": 4, "esc_2": 6, "esc_3": 4, "esc_4": 5},
         "interpretacion": {"total": {"etiqueta": "Progreso muy significativo", "accion": "Documentar y analizar…", "signo": "positivo"}},
         "alertas": [],
@@ -68,7 +68,7 @@ class InformeCrear(_InformeCampos):
     """Alta del IC de un año. `anio` obligatorio; uno por `(expediente, anio)` (409)."""
 
     model_config = ConfigDict(json_schema_extra={"examples": [{
-        "anio": 2026, "fecha": "2026-12-19", "sint_escala": _SINT_ESCALA,
+        "anio": 2026, "fecha": "2026-11-13", "sint_escala": _SINT_ESCALA,
         "val_tec1": "Año de progreso clínicamente significativo…",
         "val_tec2": "La incorporación de apoyos visuales sistemáticos…",
         "recomendaciones": "1) Profundizar el uso funcional…", "orientaciones": "Sostener la agenda visual…",
@@ -94,7 +94,7 @@ class InformeFirmar(BaseModel):
 class RecibiCrear(BaseModel):
     """Recibí de la familia: se registra **una vez**, sobre el IC firmado."""
 
-    model_config = ConfigDict(json_schema_extra={"examples": [{"firmante": "Marta R. (madre)", "fecha": "2026-12-19"}]})
+    model_config = ConfigDict(json_schema_extra={"examples": [{"firmante": "Marta R. (madre)", "fecha": "2026-11-13"}]})
 
     firmante: str | None = Field(None, description="Obligatorio, no en blanco.")
     fecha: FechaOpcional = Field(None, description="Obligatoria.")

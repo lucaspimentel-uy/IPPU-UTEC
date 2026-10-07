@@ -23,6 +23,10 @@ EJEMPLO_AVISO_SECUENCIA = [{
 }]
 
 
+#: Estado del consentimiento: lo usan `FlujoDetalle.ci` y `HceResumen.ci` (`GET /hce`), el mismo vocabulario.
+EstadoCi = Literal["pendiente", "registrado"]
+
+
 class EstadoEslabon(BaseModel):
     """`modulo` + `estado`: lo que la lista de expedientes (`GET /hce`, campo `flujo`) trae por fila."""
 
@@ -42,7 +46,7 @@ class EslabonFlujo(EstadoEslabon):
 class FlujoDetalle(BaseModel):
     hce_id: int
     anio: int
-    ci: Literal["pendiente", "registrado"] = Field(
+    ci: EstadoCi = Field(
         description="Estado del consentimiento (una vez por HCE). `pendiente` no traba nada ni produce aviso (§5.94)."
     )
     modulos: list[EslabonFlujo]

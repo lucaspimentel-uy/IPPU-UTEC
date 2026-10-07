@@ -109,6 +109,15 @@ def estados_de_flujo(db: Session, hce_ids: list[int], anio: int | None = None) -
     }
 
 
+def estados_ci(db: Session, hce_ids: list[int]) -> dict[int, str]:
+    """`{hce_id: 'pendiente' | 'registrado'}` — `estado_ci` **en bloque**: **una** consulta
+    (`consentimiento WHERE hce_id IN (…)`) sin importar cuántos ids lleguen."""
+    registrados = (
+        set(db.scalars(select(Consentimiento.hce_id).where(Consentimiento.hce_id.in_(hce_ids)))) if hce_ids else set()
+    )
+    return {hce_id: CI_REGISTRADO if hce_id in registrados else CI_PENDIENTE for hce_id in hce_ids}
+
+
 def estado_ci(db: Session, hce_id: int) -> str:
     """`registrado` si existe la fila de `consentimiento` del expediente; si no, `pendiente`.
 

@@ -10,3 +10,6 @@ venv/
 
 # Archivos subidos (Fase 6: storage real)
 uploads/
+
+# Exportación local del esquema OpenAPI (se usa para planificar; no se versiona)
+openapi.json

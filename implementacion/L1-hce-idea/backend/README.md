@@ -73,7 +73,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **811 passed, 0 skipped**.
+Una corrida válida de hoy es **815 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 

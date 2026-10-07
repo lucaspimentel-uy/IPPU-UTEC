@@ -80,7 +80,7 @@ IPPU/
   `tests/conftest.py` **aborta con exit 1** si el contenedor no está levantado, si la base de desarrollo
   está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba en
   silencio y devolvía **exit 0** con la mitad de los tests sin correr. Una corrida válida es
-  **811 passed, 0 skipped**.
+  **815 passed, 0 skipped**.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 - **Ronda M12 — absorción del Prototipo v4 (ago-2026), CERRADA el 2026-09-16.** IPPU había publicado su
   **Prototipo v4**, que se intercaló entre M11.2 y M11.3 porque tocaba la misma capa (modelos, migración,

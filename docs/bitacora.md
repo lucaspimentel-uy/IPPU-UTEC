@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión B-front-fix — cierre de la revisión de B-front** (Lucas + Claude, rama `b-front`). Decisión **§5.121 e**; sin cambio de DDL (head `dcc838486407`).
+  - **Media — `ci` en la lista:** `HceResumen.ci` con el mismo `Literal` (`EstadoCi`) y la misma derivación que `FlujoDetalle.ci`; una consulta en bloque (`services/flujo.estados_ci`).
+  - **Tests:** consistencia lista vs `/hce/{id}/flujo` (`flujo` y `ci`) sobre los 8 expedientes del seed, con baja (Martín con PB e IC firmados, Bruno sin CI); conteo **exacto** de sentencias de `GET /hce` (9 = SAVEPOINT + usuario + total + página + 3 de flujo + 1 de CI + ROLLBACK TO SAVEPOINT), igual con 2 y con 12 filas en 2 grupos; preflight CORS de POST y PATCH con `Content-Type: application/json`; la aserción de `fecha_nac` de `test_m11_3a_hce.py` ahora compara un valor real (`2016-04-12`).
+  - **Menores:** ejemplos de Swagger de `schemas/protocolo.py` e `informe_cierre.py` con las fechas del seed (2026-11-06 / 2026-11-13); `openapi.json` en `backend/.gitignore`.
+  - **Medido:** `.venv` `pytest -q` → **815 passed, 0 skipped** (811 + 4); `alembic heads` = `dcc838486407`, `check` sin cambios; ambos `--check` → exit 0.
+
 - **2026-10-07 · Sesión B-front — lecturas para la demo conectada** (Lucas + Claude, sobre `main` 0377d3f). Decisiones **§5.121 a–d**; sin cambio de DDL (head `dcc838486407`).
   - **Lista `GET /hce`:** `persona.fecha_nac` + `flujo` (`[{modulo, estado}]` del año en curso, forma de `modulos[]`), armado en bloque con 3 consultas fijas (`services/flujo.estados_de_flujo`). El test mide que 2 y 12 filas hacen las mismas 8 consultas.
   - **Técnicos:** `GET /grupos` y `HceDetalle.grupo` con `tecnico1`/`tecnico2` `{id, nombre, rol}`; `rol` = rol en el grupo, no `admin`/`tecnico`. `joinedload` en `listar_grupos`.

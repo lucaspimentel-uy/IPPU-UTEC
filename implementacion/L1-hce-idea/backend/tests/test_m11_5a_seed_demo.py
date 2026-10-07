@@ -281,3 +281,17 @@ def test_cli_con_grupos_crea_los_usuarios_y_carga_la_demo(cliente_sin_usuarios, 
     assert _profesionales(sesiones) == 3
     assert "Expedientes: 8" in salida.out
     assert PASSWORD_TEST not in salida.out + salida.err
+
+
+# ── B-front-fix: la lista dice lo mismo que el endpoint de flujo, para TODO lo sembrado ──────────
+def test_la_lista_coincide_con_el_flujo_de_cada_expediente_sembrado(client, demo):
+    filas = client.get("/hce", params={"incluir_inactivos": True, "limit": 200}).json()
+    assert {f["id"] for f in filas} == set(demo.expedientes.values())  # los 8, con Tomás (baja)
+    for f in filas:
+        flujo = client.get(f"/hce/{f['id']}/flujo").json()
+        assert f["flujo"] == [{"modulo": m["modulo"], "estado": m["estado"]} for m in flujo["modulos"]], f["id"]
+        assert f["ci"] == flujo["ci"], f["id"]
+    por_demo = {d: next(f for f in filas if f["id"] == i) for d, i in demo.expedientes.items()}
+    # Martín (102): PB e IC firmados; Bruno (107): sin CI.
+    assert [m["estado"] for m in por_demo[102]["flujo"]] == ["firmado"] * 4 and por_demo[102]["ci"] == "registrado"
+    assert por_demo[107]["ci"] == "pendiente" and {m["estado"] for m in por_demo[107]["flujo"]} == {"sin_iniciar"}

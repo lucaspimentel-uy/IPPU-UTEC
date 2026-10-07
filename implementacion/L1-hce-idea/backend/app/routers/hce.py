@@ -133,19 +133,22 @@ def buscar(
     expedientes de sus grupos (§5.101).
 
     Cada fila trae la `fecha_nac` de la persona y `flujo`: el estado de los módulos del **año en
-    curso** (`modulo`, `estado`), como `modulos[]` de `GET /hce/{id}/flujo`.
+    curso** (`modulo`, `estado`), como `modulos[]` de `GET /hce/{id}/flujo`, y `ci`, el estado del
+    consentimiento (`pendiente` · `registrado`) tal como lo devuelve ese mismo endpoint.
     """
     filas, total = servicio.buscar_hce(
         db, ci=ci, numero=numero, grupo=grupo, anio=anio, nombre=nombre,
         incluir_inactivos=incluir_inactivos, usuario=usuario, limit=limit, offset=offset,
     )
     response.headers[CABECERA_TOTAL] = str(total)
-    flujo = servicio_flujo.estados_de_flujo(db, [h.id for h in filas])  # en bloque: 3 consultas por página
+    ids = [h.id for h in filas]
+    flujo = servicio_flujo.estados_de_flujo(db, ids)  # en bloque: 3 consultas por página
+    ci_por_id = servicio_flujo.estados_ci(db, ids)  # y una más para el consentimiento
     return [
         HceResumen(
             id=h.id, hc_historico=h.hc_historico, activo=h.activo,
             grupo=GrupoResumen.model_validate(h.grupo) if h.grupo is not None else None,
-            persona=PersonaResumen.model_validate(h.persona), flujo=flujo[h.id],
+            persona=PersonaResumen.model_validate(h.persona), ci=ci_por_id[h.id], flujo=flujo[h.id],
         )
         for h in filas
     ]
