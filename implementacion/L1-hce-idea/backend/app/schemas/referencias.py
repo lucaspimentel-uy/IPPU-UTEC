@@ -10,9 +10,13 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from app.schemas.comunes import EnteroOpcional
-from app.schemas.hce import GrupoResumen
+from app.schemas.hce import GrupoConTecnicos, GrupoResumen
 
-EJEMPLO_GRUPOS = [{"id": 2, "nombre": "Escolares", "anio": 2026}]
+EJEMPLO_GRUPOS = [{
+    "id": 2, "nombre": "Escolares", "anio": 2026,
+    "tecnico1": {"id": 2, "nombre": "Dr. González", "rol": "Psicólogo/a"},
+    "tecnico2": {"id": 3, "nombre": "Mtra. Torres", "rol": "Maestro/a"},
+}]
 EJEMPLO_PROFESIONALES = [{"id": 1, "nombre": "Ana Pérez", "especialidad": "Psicología", "rol": "tecnico", "activo": True}]
 
 
@@ -63,6 +67,6 @@ EJEMPLO_RESULTADO_GRUPO = {"data": {
 
 
 __all__ = [
-    "GrupoResumen", "GrupoDetalle", "GrupoTecnicosActualizar", "ProfesionalResumen",
+    "GrupoResumen", "GrupoConTecnicos", "GrupoDetalle", "GrupoTecnicosActualizar", "ProfesionalResumen",
     "EJEMPLO_GRUPOS", "EJEMPLO_PROFESIONALES", "EJEMPLO_RESULTADO_GRUPO",
 ]

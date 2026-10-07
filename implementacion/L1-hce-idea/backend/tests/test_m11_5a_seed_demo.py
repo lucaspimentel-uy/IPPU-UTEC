@@ -75,7 +75,7 @@ def test_12a_protocolos_y_delta_de_martin(client, demo):
 def test_12a_informe_de_cierre_firmado_con_recibi_y_documento(client, demo):
     ic = client.get(f"/informe-cierre/{demo.ids['102.ic']}").json()
     assert ic["firmado"] is True
-    assert ic["recibi"] == {"firmante": "Pablo G. (padre)", "fecha": "2026-12-19"}
+    assert ic["recibi"] == {"firmante": "Pablo G. (padre)", "fecha": "2026-11-13"}
 
     doc = client.get(f"/informe-cierre/{demo.ids['102.ic']}/documento").json()
     assert doc["expediente"]["nombre"] == "Martín" and doc["expediente"]["grupo"]["nombre"] == "Escolares"

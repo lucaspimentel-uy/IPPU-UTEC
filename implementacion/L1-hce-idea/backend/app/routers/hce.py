@@ -12,9 +12,11 @@ from app.models.identidad import Profesional
 from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.hce import (
-    EJEMPLO_RESULTADO_HCE, EJEMPLO_RESUMEN_HCE, HceActualizar, HceCrear, HceDetalle, HceResumen,
+    EJEMPLO_RESULTADO_HCE, EJEMPLO_RESUMEN_HCE, GrupoResumen, HceActualizar, HceCrear, HceDetalle, HceResumen,
+    PersonaResumen,
 )
 from app.services import auth
+from app.services import flujo as servicio_flujo
 from app.services import hce as servicio
 from app.services.errores import ConflictError, DuplicadoError
 
@@ -129,13 +131,24 @@ def buscar(
     nombre; el total de todas las páginas va en la cabecera **`X-Total-Count`**. Los
     dados de baja no aparecen salvo `incluir_inactivos=true`. Un `tecnico` sólo ve los
     expedientes de sus grupos (§5.101).
+
+    Cada fila trae la `fecha_nac` de la persona y `flujo`: el estado de los módulos del **año en
+    curso** (`modulo`, `estado`), como `modulos[]` de `GET /hce/{id}/flujo`.
     """
     filas, total = servicio.buscar_hce(
         db, ci=ci, numero=numero, grupo=grupo, anio=anio, nombre=nombre,
         incluir_inactivos=incluir_inactivos, usuario=usuario, limit=limit, offset=offset,
     )
     response.headers[CABECERA_TOTAL] = str(total)
-    return [HceResumen.model_validate(h) for h in filas]
+    flujo = servicio_flujo.estados_de_flujo(db, [h.id for h in filas])  # en bloque: 3 consultas por página
+    return [
+        HceResumen(
+            id=h.id, hc_historico=h.hc_historico, activo=h.activo,
+            grupo=GrupoResumen.model_validate(h.grupo) if h.grupo is not None else None,
+            persona=PersonaResumen.model_validate(h.persona), flujo=flujo[h.id],
+        )
+        for h in filas
+    ]
 
 
 @router.get(

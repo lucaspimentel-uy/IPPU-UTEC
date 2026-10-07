@@ -20,6 +20,13 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión B-front — lecturas para la demo conectada** (Lucas + Claude, sobre `main` 0377d3f). Decisiones **§5.121 a–d**; sin cambio de DDL (head `dcc838486407`).
+  - **Lista `GET /hce`:** `persona.fecha_nac` + `flujo` (`[{modulo, estado}]` del año en curso, forma de `modulos[]`), armado en bloque con 3 consultas fijas (`services/flujo.estados_de_flujo`). El test mide que 2 y 12 filas hacen las mismas 8 consultas.
+  - **Técnicos:** `GET /grupos` y `HceDetalle.grupo` con `tecnico1`/`tecnico2` `{id, nombre, rol}`; `rol` = rol en el grupo, no `admin`/`tecnico`. `joinedload` en `listar_grupos`.
+  - **Seed:** PB de Martín 2026-11-06, IC y recibí 2026-11-13; números intactos. Se tocó **una** aserción del test §12-A (la fecha del recibí). Nota en `backend/README.md`: recargar después del 2026-11-13.
+  - **CORS:** ya era configurable con 5500 por omisión; sólo tests nuevos.
+  - **Medido:** `.venv` `pytest -q` → **811 passed, 0 skipped** (794 + 17 en `test_front_lecturas.py`; 3 tests viejos con el conjunto de claves ampliado); `alembic heads`/`check` sin cambios; `verificar_estado.py --check` y `generar_catalogos_backend.py --check` → exit 0. ⚠️ `pytest` con el Python global falla en la colección (un paquete `tests` de site-packages pisa al del repo): usar el del `.venv`.
+
 - **2026-10-07 · Sesión M11.5-a-fix — cierre de la revisión de M11.5-a** (Lucas + Claude, sesión en la nube, rama `claude/epic-keller-z3bz8n` sobre `main` 6e40ed0). Sin decisión nueva (aplica §5.120); sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
   - **Media — orden de la CLI:** `seed_demo.main()` delega en `ejecutar(cliente, sesiones, …)`; los grupos de `UBICACION_DEMO` se miran en la base **antes** de `preparar_usuarios`. Sin `seed_catalogos` → exit 1, «correr primero `python -m app.seed_catalogos`», 0 profesionales escritos (antes: 3 usuarios y «No se escribió nada»). Test + par (con catálogos → exit 0, 3 usuarios, 8 expedientes); con el orden viejo el test falla (3 ≠ 0).
   - **Bajas:** par agregado a los 3 rechazos de `test_m11_5a_grupos.py`; el test de asignación lee técnicos y roles de la fila `grupo` (`GET /grupos` no los expone) y cada técnico, con su token, alcanza un expediente de cada grupo; `README.md` sin el `UPDATE grupo` a mano y con el orden de carga (`IPPU_DEMO_PASSWORD`: sin ella, los técnicos comparten la del admin — sólo desarrollo).

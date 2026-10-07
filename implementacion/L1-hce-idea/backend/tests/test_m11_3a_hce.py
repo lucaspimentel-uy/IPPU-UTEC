@@ -142,7 +142,9 @@ def test_un_grupo_inexistente_es_422_y_uno_existente_es_201(client, db_api, crea
     assert db_api.scalar(select(func.count()).select_from(Persona)) == 0, "un alta rechazada no deja nada"
     bueno = _alta(client, grupo_id=grupo.id)
     assert bueno.status_code == 201
-    assert bueno.json()["data"]["grupo"] == {"id": grupo.id, "nombre": "Escolares", "anio": grupo.anio}
+    assert bueno.json()["data"]["grupo"] == {  # B-front: el grupo del detalle trae sus técnicos (null si no hay)
+        "id": grupo.id, "nombre": "Escolares", "anio": grupo.anio, "tecnico1": None, "tecnico2": None,
+    }
 
 
 @pytest.mark.parametrize("campo", ["nombre", "apellido", "ci"])
@@ -582,9 +584,10 @@ def test_un_filtro_vacio_se_ignora_y_sin_filtros_devuelve_todos_ordenados(client
 
 def test_la_lista_trae_el_resumen_sin_sobre(client, legajos):
     fila = client.get("/hce", params={"ci": "5789"}).json()[0]
-    assert set(fila) == {"id", "hc_historico", "activo", "grupo", "persona"}
+    assert set(fila) == {"id", "hc_historico", "activo", "grupo", "persona", "flujo"}  # B-front: + flujo
     assert fila["persona"] == {
         "id": fila["persona"]["id"], "nombre": "Martín", "apellido": "Núñez", "ci": "57891234",
+        "fecha_nac": fila["persona"]["fecha_nac"],  # B-front: + fecha_nac (su valor lo prueba test_front_lecturas)
     }
     assert fila["grupo"]["nombre"] == "Escolares"
 

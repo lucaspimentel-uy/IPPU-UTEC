@@ -164,14 +164,14 @@ MARTIN_PA = {
 }
 MARTIN_PB = {
     "items": [4, 3, 4, 3, 3, 3, 4, 4, 3, 4, 3, 3, 3, 3, 3, 3, 4, 4, 3, 4, 3, 3, 3, 2], "obs": {},
-    "fecha": "2026-12-11", "semanas": 17,
+    "fecha": "2026-11-06", "semanas": 17,
     "sint_tec1": "Generalización parcial de la comunicación al hogar. Atención conjunta consistente en sesión.",
     "sint_tec2": "Participa de rutinas grupales completas. Ajustes: apoyos visuales en todas las consignas.",
     "otros": "Psicomotricidad: mejora en regulación ante estímulos sonoros.",
     "ajustes": "Agenda visual individual (agosto); trabajo de a dos con un par tolerado (octubre).",
 }
 MARTIN_IC = {
-    "fecha": "2026-12-19",
+    "fecha": "2026-11-13",
     "sint_escala": {
         "esc_1": "Progreso moderado y sostenido en la relación social (Δ +4). La atención conjunta pasó de emergente a consistente en contextos estructurados. La interacción espontánea con pares sigue siendo el principal desafío para el próximo año.",
         "esc_2": "Área de mayor progreso del año (Δ +6). El sistema aumentativo de comunicación se consolidó y comienza a generalizarse al hogar (ítems 7 y 10). Se recomienda ampliar su alcance funcional el próximo año.",
@@ -183,7 +183,7 @@ MARTIN_IC = {
     "recomendaciones": "1) Profundizar el uso funcional del sistema aumentativo de comunicación (E2). 2) Ampliar las oportunidades de juego compartido con pares (E4). 3) Retiro gradual de apoyos en rutinas consolidadas (E3). 4) Mantener la coordinación con la escuela y el acompañante.",
     "orientaciones": "Sostener la agenda visual en el hogar. Ofrecer oportunidades de pedido con el sistema de comunicación que utiliza, en situaciones cotidianas (merienda, juego). Anticipar verbal y visualmente los cambios de rutina del fin de semana.",
 }
-MARTIN_RECIBI_FECHA = "2026-12-19"
+MARTIN_RECIBI_FECHA = "2026-11-13"
 
 SOFIA_LB = {
     "dim": [4, 2, 4, 2, 2, 2, 4, 4, 2, 2, 1, 2], "obs": {}, "fecha_consenso": "2026-03-20", "sesiones": 5,

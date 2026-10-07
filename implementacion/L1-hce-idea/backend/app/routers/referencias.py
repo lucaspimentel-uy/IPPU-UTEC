@@ -14,7 +14,7 @@ from app.routers.dependencias import sesion_lectura, sesion_transaccional, usuar
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.referencias import (
-    EJEMPLO_GRUPOS, EJEMPLO_PROFESIONALES, EJEMPLO_RESULTADO_GRUPO, GrupoDetalle, GrupoResumen,
+    EJEMPLO_GRUPOS, EJEMPLO_PROFESIONALES, EJEMPLO_RESULTADO_GRUPO, GrupoConTecnicos, GrupoDetalle,
     GrupoTecnicosActualizar, ProfesionalResumen,
 )
 from app.services import auth
@@ -29,15 +29,17 @@ _ERROR_422 = {422: {"model": RespuestaError, "description": "Parámetro inválid
 
 
 @router_grupos.get(
-    "", response_model=list[GrupoResumen], summary="Grupos de un año",
+    "", response_model=list[GrupoConTecnicos], summary="Grupos de un año",
     responses={**_ejemplo(200, EJEMPLO_GRUPOS), **_ERROR_422},
 )
 def listar_grupos(
     db: Annotated[Session, Depends(sesion_lectura)],
     anio: Annotated[int | None, Query(ge=1, le=32767, description="Año de los grupos; por omisión el año en curso.")] = None,
 ):
-    """Los grupos del `anio` (por omisión el en curso), ordenados por nombre. Lista vacía si no hay."""
-    return [GrupoResumen.model_validate(g) for g in servicio.listar_grupos(db, anio)]
+    """Los grupos del `anio` (por omisión el en curso), ordenados por nombre, cada uno con `tecnico1` y
+    `tecnico2` (`{id, nombre, rol}`, `null` si el puesto está sin asignar; `rol` es el rol **en el grupo**).
+    Lista vacía si no hay."""
+    return [GrupoConTecnicos.model_validate(g) for g in servicio.listar_grupos(db, anio)]
 
 
 @router_profesionales.get(

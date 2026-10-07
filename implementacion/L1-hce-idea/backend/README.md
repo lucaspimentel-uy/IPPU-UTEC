@@ -73,7 +73,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **794 passed, 0 skipped**.
+Una corrida válida de hoy es **811 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -96,6 +96,8 @@ misma contraseña que el admin** — aceptable sólo en desarrollo; definirla pa
 Sale con código 1 **sin escribir nada** si la demo ya está cargada o si faltan los grupos (paso 2
 salteado: el mensaje pide correr `python -m app.seed_catalogos`). Detalle y límites: docstring de
 `app/seed_demo.py` y `handoff.md` §5.120.
+
+> **Base de la presentación:** volver a correr el seed después del 2026-11-13, para que las fechas de firma (las estampa el servidor con la fecha de la corrida) no queden antes de las de evaluación.
 
 ## API (M11.3-a)
 

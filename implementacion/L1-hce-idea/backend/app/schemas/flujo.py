@@ -23,12 +23,17 @@ EJEMPLO_AVISO_SECUENCIA = [{
 }]
 
 
-class EslabonFlujo(BaseModel):
+class EstadoEslabon(BaseModel):
+    """`modulo` + `estado`: lo que la lista de expedientes (`GET /hce`, campo `flujo`) trae por fila."""
+
     modulo: str = Field(description="`HCE-LB` · `HCE-PA` · `HCE-PB` · `HCE-IC`, en el orden de la cadena.")
-    id: int | None = Field(description="Id de la fila del módulo; `null` si todavía no existe.")
     estado: Literal["sin_iniciar", "en_curso", "firmado"] = Field(
         description="Derivado, nunca almacenado: sin fila · fila sin firmar · fila firmada."
     )
+
+
+class EslabonFlujo(EstadoEslabon):
+    id: int | None = Field(description="Id de la fila del módulo; `null` si todavía no existe.")
     faltantes: list[str] = Field(
         description="Eslabones **anteriores** del mismo año que no están firmados (los ve la pantalla; no bloquean)."
     )

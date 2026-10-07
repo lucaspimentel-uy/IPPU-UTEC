@@ -72,6 +72,43 @@ def faltantes(db: Session, hce_id: int, anio: int, modulo: str) -> list[str]:
     return [m for m in previos if estado_modulo(db, hce_id, anio, m) != ESTADO_FIRMADO]
 
 
+def estados_de_flujo(db: Session, hce_ids: list[int], anio: int | None = None) -> dict[int, list[dict[str, str]]]:
+    """`{hce_id: [{"modulo", "estado"}, …]}` de los cuatro eslabones del `anio` (por omisión, el en curso).
+
+    Es `flujo_del_anio` **en bloque**, para la lista de expedientes: **tres consultas fijas**
+    (IDEA, protocolos, informes) con `hce_id IN (…)`, sin importar cuántos ids lleguen — nada de un
+    request por fila. Misma derivación (`sin_iniciar` · `en_curso` · `firmado`) y mismo orden de la
+    cadena que `modulos[]` de `GET /hce/{id}/flujo`. Un id sin filas sale con los cuatro `sin_iniciar`.
+    """
+    anio = anio if anio is not None else fechas.anio_actual()
+    firmado: dict[tuple[int, str], bool] = {}
+    if hce_ids:
+        for hce_id, f in db.execute(select(Idea.hce_id, Idea.firmado).where(Idea.hce_id.in_(hce_ids), Idea.anio == anio)):
+            firmado[hce_id, MODULO_HCE_LB] = f
+        for hce_id, tipo, f in db.execute(
+            select(Protocolo.hce_id, Protocolo.tipo, Protocolo.firmado)
+            .where(Protocolo.hce_id.in_(hce_ids), Protocolo.anio == anio)
+        ):
+            firmado[hce_id, MODULO_HCE_PA if tipo == "A" else MODULO_HCE_PB] = f
+        for hce_id, f in db.execute(
+            select(InformeCierre.hce_id, InformeCierre.firmado).where(InformeCierre.hce_id.in_(hce_ids), InformeCierre.anio == anio)
+        ):
+            firmado[hce_id, MODULO_HCE_IC] = f
+    return {
+        hce_id: [
+            {
+                "modulo": modulo,
+                "estado": (
+                    ESTADO_SIN_INICIAR if (hce_id, modulo) not in firmado
+                    else ESTADO_FIRMADO if firmado[hce_id, modulo] else ESTADO_EN_CURSO
+                ),
+            }
+            for modulo in CADENA_FLUJO
+        ]
+        for hce_id in hce_ids
+    }
+
+
 def estado_ci(db: Session, hce_id: int) -> str:
     """`registrado` si existe la fila de `consentimiento` del expediente; si no, `pendiente`.
 

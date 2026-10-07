@@ -13,9 +13,10 @@ se convierte en `None` acá, con los alias de `app.schemas.comunes`.
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.comunes import EnteroOpcional, FechaOpcional
+from app.schemas.flujo import EstadoEslabon
 
 # ── Ejemplos para Swagger ────────────────────────────────────────────────────
 _PERSONA_EJEMPLO = {
@@ -23,9 +24,14 @@ _PERSONA_EJEMPLO = {
     "fecha_nac": "2016-04-12", "sexo": "M", "localidad": "Montevideo",
     "referente": "Marta R. (madre)", "telefono": "099 456 789",
 }
+_GRUPO_EJEMPLO = {
+    "id": 2, "nombre": "Escolares", "anio": 2026,
+    "tecnico1": {"id": 2, "nombre": "Dr. González", "rol": "Psicólogo/a"},
+    "tecnico2": {"id": 3, "nombre": "Mtra. Torres", "rol": "Maestro/a"},
+}
 _HCE_EJEMPLO = {
     "id": 3, "hc_historico": 1001, "activo": True, "fecha_baja": None,
-    "grupo_id": 2, "grupo": {"id": 2, "nombre": "Escolares", "anio": 2026},
+    "grupo_id": 2, "grupo": _GRUPO_EJEMPLO,
     "diagnostico": "TEA", "cie11": "6A02", "dx_fecha": "2020-03-01",
     "derivacion": "Pediatría", "medicacion": None, "alerta": None, "anamnesis": None,
     "creado_en": "2026-10-06T14:00:00Z", "actualizado_en": "2026-10-06T14:00:00Z",
@@ -35,7 +41,11 @@ EJEMPLO_RESULTADO_HCE = {"data": _HCE_EJEMPLO, "warnings": []}
 EJEMPLO_RESUMEN_HCE = [
     {"id": 3, "hc_historico": 1001, "activo": True,
      "grupo": {"id": 2, "nombre": "Escolares", "anio": 2026},
-     "persona": {"id": 7, "nombre": "Martín", "apellido": "Rodríguez", "ci": "5.789.123-4"}}
+     "persona": {"id": 7, "nombre": "Martín", "apellido": "Rodríguez", "ci": "5.789.123-4", "fecha_nac": "2016-04-12"},
+     "flujo": [
+         {"modulo": "HCE-LB", "estado": "firmado"}, {"modulo": "HCE-PA", "estado": "en_curso"},
+         {"modulo": "HCE-PB", "estado": "sin_iniciar"}, {"modulo": "HCE-IC", "estado": "sin_iniciar"},
+     ]}
 ]
 
 
@@ -133,6 +143,41 @@ class GrupoResumen(BaseModel):
     anio: int
 
 
+class TecnicoDeGrupo(BaseModel):
+    """Un técnico del grupo. `rol` es el **rol en el grupo** (`grupo.tecnicoN_rol`, texto libre:
+    «Psicólogo/a», «Maestro/a»), **no** el rol de sesión (`admin`/`tecnico`) de `Profesional.rol`."""
+
+    id: int
+    nombre: str
+    rol: str | None
+
+
+class GrupoConTecnicos(GrupoResumen):
+    """El grupo de un año con sus dos técnicos (`null` si el puesto está sin asignar).
+
+    Se valida desde el `Grupo` del modelo (o desde un dict ya armado)."""
+
+    tecnico1: TecnicoDeGrupo | None
+    tecnico2: TecnicoDeGrupo | None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _desde_el_modelo(cls, grupo: Any) -> Any:
+        """Arma `tecnicoN` = `{id, nombre, rol}` desde la relación + `tecnicoN_rol` del `Grupo`."""
+        if isinstance(grupo, dict):
+            return grupo
+        return {
+            "id": grupo.id, "nombre": grupo.nombre, "anio": grupo.anio,
+            **{
+                f"tecnico{n}": (
+                    {"id": t.id, "nombre": t.nombre, "rol": getattr(grupo, f"tecnico{n}_rol")}
+                    if (t := getattr(grupo, f"tecnico{n}")) is not None else None
+                )
+                for n in (1, 2)
+            },
+        }
+
+
 class PersonaResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -140,10 +185,10 @@ class PersonaResumen(BaseModel):
     nombre: str
     apellido: str
     ci: str
+    fecha_nac: date
 
 
 class PersonaDetalle(PersonaResumen):
-    fecha_nac: date
     sexo: str | None
     localidad: str | None
     referente: str | None
@@ -160,6 +205,12 @@ class HceResumen(BaseModel):
     activo: bool
     grupo: GrupoResumen | None
     persona: PersonaResumen
+    flujo: list[EstadoEslabon] = Field(
+        description=(
+            "Estado de los cuatro módulos del **año en curso**, en el orden de la cadena y con la misma forma "
+            "que `modulos[]` de `GET /hce/{id}/flujo` (`modulo`, `estado`). Se arma en bloque, no un request por fila."
+        ),
+    )
 
 
 class HceDetalle(BaseModel):
@@ -172,7 +223,7 @@ class HceDetalle(BaseModel):
     activo: bool
     fecha_baja: date | None
     grupo_id: int | None
-    grupo: GrupoResumen | None
+    grupo: GrupoConTecnicos | None
     diagnostico: str | None
     cie11: str | None
     dx_fecha: date | None

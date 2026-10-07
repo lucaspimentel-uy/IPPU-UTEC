@@ -14,7 +14,7 @@ def test_grupos_devuelve_solo_los_del_anio_pedido_ordenados_por_nombre(client, c
     r = client.get("/grupos", params={"anio": hoy})
     assert r.status_code == 200
     assert [(g["nombre"], g["anio"]) for g in r.json()] == [("Escolares", hoy), ("Preadolescentes", hoy)]
-    assert set(r.json()[0]) == {"id", "nombre", "anio"}
+    assert set(r.json()[0]) == {"id", "nombre", "anio", "tecnico1", "tecnico2"}  # B-front: + técnicos
     assert [(g["nombre"], g["anio"]) for g in client.get("/grupos", params={"anio": hoy - 1}).json()] == [
         ("Escolares", hoy - 1)
     ]
