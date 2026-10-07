@@ -24,7 +24,7 @@ from app.core.constantes import HC_HISTORICO_MAX, HC_HISTORICO_MIN, MODULO_HCE_0
 from app.models.identidad import Grupo, HceDiurna, Persona, Profesional
 from app.services import auth
 from app.services.auditoria import registrar_cambios, registrar_carga
-from app.services.errores import ConflictError, NotFound, ValidationFailed
+from app.services.errores import ConflictError, DuplicadoError, NotFound, ValidationFailed
 from app.services.fechas import anio_actual
 from app.services.texto import normalizar_opcionales, normalizar_texto
 
@@ -294,7 +294,7 @@ def _exigir_hc_libre(db: Session, hc: int, *, excepto_id: int | None = None) -> 
     if excepto_id is not None:
         consulta = consulta.where(HceDiurna.id != excepto_id)
     if db.scalars(consulta).first() is not None:
-        raise ConflictError(
+        raise DuplicadoError(
             f"Ya existe un expediente con el N.º de historia clínica {hc}",
             [("hc_historico", "Ya existe un expediente con ese N.º de historia clínica")],
         )
@@ -309,7 +309,7 @@ def _persona_con_ci(db: Session, ci: str, *, excepto_id: int | None = None) -> P
 
 def _exigir_ci_libre(db: Session, ci: str, *, excepto_id: int | None = None) -> None:
     if _persona_con_ci(db, ci, excepto_id=excepto_id) is not None:
-        raise ConflictError(
+        raise DuplicadoError(
             f"Ya existe una persona con la cédula {ci}",
             [("persona.ci", "Ya existe una persona con esa cédula")],
         )
@@ -335,7 +335,7 @@ def _flush_traduciendo(db: Session) -> None:
                 "Ya existe una persona con esa cédula" if campo == "persona.ci"
                 else "Ya existe un expediente con ese N.º de historia clínica"
             )
-            raise ConflictError(mensaje, [(campo, mensaje)]) from exc
+            raise DuplicadoError(mensaje, [(campo, mensaje)]) from exc
         raise
 
 

@@ -36,7 +36,8 @@ docker compose up -d                  # 1. Postgres 16 en localhost:5440
 python -m venv .venv                  # 2. entorno (si no existe)
 .venv\Scripts\Activate.ps1            #    (Linux/Mac: source .venv/bin/activate)
 pip install -r requirements.txt
-copy .env.example .env                # 3. config (Linux/Mac: cp)
+copy .env.example .env                # 3. config (Linux/Mac: cp) — completar SECRET_KEY (obligatoria, §5.119):
+                                      #    python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 alembic upgrade head                  # 4. crear el esquema
 python -m app.seed_catalogos          # 5. cargar catálogos
@@ -72,7 +73,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **718 passed, 0 skipped**.
+Una corrida válida de hoy es **751 passed, 0 skipped**.
 
 ## API (M11.3-a)
 

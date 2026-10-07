@@ -43,6 +43,18 @@ def verificar_password(password: str, hashed: str | None) -> bool:
         return False
 
 
+#: Hash de una contraseña que nadie conoce, calculado **una vez al importar** y con el costo por
+#: omisión (el mismo que `hashear_password`). Lo usa `gastar_verificacion` para que un login con un
+#: email inexistente, inactivo o sin contraseña tarde lo mismo que uno con la contraseña mal
+#: (§5.119): sin esto, la diferencia de tiempo (sin bcrypt vs. con bcrypt) dice qué emails existen.
+_HASH_FICTICIO = bcrypt.hashpw(b"hash-ficticio-para-igualar-el-tiempo-del-login", bcrypt.gensalt())
+
+
+def gastar_verificacion(password: str) -> None:
+    """Corre `bcrypt.checkpw` contra `_HASH_FICTICIO` y descarta el resultado."""
+    bcrypt.checkpw(password.encode("utf-8")[:BCRYPT_MAX_BYTES], _HASH_FICTICIO)
+
+
 def crear_token(profesional_id: int, *, minutos: int | None = None) -> str:
     vence = datetime.now(UTC) + timedelta(
         minutes=settings.access_token_expire_minutes if minutos is None else minutos

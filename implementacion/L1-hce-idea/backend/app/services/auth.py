@@ -18,7 +18,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import ROL_ADMIN, ROL_TECNICO
-from app.core.seguridad import leer_token, verificar_password
+from app.core.seguridad import gastar_verificacion, leer_token, verificar_password
 from app.models.identidad import Grupo, HceDiurna, Profesional
 from app.services.errores import ForbiddenAction, NotFound, Unauthorized
 
@@ -39,11 +39,12 @@ def autenticar(db: Session, email: str, password: str) -> Profesional:
     profesional = db.scalars(
         select(Profesional).where(func.lower(Profesional.email) == normalizar_email(email))
     ).first()
-    if (
-        profesional is None
-        or not profesional.activo
-        or not verificar_password(password, profesional.hashed_password)
-    ):
+    if profesional is None or not profesional.activo or not profesional.hashed_password:
+        # Mismo costo que una contraseña incorrecta (§5.119): el tiempo de respuesta no
+        # distingue un email inexistente de uno existente.
+        gastar_verificacion(password)
+        raise Unauthorized(_CREDENCIALES_INVALIDAS, [(None, _CREDENCIALES_INVALIDAS)])
+    if not verificar_password(password, profesional.hashed_password):
         raise Unauthorized(_CREDENCIALES_INVALIDAS, [(None, _CREDENCIALES_INVALIDAS)])
     return profesional
 

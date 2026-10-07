@@ -168,6 +168,6 @@ def agregar_addenda(
     """Única forma de corregir un protocolo firmado: agrega `{texto, profesional_id, fecha}` y deja
     una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del protocolo."""
     protocolo = servicio.agregar_addenda(
-        db, protocolo_id, texto=datos.texto, profesional_id=datos.profesional_id, usuario_id=usuario.id,
+        db, protocolo_id, texto=datos.texto, profesional_id=usuario.id, usuario_id=usuario.id,
     )
     return Resultado(data=_detalle(db, protocolo))

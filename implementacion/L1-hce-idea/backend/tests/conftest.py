@@ -37,7 +37,13 @@ cada sub-módulo de M12: el head se deriva de los archivos de migración en tiem
 de ejecución y las tablas se cuentan, no se comparan contra una constante.
 """
 from datetime import date
+import os
 from pathlib import Path
+
+# Clave fija para los JWT de la suite (§5.119 a: sin `SECRET_KEY` la app no arranca). Va **antes**
+# de importar `app`, porque `settings` se construye al importar `app.core.config`; la variable de
+# entorno le gana al `.env` de cada uno, así que la suite no depende de la clave local.
+os.environ["SECRET_KEY"] = "clave-fija-de-la-suite-de-tests-no-usar-fuera-0123456789"
 
 import pytest
 from alembic.config import Config

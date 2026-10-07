@@ -64,9 +64,18 @@ def test_profesionales_filtra_por_activo(client, admin, crear_profesional):
     assert client.get("/profesionales", params={"activo": "quizás"}).status_code == 422
 
 
-def test_profesionales_sin_filas_es_lista_vacia(client, admin):
-    r = client.get("/profesionales", params={"activo": "false"})  # el admin del login es activo
+def test_profesionales_sin_inactivos_por_la_api_es_lista_vacia(client, admin):
+    """Por la API la tabla nunca está vacía (hay que estar logueado: el `admin` del login es una
+    fila, activa). Lo que se puede probar acá es un filtro sin coincidencias → `[]`, no un error."""
+    r = client.get("/profesionales", params={"activo": "false"})
     assert r.status_code == 200 and r.json() == []
+
+
+def test_listar_profesionales_con_la_tabla_vacia_es_lista_vacia(db):
+    """El caso «sin profesionales», en el servicio: la fixture `db` no crea al `admin` del login."""
+    from app.services.referencias import listar_profesionales
+
+    assert listar_profesionales(db) == [] and listar_profesionales(db, True) == []
 
 
 def test_solo_lectura_y_documentado_en_swagger(client):

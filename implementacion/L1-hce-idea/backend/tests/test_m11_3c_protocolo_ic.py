@@ -246,13 +246,13 @@ def test_crear_con_un_evaluador_inexistente_es_422(client, equipo):
 def test_firma_bloquea_edicion_409_y_la_addenda_corrige(client, db_api, equipo):
     hce = _hce(client)
     pid = _crear_prot(client, hce, _prot(equipo))["data"]["id"]
-    assert client.post(f"/protocolo/{pid}/addendas", json={"texto": "x", "profesional_id": equipo[0].id}).status_code == 409
+    assert client.post(f"/protocolo/{pid}/addendas", json={"texto": "x"}).status_code == 409
     assert client.patch(f"/protocolo/{pid}", json={"semanas": 17}).status_code == 200
     _firmar_prot(client, pid)
     r = client.patch(f"/protocolo/{pid}", json={"semanas": 18})
     assert r.status_code == 409 and r.json()["code"] == "signed_module"
     assert client.post(f"/protocolo/{pid}/firmar").status_code == 409
-    r = client.post(f"/protocolo/{pid}/addendas", json={"texto": "Corrección.", "profesional_id": equipo[0].id})
+    r = client.post(f"/protocolo/{pid}/addendas", json={"texto": "Corrección."})
     assert r.status_code == 201 and r.json()["data"]["addendas"][0]["texto"] == "Corrección."
     assert r.json()["data"]["semanas"] == 17
     assert [f.modulo for f in _filas(db_api, hce, tipo="addenda")] == ["HCE-PA"]
@@ -519,7 +519,7 @@ def test_patch_de_un_ic_firmado_es_409_y_sin_firmar_audita_por_escala(client, db
     r = client.patch(f"/informe-cierre/{iid}", json={"recomendaciones": "Otra cosa."})
     assert r.status_code == 409 and r.json()["code"] == "signed_module"
     assert client.get(f"/informe-cierre/{iid}").json()["recomendaciones"] == "Recomendaciones."
-    r = client.post(f"/informe-cierre/{iid}/addendas", json={"texto": "Aclaración.", "profesional_id": equipo[0].id})
+    r = client.post(f"/informe-cierre/{iid}/addendas", json={"texto": "Aclaración."})
     assert r.status_code == 201 and len(r.json()["data"]["addendas"]) == 1
 
 

@@ -182,6 +182,6 @@ def agregar_addenda(
     """Es la única forma de corregir un IDEA firmado (§4.1): agrega `{texto, profesional_id, fecha}` a
     `addendas` y deja una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del IDEA."""
     idea = servicio.agregar_addenda(
-        db, idea_id, texto=datos.texto, profesional_id=datos.profesional_id, usuario_id=usuario.id,
+        db, idea_id, texto=datos.texto, profesional_id=usuario.id, usuario_id=usuario.id,
     )
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)))

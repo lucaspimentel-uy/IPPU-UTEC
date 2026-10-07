@@ -2,6 +2,7 @@
 
 Contrato de respuesta y de error: docstring de `app/routers/__init__.py`.
 """
+from contextlib import contextmanager
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -15,6 +16,7 @@ from app.schemas.hce import (
 )
 from app.services import auth
 from app.services import hce as servicio
+from app.services.errores import ConflictError, DuplicadoError
 
 router = APIRouter(prefix="/hce", tags=["hce"])
 
@@ -23,11 +25,34 @@ router = APIRouter(prefix="/hce", tags=["hce"])
 #: `app/routers/__init__.py`). `main.py` la expone por CORS.
 CABECERA_TOTAL = "X-Total-Count"
 _USUARIO = Annotated[Profesional, Depends(usuario_actual)]
+#: §5.119 d — lo que ve un `tecnico` cuando la cédula o el N.º de HC ya existen.
+MENSAJE_DUPLICADO_TECNICO = "No se pudo completar el alta: consultá a dirección."
+
+
+@contextmanager
+def _duplicado_generico_para_tecnico(usuario: Profesional):
+    """Un `tecnico` no alcanza todos los expedientes: decirle «ya existe una persona con esa
+    cédula» (con `campo`) confirmaría un dato de un expediente que no puede ver. Recibe un 409
+    genérico, sin campo; el `admin` conserva el mensaje y el campo específicos. **Límite
+    aceptado:** que la respuesta sea un 409 distinto del 201 igual revela que el dato existe.
+    No se escribe auditoría del intento: el request se deshace entero (§5.108)."""
+    # El rol se lee **antes**: un `flush` que choca con el UNIQUE deja la sesión pendiente de
+    # rollback y expira los objetos, así que leer `usuario.rol` en el `except` daría un 500.
+    es_admin = auth.es_admin(usuario)
+    try:
+        yield
+    except DuplicadoError as exc:
+        if es_admin:
+            raise
+        raise ConflictError(MENSAJE_DUPLICADO_TECNICO, [(None, MENSAJE_DUPLICADO_TECNICO)]) from exc
 _VISIBLE = [Depends(hce_visible)]
 
 _ERROR_404 = {404: {"model": RespuestaError, "description": "No existe el expediente."}}
 _ERROR_422 = {422: {"model": RespuestaError, "description": "Datos inválidos (detalle por campo)."}}
-_ERROR_409_CI = {409: {"model": RespuestaError, "description": "Ya existe una persona con esa cédula."}}
+_ERROR_409_CI = {409: {"model": RespuestaError, "description": (
+    "Ya existe una persona con esa cédula, o un expediente con ese N.º de HC. A un `tecnico` se le "
+    "responde con un mensaje genérico y `campo: null` (§5.119 d)."
+)}}
 
 
 def _ejemplo(status: int, cuerpo) -> dict:
@@ -63,7 +88,8 @@ def crear(datos: HceCrear, db: Annotated[Session, Depends(sesion_transaccional)]
     cuerpo = datos.model_dump()
     persona = cuerpo.pop("persona")
     auth.exigir_grupo_propio(db, usuario, cuerpo.get("grupo_id"))
-    expediente = servicio.crear_hce(db, persona=persona, hce=cuerpo, usuario_id=usuario.id)
+    with _duplicado_generico_para_tecnico(usuario):
+        expediente = servicio.crear_hce(db, persona=persona, hce=cuerpo, usuario_id=usuario.id)
     return Resultado(data=HceDetalle.model_validate(expediente))
 
 
@@ -150,5 +176,6 @@ def actualizar(
     persona = cuerpo.pop("persona", None)
     if "grupo_id" in cuerpo:
         auth.exigir_grupo_propio(db, usuario, cuerpo["grupo_id"])
-    expediente = servicio.actualizar_hce_00(db, hce_id, persona=persona, hce=cuerpo, usuario_id=usuario.id)
+    with _duplicado_generico_para_tecnico(usuario):
+        expediente = servicio.actualizar_hce_00(db, hce_id, persona=persona, hce=cuerpo, usuario_id=usuario.id)
     return Resultado(data=HceDetalle.model_validate(expediente))

@@ -124,7 +124,7 @@ def agregar_addenda(
     informe_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
 ):
     informe = servicio.agregar_addenda(
-        db, informe_id, texto=datos.texto, profesional_id=datos.profesional_id, usuario_id=usuario.id,
+        db, informe_id, texto=datos.texto, profesional_id=usuario.id, usuario_id=usuario.id,
     )
     return Resultado(data=_detalle(informe))
 

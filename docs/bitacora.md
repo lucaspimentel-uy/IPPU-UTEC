@@ -20,6 +20,14 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión M11.3-d1-fix — cierre de la revisión de d1** (Lucas + Claude, sesión en la nube, misma rama **`m11.3-d1`**, sólo `origin`). Decisiones **§5.119** (a–e). Sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
+  - **H1:** `secret_key` sin valor por omisión; falta, < 32 bytes o el literal viejo → la configuración no carga, en todos los entornos. `.env.example` vacía con el comando; `conftest.py` fija una clave de prueba.
+  - **M2:** `/addendas` sin `profesional_id` (`extra="forbid"` → 422); el autor es el usuario del token. **Firmas:** las cuatro filas `firma` llevan `usuario_id` del token (ya lo hacían; ahora con test).
+  - **M1:** `DuplicadoError` en `services/hce.py`; el router de `/hce` da un 409 genérico sin `campo` a un `tecnico` (se lee el rol antes del servicio: después de un `flush` fallido el objeto expira). **L1:** bcrypt contra un hash ficticio en los caminos sin hash.
+  - **L2:** matriz de 19 casos (protocolo, IC, VF, IDEA vigente/Δ, CI, flujo) con 404 igual a inexistente fuera del grupo y 2xx dentro, y búsqueda por CI ajena → `[]` con `X-Total-Count: 0`. **L3:** test de `/profesionales` renombrado y el caso «tabla vacía» pasa al servicio. **L4:** fila «`pct` NULL» de `esquema-datos-v2.md` §4 sin la contradicción.
+  - **Tests existentes ajustados:** los cuerpos de `/addendas` de M11.3-b/c sin `profesional_id`; el autor esperado es el `admin` de `client`; «profesional inexistente → 422» pasa a «`profesional_id` en el cuerpo → 422».
+  - **Medido:** `pytest -q` → **751 passed, 0 skipped** (718 + 33); `alembic check` sin cambios; ambos `--check` → exit 0. Tres mutaciones (sin `forbid`, sin el 409 genérico, sin el hash ficticio) ponen sus tests en rojo.
+
 - **2026-10-07 · Sesión M11.3-d1 — correcciones de la revisión b+c, HCE-VF y login mínimo** (Lucas + Claude, sesión en la nube, rama **`m11.3-d1`** sobre `m11.3-c`, sólo `origin`). Decisiones **§5.118** (a–g + VF). Sin cambio de DDL: head sigue **`dcc838486407`**.
   - **Login:** `core/seguridad.py` (bcrypt directo + JWT), `services/auth.py` (alcance por grupo, 404 fuera de él), `POST /auth/login`, `GET /auth/yo`, CLI `python -m app.crear_usuario`; todos los routers protegidos desde `main.py`; `usuario_id` en cada fila de auditoría. `passlib` sale de `requirements.txt` (roto con bcrypt 5).
   - **Endpoints nuevos:** `/auth/login`, `/auth/yo`, `POST/GET/PATCH /hce/{id}/valoracion-funcional`; `GET /hce` con `limit`/`offset`/`incluir_inactivos` y `X-Total-Count`; `PATCH /hce/{id}` acepta baja/reingreso.

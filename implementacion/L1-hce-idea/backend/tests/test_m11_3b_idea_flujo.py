@@ -326,20 +326,21 @@ def test_firmar_dos_veces_es_409_y_la_primera_sigue_en_pie(client, db_api, equip
     assert len(client.get(f"/idea/{iid}").json()["firmas"]) == 2
 
 
-def test_la_addenda_en_un_idea_firmado_se_agrega_con_su_auditoria_y_en_uno_sin_firmar_es_409(client, db_api, equipo, hoy):
+def test_la_addenda_en_un_idea_firmado_se_agrega_con_su_auditoria_y_en_uno_sin_firmar_es_409(client, db_api, equipo, hoy, admin):
     hoy(date(2026, 5, 4))
     hce = _hce(client)
     sin_firmar = _crear(client, hce, _completo(equipo, anio=2025))
-    r = client.post(f"/idea/{sin_firmar['id']}/addendas", json={"texto": "Algo", "profesional_id": equipo[0].id})
+    r = client.post(f"/idea/{sin_firmar['id']}/addendas", json={"texto": "Algo"})
     assert r.status_code == 409 and r.json()["code"] == "conflict"
     assert _filas(db_api, hce, tipo="addenda") == []
     # el par que pasa
     iid = _firmado(client, hce, equipo, anio=2026)
-    r = client.post(f"/idea/{iid}/addendas", json={"texto": "Corrección de fecha.", "profesional_id": equipo[0].id})
+    r = client.post(f"/idea/{iid}/addendas", json={"texto": "Corrección de fecha."})
     assert r.status_code == 201
     assert r.json()["warnings"] == []
-    assert r.json()["data"]["addendas"] == [{"texto": "Corrección de fecha.", "profesional_id": equipo[0].id, "fecha": "2026-05-04"}]
-    r2 = client.post(f"/idea/{iid}/addendas", json={"texto": "Segunda.", "profesional_id": equipo[1].id})
+    # §5.119 b: el autor es el usuario del token (`client` entra como `admin`), no un campo del cuerpo
+    assert r.json()["data"]["addendas"] == [{"texto": "Corrección de fecha.", "profesional_id": admin.id, "fecha": "2026-05-04"}]
+    r2 = client.post(f"/idea/{iid}/addendas", json={"texto": "Segunda."})
     assert [a["texto"] for a in r2.json()["data"]["addendas"]] == ["Corrección de fecha.", "Segunda."]
     filas = _filas(db_api, hce, tipo="addenda")
     assert len(filas) == 2 and all(f.modulo == "HCE-LB" for f in filas)
@@ -347,14 +348,15 @@ def test_la_addenda_en_un_idea_firmado_se_agrega_con_su_auditoria_y_en_uno_sin_f
     assert client.get(f"/idea/{iid}").json()["total"] == 58
 
 
-def test_una_addenda_sin_texto_o_de_un_profesional_inexistente_es_422_y_completa_es_201(client, equipo):
+def test_una_addenda_sin_texto_o_con_profesional_id_en_el_cuerpo_es_422_y_completa_es_201(client, equipo):
     iid = _firmado(client, _hce(client), equipo)
-    r = client.post(f"/idea/{iid}/addendas", json={"texto": "   ", "profesional_id": equipo[0].id})
+    r = client.post(f"/idea/{iid}/addendas", json={"texto": "   "})
     assert r.status_code == 422 and r.json()["detail"][0]["campo"] == "texto"
-    r = client.post(f"/idea/{iid}/addendas", json={"texto": "Algo", "profesional_id": 99999})
+    # §5.119 b: el autor sale del token; un cliente que todavía manda `profesional_id` recibe 422
+    r = client.post(f"/idea/{iid}/addendas", json={"texto": "Algo", "profesional_id": equipo[0].id})
     assert r.status_code == 422 and r.json()["detail"][0]["campo"] == "profesional_id"
     assert client.get(f"/idea/{iid}").json()["addendas"] == []
-    assert client.post(f"/idea/{iid}/addendas", json={"texto": "Algo", "profesional_id": equipo[0].id}).status_code == 201
+    assert client.post(f"/idea/{iid}/addendas", json={"texto": "Algo"}).status_code == 201
 
 
 def test_una_falla_despues_de_escribir_al_firmar_deja_el_idea_sin_firmar_y_sin_fila_de_auditoria(

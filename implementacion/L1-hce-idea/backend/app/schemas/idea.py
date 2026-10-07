@@ -96,12 +96,15 @@ class IdeaActualizar(_IdeaCampos):
 
 
 class AddendaCrear(BaseModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [
-        {"texto": "Corrección de la fecha de consenso.", "profesional_id": 1}
+    """Cuerpo de `/addendas` (IDEA, protocolo, informe de cierre). **El autor es el usuario del
+    token** (§5.119 b), no un campo del cuerpo: `extra="forbid"` hace que un cliente viejo que
+    todavía mande `profesional_id` reciba 422 en vez de que se ignore en silencio."""
+
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"examples": [
+        {"texto": "Corrección de la fecha de consenso."}
     ]})
 
-    texto: str = Field(description="Obligatorio, no en blanco. Fecha y profesional quedan registrados.")
-    profesional_id: int
+    texto: str = Field(description="Obligatorio, no en blanco. La fecha y el autor (el usuario del token) los pone el servidor.")
 
 
 # ── Salida ───────────────────────────────────────────────────────────────────
