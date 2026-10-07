@@ -611,6 +611,9 @@ MODULO_HCE_VF = "HCE-VF"
 MODULO_HCE_SEV = "HCE-SEV"
 MODULO_HCE_INC = "HCE-INC"
 MODULO_HCE_PAI = "HCE-PAI"
+#: Eventos **institucionales** sobre un grupo (asignación de técnicos, M11.5-a, `handoff.md` §5.120):
+#: `auditoria.hce_id` NULL. No es un módulo del expediente, por eso no lleva el prefijo `HCE-`.
+MODULO_GRUPO = "GRUPO"
 
 #: Valor de `auditoria.tipo` para la edición de un campo (el CHECK de la tabla
 #: admite además firma · excepcion · addenda · alerta · carga · acceso, que son de

@@ -814,7 +814,8 @@ cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE
    (§5.102). Sin guard de consenso (§5.98).
 6. **M11.5-a — Seed espejo vía API (§12-A ejecutable):** cargar por la API el ciclo del usuario demo 1 y
    comprobar **IDEA 58 · PA 60 · PB 79 · Δ +19** (ver «Criterio de aceptación §12-A» abajo). Va **justo
-   después de la rebanada del ciclo clínico**, no al final.
+   después de la rebanada del ciclo clínico**, no al final. ✅ **HECHO 2026-10-07** (`handoff.md` §5.120):
+   `app/seed_demo.py` + `tests/test_m11_5a_seed_demo.py`.
 7. **M11.3-d — Resto del núcleo para el 26/11:** VF/baremo (sólo desde `pct`), SEV, INC, documento
    histórico inmutable, **foto sin trabas** (§5.99) · **login con 2 roles** (§5.101: `admin` ve todo,
    `tecnico` ve sus grupos) · **los routers restantes que necesiten las pantallas conectadas** (DOC, ORG,
@@ -834,7 +835,12 @@ cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE
    la demo (8 NNA, 4 arquetipos §11) y pytest contra Postgres.
 
    **Criterio de aceptación §12-A — su forma es PROSA hasta M11.5; su forma ejecutable es de M11.5**
-   (§5.65). Lo que afirma, una vez que estén en pie las cuatro piezas de la ronda M12 —**HCE-INC**,
+   (§5.65). ✅ **Ejecutable desde el 2026-10-07 (M11.5-a, `handoff.md` §5.120):**
+   `backend/tests/test_m11_5a_seed_demo.py` carga la demo con `app.seed_demo.cargar_demo` **por la API**
+   (autenticado; los datos clínicos los carga un `tecnico`) y verifica por GET IDEA 58 (18/14/14/12),
+   PA 60, PB 79, Δ +19 (4/6/4/5), sin alerta, IC firmado con recibí y `/documento`, más el estado de flujo
+   de cada arquetipo. Lo que el criterio dice de INC, PAI, ateneos y SEV **no** entra en ese test (la
+   rebanada carga sólo CI/LB/PA/PB/IC). Lo que afirma, una vez que estén en pie las cuatro piezas de la ronda M12 —**HCE-INC**,
    **HCE-PAI**, **ateneos / HCE-DOC institucional** y **HCE-SEV**—, las **6 bandas del IDEA**
    (`banda_idea`) y los **14 talleres** (`taller`): que el **ciclo completo del usuario demo 1** de la
    demo, cargado por la API, se reproduce **con los mismos números y respetando los mismos guards y la

@@ -20,6 +20,13 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión M11.5-a — seed espejo vía API (§12-A ejecutable) + asignación de técnicos** (Lucas + Claude, sesión en la nube, rama `claude/epic-keller-z3bz8n` sobre `main` c1ba234). Decisiones **§5.120** (a–e). Sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
+  - **`PATCH /grupos/{id}`** (sólo `admin`): `services/grupos.py`, schemas/router en `referencias`; 422 por campo (inexistente, inactivo, misma persona, campo ajeno), 403, 404; auditoría por campo con `hce_id` NULL y `modulo='GRUPO'`, técnico legible.
+  - **`app/seed_demo.py`**: bootstrap de usuarios con `crear_usuario` (fuera de la API) + `cargar_demo` sólo por HTTP, clínica cargada por González (`tecnico`). CLI con `IPPU_EMAIL`/`IPPU_PASSWORD`.
+  - **Frenar y consultar:** la demo usa grupos por color; Lucas eligió ubicar Azul/Celeste/Naranja en Escolares/Preadolescentes/Adolescentes **sólo en el seed** (§5.120 c: no son franjas de IPPU). Regla de obs y fechas futuras: sin conflicto (§5.120 d).
+  - **§12-A por la API (CLI contra `uvicorn`, base de desarrollo vacía):** IDEA 58 (18/14/14/12) · PA 60 · PB 79 · Δ +19 (4/6/4/5) · `alertas: []` · IC firmado con recibí. Segunda corrida → exit 1, 8 expedientes y 47 filas de auditoría antes y después.
+  - **Medido:** `pytest -q` → **790 passed, 0 skipped** (751 + 17 de grupos + 22 del seed); `alembic check` sin cambios; ambos `--check` → exit 0. Entorno: Postgres 16 local en 5440 (sin Docker en la nube).
+
 - **2026-10-07 · Sesión M11.3-d1-fix — cierre de la revisión de d1** (Lucas + Claude, sesión en la nube, misma rama **`m11.3-d1`**, sólo `origin`). Decisiones **§5.119** (a–e). Sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
   - **H1:** `secret_key` sin valor por omisión; falta, < 32 bytes o el literal viejo → la configuración no carga, en todos los entornos. `.env.example` vacía con el comando; `conftest.py` fija una clave de prueba.
   - **M2:** `/addendas` sin `profesional_id` (`extra="forbid"` → 422); el autor es el usuario del token. **Firmas:** las cuatro filas `firma` llevan `usuario_id` del token (ya lo hacían; ahora con test).

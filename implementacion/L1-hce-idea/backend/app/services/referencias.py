@@ -1,7 +1,7 @@
 """Listas de referencia de sólo lectura para la demo: grupos y profesionales (M11.3-a2).
 
 Sin escritura: crear o renombrar grupos es el sub-módulo de administración
-(`handoff.md` §5.90) y el alta de profesionales llega con el login (§5.101).
+(`handoff.md` §5.90); la asignación de técnicos (M11.5-a, §5.120) vive en `services/grupos.py`.
 """
 from sqlalchemy import select
 from sqlalchemy.orm import Session

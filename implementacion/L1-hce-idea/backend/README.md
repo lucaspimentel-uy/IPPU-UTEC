@@ -73,7 +73,20 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **751 passed, 0 skipped**.
+Una corrida válida de hoy es **790 passed, 0 skipped**.
+
+## Cargar la demo en la base de desarrollo (M11.5-a)
+
+Con la base migrada y los catálogos sembrados, y la API corriendo (`uvicorn app.main:app`), en otra terminal:
+
+```powershell
+$env:IPPU_EMAIL="admin@ippu.test"; $env:IPPU_PASSWORD="<contraseña del admin>"   # crea el admin si no existe
+python -m app.seed_demo --url http://localhost:8000
+```
+
+Carga los 8 NNA de la demo por la API (Martín = §12-A). Los usuarios (admin, «Dr. González», «Mtra. Torres»,
+contraseña `IPPU_DEMO_PASSWORD` o la del admin) se crean fuera de la API. Si la demo ya está, aborta sin
+escribir. Detalle y límites: docstring de `app/seed_demo.py` y `handoff.md` §5.120.
 
 ## API (M11.3-a)
 
