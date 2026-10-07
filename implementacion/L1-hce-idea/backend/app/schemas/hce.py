@@ -118,6 +118,10 @@ class HceActualizar(Hce00Campos):
     ]})
 
     persona: PersonaActualizar | None = None
+    activo: bool | None = Field(
+        None, description="**Baja** (`false`, exige `fecha_baja`) o **reingreso** (`true`, borra `fecha_baja`).",
+    )
+    fecha_baja: FechaOpcional = Field(None, description="Sólo con `activo: false` (o si ya está de baja).")
 
 
 # ── Salida ───────────────────────────────────────────────────────────────────

@@ -50,7 +50,8 @@ def registrar_cambios(
     - Compara **valores**, no textos: `3` y `3` no cambian; `None` y `None` tampoco.
       Si nada cambió devuelve `[]` y no escribe **ninguna** fila.
     - Sólo mira las claves de `despues`: en un PATCH, lo que no vino no cambió.
-    - `usuario_id` es opcional: queda `NULL` hasta que exista el login (§5.101).
+    - `usuario_id` es el usuario del token (los routers lo pasan desde M11.3-d1, §5.118 d); `None`
+      sólo para quien llama sin HTTP (scripts, tests de servicio).
     - `hce_id=None` es válido para eventos institucionales (cambio de técnico de un
       grupo, retiro de un taller del catálogo).
     """

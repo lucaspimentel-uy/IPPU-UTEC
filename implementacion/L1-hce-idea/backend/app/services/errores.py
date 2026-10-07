@@ -47,6 +47,16 @@ class ConflictError(ErrorDeDominio):
     code = "conflict"
 
 
+class DuplicadoError(ConflictError):
+    """Choque con un dato único de identidad (`persona.ci`, `hce_diurna.hc_historico`) → 409.
+
+    Para el cliente es el mismo 409 `conflict`; la subclase existe para que el router lo pueda
+    **reformular según quién pregunta** (§5.119 d): a un `tecnico` se le contesta con un mensaje
+    genérico, porque el específico confirmaría que esa cédula o ese N.º de HC ya existe en un
+    expediente que no puede ver.
+    """
+
+
 class SignedModuleError(ConflictError):
     """Se intentó editar un módulo ya firmado → 409. Se corrige por addenda (§4.1).
 
@@ -67,6 +77,14 @@ class ValidationFailed(ErrorDeDominio):
         if not pares:
             raise ValueError("ValidationFailed necesita al menos un problema")
         super().__init__("Datos inválidos", pares)
+
+
+class Unauthorized(ErrorDeDominio):
+    """Sin credenciales válidas (falta el token, está vencido o es inválido; usuario o
+    contraseña incorrectos) → 401 (§5.101). El mensaje nunca dice *cuál* de las dos
+    cosas falló en el login: no se revela si un email existe."""
+
+    code = "unauthorized"
 
 
 class ForbiddenAction(ErrorDeDominio):

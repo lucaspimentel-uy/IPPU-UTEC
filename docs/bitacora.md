@@ -20,6 +20,24 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión M11.3-d1-fix — cierre de la revisión de d1** (Lucas + Claude, sesión en la nube, misma rama **`m11.3-d1`**, sólo `origin`). Decisiones **§5.119** (a–e). Sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
+  - **H1:** `secret_key` sin valor por omisión; falta, < 32 bytes o el literal viejo → la configuración no carga, en todos los entornos. `.env.example` vacía con el comando; `conftest.py` fija una clave de prueba.
+  - **M2:** `/addendas` sin `profesional_id` (`extra="forbid"` → 422); el autor es el usuario del token. **Firmas:** las cuatro filas `firma` llevan `usuario_id` del token (ya lo hacían; ahora con test).
+  - **M1:** `DuplicadoError` en `services/hce.py`; el router de `/hce` da un 409 genérico sin `campo` a un `tecnico` (se lee el rol antes del servicio: después de un `flush` fallido el objeto expira). **L1:** bcrypt contra un hash ficticio en los caminos sin hash.
+  - **L2:** matriz de 19 casos (protocolo, IC, VF, IDEA vigente/Δ, CI, flujo) con 404 igual a inexistente fuera del grupo y 2xx dentro, y búsqueda por CI ajena → `[]` con `X-Total-Count: 0`. **L3:** test de `/profesionales` renombrado y el caso «tabla vacía» pasa al servicio. **L4:** fila «`pct` NULL» de `esquema-datos-v2.md` §4 sin la contradicción.
+  - **Tests existentes ajustados:** los cuerpos de `/addendas` de M11.3-b/c sin `profesional_id`; el autor esperado es el `admin` de `client`; «profesional inexistente → 422» pasa a «`profesional_id` en el cuerpo → 422».
+  - **Medido:** `pytest -q` → **751 passed, 0 skipped** (718 + 33); `alembic check` sin cambios; ambos `--check` → exit 0. Tres mutaciones (sin `forbid`, sin el 409 genérico, sin el hash ficticio) ponen sus tests en rojo.
+
+- **2026-10-07 · Sesión M11.3-d1 — correcciones de la revisión b+c, HCE-VF y login mínimo** (Lucas + Claude, sesión en la nube, rama **`m11.3-d1`** sobre `m11.3-c`, sólo `origin`). Decisiones **§5.118** (a–g + VF). Sin cambio de DDL: head sigue **`dcc838486407`**.
+  - **Login:** `core/seguridad.py` (bcrypt directo + JWT), `services/auth.py` (alcance por grupo, 404 fuera de él), `POST /auth/login`, `GET /auth/yo`, CLI `python -m app.crear_usuario`; todos los routers protegidos desde `main.py`; `usuario_id` en cada fila de auditoría. `passlib` sale de `requirements.txt` (roto con bcrypt 5).
+  - **Endpoints nuevos:** `/auth/login`, `/auth/yo`, `POST/GET/PATCH /hce/{id}/valoracion-funcional`; `GET /hce` con `limit`/`offset`/`incluir_inactivos` y `X-Total-Count`; `PATCH /hce/{id}` acepta baja/reingreso.
+  - **Firmas:** la firma del PA completa el Δ de un PB ya firmado (+ fila `edicion` `deltas`); recomendados de PA/PB (15 semanas, 113 palabras) e IC (75 por escala) como aviso.
+  - **VF:** baremo sólo desde `pct` (cortes del catálogo), «No corresponde» con `pct` NULL, alerta 90/30 al leer, entrada `extra="forbid"`. **Autogeneración no implementada:** los cortes escala → nivel no están en el Documento Técnico §7.4 ni en Especificaciones §1(g).
+  - **Tests existentes ajustados (13 que fallaban, sin cambiar lo que prueban):** `client` entra como `admin`; `usuario_id` esperado = admin; listas de `/profesionales` sin el admin; dos tests del 500 crean el expediente antes (el alcance se verifica antes del servicio); «HCE-00 ignora `activo`» pasa a ignorar sólo metadatos de origen; los cuerpos firmables de M11.3-c cumplen los recomendados nuevos.
+  - **Medido:** `pytest -q` → **718 passed, 0 skipped** (634 + 84); `alembic check` limpio; ambos `--check` → exit 0.
+  - **Smoke `uvicorn` (base de desarrollo):** admin + 2 técnicos con el CLI → login → la técnica ve sólo su grupo (404 en el ajeno), el admin todo → Martín: IDEA 58 → PB 79 firmado **antes** que el PA 60 → Δ +19 en el PB y en `/documento` → VF 58 % «Severo».
+  - Anotado, no hecho: asignar técnicos a grupos sin endpoint/CLI; baja/reingreso no escribe `evento`; cortes de la autogeneración de VF (pregunta a IPPU).
+
 - **2026-10-07 · Sesión M11.3-c — PA/PB, Δ, alerta e informe de cierre** (Lucas + Claude, sesión en la nube, rama **`m11.3-c`**, sólo `origin`). Decisiones **§5.117** (a–e + lo fijado). Sin cambio de DDL: head sigue **`dcc838486407`**.
   - **Servicios nuevos:** `protocolo.py` (24 ítems, totales sólo completos, integridad §4.3, Δ + alerta al firmar el PB), `delta.py` (`calcular_delta` tipado, interpretación y alerta desde `delta_interpretacion`), `informe_cierre.py` (firma con dos profesionales, `recibi`, `documento`); `idea.py` suma los recomendados como aviso y el Δ interanual.
   - **Endpoints:** `POST/GET /hce/{id}/protocolo` · `GET/PATCH /protocolo/{id}` · `POST /protocolo/{id}/firmar|addendas` · `GET /hce/{id}/idea/delta` · `POST/GET /hce/{id}/informe-cierre` · `GET/PATCH /informe-cierre/{id}` · `POST /informe-cierre/{id}/firmar|addendas|recibi` · `GET /informe-cierre/{id}/documento`. El ejemplo Swagger `fuera_de_secuencia` se mudó al PA.

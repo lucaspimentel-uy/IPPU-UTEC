@@ -37,30 +37,45 @@ def test_grupos_sin_filas_es_lista_vacia_y_un_anio_invalido_es_422(client, crear
     assert client.get("/grupos", params={"anio": "dos mil"}).status_code == 422
 
 
-def test_profesionales_ordenados_por_nombre_con_los_campos_minimos(client, crear_profesional):
+def _sin_login(filas: list[dict], admin) -> list[dict]:
+    """Las filas sin el `admin` con el que entra `client` (M11.3-d1): es del login, no del test."""
+    return [f for f in filas if f["id"] != admin.id]
+
+
+def test_profesionales_ordenados_por_nombre_con_los_campos_minimos(client, admin, crear_profesional):
     crear_profesional(nombre="Zulema Gil", especialidad="Psicología", rol="admin")
     crear_profesional(nombre="Ana Paz", especialidad=None)
     r = client.get("/profesionales")
     assert r.status_code == 200
-    assert [p["nombre"] for p in r.json()] == ["Ana Paz", "Zulema Gil"]
-    assert set(r.json()[0]) == {"id", "nombre", "especialidad", "rol", "activo"}, "ni email ni hash"
-    assert (r.json()[1]["especialidad"], r.json()[1]["rol"]) == ("Psicología", "admin")
-    assert r.json()[0]["especialidad"] is None
+    filas = _sin_login(r.json(), admin)
+    assert [p["nombre"] for p in filas] == ["Ana Paz", "Zulema Gil"]
+    assert set(filas[0]) == {"id", "nombre", "especialidad", "rol", "activo"}, "ni email ni hash"
+    assert (filas[1]["especialidad"], filas[1]["rol"]) == ("Psicología", "admin")
+    assert filas[0]["especialidad"] is None
 
 
-def test_profesionales_filtra_por_activo(client, crear_profesional):
+def test_profesionales_filtra_por_activo(client, admin, crear_profesional):
     crear_profesional(nombre="Activa Uno")
     crear_profesional(nombre="Inactivo Dos", activo=False)
-    nombres = lambda **q: [p["nombre"] for p in client.get("/profesionales", params=q).json()]  # noqa: E731
+    nombres = lambda **q: [p["nombre"] for p in _sin_login(client.get("/profesionales", params=q).json(), admin)]  # noqa: E731
     assert nombres(activo="true") == ["Activa Uno"]
     assert nombres(activo="false") == ["Inactivo Dos"]
     assert nombres() == ["Activa Uno", "Inactivo Dos"]
     assert client.get("/profesionales", params={"activo": "quizás"}).status_code == 422
 
 
-def test_profesionales_sin_filas_es_lista_vacia(client):
-    r = client.get("/profesionales", params={"activo": "true"})
+def test_profesionales_sin_inactivos_por_la_api_es_lista_vacia(client, admin):
+    """Por la API la tabla nunca está vacía (hay que estar logueado: el `admin` del login es una
+    fila, activa). Lo que se puede probar acá es un filtro sin coincidencias → `[]`, no un error."""
+    r = client.get("/profesionales", params={"activo": "false"})
     assert r.status_code == 200 and r.json() == []
+
+
+def test_listar_profesionales_con_la_tabla_vacia_es_lista_vacia(db):
+    """El caso «sin profesionales», en el servicio: la fixture `db` no crea al `admin` del login."""
+    from app.services.referencias import listar_profesionales
+
+    assert listar_profesionales(db) == [] and listar_profesionales(db, True) == []
 
 
 def test_solo_lectura_y_documentado_en_swagger(client):

@@ -8,7 +8,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.routers.dependencias import sesion_lectura, sesion_transaccional
+from app.models.identidad import Profesional
+from app.routers.dependencias import (
+    hce_visible, informe_visible, sesion_lectura, sesion_transaccional, usuario_actual,
+)
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.idea import AddendaCrear
@@ -18,8 +21,9 @@ from app.schemas.informe_cierre import (
 )
 from app.services import informe_cierre as servicio
 
-router_hce = APIRouter(prefix="/hce/{hce_id}/informe-cierre", tags=["informe de cierre"])
-router = APIRouter(prefix="/informe-cierre", tags=["informe de cierre"])
+router_hce = APIRouter(prefix="/hce/{hce_id}/informe-cierre", tags=["informe de cierre"], dependencies=[Depends(hce_visible)])
+router = APIRouter(prefix="/informe-cierre", tags=["informe de cierre"], dependencies=[Depends(informe_visible)])
+_USUARIO = Annotated[Profesional, Depends(usuario_actual)]
 
 _ERROR_404_HCE = {404: {"model": RespuestaError, "description": "No existe el expediente."}}
 _ERROR_404 = {404: {"model": RespuestaError, "description": "No existe el informe de cierre."}}
@@ -40,10 +44,10 @@ def _detalle(informe) -> InformeDetalle:
         409: {"model": RespuestaError, "description": "Ya existe un informe de cierre de ese año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: InformeCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
+def crear(hce_id: int, datos: InformeCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """Uno por `(expediente, año)`. Crear el IC sin LB, PA o PB del año firmados **se acepta** con
     `fuera_de_secuencia` y una fila `excepcion`. Deja una fila `auditoria` `tipo='carga'`."""
-    informe, avisos = servicio.crear_informe(db, hce_id, datos.model_dump(exclude_unset=True))
+    informe, avisos = servicio.crear_informe(db, hce_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=_detalle(informe), warnings=avisos)
 
 
@@ -76,10 +80,12 @@ def leer(informe_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
         409: {"model": RespuestaError, "description": "Está firmado (`code: signed_module`): se corrige por addenda."},
     },
 )
-def actualizar(informe_id: int, datos: InformeActualizar, db: Annotated[Session, Depends(sesion_transaccional)]):
+def actualizar(
+    informe_id: int, datos: InformeActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+):
     """Sólo se tocan las claves presentes; de `sint_escala`, sólo las escalas que vengan (una fila de
     auditoría `sint_escala.esc_N` por escala cambiada). El recibí **no** va por acá: `/recibi`."""
-    informe = servicio.actualizar_informe(db, informe_id, datos.model_dump(exclude_unset=True))
+    informe = servicio.actualizar_informe(db, informe_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=_detalle(informe))
 
 
@@ -96,11 +102,11 @@ def actualizar(informe_id: int, datos: InformeActualizar, db: Annotated[Session,
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(informe_id: int, datos: InformeFirmar, db: Annotated[Session, Depends(sesion_transaccional)]):
+def firmar(informe_id: int, datos: InformeFirmar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """El IC no tiene evaluadores propios: el cuerpo trae los **dos** `profesional_id` que firman,
     distintos y activos (§5.117 b). LB, PA o PB sin firmar **no bloquean**: avisan con
     `fuera_de_secuencia` y dejan una fila `excepcion`. Deja una fila `auditoria` `tipo='firma'`."""
-    informe, avisos = servicio.firmar_informe(db, informe_id, datos.firmantes)
+    informe, avisos = servicio.firmar_informe(db, informe_id, datos.firmantes, usuario_id=usuario.id)
     return Resultado(data=_detalle(informe), warnings=avisos)
 
 
@@ -114,8 +120,12 @@ def firmar(informe_id: int, datos: InformeFirmar, db: Annotated[Session, Depends
         409: {"model": RespuestaError, "description": "No está firmado: mientras no lo esté se edita directamente."},
     },
 )
-def agregar_addenda(informe_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
-    informe = servicio.agregar_addenda(db, informe_id, texto=datos.texto, profesional_id=datos.profesional_id)
+def agregar_addenda(
+    informe_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+):
+    informe = servicio.agregar_addenda(
+        db, informe_id, texto=datos.texto, profesional_id=usuario.id, usuario_id=usuario.id,
+    )
     return Resultado(data=_detalle(informe))
 
 
@@ -130,10 +140,12 @@ def agregar_addenda(informe_id: int, datos: AddendaCrear, db: Annotated[Session,
         409: {"model": RespuestaError, "description": "El informe no está firmado, o el recibí ya está registrado."},
     },
 )
-def registrar_recibi(informe_id: int, datos: RecibiCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
+def registrar_recibi(
+    informe_id: int, datos: RecibiCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+):
     """`{firmante, fecha}` de la familia, **después** de la firma y **una sola vez** (§5.117 e). Registra
     la entrega: no edita el contenido firmado. Deja una fila `auditoria` `tipo='carga'`."""
-    informe = servicio.registrar_recibi(db, informe_id, datos.model_dump())
+    informe = servicio.registrar_recibi(db, informe_id, datos.model_dump(), usuario_id=usuario.id)
     return Resultado(data=_detalle(informe))
 
 

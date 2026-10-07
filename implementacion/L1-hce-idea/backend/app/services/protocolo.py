@@ -24,6 +24,14 @@ Un protocolo por `(hce_id, tipo, anio)`. Sus 24 ítems van en `protocolo.items`,
   `tipo='alerta'` y la respuesta trae `alertas`. Todo en la transacción del request.
 - **Secuencia** (§5.95 · §5.116 e): crear o firmar un PA sin LB firmado, o un PB sin PA
   firmado, se acepta con `fuera_de_secuencia` + una fila `excepcion`.
+- **PB firmado antes que su PA** (decisión a de M11.3-d1, §5.118 — enmienda §5.117 (6)):
+  al firmar el **PA**, si el PB del mismo año ya está firmado y tiene `deltas` `NULL`, se
+  escriben sus `deltas` en la misma transacción, con **una** fila `auditoria`
+  `tipo='edicion'`, `campo='deltas'` (y la fila `alerta` si corresponde). Es un dato que
+  deriva el servidor, no una edición del contenido firmado del PB.
+- **Recomendados** (decisión c de M11.3-d1, §5.118; Documento Técnico §4.3): al firmar, menos
+  de 15 `semanas` (o sin cargar) o una síntesis de técnico de menos de 113 palabras (≈150)
+  agregan `recomendacion_no_cumplida` a `warnings[]`. No bloquean ni escriben auditoría.
 """
 from collections.abc import Mapping
 from typing import Any
@@ -33,9 +41,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    AUDITORIA_TIPO_ALERTA, ESTADO_EN_CURSO, ESTADO_FIRMADO, MODULO_HCE_PA, MODULO_HCE_PB,
+    AUDITORIA_TIPO_ALERTA, AVISO_RECOMENDACION_NO_CUMPLIDA, ESTADO_EN_CURSO, ESTADO_FIRMADO, MODULO_HCE_PA, MODULO_HCE_PB,
     PROTOCOLO_ESCALAS, PROTOCOLO_ITEMS, PROTOCOLO_VALOR_MAX, PROTOCOLO_VALOR_MIN,
-    PROTOCOLO_VALORES_CON_OBS,
+    PROTOCOLO_SEMANAS_RECOMENDADAS, PROTOCOLO_SINTESIS_PALABRAS_AVISO,
+    PROTOCOLO_SINTESIS_PALABRAS_SUGERIDAS, PROTOCOLO_VALORES_CON_OBS,
 )
 from app.models.identidad import Profesional
 from app.models.modulos import Protocolo
@@ -330,6 +339,75 @@ def _errores_de_firma(db: Session, protocolo: Protocolo) -> list[tuple[str | Non
     return errores
 
 
+def contar_palabras(texto: str | None) -> int:
+    """Palabras separadas por blancos (la misma cuenta que los recomendados del IDEA)."""
+    return len((texto or "").split())
+
+
+def avisos_de_recomendados(protocolo: Protocolo) -> list[dict[str, Any]]:
+    """Avisos `recomendacion_no_cumplida` de la fila HCE-PA / HCE-PB del §4.3 (decisión c de
+    M11.3-d1). Mismo formato que los del IDEA; **no bloquean ni escriben nada**."""
+    modulo = modulo_de(protocolo.tipo)
+    avisos: list[dict[str, Any]] = []
+    if protocolo.semanas is None or protocolo.semanas < PROTOCOLO_SEMANAS_RECOMENDADAS:
+        avisos.append({
+            "code": AVISO_RECOMENDACION_NO_CUMPLIDA, "modulo": modulo, "recomendacion": "semanas",
+            "mensaje": (
+                f"Se recomiendan al menos {PROTOCOLO_SEMANAS_RECOMENDADAS} semanas de asistencia efectiva"
+                + (f" (cargadas: {protocolo.semanas})" if protocolo.semanas is not None else " (no están cargadas)")
+            ),
+            "minimo": PROTOCOLO_SEMANAS_RECOMENDADAS, "valor": protocolo.semanas,
+        })
+    for campo, quien in (("sint_tec1", "técnico 1"), ("sint_tec2", "técnico 2")):
+        palabras = contar_palabras(getattr(protocolo, campo))
+        if palabras < PROTOCOLO_SINTESIS_PALABRAS_AVISO:
+            avisos.append({
+                "code": AVISO_RECOMENDACION_NO_CUMPLIDA, "modulo": modulo, "recomendacion": campo,
+                "mensaje": (
+                    f"La síntesis del {quien} tiene {palabras} palabras; la extensión sugerida es de "
+                    f"≈{PROTOCOLO_SINTESIS_PALABRAS_SUGERIDAS}"
+                ),
+                "minimo": PROTOCOLO_SINTESIS_PALABRAS_AVISO, "valor": palabras,
+            })
+    return avisos
+
+
+def _registrar_alerta(db: Session, protocolo: Protocolo, *, usuario_id: int | None) -> None:
+    """Fila `auditoria` `tipo='alerta'` si el Δ de alguna escala del PB cae en un tramo con alerta."""
+    alertas = delta.alertas_del_protocolo(db, protocolo.deltas)
+    if alertas:
+        auditoria.registrar_evento(
+            db, modulo=MODULO_HCE_PB, hce_id=protocolo.hce_id, tipo=AUDITORIA_TIPO_ALERTA, usuario_id=usuario_id,
+            detalle=f"Alerta institucional del Δ ({protocolo.anio}): " + " · ".join(
+                f"{a['escala']} Δ {a['delta']:+d} ({a['etiqueta']})" for a in alertas
+            ),
+        )
+
+
+def _completar_deltas_del_pb(db: Session, pa: Protocolo, *, usuario_id: int | None) -> None:
+    """Decisión a de M11.3-d1 (§5.118): se firma el PA y el PB del mismo año **ya estaba firmado**
+    sin Δ (se firmó antes) → se escriben sus `deltas` ahora, con una fila `edicion` `campo='deltas'`.
+
+    No es editar el PB: `deltas` es un dato que deriva el servidor de dos módulos firmados, y el
+    contenido que firmaron los técnicos (ítems, totales, síntesis) no se toca. Si el PB no está
+    firmado, o ya tiene Δ, no hace nada (el Δ se calcula cuando se firme el PB, como siempre).
+    """
+    pb = db.scalars(
+        select(Protocolo)
+        .where(Protocolo.hce_id == pa.hce_id, Protocolo.tipo == "B", Protocolo.anio == pa.anio)
+        .with_for_update()
+    ).first()
+    if pb is None or not pb.firmado or pb.deltas is not None:
+        return
+    pb.deltas = delta.calcular_delta(pa, pb)
+    db.flush()
+    auditoria.registrar_cambios(
+        db, modulo=MODULO_HCE_PB, hce_id=pb.hce_id, antes={"deltas": None}, despues={"deltas": pb.deltas},
+        usuario_id=usuario_id,
+    )
+    _registrar_alerta(db, pb, usuario_id=usuario_id)
+
+
 def firmar_protocolo(
     db: Session, protocolo_id: int, *, usuario_id: int | None = None,
 ) -> tuple[Protocolo, list[dict[str, Any]]]:
@@ -338,7 +416,9 @@ def firmar_protocolo(
     409 si ya está firmado · 422 con todo lo que falta. Congela los totales y, si es un **B**,
     escribe `deltas` = B − A cuando el A del mismo año está firmado (si no, `NULL`; el aviso
     `fuera_de_secuencia` lo explica) y la fila `alerta` si alguna escala cae en un tramo con
-    alerta. Todo en la transacción del request.
+    alerta. **En el A**, si el B del mismo año ya estaba firmado sin Δ, le completa los `deltas`
+    (decisión a de M11.3-d1). Los recomendados sin cumplir van como avisos. Todo en la
+    transacción del request.
     """
     protocolo = _obtener_para_escribir(db, protocolo_id)
     modulo = modulo_de(protocolo.tipo)
@@ -358,15 +438,11 @@ def firmar_protocolo(
         firmantes=[db.get(Profesional, protocolo.evaluador_t1_id), db.get(Profesional, protocolo.evaluador_t2_id)],
         congelar=congelar, usuario_id=usuario_id,
     )
-    alertas = delta.alertas_del_protocolo(db, protocolo.deltas)
-    if alertas:
-        auditoria.registrar_evento(
-            db, modulo=modulo, hce_id=protocolo.hce_id, tipo=AUDITORIA_TIPO_ALERTA, usuario_id=usuario_id,
-            detalle=f"Alerta institucional del Δ ({protocolo.anio}): " + " · ".join(
-                f"{a['escala']} Δ {a['delta']:+d} ({a['etiqueta']})" for a in alertas
-            ),
-        )
-    return protocolo, avisos
+    if protocolo.tipo == "B":
+        _registrar_alerta(db, protocolo, usuario_id=usuario_id)
+    else:
+        _completar_deltas_del_pb(db, protocolo, usuario_id=usuario_id)
+    return protocolo, [*avisos, *avisos_de_recomendados(protocolo)]
 
 
 def agregar_addenda(

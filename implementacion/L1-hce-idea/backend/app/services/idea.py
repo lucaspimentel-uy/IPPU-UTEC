@@ -17,7 +17,7 @@ una dimensión que nunca se tocó **no tiene entrada**.
   para un IDEA ya firmado (D4).
 - **Una sola firma** (§5.98: un único puntaje de consenso, acordado en persona): firmar
   exige `evaluador_t1_id` y `evaluador_t2_id` cargados, distintos y activos, y `firmas`
-  guarda a los dos. `usuario_id` de la auditoría queda `NULL` hasta que exista el login.
+  guarda a los dos. `usuario_id` de la auditoría es el usuario del token (login, §5.118 d).
 - **Integridad para firmar** (Documento Técnico §4.3, fila HCE-LB): 12 dimensiones
   puntuadas —sin `NS` ni vacías—, fecha de consenso, síntesis clínica y objetivos del
   período.

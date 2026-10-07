@@ -37,7 +37,13 @@ cada sub-módulo de M12: el head se deriva de los archivos de migración en tiem
 de ejecución y las tablas se cuentan, no se comparan contra una constante.
 """
 from datetime import date
+import os
 from pathlib import Path
+
+# Clave fija para los JWT de la suite (§5.119 a: sin `SECRET_KEY` la app no arranca). Va **antes**
+# de importar `app`, porque `settings` se construye al importar `app.core.config`; la variable de
+# entorno le gana al `.env` de cada uno, así que la suite no depende de la clave local.
+os.environ["SECRET_KEY"] = "clave-fija-de-la-suite-de-tests-no-usar-fuera-0123456789"
 
 import pytest
 from alembic.config import Config
@@ -272,9 +278,59 @@ def db_api(conexion_api):
         sesion.close()
 
 
+# ── Login (M11.3-d1, §5.101) ─────────────────────────────────────────────────
+# Toda ruta salvo `/health` y `/auth/login` pide token. Para que la suite anterior al login
+# siga diciendo lo mismo, **`client` entra como `admin` por omisión**: un profesional real
+# (las filas de `auditoria` lo referencian por FK) con la cabecera `Authorization` ya puesta.
+# Los tests de alcance usan `token_de(profesional)` para otra identidad, o `sin_token`.
+#
+# El hash se calcula **una vez por sesión** y con el costo mínimo de bcrypt: con el costo
+# por omisión (12), hashear en cada test sumaría minutos a la corrida.
+PASSWORD_TEST = "clave-de-prueba"
+EMAIL_ADMIN = "admin@ippu.test"
+
+
+@pytest.fixture(scope="session")
+def hash_test() -> str:
+    import bcrypt
+
+    return bcrypt.hashpw(PASSWORD_TEST.encode(), bcrypt.gensalt(rounds=4)).decode()
+
+
 @pytest.fixture
-def client(conexion_api):
-    """`TestClient` con `get_db` apuntando a la conexión del test (una sesión por request)."""
+def admin(conexion_api, hash_test):
+    """El `admin` con el que entra `client`. Nombre «Admin de prueba»: va al final de las listas por nombre."""
+    from app.models.identidad import Profesional
+
+    sesion = _fabrica_sesiones(conexion_api)()
+    try:
+        p = Profesional(
+            nombre="Zz Admin de prueba", email=EMAIL_ADMIN, rol="admin", activo=True, hashed_password=hash_test,
+        )
+        sesion.add(p)
+        sesion.commit()
+        sesion.refresh(p)
+        sesion.expunge(p)
+        return p
+    finally:
+        sesion.close()
+
+
+@pytest.fixture
+def token_de():
+    """`token_de(profesional)` → cabeceras `{"Authorization": "Bearer …"}` de ese profesional."""
+    from app.core.seguridad import crear_token
+
+    def _cabeceras(profesional) -> dict[str, str]:
+        return {"Authorization": f"Bearer {crear_token(profesional.id)}"}
+
+    return _cabeceras
+
+
+@pytest.fixture
+def client(conexion_api, admin, token_de):
+    """`TestClient` con `get_db` apuntando a la conexión del test (una sesión por request),
+    autenticado como `admin` (cabecera por omisión; un request la pisa con `headers=`)."""
     from fastapi.testclient import TestClient
 
     from app.core.database import get_db
@@ -291,7 +347,7 @@ def client(conexion_api):
 
     app.dependency_overrides[get_db] = _get_db
     try:
-        yield TestClient(app)
+        yield TestClient(app, headers=token_de(admin))
     finally:
         app.dependency_overrides.pop(get_db, None)
 

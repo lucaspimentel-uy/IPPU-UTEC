@@ -31,7 +31,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    ESTADO_EN_CURSO, ESTADO_FIRMADO, IC_SINTESIS_ESCALAS, MODULO_HCE_IC, PROTOCOLO_ESCALAS,
+    AVISO_RECOMENDACION_NO_CUMPLIDA, ESTADO_EN_CURSO, ESTADO_FIRMADO, IC_SINTESIS_ESCALA_PALABRAS_AVISO,
+    IC_SINTESIS_ESCALA_PALABRAS_SUGERIDAS, IC_SINTESIS_ESCALAS, MODULO_HCE_IC, PROTOCOLO_ESCALAS,
 )
 from app.models.identidad import Profesional
 from app.models.modulos import InformeCierre
@@ -232,6 +233,27 @@ def _errores_de_firma(
     return errores, profesionales
 
 
+def avisos_de_recomendados(informe: InformeCierre) -> list[dict[str, Any]]:
+    """Avisos `recomendacion_no_cumplida` de la fila HCE-IC del §4.3 (decisión c de M11.3-d1): una
+    síntesis de escala de menos de 75 palabras (≈100). «Elaboración próxima al cierre del PB» no
+    se verifica: no tiene un umbral escrito. **No bloquean ni escriben nada.**"""
+    avisos: list[dict[str, Any]] = []
+    sint = informe.sint_escala or {}
+    for escala in IC_SINTESIS_ESCALAS:
+        palabras = servicio_protocolo.contar_palabras(sint.get(escala))
+        if palabras < IC_SINTESIS_ESCALA_PALABRAS_AVISO:
+            avisos.append({
+                "code": AVISO_RECOMENDACION_NO_CUMPLIDA, "modulo": MODULO_HCE_IC,
+                "recomendacion": f"sint_escala.{escala}",
+                "mensaje": (
+                    f"La síntesis de la escala {escala} tiene {palabras} palabras; la extensión sugerida es de "
+                    f"≈{IC_SINTESIS_ESCALA_PALABRAS_SUGERIDAS}"
+                ),
+                "minimo": IC_SINTESIS_ESCALA_PALABRAS_AVISO, "valor": palabras,
+            })
+    return avisos
+
+
 def firmar_informe(
     db: Session, informe_id: int, firmantes_ids: list[int] | None, *, usuario_id: int | None = None,
 ) -> tuple[InformeCierre, list[dict[str, Any]]]:
@@ -246,7 +268,7 @@ def firmar_informe(
         db, informe, codigo=MODULO_HCE_IC, hce_id=informe.hce_id, anio=informe.anio,
         firmantes=profesionales, usuario_id=usuario_id,
     )
-    return informe, avisos
+    return informe, [*avisos, *avisos_de_recomendados(informe)]
 
 
 def agregar_addenda(

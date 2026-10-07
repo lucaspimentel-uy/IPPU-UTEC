@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.services.errores import (
-    ConflictError, ErrorDeDominio, ForbiddenAction, NotFound, ValidationFailed,
+    ConflictError, ErrorDeDominio, ForbiddenAction, NotFound, Unauthorized, ValidationFailed,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ _STATUS: tuple[tuple[type[ErrorDeDominio], int], ...] = (
     (ConflictError, 409),
     (ValidationFailed, 422),
     (ForbiddenAction, 403),
+    (Unauthorized, 401),
 )
 
 
@@ -60,7 +61,11 @@ def registrar_manejadores(app: FastAPI) -> None:
 
     @app.exception_handler(ErrorDeDominio)
     async def _dominio(_: Request, exc: ErrorDeDominio) -> JSONResponse:
-        return JSONResponse(_cuerpo(exc.code, list(exc.detalle)), status_code=_status_de(exc))
+        # RFC 6750: un 401 de un recurso protegido con Bearer anuncia el esquema.
+        cabeceras = {"WWW-Authenticate": "Bearer"} if isinstance(exc, Unauthorized) else None
+        return JSONResponse(
+            _cuerpo(exc.code, list(exc.detalle)), status_code=_status_de(exc), headers=cabeceras,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def _entrada(_: Request, exc: RequestValidationError) -> JSONResponse:
