@@ -5,7 +5,8 @@ Docs (Swagger): http://127.0.0.1:8000/docs
 
 Estado: **M11.3-a** — cimientos de la capa de servicios (errores, sobre de
 respuesta `{data, warnings}`, una transacción por request, auditoría de campo) y
-la primera rebanada vertical: persona + expediente (`/hce`). Los routers se
+la primera rebanada vertical: persona + expediente (`/hce`) y, desde M11.3-a2, las
+listas de sólo lectura `/grupos` y `/profesionales`. Los routers se
 entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
 se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
 backend/docs/esquema-datos-v2.md §3). El contrato de respuesta está en el
@@ -15,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import hce
+from app.routers import hce, referencias
 from app.routers.errores import registrar_manejadores
 
 app = FastAPI(
@@ -34,6 +35,8 @@ app = FastAPI(
 
 registrar_manejadores(app)
 app.include_router(hce.router)
+app.include_router(referencias.router_grupos)
+app.include_router(referencias.router_profesionales)
 
 app.add_middleware(
     CORSMiddleware,

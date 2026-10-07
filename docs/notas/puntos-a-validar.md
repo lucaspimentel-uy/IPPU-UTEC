@@ -280,6 +280,9 @@ convenio UTEC-LIDIA.
 > aplicación** — el único límite es el largo (relevamiento R0, BLOQUE 8). Con un entero desde 1000 **se
 > puede validar**, y conviene decidirlo junto con §1.8 y con `OrigenMigracionMixin`. **No se cambió el
 > tipo:** cerrar el punto es saber el formato, no implementarlo.
+>
+> ✅ **Implementado el 2026-10-06 (M11.3-a2, `handoff.md` §5.109):** `hc_historico` pasó a `Integer`, `CHECK ≥ 1000`,
+> `UNIQUE`, asignado por el servidor (`max + 1`, el primero 1001). El «No se cambió el tipo» de arriba ya no rige.
 
 **Qué es.** El esquema guarda `hc_historico` para poder cruzar cada expediente con el archivo
 de la HCE anterior. No sabemos qué formato tiene ese número.
@@ -298,6 +301,10 @@ al cargarlo en vez de aceptar cualquier texto.
 > «migran todos», **esos puntajes entran igual**, sin criterio decidido. Es decisión **de IPPU**, no
 > nuestra, y va al próximo contacto (bloque 13.a de
 > `docs/notas/respuestas-reunion-ippu-2026-08-21.md`).
+>
+> 🔢 **Restricción de numeración para cuando se migre (§5.113, 2026-10-06):** los expedientes migrados conservan su
+> `hc_historico` legado; antes de crear cualquier expediente real hay que migrar los legados primero o arrancar la
+> asignación por encima del máximo legado. No implementado.
 
 **Qué es.** Los ~80 expedientes existentes: ¿se migran, se cargan a mano, se dejan sólo como
 archivo consultable?

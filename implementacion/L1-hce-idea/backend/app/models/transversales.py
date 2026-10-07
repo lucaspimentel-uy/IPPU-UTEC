@@ -246,6 +246,11 @@ class Auditoria(Base):
     antes es esta tabla** — si el valor anterior no queda guardado acá, se
     pierde.
 
+    **`tipo='carga'` = se creó un registro** (§5.112): una sola fila, `campo`,
+    `valor_ant` y `valor_nuevo` en `NULL`, y `detalle` con el nombre del registro
+    creado. Hoy la escribe el alta del expediente (`HCE-00`); sin datos personales
+    en el texto. Las ediciones posteriores son `tipo='edicion'`, una fila por campo.
+
     Los tres son nullable: un evento de acceso o de firma no cambia un campo.
     `valor_*` son texto porque la tabla es transversal a todos los módulos y
     guardar la representación es suficiente para leer el historial; el tipado

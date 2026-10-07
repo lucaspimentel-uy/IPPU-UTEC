@@ -1,8 +1,8 @@
-"""esquema v2 inicial (i1)
+"""esquema v2 inicial a2
 
-Revision ID: b99294aec85c
+Revision ID: dcc838486407
 Revises: 
-Create Date: 2026-09-16 12:49:13.467044
+Create Date: 2026-10-06 22:49:59.867746
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'b99294aec85c'
+revision: str = 'dcc838486407'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -264,7 +264,7 @@ def upgrade() -> None:
     op.create_table('hce_diurna',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('persona_id', sa.Integer(), nullable=False),
-    sa.Column('hc_historico', sa.String(length=30), nullable=True),
+    sa.Column('hc_historico', sa.Integer(), nullable=True),
     sa.Column('grupo_id', sa.Integer(), nullable=True),
     sa.Column('diagnostico', sa.String(length=200), nullable=True),
     sa.Column('cie11', sa.String(length=20), nullable=True),
@@ -281,9 +281,11 @@ def upgrade() -> None:
     sa.Column('fecha_original', sa.Date(), nullable=True),
     sa.Column('fecha_migracion', sa.Date(), nullable=True),
     sa.Column('responsable_migracion', sa.String(length=120), nullable=True),
+    sa.CheckConstraint('hc_historico >= 1000', name=op.f('ck_hce_diurna_hc_historico_desde_1000')),
     sa.ForeignKeyConstraint(['grupo_id'], ['grupo.id'], name=op.f('fk_hce_diurna_grupo_id_grupo')),
     sa.ForeignKeyConstraint(['persona_id'], ['persona.id'], name=op.f('fk_hce_diurna_persona_id_persona')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_hce_diurna')),
+    sa.UniqueConstraint('hc_historico', name=op.f('uq_hce_diurna_hc_historico')),
     sa.UniqueConstraint('persona_id', name=op.f('uq_hce_diurna_persona_id'))
     )
     op.create_index(op.f('ix_hce_diurna_grupo_id'), 'hce_diurna', ['grupo_id'], unique=False)

@@ -157,9 +157,13 @@ class HceDiurna(OrigenMigracionMixin, Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"), unique=True)
-    # Número de historia de la HCE anterior. Identificador secundario (§10):
-    # sirve para cruzar con el archivo histórico, no como clave.
-    hc_historico: Mapped[str | None] = mapped_column(String(30))
+    # **N.º de HC institucional** (§5.43, §5.109): entero ≥ 1000, único. Lo asigna
+    # el servidor (`max + 1`, el primero 1001) y es la vía «N.º de historia clínica»
+    # de la búsqueda; `id` es interno y no se busca. Los expedientes migrados
+    # conservan el suyo (§5.113). El UNIQUE ya crea el índice que pide el Documento
+    # Técnico §3.3. Nullable sólo para filas armadas fuera del servicio (tests,
+    # migración): el alta por la API siempre lo completa.
+    hc_historico: Mapped[int | None] = mapped_column(Integer, unique=True)
     # D9: apunta a la fila del grupo **de ese año**, no a una letra. Para
     # mostrarlo se usa `grupo.nombre`; el id no significa nada.
     grupo_id: Mapped[int | None] = mapped_column(ForeignKey("grupo.id"), index=True)
@@ -183,6 +187,10 @@ class HceDiurna(OrigenMigracionMixin, Base):
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     actualizado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint("hc_historico >= 1000", name="hc_historico_desde_1000"),
     )
 
     persona: Mapped["Persona"] = relationship(back_populates="hce")

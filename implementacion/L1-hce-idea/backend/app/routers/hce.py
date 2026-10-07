@@ -35,12 +35,16 @@ def _ejemplo(status: int, cuerpo) -> dict:
 def crear(datos: HceCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
     """Crea la persona y su expediente en **una sola transacción**.
 
-    - **422** si falta un obligatorio, hay uno en blanco o el `grupo_id` no existe.
-    - **409** si ya hay una persona con esa cédula (se compara sin puntos, guiones
-      ni espacios).
+    - **422** si falta un obligatorio, hay uno en blanco, el `grupo_id` no existe o
+      el `hc_historico` explícito es menor que 1000.
+    - **409** si ya hay una persona con esa cédula (en cualquier formato de
+      escritura) o el `hc_historico` explícito ya lo tiene otro expediente.
+    - La **CI se guarda canónica** (solo dígitos y letras: sin puntos, guiones ni
+      espacios).
+    - **`hc_historico`**: si no viene, el servidor asigna el siguiente (1001 el
+      primero; dos altas simultáneas nunca reciben el mismo).
     - Un texto opcional vacío o en blanco se guarda como `NULL`.
-    - `hc_historico` es opcional y se guarda como llega (no hay regla de asignación
-      documentada).
+    - Deja **una** fila de `auditoria` con `tipo='carga'`.
     """
     cuerpo = datos.model_dump()
     persona = cuerpo.pop("persona")
@@ -57,8 +61,9 @@ def crear(datos: HceCrear, db: Annotated[Session, Depends(sesion_transaccional)]
 def buscar(
     db: Annotated[Session, Depends(sesion_transaccional)],
     ci: Annotated[str | None, Query(description="Cédula: contiene, sin puntos ni guiones.")] = None,
-    numero: Annotated[str | None, Query(description="N.º de expediente o N.º de historia anterior (igual).")] = None,
-    grupo: Annotated[str | None, Query(description="Nombre del grupo (igual; sin mayúsculas ni acentos).")] = None,
+    numero: Annotated[str | None, Query(description="N.º de historia clínica (`hc_historico`, igual). No busca por el id interno.")] = None,
+    grupo: Annotated[str | None, Query(description="Nombre del grupo (igual; sin mayúsculas ni acentos), del año `anio`.")] = None,
+    anio: Annotated[int | None, Query(ge=1, le=32767, description="Año del grupo; por omisión el año en curso. Sólo tiene efecto junto con `grupo`.")] = None,
     nombre: Annotated[str | None, Query(description="Nombre y/o apellido: contiene; sin mayúsculas ni acentos.")] = None,
 ):
     """Las **tres vías institucionales** —cédula, N.º de historia, grupo— más el
@@ -67,7 +72,7 @@ def buscar(
     """
     return [
         HceResumen.model_validate(h)
-        for h in servicio.buscar_hce(db, ci=ci, numero=numero, grupo=grupo, nombre=nombre)
+        for h in servicio.buscar_hce(db, ci=ci, numero=numero, grupo=grupo, anio=anio, nombre=nombre)
     ]
 
 

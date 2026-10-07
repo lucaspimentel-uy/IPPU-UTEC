@@ -16,7 +16,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.core.constantes import AUDITORIA_TIPO_EDICION
+from app.core.constantes import AUDITORIA_TIPO_CARGA, AUDITORIA_TIPO_EDICION
 from app.models.transversales import Auditoria
 
 
@@ -71,3 +71,26 @@ def registrar_cambios(
         db.add_all(filas)
         db.flush()
     return filas
+
+
+def registrar_carga(
+    db: Session,
+    *,
+    modulo: str,
+    hce_id: int | None,
+    detalle: str,
+    usuario_id: int | None = None,
+) -> Auditoria:
+    """Escribe **una** fila `tipo='carga'`: se creó un registro (§5.112).
+
+    `campo`, `valor_ant` y `valor_nuevo` quedan `NULL` (no cambió un campo); `detalle`
+    nombra el registro creado. **Sin datos personales** en el texto: el rastro dice
+    *qué* se creó, no *a quién* (la persona se lee en la propia HCE).
+    """
+    fila = Auditoria(
+        hce_id=hce_id, usuario_id=usuario_id, modulo=modulo,
+        tipo=AUDITORIA_TIPO_CARGA, detalle=detalle,
+    )
+    db.add(fila)
+    db.flush()
+    return fila

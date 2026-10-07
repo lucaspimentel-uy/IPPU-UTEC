@@ -7,47 +7,12 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-10-06 (sesión **M11.3-a** — cimientos de la capa de servicios + rebanada
->   persona/HCE). **Primer código de servicios del backend**: `app/services/`, `app/schemas/` y
->   `app/routers/` dejan de estar vacíos. **Hecho:** errores de dominio (`ConflictError`/`SignedModuleError`
->   → 409, `ValidationFailed` → 422, `ForbiddenAction` → 403, `NotFound` → 404) con **un solo cuerpo**
->   `{code, detail[]}` · sobre **`{data, warnings}`** en POST/PATCH (GET devuelve el recurso directo) · **una
->   transacción por request** (commit sólo en `routers/dependencias.py`; los servicios hacen `flush`) ·
->   auditoría de campo (`registrar_cambios`) · normalización `''`/blanco → `NULL` · `POST/GET/PATCH /hce` y
->   búsqueda por CI · N.º de historia · grupo (+ nombre). **Contrato y regla: §5.108** — son la base de las
->   rebanadas siguientes. **Sin cambios de modelo, migración ni seed.** **Medido:** `pytest -q` → **501
->   passed, 0 skipped** (435 + 66); ambos `--check` → exit 0; **51 tablas**; head **`b99294aec85c`** (un solo
->   archivo en `versions/`); `alembic check` → sin cambios pendientes. **Puntos abiertos** (§6, bullet M11):
->   `tipo` de auditoría para la creación · regla de `hc_historico` · qué es «N.º de HCE» en la búsqueda ·
->   falta listar grupos para que la demo elija uno. **Próximo:** **M11.3-b** (estado de flujo + `warnings` +
->   firma/addendas + validaciones del IDEA).
-> - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
-> - **Foco actual:** **L1 — M12 (absorción del Prototipo v4) CERRADA + I1 HECHO** (2026-09-16, sesión
->   M12.8-cierre+I1), **intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 ·
->   M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a ·
->   M12.8b-3a-bis · M12.8 · I1** — **51 tablas**, **501 tests en verde y 0 salteados** (435 al cerrar M12; +66 de M11.3-a), head de Alembic
->   **`b99294aec85c`** (un solo archivo en `versions/`). **Única excepción
->   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76) — **CANCELADA el 2026-09-16** (sesión M12.9,
->   §5.92), no diferida: no desbloqueaba nada de cara al 26/11.
->   **M11.3 ya tiene su reconocimiento R0-style hecho (R1, sesión M12.8b-1b).** ⚠️ **La §13 (bitácora) se mudó a `docs/bitacora.md` el 2026-09-09 (§5.84)**; en este archivo quedó un stub. 🆕 **M12.6 (HCE-PAI) se cerró el 2026-09-02 en modo SOLO ESQUEMA**: §5.54 reencuadró el bloqueo de §5.28 —de las 13 secciones del Manual que se daban por faltantes, **11 estaban en el `const MANUAL` del prototipo** y el Anexo A resultó ser material de M11.3, no de esquema— y quedan **§4 y §8 sin identificar**, anotadas en `puntos-a-validar.md` §1.16. **Ningún guard: los guards son M11.3.** El orden **M12.4 → M12.6** ya se cumplió (§5.23); **M12.6 arranca con §5.22 y §5.26 ya decididas, y ahora también con §5.50**. 🆕 **M12.5 (HCE-INC) se cerró el 2026-08-26** con tres decisiones nuevas: **§5.50 (J1)** cómo se lee una fuente que es a la vez especificación y demo —la regla que faltaba después de §5.37—, **§5.51 (J2)** el estado de inclusión es **continuo, no anual**, y **§5.52 (J3)** `inclusion.centro` es **texto, no FK**. ⚠️ **El backend estuvo quieto entre el 2026-08-15 y el 2026-08-26** (R0, D-11): lo que se había movido era documentación, demo y herramientas. **M12 cerró el 2026-09-16 y M11.3 se retoma en rebanadas verticales (§5.106).** Ningún módulo tiene dueño exclusivo (§5.6): se avisa qué se toma y se trabaja. 🆕 **La reunión con IPPU del 2026-08-21 está registrada desde el 2026-08-26** en `docs/notas/respuestas-reunion-ippu-2026-08-21.md` y en **§5.36–§5.49 (serie I)**. Lo más grande que cambió: **el IDEA es ANUAL** (§5.36 — cae la «línea base única» del Documento Técnico), **los nombres de los grupos por color eran datos de demostración** (§5.37), **el consentimiento no traba el flujo** (§5.38, ⚠️ de segunda mano), **guardar no requiere autorización pero compartir sí** (§5.39/§5.45) y **hay que modelar usuarios, roles y asignación técnico↔grupo** (§5.41). ⚠️ **Nada de eso está implementado:** son decisiones escritas; el trabajo está en §6.
-> - **Fuente normativa vigente (orden de precedencia, §5.92 deroga a §5.10):** **0.** las **decisiones de
->   este archivo §5**, el **acta de la reunión con IPPU del 2026-08-26**
->   (`respuestas-reunion-ippu-2026-08-21.md`) y las **respuestas escritas de IPPU del 2026-10-05**
->   (`docs/notas/respuestas-ippu-2026-10-05.txt`, §5.93) — todo documento normativo anterior a esa fecha
->   cede ante ellas donde haya contradicción · **1.** el **cuestionario respondido por escrito el 15/06** (prueba
->   primaria, `docs/fuentes/Cuestionario IPPU UTEC, respuestas.docx`) · **2.**
->   `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md` (Protocolo institucional de
->   acceso/confidencialidad/resguardo de la HC — matriz de roles §5, procedimientos de divulgación §6,
->   trazabilidad §8, Anexo II acuerdo de confidencialidad) · **3.** el **Manual de Procedimientos
->   institucional** · **4.** `docs/markdown/1_documento-tecnico-utec-lidia.md` (Doc. Técnico IPPU v1.0,
->   jul-2026) · **5.** presentación 13.05.2026. **En conflicto, gana el de más arriba.** ⚠️ **El Prototipo
->   v4 y la demo v4.1 (IPPU, ago-2026) dejaron de ser fuente normativa (§5.92, 2026-09-16): son insumo a
->   consultar con cuidado, no especificación a la que converger** — §5.37 encontró relleno generado
->   adentro, leído como fuente, y el mismo autor genera con IA el material de L3. Se consultan igual:
->   `docs/markdown/prototipo-v4-referencia.md` + `docs/prototipo-v4/`. Planes de ronda:
->   `docs/planes/PLAN-modular-adaptacion-HCE-2026-07.md` (M0–M11) y
->   `PLAN-M12-absorcion-prototipo-v4-2026-08.md` (M12, cerrada). Referencia previa de UX/reglas:
->   `docs/fuentes/HCE_IPPU_Prototipo_v1.html`.
+> **Estado al 2026-10-06 · sesión M11.3-a2** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
+>
+> - **Qué funciona:** backend FastAPI + Postgres · **51 tablas** · head `dcc838486407` · **521 tests, 0 salteados**. API: `POST/GET/PATCH /hce` (búsqueda por CI · N.º de HC · grupo del año · nombre), `GET /grupos?anio=`, `GET /profesionales?activo=`. Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request (§5.108). N.º de HC asignado por el servidor desde 1001 (§5.109) · CI canónica (§5.110) · auditoría `carga`/`edicion` (§5.112).
+> - **Próxima rebanada:** **M11.3-b** — estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA; después M11.3-c → M11.5-a → M11.3-d (§5.106). **Meta: prototipo presentable sin datos reales el 2026-11-26** (demo HTML conectada a la API; React + Tailwind es posterior).
+> - **Bloqueado / abierto (responsable):** Manual completo de IPPU, pregunta B1 — espera respuesta de **IPPU**, no bloquea el 26/11 (§5.105) · baja/reingreso del expediente — **Lucas**, M11.3-d · administración de grupos desde la app — **sin responsable**, fuera del 26/11 (§5.90/§5.92) · migración de datos — acceso a la HCE actual de **IPPU**, posterior al 26/11 (§5.104, §5.113).
+> - **Equipo:** Lucas Pimentel (UTEC-LIDIA, responsable del documento) · Samuel · Victor — sin dueño exclusivo de módulos (§5.6). Precedencia de fuentes: `CLAUDE.md`, «Precedencia normativa».
 
 ---
 
@@ -2985,6 +2950,63 @@ la explicación completa está en los docstrings de `app/routers/__init__.py` y 
 
 ---
 
+## 5.109 → 5.114 · Sesión M11.3-a2 — identidad y listas de lectura para la demo (2026-10-06, Lucas)
+
+Sesión correctiva corta de M11.3-a: la revisión encontró cuatro problemas de identidad y dos lecturas que
+faltaban para que la demo pudiera crear un expediente. Las seis decisiones las tomó el equipo; acá se
+transcriben (a–f) y entre paréntesis va lo que la implementación **fijó sin que estuviera dicho**.
+
+### 5.109 (a) `hc_historico` es el N.º de HC institucional: entero ≥ 1000, único, asignado por el servidor (2026-10-06, Lucas)
+**Enmienda §5.43**, que decía «no se cambia el tipo en esta sesión»: el tipo cambia ahora.
+- `hce_diurna.hc_historico` → `Integer`, `CHECK (hc_historico >= 1000)`, `UNIQUE` (que ya es el índice que pide
+  el Documento Técnico §3.3).
+- **Alta sin número:** el servidor asigna `max(hc_historico) + 1` (el primero, 1001) **dentro de la transacción
+  del request**, bajo un lock de aplicación (`pg_advisory_xact_lock`) que dura hasta el commit: dos altas
+  simultáneas nunca reciben el mismo número. **Alta con número explícito:** se acepta si es ≥ 1000 y está
+  libre; **409** si está tomado, **422** si es < 1000. Una colisión que llegue al `UNIQUE` (carga fuera del
+  servicio) también es 409, nunca 500.
+- **`hce.id` es interno.** La vía «N.º de historia clínica» de la búsqueda compara **sólo** `hc_historico`.
+- *(Fijado por la implementación:)* la columna queda **nullable** —sólo para filas armadas fuera del servicio,
+  p. ej. tests o migración—; el alta por la API siempre la completa. **Editable por `PATCH`** con las mismas
+  reglas (≥ 1000, libre), pero **no se puede borrar** (`null` → 422). Tope: lo que cabe en un `integer`; si el
+  máximo está en el tope, el alta sin número da 409 explicado (no hay «siguiente»). Un valor que no es un
+  entero, o uno que no cabe, **no coincide con nada** en la búsqueda (lista vacía, no error). Un `""`/blanco
+  en el campo se trata como ausente.
+
+### 5.110 (b) La CI se guarda canónica (2026-10-06, Lucas)
+Se guarda **sin puntos, guiones ni espacios** (`1.234.567-8` → `12345678`); **el formato es asunto del
+frontend**. El `UNIQUE` ya existente sobre `persona.ci` pasa a atrapar los duplicados sea cual sea el formato en
+que lleguen, **la carrera entre dos altas incluida**. *(Fijado:)* se quitan sólo los separadores, **no** se
+descartan letras (un documento extranjero no se destruye); una CI que queda vacía tras canonizar es 422. La
+búsqueda por CI es «contiene» sobre el valor canónico. Reemplaza el «se guarda tal cual se escribió» de §5.108.5.
+
+### 5.111 (c) La búsqueda por grupo es por año (2026-10-06, Lucas)
+Parámetro opcional `anio`; **por omisión, el año calendario en curso**. Corrige el punto abierto de M11.3-a
+(«Escolares» devolvía a los de 2026 y a los de 2027). *(Fijado:)* `anio` **sólo califica a `grupo`**: sin
+`grupo` no filtra nada, para que buscar por CI no deje afuera a quien está en un grupo de otro año.
+
+### 5.112 (d) Crear un registro escribe una fila `auditoria` `tipo='carga'` (2026-10-06, Lucas)
+`campo`, `valor_ant` y `valor_nuevo` en `NULL`; `detalle` nombra el registro. Hoy lo escribe el alta del
+expediente (módulo `HCE-00`), en la misma transacción. *(Fijado:)* el `detalle` **no lleva datos personales**
+(«Alta del expediente 3 (N.º de HC 1001)»). Las ediciones siguen siendo `tipo='edicion'`, una fila por campo.
+Cierra el punto abierto «`tipo` de la auditoría de creación» de M11.3-a.
+
+### 5.113 (e) Restricción de numeración heredada — para la migración de datos, **no implementada ahora** (2026-10-06, Lucas)
+Los expedientes migrados **conservan su `hc_historico` legado**. Antes de crear **cualquier expediente real**
+en el sistema nuevo, hay que **migrar primero los legados** o **arrancar la asignación por encima del máximo
+legado**; si no, el `max + 1` choca con números ya usados en la HCE anterior. (Con la asignación actual,
+migrar primero ya alcanza: el siguiente número sale de `max + 1`.) Puntero en `puntos-a-validar.md` §1.8.
+
+### 5.114 (f) Documentación mínima hasta el 2026-11-26 (2026-10-06, Lucas) — **enmienda §5.82**
+- La **cabecera de `handoff.md`** pasa a ser **una pantalla** (≤ 15 líneas): qué funciona, próxima rebanada y
+  qué está bloqueado, con su responsable.
+- Cada sesión escribe **sólo** su entrada de `docs/bitacora.md` (≤ 15 líneas), tilda su casilla de §6 y suma un
+  §5 **sólo si tomó una decisión**. **Sin notas, relevamientos ni resúmenes nuevos.**
+- Los documentos largos existentes quedan como **referencia**, no como lectura obligatoria. `CLAUDE.md`
+  («Arranque de sesión») se actualizó en consecuencia.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -3296,24 +3318,19 @@ la explicación completa está en los docstrings de `app/routers/__init__.py` y 
   - [x] **M11.3-a** cimientos + persona/HCE — **HECHO 2026-10-06** (§5.108). `POST /hce` · `GET /hce`
     (búsqueda) · `GET /hce/{id}` · `PATCH /hce/{id}`; 66 tests nuevos. Las rebanadas siguientes **heredan** el
     contrato `{data, warnings}` / `{code, detail[]}` y la regla «el servicio hace `flush`, el router
-    commitea». **Puntos abiertos que la rebanada dejó (no inventó reglas):**
-    - **`tipo` de la auditoría de creación.** El CHECK de `auditoria.tipo` admite `carga`, pero ningún
-      documento dice que sea el de «se creó el expediente». **Hoy un alta no escribe auditoría.** Decidir
-      si la creación se audita y con qué `tipo`.
-    - **Regla de `hc_historico`.** §5.43 fija sólo el *formato* (entero desde 1000: 1001, 1002…); ningún
-      documento define **cómo se le asigna número a un expediente nuevo**, ni si es único. La columna sigue
-      `varchar(30)`, sin CHECK, sin UNIQUE y **sin índice** (el Documento Técnico pide índice en los tres
-      campos de búsqueda). Se acepta como dato **opcional** tal cual llega. A decidir junto con la
-      migración (§5.43).
-    - **«N.º de HCE» en la búsqueda.** El Documento Técnico (línea 66) lo nombra sin decir qué columna es. La
-      búsqueda acepta **`hce_diurna.id` o `hc_historico`** (la demo usa el id). Si el id pasa de ~1000 los
-      dos rangos se pisan y un mismo número devolvería dos expedientes.
-    - **Falta `GET /grupos`**: `POST /hce` pide `grupo_id` y la demo no tiene cómo elegir uno. Entra con la
-      conexión de pantallas (M11.3-d / Fase 3).
+    commitea». **Puntos abiertos que la rebanada dejó (no inventó reglas)** — cinco de los seis quedaron
+    **cerrados en M11.3-a2** (abajo); sólo queda el de alta/baja:
+    - ~~`tipo` de la auditoría de creación~~ → **RESUELTO (M11.3-a2, §5.112):** `tipo='carga'`.
+    - ~~Regla de `hc_historico`~~ → **RESUELTO (M11.3-a2, §5.109):** entero ≥ 1000, único, asignado `max + 1`.
+    - ~~«N.º de HCE» en la búsqueda~~ → **RESUELTO (M11.3-a2, §5.109):** sólo `hc_historico`; el `id` es interno.
+    - ~~Falta `GET /grupos`~~ → **RESUELTO (M11.3-a2):** `GET /grupos?anio=` y `GET /profesionales?activo=`.
     - **Alta/baja del expediente** (`activo`, `fecha_baja`, `evento`) **no se edita por `PATCH /hce`**: es
-      la línea de tiempo (`evento`), no HCE-00. Sin rebanada asignada todavía.
-    - **Grupo en la búsqueda:** compara el **nombre**, de cualquier año (el grupo es `(nombre, anio)`).
-      «Escolares» devuelve integrantes de 2026 y de 2027.
+      la línea de tiempo (`evento`), no HCE-00. **Diferido a M11.3-d** (baja/reingreso).
+    - ~~Grupo en la búsqueda de cualquier año~~ → **RESUELTO (M11.3-a2, §5.111):** por año, por omisión el en curso.
+  - [x] **M11.3-a2** identidad + listas de lectura — **HECHO 2026-10-06** (§5.109–§5.114). `hc_historico`
+    entero ≥ 1000 único asignado por el servidor (lock por transacción) · CI canónica · búsqueda por grupo con
+    `anio` · auditoría `carga` en el alta · `GET /grupos` y `GET /profesionales` · migración regenerada
+    (head `dcc838486407`) · 20 tests nuevos (**521 passed, 0 skipped**).
   - [ ] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
     §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda.
   - [ ] **M11.3-c** PA/PB/IC + **Δ sólo dentro del mismo instrumento** (§5.36) + alerta + datos del IC

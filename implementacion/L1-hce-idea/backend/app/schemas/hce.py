@@ -11,7 +11,7 @@ servicio, no sólo para quien entre por HTTP.
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ── Ejemplos para Swagger ────────────────────────────────────────────────────
 _PERSONA_EJEMPLO = {
@@ -20,7 +20,7 @@ _PERSONA_EJEMPLO = {
     "referente": "Marta R. (madre)", "telefono": "099 456 789",
 }
 _HCE_EJEMPLO = {
-    "id": 3, "hc_historico": "1001", "activo": True, "fecha_baja": None,
+    "id": 3, "hc_historico": 1001, "activo": True, "fecha_baja": None,
     "grupo_id": 2, "grupo": {"id": 2, "nombre": "Escolares", "anio": 2026},
     "diagnostico": "TEA", "cie11": "6A02", "dx_fecha": "2020-03-01",
     "derivacion": "Pediatría", "medicacion": None, "alerta": None, "anamnesis": None,
@@ -29,7 +29,7 @@ _HCE_EJEMPLO = {
 }
 EJEMPLO_RESULTADO_HCE = {"data": _HCE_EJEMPLO, "warnings": []}
 EJEMPLO_RESUMEN_HCE = [
-    {"id": 3, "hc_historico": "1001", "activo": True,
+    {"id": 3, "hc_historico": 1001, "activo": True,
      "grupo": {"id": 2, "nombre": "Escolares", "anio": 2026},
      "persona": {"id": 7, "nombre": "Martín", "apellido": "Rodríguez", "ci": "5.789.123-4"}}
 ]
@@ -41,7 +41,10 @@ class PersonaCrear(BaseModel):
 
     nombre: str = Field(max_length=80)
     apellido: str = Field(max_length=80)
-    ci: str = Field(max_length=20, description="Se guarda tal cual se escribe; la unicidad ignora puntos, guiones y espacios.")
+    ci: str = Field(
+        max_length=20,
+        description="Se guarda **canónica**: sin puntos, guiones ni espacios (`1.234.567-8` → `12345678`). El formato es del frontend.",
+    )
     fecha_nac: date
     sexo: str | None = Field(None, max_length=20)
     localidad: str | None = Field(None, max_length=80)
@@ -65,9 +68,13 @@ class PersonaActualizar(BaseModel):
 class Hce00Campos(BaseModel):
     """Campos de HCE-00 propios del expediente (todos opcionales)."""
 
-    hc_historico: str | None = Field(
-        None, max_length=30,
-        description="N.º de historia de la HCE anterior. Texto libre por ahora: ver el punto abierto sobre su regla.",
+    hc_historico: int | None = Field(
+        None,
+        description=(
+            "N.º de historia clínica institucional: entero ≥ 1000, único. **Alta:** si no viene, "
+            "el servidor asigna el siguiente (1001 el primero); si viene, tiene que ser ≥ 1000 "
+            "(422) y estar libre (409). **Edición:** no se puede borrar (`null` → 422)."
+        ),
     )
     grupo_id: int | None = Field(None, description="Debe existir; es el grupo **de ese año** (id propio, D9).")
     diagnostico: str | None = Field(None, max_length=200)
@@ -77,6 +84,13 @@ class Hce00Campos(BaseModel):
     medicacion: str | None = None
     alerta: str | None = None
     anamnesis: dict[str, Any] | None = Field(None, description="Objeto JSON libre; se reemplaza completo.")
+
+    @field_validator("hc_historico", mode="before")
+    @classmethod
+    def _blanco_es_ausente(cls, valor):
+        """`""` o blanco → `None`, como en los demás opcionales (§5.108.5): un formulario que
+        deja el campo vacío no tiene que recibir un 422 por eso."""
+        return None if isinstance(valor, str) and not valor.strip() else valor
 
 
 class HceCrear(Hce00Campos):
@@ -141,7 +155,7 @@ class HceResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    hc_historico: str | None
+    hc_historico: int | None
     activo: bool
     grupo: GrupoResumen | None
     persona: PersonaResumen
@@ -153,7 +167,7 @@ class HceDetalle(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    hc_historico: str | None
+    hc_historico: int | None
     activo: bool
     fecha_baja: date | None
     grupo_id: int | None

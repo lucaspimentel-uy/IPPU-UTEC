@@ -20,6 +20,15 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-06 · Sesión M11.3-a2 — identidad + listas de lectura** (Lucas + Claude, rama `main`). Correctiva de M11.3-a; decisiones **§5.109–§5.114**.
+  - **`hc_historico`** → `Integer`, `CHECK ≥ 1000`, `UNIQUE`; el servidor asigna `max + 1` (1001 el primero) con `pg_advisory_xact_lock` por transacción; explícito: ≥ 1000 y libre (409/422). La búsqueda «N.º de HC» ya no mira `hce.id`.
+  - **CI canónica** (sin puntos/guiones/espacios) → el `UNIQUE` atrapa duplicados en cualquier formato. **Búsqueda por grupo con `anio`** (por omisión, el en curso). **Alta → una fila `auditoria` `tipo='carga'`**.
+  - **`GET /grupos?anio=`** y **`GET /profesionales?activo=`** (sólo lectura, sin email ni hash).
+  - **Migración regenerada** (§5.19): head **`dcc838486407`**, un solo archivo; `alembic check` limpio; dev DB recreada.
+  - **Medido:** `pytest -q` → **521 passed, 0 skipped** (501 + 20; incluye un test de concurrencia con dos transacciones reales); ambos `--check` → exit 0; humo con `uvicorn`: dos altas → 1001, 1002, y se borraron.
+  - Hallazgo propio: con un N.º explícito en el tope del `integer`, el `max + 1` desbordaba (500); ahora es 409 explicado.
+  - Cabecera de `handoff.md` reescrita a una pantalla (§5.114). Sin tocar demo, flujo, firma, auth ni baja/reingreso.
+
 - **2026-10-06 · Sesión M11.3-a — cimientos de servicios + rebanada persona/HCE** (Lucas + Claude, rama `main`).
   Primer código de `app/services/`, `app/schemas/` y `app/routers/`. **Sin cambios de modelo, migración ni seed.**
   - **Cimientos:** errores de dominio (409/422/403/404) con un solo cuerpo `{code, detail[]}`; sobre `{data,

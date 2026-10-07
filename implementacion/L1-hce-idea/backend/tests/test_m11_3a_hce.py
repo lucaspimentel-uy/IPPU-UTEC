@@ -37,9 +37,12 @@ def _id(r) -> int:
     return r.json()["data"]["id"]
 
 
-def _filas(db_api, hce_id: int) -> list[Auditoria]:
+def _filas(db_api, hce_id: int, tipo: str = "edicion") -> list[Auditoria]:
+    """Filas de auditoría del expediente; por omisión las **ediciones** (la `carga` del alta va aparte)."""
     db_api.expire_all()
-    return list(db_api.scalars(select(Auditoria).where(Auditoria.hce_id == hce_id).order_by(Auditoria.id)))
+    return list(db_api.scalars(
+        select(Auditoria).where(Auditoria.hce_id == hce_id, Auditoria.tipo == tipo).order_by(Auditoria.id)
+    ))
 
 
 def _columna(db_api, columna, hce_id: int):
@@ -77,9 +80,36 @@ def test_la_ci_se_compara_sin_puntos_guiones_ni_espacios(client, otra_forma):
     assert _alta(client, _persona(ci=otra_forma)).status_code == 409
 
 
-def test_la_ci_se_guarda_como_se_escribio(client, db_api):
+def test_la_ci_se_guarda_canonica_sin_puntos_guiones_ni_espacios(client, db_api):
     hid = _id(_alta(client, _persona(ci="5.789.123-4")))
-    assert db_api.scalar(select(Persona.ci).join(HceDiurna).where(HceDiurna.id == hid)) == "5.789.123-4"
+    assert db_api.scalar(select(Persona.ci).join(HceDiurna).where(HceDiurna.id == hid)) == "57891234"
+
+
+def test_la_misma_ci_en_tres_formatos_se_guarda_igual_y_la_segunda_es_409(client, db_api):
+    primero = _id(_alta(client, _persona(ci="1.234.567-8")))
+    assert db_api.scalar(select(Persona.ci).join(HceDiurna).where(HceDiurna.id == primero)) == "12345678"
+    for otra_forma in ("12345678", "1 234 567 8"):
+        r = _alta(client, _persona(ci=otra_forma))
+        assert r.status_code == 409 and r.json()["detail"][0]["campo"] == "persona.ci", otra_forma
+    assert db_api.scalar(select(func.count()).select_from(Persona).where(Persona.ci == "12345678")) == 1
+    # el par que pasa: otra cédula, en cualquiera de los formatos, entra y se guarda canónica
+    segundo = _id(_alta(client, _persona(ci="1 234 567-9")))
+    assert db_api.scalar(select(Persona.ci).join(HceDiurna).where(HceDiurna.id == segundo)) == "12345679"
+
+
+def test_una_ci_sin_digitos_ni_letras_es_422_al_guardar_y_con_digitos_es_201(client):
+    r = _alta(client, _persona(ci=".-."))
+    assert r.status_code == 422 and r.json()["detail"][0]["campo"] == "persona.ci"
+    assert _alta(client, _persona(ci=".5-")).status_code == 201
+
+
+def test_cambiar_la_ci_se_guarda_canonica_y_se_audita_canonica(client, db_api):
+    hid = _id(_alta(client, _persona(ci="111")))
+    assert client.patch(f"/hce/{hid}", json={"persona": {"ci": "2.222-2"}}).status_code == 200
+    assert [(f.valor_ant, f.valor_nuevo) for f in _filas(db_api, hid)] == [("111", "22222")]
+    # escribir la misma CI con otro formato no es un cambio
+    assert client.patch(f"/hce/{hid}", json={"persona": {"ci": "22.222"}}).status_code == 200
+    assert len(_filas(db_api, hid)) == 1
 
 
 def test_un_409_no_envenena_el_siguiente_request_del_mismo_test(client):
@@ -111,7 +141,7 @@ def test_un_grupo_inexistente_es_422_y_uno_existente_es_201(client, db_api, crea
     assert db_api.scalar(select(func.count()).select_from(Persona)) == 0, "un alta rechazada no deja nada"
     bueno = _alta(client, grupo_id=grupo.id)
     assert bueno.status_code == 201
-    assert bueno.json()["data"]["grupo"] == {"id": grupo.id, "nombre": "Escolares", "anio": 2026}
+    assert bueno.json()["data"]["grupo"] == {"id": grupo.id, "nombre": "Escolares", "anio": grupo.anio}
 
 
 @pytest.mark.parametrize("campo", ["nombre", "apellido", "ci"])
@@ -152,11 +182,147 @@ def test_el_vacio_se_guarda_como_null_y_el_texto_tal_cual(client, db_api):
     assert fila == (None, None, "Marta R.", None, None, None, "Pediatría", " dos veces por día ")
 
 
-def test_hc_historico_se_acepta_como_dato_opcional(client):
-    con = _alta(client, hc_historico="1001")
-    assert con.status_code == 201 and con.json()["data"]["hc_historico"] == "1001"
-    sin = _alta(client, hc_historico="  ")
-    assert sin.status_code == 201 and sin.json()["data"]["hc_historico"] is None
+# ── N.º de HC (§5.109) ───────────────────────────────────────────────────────
+def test_los_numeros_de_hc_asignados_son_1001_1002_en_orden(client):
+    a, b, c = (_alta(client).json()["data"]["hc_historico"] for _ in range(3))
+    assert (a, b, c) == (1001, 1002, 1003)
+
+
+def test_un_numero_explicito_libre_es_201_ocupado_409_y_menor_a_1000_422(client):
+    ok = _alta(client, hc_historico=5000)
+    assert ok.status_code == 201 and ok.json()["data"]["hc_historico"] == 5000
+    ocupado = _alta(client, hc_historico=5000)
+    assert ocupado.status_code == 409 and ocupado.json()["detail"][0]["campo"] == "hc_historico"
+    bajo = _alta(client, hc_historico=999)
+    assert bajo.status_code == 422 and bajo.json()["detail"][0]["campo"] == "hc_historico"
+    # el límite de abajo pasa, y el siguiente automático sigue al máximo existente
+    assert _alta(client, hc_historico=1000).status_code == 201
+    assert _alta(client).json()["data"]["hc_historico"] == 5001
+
+
+def test_un_numero_rechazado_no_deja_persona_ni_expediente(client, db_api):
+    assert _alta(client, hc_historico=2000).status_code == 201
+    for malo in (2000, 999):
+        assert _alta(client, hc_historico=malo).status_code in (409, 422)
+    assert db_api.scalar(select(func.count()).select_from(Persona)) == 1
+    assert db_api.scalar(select(func.count()).select_from(HceDiurna)) == 1
+
+
+def test_un_numero_que_no_cabe_en_un_entero_o_no_es_entero_es_422_y_en_blanco_se_asigna(client):
+    for malo in (2_147_483_648, "abc", 1000.5):
+        r = _alta(client, hc_historico=malo)
+        assert r.status_code == 422, malo
+        assert r.json()["code"] == "validation_error"
+    en_blanco = _alta(client, hc_historico="  ")
+    assert en_blanco.status_code == 201 and en_blanco.json()["data"]["hc_historico"] == 1001
+    # el tope exacto cabe; después de él no hay «siguiente»: 409 explicado, no un 500 por desborde
+    assert _alta(client, hc_historico=2_147_483_647).status_code == 201
+    sin_numero = _alta(client)
+    assert sin_numero.status_code == 409 and sin_numero.json()["detail"][0]["campo"] == "hc_historico"
+    assert _alta(client, hc_historico=2000).status_code == 201  # con uno explícito libre sigue andando
+
+
+def test_editar_el_numero_valida_rango_y_unicidad_y_no_se_puede_borrar(client, db_api):
+    a = _id(_alta(client))   # 1001
+    b = _id(_alta(client))   # 1002
+    assert client.patch(f"/hce/{b}", json={"hc_historico": 1001}).status_code == 409
+    assert client.patch(f"/hce/{b}", json={"hc_historico": 999}).status_code == 422
+    assert client.patch(f"/hce/{b}", json={"hc_historico": None}).status_code == 422
+    assert client.patch(f"/hce/{b}", json={"hc_historico": 1002}).status_code == 200, "el propio número no es duplicado"
+    assert _filas(db_api, b) == []
+    r = client.patch(f"/hce/{b}", json={"hc_historico": 3000})
+    assert r.status_code == 200 and r.json()["data"]["hc_historico"] == 3000
+    assert [(f.campo, f.valor_ant, f.valor_nuevo) for f in _filas(db_api, b)] == [("hc_historico", "1002", "3000")]
+    assert client.get(f"/hce/{a}").json()["hc_historico"] == 1001
+
+
+def test_la_carrera_por_el_numero_tambien_es_409_y_no_un_500(client, monkeypatch):
+    """La verificación previa «no ve» al otro: el UNIQUE de la base es la última defensa."""
+    assert _alta(client, hc_historico=4000).status_code == 201
+    monkeypatch.setattr(servicio_hce, "_exigir_hc_libre", lambda *a, **k: None)
+    r = _alta(client, hc_historico=4000)
+    assert r.status_code == 409 and r.json()["detail"][0]["campo"] == "hc_historico"
+    monkeypatch.undo()
+    assert _alta(client, hc_historico=4001).status_code == 201  # y la conexión sigue sana
+
+
+def test_dos_altas_concurrentes_reciben_numeros_distintos(engine):
+    """Dos transacciones **reales y simultáneas** (conexiones propias, con commit).
+
+    La segunda tiene que esperar el lock de la numeración hasta que la primera
+    confirme; sin él las dos leerían el mismo `max` y chocarían (o se pisarían).
+    Es el único test que commitea de verdad: limpia lo que creó.
+    """
+    import threading
+    import time
+
+    from sqlalchemy import delete
+    from sqlalchemy.orm import sessionmaker
+
+    Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    cis = ("70000001", "70000002")
+    resultados: dict[str, int] = {}
+    errores: list[BaseException] = []
+    primera_numerada = threading.Event()
+
+    def _alta_real(clave: str, ci: str, esperar: threading.Event | None, avisar: threading.Event | None):
+        s = Sesion()
+        try:
+            if esperar:
+                esperar.wait(5)
+            h = servicio_hce.crear_hce(
+                s, persona={"nombre": "A", "apellido": "B", "ci": ci, "fecha_nac": "2016-01-01"}, hce={},
+            )
+            resultados[clave] = h.hc_historico
+            if avisar:  # numerada pero SIN confirmar: la otra tiene que esperar
+                avisar.set()
+                time.sleep(0.5)
+            s.commit()
+        except BaseException as exc:  # noqa: BLE001
+            errores.append(exc)
+            s.rollback()
+        finally:
+            s.close()
+
+    try:
+        t1 = threading.Thread(target=_alta_real, args=("a", cis[0], None, primera_numerada))
+        t2 = threading.Thread(target=_alta_real, args=("b", cis[1], primera_numerada, None))
+        t1.start()
+        t2.start()
+        t1.join(15)
+        t2.join(15)
+        assert not errores, errores
+        assert sorted(resultados.values()) == [1001, 1002], resultados
+        assert resultados["a"] == 1001 and resultados["b"] == 1002, "la que espera recibe el número siguiente"
+    finally:
+        with Sesion() as s:
+            ids = list(s.scalars(select(Persona.id).where(Persona.ci.in_(cis))))
+            s.execute(delete(HceDiurna).where(HceDiurna.persona_id.in_(ids)))  # la auditoría cae por CASCADE
+            s.execute(delete(Persona).where(Persona.id.in_(ids)))
+            s.commit()
+
+
+# ── Auditoría de la creación (§5.112) ────────────────────────────────────────
+def test_el_alta_escribe_exactamente_una_fila_de_carga_y_un_patch_solo_ediciones(client, db_api):
+    hid = _id(_alta(client, diagnostico="TEA"))
+    cargas = _filas(db_api, hid, "carga")
+    assert len(cargas) == 1
+    c = cargas[0]
+    assert (c.modulo, c.tipo, c.campo, c.valor_ant, c.valor_nuevo) == ("HCE-00", "carga", None, None, None)
+    assert str(hid) in c.detalle and "1001" in c.detalle
+    assert client.patch(f"/hce/{hid}", json={"diagnostico": "otro", "alerta": "x"}).status_code == 200
+    assert len(_filas(db_api, hid, "carga")) == 1, "editar no vuelve a escribir una carga"
+    assert len(_filas(db_api, hid, "edicion")) == 2
+    db_api.expire_all()
+    assert db_api.scalar(select(func.count()).select_from(Auditoria).where(Auditoria.hce_id == hid)) == 3
+
+
+def test_un_alta_rechazada_no_escribe_carga(client, db_api):
+    assert _alta(client, _persona(ci="55")).status_code == 201
+    assert _alta(client, _persona(ci="55")).status_code == 409
+    assert _alta(client, _persona(ci="56"), grupo_id=987654).status_code == 422
+    db_api.expire_all()
+    assert db_api.scalar(select(func.count()).select_from(Auditoria).where(Auditoria.tipo == "carga")) == 1
 
 
 # ── Lectura ──────────────────────────────────────────────────────────────────
@@ -314,9 +480,9 @@ def legajos(client, crear_grupo):
     escolares, inicial = crear_grupo(nombre="Escolares"), crear_grupo(nombre="Inicial")
     ids = {
         "martin": _id(_alta(client, _persona(nombre="Martín", apellido="Núñez", ci="5.789.123-4"),
-                            grupo_id=escolares.id, hc_historico="1001")),
+                            grupo_id=escolares.id)),
         "sofia": _id(_alta(client, _persona(nombre="Sofía", apellido="Pérez", ci="6.012.345-1"),
-                           grupo_id=escolares.id, hc_historico="1002")),
+                           grupo_id=escolares.id)),
         "tomas": _id(_alta(client, _persona(nombre="Tomás", apellido="Gil", ci="7.000.111-2"))),
     }
     ids["inicial_id"] = inicial.id
@@ -336,11 +502,18 @@ def test_buscar_por_ci_ignora_puntos_y_guiones_y_no_inventa_resultados(client, l
     assert _buscar(client, ci="999") == []
 
 
-def test_buscar_por_numero_encuentra_el_expediente_o_la_historia_anterior(client, legajos):
-    assert _buscar(client, numero=str(legajos["tomas"])) == [legajos["tomas"]]
+def test_buscar_por_numero_es_solo_el_numero_de_hc_y_nunca_el_id_interno(client, legajos, db_api):
+    # el N.º de HC de cada uno se asignó solo: 1001, 1002, 1003
+    assert _buscar(client, numero="1001") == [legajos["martin"]]
     assert _buscar(client, numero="1002") == [legajos["sofia"]]
+    assert _buscar(client, numero=" 1003 ") == [legajos["tomas"]]
+    # el id interno de un expediente NO es un N.º de HC: buscarlo no lo encuentra
+    for clave in ("martin", "sofia", "tomas"):
+        assert db_api.scalar(select(HceDiurna.hc_historico).where(HceDiurna.id == legajos[clave])) >= 1001
+        assert _buscar(client, numero=str(legajos[clave])) == []
     assert _buscar(client, numero="424242") == []
     assert _buscar(client, numero="12345678901234567890") == []  # no cabe en un int: no debe explotar
+    assert _buscar(client, numero="10x1") == []                   # no es un número: nada coincide
 
 
 def test_buscar_por_grupo_ignora_mayusculas_y_no_encuentra_otro_grupo(client, legajos):
@@ -348,6 +521,26 @@ def test_buscar_por_grupo_ignora_mayusculas_y_no_encuentra_otro_grupo(client, le
     assert _buscar(client, grupo="  escolares ") == [legajos["martin"], legajos["sofia"]]
     assert _buscar(client, grupo="Inicial") == []  # el grupo existe pero no tiene integrantes
     assert _buscar(client, grupo="Adolescentes") == []
+
+
+def test_buscar_por_grupo_es_por_anio_y_por_omision_el_anio_en_curso(client, crear_grupo):
+    hoy = servicio_hce.anio_actual()
+    actual, pasado = crear_grupo(nombre="Escolares", anio=hoy), crear_grupo(nombre="Escolares", anio=hoy - 1)
+    de_hoy = _id(_alta(client, _persona(nombre="Hoy"), grupo_id=actual.id))
+    de_ayer = _id(_alta(client, _persona(nombre="Ayer"), grupo_id=pasado.id))
+    assert _buscar(client, grupo="Escolares") == [de_hoy], "por omisión, el año en curso"
+    assert _buscar(client, grupo="Escolares", anio=hoy) == [de_hoy]
+    assert _buscar(client, grupo="Escolares", anio=hoy - 1) == [de_ayer]
+    assert _buscar(client, grupo="Escolares", anio=hoy + 1) == []
+    # `anio` sólo califica al grupo: sin `grupo` no deja afuera a nadie (ni siquiera a quien está en un grupo viejo)
+    assert sorted(_buscar(client, anio=hoy)) == sorted([de_hoy, de_ayer])
+    assert _buscar(client, nombre="ayer") == [de_ayer]
+
+
+def test_el_anio_de_la_busqueda_fuera_de_rango_es_422_y_dentro_es_200(client):
+    assert client.get("/hce", params={"grupo": "x", "anio": 0}).status_code == 422
+    assert client.get("/hce", params={"grupo": "x", "anio": 99999}).status_code == 422
+    assert client.get("/hce", params={"grupo": "x", "anio": 2026}).status_code == 200
 
 
 def test_buscar_por_nombre_ignora_acentos_y_vale_en_cualquier_orden(client, legajos):
@@ -387,7 +580,7 @@ def test_la_lista_trae_el_resumen_sin_sobre(client, legajos):
     fila = client.get("/hce", params={"ci": "5789"}).json()[0]
     assert set(fila) == {"id", "hc_historico", "activo", "grupo", "persona"}
     assert fila["persona"] == {
-        "id": fila["persona"]["id"], "nombre": "Martín", "apellido": "Núñez", "ci": "5.789.123-4",
+        "id": fila["persona"]["id"], "nombre": "Martín", "apellido": "Núñez", "ci": "57891234",
     }
     assert fila["grupo"]["nombre"] == "Escolares"
 

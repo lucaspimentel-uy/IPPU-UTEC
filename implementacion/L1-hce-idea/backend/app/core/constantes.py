@@ -588,3 +588,11 @@ MODULO_HCE_PAI = "HCE-PAI"
 #: admite además firma · excepcion · addenda · alerta · carga · acceso, que son de
 #: otras rebanadas).
 AUDITORIA_TIPO_EDICION = "edicion"
+#: Valor de `auditoria.tipo` para la **creación** de un registro (§5.112): una fila,
+#: `campo` NULL, `detalle` con el nombre del registro creado.
+AUDITORIA_TIPO_CARGA = "carga"
+
+#: N.º de HC institucional (`hce_diurna.hc_historico`, §5.109): entero desde 1000,
+#: hasta lo que cabe en un `integer` de Postgres.
+HC_HISTORICO_MIN = 1000
+HC_HISTORICO_MAX = 2_147_483_647

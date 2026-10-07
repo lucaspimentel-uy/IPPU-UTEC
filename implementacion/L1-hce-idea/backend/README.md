@@ -66,11 +66,11 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **501 passed, 0 skipped**.
+Una corrida válida de hoy es **521 passed, 0 skipped**.
 
 ## API (M11.3-a)
 
-Swagger en `/docs`. Por ahora: `POST /hce` · `GET /hce` (búsqueda por `ci`, `numero`, `grupo`, `nombre`) ·
+Swagger en `/docs`. Por ahora: `POST /hce` · `GET /hce` (búsqueda por `ci`, `numero` = N.º de HC, `grupo` + `anio`, `nombre`) · `GET /grupos?anio=` · `GET /profesionales?activo=` ·
 `GET /hce/{id}` · `PATCH /hce/{id}`. **Contrato** (`handoff.md` §5.108): `GET` devuelve el recurso directo;
 `POST`/`PATCH` devuelven `{"data": …, "warnings": []}`; todos los errores devuelven
 `{"code": …, "detail": [{"campo": …, "mensaje": …}]}`. **Una transacción por request**: los servicios

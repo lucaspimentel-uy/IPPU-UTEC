@@ -36,6 +36,7 @@ segundo `skip`, en `tests/test_esquema_v2.py`, y también se retiró.
 cada sub-módulo de M12: el head se deriva de los archivos de migración en tiempo
 de ejecución y las tablas se cuentan, no se comparan contra una constante.
 """
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -323,7 +324,7 @@ def crear_grupo(db_api):
         from app.models.identidad import Grupo
 
         n = next(contador)
-        datos = {"nombre": f"Grupo {n}", "anio": 2026}
+        datos = {"nombre": f"Grupo {n}", "anio": date.today().year}  # el año en curso: es el que la búsqueda asume
         datos.update(campos)
         g = Grupo(**datos)
         db_api.add(g)

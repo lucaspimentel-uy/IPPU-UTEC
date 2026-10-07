@@ -7,18 +7,20 @@
 > 2026-08-03: lo tienen los tres al clonar, y aplica igual en la sesión de cualquiera.
 
 ## Arranque de sesión (obligatorio)
-1. `git pull` y leer **`handoff.md`** — cabecera, **§5** (decisiones tomadas), **§6** (pendientes y sus
-   responsables) y **§12** (flujo de trabajo del equipo).
+1. `git pull` y leer la **cabecera de `handoff.md`** (una pantalla: qué funciona, próxima rebanada,
+   bloqueos) y el **§6** de la rebanada que se toma. **Hasta el 2026-11-26 rige la documentación mínima
+   (`handoff.md` §5.114, enmienda §5.82):** el resto de `handoff.md` (§5, §12) y los documentos largos son
+   **referencia**, no lectura obligatoria — se consultan cuando la tarea los toca (la regla
+   anti-contradicción de abajo sigue vigente).
 2. Mirar en §6 si alguien ya está en eso y trabajar en rama corta. **Desde el 2026-08-07 ningún módulo
    tiene dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma, no se pide permiso.
 3. **La demo está modularizada** (`demo/index.html` + `demo/css/` + `demo/js/*.js`, 2026-08-07): se puede
    trabajar en paralelo **siempre que cada uno tome archivos distintos** de `demo/js/`. Avisar qué archivo
    se toma (§12.3). `index.html` y `js/utils.js` los tocan todos → coordinar antes.
-4. Al terminar: verificar (pytest / Playwright), **actualizar `handoff.md`** (§5 si hubo decisión, §6) y
-   escribir la entrada de bitácora en **`docs/bitacora.md`** (la §13 se mudó ahí el 2026-09-09, `handoff.md`
-   §5.84; en `handoff.md` quedó un stub). Por §5.82, la sesión que escribe bitácora **también actualiza la
-   cabecera de `handoff.md`** (fecha, nombre de sesión, cifras). Después, commit + push **a los dos
-   remotos** (`gitlab` y `origin`).
+4. Al terminar: verificar (pytest / Playwright) y escribir **sólo** (§5.114): la entrada de **`docs/bitacora.md`**
+   (≤ 15 líneas), la casilla de **§6** tildada, un **§5** únicamente si se tomó una decisión, y la **cabecera de
+   `handoff.md`** al día (≤ 15 líneas). **Sin notas, relevamientos ni resúmenes nuevos.** Después, commit + push
+   **a los dos remotos** (`gitlab` y `origin`).
 
 ## Regla anti-contradicción
 Si algo que se está por implementar **contradice una decisión ya registrada en `handoff.md` §5**, no se
@@ -109,7 +111,7 @@ React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · P
 
 ⚠️ **Para el 26/11/2026 el frontend es la demo HTML existente conectada a la API** (Fase 3), no React: React + Tailwind es **posterior al 26/11** (`handoff.md` §5.106, 2026-10-05).
 
-**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **501 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6, 432 al cerrar M12.8a, 434 al cerrar M12.8, 435 al cerrar M12, 501 al cerrar M11.3-a): si ves «skipped», algo está mal.
+**Backend** (`implementacion/L1-hce-idea/backend/`): **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL**. Correr: `cd` al backend → **`docker compose up -d`** (Postgres 16 en `127.0.0.1:5440`) → `.venv\Scripts\Activate.ps1` → `alembic upgrade head` → `python -m app.seed_catalogos` → `uvicorn app.main:app --reload` (docs en `/docs`). Tests: `pytest -q` (base `ippu_test`, aislada). **Docker es requisito**: `config.py` rechaza al arrancar cualquier `DATABASE_URL` que no sea Postgres, y desde el 2026-08-15 una **guardia de sesión** en `tests/conftest.py` **aborta `pytest` con exit 1** si el contenedor no está arriba, si la base de desarrollo está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba y la corrida devolvía **exit 0** con la mitad de los tests sin correr; **ya no hay ningún `skip`**. Una corrida válida es **521 passed, 0 skipped** (307 al cerrar M12.5, 389 al cerrar M12.6, 432 al cerrar M12.8a, 434 al cerrar M12.8, 435 al cerrar M12, 501 al cerrar M11.3-a, 521 al cerrar M11.3-a2): si ves «skipped», algo está mal.
 
 **Ronda M12 (absorción del Prototipo v4) — CERRADA el 2026-09-16**, intercalada entre M11.2 y M11.3.
 Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Toca la misma capa que M11.2 —modelos,
@@ -180,8 +182,8 @@ real de los catálogos propios de IPPU la da IPPU, no el prototipo.
   el Prototipo v4 verbatim; el resto de `DESDE_LA_DEMO` se queda, con motivo anotado en el código — el
   Prototipo v4 dejó de ser fuente normativa, ver arriba) y los guards de M12.1–M12.7 auditados (un hueco
   real corregido en `puntuacion_idea`). **No** es el seed espejo (eso es M11.5). Estado final: **51
-  tablas**, **501 tests en verde y 0 salteados** (435 al cerrar M12: 434 de M12.8 + 1 de I1; +66 de M11.3-a), migración
-  `b99294aec85c`, un solo archivo en `versions/`. **Única excepción registrada: M12.8b-3b** (pase de
+  tablas**, **521 tests en verde y 0 salteados** (435 al cerrar M12: 434 de M12.8 + 1 de I1; +66 de M11.3-a; +20 de M11.3-a2), migración
+  `dcc838486407`, un solo archivo en `versions/`. **Única excepción registrada: M12.8b-3b** (pase de
   vocabulario, diferido).
 - **I1 HECHO** (2026-09-16, mismo sesión que cierra M12.8, §5.36/§5.91) — `idea.anio` **SmallInteger NOT
   NULL** (mismo tipo que `grupo.anio`) + `UniqueConstraint(hce_id, anio)` (`uq_idea_hce_anio`, mismo patrón
@@ -198,7 +200,7 @@ real de los catálogos propios de IPPU la da IPPU, no el prototipo.
 
 **M11 (backend v2).** Sin dueño exclusivo (`handoff.md` §5.6). Decisiones cerradas (`handoff.md` §5.2, **no reabrir sin acuerdo del equipo**): **Postgres-only** · **lógica de negocio en el servidor** (Pydantic + servicios, **sin triggers PL/pgSQL**; la BD sólo garantiza integridad estructural) · **portabilidad paramétrica mínima**.
 - **HECHO (2026-08-07):** **M11.1** infra + **M11.2** modelos (28 tablas en `app/models/{catalogos,identidad,modulos,transversales}.py`), migración inicial única y catálogos. El backend v1 **se retiró entero** (hablaba del modelo pre-Documento Técnico). Verificado: **21 tests estructurales**.
-- **FALTA — en REBANADAS VERTICALES** (`handoff.md` §5.106, 2026-10-05; **M11.4 se disuelve**: cada rebanada trae servicio + schema + router + tests): **M11.3-a** cimientos + persona/HCE (**HECHA 2026-10-06**, `handoff.md` §5.108: contrato `{data, warnings}`, una transacción por request) → **M11.3-b** estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA → **M11.3-c** PA/PB/IC + Δ + alerta + datos del IC para el PDF → **M11.5-a** seed espejo **vía API** como test ejecutable de §12-A (§5.65) → **M11.3-d** VF/baremo, SEV, INC, documento histórico, foto, **login con 2 roles** (`admin` | `tecnico`) y routers que pidan las pantallas conectadas → **M11.6 reducido** (Swagger reemplaza `ejemplos-endpoints.md`). **Reglas nuevas de IPPU (2026-10-05) que la implementación respeta:** el CI **no traba** (§5.94) · la secuencia **sólo avisa** — `warnings[]` + fila `auditoria` `tipo='excepcion'`; **firma = bloqueo sigue dando 409** (§5.95) · cadena por año LB→PA→PB→IC (§5.96) · **Δ sólo dentro del mismo instrumento** (§5.36) · qué IDEA rige: el de su año, y en la HCE el firmado de mayor `anio` (§5.97) · **puntaje único** (§5.98) · **guardar una foto no requiere nada** (§5.99) · baremo sólo desde `pct`. **Meta: prototipo presentable sin datos reales el 26/11** con la demo HTML conectada. **M11.3 lo toma Lucas** (§5.67). Después: Fase 4 completa (roles y matriz), Fase 6 (Docker completo), React + Tailwind.
+- **FALTA — en REBANADAS VERTICALES** (`handoff.md` §5.106, 2026-10-05; **M11.4 se disuelve**: cada rebanada trae servicio + schema + router + tests): **M11.3-a** cimientos + persona/HCE (**HECHA 2026-10-06**, `handoff.md` §5.108: contrato `{data, warnings}`, una transacción por request) → **M11.3-a2** identidad (N.º de HC asignado, CI canónica) + `GET /grupos`/`/profesionales` (**HECHA 2026-10-06**, §5.109–§5.114) → **M11.3-b** estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA → **M11.3-c** PA/PB/IC + Δ + alerta + datos del IC para el PDF → **M11.5-a** seed espejo **vía API** como test ejecutable de §12-A (§5.65) → **M11.3-d** VF/baremo, SEV, INC, documento histórico, foto, **login con 2 roles** (`admin` | `tecnico`) y routers que pidan las pantallas conectadas → **M11.6 reducido** (Swagger reemplaza `ejemplos-endpoints.md`). **Reglas nuevas de IPPU (2026-10-05) que la implementación respeta:** el CI **no traba** (§5.94) · la secuencia **sólo avisa** — `warnings[]` + fila `auditoria` `tipo='excepcion'`; **firma = bloqueo sigue dando 409** (§5.95) · cadena por año LB→PA→PB→IC (§5.96) · **Δ sólo dentro del mismo instrumento** (§5.36) · qué IDEA rige: el de su año, y en la HCE el firmado de mayor `anio` (§5.97) · **puntaje único** (§5.98) · **guardar una foto no requiere nada** (§5.99) · baremo sólo desde `pct`. **Meta: prototipo presentable sin datos reales el 26/11** con la demo HTML conectada. **M11.3 lo toma Lucas** (§5.67). Después: Fase 4 completa (roles y matriz), Fase 6 (Docker completo), React + Tailwind.
 - **Al tocar los modelos, leer primero `backend/docs/esquema-datos-v2.md`** (§2 tablas, §4 dónde vive cada regla). Los catálogos de `app/data/catalogos_iniciales.json` **se generan** con `herramientas/generar_catalogos_backend.py`, no se editan a mano.
 - **Antes de dar algo por definido, mirar `docs/notas/puntos-a-validar.md`**: hay supuestos tomados por nosotros que IPPU todavía no confirmó.
 
@@ -209,4 +211,4 @@ real de los catálogos propios de IPPU la da IPPU, no el prototipo.
   su Anexo II trae el modelo de acuerdo. Lo que falta es la **firma** (`puntos-a-validar.md` §1.6).
 - Datos de NNA = sensibles: nunca subir identificadores/imágenes reales a servicios externos sin evaluación.
 - La IA **apoya**, no reemplaza, el juicio clínico.
-- **Al terminar una sesión con cambios relevantes, actualizar `handoff.md`** (§5 decisiones, §6 pendientes) + la **cabecera** (§5.82), y escribir la entrada de bitácora en **`docs/bitacora.md`** (§5.84). Pushear a los dos remotos.
+- **Al terminar una sesión con cambios relevantes:** la documentación mínima de «Arranque de sesión», punto 4 (§5.114, vigente hasta el 2026-11-26). Pushear a los dos remotos.
