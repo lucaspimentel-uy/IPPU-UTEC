@@ -30,7 +30,9 @@ Sólo CI/LB/PA/PB/IC: ni documentos, ni fotos, ni INC, PAI ni SEV.
 
 La demo usa grupos por color, que **no existen en IPPU** (§5.37/§5.61). El dict `UBICACION_DEMO`
 coloca cada color en uno de los cinco grupos reales del año 2026. Si algún grupo real falta en la
-base, `cargar_demo` se detiene antes de escribir (`DemoNoCargable`): no se crean grupos.
+base, el seed se detiene antes de escribir (`DemoNoCargable`): no se crean grupos. La CLI lo
+comprueba **antes del bootstrap de usuarios** (M11.5-a-fix): sin `seed_catalogos`, sale con código 1
+sin haber creado ningún usuario.
 
 ## Atomicidad
 
@@ -45,8 +47,10 @@ mitad de camino**, lo que ya entró queda (carga parcial). Para rehacerla en lim
 
 Con la API corriendo (`uvicorn app.main:app`). Credenciales del admin en el entorno, misma
 convención que `crear_usuario`: `IPPU_EMAIL` / `IPPU_PASSWORD`. La contraseña de los dos
-profesionales de la demo es `IPPU_DEMO_PASSWORD` (por omisión, la del admin). Sale con código 1 si
-la demo ya estaba cargada (sin escribir nada) o si algo falla.
+profesionales de la demo es `IPPU_DEMO_PASSWORD` (por omisión, la del admin: sólo desarrollo). Sale
+con código 1 si la demo ya estaba cargada o si faltan los grupos (en los dos casos, sin escribir
+nada) o si algo falla. Orden de `ejecutar`: (1) ¿la demo ya está? (por la API, si el admin ya
+existe) → (2) ¿están los grupos? (en la base) → (3) bootstrap de usuarios → (4) `cargar_demo`.
 """
 from __future__ import annotations
 
@@ -285,6 +289,18 @@ class _Api:
         return respuesta["data"]
 
 
+def grupos_faltantes(existentes) -> list[str]:
+    """Los grupos de `UBICACION_DEMO` que no están entre los nombres `existentes` (del año `ANIO`)."""
+    return sorted(set(UBICACION_DEMO.values()) - set(existentes))
+
+
+def _sin_grupos(faltan: list[str]) -> DemoNoCargable:
+    return DemoNoCargable(
+        f"Faltan los grupos {', '.join(faltan)} de {ANIO}: correr primero `python -m app.seed_catalogos`. "
+        "No se escribió nada."
+    )
+
+
 def _ci_canonica(ci: str) -> str:
     return "".join(c for c in ci if c.isalnum())
 
@@ -332,11 +348,9 @@ def cargar_demo(
     if ya:
         raise DemoNoCargable(f"La demo ya está cargada (existen las CI {', '.join(ya)}). No se escribió nada.")
     grupos = {g["nombre"]: g["id"] for g in api.get("/grupos", params={"anio": ANIO})}
-    faltan = sorted(set(UBICACION_DEMO.values()) - set(grupos))
+    faltan = grupos_faltantes(grupos)
     if faltan:
-        raise DemoNoCargable(
-            f"Faltan los grupos {', '.join(faltan)} de {ANIO} (correr `python -m app.seed_catalogos`). No se escribió nada."
-        )
+        raise _sin_grupos(faltan)
     resumen.grupos = {n: grupos[n] for n in UBICACION_DEMO.values()}
 
     gonzalez = api.entrar(GONZALEZ["email"], demo_password)
@@ -442,29 +456,52 @@ def main(argv: list[str] | None = None) -> int:
     import httpx
 
     from app.core.database import SessionLocal
-    from app.crear_usuario import DatoInvalido
 
     try:
         with httpx.Client(base_url=args.url, timeout=30) as cliente:
             cliente.get("/health").raise_for_status()
-            # Comprobación previa, sin escribir: si la demo ya está, ni siquiera se crean usuarios.
-            _comprobar_vacia(cliente, admin_email, admin_password)
-            with SessionLocal() as db:
-                creados = preparar_usuarios(
-                    db, admin_email=admin_email, admin_password=admin_password, demo_password=demo_password,
-                )
-                db.commit()
-            for email in creados:
-                print(f"Usuario creado (bootstrap fuera de la API): {email}")
-            resumen = cargar_demo(
-                cliente, admin_email=admin_email, admin_password=admin_password,
-                demo_password=demo_password, progreso=print,
+            return ejecutar(
+                cliente, SessionLocal,
+                admin_email=admin_email, admin_password=admin_password, demo_password=demo_password,
             )
-    except (DemoNoCargable, DatoInvalido) as exc:
-        print(f"No se cargó la demo: {exc}", file=sys.stderr)
-        return 1
     except httpx.HTTPError as exc:
         print(f"No se pudo hablar con la API en {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+
+def ejecutar(cliente, sesiones, *, admin_email: str, admin_password: str, demo_password: str) -> int:
+    """Lo que hace la CLI, con el cliente HTTP y la fábrica de sesiones inyectados (la suite los
+    apunta a la base de test). Devuelve el código de salida.
+
+    **Ninguna escritura antes de las dos comprobaciones**: que la demo no esté cargada y que existan
+    los grupos de `UBICACION_DEMO`. Los grupos se miran en la base, no por la API, porque en una base
+    nueva el admin todavía no existe y no hay con quién entrar.
+    """
+    from app.crear_usuario import DatoInvalido
+    from app.services.referencias import listar_grupos
+
+    try:
+        # 1. Comprobación previa por la API (si el admin ya puede entrar), sin escribir.
+        _comprobar_vacia(cliente, admin_email, admin_password)
+        with sesiones() as db:
+            # 2. Grupos, antes del bootstrap: sin `seed_catalogos` no se crea ni un usuario.
+            faltan = grupos_faltantes(g.nombre for g in listar_grupos(db, ANIO))
+            if faltan:
+                raise _sin_grupos(faltan)
+            # 3. Bootstrap de usuarios (fuera de la API).
+            creados = preparar_usuarios(
+                db, admin_email=admin_email, admin_password=admin_password, demo_password=demo_password,
+            )
+            db.commit()
+        for email in creados:
+            print(f"Usuario creado (bootstrap fuera de la API): {email}")
+        # 4. Todo lo demás, por HTTP.
+        resumen = cargar_demo(
+            cliente, admin_email=admin_email, admin_password=admin_password,
+            demo_password=demo_password, progreso=print,
+        )
+    except (DemoNoCargable, DatoInvalido) as exc:
+        print(f"No se cargó la demo: {exc}", file=sys.stderr)
         return 1
     print(resumen.texto())
     return 0

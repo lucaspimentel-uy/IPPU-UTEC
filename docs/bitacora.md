@@ -20,6 +20,11 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión M11.5-a-fix — cierre de la revisión de M11.5-a** (Lucas + Claude, sesión en la nube, rama `claude/epic-keller-z3bz8n` sobre `main` 6e40ed0). Sin decisión nueva (aplica §5.120); sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
+  - **Media — orden de la CLI:** `seed_demo.main()` delega en `ejecutar(cliente, sesiones, …)`; los grupos de `UBICACION_DEMO` se miran en la base **antes** de `preparar_usuarios`. Sin `seed_catalogos` → exit 1, «correr primero `python -m app.seed_catalogos`», 0 profesionales escritos (antes: 3 usuarios y «No se escribió nada»). Test + par (con catálogos → exit 0, 3 usuarios, 8 expedientes); con el orden viejo el test falla (3 ≠ 0).
+  - **Bajas:** par agregado a los 3 rechazos de `test_m11_5a_grupos.py`; el test de asignación lee técnicos y roles de la fila `grupo` (`GET /grupos` no los expone) y cada técnico, con su token, alcanza un expediente de cada grupo; `README.md` sin el `UPDATE grupo` a mano y con el orden de carga (`IPPU_DEMO_PASSWORD`: sin ella, los técnicos comparten la del admin — sólo desarrollo).
+  - **Medido:** `pytest -q` → **794 passed, 0 skipped** (790 + 4); `alembic check` sin cambios; ambos `--check` → exit 0. Postgres 16 local en 5440 (sin Docker en la nube).
+
 - **2026-10-07 · Sesión M11.5-a — seed espejo vía API (§12-A ejecutable) + asignación de técnicos** (Lucas + Claude, sesión en la nube, rama `claude/epic-keller-z3bz8n` sobre `main` c1ba234). Decisiones **§5.120** (a–e). Sin cambio de DDL: head **`dcc838486407`**, un archivo en `versions/`.
   - **`PATCH /grupos/{id}`** (sólo `admin`): `services/grupos.py`, schemas/router en `referencias`; 422 por campo (inexistente, inactivo, misma persona, campo ajeno), 403, 404; auditoría por campo con `hce_id` NULL y `modulo='GRUPO'`, técnico legible.
   - **`app/seed_demo.py`**: bootstrap de usuarios con `crear_usuario` (fuera de la API) + `cargar_demo` sólo por HTTP, clínica cargada por González (`tecnico`). CLI con `IPPU_EMAIL`/`IPPU_PASSWORD`.

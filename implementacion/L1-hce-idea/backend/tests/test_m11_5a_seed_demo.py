@@ -12,9 +12,9 @@ import pytest
 
 from app import seed_catalogos
 from app.seed_demo import (
-    ANIO, GONZALEZ, NNA, TORRES, UBICACION_DEMO, DemoNoCargable, cargar_demo, preparar_usuarios,
+    ANIO, GONZALEZ, NNA, TORRES, UBICACION_DEMO, DemoNoCargable, cargar_demo, ejecutar, preparar_usuarios,
 )
-from tests.conftest import EMAIL_ADMIN, PASSWORD_TEST
+from tests.conftest import EMAIL_ADMIN, PASSWORD_TEST, _fabrica_sesiones
 
 
 @pytest.fixture
@@ -140,18 +140,40 @@ def test_cada_grupo_lista_sus_nna(client, demo, grupo, cantidad):
     assert len(r.json()) == cantidad and nombres == esperados
 
 
-def test_los_dos_tecnicos_quedan_asignados_a_los_tres_grupos(client, demo):
-    grupos = {g["id"]: g for g in client.get("/grupos", params={"anio": ANIO}).json()}
-    assert set(demo.grupos) == {"Escolares", "Preadolescentes", "Adolescentes"}
+def test_los_dos_tecnicos_quedan_asignados_a_los_tres_grupos(client, demo, db_api):
+    """Los dos técnicos, con su rol, en cada uno de los tres grupos. Se leen de la fila `grupo`:
+    `GET /grupos` es una lista de referencia (`id`, `nombre`, `anio`) y no expone los técnicos."""
+    from sqlalchemy import select
+
+    from app.models.identidad import Grupo
+
     gonzalez, torres = demo.profesionales[GONZALEZ["nombre"]], demo.profesionales[TORRES["nombre"]]
-    for grupo_id in demo.grupos.values():
-        assert grupos[grupo_id]  # existe en el año
-    # La asignación se ve en el alcance: González (tecnico) lee los 8 expedientes.
-    r = client.post("/auth/login", json={"email": GONZALEZ["email"], "password": PASSWORD_TEST})
+    assert gonzalez != torres
+    db_api.expire_all()
+    filas = {g.nombre: g for g in db_api.scalars(select(Grupo).where(Grupo.id.in_(demo.grupos.values())))}
+    assert set(filas) == {"Escolares", "Preadolescentes", "Adolescentes"}
+    for nombre, g in filas.items():
+        assert (g.tecnico1_id, g.tecnico1_rol, g.tecnico2_id, g.tecnico2_rol) == (
+            gonzalez, GONZALEZ["especialidad"], torres, TORRES["especialidad"]), nombre
+    # Y en `GET /grupos` aparecen los tres, con el id que se asignó.
+    por_id = {g["id"]: g["nombre"] for g in client.get("/grupos", params={"anio": ANIO}).json()}
+    assert {por_id[i] for i in demo.grupos.values()} == set(demo.grupos)
+
+
+@pytest.mark.parametrize("tecnico", [GONZALEZ, TORRES], ids=["gonzalez", "torres"])
+def test_cada_tecnico_alcanza_un_expediente_de_cada_grupo(client, demo, tecnico):
+    """La asignación se ve en el alcance (§5.101): cada técnico, con su propio token, lee un
+    expediente de cada uno de los tres grupos y los 8 en la búsqueda."""
+    r = client.post("/auth/login", json={"email": tecnico["email"], "password": PASSWORD_TEST})
+    assert r.status_code == 200, r.text
     cab = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    for grupo in demo.grupos:
+        demo_id = next(i for i, n in NNA.items() if UBICACION_DEMO[n["color"]] == grupo)
+        leido = client.get(f"/hce/{demo.expedientes[demo_id]}", headers=cab)
+        assert leido.status_code == 200, (grupo, leido.text)
+        assert leido.json()["grupo"]["nombre"] == grupo
     vistos = client.get("/hce", params={"incluir_inactivos": "true"}, headers=cab)
     assert int(vistos.headers["X-Total-Count"]) == len(NNA)
-    assert gonzalez != torres
 
 
 # ── Avisos esperados: no bloquean ────────────────────────────────────────────
@@ -202,3 +224,60 @@ def test_sin_los_grupos_reales_no_escribe_nada(client, admin, db_api, hash_rapid
     with pytest.raises(DemoNoCargable, match="Faltan los grupos"):
         cargar_demo(client, admin_email=EMAIL_ADMIN, admin_password=PASSWORD_TEST, demo_password=PASSWORD_TEST)
     assert client.get("/hce", params={"incluir_inactivos": "true"}).json() == []
+
+
+# ── CLI (M11.5-a-fix): los grupos se comprueban ANTES del bootstrap de usuarios ──
+@pytest.fixture
+def cliente_sin_usuarios(conexion_api):
+    """`TestClient` contra la base de test **sin ningún profesional** (el `client` de conftest crea
+    el admin): es la base recién migrada de la CLI."""
+    from fastapi.testclient import TestClient
+
+    from app.core.database import get_db
+    from app.main import app
+
+    sesiones = _fabrica_sesiones(conexion_api)
+
+    def _get_db():
+        with sesiones() as sesion:
+            yield sesion
+
+    app.dependency_overrides[get_db] = _get_db
+    try:
+        yield TestClient(app), sesiones
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+def _profesionales(sesiones) -> int:
+    from sqlalchemy import func, select
+
+    from app.models.identidad import Profesional
+
+    with sesiones() as db:
+        return db.scalar(select(func.count(Profesional.id)))
+
+
+def test_cli_sin_grupos_sale_con_1_y_no_crea_usuarios(cliente_sin_usuarios, hash_rapido, capsys):
+    cliente, sesiones = cliente_sin_usuarios
+    assert _profesionales(sesiones) == 0
+    codigo = ejecutar(cliente, sesiones, admin_email=EMAIL_ADMIN, admin_password=PASSWORD_TEST,
+                      demo_password=PASSWORD_TEST)
+    assert codigo == 1
+    assert _profesionales(sesiones) == 0
+    err = capsys.readouterr().err
+    assert "Faltan los grupos" in err and "python -m app.seed_catalogos" in err
+
+
+def test_cli_con_grupos_crea_los_usuarios_y_carga_la_demo(cliente_sin_usuarios, hash_rapido, db_api, capsys):
+    """El par: con `seed_catalogos`, la misma base y el mismo camino terminan con código 0."""
+    cliente, sesiones = cliente_sin_usuarios
+    seed_catalogos.run(db=db_api, verboso=False)
+    db_api.commit()
+    codigo = ejecutar(cliente, sesiones, admin_email=EMAIL_ADMIN, admin_password=PASSWORD_TEST,
+                      demo_password=PASSWORD_TEST)
+    salida = capsys.readouterr()
+    assert codigo == 0, salida.err
+    assert _profesionales(sesiones) == 3
+    assert "Expedientes: 8" in salida.out
+    assert PASSWORD_TEST not in salida.out + salida.err

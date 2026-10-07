@@ -78,9 +78,11 @@ def test_tecnico_recibe_403_y_admin_200(client, grupo, equipo, token_de):
     assert client.patch(f"/grupos/{grupo.id}", json=cuerpo).status_code == 200  # el par
 
 
-def test_tecnico_recibe_403_aunque_el_grupo_no_exista(client, equipo, token_de):
+def test_tecnico_recibe_403_aunque_el_grupo_no_exista_y_admin_404(client, equipo, token_de):
+    """El 403 no depende del grupo: el mismo request, como `admin`, llega a buscarlo (404)."""
     r = client.patch("/grupos/999999", json={}, headers=token_de(equipo[0]))
     assert r.status_code == 403
+    assert client.patch("/grupos/999999", json={}).status_code == 404  # el par: el admin pasa el 403
 
 
 def test_grupo_inexistente_404_y_existente_200(client, grupo, equipo):
@@ -98,10 +100,11 @@ def test_profesional_inactivo_422_por_campo_y_activo_200(client, grupo, equipo):
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico2_id": gonzalez.id}).status_code == 200
 
 
-def test_profesional_inexistente_422_por_campo(client, grupo):
+def test_profesional_inexistente_422_por_campo_y_existente_200(client, grupo, equipo):
     r = client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": 999999})
     assert r.status_code == 422
     assert r.json()["detail"] == [{"campo": "tecnico1_id", "mensaje": "No existe el profesional 999999"}]
+    assert client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": equipo[0].id}).status_code == 200
 
 
 def test_misma_persona_en_los_dos_puestos_422_y_distintas_200(client, grupo, equipo):
@@ -133,13 +136,19 @@ def test_campo_ajeno_a_los_tecnicos_422_y_sin_el_200(client, grupo, equipo, db_a
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": equipo[0].id}).status_code == 200
 
 
-def test_un_rechazo_no_escribe_nada(client, grupo, equipo, db_api):
-    gonzalez, _, inactivo = equipo
+def test_un_rechazo_no_escribe_nada_y_el_mismo_cuerpo_valido_si(client, grupo, equipo, db_api):
+    gonzalez, torres, inactivo = equipo
     r = client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": gonzalez.id, "tecnico2_id": inactivo.id})
     assert r.status_code == 422
     db_api.expire_all()
     assert db_api.get(Grupo, grupo.id).tecnico1_id is None
     assert _filas_grupo(db_api) == []
+    # El par: con un técnico 2 activo, el mismo cuerpo se aplica y deja sus dos filas.
+    ok = client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": gonzalez.id, "tecnico2_id": torres.id})
+    assert ok.status_code == 200
+    db_api.expire_all()
+    assert (db_api.get(Grupo, grupo.id).tecnico1_id, db_api.get(Grupo, grupo.id).tecnico2_id) == (gonzalez.id, torres.id)
+    assert [f.campo for f in _filas_grupo(db_api)] == ["tecnico1_id", "tecnico2_id"]
 
 
 # ── Auditoría ────────────────────────────────────────────────────────────────
