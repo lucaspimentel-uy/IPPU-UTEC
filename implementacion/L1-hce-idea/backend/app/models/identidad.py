@@ -180,7 +180,7 @@ class HceDiurna(OrigenMigracionMixin, Base):
     derivacion: Mapped[str | None] = mapped_column(String(200))
     medicacion: Mapped[str | None] = mapped_column(Text)
     alerta: Mapped[str | None] = mapped_column(Text)
-    anamnesis: Mapped[dict | None] = mapped_column(JSONB)
+    anamnesis: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
 
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     fecha_baja: Mapped[date | None] = mapped_column(Date)

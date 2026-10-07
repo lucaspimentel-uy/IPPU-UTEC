@@ -16,6 +16,7 @@
 >   ⚠️ **Sigue abierto, en la otra lista:** crear/renombrar grupos **desde la app** (`puntos-a-validar.md`
 >   §2.8), y si «Taller de Adolescentes» es el servicio de Taller Terapéutico y no un grupo (pregunta A5
 >   de `docs/notas/preguntas-ippu.md`).
+>   *(Nota posterior, 2026-10-06: lo de A5 quedó **superado por §5.107** — «Taller de Adolescentes» es un grupo.)*
 > - [x] ~~**I7 · Se retira la sección VII del PAI (FODA)** (§5.42, ratificado por **§5.59 / L6**)~~ →
 >   **RESUELTO en M12.8a-1 (2026-09-03).** `fort`, `oport`, `debil`, `amen` salieron de `app/models/pai.py`
 >   y de la migración; la cifra «campos propios» bajó de 43 a **39** en `CLAUDE.md`, el bloque «Qué se

@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict
 from app.schemas.hce import GrupoResumen
 
 EJEMPLO_GRUPOS = [{"id": 2, "nombre": "Escolares", "anio": 2026}]
-EJEMPLO_PROFESIONALES = [{"id": 1, "nombre": "Ana Pérez", "especialidad": "Psicología", "rol": "tecnico"}]
+EJEMPLO_PROFESIONALES = [{"id": 1, "nombre": "Ana Pérez", "especialidad": "Psicología", "rol": "tecnico", "activo": True}]
 
 
 class ProfesionalResumen(BaseModel):
@@ -18,6 +18,7 @@ class ProfesionalResumen(BaseModel):
     nombre: str
     especialidad: str | None
     rol: str
+    activo: bool
 
 
 __all__ = ["GrupoResumen", "ProfesionalResumen", "EJEMPLO_GRUPOS", "EJEMPLO_PROFESIONALES"]

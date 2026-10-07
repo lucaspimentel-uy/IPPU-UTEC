@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.routers.dependencias import sesion_transaccional
+from app.routers.dependencias import sesion_lectura, sesion_transaccional
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.hce import (
     EJEMPLO_RESULTADO_HCE, EJEMPLO_RESUMEN_HCE, HceActualizar, HceCrear, HceDetalle, HceResumen,
@@ -59,7 +59,7 @@ def crear(datos: HceCrear, db: Annotated[Session, Depends(sesion_transaccional)]
     responses={**_ejemplo(200, EJEMPLO_RESUMEN_HCE), **_ERROR_422},
 )
 def buscar(
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: Annotated[Session, Depends(sesion_lectura)],
     ci: Annotated[str | None, Query(description="Cédula: contiene, sin puntos ni guiones.")] = None,
     numero: Annotated[str | None, Query(description="N.º de historia clínica (`hc_historico`, igual). No busca por el id interno.")] = None,
     grupo: Annotated[str | None, Query(description="Nombre del grupo (igual; sin mayúsculas ni acentos), del año `anio`.")] = None,
@@ -82,7 +82,7 @@ def buscar(
     summary="Un expediente con su persona",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_HCE["data"]), **_ERROR_404},
 )
-def leer(hce_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
+def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     return HceDetalle.model_validate(servicio.obtener_hce(db, hce_id))
 
 

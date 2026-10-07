@@ -216,7 +216,7 @@ class ValoracionFuncional(Base):
     )
     vigencia: Mapped[date | None] = mapped_column(Date)
     rnpcd: Mapped[str | None] = mapped_column(String(60))
-    dominios: Mapped[dict | None] = mapped_column(JSONB)      # 6 dominios CIF
+    dominios: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))      # 6 dominios CIF
     capacidades: Mapped[str | None] = mapped_column(Text)
     barreras: Mapped[str | None] = mapped_column(Text)
     apoyos: Mapped[str | None] = mapped_column(Text)

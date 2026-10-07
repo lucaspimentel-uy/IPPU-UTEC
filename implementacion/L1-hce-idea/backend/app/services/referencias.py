@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Grupo, Profesional
-from app.services.hce import anio_actual
+from app.services.fechas import anio_actual
 
 
 def listar_grupos(db: Session, anio: int | None = None) -> list[Grupo]:

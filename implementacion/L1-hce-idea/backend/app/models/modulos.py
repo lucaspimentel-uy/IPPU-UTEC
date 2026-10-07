@@ -57,9 +57,9 @@ class FirmaMixin:
     y sigue devolviendo 409 al editar un módulo firmado.
     """
     firmado: Mapped[bool] = mapped_column(Boolean, default=False)
-    firmas: Mapped[list | None] = mapped_column(JSONB)
-    addendas: Mapped[list | None] = mapped_column(JSONB)
-    excepcion: Mapped[dict | None] = mapped_column(JSONB)
+    firmas: Mapped[list | None] = mapped_column(JSONB(none_as_null=True))
+    addendas: Mapped[list | None] = mapped_column(JSONB(none_as_null=True))
+    excepcion: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
 
 
 class PuntuacionConsensoMixin:
@@ -214,7 +214,7 @@ class Consentimiento(FirmaMixin, Base):
     firmante: Mapped[str | None] = mapped_column(String(120))
     fecha: Mapped[date | None] = mapped_column(Date)
     # {evaluacion, registro, comunicacion} — las 3 autorizaciones del CI.
-    autorizaciones: Mapped[dict | None] = mapped_column(JSONB)
+    autorizaciones: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     documento_id: Mapped[int | None] = mapped_column(ForeignKey("documento.id"), index=True)
 
 
@@ -266,7 +266,7 @@ class Idea(FirmaMixin, EvaluadoresMixin, OrigenMigracionMixin, Base):
     # — con el UNIQUE de abajo, nullable habría dejado la fila justamente menos
     # protegida (Postgres no trata dos NULL como iguales).
     anio: Mapped[int] = mapped_column(SmallInteger)
-    dim: Mapped[dict | None] = mapped_column(JSONB)
+    dim: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     fecha_consenso: Mapped[date | None] = mapped_column(Date)
     sesiones: Mapped[int | None] = mapped_column(Integer)
     sintesis: Mapped[str | None] = mapped_column(Text)
@@ -381,14 +381,14 @@ class Protocolo(FirmaMixin, EvaluadoresMixin, Base):
     fecha: Mapped[date | None] = mapped_column(Date)
     semanas: Mapped[int | None] = mapped_column(Integer)
     # 24 × {valor: 1..5, obs}. La obs es obligatoria si el valor es 1 o 5.
-    items: Mapped[dict | None] = mapped_column(JSONB)
+    items: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     sint_tec1: Mapped[str | None] = mapped_column(Text)
     sint_tec2: Mapped[str | None] = mapped_column(Text)
     otros: Mapped[str | None] = mapped_column(Text)
     ajustes: Mapped[str | None] = mapped_column(Text)          # sólo B
     # Sólo B. Lo escribe el servidor al firmar; si no hay A firmado queda NULL
     # y se registra la constancia en auditoría.
-    deltas: Mapped[dict | None] = mapped_column(JSONB)
+    deltas: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
 
     total: Mapped[int | None] = mapped_column(Integer)
     esc_1: Mapped[int | None] = mapped_column(Integer)
@@ -471,13 +471,13 @@ class InformeCierre(FirmaMixin, Base):
     )
     anio: Mapped[int] = mapped_column(Integer)
     fecha: Mapped[date | None] = mapped_column(Date)
-    sint_escala: Mapped[dict | None] = mapped_column(JSONB)     # 4 síntesis, una por escala
+    sint_escala: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))     # 4 síntesis, una por escala
     val_tec1: Mapped[str | None] = mapped_column(Text)
     val_tec2: Mapped[str | None] = mapped_column(Text)
     recomendaciones: Mapped[str | None] = mapped_column(Text)
     orientaciones: Mapped[str | None] = mapped_column(Text)
     # {firmante, fecha} — la familia acusa recibo DESPUÉS de la firma técnica.
-    recibi: Mapped[dict | None] = mapped_column(JSONB)
+    recibi: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
 
     hce: Mapped["HceDiurna"] = relationship()
 

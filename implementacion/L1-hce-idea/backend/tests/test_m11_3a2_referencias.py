@@ -3,7 +3,7 @@
 Todo rechazo va con su par que pasa. Las fábricas son las de `conftest.py` (la base de
 test no tiene catálogos).
 """
-from app.services.hce import anio_actual
+from app.services.fechas import anio_actual
 
 
 def test_grupos_devuelve_solo_los_del_anio_pedido_ordenados_por_nombre(client, crear_grupo):
@@ -43,7 +43,7 @@ def test_profesionales_ordenados_por_nombre_con_los_campos_minimos(client, crear
     r = client.get("/profesionales")
     assert r.status_code == 200
     assert [p["nombre"] for p in r.json()] == ["Ana Paz", "Zulema Gil"]
-    assert set(r.json()[0]) == {"id", "nombre", "especialidad", "rol"}, "ni email ni hash"
+    assert set(r.json()[0]) == {"id", "nombre", "especialidad", "rol", "activo"}, "ni email ni hash"
     assert (r.json()[1]["especialidad"], r.json()[1]["rol"]) == ("Psicología", "admin")
     assert r.json()[0]["especialidad"] is None
 

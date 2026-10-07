@@ -16,6 +16,7 @@ from app.models.identidad import HceDiurna, Persona
 from app.models.transversales import Auditoria
 from app.services import hce as servicio_hce
 from app.services.errores import ConflictError
+from app.services.fechas import anio_actual
 
 _cis = itertools.count(1_000_000)
 
@@ -524,7 +525,7 @@ def test_buscar_por_grupo_ignora_mayusculas_y_no_encuentra_otro_grupo(client, le
 
 
 def test_buscar_por_grupo_es_por_anio_y_por_omision_el_anio_en_curso(client, crear_grupo):
-    hoy = servicio_hce.anio_actual()
+    hoy = anio_actual()
     actual, pasado = crear_grupo(nombre="Escolares", anio=hoy), crear_grupo(nombre="Escolares", anio=hoy - 1)
     de_hoy = _id(_alta(client, _persona(nombre="Hoy"), grupo_id=actual.id))
     de_ayer = _id(_alta(client, _persona(nombre="Ayer"), grupo_id=pasado.id))

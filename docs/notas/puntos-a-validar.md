@@ -761,7 +761,7 @@ porcentaje oficial.
 > ⚠️ **D-2 de la hoja de L6 (2026-09-03, `handoff.md` §5.61 / L8) separa las dos cosas:**
 > - **Los nombres** ya están **ratificados** y su renombrado (4 → 5 filas, `UPDATE` + regenerar catálogos
 >   + el test + los literales de fixture + la demo) se ejecuta en **M12.8a**. **«Taller de Adolescentes»**
->   se toma como fila de `grupo`; si IPPU quiere decir otra cosa con él, vuelve.
+>   es una fila de `grupo` (confirmado por IPPU, ver arriba).
 > - **Lo que este punto pide y NO se cierra** es la **creación** de grupos desde la aplicación: que ADMIN
 >   pueda abrir el año nuevo con sus técnicos. Eso es **M11.3/M11.4** y **sigue abierto**.
 >

@@ -7,10 +7,10 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> **Estado al 2026-10-06 · sesión M11.3-a2** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
+> **Estado al 2026-10-06 · sesión M11.3-a3** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
 >
-> - **Qué funciona:** backend FastAPI + Postgres · **51 tablas** · head `dcc838486407` · **521 tests, 0 salteados**. API: `POST/GET/PATCH /hce` (búsqueda por CI · N.º de HC · grupo del año · nombre), `GET /grupos?anio=`, `GET /profesionales?activo=`. Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request (§5.108). N.º de HC asignado por el servidor desde 1001 (§5.109) · CI canónica (§5.110) · auditoría `carga`/`edicion` (§5.112).
-> - **Próxima rebanada:** **M11.3-b** — estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA; después M11.3-c → M11.5-a → M11.3-d (§5.106). **Meta: prototipo presentable sin datos reales el 2026-11-26** (demo HTML conectada a la API; React + Tailwind es posterior).
+> - **Qué funciona:** backend FastAPI + Postgres · **51 tablas** · head `dcc838486407` · **539 tests, 0 salteados**. API: `POST/GET/PATCH /hce` (búsqueda por CI · N.º de HC · grupo del año · nombre), `GET /grupos?anio=`, `GET /profesionales?activo=`. Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request, los GET no commitean, el 500 conserva el sobre (§5.108, §5.115). N.º de HC asignado por el servidor desde 1001 (§5.109) · CI canónica (§5.110) · auditoría `carga`/`edicion` (§5.112).
+> - **Próxima rebanada:** **M11.3-b** (hereda las convenciones de §5.115) — estado de flujo + `warnings` + firma/addendas + validaciones/totales/banda del IDEA; después M11.3-c → M11.5-a → M11.3-d (§5.106). **Meta: prototipo presentable sin datos reales el 2026-11-26** (demo HTML conectada a la API; React + Tailwind es posterior).
 > - **Bloqueado / abierto (responsable):** Manual completo de IPPU, pregunta B1 — espera respuesta de **IPPU**, no bloquea el 26/11 (§5.105) · baja/reingreso del expediente — **Lucas**, M11.3-d · administración de grupos desde la app — **sin responsable**, fuera del 26/11 (§5.90/§5.92) · migración de datos — acceso a la HCE actual de **IPPU**, posterior al 26/11 (§5.104, §5.113).
 > - **Equipo:** Lucas Pimentel (UTEC-LIDIA, responsable del documento) · Samuel · Victor — sin dueño exclusivo de módulos (§5.6). Precedencia de fuentes: `CLAUDE.md`, «Precedencia normativa».
 
@@ -3005,6 +3005,14 @@ migrar primero ya alcanza: el siguiente número sale de `max + 1`.) Puntero en `
 - Los documentos largos existentes quedan como **referencia**, no como lectura obligatoria. `CLAUDE.md`
   («Arranque de sesión») se actualizó en consecuencia.
 
+## 5.115 · Convenciones transversales de la capa de servicios (2026-10-06, Lucas — sesión M11.3-a3)
+Salen de la revisión de conformidad de M11.3-a/a2. **Las heredan M11.3-b en adelante** (JSONB `firmas`/`addendas`/`dim`, fechas vacías de formularios). Sin cambio de DDL.
+- **(a) JSONB ausente = `NULL` de SQL**, nunca el `null` de JSON: `JSONB(none_as_null=True)` en toda columna JSONB nullable (sólo Python; el head no cambia). Un test recorre `Base.metadata` y falla si una nueva no lo lleva.
+- **(b) Vacío en opcionales que no son texto = `NULL`.** `""`/blanco → `None` con `FechaOpcional`/`EnteroOpcional` (`app/schemas/comunes.py`, `BeforeValidator`); también para FK. Cada schema nuevo los reusa, no escribe su validador. Los **textos** se siguen normalizando en el servicio (`services/texto.py`).
+- **(c) Un error no previsto conserva el sobre:** 500 → `{"code": "internal_error", "detail": [{"campo": null, "mensaje": "Error interno"}]}`, nunca el texto de la excepción; el traceback va al log. Se implementa como **middleware** registrado antes de CORS (un `exception_handler(Exception)` queda afuera de CORS). Documentado en Swagger para todas las rutas.
+- **(d) Los GET no commitean:** usan `sesion_lectura`; sólo las mutaciones pasan por `sesion_transaccional`. Un `commit()` que falla tiene que salir como error, lo que depende de que FastAPI corra la salida de las dependencias **antes** de enviar la respuesta (0.115.x): `fastapi` queda fijado con el motivo en `requirements.txt` y un test se rompe si cambia.
+- **(e) Elecciones de M11.3-a2 que no estaban escritas:** `anio` fuera de 1..32767 → **422** · la auditoría de `persona.ci` guarda el valor **canónico** (§5.110) · `GET /grupos` → `[{id, nombre, anio}]` y `GET /profesionales` → `[{id, nombre, especialidad, rol, activo}]` (sin email ni hash), ambos **sin sobre**.
+
 ---
 
 ## 6. Pendientes / próximos pasos (sugeridos)
@@ -3331,6 +3339,7 @@ migrar primero ya alcanza: el siguiente número sale de `max + 1`.) Puntero en `
     entero ≥ 1000 único asignado por el servidor (lock por transacción) · CI canónica · búsqueda por grupo con
     `anio` · auditoría `carga` en el alta · `GET /grupos` y `GET /profesionales` · migración regenerada
     (head `dcc838486407`) · 20 tests nuevos (**521 passed, 0 skipped**).
+  - [x] **M11.3-a3** convenciones transversales (JSONB `NULL`, vacío en fecha/entero/FK, 500 con sobre, GET sin commit) — **HECHO 2026-10-06** (§5.115). 18 tests nuevos (**539 passed, 0 skipped**); sin cambio de DDL.
   - [ ] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
     §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda.
   - [ ] **M11.3-c** PA/PB/IC + **Δ sólo dentro del mismo instrumento** (§5.36) + alerta + datos del IC

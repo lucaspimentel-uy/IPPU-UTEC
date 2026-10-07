@@ -3,15 +3,19 @@
 Los largos máximos son los de las columnas (`app/models/identidad.py`): un texto
 demasiado largo se rechaza con 422 acá, y no explota como `DataError` al insertar.
 
-**Vacío y blanco no se resuelven en estos schemas** sino en el servicio
-(`app/services/hce.py`): las dos cosas —`''` → `NULL` en los opcionales, rechazo
-de los obligatorios en blanco— tienen que valer para cualquier que llame al
-servicio, no sólo para quien entre por HTTP.
+**Vacío y blanco, según el tipo (§5.115 b).** En los **textos** se resuelven en el
+servicio (`app/services/hce.py`): `''` → `NULL` en los opcionales y rechazo de los
+obligatorios en blanco tienen que valer para cualquiera que llame al servicio, no
+sólo para quien entre por HTTP. En las **fechas, enteros y FK** opcionales, un `""`
+no es un valor que el servicio pueda recibir (no es un `date` ni un `int`), así que
+se convierte en `None` acá, con los alias de `app.schemas.comunes`.
 """
 from datetime import date, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.comunes import EnteroOpcional, FechaOpcional
 
 # ── Ejemplos para Swagger ────────────────────────────────────────────────────
 _PERSONA_EJEMPLO = {
@@ -58,7 +62,7 @@ class PersonaActualizar(BaseModel):
     nombre: str | None = Field(None, max_length=80)
     apellido: str | None = Field(None, max_length=80)
     ci: str | None = Field(None, max_length=20)
-    fecha_nac: date | None = None
+    fecha_nac: FechaOpcional = None  # `""` llega al servicio como `None` → «No puede estar vacío» (422)
     sexo: str | None = Field(None, max_length=20)
     localidad: str | None = Field(None, max_length=80)
     referente: str | None = Field(None, max_length=120)
@@ -68,7 +72,7 @@ class PersonaActualizar(BaseModel):
 class Hce00Campos(BaseModel):
     """Campos de HCE-00 propios del expediente (todos opcionales)."""
 
-    hc_historico: int | None = Field(
+    hc_historico: EnteroOpcional = Field(
         None,
         description=(
             "N.º de historia clínica institucional: entero ≥ 1000, único. **Alta:** si no viene, "
@@ -76,21 +80,14 @@ class Hce00Campos(BaseModel):
             "(422) y estar libre (409). **Edición:** no se puede borrar (`null` → 422)."
         ),
     )
-    grupo_id: int | None = Field(None, description="Debe existir; es el grupo **de ese año** (id propio, D9).")
+    grupo_id: EnteroOpcional = Field(None, description="Debe existir; es el grupo **de ese año** (id propio, D9).")
     diagnostico: str | None = Field(None, max_length=200)
     cie11: str | None = Field(None, max_length=20)
-    dx_fecha: date | None = None
+    dx_fecha: FechaOpcional = None
     derivacion: str | None = Field(None, max_length=200)
     medicacion: str | None = None
     alerta: str | None = None
     anamnesis: dict[str, Any] | None = Field(None, description="Objeto JSON libre; se reemplaza completo.")
-
-    @field_validator("hc_historico", mode="before")
-    @classmethod
-    def _blanco_es_ausente(cls, valor):
-        """`""` o blanco → `None`, como en los demás opcionales (§5.108.5): un formulario que
-        deja el campo vacío no tiene que recibir un 422 por eso."""
-        return None if isinstance(valor, str) and not valor.strip() else valor
 
 
 class HceCrear(Hce00Campos):

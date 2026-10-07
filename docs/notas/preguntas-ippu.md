@@ -93,16 +93,13 @@ Protocolo prevé — `handoff.md` §5.70).
 > **Estado (2026-10-05): ✅ RESPONDIDA — «grupo».** Primera respuesta (por escrito): Taller Terapéutico y Clínica son otros servicios, fuera de Atención Diurna, «no son nombres de grupos» — ambigua. Re-preguntada con la pregunta reformulada, IPPU contestó: **«Taller adolescentes es el nombre de un grupo»**. Confirma los cinco grupos sembrados (§5.61); la fila no sale.
 > **Aterrizó en:** `handoff.md` §5.107 (confirma §5.61; supera lo que dejaron §5.93/§5.104) · `puntos-a-validar.md` §2.8. Respuesta verbatim de la primera vuelta en `respuestas-ippu-2026-10-05.txt`; la segunda llegó por Lucas y consta en §5.107.
 
-**Qué se pregunta.** IPPU dio cinco nombres de grupo: Inicial · Escolares · Preadolescentes · Adolescentes
-· **Taller de Adolescentes**. Pero el Documento Técnico §1 dice: *«Los servicios de **Taller Terapéutico**
-y **Clínica** quedan reservados en la arquitectura de navegación y permisos para la **Fase 2**, con
-estructuras de registro propias a definir»* — o sea, separados del Servicio de Atención Diurna. Si «Taller
-de Adolescentes» es ese servicio, **no es un grupo** y modelarlo como una fila más sería un error de
-categoría.
-**Por qué importa.** Cambia qué se siembra en M12.8a. Por ahora se toma como el quinto grupo (la reunión
-manda, `handoff.md` §5.61), pero hay que preguntarlo.
-**Qué bloquea.** El renombrado de grupos de M12.8a; hoy se hace con los cinco.
-**Dónde aterriza.** `puntos-a-validar.md` §2.8 · `handoff.md` §5.61.
+**Qué se preguntó.** IPPU dio cinco nombres de grupo: Inicial · Escolares · Preadolescentes · Adolescentes
+· **Taller de Adolescentes**. El Documento Técnico §1 reserva los servicios de **Taller Terapéutico** y
+**Clínica** para la **Fase 2**, separados del Servicio de Atención Diurna; la duda era si «Taller de
+Adolescentes» era ese servicio (y no una fila de `grupo`).
+**Qué quedó decidido.** Es **un grupo**: los cinco grupos sembrados se quedan (`handoff.md` §5.61,
+confirmada). Taller Terapéutico y Clínica son otros servicios, fuera de Atención Diurna.
+**Dónde aterrizó.** `handoff.md` §5.107 · `puntos-a-validar.md` §2.8.
 
 ---
 
@@ -381,11 +378,11 @@ en varios lugares del repo y conviene tener un número único con su definición
 | `respuestas-reunion-ippu-2026-08-21.md` §16 | **15** | 9.a (A4) · 1.b (C5) · 2.a (B3) · 2.b (C4) · 3.b (B2) · 5.c (B6) · 5.d (B5) · 6 (C1) · 7.b (C7) · 8.a (C3) · 8.b (C3) · 8.c (C2) · 13.a (B8) · 12 a medias (A1) · 13.b a medias (B4) |
 | `handoff.md` §6 | **4** | §5.38 consentimiento (A3) · §5.49 guía de trámites (C8) · §5.37 relleno del prototipo (C9) · aclaración de la intro (C10) |
 | ⚠️ CONFIRMABLE (`handoff.md` §5.38, §5.58/§5.63) | **2** | consentimiento no traba (A3) · ateneo de grupo = acceso general (A4) — ya contados arriba |
-| Nuevas / afiladas en L9 | **3** | «Taller de Adolescentes» grupo o servicio (A5) · «perfil de área de Inclusión» + lista de 5 roles (B5) · tipos de informe y «área configurable» (B7) |
+| Nuevas / afiladas en L9 | **2** | «perfil de área de Inclusión» + lista de 5 roles (B5) · tipos de informe y «área configurable» (B7) |
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 | Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11).
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 

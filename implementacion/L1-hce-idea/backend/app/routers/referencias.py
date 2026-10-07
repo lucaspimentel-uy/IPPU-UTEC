@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.routers.dependencias import sesion_transaccional
+from app.routers.dependencias import sesion_lectura
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError
 from app.schemas.referencias import (
@@ -27,7 +27,7 @@ _ERROR_422 = {422: {"model": RespuestaError, "description": "Parámetro inválid
     responses={**_ejemplo(200, EJEMPLO_GRUPOS), **_ERROR_422},
 )
 def listar_grupos(
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: Annotated[Session, Depends(sesion_lectura)],
     anio: Annotated[int | None, Query(ge=1, le=32767, description="Año de los grupos; por omisión el año en curso.")] = None,
 ):
     """Los grupos del `anio` (por omisión el en curso), ordenados por nombre. Lista vacía si no hay."""
@@ -39,7 +39,7 @@ def listar_grupos(
     responses={**_ejemplo(200, EJEMPLO_PROFESIONALES), **_ERROR_422},
 )
 def listar_profesionales(
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: Annotated[Session, Depends(sesion_lectura)],
     activo: Annotated[bool | None, Query(description="`true`: sólo activos · `false`: sólo inactivos · omitido: todos.")] = None,
 ):
     """Profesionales ordenados por nombre, con los campos mínimos para elegir uno. Lista vacía si no hay."""

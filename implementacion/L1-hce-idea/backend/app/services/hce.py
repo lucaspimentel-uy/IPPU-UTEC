@@ -14,7 +14,6 @@ guiones ni espacios). Crear un expediente deja una fila `auditoria` `tipo='carga
 import re
 import unicodedata
 from collections.abc import Mapping
-from datetime import date
 from typing import Any
 
 from sqlalchemy import String, false, func, or_, select
@@ -25,6 +24,7 @@ from app.core.constantes import HC_HISTORICO_MAX, HC_HISTORICO_MIN, MODULO_HCE_0
 from app.models.identidad import Grupo, HceDiurna, Persona
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, NotFound, ValidationFailed
+from app.services.fechas import anio_actual
 from app.services.texto import normalizar_opcionales, normalizar_texto
 
 # Qué campo pertenece a qué tabla. Es también la **lista blanca** de lo que
@@ -76,11 +76,6 @@ def _plano(texto: str) -> str:
 
 def _plano_sql(columna):
     return func.lower(func.translate(columna, _CON_ACENTO, _SIN_ACENTO, type_=String), type_=String)
-
-
-def anio_actual() -> int:
-    """Año calendario en curso: el que se asume al buscar por grupo sin decir el año."""
-    return date.today().year
 
 
 # ── Lectura ──────────────────────────────────────────────────────────────────

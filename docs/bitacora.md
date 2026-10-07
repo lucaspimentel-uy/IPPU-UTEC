@@ -20,6 +20,16 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-06 · Sesión M11.3-a3 — convenciones transversales tras la revisión de M11.3-a/a2** (Lucas + Claude, rama `main`). Decisiones **§5.115**. Sin cambio de DDL: head sigue **`dcc838486407`**.
+  - **(a) JSONB:** `JSONB(none_as_null=True)` en las 13 columnas nullable. Antes, `anamnesis: null` (alta o PATCH) se guardaba como JSON `null`: el test nuevo falló con `assert _anamnesis_es_sql_null(...) is True` → `False`.
+  - **(b) Vacío en fecha/entero/FK opcionales → `None`:** `FechaOpcional`/`EnteroOpcional` en `schemas/comunes.py`; aplicado a `dx_fecha`, `grupo_id`, `hc_historico`, `fecha_nac` (PATCH).
+  - **(c) 500 con sobre** `internal_error` (mensaje genérico; traceback al log). Es *middleware*, no `exception_handler(Exception)`: éste quedaba fuera de CORS y la demo vería un fallo de red.
+  - **(d) GET no commitean** (`sesion_lectura`); test de commit fallido ⇒ 500 con sobre, que rompe si FastAPI (≥ ~0.118) mueve el commit tras la respuesta; pin comentado en `requirements.txt`.
+  - **L1** falla tardía en `POST /hce` no deja persona/expediente/auditoría · **L2** `activo` en `/profesionales` · **L6** `anio_actual` → `services/fechas.py`.
+  - **Docs A5:** cuerpo de A5 como respondida, fila del resumen, `puntos-a-validar` §2.8, nota en `pendientes-resueltos`, segunda vuelta verbatim en `respuestas-ippu-2026-10-05.txt`.
+  - **Medido:** `pytest -q` → **539 passed, 0 skipped** (521 + 18; mutaciones verificadas en (b) y (d)); `alembic check` limpio; ambos `--check` → exit 0.
+  - Fuera de alcance, anotado: `?anio=`/`?activo=` vacíos en query siguen dando 422; paginación (L3) a M11.3-d.
+
 - **2026-10-06 · Sesión M11.3-a2 — identidad + listas de lectura** (Lucas + Claude, rama `main`). Correctiva de M11.3-a; decisiones **§5.109–§5.114**.
   - **`hc_historico`** → `Integer`, `CHECK ≥ 1000`, `UNIQUE`; el servidor asigna `max + 1` (1001 el primero) con `pg_advisory_xact_lock` por transacción; explícito: ≥ 1000 y libre (409/422). La búsqueda «N.º de HC» ya no mira `hce.id`.
   - **CI canónica** (sin puntos/guiones/espacios) → el `UNIQUE` atrapa duplicados en cualquier formato. **Búsqueda por grupo con `anio`** (por omisión, el en curso). **Alta → una fila `auditoria` `tipo='carga'`**.

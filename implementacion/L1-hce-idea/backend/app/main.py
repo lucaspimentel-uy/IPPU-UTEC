@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import hce, referencias
 from app.routers.errores import registrar_manejadores
+from app.schemas.comunes import RESPUESTA_500
 
 app = FastAPI(
     title=settings.app_name,
@@ -29,8 +30,11 @@ app = FastAPI(
         "devuelven `{\"data\": <recurso>, \"warnings\": []}` (`warnings` siempre presente: "
         "avisos no bloqueantes). Todos los errores devuelven "
         "`{\"code\": str, \"detail\": [{\"campo\": str|null, \"mensaje\": str}]}`. "
-        "Una transacción por request."
+        "Los errores no previstos son `500` con `code: \"internal_error\"` y un mensaje "
+        "genérico (la causa va al log, no a la respuesta). "
+        "Una transacción por request; los GET no commitean."
     ),
+    responses=RESPUESTA_500,
 )
 
 registrar_manejadores(app)
