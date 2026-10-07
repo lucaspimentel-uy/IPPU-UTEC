@@ -221,3 +221,113 @@ def db(engine):
         if trans.is_active:
             trans.rollback()
         conexion.close()
+
+
+# ── API (M11.3-a) ────────────────────────────────────────────────────────────
+# Los tests de la API necesitan que **el router pueda commitear sin que el commit
+# escape del test**, y que un request rechazado (409/422) **no deje la sesión
+# envenenada** para el siguiente request del mismo test.
+#
+# La fixture `db` de arriba no sirve para eso: su sesión, atada a una conexión que
+# ya está en una transacción, **ignora el `commit()`** y su `rollback()` deshace
+# la transacción entera —incluidos los datos que el test preparó—. Acá, en cambio,
+# cada sesión usa `join_transaction_mode="create_savepoint"`: su `commit()` libera
+# un SAVEPOINT (los datos quedan visibles para las demás sesiones de la misma
+# conexión) y su `rollback()` vuelve sólo hasta el SAVEPOINT. Al terminar el test,
+# el rollback de la transacción externa lo deshace todo.
+#
+# `db` y esta familia no se mezclan en un mismo test: `db` tiene su propia conexión.
+@pytest.fixture
+def conexion_api(engine):
+    conexion = engine.connect()
+    externa = conexion.begin()
+    try:
+        yield conexion
+    finally:
+        if externa.is_active:
+            externa.rollback()
+        conexion.close()
+
+
+def _fabrica_sesiones(conexion):
+    return sessionmaker(
+        bind=conexion, autocommit=False, autoflush=False,
+        join_transaction_mode="create_savepoint",
+    )
+
+
+@pytest.fixture
+def db_api(conexion_api):
+    """Sesión del test para **preparar datos y verificar** lo que dejó la API.
+
+    Para leer lo que cambió la API, `db_api.expire_all()` primero o consultar
+    columnas (`db_api.scalar(select(Persona.ci)...)`): el mapa de identidad de esta
+    sesión no se entera de lo que escribieron las sesiones de los requests.
+    """
+    sesion = _fabrica_sesiones(conexion_api)()
+    try:
+        yield sesion
+    finally:
+        sesion.close()
+
+
+@pytest.fixture
+def client(conexion_api):
+    """`TestClient` con `get_db` apuntando a la conexión del test (una sesión por request)."""
+    from fastapi.testclient import TestClient
+
+    from app.core.database import get_db
+    from app.main import app
+
+    Sesion = _fabrica_sesiones(conexion_api)
+
+    def _get_db():
+        sesion = Sesion()
+        try:
+            yield sesion
+        finally:
+            sesion.close()
+
+    app.dependency_overrides[get_db] = _get_db
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+# La base de test se arma con `create_all()`: **no tiene catálogos sembrados**. Los
+# tests que necesitan un grupo o un profesional lo crean con estas fábricas.
+@pytest.fixture
+def crear_profesional(db_api):
+    contador = iter(range(1, 10_000))
+
+    def _crear(**campos):
+        from app.models.identidad import Profesional
+
+        n = next(contador)
+        datos = {"nombre": f"Profesional {n}", "email": f"prof{n}@ippu.test", "rol": "tecnico"}
+        datos.update(campos)
+        p = Profesional(**datos)
+        db_api.add(p)
+        db_api.commit()
+        return p
+
+    return _crear
+
+
+@pytest.fixture
+def crear_grupo(db_api):
+    contador = iter(range(1, 10_000))
+
+    def _crear(**campos):
+        from app.models.identidad import Grupo
+
+        n = next(contador)
+        datos = {"nombre": f"Grupo {n}", "anio": 2026}
+        datos.update(campos)
+        g = Grupo(**datos)
+        db_api.add(g)
+        db_api.commit()
+        return g
+
+    return _crear

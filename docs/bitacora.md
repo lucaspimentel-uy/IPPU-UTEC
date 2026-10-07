@@ -20,6 +20,22 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-06 · Sesión M11.3-a — cimientos de servicios + rebanada persona/HCE** (Lucas + Claude, rama `main`).
+  Primer código de `app/services/`, `app/schemas/` y `app/routers/`. **Sin cambios de modelo, migración ni seed.**
+  - **Cimientos:** errores de dominio (409/422/403/404) con un solo cuerpo `{code, detail[]}`; sobre `{data,
+    warnings}` en POST/PATCH; **una transacción por request** (commit sólo en `routers/dependencias.py`);
+    `registrar_cambios` (auditoría de campo) y `normalizar_texto` (`''`/blanco → `NULL`). Contrato en **§5.108**.
+  - **Rebanada:** `POST/GET/PATCH /hce` + búsqueda por CI · N.º de historia · grupo (+ nombre; fuente: Doc.
+    Técnico l.66). La CI se compara sin puntos/guiones; la carrera por `uq_persona_ci` también da 409.
+  - **Tests:** fixtures `client`/`db_api` con savepoints (el commit del router no escapa del test). Mutaciones
+    verificadas: sin commit → 30 fallan; sin normalizar → 10; sin chequeo de CI → 4; sin traducir
+    `IntegrityError` → 1; auditar siempre → 4; commit aun con error → 2. (Sin `rollback` explícito no falla
+    nada: `get_db` cierra la sesión y eso ya deshace; el `rollback` queda como cinturón.)
+  - **Smoke real** (uvicorn contra la base de desarrollo): 201 persistido, 409, PATCH con 1 fila de auditoría;
+    filas de prueba borradas después.
+  - **Abiertos (§6):** `tipo` de auditoría de la creación · regla de `hc_historico` · «N.º de HCE» · falta `GET /grupos`.
+  - **Medido:** `pytest -q` → **501 passed, 0 skipped** (435 + 66); ambos `--check` → 0; head `b99294aec85c`.
+
 - **2026-10-05 · Sesión M11.3-0b — A5 contestada, B1 con texto definitivo** (Lucas + Claude, rama `main`).
   Continuación corta de M11.3-0; sin cambios de código (sólo comentarios y docstrings).
   - **A5:** IPPU respondió «Taller adolescentes es el nombre de un grupo» → **§5.107** (confirma §5.61; supera

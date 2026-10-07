@@ -7,27 +7,25 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> - **Última actualización:** 2026-10-05 (sesión **M11.3-0** — respuestas escritas de IPPU A1–B12).
->   Sesión **sólo de documentación**: no tocó código, migración, seed ni tests; únicamente docstrings de
->   `app/models/`. IPPU contestó por escrito las 17 preguntas de `preguntas-ippu.md` A y B
->   (`docs/notas/respuestas-ippu-2026-10-05.txt`, registradas como fuente de nivel 0, **§5.93**). Escritas
->   **§5.93–§5.106**: el CI **no traba** (A3, cierra §5.38) · la secuencia **sólo avisa** (B4, enmienda
->   §5.86: `warnings[]` + fila `auditoria` `tipo='excepcion'`) · cadena por año · qué IDEA rige (el de su año;
->   en la HCE el firmado de mayor `anio`) · **puntaje único** (ratifica §5.47) · fotos sin trabas ·
->   **`tecnico_grupo` CANCELADA** (supera §5.79/§5.87, cierra §5.89) · login mínimo `admin` \| `tecnico` para
->   el 26/11 · informes configurables y divulgación fuera del 26/11 · el Anexo A **ya no bloquea** (B1 se
->   re-pregunta) · **M11.4 se disuelve en rebanadas verticales** (§5.106). **Seguía abierta B1**
->   (no entendida; re-preguntada). **Actualización de la misma fecha (sesión M11.3-0b, §5.107): A5 contestada — «Taller de Adolescentes» es un grupo; §5.61 confirmada. B1 sigue abierta, con su texto definitivo.** Reescritos: `esquema-datos-v2.md` §2.2, §2.3, §2.6,
->   §4, §5 y §6; `preguntas-ippu.md` (estado de cada ítem); `puntos-a-validar.md`; el bullet M11 de §6;
->   `CLAUDE.md`; nota de superseded en `PLAN-modular-adaptacion-HCE-2026-07.md`. Barrido de vigencia con
->   evidencia (§5.83) en `docs/bitacora.md`. **Medido:** `pytest -q` → **435 passed, 0 skipped**; ambos
->   `--check` → exit 0; **51 tablas**; head de Alembic **`b99294aec85c`** (un solo archivo en `versions/`) —
->   idéntico al punto de partida. **Próximo:** **M11.3-a** (cimientos + persona/HCE).
+> - **Última actualización:** 2026-10-06 (sesión **M11.3-a** — cimientos de la capa de servicios + rebanada
+>   persona/HCE). **Primer código de servicios del backend**: `app/services/`, `app/schemas/` y
+>   `app/routers/` dejan de estar vacíos. **Hecho:** errores de dominio (`ConflictError`/`SignedModuleError`
+>   → 409, `ValidationFailed` → 422, `ForbiddenAction` → 403, `NotFound` → 404) con **un solo cuerpo**
+>   `{code, detail[]}` · sobre **`{data, warnings}`** en POST/PATCH (GET devuelve el recurso directo) · **una
+>   transacción por request** (commit sólo en `routers/dependencias.py`; los servicios hacen `flush`) ·
+>   auditoría de campo (`registrar_cambios`) · normalización `''`/blanco → `NULL` · `POST/GET/PATCH /hce` y
+>   búsqueda por CI · N.º de historia · grupo (+ nombre). **Contrato y regla: §5.108** — son la base de las
+>   rebanadas siguientes. **Sin cambios de modelo, migración ni seed.** **Medido:** `pytest -q` → **501
+>   passed, 0 skipped** (435 + 66); ambos `--check` → exit 0; **51 tablas**; head **`b99294aec85c`** (un solo
+>   archivo en `versions/`); `alembic check` → sin cambios pendientes. **Puntos abiertos** (§6, bullet M11):
+>   `tipo` de auditoría para la creación · regla de `hc_historico` · qué es «N.º de HCE» en la búsqueda ·
+>   falta listar grupos para que la demo elija uno. **Próximo:** **M11.3-b** (estado de flujo + `warnings` +
+>   firma/addendas + validaciones del IDEA).
 > - **Responsable del documento:** Lucas Pimentel (UTEC-LIDIA) · **Equipo:** Lucas · Samuel · Victor
 > - **Foco actual:** **L1 — M12 (absorción del Prototipo v4) CERRADA + I1 HECHO** (2026-09-16, sesión
 >   M12.8-cierre+I1), **intercalada entre M11.2 y M11.3.** **HECHOS: M12.0 · M12.1 · M12.2 · M12.3 · M12.4 ·
 >   M12.5 · M12.6 · M12.7 · M12.8a-1 · M12.8a-3 · M12.8b-1 · M12.8b-1b · M12.8b-2 · M12.8b-2b · M12.8b-3a ·
->   M12.8b-3a-bis · M12.8 · I1** — **51 tablas**, **435 tests en verde y 0 salteados**, head de Alembic
+>   M12.8b-3a-bis · M12.8 · I1** — **51 tablas**, **501 tests en verde y 0 salteados** (435 al cerrar M12; +66 de M11.3-a), head de Alembic
 >   **`b99294aec85c`** (un solo archivo en `versions/`). **Única excepción
 >   registrada: M12.8b-3b** (pase de vocabulario §5.75/§5.76) — **CANCELADA el 2026-09-16** (sesión M12.9,
 >   §5.92), no diferida: no desbloqueaba nada de cara al 26/11.
@@ -2962,6 +2960,31 @@ está en `preguntas-ippu.md` B1. **Sigue sin bloquear el 26/11** (§5.105).
 
 ---
 
+## 5.108 · Sesión M11.3-a — contrato de la API y regla de transacción (2026-10-06, Lucas)
+
+### 5.108 Contrato de respuesta y una transacción por request: base de todas las rebanadas (2026-10-06, Lucas)
+
+**Contexto.** La demo HTML se conecta a esta API en Fase 3 (§5.106), así que lo que se fija en la primera
+rebanada **no se cambia sin acuerdo del equipo**. Estas son las reglas, tal como las implementa M11.3-a;
+la explicación completa está en los docstrings de `app/routers/__init__.py` y `app/services/__init__.py`.
+
+1. **Éxito.** `GET` → el recurso (o la lista) **directo**. `POST`/`PATCH`/`PUT` → **`{"data": …, "warnings": []}`**;
+   `warnings` **siempre presente**, lista de `{code, mensaje, …}` no bloqueantes. Es el lugar donde
+   M11.3-b pone los avisos de secuencia (§5.95).
+2. **Error.** Todos —404, 409, 422, 403, y también la validación de entrada de FastAPI y las rutas
+   inexistentes— devuelven **`{"code": str, "detail": [{"campo": str|null, "mensaje": str}]}`**. `detail`
+   es siempre una lista. Códigos: `not_found` · `conflict` · `signed_module` (409) · `validation_error` ·
+   `forbidden` · `http_error`. **No existe un error de secuencia** (§5.95).
+3. **Transacción.** **Una por request.** Los servicios **sólo `flush()`**, nunca `commit` ni `rollback`; el
+   commit ocurre **una vez**, en `app/routers/dependencias.py::sesion_transaccional`, y cualquier excepción
+   deshace todo. Es lo que permite que «firmar» = módulo + totales + auditoría entren o no entren juntos.
+4. **Capas.** Los servicios levantan errores de dominio y **no importan FastAPI** (un test lo fija por AST).
+5. **Textos.** `''` y blanco → `NULL` al guardar en los opcionales (`esquema-datos-v2.md` §4); un texto con
+   contenido se guarda **sin tocar**. **CI:** se guarda como se escribió y la unicidad ignora puntos,
+   guiones y espacios.
+
+---
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -3270,7 +3293,27 @@ está en `preguntas-ippu.md` B1. **Sigue sin bloquear el 26/11** (§5.105).
   plan**). **Meta: prototipo presentable SIN datos reales el 2026-11-26** (§5.92), con la **demo HTML
   existente conectada a la API**; React + Tailwind es posterior. **M12 cerró el 2026-09-16: ya no hay
   pausa.** Cada rebanada = servicio + schema + router + tests de su dominio:
-  - [ ] **M11.3-a** cimientos + persona/HCE.
+  - [x] **M11.3-a** cimientos + persona/HCE — **HECHO 2026-10-06** (§5.108). `POST /hce` · `GET /hce`
+    (búsqueda) · `GET /hce/{id}` · `PATCH /hce/{id}`; 66 tests nuevos. Las rebanadas siguientes **heredan** el
+    contrato `{data, warnings}` / `{code, detail[]}` y la regla «el servicio hace `flush`, el router
+    commitea». **Puntos abiertos que la rebanada dejó (no inventó reglas):**
+    - **`tipo` de la auditoría de creación.** El CHECK de `auditoria.tipo` admite `carga`, pero ningún
+      documento dice que sea el de «se creó el expediente». **Hoy un alta no escribe auditoría.** Decidir
+      si la creación se audita y con qué `tipo`.
+    - **Regla de `hc_historico`.** §5.43 fija sólo el *formato* (entero desde 1000: 1001, 1002…); ningún
+      documento define **cómo se le asigna número a un expediente nuevo**, ni si es único. La columna sigue
+      `varchar(30)`, sin CHECK, sin UNIQUE y **sin índice** (el Documento Técnico pide índice en los tres
+      campos de búsqueda). Se acepta como dato **opcional** tal cual llega. A decidir junto con la
+      migración (§5.43).
+    - **«N.º de HCE» en la búsqueda.** El Documento Técnico (línea 66) lo nombra sin decir qué columna es. La
+      búsqueda acepta **`hce_diurna.id` o `hc_historico`** (la demo usa el id). Si el id pasa de ~1000 los
+      dos rangos se pisan y un mismo número devolvería dos expedientes.
+    - **Falta `GET /grupos`**: `POST /hce` pide `grupo_id` y la demo no tiene cómo elegir uno. Entra con la
+      conexión de pantallas (M11.3-d / Fase 3).
+    - **Alta/baja del expediente** (`activo`, `fecha_baja`, `evento`) **no se edita por `PATCH /hce`**: es
+      la línea de tiempo (`evento`), no HCE-00. Sin rebanada asignada todavía.
+    - **Grupo en la búsqueda:** compara el **nombre**, de cualquier año (el grupo es `(nombre, anio)`).
+      «Escolares» devuelve integrantes de 2026 y de 2027.
   - [ ] **M11.3-b** estado de flujo + `warnings` (la secuencia **sólo avisa**, §5.95; el CI **no traba**,
     §5.94) + firma/addendas (firma = bloqueo, 409) + validaciones del IDEA / totales / banda.
   - [ ] **M11.3-c** PA/PB/IC + **Δ sólo dentro del mismo instrumento** (§5.36) + alerta + datos del IC

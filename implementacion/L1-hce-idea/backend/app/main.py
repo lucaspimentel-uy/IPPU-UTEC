@@ -3,23 +3,37 @@
 Levantar con:  uvicorn app.main:app --reload
 Docs (Swagger): http://127.0.0.1:8000/docs
 
-Estado: **M11.2** — modelos y catálogos del esquema v2 en su lugar. Los routers
-de dominio se reconstruyen en M11.4 (los de la v1 se retiraron porque hablaban
-del modelo anterior al Documento Técnico; ver backend/docs/esquema-datos-v2.md §3).
+Estado: **M11.3-a** — cimientos de la capa de servicios (errores, sobre de
+respuesta `{data, warnings}`, una transacción por request, auditoría de campo) y
+la primera rebanada vertical: persona + expediente (`/hce`). Los routers se
+entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
+se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
+backend/docs/esquema-datos-v2.md §3). El contrato de respuesta está en el
+docstring de `app/routers/__init__.py`.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.routers import hce
+from app.routers.errores import registrar_manejadores
 
 app = FastAPI(
     title=settings.app_name,
     version="2.0.0-dev",
     description=(
         "API de la Historia Clínica Electrónica + protocolo IDEA (IPPU × UTEC-LIDIA). "
-        "Esquema v2 (M11) — Servicio de Atención Diurna."
+        "Esquema v2 (M11) — Servicio de Atención Diurna.\n\n"
+        "**Contrato de respuesta.** GET devuelve el recurso directo. POST/PATCH/PUT "
+        "devuelven `{\"data\": <recurso>, \"warnings\": []}` (`warnings` siempre presente: "
+        "avisos no bloqueantes). Todos los errores devuelven "
+        "`{\"code\": str, \"detail\": [{\"campo\": str|null, \"mensaje\": str}]}`. "
+        "Una transacción por request."
     ),
 )
+
+registrar_manejadores(app)
+app.include_router(hce.router)
 
 app.add_middleware(
     CORSMiddleware,

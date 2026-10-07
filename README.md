@@ -69,7 +69,7 @@ IPPU/
   El 2026-09-02, **M12.6** (HCE-PAI: la propuesta y sus siete tablas hijas, sólo esquema) y el 2026-09-03
   **M12.8a** (§VII/FODA fuera de `pai`, los cinco nombres reales de grupo, `ateneo.observaciones` y
   `divulgacion` — el registro de divulgación de datos del Protocolo de acceso, §5.80).
-  Estado actual: **51 tablas**, verificadas con **435 tests estructurales** contra Postgres, **0
+  Estado actual: **51 tablas**, verificadas con **501 tests** (estructurales + de la API) contra Postgres, **0
   salteados**. ⚠️ **El conteo se movió y ninguna vez fue regresión:** bajó de 35 a 34 en M12.3
   —que no crea tablas y retira `hce_taller`, resto del esquema v1 (§5.20)—, subió a 36 en M12.4, a 38
   en M12.7, a 42 en M12.5, a 50 en M12.6 (HCE-PAI) y a 51 en M12.8a (`divulgacion`). **Falta M11.3** (los
@@ -80,7 +80,7 @@ IPPU/
   `tests/conftest.py` **aborta con exit 1** si el contenedor no está levantado, si la base de desarrollo
   está vacía o si no está en el head — cada caso con el comando que lo arregla. Antes se salteaba en
   silencio y devolvía **exit 0** con la mitad de los tests sin correr. Una corrida válida es
-  **435 passed, 0 skipped**.
+  **501 passed, 0 skipped**.
   Desde el 2026-08-07 **no hay módulos con dueño exclusivo** (`handoff.md` §5.6): se avisa qué se toma y listo.
 - **Ronda M12 — absorción del Prototipo v4 (ago-2026), CERRADA el 2026-09-16.** IPPU había publicado su
   **Prototipo v4**, que se intercaló entre M11.2 y M11.3 porque tocaba la misma capa (modelos, migración,

@@ -558,3 +558,33 @@ DIVULGACION_DESTINATARIOS: tuple[str, ...] = (
 #: prioriza disociado/anonimizado—. `"disociado"` abarca «disociado o
 #: anonimizado» del §6.6; `"agregado"` es la estadística sin individuos.
 DIVULGACION_ALCANCES: tuple[str, ...] = ("identificable", "disociado", "agregado")
+
+# --------------------------------------------------------------------------
+# Auditoría de campo (HCE-LOG · M11.3-a)
+# --------------------------------------------------------------------------
+# `auditoria.modulo` es `String(20)` **sin CHECK** (a propósito: hay eventos
+# institucionales, como cambiar los técnicos de un grupo, que no son de ningún
+# módulo del expediente). Sin una lista cerrada en la base, la única defensa
+# contra «HCE-00» / «hce00» / «HCE00» escritos a mano en tres servicios distintos
+# es que **nadie escriba el literal**: los servicios importan estas constantes.
+#
+# Los códigos son los que la demo ya usa (`demo/js/flujo.js`: `MODULOS_FLUJO.full`
+# y `MOD_LABEL`) más los tres módulos que M12 agregó al expediente (SEV, INC, PAI)
+# con el mismo prefijo `HCE-`. No se inventó ninguno.
+MODULO_HCE_00 = "HCE-00"    # identificación + anamnesis; siempre editable, sin firma
+MODULO_HCE_CI = "HCE-CI"
+MODULO_HCE_LB = "HCE-LB"
+MODULO_HCE_PA = "HCE-PA"
+MODULO_HCE_PB = "HCE-PB"
+MODULO_HCE_IC = "HCE-IC"
+MODULO_HCE_DOC = "HCE-DOC"
+MODULO_HCE_ORG = "HCE-ORG"
+MODULO_HCE_VF = "HCE-VF"
+MODULO_HCE_SEV = "HCE-SEV"
+MODULO_HCE_INC = "HCE-INC"
+MODULO_HCE_PAI = "HCE-PAI"
+
+#: Valor de `auditoria.tipo` para la edición de un campo (el CHECK de la tabla
+#: admite además firma · excepcion · addenda · alerta · carga · acceso, que son de
+#: otras rebanadas).
+AUDITORIA_TIPO_EDICION = "edicion"
