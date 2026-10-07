@@ -18,19 +18,27 @@ heredan: **no se cambia sin acuerdo del equipo**.
 
 ## Error
 
-Todos los errores —404, 409, 422, 403, los de validación de FastAPI y el 500—
+Todos los errores —404, 409, 422, 403, 401, los de validación de FastAPI y el 500—
 tienen el mismo cuerpo::
 
     {"code": "conflict", "detail": [{"campo": "persona.ci", "mensaje": "..."}]}
 
 `code` es estable y legible por máquina (`not_found`, `conflict`,
-`signed_module`, `validation_error`, `forbidden`, `http_error`, `internal_error`);
+`signed_module`, `validation_error`, `forbidden`, `unauthorized`, `http_error`,
+`internal_error`);
 `detail` es **siempre una lista**, aunque haya un solo problema. Un error no
 previsto es `500` con `{"code": "internal_error", "detail": [{"campo": null,
 "mensaje": "Error interno"}]}`: **nunca** el texto de la excepción; el traceback
 completo va al log del servidor (§5.115 c). Los servicios levantan
 errores de dominio (`app/services/errores.py`); la traducción a HTTP está en
 `app/routers/errores.py`.
+
+## Autenticación (M11.3-d1, §5.101)
+
+Todo pide `Authorization: Bearer <token>` (de `POST /auth/login`) salvo `/health`,
+`/auth/login` y la documentación: sin token, o vencido, **401** `unauthorized`. Un
+`tecnico` sólo alcanza los expedientes de sus grupos; uno fuera de su alcance —y lo que
+cuelga de él— es **404** con el mismo mensaje que uno que no existe.
 
 ## Transacción
 

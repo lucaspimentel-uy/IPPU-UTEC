@@ -13,8 +13,10 @@ SQLAlchemy==2.0.36
 alembic==1.14.0
 psycopg[binary]==3.2.3
 
-# --- Autenticación (Fase 4) ---
-passlib[bcrypt]==1.7.4
+# --- Autenticación (login mínimo, §5.101 · M11.3-d1) ---
+# `bcrypt` directo y no `passlib[bcrypt]`: passlib 1.7.4 (sin mantenimiento) falla con bcrypt ≥ 4.1
+# al hashear (`ValueError: password cannot be longer than 72 bytes` en su prueba interna).
+bcrypt==5.0.0
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.20
 

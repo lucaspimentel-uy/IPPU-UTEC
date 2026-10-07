@@ -69,6 +69,14 @@ class ValidationFailed(ErrorDeDominio):
         super().__init__("Datos inválidos", pares)
 
 
+class Unauthorized(ErrorDeDominio):
+    """Sin credenciales válidas (falta el token, está vencido o es inválido; usuario o
+    contraseña incorrectos) → 401 (§5.101). El mensaje nunca dice *cuál* de las dos
+    cosas falló en el login: no se revela si un email existe."""
+
+    code = "unauthorized"
+
+
 class ForbiddenAction(ErrorDeDominio):
     """La acción no está permitida en este estado o para este actor → 403."""
 

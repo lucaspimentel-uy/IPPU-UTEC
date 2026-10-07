@@ -674,6 +674,38 @@ PROTOCOLO_VALORES_CON_OBS: tuple[int, ...] = (1, 5)
 #: mismas `esc_1`…`esc_4` que `protocolo`, porque la síntesis comenta el Δ de cada una).
 IC_SINTESIS_ESCALAS: tuple[str, ...] = tuple(PROTOCOLO_ESCALAS)
 
+#: Recomendados de las filas HCE-PA / HCE-PB y HCE-IC del Documento Técnico §4.3 (decisión c
+#: de M11.3-d1, §5.118). Mismo mecanismo que los del IDEA (§5.117 a): al firmar, si no se
+#: cumplen, `warnings[]` lleva `recomendacion_no_cumplida` — **nunca bloquean** ni escriben
+#: auditoría. Las extensiones son «≈»: se avisa por debajo del **75 %** de lo sugerido, la
+#: misma tolerancia que fija `IDEA_SINTESIS_PALABRAS_AVISO` (150 de ≈200).
+#: «≥ 15 semanas de asistencia efectiva» (PA/PB): mínimo exacto, sin tolerancia.
+PROTOCOLO_SEMANAS_RECOMENDADAS = 15
+#: ≈150 palabras por síntesis de técnico (PA/PB); se avisa por debajo de 113 (⌈0,75 × 150⌉).
+PROTOCOLO_SINTESIS_PALABRAS_SUGERIDAS = 150
+PROTOCOLO_SINTESIS_PALABRAS_AVISO = 113
+#: ≈100 palabras por síntesis de escala (IC); se avisa por debajo de 75.
+IC_SINTESIS_ESCALA_PALABRAS_SUGERIDAS = 100
+IC_SINTESIS_ESCALA_PALABRAS_AVISO = 75
+
+# --------------------------------------------------------------------------
+# HCE-VF — valoración funcional (M11.3-d1 · Documento Técnico §7)
+# --------------------------------------------------------------------------
+#: Lo que se muestra como categoría cuando `pct` es `NULL` (menores de 2 años: no aplica el
+#: BUND, §7.1). No es una fila de `baremo_categoria`: es la ausencia de categoría, y por eso
+#: `categoria_id` queda `NULL` (`esquema-datos-v2.md` §4, fila «`pct` NULL»).
+VF_CATEGORIA_NO_CORRESPONDE = "No corresponde"
+#: Alerta única del módulo (§7.8): vencimiento/revisión de la valoración oficial a 90 y 30
+#: días de `vigencia`. **Se calcula al leer, nunca se guarda.**
+VF_ALERTA_DIAS: tuple[int, ...] = (90, 30)
+
+# --------------------------------------------------------------------------
+# Login mínimo (§5.101 · M11.3-d1)
+# --------------------------------------------------------------------------
+#: Los dos valores de `profesional.rol` (`ck_profesional_rol_valido`).
+ROL_ADMIN = "admin"
+ROL_TECNICO = "tecnico"
+
 #: N.º de HC institucional (`hce_diurna.hc_historico`, §5.109): entero desde 1000,
 #: hasta lo que cabe en un `integer` de Postgres.
 HC_HISTORICO_MIN = 1000

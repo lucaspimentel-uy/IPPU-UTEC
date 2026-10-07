@@ -21,7 +21,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, contains_eager
 
 from app.core.constantes import HC_HISTORICO_MAX, HC_HISTORICO_MIN, MODULO_HCE_00
-from app.models.identidad import Grupo, HceDiurna, Persona
+from app.models.identidad import Grupo, HceDiurna, Persona, Profesional
+from app.services import auth
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, NotFound, ValidationFailed
 from app.services.fechas import anio_actual
@@ -29,12 +30,17 @@ from app.services.texto import normalizar_opcionales, normalizar_texto
 
 # Qué campo pertenece a qué tabla. Es también la **lista blanca** de lo que
 # HCE-00 deja escribir: cualquier otra clave que llegue se ignora (los metadatos
-# de origen, `activo` y `fecha_baja` no se editan por acá).
+# de origen, por ejemplo). `activo` y `fecha_baja` (baja/reingreso, M11.3-d1) se
+# editan por el PATCH pero con sus propias reglas (`_preparar_baja`), y no en el alta.
 PERSONA_OBLIGATORIOS = ("nombre", "apellido", "ci")
 PERSONA_OPCIONALES = ("sexo", "localidad", "referente", "telefono")
 PERSONA_CAMPOS = (*PERSONA_OBLIGATORIOS, "fecha_nac", *PERSONA_OPCIONALES)
 HCE_TEXTOS = ("diagnostico", "cie11", "derivacion", "medicacion", "alerta")
 HCE_CAMPOS = (*HCE_TEXTOS, "hc_historico", "grupo_id", "dx_fecha", "anamnesis")
+BAJA_CAMPOS = ("activo", "fecha_baja")
+#: Paginación de la búsqueda (M11.3-d1): por omisión 50, nunca más de 200 por página.
+LIMITE_POR_OMISION = 50
+LIMITE_MAXIMO = 200
 
 # Nombres de los UNIQUE que fija la convención de `core/database.py`, y el campo con
 # el que se informa cada violación.
@@ -94,7 +100,11 @@ def buscar_hce(
     grupo: str | None = None,
     anio: int | None = None,
     nombre: str | None = None,
-) -> list[HceDiurna]:
+    incluir_inactivos: bool = False,
+    usuario: Profesional | None = None,
+    limit: int = LIMITE_POR_OMISION,
+    offset: int = 0,
+) -> tuple[list[HceDiurna], int]:
     """Búsqueda de expedientes por las **tres vías institucionales** + nombre.
 
     Fuente: Documento Técnico (`docs/markdown/1_documento-tecnico-utec-lidia.md`
@@ -118,6 +128,12 @@ def buscar_hce(
 
     Varios filtros a la vez se combinan con **Y**. Un filtro vacío o en blanco se
     ignora (igual que `''` → `NULL` al guardar). Sin filtros devuelve todos.
+
+    **M11.3-d1:** los expedientes **dados de baja** (`activo = false`) no aparecen salvo
+    `incluir_inactivos=True`. Con `usuario`, sólo los de su alcance (§5.101: un `tecnico`,
+    los de sus grupos; `None` = sin filtro, para quien llama sin HTTP). Devuelve
+    `(página, total)`: `total` cuenta **todas** las filas que cumplen los filtros, no sólo
+    las de la página (`limit` 1..200, `offset` ≥ 0; los acota el router).
     """
     ci, numero, grupo, nombre = (normalizar_texto(v) for v in (ci, numero, grupo, nombre))
     condiciones = []
@@ -148,15 +164,20 @@ def buscar_hce(
             )
         )
 
+    if not incluir_inactivos:
+        condiciones.append(HceDiurna.activo.is_(True))
+    if usuario is not None and (alcance := auth.condicion_de_alcance(usuario)) is not None:
+        condiciones.append(alcance)
+
+    base = select(HceDiurna).join(HceDiurna.persona).outerjoin(HceDiurna.grupo).where(*condiciones)
+    total = db.scalar(select(func.count()).select_from(base.subquery()))
     consulta = (
-        select(HceDiurna)
-        .join(HceDiurna.persona)
-        .outerjoin(HceDiurna.grupo)
-        .options(contains_eager(HceDiurna.persona), contains_eager(HceDiurna.grupo))
-        .where(*condiciones)
+        base.options(contains_eager(HceDiurna.persona), contains_eager(HceDiurna.grupo))
         .order_by(Persona.apellido, Persona.nombre, HceDiurna.id)
+        .limit(limit)
+        .offset(offset)
     )
-    return list(db.scalars(consulta).all())
+    return list(db.scalars(consulta).all()), total
 
 
 # ── Validación ───────────────────────────────────────────────────────────────
@@ -207,6 +228,39 @@ def _preparar_hce(
                 "hc_historico",
                 f"Debe ser un número entero desde {HC_HISTORICO_MIN} hasta {HC_HISTORICO_MAX}",
             ))
+    return d
+
+
+def _preparar_baja(
+    expediente: HceDiurna, datos: Mapping[str, Any], errores: list[tuple[str | None, str]],
+) -> dict[str, Any]:
+    """Baja y reingreso por `PATCH` (M11.3-d1): `activo` + `fecha_baja`, sólo las claves que vinieron.
+
+    - **Baja** (`activo=false`) exige `fecha_baja`: la del mismo cuerpo o, si no vino, la que
+      ya tenga guardada (422 si ninguna).
+    - **Reingreso** (`activo=true` sobre un expediente dado de baja) **borra** `fecha_baja`
+      (queda en la auditoría como `valor_ant`).
+    - Un expediente activo no lleva `fecha_baja`: mandarla sin `activo=false` es 422.
+    - `activo: null` es 422 (un expediente está activo o no).
+    """
+    d = {c: datos[c] for c in BAJA_CAMPOS if c in datos}
+    if not d:
+        return d
+    if "activo" in d and not isinstance(d["activo"], bool):
+        errores.append(("activo", "Tiene que ser true (reingreso) o false (baja)"))
+        return d
+    activo = d.get("activo", expediente.activo)
+    if activo is False:
+        if d.get("fecha_baja", expediente.fecha_baja) is None:
+            errores.append(("fecha_baja", "La baja exige la fecha de baja"))
+    else:
+        if d.get("fecha_baja") is not None:
+            errores.append((
+                "fecha_baja",
+                "Un expediente activo no tiene fecha de baja: para dar de baja mandá también `activo: false`",
+            ))
+        if expediente.activo is False:  # reingreso
+            d["fecha_baja"] = None
     return d
 
 
@@ -348,6 +402,7 @@ def actualizar_hce_00(
     errores: list[tuple[str | None, str]] = []
     cambios_p = _preparar_persona(persona or {}, errores, alta=False)
     cambios_h = _preparar_hce(db, hce or {}, errores, alta=False)
+    cambios_h.update(_preparar_baja(expediente, hce or {}, errores))
     if errores:
         raise ValidationFailed(errores)
     if "ci" in cambios_p and cambios_p["ci"] != quien.ci:

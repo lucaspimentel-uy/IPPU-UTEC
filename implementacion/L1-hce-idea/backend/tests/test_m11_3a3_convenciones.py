@@ -136,9 +136,10 @@ def test_un_error_no_previsto_es_500_con_el_sobre_sin_el_texto_y_con_traceback_e
     def _explota(*a, **k):
         raise RuntimeError(_SECRETO)
 
+    hid = _alta(client)  # desde M11.3-d1 el alcance se verifica antes del servicio: tiene que existir
     monkeypatch.setattr(servicio_hce, "obtener_hce", _explota)
     with caplog.at_level("ERROR"):
-        r = client.get("/hce/1")
+        r = client.get(f"/hce/{hid}")
     assert r.status_code == 500
     assert r.json() == _SOBRE_500
     assert _SECRETO not in r.text
@@ -153,9 +154,10 @@ def test_el_500_lleva_las_cabeceras_cors(client, monkeypatch):
     from app.core.config import settings
     from app.services import hce as servicio_hce
 
+    hid = _alta(client)
     monkeypatch.setattr(servicio_hce, "obtener_hce", lambda *a, **k: 1 / 0)
     origen = settings.cors_origins[0]
-    r = client.get("/hce/1", headers={"Origin": origen})
+    r = client.get(f"/hce/{hid}", headers={"Origin": origen})
     assert r.status_code == 500
     assert r.headers["access-control-allow-origin"] == origen
 
@@ -248,7 +250,7 @@ def test_una_falla_despues_de_escribir_en_el_alta_no_deja_persona_expediente_ni_
 def test_profesionales_expone_activo_en_cada_fila(client, crear_profesional):
     crear_profesional(nombre="Ana", activo=True)
     crear_profesional(nombre="Beto", activo=False)
-    filas = client.get("/profesionales").json()
+    filas = [f for f in client.get("/profesionales").json() if f["rol"] != "admin"]  # sin el admin del login
     assert [(f["nombre"], f["activo"]) for f in filas] == [("Ana", True), ("Beto", False)]
     assert [f["nombre"] for f in client.get("/profesionales?activo=false").json()] == ["Beto"]
 

@@ -11,7 +11,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.routers.dependencias import sesion_lectura, sesion_transaccional
+from app.models.identidad import Profesional
+from app.routers.dependencias import hce_visible, idea_visible, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.idea import (
@@ -21,8 +22,9 @@ from app.schemas.idea import (
 from app.services import fechas
 from app.services import idea as servicio
 
-router_hce = APIRouter(prefix="/hce/{hce_id}/idea", tags=["idea"])
-router = APIRouter(prefix="/idea", tags=["idea"])
+router_hce = APIRouter(prefix="/hce/{hce_id}/idea", tags=["idea"], dependencies=[Depends(hce_visible)])
+router = APIRouter(prefix="/idea", tags=["idea"], dependencies=[Depends(idea_visible)])
+_USUARIO = Annotated[Profesional, Depends(usuario_actual)]
 
 _ERROR_404_HCE = {404: {"model": RespuestaError, "description": "No existe el expediente."}}
 _ERROR_404 = {404: {"model": RespuestaError, "description": "No existe el IDEA."}}
@@ -43,7 +45,7 @@ _ERROR_409_FIRMADO = {409: {
         409: {"model": RespuestaError, "description": "Ya existe un IDEA de ese año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: IdeaCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
+def crear(hce_id: int, datos: IdeaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """Un IDEA por `(expediente, año)`. `anio` es obligatorio; `dim` puede venir parcial (las
     dimensiones se completan con PATCH). Calcula `total` y las 4 escalas.
 
@@ -51,7 +53,7 @@ def crear(hce_id: int, datos: IdeaCrear, db: Annotated[Session, Depends(sesion_t
     el CI pendiente tampoco avisa (es sólo un estado visible, §5.94). Deja una fila `auditoria`
     `tipo='carga'`.
     """
-    idea, avisos = servicio.crear_idea(db, hce_id, datos.model_dump(exclude_unset=True))
+    idea, avisos = servicio.crear_idea(db, hce_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)), warnings=avisos)
 
 
@@ -118,12 +120,12 @@ def leer(idea_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     summary="Edición parcial de un IDEA sin firmar",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_IDEA), **_ERROR_404, **_ERROR_422, **_ERROR_409_FIRMADO},
 )
-def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depends(sesion_transaccional)]):
+def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """Sólo se tocan las claves presentes; de `dim`, sólo las dimensiones que vengan. **Recalcula**
     `total` y `esc_a`…`esc_d` (sin las dimensiones `NS` ni las vacías). Cada campo que cambia deja
     **una fila** de auditoría; de `dim`, una por dimensión (`campo='dim.D5'`); un PATCH idéntico no
     deja ninguna. **409** si el IDEA está firmado."""
-    idea = servicio.actualizar_idea(db, idea_id, datos.model_dump(exclude_unset=True))
+    idea = servicio.actualizar_idea(db, idea_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)))
 
 
@@ -152,7 +154,7 @@ def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depen
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
+def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """**Un solo acto** (§5.98: un único puntaje de consenso, acordado en persona): firman los dos
     evaluadores ya cargados en el IDEA. Valida la integridad del Documento Técnico §4.3, recalcula y
     **congela** `total` y escalas, escribe `manual_version` y `firmas` (`{profesional_id, rol, fecha}`
@@ -160,7 +162,7 @@ def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
     es **409**. Los **recomendados** del §4.3 (≥ 5 sesiones previas, síntesis de ≈200 palabras) no
     bloquean: si no se cumplen, `warnings[]` lleva `recomendacion_no_cumplida` (§5.117 a).
     """
-    idea, avisos = servicio.firmar_idea(db, idea_id)
+    idea, avisos = servicio.firmar_idea(db, idea_id, usuario_id=usuario.id)
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)), warnings=avisos)
 
 
@@ -174,8 +176,12 @@ def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
         409: {"model": RespuestaError, "description": "El IDEA no está firmado: mientras no lo esté se edita directamente."},
     },
 )
-def agregar_addenda(idea_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
+def agregar_addenda(
+    idea_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+):
     """Es la única forma de corregir un IDEA firmado (§4.1): agrega `{texto, profesional_id, fecha}` a
     `addendas` y deja una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del IDEA."""
-    idea = servicio.agregar_addenda(db, idea_id, texto=datos.texto, profesional_id=datos.profesional_id)
+    idea = servicio.agregar_addenda(
+        db, idea_id, texto=datos.texto, profesional_id=datos.profesional_id, usuario_id=usuario.id,
+    )
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)))

@@ -11,7 +11,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.routers.dependencias import sesion_lectura, sesion_transaccional
+from app.models.identidad import Profesional
+from app.routers.dependencias import (
+    hce_visible, protocolo_visible, sesion_lectura, sesion_transaccional, usuario_actual,
+)
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.idea import AddendaCrear
@@ -21,8 +24,9 @@ from app.schemas.protocolo import (
 )
 from app.services import protocolo as servicio
 
-router_hce = APIRouter(prefix="/hce/{hce_id}/protocolo", tags=["protocolo"])
-router = APIRouter(prefix="/protocolo", tags=["protocolo"])
+router_hce = APIRouter(prefix="/hce/{hce_id}/protocolo", tags=["protocolo"], dependencies=[Depends(hce_visible)])
+router = APIRouter(prefix="/protocolo", tags=["protocolo"], dependencies=[Depends(protocolo_visible)])
+_USUARIO = Annotated[Profesional, Depends(usuario_actual)]
 
 _ERROR_404_HCE = {404: {"model": RespuestaError, "description": "No existe el expediente."}}
 _ERROR_404 = {404: {"model": RespuestaError, "description": "No existe el protocolo."}}
@@ -59,14 +63,14 @@ def _detalle(db: Session, protocolo) -> ProtocoloDetalle:
         409: {"model": RespuestaError, "description": "Ya existe un protocolo de ese tipo y año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: ProtocoloCrear, db: Annotated[Session, Depends(sesion_transaccional)]):
+def crear(hce_id: int, datos: ProtocoloCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """Uno por `(expediente, tipo, año)`. `items` puede venir parcial. Calcula los totales (cada escala
     y el total **sólo completos**; mientras falte un ítem, `null`). `ajustes` sólo en el B.
 
     Crear un PA sin el LB del año firmado, o un PB sin el PA firmado, **se acepta** con
     `fuera_de_secuencia` y una fila `excepcion`. Deja una fila `auditoria` `tipo='carga'`.
     """
-    protocolo, avisos = servicio.crear_protocolo(db, hce_id, datos.model_dump(exclude_unset=True))
+    protocolo, avisos = servicio.crear_protocolo(db, hce_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=_detalle(db, protocolo), warnings=avisos)
 
 
@@ -100,11 +104,12 @@ def leer(protocolo_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
 )
 def actualizar(
     protocolo_id: int, datos: ProtocoloActualizar, db: Annotated[Session, Depends(sesion_transaccional)],
+    usuario: _USUARIO,
 ):
     """Sólo se tocan las claves presentes; de `items`, sólo los ítems que vengan. **Recalcula** los
     totales. Cada campo que cambia deja una fila de auditoría; de `items`, una por ítem
     (`campo='items.7'`). **409** si está firmado."""
-    protocolo = servicio.actualizar_protocolo(db, protocolo_id, datos.model_dump(exclude_unset=True))
+    protocolo = servicio.actualizar_protocolo(db, protocolo_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
     return Resultado(data=_detalle(db, protocolo))
 
 
@@ -133,7 +138,7 @@ def actualizar(
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
+def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """**Un solo acto** (como el IDEA): firman los dos evaluadores cargados. Valida la integridad del
     Documento Técnico §4.3 (24 ítems, fecha, obs en los 1 y 5, síntesis de los dos técnicos),
     congela los totales y deja una fila `auditoria` `tipo='firma'`.
@@ -143,7 +148,7 @@ def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transacciona
     tramo con alerta del catálogo, la respuesta trae `alertas` y se escribe una fila `tipo='alerta'`.
     Todo en una transacción. Firmar dos veces es **409**.
     """
-    protocolo, avisos = servicio.firmar_protocolo(db, protocolo_id)
+    protocolo, avisos = servicio.firmar_protocolo(db, protocolo_id, usuario_id=usuario.id)
     return Resultado(data=_detalle(db, protocolo), warnings=avisos)
 
 
@@ -158,9 +163,11 @@ def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transacciona
     },
 )
 def agregar_addenda(
-    protocolo_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)],
+    protocolo_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
 ):
     """Única forma de corregir un protocolo firmado: agrega `{texto, profesional_id, fecha}` y deja
     una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del protocolo."""
-    protocolo = servicio.agregar_addenda(db, protocolo_id, texto=datos.texto, profesional_id=datos.profesional_id)
+    protocolo = servicio.agregar_addenda(
+        db, protocolo_id, texto=datos.texto, profesional_id=datos.profesional_id, usuario_id=usuario.id,
+    )
     return Resultado(data=_detalle(db, protocolo))

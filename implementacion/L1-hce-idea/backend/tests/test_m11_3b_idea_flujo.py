@@ -275,7 +275,7 @@ def test_firmar_exige_fecha_sintesis_y_objetivos_del_documento_tecnico_4_3(clien
 
 
 def test_la_firma_guarda_a_los_dos_evaluadores_la_version_del_manual_y_una_fila_de_auditoria(
-    client, db_api, equipo, hoy, monkeypatch,
+    client, db_api, equipo, hoy, monkeypatch, admin,
 ):
     hoy(date(2026, 4, 2))
     monkeypatch.setattr(servicio_idea, "IDEA_MANUAL_VERSION", "Manual X v1")
@@ -293,7 +293,8 @@ def test_la_firma_guarda_a_los_dos_evaluadores_la_version_del_manual_y_una_fila_
         {"profesional_id": equipo[1].id, "rol": "Psicopedagogía", "fecha": "2026-04-02"},
     ]
     filas = _filas(db_api, hce, tipo="firma")
-    assert len(filas) == 1 and filas[0].modulo == "HCE-LB" and filas[0].usuario_id is None
+    # Desde M11.3-d1 la fila lleva al usuario del token (`client` entra como `admin`, §5.101).
+    assert len(filas) == 1 and filas[0].modulo == "HCE-LB" and filas[0].usuario_id == admin.id
 
 
 def test_un_cambio_posterior_de_la_version_del_manual_no_toca_un_idea_firmado(client, equipo, monkeypatch):

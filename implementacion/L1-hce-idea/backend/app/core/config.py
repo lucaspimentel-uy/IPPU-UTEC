@@ -24,12 +24,16 @@ class Settings(BaseSettings):
     # Base separada para pytest (M11.5); la crea docker/initdb/00-crear-base-test.sql.
     test_database_url: str = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_test"
 
-    # Auth (Fase 4)
+    # Login mínimo (§5.101, M11.3-d1): firma de los JWT y su duración. `SECRET_KEY` se
+    # cambia en cualquier despliegue que no sea la máquina de cada uno (`.env.example`).
     secret_key: str = "cambiar-en-produccion"
-    access_token_expire_minutes: int = 480  # 8 h
+    access_token_expire_minutes: int = 480  # 8 h: una jornada
 
-    # CORS — orígenes permitidos del frontend (la demo)
-    cors_origins: list[str] = ["http://localhost:8000", "http://127.0.0.1:8000"]
+    # CORS — orígenes desde los que el navegador puede llamar a la API (la demo HTML conectada,
+    # Fase 3). Variable `CORS_ORIGINS`, **como lista JSON** (así la lee pydantic-settings). Por
+    # omisión, la demo servida localmente con `python -m http.server 5500` desde `demo/`
+    # (abrirla como `file://` no sirve: el navegador manda `Origin: null`).
+    cors_origins: list[str] = ["http://localhost:5500", "http://127.0.0.1:5500"]
 
     @field_validator("database_url", "test_database_url")
     @classmethod

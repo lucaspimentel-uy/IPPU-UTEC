@@ -40,8 +40,14 @@ copy .env.example .env                # 3. config (Linux/Mac: cp)
 
 alembic upgrade head                  # 4. crear el esquema
 python -m app.seed_catalogos          # 5. cargar catálogos
-uvicorn app.main:app --reload         # 6. API en http://127.0.0.1:8000/docs
+python -m app.crear_usuario --email yo@ippu.test --nombre "Yo" --rol admin   # 6. un usuario (pide la contraseña)
+uvicorn app.main:app --reload         # 7. API en http://127.0.0.1:8000/docs
 ```
+
+**Login (§5.118 d).** Todo salvo `/health` y `/auth/login` pide token: en Swagger, `POST /auth/login` con
+`{email, password}`, copiar `access_token` y pegarlo en **Authorize**. Un `tecnico` sólo ve los expedientes
+de los grupos en los que es `tecnico1_id`/`tecnico2_id` (hoy se asignan con un `UPDATE grupo` a mano). La
+demo conectada se sirve con `python -m http.server 5500` desde `demo/` (origen permitido por `CORS_ORIGINS`).
 
 Tests: `pytest -q` (usa la base `ippu_test`, aislada de la de desarrollo).
 
@@ -66,7 +72,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **634 passed, 0 skipped**.
+Una corrida válida de hoy es **718 passed, 0 skipped**.
 
 ## API (M11.3-a)
 
@@ -76,7 +82,8 @@ Swagger en `/docs`. Por ahora: `POST /hce` · `GET /hce` (búsqueda por `ci`, `n
 `{"code": …, "detail": [{"campo": …, "mensaje": …}]}`. **Una transacción por request**: los servicios
 (`app/services/`) sólo hacen `flush`, el commit está en `app/routers/dependencias.py`. Los tests de la API usan
 las fixtures `client`, `db_api`, `crear_grupo` y `crear_profesional` de `tests/conftest.py` (savepoints: un
-commit del router no escapa del test).
+commit del router no escapa del test). `client` entra como `admin`; `token_de(profesional)` da las cabeceras
+de otro usuario.
 
 ## Por qué Postgres en Docker
 

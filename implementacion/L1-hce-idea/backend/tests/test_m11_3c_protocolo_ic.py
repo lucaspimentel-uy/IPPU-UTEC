@@ -29,6 +29,15 @@ _cis = itertools.count(3_000_000)
 
 MARTIN_IDEA = [6, 6, 6, 6, 4, 4, 4, 6, 4, 4, 4, 4]
 SINTESIS_LARGA = " ".join(["Perfil con mayor compromiso en Relación Social."] * 30)
+# M11.3-d1 (§5.118 c): firmar con síntesis cortas o sin 15 semanas agrega `recomendacion_no_cumplida`.
+# Los cuerpos «que se pueden firmar» de este archivo cumplen los recomendados, para que sus
+# `warnings` sigan diciendo sólo lo que estos tests miran (secuencia); los avisos nuevos tienen sus
+# propios tests en `test_m11_3d1_*`.
+SINTESIS_TECNICO = " ".join(["Emergencia clara de atención conjunta y mayor permanencia."] * 15)  # 120 palabras
+
+
+def _sint_escala(escala: str) -> str:
+    return f"Síntesis de {escala}. " + " ".join(["Comenta el Δ de la escala con ejemplos."] * 11)  # 80 palabras
 
 
 # ── Ayudas ───────────────────────────────────────────────────────────────────
@@ -69,7 +78,7 @@ def _prot(equipo, tipo="A", anio=2026, valores=VALORES_PA_MARTIN, **extra) -> di
     """Cuerpo de alta de un protocolo que se puede firmar."""
     return {
         "tipo": tipo, "anio": anio, "items": _items(valores), "fecha": f"{anio}-07-07", "semanas": 16,
-        "sint_tec1": "Emergencia clara de atención conjunta.", "sint_tec2": "Mayor permanencia en actividades.",
+        "sint_tec1": SINTESIS_TECNICO, "sint_tec2": SINTESIS_TECNICO,
         "evaluador_t1_id": equipo[0].id, "evaluador_t2_id": equipo[1].id, **extra,
     }
 
@@ -101,7 +110,7 @@ def _idea_firmada(client, hce, equipo, anio=2026, valores=MARTIN_IDEA) -> int:
 def _ic(anio=2026, **extra) -> dict:
     return {
         "anio": anio, "fecha": f"{anio}-12-19",
-        "sint_escala": {e: f"Síntesis de {e}." for e in PROTOCOLO_ESCALAS},
+        "sint_escala": {e: _sint_escala(e) for e in PROTOCOLO_ESCALAS},
         "val_tec1": "Valoración del técnico 1.", "val_tec2": "Valoración del técnico 2.",
         "recomendaciones": "Recomendaciones.", "orientaciones": "Orientaciones.", **extra,
     }
@@ -502,7 +511,7 @@ def test_firmar_el_ic_exige_integridad_y_dos_firmantes_distintos_y_activos(clien
 def test_patch_de_un_ic_firmado_es_409_y_sin_firmar_audita_por_escala(client, db_api, equipo):
     hce = _hce(client)
     iid = client.post(f"/hce/{hce}/informe-cierre", json=_ic()).json()["data"]["id"]
-    r = client.patch(f"/informe-cierre/{iid}", json={"sint_escala": {"esc_2": "Nueva.", "esc_3": "Síntesis de esc_3."}})
+    r = client.patch(f"/informe-cierre/{iid}", json={"sint_escala": {"esc_2": "Nueva.", "esc_3": _sint_escala("esc_3")}})
     assert r.status_code == 200 and r.json()["data"]["sint_escala"]["esc_2"] == "Nueva."
     assert [f.campo for f in _filas(db_api, hce, tipo="edicion")] == ["sint_escala.esc_2"]
     assert client.patch(f"/informe-cierre/{iid}", json={"sint_escala": {"esc_9": "x"}}).status_code == 422
@@ -556,7 +565,7 @@ def test_documento_de_un_ic_sin_firmar_es_409_y_firmado_trae_todo_con_el_idea_de
     assert doc["protocolos"]["a"]["total"] == 60 and doc["protocolos"]["b"]["total"] == 79
     assert doc["protocolos"]["deltas"]["total"] == 19 and doc["protocolos"]["alertas"] == []
     assert doc["protocolos"]["interpretacion"]["esc_2"]["etiqueta"]
-    assert doc["informe"]["sint_escala"]["esc_1"] == "Síntesis de esc_1." and doc["informe"]["recibi"]["firmante"] == "Marta"
+    assert doc["informe"]["sint_escala"]["esc_1"] == _sint_escala("esc_1") and doc["informe"]["recibi"]["firmante"] == "Marta"
     assert [f["nombre"] for f in doc["informe"]["firmas"]] == ["Ana", "Beto"]
     assert client.get("/informe-cierre/99999/documento").status_code == 404
 

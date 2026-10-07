@@ -345,7 +345,7 @@ def test_un_expediente_inexistente_es_404_y_uno_existente_es_200(client):
 
 
 # ── Edición de HCE-00 ────────────────────────────────────────────────────────
-def test_editar_dos_campos_deja_exactamente_dos_filas_de_auditoria(client, db_api):
+def test_editar_dos_campos_deja_exactamente_dos_filas_de_auditoria(client, db_api, admin):
     hid = _id(_alta(client, diagnostico="TEA", alerta="alergia"))
     r = client.patch(f"/hce/{hid}", json={"diagnostico": "TEA nivel 2", "alerta": "sin alergias"})
     assert r.status_code == 200
@@ -355,7 +355,8 @@ def test_editar_dos_campos_deja_exactamente_dos_filas_de_auditoria(client, db_ap
     assert len(filas) == 2
     cambios = {f.campo: (f.valor_ant, f.valor_nuevo) for f in filas}
     assert cambios == {"diagnostico": ("TEA", "TEA nivel 2"), "alerta": ("alergia", "sin alergias")}
-    assert all(f.modulo == "HCE-00" and f.tipo == "edicion" and f.usuario_id is None for f in filas)
+    # Desde M11.3-d1 (login, §5.101) la fila lleva al usuario del token: `client` entra como `admin`.
+    assert all(f.modulo == "HCE-00" and f.tipo == "edicion" and f.usuario_id == admin.id for f in filas)
 
 
 def test_editar_con_valores_identicos_no_escribe_auditoria(client, db_api):
@@ -444,8 +445,10 @@ def test_editar_un_expediente_inexistente_es_404_y_uno_existente_es_200(client):
 
 
 def test_los_campos_que_hce_00_no_edita_se_ignoran(client, db_api):
+    # `activo` y `fecha_baja` salieron de esta lista en M11.3-d1: son la baja/reingreso por PATCH
+    # (tests en `test_m11_3d1_login_listado.py`). Los metadatos de origen siguen ignorándose.
     hid = _id(_alta(client))
-    r = client.patch(f"/hce/{hid}", json={"activo": False, "fecha_baja": "2026-01-01", "sistema_origen": "heroku"})
+    r = client.patch(f"/hce/{hid}", json={"sistema_origen": "heroku", "id_origen": "x"})
     assert r.status_code == 200
     assert r.json()["data"]["activo"] is True and r.json()["data"]["fecha_baja"] is None
     assert _filas(db_api, hid) == []
