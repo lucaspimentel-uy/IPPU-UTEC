@@ -42,6 +42,18 @@ IDEA_VALOR_MAX = 8
 #: «No sabe / observación insuficiente»: excluye la dimensión del total y **impide firmar**.
 IDEA_NS = "NS"
 
+#: Recomendados de la fila HCE-LB del Documento Técnico §4.3 («advierten y piden constancia;
+#: no bloquean»). Decisión a de M11.3-c (§5.117): al firmar, si no se cumplen, la respuesta
+#: lleva un aviso `recomendacion_no_cumplida` — **nunca un bloqueo, ni constancia, ni fila de
+#: auditoría**. Constantes y no catálogo: son texto del Documento Técnico, no algo que IPPU
+#: mueva sin revisión.
+IDEA_SESIONES_RECOMENDADAS = 5
+#: Extensión **sugerida** de la síntesis clínica (≈200 palabras, §4.3).
+IDEA_SINTESIS_PALABRAS_SUGERIDAS = 200
+#: Umbral del aviso: «muy por debajo» de las ≈200 = menos del 75 % (150 palabras). Una
+#: síntesis de 180 palabras cumple el «≈200»; una de 40, no.
+IDEA_SINTESIS_PALABRAS_AVISO = 150
+
 # --------------------------------------------------------------------------
 # Consenso interjueces (D7 · `handoff.md` §5.16 · M12.2)
 # --------------------------------------------------------------------------
@@ -613,6 +625,9 @@ AUDITORIA_TIPO_FIRMA = "firma"
 AUDITORIA_TIPO_ADDENDA = "addenda"
 #: Se creó o firmó un módulo **fuera de secuencia** (§5.95): se acepta, avisa y deja esta fila.
 AUDITORIA_TIPO_EXCEPCION = "excepcion"
+#: Alerta institucional del Δ (§5.117 d): **una** fila al firmar el PB cuyo Δ de alguna escala
+#: cae en un tramo `alerta=True` de `delta_interpretacion`.
+AUDITORIA_TIPO_ALERTA = "alerta"
 
 # --------------------------------------------------------------------------
 # Flujo clínico (M11.3-b · §5.96)
@@ -629,6 +644,35 @@ CI_PENDIENTE = "pendiente"
 CI_REGISTRADO = "registrado"
 #: `code` del aviso de `warnings[]` por escribir o firmar fuera de secuencia (§5.95).
 AVISO_FUERA_DE_SECUENCIA = "fuera_de_secuencia"
+#: `code` del aviso de `warnings[]` por firmar sin cumplir un recomendado del §4.3 (§5.117 a).
+AVISO_RECOMENDACION_NO_CUMPLIDA = "recomendacion_no_cumplida"
+
+# --------------------------------------------------------------------------
+# Escala IPPU-TEA — Protocolos A y B (M11.3-c · Documento Técnico §5.2)
+# --------------------------------------------------------------------------
+#: Los 24 ítems, en el orden del instrumento. Son las claves de `protocolo.items`
+#: (`"1"`…`"24"`, el `id` de `ippu_item` como texto: las claves de un JSON son texto).
+PROTOCOLO_ITEMS: tuple[str, ...] = tuple(str(n) for n in range(1, 25))
+#: Escala (`esc_1`…`esc_4`) → sus ítems: **seis consecutivos** (Documento Técnico §5.2:
+#: «4 escalas × 6 ítems»; coincide con `ippu_item.escala` del catálogo —ítems 1–6 escala
+#: 1, 7–12 escala 2, 13–18 escala 3, 19–24 escala 4—, lo verifica un test). Constante y no
+#: lectura del catálogo, por la misma razón que `IDEA_ESCALAS`: los grupos son fijos del
+#: instrumento; lo que IPPU ajusta del catálogo es la redacción.
+PROTOCOLO_ESCALAS: dict[str, tuple[str, ...]] = {
+    f"esc_{i + 1}": PROTOCOLO_ITEMS[i * 6:(i + 1) * 6] for i in range(4)
+}
+#: Likert de progreso 1–5 (mayor = mejor, lógica inversa al IDEA).
+PROTOCOLO_VALOR_MIN = 1
+PROTOCOLO_VALOR_MAX = 5
+#: Valores que exigen fundamentación (`obs`) para firmar (Documento Técnico §4.3 y §5.2).
+PROTOCOLO_VALORES_CON_OBS: tuple[int, ...] = (1, 5)
+
+# --------------------------------------------------------------------------
+# Informe de Cierre (M11.3-c · Documento Técnico §4.3 y §5.3)
+# --------------------------------------------------------------------------
+#: Claves de `informe_cierre.sint_escala`: una síntesis por escala de la IPPU-TEA (las
+#: mismas `esc_1`…`esc_4` que `protocolo`, porque la síntesis comenta el Δ de cada una).
+IC_SINTESIS_ESCALAS: tuple[str, ...] = tuple(PROTOCOLO_ESCALAS)
 
 #: N.º de HC institucional (`hce_diurna.hc_historico`, §5.109): entero desde 1000,
 #: hasta lo que cabe en un `integer` de Postgres.

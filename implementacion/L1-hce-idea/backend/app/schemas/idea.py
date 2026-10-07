@@ -10,7 +10,6 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
 from app.schemas.comunes import EnteroOpcional, FechaOpcional
-from app.schemas.flujo import EJEMPLO_AVISO_SECUENCIA
 
 # ── Ejemplos para Swagger ────────────────────────────────────────────────────
 # Martín (usuario 1 de la demo): D1–D3 = 6·6·6 · D4–D6 = 6·4·4 · D7–D9 = 4·6·4 · D10–D12 = 4·4·4
@@ -37,7 +36,15 @@ EJEMPLO_IDEA = {
     "manual_version": "Manual Unificado IDEA v1.0 (07/2026)",
 }
 EJEMPLO_RESULTADO_IDEA = {"data": EJEMPLO_IDEA, "warnings": []}
-EJEMPLO_RESULTADO_IDEA_CON_AVISO = {"data": EJEMPLO_IDEA, "warnings": EJEMPLO_AVISO_SECUENCIA}
+EJEMPLO_RESULTADO_IDEA_CON_RECOMENDACION = {"data": EJEMPLO_IDEA, "warnings": [{
+    "code": "recomendacion_no_cumplida", "modulo": "HCE-LB", "recomendacion": "sesiones",
+    "mensaje": "Se recomiendan al menos 5 sesiones de observación previas (cargadas: 3)",
+    "minimo": 5, "valor": 3,
+}]}
+EJEMPLO_DELTA_IDEA = {
+    "anio": 2027, "anio_anterior": 2026, "idea_id": 12, "idea_anterior_id": 11,
+    "delta": {"total": -6, "esc_a": -2, "esc_b": -2, "esc_c": 0, "esc_d": -2},
+}
 EJEMPLO_VIGENTE = {"vigente": EJEMPLO_IDEA, "en_curso": None}
 
 
@@ -140,3 +147,19 @@ class IdeaVigente(BaseModel):
 
     vigente: IdeaDetalle | None = Field(description="El **firmado de mayor `anio`**.")
     en_curso: IdeaDetalle | None = Field(description="El **sin firmar del año en curso**; no desplaza al vigente.")
+
+
+class IdeaDelta(BaseModel):
+    """Δ interanual del IDEA (§5.36): el firmado de `anio` menos el firmado de `anio − 1`."""
+
+    anio: int
+    anio_anterior: int
+    idea_id: int | None = Field(description="IDEA **firmado** de `anio`; `null` si no hay.")
+    idea_anterior_id: int | None = Field(description="IDEA **firmado** de `anio − 1`; `null` si no hay.")
+    delta: dict[str, int | None] | None = Field(
+        description=(
+            "`{total, esc_a..esc_d}` = actual − anterior; `null` si falta alguno de los dos firmados. "
+            "En el IDEA **menor es mejor**: un Δ negativo es una mejora. Sin interpretación ni alerta "
+            "(el catálogo `delta_interpretacion` es del protocolo)."
+        ),
+    )

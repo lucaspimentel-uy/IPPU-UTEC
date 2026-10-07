@@ -8,16 +8,17 @@ lista, «cuál rige»), en `/hce/{hce_id}/idea`.
 """
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.routers.dependencias import sesion_lectura, sesion_transaccional
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.idea import (
-    EJEMPLO_IDEA, EJEMPLO_RESULTADO_IDEA, EJEMPLO_RESULTADO_IDEA_CON_AVISO, EJEMPLO_VIGENTE,
-    AddendaCrear, IdeaActualizar, IdeaCrear, IdeaDetalle, IdeaVigente,
+    EJEMPLO_DELTA_IDEA, EJEMPLO_IDEA, EJEMPLO_RESULTADO_IDEA, EJEMPLO_RESULTADO_IDEA_CON_RECOMENDACION,
+    EJEMPLO_VIGENTE, AddendaCrear, IdeaActualizar, IdeaCrear, IdeaDelta, IdeaDetalle, IdeaVigente,
 )
+from app.services import fechas
 from app.services import idea as servicio
 
 router_hce = APIRouter(prefix="/hce/{hce_id}/idea", tags=["idea"])
@@ -81,6 +82,24 @@ def vigente(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     })
 
 
+@router_hce.get(
+    "/delta",
+    response_model=IdeaDelta,
+    summary="Δ interanual del IDEA",
+    responses={**_ejemplo(200, EJEMPLO_DELTA_IDEA), **_ERROR_404_HCE, **_ERROR_422},
+)
+def delta_interanual(
+    hce_id: int,
+    db: Annotated[Session, Depends(sesion_lectura)],
+    anio: Annotated[int | None, Query(ge=2, le=32767, description="Año del IDEA actual; por omisión el año en curso.")] = None,
+):
+    """El IDEA **firmado** de `anio` menos el **firmado** de `anio − 1` (Δ sólo dentro del mismo
+    instrumento, §5.36). Se calcula al leer; `delta` es `null` si falta alguno de los dos. En el
+    IDEA menor es mejor: un Δ negativo es una mejora. **No** tiene interpretación ni alerta."""
+    anio = anio if anio is not None else fechas.anio_actual()
+    return IdeaDelta.model_validate(servicio.delta_interanual(db, hce_id, anio))
+
+
 @router.get(
     "/{idea_id}",
     response_model=IdeaDetalle,
@@ -115,13 +134,14 @@ def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depen
     responses={
         200: {"content": {"application/json": {"examples": {
             "sin_avisos": {"summary": "Firma en secuencia", "value": EJEMPLO_RESULTADO_IDEA},
-            "fuera_de_secuencia": {
-                "summary": "Firma fuera de secuencia (contrato de PA/PB/IC; LB nunca lo produce)",
+            "recomendacion_no_cumplida": {
+                "summary": "Firma con un recomendado del §4.3 sin cumplir",
                 "description": (
-                    "La secuencia sólo avisa: la firma se acepta, `warnings[]` lleva `fuera_de_secuencia` y se "
-                    "escribe una fila `auditoria` `tipo='excepcion'`. Ejemplo ilustrativo del contrato."
+                    "Menos de 5 sesiones previas o una síntesis muy por debajo de las ≈200 palabras sugeridas: "
+                    "la firma se acepta y `warnings[]` lleva un `recomendacion_no_cumplida` por cada uno. "
+                    "No bloquea, no pide constancia y no deja fila de auditoría (§5.117 a)."
                 ),
-                "value": EJEMPLO_RESULTADO_IDEA_CON_AVISO,
+                "value": EJEMPLO_RESULTADO_IDEA_CON_RECOMENDACION,
             },
         }}}},
         **_ERROR_404,
@@ -137,7 +157,8 @@ def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)]):
     evaluadores ya cargados en el IDEA. Valida la integridad del Documento Técnico §4.3, recalcula y
     **congela** `total` y escalas, escribe `manual_version` y `firmas` (`{profesional_id, rol, fecha}`
     de los dos) y deja una fila `auditoria` `tipo='firma'` — todo en una transacción. Firmar dos veces
-    es **409**.
+    es **409**. Los **recomendados** del §4.3 (≥ 5 sesiones previas, síntesis de ≈200 palabras) no
+    bloquean: si no se cumplen, `warnings[]` lleva `recomendacion_no_cumplida` (§5.117 a).
     """
     idea, avisos = servicio.firmar_idea(db, idea_id)
     return Resultado(data=IdeaDetalle.model_validate(servicio.vista(db, idea)), warnings=avisos)

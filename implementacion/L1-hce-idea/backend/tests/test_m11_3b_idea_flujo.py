@@ -67,11 +67,16 @@ def hoy(monkeypatch):
     return _congelar
 
 
+#: Síntesis que cumple el recomendado de extensión (§5.117 a, M11.3-c): sin ella, cada firma
+#: traería un aviso `recomendacion_no_cumplida` y los `warnings == []` de abajo no probarían lo suyo.
+SINTESIS_LARGA = " ".join(["Perfil con mayor compromiso en Relación Social."] * 30)
+
+
 def _completo(equipo, anio=2026, valores=MARTIN, **extra) -> dict:
-    """Cuerpo de alta de un IDEA que se puede firmar."""
+    """Cuerpo de alta de un IDEA que se puede firmar (y que cumple los recomendados del §4.3)."""
     return {
-        "anio": anio, "dim": _dim(valores), "fecha_consenso": f"{anio}-03-20",
-        "sintesis": "Perfil con mayor compromiso en Relación Social.", "objetivos": "Ampliar la iniciación.",
+        "anio": anio, "dim": _dim(valores), "fecha_consenso": f"{anio}-03-20", "sesiones": 6,
+        "sintesis": SINTESIS_LARGA, "objetivos": "Ampliar la iniciación.",
         "evaluador_t1_id": equipo[0].id, "evaluador_t2_id": equipo[1].id, **extra,
     }
 
@@ -393,7 +398,7 @@ def test_editar_d5_y_d7_deja_exactamente_dos_filas_dim_d5_y_dim_d7_y_un_patch_id
 def test_una_fila_por_cada_campo_escalar_que_cambia_y_la_obs_se_conserva_si_no_viene(client, db_api, equipo):
     hce = _hce(client)
     idea = _crear(client, hce, _completo(equipo, dim={**_dim(MARTIN), "D5": {"valor": 4, "obs": "Observación previa"}}))
-    r = client.patch(f"/idea/{idea['id']}", json={"sesiones": 6, "sintesis": "Nueva síntesis.", "dim": {"D5": {"valor": 6}}})
+    r = client.patch(f"/idea/{idea['id']}", json={"sesiones": 7, "sintesis": "Nueva síntesis.", "dim": {"D5": {"valor": 6}}})
     assert r.status_code == 200 and r.json()["data"]["dim"]["D5"] == {"valor": 6, "obs": "Observación previa"}
     assert sorted(f.campo for f in _filas(db_api, hce, tipo="edicion", modulo="HCE-LB")) == ["dim.D5", "sesiones", "sintesis"]
 
@@ -690,6 +695,9 @@ def test_swagger_documenta_cada_endpoint_nuevo_con_ejemplos_y_el_aviso_fuera_de_
             esquema = op["requestBody"]["content"]["application/json"]["schema"]
             nombre = esquema["$ref"].rsplit("/", 1)[-1]
             assert spec["components"]["schemas"][nombre].get("examples"), (metodo, ruta)
+    # M11.3-c: el ejemplo `fuera_de_secuencia` se mudó a PA (LB nunca lo produce; ver
+    # test_m11_3c_protocolo_ic.py); en la firma del IDEA queda el de los recomendados (§5.117 a).
     firmar = spec["paths"]["/idea/{idea_id}/firmar"]["post"]["responses"]["200"]["content"]["application/json"]["examples"]
-    aviso = firmar["fuera_de_secuencia"]["value"]["warnings"][0]
-    assert aviso["code"] == "fuera_de_secuencia" and aviso["modulo"] and aviso["faltan"]
+    assert "fuera_de_secuencia" not in firmar
+    aviso = firmar["recomendacion_no_cumplida"]["value"]["warnings"][0]
+    assert aviso["code"] == "recomendacion_no_cumplida" and aviso["modulo"] == "HCE-LB"

@@ -15,9 +15,9 @@
   usa**: el rastro es sólo `auditoria` (decisión e de §5.116).
 - **La falta de CI no avisa ni deja fila:** es únicamente el estado «CI pendiente».
 
-Esta rebanada sólo tiene LB (IDEA), el primer eslabón, así que ninguna operación del
-IDEA puede salir fuera de secuencia; la lógica es **genérica** para que PA/PB/IC (M11.3-c)
-la usen tal cual.
+LB (IDEA) es el primer eslabón y nunca sale fuera de secuencia; desde M11.3-c la usan
+tal cual PA, PB e IC (`services/protocolo.py`, `services/informe_cierre.py`), al crear y
+al firmar.
 """
 from typing import Any
 

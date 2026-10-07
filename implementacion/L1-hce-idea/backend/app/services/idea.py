@@ -20,9 +20,14 @@ una dimensión que nunca se tocó **no tiene entrada**.
   guarda a los dos. `usuario_id` de la auditoría queda `NULL` hasta que exista el login.
 - **Integridad para firmar** (Documento Técnico §4.3, fila HCE-LB): 12 dimensiones
   puntuadas —sin `NS` ni vacías—, fecha de consenso, síntesis clínica y objetivos del
-  período. Los «recomendados» de esa fila (≥ 5 sesiones previas, extensión de la síntesis)
-  **no se implementan**: el documento dice «advierten y piden constancia», pero no define el
-  mecanismo ni fue decidido en §5.116 (queda anotado en el informe de la sesión).
+  período.
+- **Recomendados de esa fila** (§5.117 a, M11.3-c): menos de `IDEA_SESIONES_RECOMENDADAS`
+  sesiones previas (o sin cargar), o una síntesis de menos de `IDEA_SINTESIS_PALABRAS_AVISO`
+  palabras (las sugeridas son ≈200) → al firmar, un aviso `recomendacion_no_cumplida` por
+  cada uno. **Nunca bloquean**, no piden constancia y no escriben auditoría.
+- **Δ interanual** (§5.117 c): `delta_interanual` resta el IDEA firmado del año anterior al
+  firmado del año pedido (`services/delta.py`); se calcula **al leer**, no se guarda. No
+  tiene interpretación ni alerta: el catálogo `delta_interpretacion` es del protocolo.
 - **Qué IDEA rige** (§5.97): un documento muestra el de su año (`idea_de_anio`); la vista de
   la HCE, el **firmado de mayor `anio`**; uno sin firmar del año en curso va aparte como
   «en curso» (`idea_vigente`).
@@ -37,13 +42,15 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    ESTADO_EN_CURSO, ESTADO_FIRMADO, IDEA_DIMENSIONES, IDEA_ESCALAS, IDEA_MANUAL_VERSION,
-    IDEA_NS, IDEA_VALOR_MAX, IDEA_VALOR_MIN, MODULO_HCE_LB,
+    AVISO_RECOMENDACION_NO_CUMPLIDA, ESTADO_EN_CURSO, ESTADO_FIRMADO, IDEA_DIMENSIONES,
+    IDEA_ESCALAS, IDEA_MANUAL_VERSION, IDEA_NS, IDEA_SESIONES_RECOMENDADAS,
+    IDEA_SINTESIS_PALABRAS_AVISO, IDEA_SINTESIS_PALABRAS_SUGERIDAS, IDEA_VALOR_MAX,
+    IDEA_VALOR_MIN, MODULO_HCE_LB,
 )
 from app.models.catalogos import BandaIdea
 from app.models.identidad import Profesional
 from app.models.modulos import Idea
-from app.services import fechas, firma, flujo
+from app.services import delta, fechas, firma, flujo
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, NotFound, ValidationFailed
 from app.services.hce import obtener_hce
@@ -138,6 +145,29 @@ def idea_vigente(db: Session, hce_id: int) -> dict[str, Idea | None]:
         )
     ).first()
     return {"vigente": vigente, "en_curso": en_curso}
+
+
+def delta_interanual(db: Session, hce_id: int, anio: int) -> dict[str, Any]:
+    """Δ del IDEA **firmado** de `anio` contra el **firmado** de `anio − 1` (§5.36, §5.117 c).
+
+    `{anio, anio_anterior, idea_id, idea_anterior_id, delta}`: `delta` es `{total, esc_a..esc_d}`
+    (actual − anterior; en el IDEA **menor es mejor**, así que un Δ negativo es una mejora) o
+    `None` si falta alguno de los dos firmados. 404 si no existe el expediente; 422 si el año
+    no es válido. Se calcula al leer: no se guarda.
+    """
+    obtener_hce(db, hce_id)
+    if not 2 <= anio <= 32767:
+        raise ValidationFailed([("anio", "Debe estar entre 2 y 32767")])
+    actual = idea_de_anio(db, hce_id, anio)
+    anterior = idea_de_anio(db, hce_id, anio - 1)
+    actual = actual if actual is not None and actual.firmado else None
+    anterior = anterior if anterior is not None and anterior.firmado else None
+    return {
+        "anio": anio, "anio_anterior": anio - 1,
+        "idea_id": actual.id if actual is not None else None,
+        "idea_anterior_id": anterior.id if anterior is not None else None,
+        "delta": delta.calcular_delta(anterior, actual) if actual is not None and anterior is not None else None,
+    }
 
 
 def vista(db: Session, idea: Idea) -> dict[str, Any]:
@@ -362,6 +392,32 @@ def _errores_de_firma(db: Session, idea: Idea) -> list[tuple[str | None, str]]:
     return errores
 
 
+def avisos_de_recomendados(idea: Idea) -> list[dict[str, Any]]:
+    """Avisos `recomendacion_no_cumplida` de los recomendados del §4.3 (fila HCE-LB) que no se
+    cumplen. **No bloquean ni escriben nada** (§5.117 a): sólo van a `warnings[]` al firmar."""
+    avisos: list[dict[str, Any]] = []
+    if idea.sesiones is None or idea.sesiones < IDEA_SESIONES_RECOMENDADAS:
+        avisos.append({
+            "code": AVISO_RECOMENDACION_NO_CUMPLIDA, "modulo": MODULO_HCE_LB, "recomendacion": "sesiones",
+            "mensaje": (
+                f"Se recomiendan al menos {IDEA_SESIONES_RECOMENDADAS} sesiones de observación previas"
+                + (f" (cargadas: {idea.sesiones})" if idea.sesiones is not None else " (no están cargadas)")
+            ),
+            "minimo": IDEA_SESIONES_RECOMENDADAS, "valor": idea.sesiones,
+        })
+    palabras = len((idea.sintesis or "").split())
+    if palabras < IDEA_SINTESIS_PALABRAS_AVISO:
+        avisos.append({
+            "code": AVISO_RECOMENDACION_NO_CUMPLIDA, "modulo": MODULO_HCE_LB, "recomendacion": "sintesis",
+            "mensaje": (
+                f"La síntesis clínica tiene {palabras} palabras; la extensión sugerida es de "
+                f"≈{IDEA_SINTESIS_PALABRAS_SUGERIDAS}"
+            ),
+            "minimo": IDEA_SINTESIS_PALABRAS_AVISO, "valor": palabras,
+        })
+    return avisos
+
+
 def firmar_idea(
     db: Session, idea_id: int, *, usuario_id: int | None = None,
 ) -> tuple[Idea, list[dict[str, Any]]]:
@@ -390,7 +446,7 @@ def firmar_idea(
         firmantes=[db.get(Profesional, idea.evaluador_t1_id), db.get(Profesional, idea.evaluador_t2_id)],
         congelar=congelar, usuario_id=usuario_id,
     )
-    return idea, avisos
+    return idea, [*avisos, *avisos_de_recomendados(idea)]
 
 
 def agregar_addenda(

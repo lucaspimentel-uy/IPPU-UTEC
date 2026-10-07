@@ -20,6 +20,15 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-07 · Sesión M11.3-c — PA/PB, Δ, alerta e informe de cierre** (Lucas + Claude, sesión en la nube, rama **`m11.3-c`**, sólo `origin`). Decisiones **§5.117** (a–e + lo fijado). Sin cambio de DDL: head sigue **`dcc838486407`**.
+  - **Servicios nuevos:** `protocolo.py` (24 ítems, totales sólo completos, integridad §4.3, Δ + alerta al firmar el PB), `delta.py` (`calcular_delta` tipado, interpretación y alerta desde `delta_interpretacion`), `informe_cierre.py` (firma con dos profesionales, `recibi`, `documento`); `idea.py` suma los recomendados como aviso y el Δ interanual.
+  - **Endpoints:** `POST/GET /hce/{id}/protocolo` · `GET/PATCH /protocolo/{id}` · `POST /protocolo/{id}/firmar|addendas` · `GET /hce/{id}/idea/delta` · `POST/GET /hce/{id}/informe-cierre` · `GET/PATCH /informe-cierre/{id}` · `POST /informe-cierre/{id}/firmar|addendas|recibi` · `GET /informe-cierre/{id}/documento`. El ejemplo Swagger `fuera_de_secuencia` se mudó al PA.
+  - **§4.3 (Documento Técnico, `1_documento-tecnico-utec-lidia.md:84-86`):** PA/PB = 24 ítems · fecha · obs en 1 y 5 · síntesis de ambos técnicos; IC = síntesis por escala · valoraciones · recomendaciones · orientaciones · fecha (+ «LB/PA/PB firmados», que sólo avisa). Alerta: §5.2 «Δ ≤ −7 en una escala».
+  - **Tests M11.3-b ajustados:** el helper `_completo` ahora cumple los recomendados (sesiones 6, síntesis larga) y el test de Swagger mira `recomendacion_no_cumplida` en la firma del IDEA.
+  - **Medido:** `pytest -q` → **634 passed, 0 skipped** (600 + 34; tres mutaciones —alerta, obs en 1/5, ajustes en A— rompen tests); `alembic check` limpio; ambos `--check` → exit 0 (sin Docker en la nube: el conteo de tests lo verifica a mano esta entrada).
+  - **Smoke `uvicorn` en la nube (Postgres local, base de desarrollo sembrada):** HCE (N.º 1001) → CI → IDEA 58 «Moderado» firmado → PA 60 → PB 79 (Δ +19, «Progreso muy significativo», sin alertas) → IC firmado → recibí → `/documento` completo → flujo con los cuatro `firmado`.
+  - Anotado, no hecho: recomendados de PA/PB/IC; recálculo del Δ si el PA se firma después del PB.
+
 - **2026-10-06 · Sesión M11.3-b — motor de flujo, consentimiento mínimo, firma = bloqueo e IDEA** (Lucas + Claude, rama `main`). Decisiones **§5.116** (a–e + lo fijado). Sin cambio de DDL: head sigue **`dcc838486407`**, un archivo en `versions/`.
   - **Servicios nuevos:** `flujo.py` (estado derivado `sin_iniciar|en_curso|firmado`, `faltantes`, CI `pendiente|registrado`, `avisos_de_secuencia` genérico), `firma.py` (`firmar_modulo`, `agregar_addenda`, candado 409 para todo `FirmaMixin`), `idea.py` (totales, banda desde `banda_idea`, validaciones de firma, `idea_vigente`, `idea_de_anio`), `consentimiento.py`.
   - **Endpoints:** `GET /hce/{id}/flujo` · `GET/POST/PATCH /hce/{id}/consentimiento` · `POST/GET /hce/{id}/idea` · `GET /hce/{id}/idea/vigente` · `GET/PATCH /idea/{id}` · `POST /idea/{id}/firmar` · `POST /idea/{id}/addendas`. Swagger con ejemplos, incluido `warnings` con `fuera_de_secuencia`.
