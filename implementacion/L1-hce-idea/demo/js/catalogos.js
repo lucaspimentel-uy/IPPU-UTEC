@@ -99,24 +99,6 @@ const ALERTA_DELTA = (() => {
   return -Infinity; // ningún tramo con alerta
 })();
 
-/* M5.3 · Al firmar el Protocolo B: delta B−A automático + alerta institucional (§5.2).
-   Si el PA no está firmado (habilitación excepcional de PB), no hay delta — queda constancia. */
-function calcularDeltasPB(nna){
-  const fl = nna.flujo;
-  if(!fl.pa.firmado || !protTotales(fl.pa.item).completo){
-    fl.pb.deltas = null;
-    logEvento(nna, {modulo:"pb", tipo:"edicion", detalle:"Protocolo B firmado sin Protocolo A firmado — delta B−A no calculable."});
-    return;
-  }
-  fl.pb.deltas = calcularDelta(fl.pa, fl.pb);
-  const alertas = fl.pb.deltas.esc.map((d,i)=> d<=ALERTA_DELTA ? i : null).filter(x=>x!=null);
-  if(alertas.length){
-    const det = alertas.map(i=>`E${i+1} ${IPPU_ESCALAS[i]} (Δ ${fmtDelta(fl.pb.deltas.esc[i])})`).join(" · ");
-    logEvento(nna, {modulo:"pb", tipo:"alerta", detalle:`Alerta institucional (§5.2): regresión significativa — ${det}. Requiere revisión del equipo técnico.`});
-    setTimeout(()=>toast(`⚠ Alerta institucional: Δ ≤ ${ALERTA_DELTA} en ${alertas.map(i=>"E"+(i+1)).join(", ")} — registrada en HCE-LOG.`), 3400);
-  }
-}
-
 /* =============== ESCALA IDEA OFICIAL — Ángel Rivière, 1997/2002 ===============
    Cada dimensión: array de [puntuación, descriptor_oficial]
    Puntuaciones pares (0,2,4,6,8) = niveles principales

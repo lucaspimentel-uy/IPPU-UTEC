@@ -94,10 +94,7 @@ function cargarIC(id){
   document.getElementById("icAuto").innerHTML = `
     <div class="card"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Análisis cuantitativo — autogenerado desde los módulos firmados</h2></div>
     <div style="padding:16px 18px">${icTablaHtml(p)}${icRadaresHtml(p)}</div></div>`;
-  const h = moduloHabilitado(p, "ic");
-  document.getElementById("icAviso").innerHTML =
-    st==="bloqueado" ? `<div class="review-note" style="margin-bottom:14px">🔒 <b>HCE-IC bloqueado:</b> ${h.motivoBloqueo}${h.exceptuable?' La habilitación excepcional se gestiona desde el panel «Flujo de módulos» del expediente.':""}</div>`
-    : (ic.excepcion && !ic.firmado ? `<div class="review-note" style="margin-bottom:14px">⚠ Habilitado excepcionalmente (${ic.excepcion.motivo}) — los módulos no firmados aparecen como «—» en la tabla y el radar.</div>` : "");
+  document.getElementById("icAviso").innerHTML = "";
   ic.sintEsc.forEach((t,i)=>{ const el=document.getElementById("ic_esc"+i); if(el) el.value = t||""; });
   const set=(fid,val)=>{ const el=document.getElementById(fid); if(el) el.value=(val==null)?"":val; };
   set("ic_val1", ic.valTec1); set("ic_val2", ic.valTec2);
@@ -126,7 +123,6 @@ function guardarIC(){
   if(!p){ toast("Seleccioná un NNA"); return; }
   const st = estadoModulo(p, "ic");
   if(st==="firmado"){ toast("El informe está firmado — corrección por addenda."); return; }
-  if(st==="bloqueado"){ toast(moduloHabilitado(p,"ic").motivoBloqueo); return; }
   guardarICDesdeForm(p);
   document.getElementById("icEstadoBadge").innerHTML = estadoBadgeM(estadoModulo(p,"ic"));
   toast(`HCE-IC guardado (borrador) — ${p.nombre}`);
@@ -135,8 +131,6 @@ function firmarIC(){
   const p = NNA.find(n=>n.id===parseInt(document.getElementById("selNNAIC").value));
   if(!p){ toast("Seleccioná un NNA"); return; }
   if(p.flujo.ic.firmado){ toast("El informe ya está firmado."); return; }
-  const st = estadoModulo(p, "ic");
-  if(st==="bloqueado"){ toast(moduloHabilitado(p,"ic").motivoBloqueo); return; }
   guardarICDesdeForm(p);            // persistir el form antes de validar/firmar
   const cortas = p.flujo.ic.sintEsc.filter(t=>t && t.split(/\s+/).length < 40).length;
   if(cortas) toast("Sugerencia (§4.3): extensión aproximada de 100 palabras por escala — no bloquea la firma.");

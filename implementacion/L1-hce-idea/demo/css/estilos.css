@@ -186,7 +186,7 @@
   .navitem:hover{background:rgba(255,255,255,.06);color:#fff}
   .navitem.active{background:rgba(180,89,10,.20);color:#fff;border-left-color:var(--orange);font-weight:600}
   .sidebar .foot{
-    margin-top:auto;padding:var(--s4) var(--s5);font-family:var(--f-dato);font-size:var(--fs-3xs);
+    padding:var(--s4) var(--s5);font-family:var(--f-dato);font-size:var(--fs-3xs);
     line-height:1.6;color:#6C828E;border-top:1px solid #2A3E4A
   }
 
@@ -330,12 +330,6 @@
   }
   .opcion.sel .score-badge{background:var(--ink);color:#fff}
   .opcion .desc{font-size:var(--fs-xs);line-height:1.5;color:var(--ink);padding-top:5px}
-  /* Badge de color por severidad (0 = sin trastorno … 8 = afectación severa) */
-  .badge-0{background:var(--ok-soft)!important;color:var(--ok)!important}
-  .badge-2{background:#E7F1E9!important;color:#2A6B45!important}
-  .badge-4{background:var(--warn-soft)!important;color:var(--warn)!important}
-  .badge-6{background:#F6E5D3!important;color:#8A4416!important}
-  .badge-8{background:var(--bad-soft)!important;color:var(--bad)!important}
   /* Botones de puntaje intermedio (1,3,5,7) + NS */
   .inter-row{
     display:flex;gap:var(--s1);margin-top:var(--s2);padding:var(--s2) var(--s3);
@@ -498,10 +492,12 @@
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--s4)}
   .note{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);line-height:1.55}
 
+  /* La marca vive en el pie de la barra lateral (en flujo, no flotante): una marca fija abajo a la derecha
+     tapaba filas de las tablas a 1280×800 y 1280×900 (handoff §5.125). */
   .demo-tag{
-    position:fixed;bottom:var(--s3);right:var(--s3);background:var(--navy);color:#B9C8D1;
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.03em;
-    padding:5px var(--s3);border-radius:var(--r-sm);opacity:.92;z-index:60
+    margin:auto var(--s4) var(--s3);background:var(--navy);color:#B9C8D1;border:1px solid #2A3E4A;
+    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.03em;line-height:1.5;
+    padding:5px var(--s3);border-radius:var(--r-sm);pointer-events:none
   }
   @media(max-width:760px){
     .layout{flex-direction:column}
@@ -1285,3 +1281,83 @@
   .avisos-api{margin-bottom:var(--s4)}
   .avisos-api ul{margin:var(--s1) 0 0;padding-left:var(--s5)}
   .btn[hidden]{display:none}   /* .btn fija display y pisaba el atributo hidden (Reintentar de grupos se veia siempre) */
+
+
+  /* ============ FASE 3-c · IDEA y PROTOCOLOS CONECTADOS (handoff §5.125) ============
+     Rampa SECUENCIAL de UN solo matiz (azul) para las 6 bandas del IDEA y los niveles de puntaje
+     (notas de accesibilidad §3.1): banda 1 = claro … banda 6 = oscuro. Nunca --ok / --warn / --bad.
+     El nombre de la banda va SIEMPRE escrito; el color solo la ordena. Contraste medido: texto oscuro
+     sobre los pasos 1–4 (>= 5:1) y blanco sobre 5–6 (>= 5.6:1). */
+  :root{
+    --rampa-1:#E1ECF8; --rampa-2:#BBD3EE; --rampa-3:#8FB6E0; --rampa-4:#5C92CC; --rampa-5:#2E69AD; --rampa-6:#173F73;
+    --rampa-txt-claro:#0B2036; --rampa-borde:#173F73;
+  }
+  .banda-chip{
+    display:inline-block;padding:5px var(--s3);border-radius:var(--r-sm);font-size:var(--fs-2xs);font-weight:700;
+    line-height:1.4;border:1px solid var(--rampa-borde);max-width:100%
+  }
+  .banda-chip .banda-rot{font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;font-weight:700;opacity:.9}
+  .banda-chip .banda-rango{font-family:var(--f-dato);font-weight:600}
+  .banda-1{background:var(--rampa-1);color:var(--rampa-txt-claro)}
+  .banda-2{background:var(--rampa-2);color:var(--rampa-txt-claro)}
+  .banda-3{background:var(--rampa-3);color:var(--rampa-txt-claro)}
+  .banda-4{background:var(--rampa-4);color:var(--rampa-txt-claro)}
+  .banda-5{background:var(--rampa-5);color:#fff}
+  .banda-6{background:var(--rampa-6);color:#fff;border-color:#fff}
+  .idea-summary .banda-chip{border-width:2px;border-color:#fff}
+  .ev-nota-banda{font-size:var(--fs-2xs);color:#C2D2DB}
+  /* Insignia del puntaje de cada descripcion (0 … 8): misma rampa, con el numero siempre visible. */
+  .score-badge.sb-0,.score-badge.sb-1{background:var(--rampa-1);color:var(--rampa-txt-claro)}
+  .score-badge.sb-2,.score-badge.sb-3{background:var(--rampa-2);color:var(--rampa-txt-claro)}
+  .score-badge.sb-4{background:var(--rampa-3);color:var(--rampa-txt-claro)}
+  .score-badge.sb-5{background:var(--rampa-4);color:var(--rampa-txt-claro)}
+  .score-badge.sb-6,.score-badge.sb-7{background:var(--rampa-5);color:#fff}
+  .score-badge.sb-8{background:var(--rampa-6);color:#fff}
+  .score-badge.sb-lik{background:var(--paper-3);color:var(--ink);display:inline-flex;min-width:28px;height:26px;align-items:center;justify-content:center;border-radius:var(--r-sm);font-family:var(--f-dato);font-weight:700}
+  .dsel .score-badge,.ev-tabla .score-badge{display:inline-flex;min-width:28px;height:26px;align-items:center;justify-content:center;border-radius:var(--r-sm);font-family:var(--f-dato);font-weight:700;vertical-align:middle}
+  .review-note[hidden]{display:none}
+  .dsel,.dobs{margin-top:var(--s2);font-size:var(--fs-2xs);color:var(--ink-2)}
+  .dobs summary{cursor:pointer;font-weight:600;color:var(--ink)}
+  .dobs textarea{min-height:56px}
+  .inter-nota{font-size:var(--fs-3xs);color:var(--ink-2)}
+  /* NS: valor valido del IDEA, DISTINTO de un numero y de «sin puntuar»: borde punteado, sin relleno, glifo propio. */
+  .ns-marca{
+    display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border:2px dashed var(--ink-2);border-radius:var(--r-sm);
+    background:transparent;color:var(--ink);font-family:var(--f-dato);font-size:var(--fs-2xs);font-weight:700;letter-spacing:.04em
+  }
+  .inter-ns{border-style:dashed;border-width:2px;border-color:var(--ink-2);color:var(--ink)}
+  .inter-ns.sel{background:var(--paper);color:var(--ink);border-style:solid;box-shadow:inset 0 0 0 2px var(--ink)}
+  .sin-puntuar{color:var(--ink-2);font-style:italic}
+  /* Errores del servidor junto al campo / dimension / item */
+  .ev-err{font-size:var(--fs-3xs);color:var(--bad);margin-top:var(--s1);font-weight:600}
+  .ev-err:empty{display:none}
+  .dimension.invalid,.prot-item.invalid{box-shadow:inset 3px 0 0 var(--bad)}
+  .opciones[data-invalid],.lik-row[data-invalid]{outline:2px solid var(--bad);outline-offset:2px;border-radius:var(--r-sm)}
+  .field.invalid select{border-color:var(--bad);background:var(--bad-soft)}
+  .field input[aria-invalid="true"],.field textarea[aria-invalid="true"],.field select[aria-invalid="true"]{border-color:var(--bad)}
+  /* Encabezado del modulo, estado y marca de addenda (notas §3.2 A): glifo + texto, nunca solo color */
+  .ev-cab{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule)}
+  .ev-cab h3{margin:0;padding:0;border:0}
+  .ev-estado{display:inline-flex;gap:var(--s2);flex-wrap:wrap;align-items:center}
+  .st-addenda{background:var(--paper);color:var(--ink);border:2px double var(--ink)}
+  .st-mini.st-addenda{background:none;border:none;color:var(--ink);font-weight:700}
+  .fl-add{font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink)}
+  .ev-card .ib{padding:var(--s3) var(--s4)}
+  .ev-etq{font-size:var(--fs-3xs);color:#C2D2DB;letter-spacing:.02em;margin-top:2px}
+  .ev-acciones{display:flex;flex-direction:row;flex-wrap:wrap;gap:var(--s2)}
+  .ev-confirma{display:flex;flex-direction:column;gap:var(--s2);max-width:34ch;font-size:var(--fs-2xs);color:#fff}
+  .ev-alerta{font-weight:700;color:var(--ink)}
+  .ev-alertas{margin-bottom:var(--s3)}
+  .tot-lectura{font-family:var(--f-dato);font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums}
+  .tot-lectura small{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
+  .ev-puntaje{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
+  .ev-largo{white-space:pre-wrap;text-align:left}
+  .ev-tabla th[scope="row"]{text-align:left;font-weight:600;white-space:normal}
+  .ev-tabla td{white-space:normal}
+  .ev-add-lista{margin:0 0 var(--s3);padding-left:var(--s5);font-size:var(--fs-xs)}
+  .ev-add-lista li{margin-bottom:var(--s2)}
+  .exp-grid>*{min-width:0}      /* una tabla ancha dentro de una columna scrollea en su contenedor, no ensancha la página */
+  @media(max-width:760px){
+    .idea-summary{position:static;gap:var(--s3)}
+    .ev-confirma{max-width:none}
+  }

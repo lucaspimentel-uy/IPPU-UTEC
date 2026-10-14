@@ -10,10 +10,10 @@ Sirve para una pregunta concreta:
 
 Se captura antes, se captura después, se comparan. Si difieren, algo se rompió.
 
-## Demo conectada a la API — `conectada.js` (Fase 3-a y 3-b, `handoff.md` §5.122 y §5.124)
+## Demo conectada a la API — `conectada.js` (Fase 3-a, 3-b y 3-c, `handoff.md` §5.122, §5.124 y §5.125)
 
 Es **otra cosa** que el *fingerprint* de abajo: no compara dos versiones de la demo estática, sino que
-prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, modo demostración). Corre en Chromium
+prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, IDEA, protocolos A/B, modo demostración). Corre en Chromium
 headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
 
 **Qué necesita** (tres cosas arriba a la vez; el script avisa cuál falta):
@@ -39,9 +39,14 @@ headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
 
 ```bash
 cd implementacion/L1-hce-idea/demo/verificacion
-IPPU_DEMO_PASSWORD=… IPPU_ADMIN_EMAIL=… IPPU_ADMIN_PASSWORD=… node conectada.js
-# PowerShell: $env:IPPU_DEMO_PASSWORD="…"; $env:IPPU_ADMIN_EMAIL="…"; $env:IPPU_ADMIN_PASSWORD="…"; node conectada.js
+CONFIRMA_BASE_DESCARTABLE=1 IPPU_DEMO_PASSWORD=… IPPU_ADMIN_EMAIL=… IPPU_ADMIN_PASSWORD=… node conectada.js
+# PowerShell: $env:CONFIRMA_BASE_DESCARTABLE="1"; $env:IPPU_DEMO_PASSWORD="…"; $env:IPPU_ADMIN_EMAIL="…"; $env:IPPU_ADMIN_PASSWORD="…"; node conectada.js
 ```
+
+⚠️ **La corrida ESCRIBE** (crea expedientes, firma IDEA y protocolos, agrega addendas) **y se niega a correr sin
+`CONFIRMA_BASE_DESCARTABLE=1`**, sea cual sea la API (`API=`): sale con **exit 1 antes de pedirle nada a la API**
+(el chequeo `3c-j1` lo prueba contra una API inexistente). Ponerla es afirmar que la base es la descartable de
+«Base descartable» (abajo) y no la de trabajo.
 
 `IPPU_ADMIN_EMAIL` / `IPPU_ADMIN_PASSWORD` son el **admin del seed** (los `IPPU_EMAIL` / `IPPU_PASSWORD` con los que
 se corrió `app.seed_demo`): desde la 3-b el chequeo (c) compara el 409 del técnico con el del admin.
@@ -56,7 +61,7 @@ así que `API=http://localhost:8001 node conectada.js` hace que **la prueba y la
 
 ### Base descartable en otro puerto (para revisar sin tocar la base de trabajo)
 
-Desde la 3-b la corrida **escribe**: crea un expediente, lo edita, le da de baja y reingreso y le registra el CI. Los
+Desde la 3-b la corrida **escribe**: crea expedientes, los edita, les da de baja y reingreso, registra CI y (3-c) firma el IDEA de Joaquín, el PA y el PB de Sofía y agrega una addenda al IDEA de Martín. Los
 conteos del principio (7 activos, 8 con inactivos…) son los del seed recién cargado, así que **cada corrida pide una
 base nueva**. Receta (PowerShell, desde `backend/`, Postgres de `docker compose up -d` arriba):
 
@@ -67,7 +72,7 @@ $env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_3b"     
 .venv\Scripts\python -m alembic upgrade head
 .venv\Scripts\python -m app.seed_catalogos
 .venv\Scripts\python -m uvicorn app.main:app --port 8001                         # otra terminal, con el mismo DATABASE_URL
-# con la API arriba, en la primera terminal:
+# con la API arriba, en la primera terminal (la verificación pide además CONFIRMA_BASE_DESCARTABLE=1):
 $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "…"; $env:IPPU_DEMO_PASSWORD = "…"
 .venv\Scripts\python -m app.seed_demo --url http://localhost:8001
 ```
@@ -76,31 +81,52 @@ Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; C
 el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
 levantarla y volver a cargar el seed.
 
-**Qué verifica** (78 chequeos): **Fase 3-a** — (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
-mensaje en `role="alert"` con foco y `sessionStorage` vacío · (c) conteos del listado y del filtro de
-grupo **iguales a los de `backend/tests/test_m11_5a_seed_demo.py`** (7 activos · 8 con inactivos ·
-Escolares 3 · Preadolescentes 3 · Adolescentes 2) · (d) búsqueda (regla de la caja contra el GET real) · (e) Bruno con
-«CI pendiente» · (f) HCE-00 de Martín contra `GET /hce/{id}`, técnicos del grupo y stepper del flujo, sin lo que la API
-no guarda · (g) «Modo demostración» en pestañas y vistas no conectadas · (h) logout, 401, API caída, recarga con
-sesión, login modal con app inerte, sin desborde a 390/1024/1280 px, «Salir» con cargas en vuelo.
-**Fase 3-b** (al final, porque escribe) — diálogo de alta (role/aria-modal, app inerte, Esc, foco, sin nivel de apoyo ni
-talleres) · (a) alta como técnico: `POST /hce` con `grupo_id`, técnicos del grupo, aparece en el listado con «CI
-pendiente» · (b) misma cédula como técnico: 409 **genérico**, foco en el resumen · (c) como admin: mensaje **específico
-junto a la cédula** · (d) editar: `PATCH` sólo con lo que cambió, anamnesis con sus cinco claves, valor visible tras
-recargar, baja sin `fecha_baja` → error por campo y con fecha → guardada, reingreso · (e) sin CI nada se traba (sin
-candado ni «Bloqueado»), el 404 del CI se lee como «pendiente», registrar el CI → fila del listado y stepper
-«Registrado», editar el CI con `PATCH`, sin campo de adjunto · (f) obligatorios vacíos → error por campo con
-`aria-describedby` (alta y CI) · carry-over de la 3-a: `API=` efectivo y `GET /grupos` en vuelo descartado al salir.
-Y **0 errores de JavaScript** en toda la corrida.
+**Qué verifica** (107 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`):
+
+- **Fase 3-a** — `3a-a` login del técnico y chip con su nombre y rol · `3a-b` contraseña mala → mensaje en
+  `role="alert"` con foco y `sessionStorage` vacío · `3a-c…` conteos del listado y del filtro de grupo **iguales a los de
+  `backend/tests/test_m11_5a_seed_demo.py`** (7 activos · 8 con inactivos · Escolares 3 · Preadolescentes 3 · Adolescentes 2) ·
+  `3a-d…`/`3a-m…` búsqueda (regla de la caja contra el GET real) · `3a-e…` Bruno con «CI pendiente» · `3a-f…` HCE-00 de Martín
+  contra `GET /hce/{id}`, técnicos del grupo y stepper del flujo, sin lo que la API no guarda · `3a-g…` «Modo demostración»
+  en pestañas y vistas no conectadas · `3a-h`/`3a-i`/`3a-j`/`3a-k` logout, 401, recarga con sesión, API caída · `3a-l…` login
+  modal con app inerte · `3a-w` sin desborde a 390/1024/1280 px · `3a-s…` «Salir» con cargas en vuelo.
+- **Fase 3-b** (escribe) — `3b-m5`/`3b-m6` diálogo de alta (role/aria-modal, app inerte, Esc, foco, sin nivel de apoyo ni
+  talleres) · `3b-a…` alta como técnico: `POST /hce` con `grupo_id`, técnicos del grupo, aparece en el listado con «CI
+  pendiente» · `3b-b` misma cédula como técnico: 409 **genérico** · `3b-c` como admin: mensaje **específico junto a la cédula** ·
+  `3b-d…` editar: `PATCH` sólo con lo que cambió, anamnesis con sus cinco claves, baja y reingreso · `3b-e…` sin CI nada se
+  traba, el 404 del CI se lee como «pendiente», registrar y editar el CI · `3b-f…` obligatorios vacíos → error por campo con
+  `aria-describedby` · `3b-w2`, `3b-s3`, `3b-api`.
+- **Fase 3-c** (escribe: firma y addendas) — contra el seed: Martín (IDEA 58, PA 60, PB 79, Δ +19), Sofía (PA en borrador),
+  Joaquín (LB en borrador con dos `NS`) y dos expedientes que crea el script:
+  `3c-a` IDEA firmado: 58, banda **escrita** con el color de la rampa de un solo matiz (nunca ok/warn/bad), sin «nivel DSM», solo
+  lectura · `3c-vigente` HCE-00 muestra el IDEA de `GET …/idea/vigente` · `3c-g` PA/PB/Δ de Martín **como los devuelve la API** ·
+  `3c-d`/`3c-d2` addenda (cuerpo sin autor; autor = usuario de la sesión; marca en encabezado, pestaña y stepper; 422 vacía) ·
+  `3c-e` NS con su marca propia · `3c-422` el 422 de firmar **por dimensión y por campo** · `3c-h`/`3c-h2` evaluador faltante →
+  error junto a su campo; con los dos, `POST /firmar` **sin cuerpo** y aviso «recomendación no cumplida» sin bloquear ·
+  `3c-b0…b3` PA de Sofía: ítem 1 sin observación → error junto al ítem; con observación firma; firmado, la API contesta 409 ·
+  `3c-prov` suma «provisorio» en vivo, sin banda · `3c-c` PB creado y firmado: **Δ, lectura y alerta mostrados == API** ·
+  `3c-i` IDEA en un expediente **sin CI**, sin candados · `3c-f` PA con el LB sin firmar → «fuera de secuencia» que no bloquea ·
+  `3c-pa-pb` PB firmado antes que su PA: al firmar el PA se vuelve a leer el PB y aparece su Δ ·
+  `3c-j1` la guarda `CONFIRMA_BASE_DESCARTABLE` (exit 1 antes de pedir nada) · `3c-j2`/`3c-j3` «Salir» y 401 con el diálogo
+  abierto dejan los campos vacíos y `WIZ.orig` null · `3c-j4`/`3c-j5`/`3c-j11` selector de grupos (técnico: sólo los suyos, sin
+  «Sin grupo asignado», uno solo → preseleccionado; admin: todos) · `3c-j6` alta del técnico en un grupo ajeno → el 403 de la API
+  se muestra · `3c-j7` una escritura que devuelve `warnings` los muestra sin bloquear · `3c-j8` la cédula se compara por valor
+  bruto · `3c-j9` el expediente de ejemplo no muestra candados ni «Bloqueado» ni modal de excepción · `3c-j10` la marca «Demo
+  parcialmente conectada» no tapa contenido a 1280×800 y 1280×900.
+- `z` — **0 errores de JavaScript** en toda la corrida.
+
 Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.
 
-### Las otras dos herramientas también corren contra la demo conectada (3-b)
+### Las otras dos herramientas también corren contra la demo conectada (3-b y 3-c)
 
 - **`herramientas/verificar_contraste_ui.js`** (raíz del repo) abre la demo por `http://localhost:5500/index.html?api=<API>`
   y hace login con el técnico del seed (`IPPU_DEMO_PASSWORD`; opcionales `API=`, `DEMO=`, `IPPU_DEMO_EMAIL=`): corre
   **sin tocarlo** desde el repo. Recorre las vistas, las 13 pestañas de un expediente de la API, el CI pendiente con sus
   errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos 14 pares que fallan que
-  la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla.
+  la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
+  confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable): **los mismos 14 pares que fallan**
+  (62 → 72 pares distintos; los 11 pares nuevos —rampa de bandas, marca de NS, addenda, barra— miden **entre 4,85:1 y 13,78:1**).
+  Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
   ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
   `:focus-visible` se miden.
 - **`fingerprint.js`** acepta una **URL** además de una ruta: `node fingerprint.js http://localhost:5500/index.html salida.json`

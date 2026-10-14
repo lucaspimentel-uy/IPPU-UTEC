@@ -65,6 +65,7 @@
     <button class="navitem" data-view="grupos">Grupos</button>
     <button class="navitem" data-view="inclusion">Inclusión</button>
     <button class="navitem" data-view="ateneos">Ateneos y capacitación</button>
+    <div class="demo-tag">Demo parcialmente conectada a la API</div>
     <div class="foot">v4.1 — Demo L1<br>IPPU × UTEC-LIDIA · 2026<br>fundacionippu.uy</div>
   </nav>
 
@@ -132,97 +133,8 @@
       <div id="expedienteContent"></div>
     </section>
 
-    <!-- ============ VISTA: EVALUACIÓN IDEA ============ -->
-    <section class="view" id="view-idea">
-      <div data-modo-demo></div>
-      <div class="crumbs">Inicio › Evaluación IDEA › <b>Nueva evaluación</b></div>
-      <h1 class="pagetitle">HCE-LB · Línea base — IDEA (Inventario del Espectro Autista)</h1>
-      <p class="pagedesc">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. Cada dimensión 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b> Se aplica <b>una sola vez, al ingreso</b>; el progreso del año se mide con la Escala IPPU-TEA (PA/PB), no repitiendo el IDEA.</p>
-
-      <div class="selector">
-        <label for="selNNA"><b>NNA evaluado:</b></label>
-        <select id="selNNA" onchange="cargarIDEA(parseInt(this.value))"></select>
-        <span id="ideaEstadoBadge"></span>
-        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
-      </div>
-
-      <div id="ideaForm"></div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Datos de la línea base (HCE-LB)</h2></div>
-        <div style="padding:16px 18px">
-          <div class="form-grid">
-            <div class="field"><label>Fecha de consenso <span class="req">*</span></label><input id="lb_fecha" type="date"></div>
-            <div class="field"><label>Sesiones de observación previas</label><input id="lb_sesiones" type="number" min="0" placeholder="Recomendado ≥ 5"></div>
-          </div>
-          <div class="form-grid full">
-            <div class="field"><label>Síntesis clínica <span class="req">*</span></label><textarea id="lb_sintesis" placeholder="Perfil, escalas más afectadas, nivel de soporte orientativo… (sugerido ≈200 palabras)"></textarea></div>
-            <div class="field"><label>Objetivos del período <span class="req">*</span></label><textarea id="lb_objetivos" placeholder="Objetivos de trabajo derivados de la línea base."></textarea></div>
-          </div>
-          <label style="display:flex;gap:8px;align-items:center;font-size:.8rem;margin-top:6px"><input type="checkbox" id="lb_migrado"> Migrado del sistema anterior</label>
-        </div>
-      </div>
-
-      <div class="idea-summary">
-        <div><div class="sum-lab">Puntaje total IDEA</div>
-        <div class="tot"><span id="ideaTotal">0</span><small> / 96</small></div></div>
-        <div class="nivel" id="ideaNivel">Sin puntuar</div>
-        <div class="spacer"></div>
-        <div class="nota">Banda orientativa para el equipo. El juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda). Para firmar: 12 dimensiones sin NS + fecha + síntesis + objetivos.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-ghost" onclick="guardarIDEA()">Guardar borrador</button>
-          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarLB()">✓ Firmar línea base</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ VISTA: ESCALA IPPU-TEA (HCE-PA / HCE-PB) — M5 ============ -->
-    <section class="view" id="view-prot">
-      <div data-modo-demo></div>
-      <div class="crumbs">Inicio › Escala IPPU-TEA › <b id="protCrumb">HCE-PA</b></div>
-      <h1 class="pagetitle" id="protTitle">HCE-PA · Protocolo A — Escala IPPU-TEA</h1>
-      <p class="pagedesc">Instrumento propio de IPPU para medir <b>progreso</b>: 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable/generalizado). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA (§5.2): nunca se comparan puntajes entre ambos instrumentos.</p>
-
-      <div class="selector">
-        <label for="selNNAProt"><b>NNA evaluado:</b></label>
-        <select id="selNNAProt" onchange="protSwitch(protKey)"></select>
-        <button class="prot-tab active" id="protTabPa" type="button" onclick="protSwitch('pa')">Protocolo A · julio</button>
-        <button class="prot-tab" id="protTabPb" type="button" onclick="protSwitch('pb')">Protocolo B · fin de año</button>
-        <span id="protEstadoBadge"></span>
-        <span style="color:var(--ink-2)">Evaluadores: Dr. González · Mtra. Torres</span>
-      </div>
-      <div id="protAviso"></div>
-
-      <div id="protForm"></div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)" id="protDatosTitle">Datos del protocolo</h2></div>
-        <div style="padding:16px 18px">
-          <div class="form-grid">
-            <div class="field"><label>Fecha de aplicación <span class="req">*</span></label><input id="prot_fecha" type="date"></div>
-            <div class="field"><label>Semanas de asistencia efectiva</label><input id="prot_semanas" type="number" min="0" placeholder="Recomendado ≥ 15"><div class="hint">Recomendación §4.3: ≥ 15 semanas (advierte, no bloquea la firma).</div></div>
-          </div>
-          <div class="form-grid full">
-            <div class="field"><label>Síntesis — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="prot_sint1" placeholder="Síntesis cualitativa del período (técnico 1)."></textarea></div>
-            <div class="field"><label>Síntesis — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="prot_sint2" placeholder="Síntesis cualitativa del período (técnico 2)."></textarea></div>
-            <div class="field"><label>Otras valoraciones profesionales</label><textarea id="prot_otros" placeholder="Fonoaudiología, psicomotricidad u otras valoraciones (opcional)."></textarea></div>
-            <div class="field" id="protAjustesWrap" style="display:none"><label>Ajustes introducidos durante el año</label><textarea id="prot_ajustes" placeholder="Sólo Protocolo B: ajustes al plan de trabajo entre A y B."></textarea></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="idea-summary">
-        <div><div class="sum-lab">Puntaje total IPPU-TEA</div>
-        <div class="tot"><span id="protTotal">0</span><small> / 120</small></div></div>
-        <div class="nivel" id="protNivel">0 / 24 ítems</div>
-        <div class="spacer"></div>
-        <div class="nota">Escala de progreso (mayor = más progreso), <b>no comparable con el IDEA</b>. Para firmar: 24 ítems puntuados + fecha + observación en todo ítem 1/5 + síntesis de ambos técnicos. La firma bloquea el protocolo (corrección por addenda).</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-ghost" onclick="guardarProt()">Guardar borrador</button>
-          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarProt()">✓ Firmar protocolo</button>
-        </div>
-      </div>
-    </section>
+    <!-- LB (IDEA), PA y PB ya no son vistas sueltas: se editan y firman en las pestañas del expediente
+         (js/evaluaciones.js), contra la API. -->
 
     <!-- ============ VISTA: HCE-IC · INFORME DE CIERRE ANUAL (M6) ============ -->
     <section class="view" id="view-ic">
@@ -626,8 +538,6 @@
 
 <!-- ===================== TOAST ===================== -->
 <div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
-
-<div class="demo-tag">Demo parcialmente conectada a la API</div>
 
 <!-- Scripts sin defer ni type=module: el orden de carga ES el orden de ejecucion del monolito
      original. Desde la Fase 3-a la demo se sirve por http (localhost:5500) y habla con la API

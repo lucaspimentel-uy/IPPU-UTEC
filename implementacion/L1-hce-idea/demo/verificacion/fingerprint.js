@@ -276,9 +276,8 @@ const norm = (s) => (s == null ? s : String(s)
   await page.evaluate(() => closeFlujoModal());
 
   /* C6 · Vistas que se arman por JS. */
-  await page.evaluate(() => cargarIDEA(101));       await html('C6a_vista_idea', '#view-idea');
-  await page.evaluate(() => cargarProt(102, 'pa')); await html('C6b_vista_prot_pa', '#view-prot');
-  await page.evaluate(() => cargarProt(102, 'pb')); await html('C6c_vista_prot_pb', '#view-prot');
+  /* IDEA, PA y PB dejaron de ser vistas de ejemplo en la Fase 3-c: viven en las pestañas del expediente de la API
+     (conectada.js las verifica), asi que ya no hay vista que capturar aqui. */
   await page.evaluate(() => cargarIC(102));         await html('C6d_vista_ic', '#view-ic');
   await page.evaluate(() => generarInforme(102));   await html('C6e_vista_informe', '#view-informe');
   await page.evaluate(() => { try { genVFBorrador(101, true); } catch (e) { window.__vfErr = e.message; } });

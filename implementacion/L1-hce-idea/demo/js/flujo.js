@@ -1,11 +1,13 @@
-/* M1 - Motor de flujo: estado, firma, bloqueo, addenda, excepcion + HCE-LOG.
+/* M1 - Motor de flujo de la demo de EJEMPLO: estado, firma, addenda + HCE-LOG.
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
-   Extraido del monolito (lineas 1251-1804) sin cambios de logica.
+   Fase 3-c (handoff §5.125): ningun modulo se bloquea ni por CI ni por secuencia (§5.94, §5.95) y ya no hay
+   «habilitacion excepcional». LB, PA y PB se editan y firman SOLO contra la API (evaluaciones.js); aca queda
+   el expediente de ejemplo (datos de datos.js, ids 101-108) y el IC, que se conecta en la fase siguiente.
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 /* =================================================================
-   M1 · MOTOR DE FLUJO (estado · firma · bloqueo · addenda · excepción)
+   M1 · MOTOR DE FLUJO DE EJEMPLO (estado · firma · addenda)
    Documento Técnico IPPU §3.2 (HCE-LOG) y §4 (flujo guiado, no impuesto).
-   Secuencia: CI → LB → PA → PB → IC. Estados derivados: bloqueado | borrador | firmado.
+   Secuencia sugerida: CI → LB → PA → PB → IC. Estados derivados: borrador | firmado (nunca «bloqueado»).
    Todo en memoria (demo, no persistente). Infraestructura que poblarán M2–M6.
    ================================================================= */
 const USUARIO_ACTUAL = "Dr. González — Psicología";  // sesión demo (login pre-cargado)
@@ -30,7 +32,7 @@ const TECNICOS = [
   {profesional:"Mtra. Torres", rol:"Maestro/a"},
 ];
 
-/* Objeto de flujo por defecto: CI editable (borrador), el resto bloqueado. */
+/* Objeto de flujo por defecto: todo en borrador, nada bloqueado. */
 function initFlujo(){
   const mk = () => ({firmado:false, firmas:[], addendas:[], excepcion:null});
   const f = {ci:mk(), lb:mk(), pa:mk(), pb:mk(), ic:mk()};
@@ -47,46 +49,20 @@ function initFlujo(){
   return f;
 }
 
-/* --- Reglas de secuencia (§4.1 / §4.2) -------------------------------
-   ¿El módulo está habilitado para editar/firmar? (independiente de si ya está firmado)
-   Devuelve {habilitado, exceptuable, motivoBloqueo}.
-   Regla dura: sin CI firmado nada se habilita, y eso NO es exceptuable (§4.2). */
+/* --- Secuencia (§5.94, §5.95): la secuencia sólo AVISA; nada se bloquea ni por CI ni por el eslabón anterior. ---
+   Se conserva el nombre porque lo llaman las vistas de ejemplo; siempre está habilitado. */
 function moduloHabilitado(nna, key){
-  if(key==="ci") return {habilitado:true, exceptuable:false, motivoBloqueo:""};
-  if(!nna.flujo.ci.firmado){
-    return {habilitado:false, exceptuable:false,
-      motivoBloqueo:"Requiere Consentimiento Informado firmado — único requisito no exceptuable (§4.2)."};
-  }
-  const prev = SECUENCIA[SECUENCIA.indexOf(key)-1];
-  const habilitado = nna.flujo[prev].firmado || !!nna.flujo[key].excepcion;
-  return {habilitado, exceptuable:true,
-    motivoBloqueo: habilitado ? "" : `Requiere ${modInfo(prev).full} firmado o habilitación excepcional.`};
+  return {habilitado:true, exceptuable:false, motivoBloqueo:""};
 }
 
-/* Estado visible DERIVADO (nunca se almacena 'borrador'/'bloqueado' → sin drift). */
+/* Estado visible DERIVADO (nunca se almacena → sin drift): firmado | borrador. */
 function estadoModulo(nna, key){
-  if(nna.flujo[key].firmado) return "firmado";
-  return moduloHabilitado(nna, key).habilitado ? "borrador" : "bloqueado";
+  return nna.flujo[key].firmado ? "firmado" : "borrador";
 }
 
-/* HOOK de validación de integridad (§4.3). Vacío en M1; M4–M6 lo completan por módulo. */
+/* Validación de integridad del IC de ejemplo (§4.3). LB, PA y PB ya no se validan en el navegador:
+   la API devuelve un 422 con el detalle por campo (evaluaciones.js). */
 function validarIntegridad(nna, key){
-  if(key==="lb"){                                   // HCE-LB / IDEA (M4, §4.3)
-    const lb = nna.flujo.lb; const t = lbTotales(lb.dim);
-    if(t.count < 12 || t.hayNS) return {ok:false, msg:"Para firmar la línea base: las 12 dimensiones deben estar puntuadas y sin NS."};
-    if(!lb.fecha)     return {ok:false, msg:"Falta la fecha de consenso de la línea base."};
-    if(!lb.sintesis)  return {ok:false, msg:"Falta la síntesis clínica de la línea base."};
-    if(!lb.objetivos) return {ok:false, msg:"Faltan los objetivos del período."};
-  }
-  if(key==="pa" || key==="pb"){                     // HCE-PA/PB · Escala IPPU-TEA (M5, §4.3)
-    const pr = nna.flujo[key]; const t = protTotales(pr.item);
-    const code = key==="pa" ? "Protocolo A" : "Protocolo B";
-    if(!t.completo) return {ok:false, msg:`Para firmar el ${code}: los 24 ítems deben estar puntuados (van ${t.count}).`};
-    const sinObs = pr.item.map((v,ix)=>((v===1||v===5) && !(pr.obs[ix]||"").trim()) ? ix+1 : null).filter(x=>x!=null);
-    if(sinObs.length) return {ok:false, msg:`Observación cualitativa obligatoria en todo ítem puntuado 1 o 5 — falta en: ítem ${sinObs.join(", ítem ")}.`};
-    if(!pr.fecha) return {ok:false, msg:`Falta la fecha de aplicación del ${code}.`};
-    if(!pr.sintTec1 || !pr.sintTec2) return {ok:false, msg:`Faltan las síntesis de ambos técnicos (${code}).`};
-  }
   if(key==="ic"){                                   // HCE-IC · Informe de Cierre Anual (M6, §4.3)
     const ic = nna.flujo.ic;
     const faltan = ic.sintEsc.map((t,i)=>(t||"").trim()?null:`E${i+1}`).filter(x=>x);
@@ -109,9 +85,7 @@ function logEvento(nna, {modulo, tipo, detalle, ts, usuario}){
 function firmarModulo(id, key){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
   if(nna.flujo[key].firmado){ toast("El módulo ya está firmado."); return; }
-  const h = moduloHabilitado(nna, key);
-  if(!h.habilitado){ toast(h.motivoBloqueo); return; }
-  const v = validarIntegridad(nna, key);          // hook (no-op en M1)
+  const v = validarIntegridad(nna, key);
   if(!v.ok){ toast(v.msg); return; }
   openFirmaModal(id, key);
 }
@@ -131,30 +105,10 @@ function confirmarFirma(id, key){
     logEvento(nna, {modulo:key, tipo:"firma", detalle:`Firma doble — ${TECNICOS.map(t=>t.profesional+" ("+t.rol+")").join(" · ")}.`});
   }
   f.firmado = true;
-  if(key==="pb") calcularDeltasPB(nna);   // M5.3: delta B−A automático al firmar B (§5.2)
   closeFlujoModal(); renderFlujo(id);
-  if(key==="lb" && document.getElementById("view-idea") && document.getElementById("view-idea").classList.contains("active")) cargarIDEA(nna.id);
-  if((key==="pa"||key==="pb") && document.getElementById("view-prot") && document.getElementById("view-prot").classList.contains("active")) cargarProt(nna.id, key);
   if(key==="ic" && document.getElementById("view-ic") && document.getElementById("view-ic").classList.contains("active")) cargarIC(nna.id);
   if(typeof renderNNA==="function") renderNNA();
-  toast(`${modInfo(key).full} firmado. Bloqueado para edición (corrección por addenda).`);
-}
-function habilitarExcepcional(id, key){
-  const nna = NNA.find(n=>n.id===id); if(!nna) return;
-  const h = moduloHabilitado(nna, key);
-  if(!h.exceptuable){ toast(h.motivoBloqueo); return; }
-  if(h.habilitado){ toast("El módulo ya está habilitado."); return; }
-  openExcepcionModal(id, key);
-}
-function confirmarExcepcion(id, key){
-  const nna = NNA.find(n=>n.id===id);
-  const motivo = document.getElementById("mfMotivo").value;
-  const texto = (document.getElementById("mfTexto").value||"").trim();
-  if(!texto){ toast("La constancia del motivo es obligatoria."); return; }
-  nna.flujo[key].excepcion = {motivo, texto, profesional:USUARIO_ACTUAL, fecha:HOY};
-  logEvento(nna, {modulo:key, tipo:"excepcion", detalle:`Habilitación excepcional — ${motivo}: ${texto}`});
-  closeFlujoModal(); renderFlujo(id);
-  toast(`${modInfo(key).full} habilitado excepcionalmente. Registrado en HCE-LOG.`);
+  toast(`${modInfo(key).full} firmado: ya no se edita, se corrige por addenda.`);
 }
 function addendaModulo(id, key){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
@@ -191,31 +145,17 @@ function openFirmaModal(id, key){
        <label style="display:flex;gap:8px;align-items:center;font-size:.83rem;margin-bottom:7px"><input type="checkbox" id="mfAutReg" checked> Autoriza el registro en la HCE</label>
        <label style="display:flex;gap:8px;align-items:center;font-size:.83rem;margin-bottom:12px"><input type="checkbox" id="mfAutCom" checked> Autoriza la comunicación a organismos (INAU / BPS)</label>
        <div class="field"><label>Adjunto (documento firmado)</label><input id="mfAdjunto" value="consentimiento_2026.pdf"><div class="hint">Demo: no se sube un archivo real.</div></div>
-       <div class="review-note">⚠ Único bloqueo sin excepción posible (§4.2): sin CI firmado no se habilita ningún módulo de evaluación.</div>`
+       <div class="review-note">El consentimiento es un estado visible del expediente: no bloquea ningún módulo (§5.94).</div>`
     : `<div class="section-label">Firma doble de técnicos responsables (§3.1)</div>
        ${TECNICOS.map(t=>`<div class="data-row"><dt>${t.rol}</dt><dd>${t.profesional}</dd></div>`).join("")}
        <div class="field" style="margin-top:12px"><label>Fecha de consenso</label><input id="mfFecha" type="date" value="${HOY}"></div>
-       <div class="review-note">⚠ La firma bloquea el módulo. En M1 la validación de integridad (§4.3) es un hook vacío; cada módulo (M4–M6) la completa.</div>`;
+       <div class="review-note">⚠ La firma bloquea el módulo: después sólo se corrige por addenda.</div>`;
   const foot = `<span class="left">${m.full} · ${m.name}</span>
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
       <button class="btn btn-primary" style="background:var(--ok)" onclick="confirmarFirma(${id},'${key}')">✓ Firmar y bloquear</button>
     </div>`;
   openFlujoModal(`Firmar ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
-}
-function openExcepcionModal(id, key){
-  const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
-  const motivos = ["Ingreso tardío","Reingreso","Licencia del equipo","Situación familiar","Otro"];
-  const body = `<div class="section-label">Habilitación excepcional (§4.2)</div>
-    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">Este módulo está bloqueado por la secuencia. Podés habilitarlo dejando una constancia del motivo — <b>queda registrada en HCE-LOG y no se oculta</b>.</p>
-    <div class="field"><label>Motivo</label><select id="mfMotivo">${motivos.map(o=>`<option>${o}</option>`).join("")}</select></div>
-    <div class="field"><label>Constancia (obligatoria)</label><textarea id="mfTexto" placeholder="Breve descripción del motivo de la habilitación excepcional."></textarea></div>`;
-  const foot = `<span class="left">${m.full} · ${m.name}</span>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--warn)" onclick="confirmarExcepcion(${id},'${key}')">⚠ Habilitar excepcionalmente</button>
-    </div>`;
-  openFlujoModal(`Habilitar ${m.full} excepcionalmente`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
 function openAddendaModal(id, key){
   const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
@@ -241,7 +181,7 @@ function verHceLog(id){
     : `<p style="color:var(--ink-2);font-size:.85rem;padding:8px 0">Sin eventos de auditoría todavía.</p>`;
   const foot = `<span class="left">HCE-LOG · registro de solo lectura e inalterable (§3.2 · demo, no persistente)</span>
     <button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
-  openFlujoModal(`HCE-LOG — ${nna.nombre} ${nna.apellido}`, "Auditoría: firmas, habilitaciones excepcionales y addendas", body, foot);
+  openFlujoModal(`HCE-LOG — ${nna.nombre} ${nna.apellido}`, "Auditoría: firmas y addendas", body, foot);
 }
 
 /* HCE-CI · vista de detalle del consentimiento firmado (M3). */
@@ -256,7 +196,7 @@ function verCI(id){
     <div class="data-row"><dt>Autoriza comunicación a organismos</dt><dd>${si(a.comunicacion)}</dd></div>
     <div class="data-row"><dt>Adjunto</dt><dd>${c.adjunto||"—"}</dd></div>
     ${c.addendas.length?`<div class="section-label">Addendas</div>${c.addendas.map(x=>`<div class="data-row"><dt>${fmtFecha(x.fecha)}</dt><dd style="text-align:left">${x.texto}</dd></div>`).join("")}`:""}`;
-  const foot = `<span class="left">HCE-CI · único bloqueo sin excepción (§4.2)</span><button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
+  const foot = `<span class="left">HCE-CI · consentimiento informado</span><button class="btn btn-ghost" onclick="closeFlujoModal()">Cerrar</button>`;
   openFlujoModal("HCE-CI — Consentimiento informado", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
 
@@ -313,22 +253,20 @@ function verProt(id, key){
 
 /* --- Render del panel de flujo (se inyecta en el expediente) --------- */
 function estadoBadgeM(st){
-  const m = {firmado:["mb-firmado","Firmado"], borrador:["mb-borrador","Borrador"], bloqueado:["mb-bloqueado","Bloqueado"]};
-  const [c,t] = m[st]||["mb-bloqueado",st]; return `<span class="mbadge ${c}">${t}</span>`;
+  const m = {firmado:["mb-firmado","Firmado"], borrador:["mb-borrador","Borrador"]};
+  const [c,t] = m[st]||["mb-borrador",st]; return `<span class="mbadge ${c}">${t}</span>`;
 }
 function stepperHtml(nna){
   return `<div class="flujo-stepper">${MODULOS_FLUJO.map(m=>{
     const st = estadoModulo(nna, m.key);
-    const exc = !!nna.flujo[m.key].excepcion;
-    const dot = st==="firmado" ? "✓" : (st==="borrador" ? "●" : "🔒");
-    return `<div class="fstep s-${st}${exc?" exc":""}"><span class="fdot">${dot}</span><span class="fname">${m.code}</span>${exc?'<span class="fexc">⚠ excep.</span>':""}</div>`;
+    const dot = st==="firmado" ? "✓" : "●";
+    return `<div class="fstep s-${st}"><span class="fdot">${dot}</span><span class="fname">${m.code}</span></div>`;
   }).join("")}</div>`;
 }
 function flujoBodyHtml(nna){
   const rows = MODULOS_FLUJO.map(m=>{
     const f = nna.flujo[m.key];
     const st = estadoModulo(nna, m.key);
-    const h = moduloHabilitado(nna, m.key);
     let meta, actions;
     if(st==="firmado"){
       const fecha = f.firmas[0] ? f.firmas[0].fecha : "";
@@ -340,26 +278,16 @@ function flujoBodyHtml(nna){
                    : m.key==="ic" ? `<button class="btn btn-ghost btn-mini" onclick="generarInforme(${nna.id})">Ver informe</button>` : "";
       const recibiBtn = (m.key==="ic" && !f.recibi) ? `<button class="btn btn-ghost btn-mini" style="color:var(--warn)" onclick="openRecibiModal(${nna.id})">✍ Recibí</button>` : "";
       actions = `${verBtn}${recibiBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
-    } else if(st==="borrador"){
-      meta = f.excepcion ? `Habilitado excepcionalmente — ${f.excepcion.motivo}` : "En borrador · editable";
-      const editar = m.key==="lb"
-        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('idea', ${nna.id})">✎ Editar IDEA</button>`
-        : (m.key==="pa"||m.key==="pb")
-        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('${m.key}', ${nna.id})">✎ Editar Protocolo ${m.key==="pa"?"A":"B"}</button>`
-        : m.key==="ic"
-        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('ic', ${nna.id})">✎ Editar Informe</button>`
-        : `<button class="btn btn-ghost btn-mini" disabled title="El CI se completa al firmar">✎ Editar</button>`;
-      actions = `${editar}<button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`;
     } else {
-      meta = h.motivoBloqueo;
-      actions = h.exceptuable
-        ? `<button class="btn btn-ghost btn-mini" style="color:var(--warn)" onclick="habilitarExcepcional(${nna.id},'${m.key}')">⚠ Habilitar excep.</button>`
-        : `<button class="btn btn-ghost btn-mini" disabled title="${h.motivoBloqueo}">🔒 Bloqueado</button>`;
+      meta = "En borrador · editable";
+      // LB, PA y PB se editan y firman contra la API (pestañas del expediente de verdad); acá sólo el IC de ejemplo.
+      actions = m.key==="ic"
+        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('ic', ${nna.id})">✎ Editar Informe</button><button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`
+        : "";
     }
-    const excTag = f.excepcion ? `<span class="fr-exc-tag" title="${f.excepcion.texto}"> · ⚠ excepción</span>` : "";
     return `<div class="flujo-row">
       <span class="fr-code">${m.code}</span>
-      <div class="fr-name">${m.name} ${estadoBadgeM(st)}${excTag}<div class="fr-meta">${meta}</div></div>
+      <div class="fr-name">${m.name} ${estadoBadgeM(st)}<div class="fr-meta">${meta}</div></div>
       <div class="fr-actions">${actions}</div>
     </div>`;
   }).join("");
@@ -367,7 +295,7 @@ function flujoBodyHtml(nna){
 }
 function flujoPanelHtml(nna){
   return `<div class="flujo-card">
-    <h3><span class="ic">⚑</span> Flujo de módulos (HCE) · CI → LB → PA → PB → IC
+    <h3><span class="ic">⚑</span> Flujo de módulos (HCE) · CI, LB, PA, PB, IC
       <span class="spacer"></span>
       <button class="btn btn-ghost btn-mini" onclick="verHceLog(${nna.id})">☰ Ver auditoría (HCE-LOG)</button>
     </h3>
@@ -464,7 +392,7 @@ NNA.forEach(n=>{
   seedCI(byId(104),"2026-06-10");
   setLB(byId(104), {dim:[8,8,"NS", 8,8,6, 6,6,8, 8,6,"NS"], fecha:"", sesiones:5, sintesis:"", objetivos:""});
   if(byId(104)) byId(104).flujo.lb.obs[2] = "NS: se requiere más observación en juego compartido antes de puntuar D3.";
-  // Arquetipo 4 — Bruno (107): consentimiento pendiente → todo bloqueado (estado por defecto de initFlujo).
+  // Arquetipo 4 — Bruno (107): consentimiento pendiente, nada iniciado (estado por defecto de initFlujo).
 
   // Otros NNA: CI + LB firmados, con IDEA generado consistente con su total previo, para dar variedad.
   const LB_OTROS = {103:[6,4,6, 4,6,4, 4,6,4, 4,4,3], 105:[4,4,4, 4,4,4, 4,4,4, 4,4,3], 108:[4,4,4, 4,4,4, 4,4,4, 2,4,2]};

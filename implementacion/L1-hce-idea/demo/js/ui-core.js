@@ -1,4 +1,4 @@
-/* Navegacion, tabla NNA, formulario IDEA, Likert, graficos de analitica, toast, sesion.
+/* Navegacion, tabla NNA, Likert, graficos de analitica, toast, sesion.
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
    Extraido del monolito (lineas 2061-2427) sin cambios de logica.
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
@@ -15,7 +15,6 @@ document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>
 
 /* ================= INICIO: TABLA NNA (re-renderizable) ================= */
 const tb = document.getElementById("tbodyNNA");
-const selNNA = document.getElementById("selNNA");
 
 function pillEval(ev){
   if(!ev) return `<span class="pill due">sin evaluar</span>`;
@@ -261,12 +260,9 @@ function toggleActivo(id){
 }
 
 function renderNNA(){
-  // Dropdown de NNA (todos) para las evaluaciones IDEA e IPPU-TEA (PA/PB)
+  // Dropdown de NNA (todos) para el Informe de Cierre de ejemplo
   const optsNNA = NNA.map(p=>
     `<option value="${p.id}">#${p.id} · ${p.nombre} ${p.apellido} · Grupo ${p.grupo}</option>`).join("");
-  selNNA.innerHTML = optsNNA;
-  const selProt = document.getElementById("selNNAProt");
-  if(selProt){ const prev = selProt.value; selProt.innerHTML = optsNNA; if(prev) selProt.value = prev; }
   const selIC = document.getElementById("selNNAIC");
   if(selIC){ const prev = selIC.value; selIC.innerHTML = optsNNA; if(prev) selIC.value = prev; }
   // Fase 3-a: el listado y los KPIs de Inicio ya no salen de este array (ver «INICIO CONECTADO»).
@@ -291,27 +287,19 @@ function renderPendientes(){
       <div class="kpi"><div class="lab">Sin iniciar</div><div class="val purple">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
   }
   tb2.innerHTML = pend.length ? pend.map(p=>{
-    const est = estadoModulo(p,"lb");
-    const estadoTxt = est==="borrador" ? `<span style="color:var(--warn);font-weight:600">borrador</span>`
-      : est==="bloqueado" ? `<span style="color:var(--ink-2)">requiere CI</span>` : `<span style="color:var(--ink-2)">sin iniciar</span>`;
+    const estadoTxt = `<span style="color:var(--ink-2)">sin iniciar</span>`;
     return `<tr>
       <td><b>#${p.id}</b></td><td>${p.ci}</td>
       <td class="nna-name">${p.nombre}</td><td class="nna-name">${p.apellido}</td>
       <td>Grupo ${p.grupo}</td><td>${estadoTxt}</td>
-      <td><button class="btn btn-link" onclick="irAEval('idea', ${p.id})">Cargar IDEA →</button></td>
+      <td><button class="btn btn-link" onclick="go('inicio')">Ir al listado →</button></td>
     </tr>`;
   }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
 }
 
-/* --- Navegación a una evaluación preseleccionando el NNA --- */
+/* --- Navegación al Informe de Cierre de ejemplo preseleccionando el NNA (LB/PA/PB: pestañas del expediente) --- */
 function irAEval(view, id){
-  if(view==="idea"){
-    go("idea");
-    cargarIDEA(id);
-  } else if(view==="pa" || view==="pb"){
-    go("prot");
-    cargarProt(id, view);
-  } else if(view==="ic"){
+  if(view==="ic"){
     go("ic");
     cargarIC(id);
   } else if(view==="intermedia"){
@@ -326,119 +314,6 @@ function scrollASeccion(anchorId){
 }
 
 renderNNA();
-
-/* ================= FORMULARIO IDEA ================= */
-const form = document.getElementById("ideaForm");
-const ideaScores = {};
-
-// Indicador de progreso de las 12 dimensiones
-const progRow = document.createElement("div");
-progRow.className = "prog-dims";
-progRow.innerHTML = Array.from({length:12},(_,i)=>
-  `<div class="prog-dim" id="prog-d${i+1}" title="D${i+1}">${i+1}</div>`).join("");
-form.appendChild(progRow);
-
-const badgeClass = v => v===0?"badge-0":v<=2?"badge-2":v<=4?"badge-4":v<=6?"badge-6":"badge-8";
-
-DIMENSIONES.forEach((escala, ei)=>{
-  let html = `<div class="escala ${escala.esc}">
-    <header><span>${escala.escName}</span><span class="dims">D${ei*3+1} · D${ei*3+2} · D${ei*3+3} — Máx. 24 pts</span></header>`;
-
-  escala.dims.forEach((dim, di)=>{
-    const dimKey = `${ei}-${di}`;
-    const dimNum = ei*3 + di + 1;
-
-    let opcionesHtml = dim.opciones.map(([pts, desc])=>`
-      <button class="opcion" data-dim="${dimKey}" data-v="${pts}" type="button">
-        <span class="score-badge ${badgeClass(pts)}">${pts}</span>
-        <span class="desc">${desc}</span>
-      </button>`).join("");
-
-    html += `<div class="dimension" id="dim-${dimKey}">
-      <div class="dname">${dim.label}</div>
-      <div class="dinstr">Seleccioná la descripción que mejor caracterice al NNA — asignar siempre la puntuación más baja posible.</div>
-      <div class="opciones">${opcionesHtml}</div>
-      <div class="inter-row">
-        <span class="inter-label">¿El caso se sitúa claramente entre dos niveles?</span>
-        ${[1,3,5,7].map(v=>`<button class="inter-btn" data-dim="${dimKey}" data-inter="${v}" type="button">
-          Puntaje ${v}</button>`).join("")}
-        <button class="inter-btn" data-dim="${dimKey}" data-ns="1" type="button" style="border-color:var(--warn);color:var(--warn)">NS</button>
-        <span style="font-size:.68rem;color:var(--ink-2)">Intermedias (Rivière) · NS = observación insuficiente (impide firmar)</span>
-      </div>
-      <div id="sel-${dimKey}" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;background:#EEF3FA;font-size:.76rem;color:var(--ink-2)">
-        Puntaje seleccionado: <b id="sval-${dimKey}">—</b>
-      </div>
-    </div>`;
-  });
-
-  html += `<div class="esc-foot">
-    <span class="subtxt">Puntaje 0 = sin trastorno · 8 = afectación severa</span>
-    <span>Subtotal escala: <b id="sub${ei}">0 / 24</b></span>
-  </div></div>`;
-
-  form.insertAdjacentHTML("beforeend", html);
-});
-
-function updateScore(dimKey, val){
-  ideaScores[dimKey] = val;
-  // mostrar selección
-  document.getElementById(`sel-${dimKey}`).style.display = "block";
-  document.getElementById(`sval-${dimKey}`).textContent = val;
-  // marcar progreso
-  const dimNum = parseInt(dimKey.split("-")[0])*3 + parseInt(dimKey.split("-")[1]) + 1;
-  const pd = document.getElementById(`prog-d${dimNum}`);
-  if(pd){ pd.classList.add("filled"); }
-  // recalcular subtotales y total (NS no suma y bloquea la firma)
-  let total = 0, hayNS = false;
-  DIMENSIONES.forEach((e,ei)=>{
-    let sub = 0;
-    e.dims.forEach((_,di)=>{ const v = ideaScores[`${ei}-${di}`]; if(v==="NS") hayNS=true; else if(typeof v==="number") sub += v; });
-    document.getElementById("sub"+ei).textContent = `${sub} / 24`;
-    total += sub;
-  });
-  document.getElementById("ideaTotal").textContent = total;
-  const nivel = document.getElementById("ideaNivel");
-  const answered = Object.keys(ideaScores).length;
-  const pct = Math.round(total/96*100);
-  if(answered < 12){
-    nivel.textContent = `${answered} / 12 dimensiones puntuadas`;
-    nivel.style.background="#2C4A66";
-  } else if(hayNS){
-    nivel.textContent = `Incluye NS — no se puede firmar (falta observación)`;
-    nivel.style.background="var(--warn)";
-  } else if(total >= 65){
-    nivel.textContent=`Espectro severo — ${total} pts (${pct}%)`;
-    nivel.style.background="var(--bad)";
-  } else if(total >= 33){
-    nivel.textContent=`Espectro moderado — ${total} pts (${pct}%)`;
-    nivel.style.background="var(--warn)";
-  } else {
-    nivel.textContent=`Espectro leve — ${total} pts (${pct}%)`;
-    nivel.style.background="var(--ok)";
-  }
-}
-
-form.addEventListener("click", ev=>{
-  // Opciones principales (0,2,4,6,8)
-  const opcion = ev.target.closest(".opcion[data-dim]");
-  if(opcion){
-    const dim = opcion.dataset.dim;
-    document.querySelectorAll(`.opcion[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
-    document.querySelectorAll(`.inter-btn[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
-    opcion.classList.add("sel");
-    updateScore(dim, +opcion.dataset.v);
-    return;
-  }
-  // NS (observación insuficiente) o puntuaciones intermedias (1,3,5,7)
-  const interBtn = ev.target.closest(".inter-btn[data-dim]");
-  if(interBtn){
-    const dim = interBtn.dataset.dim;
-    document.querySelectorAll(`.opcion[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
-    document.querySelectorAll(`.inter-btn[data-dim="${dim}"]`).forEach(b=>b.classList.remove("sel"));
-    interBtn.classList.add("sel");
-    updateScore(dim, interBtn.dataset.ns ? "NS" : +interBtn.dataset.inter);
-  }
-});
 
 /* ================= EVAL INTERMEDIA: LIKERT ================= */
 const likSel = {};
@@ -659,7 +534,8 @@ function limpiarUiDeSesion(){
   ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
   // Cargas en vuelo del expediente: la secuencia sube y se descarta todo lo que tenga datos de un NNA.
   EXP.seq++;
-  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[]});
+  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null});
+  if(typeof evReiniciar === "function") evReiniciar(true);     // evaluaciones: ni borradores ni profesionales de la sesión anterior
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";
   _el("userNombre").textContent = "—";

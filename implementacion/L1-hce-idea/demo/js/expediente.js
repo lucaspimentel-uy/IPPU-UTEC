@@ -12,7 +12,7 @@
    de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
    El estado de cada modulo sale SIEMPRE de GET /hce/{id}/flujo: nada se bloquea en el navegador (§5.94,
    §5.95); fuera de secuencia es un aviso, y el CI pendiente es un estado visible, no un candado. */
-const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[] };
+const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null };
 
 /* Pestanas del expediente. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
 const TABS_EXP = [
@@ -48,7 +48,7 @@ function tabsExpedienteHtml(){
       let marca = "";
       if(est === "ci_pendiente") marca = ` <span class="st-mini st-ci-pend"><span aria-hidden="true">⚠</span><span class="sr-only">consentimiento pendiente</span></span>`;
       else if(est === "registrado") marca = ` <span class="st-mini st-firmado"><span aria-hidden="true">●</span><span class="sr-only">consentimiento registrado</span></span>`;
-      else if(est){ const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar; marca = ` <span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">${e.txt}</span></span>`; }
+      else if(est){ const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar; marca = ` <span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">${e.txt}</span></span>${addendaMarcaHtml(nAddendas(t.k), true)}`; }
       return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"
         aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}"
         title="${escHtml(t.t)}" onclick="selTabExp('${t.k}')">${t.r}${marca}</button>`;
@@ -70,9 +70,13 @@ function teclaTabExp(ev){
 /* Solo las marcas de estado de las pestanas (el panel no depende del flujo, asi no pierde el foco ni lo tipeado). */
 function pintarTabsExp(){
   const cont = document.getElementById("tabsExpWrap");
-  if(cont) cont.innerHTML = tabsExpedienteHtml();
+  if(!cont) return;
+  const foco = document.activeElement && cont.contains(document.activeElement) ? document.activeElement.id : null;
+  cont.innerHTML = tabsExpedienteHtml();
+  if(foco){ const b = document.getElementById(foco); if(b) b.focus(); }      // repintar las marcas no le saca el foco al teclado
 }
 function selTabExp(k, enfocar){
+  if(typeof evSincronizar === "function") evSincronizar();   // lo tipeado en LB/PA/PB sin guardar no se pierde al cambiar de pestaña
   EXP.tab = k;
   pintarTabsExp();
   const panel = document.getElementById("panelExp");
@@ -80,6 +84,7 @@ function selTabExp(k, enfocar){
   panel.innerHTML = panelTabExpHtml(k);
   panel.setAttribute("aria-labelledby", "tabExp-" + k);
   if(k === "ci" && EXP.ci === null) cargarCi();      // la pestaña de CI pide su estado la primera vez
+  if(esTabEval(k)) evMostrar(k);                      // LB, PA y PB: se leen de la API (evaluaciones.js)
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
 }
 
@@ -122,6 +127,7 @@ function hce00Html(p){
       </div>
     </div>
     <div>
+      ${ideaVigenteCardHtml()}
       <div class="info-card">
         <h3><span class="ic" aria-hidden="true">☎</span> Contacto familiar</h3>
         <dl class="ib">
@@ -170,11 +176,12 @@ function flujoCardHtml(){
     // «fuera de secuencia» = el modulo ya tiene trabajo y hay anteriores sin firmar. Informa; no bloquea (§5.95).
     const fuera = est !== "sin_iniciar" && mo.faltantes && mo.faltantes.length
       ? `<span class="fl-aviso"><span aria-hidden="true">! </span>fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}</span>` : "";
-    const etiqueta = `${MOD_NOMBRE[m]}: ${txt}${fuera ? ", fuera de secuencia" : ""}`;
+    const nAdd = nAddendas(MOD_TAB[m]);
+    const etiqueta = `${MOD_NOMBRE[m]}: ${txt}${nAdd ? `, con ${nAdd} addenda${nAdd > 1 ? "s" : ""}` : ""}${fuera ? ", fuera de secuencia" : ""}`;
     return `<li><button type="button" class="fl-btn" onclick="selTabExp('${MOD_TAB[m]}', true)" aria-label="${escHtml(etiqueta)}">
       <span aria-hidden="true">${pillModulo(MOD_CORTO[m], m, est)}</span>
       <span class="fl-nombre" aria-hidden="true">${escHtml(MOD_NOMBRE[m])}</span>
-      <span class="fl-estado" aria-hidden="true">${txt}</span>${fuera ? `<span aria-hidden="true">${fuera}</span>` : ""}</button></li>`;
+      <span class="fl-estado" aria-hidden="true">${txt}${nAdd ? ` <span class="fl-add">✚ ${nAdd} addenda${nAdd > 1 ? "s" : ""}</span>` : ""}</span>${fuera ? `<span aria-hidden="true">${fuera}</span>` : ""}</button></li>`;
   }).join("");
   return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}
     <div class="ib">
@@ -353,6 +360,7 @@ async function ciGuardar(){
 function panelTabExpHtml(k){
   if(k === "hce00") return hce00Html(EXP.hce);
   if(k === "ci") return ciPanelHtml();
+  if(esTabEval(k)) return evPanelHtml(k);
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
     <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
@@ -403,7 +411,8 @@ function pintarCabeceraExp(){
 /* `opts.avisos`: warnings[] de la escritura que lo abre (alta). */
 async function abrirExpediente(id, opts){
   const mi = ++EXP.seq;
-  Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || []});
+  Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || [], mods:null, idea:{estado:"cargando"}});
+  evReiniciar();
   expedienteCargando();
   let hce, raw;
   try{
@@ -428,6 +437,7 @@ async function abrirExpediente(id, opts){
     <div id="tabsExpWrap">${tabsExpedienteHtml()}</div>
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
   pintarAvisosExp(); pintarFlujo();
+  cargarModsExp(); cargarIdeaVigente();         // addendas por modulo (marcas) y «qué IDEA rige» (§5.97), de la API
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
 }
@@ -504,9 +514,6 @@ function abrirExpedienteDemo(id){
 
     <div class="eval-bar">
       <span class="eval-bar-lbl">Cargar evaluación:</span>
-      <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
-      <button class="btn btn-ghost" onclick="irAEval('pa', ${p.id})">Protocolo A (IPPU-TEA)</button>
-      <button class="btn btn-ghost" onclick="irAEval('pb', ${p.id})">Protocolo B (IPPU-TEA)</button>
       <button class="btn btn-ghost" onclick="irAEval('ic', ${p.id})">Informe de Cierre (IC)</button>
       <!-- M5.3: "Eval. intermedia" (Likert 3 ítems/dim) reemplazada por la Escala IPPU-TEA (PA/PB);
            el código de la vista se conserva sin exponer, como áreas/general. -->
@@ -600,15 +607,6 @@ function abrirExpedienteDemo(id){
   go("expediente");
 }
 
-
-// abrir IDEA preseleccionando el NNA del expediente
-function evaluarDesdeExp(id){
-  go("idea");
-  const sel = document.getElementById("selNNA");
-  sel.value = String(id);
-  // reset del formulario IDEA
-  resetIDEA();
-}
 
 /* ============ HCE-IC · INFORME DE CIERRE ANUAL — imprimible (M6) ============
    "El único informe válido" (§5.3): el PDF con membrete se genera EXCLUSIVAMENTE

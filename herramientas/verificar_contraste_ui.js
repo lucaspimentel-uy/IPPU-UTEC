@@ -225,19 +225,30 @@ function extraerSelectoresDeAnilloFoco() {
  * suelto en el loop de abajo. `prep` corre ANTES de intentar enfocar; si no se sabe cómo
  * llegar a un selector en esta corrida, se deja sin `prep` y el resultado lo dice honestamente
  * ("sin elemento en el DOM") en vez de simular un número que no se verificó. */
+/* Abre un expediente DE LA API por nombre y su pestaña de evaluación (LB/PA/PB), esperando a que cargue. */
+async function abrirPorNombre(page, nombre, tab) {
+  await page.evaluate(async (n) => {
+    const r = await fetch(API_BASE + '/hce?nombre=' + encodeURIComponent(n) + '&limit=5', { headers: { Authorization: 'Bearer ' + Sesion.token() } });
+    const j = await r.json();
+    await abrirExpediente(j.find((h) => h.persona.nombre === n).id);
+  }, nombre);
+  await page.waitForSelector('#expTitulo', { timeout: 8000 });
+  await page.click('#tabExp-' + tab);
+  await page.waitForFunction(() => document.getElementById('evResumen') || document.getElementById('evEstado'), null, { timeout: 8000 });
+  await page.waitForTimeout(200);
+}
+
 const PREP_ANILLO = {
   '.login-field input': null, // se mide aparte, ANTES de loguearse (ver main)
   'select': async (page) => { await page.evaluate(() => go('ateneos')); await page.waitForTimeout(80); },
   '.field input': async (page) => { await page.evaluate(() => go('ateneos')); await page.waitForTimeout(80); },
   '.search-wrap input': async (page) => { await page.evaluate(() => go('inicio')); await page.waitForTimeout(80); },
   '.prot-obs textarea': async (page) => {
-    // 102 (Martín) tiene el PA firmado => de sólo lectura => sus textarea quedan
-    // `disabled` (evaluaciones.js:204) y no aceptan foco. 101 (Sofía) tiene el PA en
-    // borrador (arquetipo §11) — ahí el campo es editable de verdad.
-    await page.evaluate(() => { cargarProt(101, 'pa'); go('prot'); });
-    await page.waitForTimeout(80);
-    // .prot-obs sólo se muestra si el ítem vale 1/5 (evaluaciones.js:112-119) — se fuerza la
-    // clase para medir el anillo del campo, no para afirmar que el seed tiene ese puntaje.
+    // Martín tiene el PA firmado => de sólo lectura (no hay formulario). Sofía (seed) tiene el PA en
+    // borrador: ahí el campo es editable de verdad (Fase 3-c: pestaña PA del expediente de la API).
+    await abrirPorNombre(page, 'Sofía', 'pa');
+    // .prot-obs sólo se muestra si el ítem vale 1/5 — se fuerza la clase para medir el anillo del
+    // campo, no para afirmar que el seed tiene ese puntaje.
     await page.evaluate(() => { const w = document.querySelector('.prot-obs'); if (w) w.classList.add('show'); });
   },
 };
@@ -396,9 +407,25 @@ async function medirAnillosDeFoco(page, selectores) {
   await page.evaluate(() => abrirExpedienteDemo(102));
   await page.waitForTimeout(120);
   todosPares = todosPares.concat(await extraerParesVivos(page));
-  await page.evaluate(() => cargarIDEA(101));
-  await page.waitForTimeout(80);
+  // Fase 3-c: IDEA y protocolos de la API. Joaquín = borrador con NS (editable, barra de totales, confirmación de
+  // firma y 422); Martín = LB firmado con banda, addendas y PB firmado con Δ (solo lectura); Sofía = PA editable.
+  // Todo con el seed recién cargado: sólo se lee (firmar con campos incompletos da 422 y no escribe nada).
+  await page.click('.navitem[data-view="inicio"]');
+  await abrirPorNombre(page, 'Joaquín', 'lb');
   todosPares = todosPares.concat(await extraerParesVivos(page));
+  await page.evaluate(() => evPedirFirma()); await page.waitForTimeout(100);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // barra con la confirmación de firma
+  await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await page.waitForTimeout(150);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // 422 por dimensión y por campo
+  await abrirPorNombre(page, 'Martín', 'lb');
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // LB firmado: puntaje, banda (rampa), dimensiones
+  await page.click('#tabExp-pb'); await page.waitForSelector('#evDeltaTabla', { timeout: 8000 }); await page.waitForTimeout(150);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // PB firmado: Δ e interpretación
+  await abrirPorNombre(page, 'Sofía', 'pa');
+  await page.evaluate(() => document.querySelectorAll('.prot-obs').forEach((w) => w.classList.add('show')));
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // PA editable con las observaciones a la vista
+  await page.evaluate(() => evPedirFirma()); await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await page.waitForTimeout(150);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // errores del PA (fecha, síntesis)
 
   // Deduplicar por (fg,bg,esGrande)
   const mapaPares = new Map();

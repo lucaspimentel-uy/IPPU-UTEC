@@ -8,7 +8,7 @@
    adivina el rol para reformularlo (§5.119 d).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 
-const WIZ = { modo:"alta", step:1, orig:null, grupos:[], guardando:false, opener:null, sesion:0 };
+const WIZ = { modo:"alta", step:1, orig:null, inicial:null, grupos:[], guardando:false, opener:null, sesion:0 };
 
 /* ---------- Tabla unica: campo de la API <-> input <-> paso <-> rotulo ----------
    La usan la validacion, el mapeo de errores del servidor, el resumen y la revision. */
@@ -139,16 +139,19 @@ function cerrarModalAlta(sinFoco){
 }
 
 function _wizLimpiarFormulario(){
-  ["f_nombre","f_apellido","f_nac","f_ci","f_loc","f_ref","f_tel","f_dx","f_cie11","f_dxfecha","f_deriv","f_med",
-   "f_alerta","f_hc","f_motivo","f_perinatal","f_desarrollo","f_famhist","f_antec","f_fecha_baja"].forEach(id => { document.getElementById(id).value = ""; });
+  // Todos los input y textarea del dialogo, no una lista de ids: lo que se agregue al formulario se limpia solo.
+  document.querySelectorAll("#modalAlta input, #modalAlta textarea").forEach(el => {
+    if(el.type === "checkbox" || el.type === "radio") el.checked = false; else el.value = "";
+  });
   document.getElementById("f_sexo").selectedIndex = 0;
   document.getElementById("f_estado").value = "activo";
   document.getElementById("f_grupo").value = "";
+  document.getElementById("f_tecnicos").innerHTML = "";
   formLimpiar(document.getElementById("modalAlta"), "altaErrores");
 }
 
 function openAlta(){
-  WIZ.modo = "alta"; WIZ.orig = null; WIZ.grupos = [];
+  WIZ.modo = "alta"; WIZ.orig = null; WIZ.inicial = null; WIZ.grupos = [];
   _wizLimpiarFormulario();
   document.getElementById("modalTitle").textContent = "Registrar nuevo NNA en la HCE";
   document.getElementById("modalSub").textContent = "Alta de expediente clínico · Convenio INAU — Fundación IPPU";
@@ -169,6 +172,7 @@ function openEditar(){
   _wset("f_nombre", p.nombre); _wset("f_apellido", p.apellido); _wset("f_nac", p.fecha_nac);
   _wset("f_ci", ciFormateada(p.ci)); _wsetSelect("f_sexo", p.sexo); _wset("f_loc", p.localidad);
   _wset("f_ref", p.referente); _wset("f_tel", p.telefono);
+  WIZ.inicial = {ci: _wv("f_ci")};       // lo que se le mostro: el cambio se detecta comparando contra esto, tal cual
   _wset("f_dx", h.diagnostico); _wset("f_cie11", h.cie11); _wset("f_dxfecha", h.dx_fecha);
   _wset("f_deriv", h.derivacion); _wset("f_med", h.medicacion); _wset("f_alerta", h.alerta);
   _wset("f_hc", h.hc_historico);
@@ -193,15 +197,25 @@ function _wizGrupoDeId(id){
   const o = WIZ.orig && WIZ.orig.grupo;
   return o && String(o.id) === String(id) ? o : null;
 }
+/* Grupos que se OFRECEN: el admin ve todos; un tecnico, solo aquellos de los que es tecnico1 o tecnico2.
+   Es presentacion (§5.125): la autoridad es la API, y un 403 al guardar se sigue mostrando. */
+function _wizGruposOfrecidos(filas){
+  const u = Sesion.usuario();
+  if(!u || u.rol === "admin") return filas;
+  return filas.filter(g => (g.tecnico1 && g.tecnico1.id === u.id) || (g.tecnico2 && g.tecnico2.id === u.id));
+}
 function _wizRellenarGrupos(){
   const sel = document.getElementById("f_grupo");
+  const u = Sesion.usuario(), admin = !u || u.rol === "admin";
   const previo = sel.value || (WIZ.orig && WIZ.orig.grupo_id !== null && WIZ.orig.grupo_id !== undefined ? String(WIZ.orig.grupo_id) : "");
-  const filas = WIZ.grupos.slice();
+  const filas = _wizGruposOfrecidos(WIZ.grupos);
   const o = WIZ.orig && WIZ.orig.grupo;
   if(o && !filas.some(g => g.id === o.id)) filas.unshift(o);   // el grupo actual, aunque sea de otro año
-  sel.innerHTML = `<option value="">Sin grupo asignado</option>` +
+  const vacio = admin ? "Sin grupo asignado" : (filas.length ? "Elegí un grupo" : "No tenés grupos asignados");
+  sel.innerHTML = `<option value="">${vacio}</option>` +
     filas.map(g => `<option value="${g.id}">${escHtml(g.nombre)}${o && g.id === o.id && !WIZ.grupos.some(x => x.id === g.id) ? " (" + escHtml(g.anio) + ")" : ""}</option>`).join("");
   sel.value = previo;
+  if(!admin && !sel.value && filas.length === 1) sel.value = String(filas[0].id);   // un solo grupo propio: queda elegido
   wizGrupoCambio();
 }
 function wizGrupoCambio(){
@@ -314,8 +328,9 @@ function wizCambios(){
       lista.push({rot: WIZ_CAMPOS.find(c => c.id === id).rot, antes: mostrar(p[k]), despues: mostrar(_wv(id))});
     }
   });
-  const canon = s => String(s).replace(/[^0-9A-Za-z]/g, "");     // misma idea que la API: solo digitos y letras
-  if(canon(p.ci || "") !== canon(_wv("f_ci"))){
+  // Cedula: se compara el texto tal cual con el que se mostro al abrir; la forma canonica es cosa de la API.
+  // Si se reescribe igual pero con otro formato, se manda y la API decide que no cambio nada.
+  if(_wv("f_ci") !== (WIZ.inicial ? WIZ.inicial.ci : ciFormateada(p.ci))){
     pers.ci = _wv("f_ci");
     lista.push({rot: "Cédula", antes: ciFormateada(p.ci), despues: _wv("f_ci")});
   }
@@ -330,7 +345,8 @@ function wizCambios(){
     body.hc_historico = _wizHcNumero(_wv("f_hc"));
     lista.push({rot: "N.º de HC", antes: mostrar(o.hc_historico), despues: mostrar(_wv("f_hc"))});
   }
-  if(_wnorm(o.grupo_id) !== _wv("f_grupo")){
+  // Mientras los grupos cargan el selector esta deshabilitado y vacio: eso no es «sacar al NNA de su grupo».
+  if(!document.getElementById("f_grupo").disabled && _wnorm(o.grupo_id) !== _wv("f_grupo")){
     body.grupo_id = _wv("f_grupo") ? Number(_wv("f_grupo")) : null;
     const g = _wizGrupoDeId(_wv("f_grupo"));
     lista.push({rot: "Grupo", antes: o.grupo ? o.grupo.nombre : "—", despues: g ? g.nombre : "—"});
@@ -444,7 +460,14 @@ async function guardarNNA(){
 }
 
 /* Cierre de sesion / 401: el dialogo no puede quedar abierto detras del login. */
-function cerrarDialogosConectados(){ cerrarModalAlta(true); }
+function cerrarDialogosConectados(){
+  cerrarModalAlta(true);
+  // Aunque el dialogo ya estuviera cerrado: nada del NNA anterior queda en memoria ni en los campos.
+  WIZ.orig = null; WIZ.grupos = []; WIZ.inicial = null; WIZ.step = 1; WIZ.guardando = false;
+  _wizLimpiarFormulario();
+  document.getElementById("f_grupo").innerHTML = `<option value="">Sin grupo asignado</option>`;
+  document.getElementById("f_grupo_estado").textContent = "";
+}
 
 document.getElementById("modalAlta").addEventListener("keydown", e => {
   // Tab no sale del dialogo hacia el navegador: el ultimo control vuelve al primero y viceversa.
