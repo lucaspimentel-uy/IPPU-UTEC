@@ -18,15 +18,27 @@
  * implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium`
  * (Playwright fijado en su package.json; ver su README.md).
  *
- * Uso:  node herramientas/verificar_contraste_ui.js            (tabla completa)
- *       node herramientas/verificar_contraste_ui.js --json out.json   (además, JSON crudo)
+ * Uso:  IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js            (tabla completa)
+ *       IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js --json out.json   (además, JSON crudo)
+ *
+ * Desde la Fase 3 la demo NO abre por file://: el login es contra la API y ésta sólo acepta el origen
+ * localhost:5500 (CORS). Igual que demo/verificacion/conectada.js, hace falta (README de esa carpeta):
+ *   - la demo servida en DEMO   (por omisión http://localhost:5500;  cd demo && python -m http.server 5500)
+ *   - la API en API             (por omisión http://localhost:8000, con la base cargada por `python -m app.seed_demo`)
+ *   - IPPU_DEMO_PASSWORD        contraseña del técnico de la demo (la del seed)
+ *   - opcional: IPPU_DEMO_EMAIL (por omisión gonzalez@demo.ippu.test)
+ * La demo se abre con ?api=<API>: API=http://localhost:8001 sirve para una base descartable.
  */
 const fs = require('fs');
 const path = require('path');
 
 const REPO = path.resolve(__dirname, '..');
 const CSS_PATH = path.join(REPO, 'implementacion/L1-hce-idea/demo/css/estilos.css');
-const HTML_PATH = path.join(REPO, 'implementacion/L1-hce-idea/demo/index.html');
+const API = process.env.API || 'http://localhost:8000';
+const DEMO = process.env.DEMO || 'http://localhost:5500';
+const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
+const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
+const URL_DEMO = DEMO + '/index.html?api=' + encodeURIComponent(API);
 const PLAYWRIGHT_DIR = path.join(REPO, 'implementacion/L1-hce-idea/demo/verificacion/node_modules');
 
 let chromium;
@@ -294,9 +306,14 @@ async function medirAnillosDeFoco(page, selectores) {
   console.log(`Variables custom con color: ${variables.length}`);
   console.log(`Declaraciones literales con color: ${literales.length}\n`);
 
+  if (!PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD (contraseña del técnico de la demo; la del seed).'); process.exit(1); }
+  for (const [nombre, url] of [['API', API + '/health'], ['demo', DEMO + '/index.html']]) {
+    try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); }
+    catch (e) { console.error(`No responde la ${nombre} en ${url} (${e.message}). Ver demo/verificacion/README.md → «Demo conectada».`); process.exit(1); }
+  }
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto('file:///' + HTML_PATH.replace(/\\/g, '/'));
+  await page.goto(URL_DEMO);
   await page.waitForSelector('#loginScreen', { state: 'attached' });
 
   // El anillo de .login-field input SOLO existe con la pantalla de login activa —
@@ -316,8 +333,11 @@ async function medirAnillosDeFoco(page, selectores) {
     return { boxShadowComputado, bg };
   });
 
-  await page.click('#loginForm button[type="submit"]');
-  await page.waitForSelector('#loginScreen.hidden', { state: 'attached' });
+  await page.fill('#loginUser', EMAIL);
+  await page.fill('#loginPass', PASSWORD);
+  await page.click('#loginBtn');
+  await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+  await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
 
   const VISTAS = ['inicio', 'pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos'];
   let todosPares = [];
@@ -329,8 +349,51 @@ async function medirAnillosDeFoco(page, selectores) {
   await page.click('.userchip');
   await page.waitForTimeout(80);
   todosPares = todosPares.concat(await extraerParesVivos(page));
-  // Un expediente, para cubrir formularios/badges que no están en las vistas de listado.
-  await page.evaluate(() => abrirExpediente(102));
+  // Un expediente DE LA API (el primero de la lista), con cada una de sus pestañas; después el
+  // expediente de EJEMPLO (modo demostración) y el formulario IDEA, que traen los componentes que la
+  // línea base ya medía (heatmap, barras, íconos).
+  await page.click('.navitem[data-view="inicio"]');
+  await page.locator('#tbodyNNA tr[data-hce]').first().getByRole('button', { name: /Abrir expediente/ }).click();
+  await page.waitForSelector('#expTitulo', { timeout: 8000 });
+  await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').textContent), null, { timeout: 8000 });
+  for (const k of await page.$$eval('.exp-tab', (bs) => bs.map((b) => b.dataset.tab))) {
+    await page.click('#tabExp-' + k);
+    await page.waitForTimeout(150);
+    todosPares = todosPares.concat(await extraerParesVivos(page));
+  }
+  // Pantallas de escritura (Fase 3-b): CI pendiente con sus errores de formulario, y el diálogo de
+  // alta/edición en sus cuatro pasos, con el resumen de errores a la vista. Se busca a Bruno (seed: sin CI);
+  // si la base no es la del seed, se usa el expediente ya abierto y el CI que tenga.
+  await page.click('.navitem[data-view="inicio"]');
+  const bruno = page.locator('#tbodyNNA tr[data-hce]', { hasText: 'Bruno' });
+  if (await bruno.count()) {
+    await bruno.getByRole('button', { name: /Abrir expediente/ }).click();
+    await page.waitForSelector('#expTitulo', { timeout: 8000 });
+    await page.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+  }
+  await page.click('#tabExp-ci');
+  await page.waitForTimeout(400);
+  todosPares = todosPares.concat(await extraerParesVivos(page));            // CI: pendiente (formulario) o registrado
+  if (await page.locator('#btnCiGuardar').count()) {
+    await page.click('#btnCiGuardar');                                       // obligatorios vacíos → errores + resumen
+    await page.waitForTimeout(100);
+    todosPares = todosPares.concat(await extraerParesVivos(page));
+  }
+  await page.evaluate(() => openEditar());                                   // el diálogo, paso por paso
+  await page.waitForSelector('#modalAlta.open');
+  await page.waitForTimeout(300);
+  const nombreOrig = await page.inputValue('#f_nombre');
+  await page.fill('#f_nombre', ''); await page.click('#btnNext'); await page.waitForTimeout(400);   // paso 1 con el resumen de errores
+  todosPares = todosPares.concat(await extraerParesVivos(page));
+  await page.fill('#f_nombre', nombreOrig);
+  for (let paso = 2; paso <= 4; paso++) {                                    // pasos 2 (grupo, estado), 3 (anamnesis) y 4 (revisión)
+    await page.click('#btnNext'); await page.waitForTimeout(400);   // el .dot del paso activo anima su fondo (.2s): se mide ya asentado
+    todosPares = todosPares.concat(await extraerParesVivos(page));
+  }
+  // Se cierra por script, NO con Escape: una tecla pulsada pasa el navegador a modalidad de teclado y entonces
+  // `.focus()` cumple :focus-visible, lo que cambiaria cuales anillos de la parte 3 se miden (ver nota arriba).
+  await page.evaluate(() => closeAlta());
+  await page.evaluate(() => abrirExpedienteDemo(102));
   await page.waitForTimeout(120);
   todosPares = todosPares.concat(await extraerParesVivos(page));
   await page.evaluate(() => cargarIDEA(101));

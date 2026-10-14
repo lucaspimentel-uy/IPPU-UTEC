@@ -3,25 +3,26 @@
    Extraido del monolito (lineas 2618-2886) sin cambios de logica.
    Nota: 2774-2780 se movieron a utils.js (ver su cabecera).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
-/* ===================== EXPEDIENTE CONECTADO · HCE-00 de solo lectura (Fase 3-a) =====================
-   handoff §5.122. abrirExpediente(id) carga GET /hce/{id} (+ GET /hce/{id}/flujo para el estado de
-   los modulos) y pinta SOLO lo que la API tiene. Lo que la API no guarda (nivel de soporte,
-   talleres, historial, antecedentes) no se muestra. Los modulos que todavia no estan conectados
-   son pestanas con el panel de modo demostracion y SIN datos: no se mezcla una persona de la API
-   con datos de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
-   Nada se edita en esta rebanada. */
-const EXP = { id:null, seq:0, hce:null, flujo:null, tab:"hce00" };
+/* ===================== EXPEDIENTE CONECTADO · HCE-00 editable, CI y flujo (Fase 3-a/3-b) =====================
+   handoff §5.122 / §5.124. abrirExpediente(id) carga GET /hce/{id} (+ GET /hce/{id}/flujo para el estado de
+   los modulos) y pinta SOLO lo que la API tiene. Lo que la API no guarda (nivel de soporte, talleres,
+   historial, antecedentes) no se muestra. HCE-00 se edita (PATCH, wizard-nna.js) y el CI se registra y se
+   edita desde su pestana (POST/PATCH /hce/{id}/consentimiento). Los modulos que todavia no estan conectados
+   son pestanas con el panel de modo demostracion y SIN datos: no se mezcla una persona de la API con datos
+   de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
+   El estado de cada modulo sale SIEMPRE de GET /hce/{id}/flujo: nada se bloquea en el navegador (§5.94,
+   §5.95); fuera de secuencia es un aviso, y el CI pendiente es un estado visible, no un candado. */
+const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[] };
 
-/* `fase`: campo INTERNO (nunca se muestra), alineado con la checklist de handoff §6: ci→3-b ·
-   lb, pa, pb→3-c · ic, vf→3-d. Sin `fase` = fuera del alcance del 26/11/2026. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
+/* Pestanas del expediente. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
 const TABS_EXP = [
   {k:"hce00", r:"HCE-00", t:"Identificación y datos clínicos"},
-  {k:"ci",    r:"CI",  t:"Consentimiento informado",        fase:"3-b"},
-  {k:"lb",    r:"LB",  t:"Línea base — IDEA",               fase:"3-c", mod:"HCE-LB"},
-  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          fase:"3-c", mod:"HCE-PA"},
-  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          fase:"3-c", mod:"HCE-PB"},
-  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         fase:"3-d", mod:"HCE-IC"},
-  {k:"vf",    r:"VF",  t:"Valoración funcional",            fase:"3-d"},
+  {k:"ci",    r:"CI",  t:"Consentimiento informado"},
+  {k:"lb",    r:"LB",  t:"Línea base — IDEA",               mod:"HCE-LB"},
+  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          mod:"HCE-PA"},
+  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          mod:"HCE-PB"},
+  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         mod:"HCE-IC"},
+  {k:"vf",    r:"VF",  t:"Valoración funcional"},
   {k:"doc",   r:"DOC", t:"Documentos y fotos"},
   {k:"org",   r:"ORG", t:"Áreas INAU y BPS"},
   {k:"inc",   r:"INC", t:"Inclusión educativa y social"},
@@ -29,10 +30,12 @@ const TABS_EXP = [
   {k:"sev",   r:"SEV", t:"Severidad (DSM-5-TR)"},
   {k:"log",   r:"LOG", t:"Registro de cambios"}
 ];
+const MOD_NOMBRE = {"HCE-LB":"Línea base (IDEA)", "HCE-PA":"Protocolo A", "HCE-PB":"Protocolo B", "HCE-IC":"Informe de cierre"};
+const MOD_TAB = {"HCE-LB":"lb", "HCE-PA":"pa", "HCE-PB":"pb", "HCE-IC":"ic"};
 
 function _estadoTab(t){
   if(!EXP.flujo) return null;
-  if(t.k === "ci") return EXP.flujo.ci === "registrado" ? "firmado" : "ci_pendiente";
+  if(t.k === "ci") return EXP.flujo.ci === "registrado" ? "registrado" : "ci_pendiente";
   if(t.mod && EXP.flujo.modulos[t.mod]) return EXP.flujo.modulos[t.mod].estado;
   return null;
 }
@@ -44,6 +47,7 @@ function tabsExpedienteHtml(){
       const sel = EXP.tab === t.k;
       let marca = "";
       if(est === "ci_pendiente") marca = ` <span class="st-mini st-ci-pend"><span aria-hidden="true">⚠</span><span class="sr-only">consentimiento pendiente</span></span>`;
+      else if(est === "registrado") marca = ` <span class="st-mini st-firmado"><span aria-hidden="true">●</span><span class="sr-only">consentimiento registrado</span></span>`;
       else if(est){ const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar; marca = ` <span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">${e.txt}</span></span>`; }
       return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"
         aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}"
@@ -63,14 +67,19 @@ function teclaTabExp(ev){
   selTabExp(ks[i], true);
 }
 
-function selTabExp(k, enfocar){
-  EXP.tab = k;
+/* Solo las marcas de estado de las pestanas (el panel no depende del flujo, asi no pierde el foco ni lo tipeado). */
+function pintarTabsExp(){
   const cont = document.getElementById("tabsExpWrap");
   if(cont) cont.innerHTML = tabsExpedienteHtml();
+}
+function selTabExp(k, enfocar){
+  EXP.tab = k;
+  pintarTabsExp();
   const panel = document.getElementById("panelExp");
   if(!panel) return;          // sesión cerrada o expediente descartado mientras tanto
   panel.innerHTML = panelTabExpHtml(k);
   panel.setAttribute("aria-labelledby", "tabExp-" + k);
+  if(k === "ci" && EXP.ci === null) cargarCi();      // la pestaña de CI pide su estado la primera vez
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
 }
 
@@ -87,13 +96,14 @@ function filaTecnico(rotulo, nombre, rol){
 function hce00Html(p){
   const a = p.anamnesis;
   const anam = a
-    ? `${filaDato("Motivo de ingreso", a.motivo)}${filaDato("Perinatales", a.perinatal)}${filaDato("Desarrollo", a.desarrollo)}${filaDato("Ant. familiares", a.familiares)}`
+    ? `${filaDato("Motivo de ingreso", a.motivo)}${filaDato("Perinatales", a.perinatal)}${filaDato("Desarrollo", a.desarrollo)}${filaDato("Ant. familiares", a.familiares)}${filaDato("Observaciones", a.observaciones)}`
     : `<div class="hint">Sin anamnesis cargada en el expediente.</div>`;
   return `<div class="exp-grid">
     <div>
       <div class="info-card">
         <h3><span class="ic" aria-hidden="true">▤</span> HCE-00 · Identificación y datos clínicos
-          <span class="mbadge mb-borrador" title="Módulo siempre editable (§3.2); en esta versión solo lectura">Solo lectura</span></h3>
+          <span style="flex:1"></span>
+          <button type="button" class="btn btn-ghost btn-mini" onclick="openEditar()">✎ Editar</button></h3>
         <dl class="ib">
           ${filaDato("Diagnóstico", p.dx)}
           ${filaDato("CIE-11", p.cie11)}
@@ -110,6 +120,8 @@ function hce00Html(p){
         <h3><span class="ic" aria-hidden="true">❏</span> HCE-00 · Anamnesis — Historia del desarrollo</h3>
         <dl class="ib">${anam}</dl>
       </div>
+    </div>
+    <div>
       <div class="info-card">
         <h3><span class="ic" aria-hidden="true">☎</span> Contacto familiar</h3>
         <dl class="ib">
@@ -119,46 +131,70 @@ function hce00Html(p){
         </dl>
       </div>
     </div>
-    <div>${flujoResumenHtml()}</div>
   </div>`;
 }
 
-/* Estado de la cadena del anio en curso, tal cual lo devuelve GET /hce/{id}/flujo. */
-function flujoResumenHtml(){
+/* ---------- Avisos de la API (warnings[]): se muestran, nunca bloquean ---------- */
+function avisosHtml(avisos){
+  if(!avisos || !avisos.length) return "";
+  return `<div class="review-note avisos-api" role="status">
+    <span aria-hidden="true">ℹ</span>
+    <div><b>Avisos de la API (no bloquean):</b><ul>${avisos.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+    <button type="button" class="btn btn-ghost btn-mini" onclick="EXP.avisos=[];pintarAvisosExp()">Entendido</button></div>
+  </div>`;
+}
+function pintarAvisosExp(){
+  const el = document.getElementById("expAvisos");
+  if(el) el.innerHTML = avisosHtml(EXP.avisos);
+}
+
+/* ---------- Flujo del año: CI aparte + cadena LB → PA → PB → IC, tal cual la API ---------- */
+function flujoCardHtml(){
+  const cab = (extra) => `<h3 id="flujoTitulo"><span class="ic" aria-hidden="true">◐</span> Flujo del año${EXP.flujo ? " " + escHtml(EXP.flujo.anio) : ""}
+      <span class="spacer"></span>${extra || ""}
+      <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('log', true)">Ver auditoría</button></h3>`;
   if(EXP.flujoError){
-    return `<div class="info-card"><h3>Módulos del año</h3><div class="ib"><div class="hint" role="status">No se pudo cargar el estado de los módulos.
-      <button class="btn btn-ghost btn-mini" onclick="recargarFlujoExp()">Reintentar</button></div></div></div>`;
+    return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib"><div class="hint" role="status">No se pudo cargar el estado de los módulos.
+      <button class="btn btn-ghost btn-mini" onclick="recargarFlujoExp()">Reintentar</button></div></div></section>`;
   }
-  if(!EXP.flujo) return `<div class="info-card"><h3>Módulos del año</h3><div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(!EXP.flujo) return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib"><div class="hint" role="status">Cargando…</div></div></section>`;
   const f = EXP.flujo;
-  const filas = MODULOS_CADENA.map(m=>{
-    const mo = f.modulos[m]; const est = mo ? mo.estado : "sin_iniciar";
-    return `<div class="data-row"><dt>${escHtml(m)}</dt><dd>${pillModulo(MOD_CORTO[m], m, est)} <span style="color:var(--ink-2)">${(ESTADO_MOD_TXT[est]||ESTADO_MOD_TXT.sin_iniciar).txt}</span></dd></div>`;
+  const ci = f.ci === "registrado"
+    ? `${pillCi("registrado")}`
+    : `${pillCi("pendiente")} <span style="color:var(--ink-2)">Es un estado visible: no bloquea ningún módulo.</span>
+       <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('ci', true)">Registrar CI →</button>`;
+  const pasos = MODULOS_CADENA.map(m=>{
+    const mo = f.modulos[m] || {estado:"sin_iniciar", faltantes:[]};
+    const est = ESTADO_MOD_TXT[mo.estado] ? mo.estado : "sin_iniciar";
+    const txt = ESTADO_MOD_TXT[est].txt;
+    // «fuera de secuencia» = el modulo ya tiene trabajo y hay anteriores sin firmar. Informa; no bloquea (§5.95).
+    const fuera = est !== "sin_iniciar" && mo.faltantes && mo.faltantes.length
+      ? `<span class="fl-aviso"><span aria-hidden="true">! </span>fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}</span>` : "";
+    const etiqueta = `${MOD_NOMBRE[m]}: ${txt}${fuera ? ", fuera de secuencia" : ""}`;
+    return `<li><button type="button" class="fl-btn" onclick="selTabExp('${MOD_TAB[m]}', true)" aria-label="${escHtml(etiqueta)}">
+      <span aria-hidden="true">${pillModulo(MOD_CORTO[m], m, est)}</span>
+      <span class="fl-nombre" aria-hidden="true">${escHtml(MOD_NOMBRE[m])}</span>
+      <span class="fl-estado" aria-hidden="true">${txt}</span>${fuera ? `<span aria-hidden="true">${fuera}</span>` : ""}</button></li>`;
   }).join("");
-  return `<div class="info-card">
-    <h3><span class="ic" aria-hidden="true">◐</span> Módulos del año ${escHtml(f.anio)}</h3>
-    <dl class="ib">
-      <div class="data-row"><dt>HCE-CI</dt><dd>${pillCi(f.ci)}</dd></div>
-      ${filas}
-    </dl>
-    <div class="ib hint" style="padding-top:0">● firmado · ◐ en curso · ○ sin iniciar. Se completan desde cada pestaña cuando se conecte.</div>
-  </div>`;
+  return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}
+    <div class="ib">
+      <div class="fl-ci"><span class="fl-rotulo">Consentimiento informado (CI)</span> ${ci}</div>
+      <ol class="fl-cadena" aria-label="Cadena anual ${escHtml(f.anio)}: línea base, protocolo A, protocolo B e informe de cierre">${pasos}</ol>
+      <p class="hint" style="margin-top:var(--s3)">● firmado · ◐ en curso · ○ sin iniciar. Ningún módulo se bloquea: se puede trabajar en cualquier orden y, si queda fuera de secuencia, la API lo avisa.</p>
+    </div></section>`;
+}
+function pintarFlujo(){
+  const w = document.getElementById("flujoWrap");
+  if(w) w.innerHTML = flujoCardHtml();
 }
 
-function panelTabExpHtml(k){
-  if(k === "hce00") return hce00Html(EXP.hce);
-  const t = TABS_EXP.find(x => x.k === k);
-  return `<div class="info-card">
-    <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
-    <div class="ib">${panelModoDemo("Este módulo todavía no está conectado al servidor.")}</div>
-  </div>`;
-}
-
-async function recargarFlujoExp(){
+/* Vuelve a pedir el flujo. `conservar`: no vaciar lo que ya se ve mientras llega (p. ej. tras registrar el CI). */
+async function recargarFlujoExp(conservar){
   if(EXP.id === null) return;   // no hay expediente abierto (p. ej. se cerró la sesión)
   const mi = EXP.seq;
-  EXP.flujo = null; EXP.flujoError = false;
-  selTabExp(EXP.tab);
+  if(!conservar) EXP.flujo = null;
+  EXP.flujoError = false;
+  pintarFlujo(); pintarTabsExp();
   try{
     const f = await apiFetch(`/hce/${EXP.id}/flujo`);
     if(mi !== EXP.seq) return;
@@ -167,7 +203,161 @@ async function recargarFlujoExp(){
     if(mi !== EXP.seq) return;
     EXP.flujoError = true;
   }
-  selTabExp(EXP.tab);
+  pintarFlujo(); pintarTabsExp();
+}
+
+/* ---------- Pestaña CI: GET (404 = pendiente) · POST registra · PATCH edita. Nunca «firmado». ---------- */
+function _ci(){ return EXP.ci || {estado:"cargando"}; }
+function repintarCi(enfocarId){
+  if(EXP.tab !== "ci") return;
+  const p = document.getElementById("panelExp");
+  if(!p) return;
+  p.innerHTML = panelTabExpHtml("ci");
+  if(enfocarId){ const e = document.getElementById(enfocarId); if(e) e.focus(); }
+}
+async function cargarCi(){
+  const mi = EXP.seq, id = EXP.id;
+  if(id === null) return;
+  EXP.ci = {estado:"cargando"};
+  repintarCi();
+  try{
+    const r = await apiFetch(`/hce/${id}/consentimiento`);
+    if(mi !== EXP.seq) return;
+    EXP.ci = {estado:"registrado", datos: adaptarCi(r.data), editando:false};
+  }catch(err){
+    if(mi !== EXP.seq) return;
+    // 404 = todavia no esta registrado: es el estado «pendiente», no una falla.
+    EXP.ci = (err instanceof ApiError && err.status === 404) ? {estado:"pendiente"}
+      : {estado:"error", mensaje: err instanceof ApiError ? err.message : "No se pudo cargar el consentimiento."};
+  }
+  repintarCi();
+}
+function ciEditar(){ if(EXP.ci && EXP.ci.estado === "registrado"){ EXP.ci.editando = true; repintarCi("ci_firmante"); } }
+function ciCancelar(){ if(EXP.ci && EXP.ci.estado === "registrado"){ EXP.ci.editando = false; repintarCi("btnCiEditar"); } }
+
+function ciFormHtml(d, registrar){
+  const c = (v) => v ? " checked" : "";
+  return `<div id="ciErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
+    <div class="form-grid">
+      <div class="field"><label for="ci_firmante">Referente familiar que firma <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatorio)</span></label>
+        <input id="ci_firmante" value="${escHtml(d.firmante)}" autocomplete="off" aria-required="true" aria-describedby="err_ci_firmante"><div class="err" id="err_ci_firmante"></div></div>
+      <div class="field"><label for="ci_fecha">Fecha del consentimiento <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatoria)</span></label>
+        <input id="ci_fecha" type="date" value="${escHtml(d.fecha)}" aria-required="true" aria-describedby="err_ci_fecha"><div class="err" id="err_ci_fecha"></div></div>
+    </div>
+    <fieldset class="ci-aut"><legend>Autorizaciones de la familia</legend>
+      <label class="check-row"><input type="checkbox" id="ci_aut_eval"${c(d.evaluacion)}> Autoriza la evaluación</label>
+      <label class="check-row"><input type="checkbox" id="ci_aut_reg"${c(d.registro)}> Autoriza el registro en la HCE</label>
+      <label class="check-row"><input type="checkbox" id="ci_aut_com"${c(d.comunicacion)}> Autoriza la comunicación a organismos (INAU / BPS)</label>
+    </fieldset>
+    <div class="acciones-form">
+      <button type="button" class="btn btn-primary" id="btnCiGuardar" onclick="ciGuardar()"${_ci().guardando ? " disabled" : ""}>${_ci().guardando ? "Guardando…" : (registrar ? "Registrar consentimiento" : "Guardar cambios")}</button>
+      ${registrar ? "" : `<button type="button" class="btn btn-ghost" onclick="ciCancelar()">Cancelar</button>`}
+    </div>`;
+}
+
+function ciPanelHtml(){
+  const ci = _ci();
+  const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✍</span> CI · Consentimiento informado ${estado || ""}</h3>`;
+  if(ci.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib"><div class="hint" role="status">Cargando consentimiento…</div></div></div>`;
+  if(ci.estado === "error"){
+    return `<div class="info-card">${cab()}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(ci.mensaje)}<br>
+      <button class="btn btn-primary btn-mini" style="margin-top:10px" onclick="cargarCi()">Reintentar</button></div></div></div>`;
+  }
+  if(ci.estado === "pendiente"){
+    return `<div class="info-card">${cab(pillCi("pendiente"))}<div class="ib">
+      <p class="hint" style="margin-bottom:var(--s3)">El consentimiento todavía no está registrado. Es un estado visible del expediente: <b>no bloquea</b> ninguna evaluación. Se registra una sola vez y después se puede editar.</p>
+      ${ciFormHtml({firmante:"", fecha:"", evaluacion:false, registro:false, comunicacion:false}, true)}
+    </div></div>`;
+  }
+  const d = ci.datos;
+  const si = (b) => b ? "Sí" : "No";
+  if(ci.editando){
+    return `<div class="info-card">${cab(pillCi("registrado"))}<div class="ib">${ciFormHtml(d, false)}</div></div>`;
+  }
+  return `<div class="info-card">${cab(pillCi("registrado"))}
+    <dl class="ib">
+      ${filaDato("Referente que firma", d.firmante)}
+      ${filaDato("Fecha", d.fecha ? fmtFecha(d.fecha) : null)}
+      ${filaDato("Autoriza la evaluación", si(d.evaluacion))}
+      ${filaDato("Autoriza el registro en la HCE", si(d.registro))}
+      ${filaDato("Autoriza la comunicación a organismos", si(d.comunicacion))}
+    </dl>
+    <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnCiEditar" onclick="ciEditar()">✎ Editar</button></div>
+  </div>`;
+}
+
+/* Boton de guardar del formulario de CI: ocupado/libre sin re-pintar el formulario. */
+function _ciBoton(ci, ocupado){
+  ci.guardando = ocupado;
+  const b = document.getElementById("btnCiGuardar");
+  if(!b) return;
+  b.disabled = ocupado;
+  b.textContent = ocupado ? "Guardando…" : (ci.estado === "pendiente" ? "Registrar consentimiento" : "Guardar cambios");
+}
+
+async function ciGuardar(){
+  const ci = EXP.ci;
+  if(!ci || ci.guardando) return;
+  const mi = EXP.seq, id = EXP.id;
+  const panel = document.getElementById("panelExp");
+  formLimpiar(panel, "ciErrores");
+  const v = (x) => (document.getElementById(x).value || "").trim();
+  const chk = (x) => document.getElementById(x).checked;
+  const nuevo = {firmante: v("ci_firmante"), fecha: v("ci_fecha"), evaluacion: chk("ci_aut_eval"), registro: chk("ci_aut_reg"), comunicacion: chk("ci_aut_com")};
+  const mostrarErr = (items, titulo) => { formResumen("ciErrores", items, titulo).focus(); };
+  const faltan = [];
+  if(!nuevo.firmante) faltan.push({id:"ci_firmante", rot:"Referente", mensaje:"Ingresá quién firma el consentimiento."});
+  if(!nuevo.fecha) faltan.push({id:"ci_fecha", rot:"Fecha", mensaje:"Ingresá la fecha del consentimiento."});
+  if(faltan.length){ mostrarErr(faltan, "Faltan datos obligatorios:"); return; }
+
+  const aut = {evaluacion: nuevo.evaluacion, registro: nuevo.registro, comunicacion: nuevo.comunicacion};
+  const registrar = ci.estado === "pendiente";
+  let body = {firmante: nuevo.firmante, fecha: nuevo.fecha, autorizaciones: aut};
+  if(!registrar){                                   // PATCH: solo lo que cambio (autorizaciones va completo)
+    const d = ci.datos;
+    body = {};
+    if(nuevo.firmante !== d.firmante) body.firmante = nuevo.firmante;
+    if(nuevo.fecha !== d.fecha) body.fecha = nuevo.fecha;
+    if(nuevo.evaluacion !== d.evaluacion || nuevo.registro !== d.registro || nuevo.comunicacion !== d.comunicacion) body.autorizaciones = aut;
+    if(!Object.keys(body).length){ mostrarErr([{mensaje:"No hay cambios para guardar."}], "Nada que guardar:"); return; }
+  }
+  _ciBoton(ci, true);
+  try{
+    const r = await apiFetch(`/hce/${id}/consentimiento`, {method: registrar ? "POST" : "PATCH", body});
+    if(mi !== EXP.seq) return;
+    EXP.ci = {estado:"registrado", datos: adaptarCi(r.data), editando:false};
+    EXP.avisos = r.warnings || []; pintarAvisosExp();
+    repintarCi("ciTitulo");
+    toast(registrar ? "Consentimiento registrado" : "Consentimiento actualizado");
+    recargarFlujoExp(true);                          // el stepper y las pestañas leen el estado de la API, no el del formulario
+    refrescarListaTrasEscritura();                   // y la fila del listado también
+  }catch(err){
+    if(mi !== EXP.seq) return;
+    _ciBoton(ci, false);
+    const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo:null, mensaje: err.message || "No se pudo guardar."}];
+    const mapa = {firmante:"ci_firmante", fecha:"ci_fecha", autorizaciones:"ci_aut_eval"};
+    const items = detalle.map(d => {
+      const campo = d.campo ? String(d.campo).split(".")[0] : null;
+      return {id: mapa[campo] || null, rot: campo === "firmante" ? "Referente" : campo === "fecha" ? "Fecha" : campo === "autorizaciones" ? "Autorizaciones" : "", mensaje: d.mensaje};
+    });
+    // El formulario no se vuelve a pintar: lo tipeado se conserva y los errores quedan junto a cada campo.
+    formResumen("ciErrores", items, "No se pudo guardar:").focus();
+    if(err instanceof ApiError && err.status === 409 && registrar){
+      // Otro usuario ya lo registró: se vuelve a leer para mostrar lo que hay realmente.
+      EXP.avisos = [{mensaje: err.message}]; pintarAvisosExp();
+      cargarCi(); recargarFlujoExp(true); refrescarListaTrasEscritura();
+    }
+  }
+}
+
+function panelTabExpHtml(k){
+  if(k === "hce00") return hce00Html(EXP.hce);
+  if(k === "ci") return ciPanelHtml();
+  const t = TABS_EXP.find(x => x.k === k);
+  return `<div class="info-card">
+    <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
+    <div class="ib">${panelModoDemo("Este módulo todavía no está conectado al servidor.")}</div>
+  </div>`;
 }
 
 function expedienteCargando(){
@@ -185,42 +375,59 @@ function expedienteError(err, id){
         <button class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button></div></div></div></div>`;
 }
 
-async function abrirExpediente(id){
-  const mi = ++EXP.seq;
-  Object.assign(EXP, {id, hce:null, flujo:null, flujoError:false, tab:"hce00"});
-  expedienteCargando();
-  let hce;
-  try{
-    // El detalle y el flujo se piden juntos; si el flujo falla, el HCE-00 se muestra igual.
-    const [rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}`), apiFetch(`/hce/${id}/flujo`)]);
-    if(mi !== EXP.seq) return;
-    if(rh.status === "rejected") throw rh.reason;
-    hce = adaptarHce00(rh.value.data);
-    if(rf.status === "fulfilled") EXP.flujo = adaptarFlujo(rf.value.data); else EXP.flujoError = true;
-  }catch(err){
-    if(mi !== EXP.seq) return;
-    expedienteError(err, id);
-    return;
-  }
-  EXP.hce = hce;
+/* Cabecera del expediente (se vuelve a pintar tras editar HCE-00, con lo que devolvio la API). */
+function cabeceraExpHtml(hce){
   const nombre = `${hce.nombre} ${hce.apellido}`.trim();
-  document.getElementById("expCrumb").textContent = `Expediente · ${nombre}`;
-  document.getElementById("expedienteContent").innerHTML = `
-    <div class="exp-head">
+  return `<div class="exp-head">
       <div class="exp-avatar" aria-hidden="true">${escHtml(inicialesDe(nombre))}</div>
       <div>
         <h1 id="expTitulo" tabindex="-1">${escHtml(nombre)}</h1>
-        <div class="meta">${hce.edad === null ? "" : hce.edad + " años · "}${hce.sexo ? escHtml(hce.sexo) + " · " : ""}N.º HCE ${escHtml(hce.hc)} · C.I. ${escHtml(hce.ciTxt)}${!hce.activo && hce.bajaFecha ? ` · Baja: ${fmtFecha(hce.bajaFecha)}` : ""}</div>
+        <div class="meta">${hce.edad === null ? "" : hce.edad + " años · "}${hce.sexo ? escHtml(hce.sexo) + " · " : ""}N.º de HC ${escHtml(hce.hc)} · C.I. ${escHtml(hce.ciTxt)}${!hce.activo && hce.bajaFecha ? ` · Baja: ${fmtFecha(hce.bajaFecha)}` : ""}</div>
         <div class="badges">
           ${hce.grupo ? `<span class="bdg">Grupo ${escHtml(hce.grupo)}</span>` : ""}
           <span class="bdg">${hce.activo ? "Activo" : "Inactivo"}</span>
         </div>
       </div>
       <div class="spacer"></div>
-      <button class="btn btn-ghost" onclick="go('inicio')">‹ Volver al listado</button>
-    </div>
+      <button type="button" class="btn btn-primary" onclick="openEditar()">✎ Editar datos</button>
+      <button type="button" class="btn btn-ghost" onclick="go('inicio')">‹ Volver al listado</button>
+    </div>`;
+}
+function pintarCabeceraExp(){
+  const c = document.getElementById("expHead");
+  if(!c || !EXP.hce) return;
+  c.innerHTML = cabeceraExpHtml(EXP.hce);
+  document.getElementById("expCrumb").textContent = `Expediente · ${EXP.hce.nombre} ${EXP.hce.apellido}`.trim();
+}
+
+/* `opts.avisos`: warnings[] de la escritura que lo abre (alta). */
+async function abrirExpediente(id, opts){
+  const mi = ++EXP.seq;
+  Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || []});
+  expedienteCargando();
+  let hce, raw;
+  try{
+    // El detalle y el flujo se piden juntos; si el flujo falla, el HCE-00 se muestra igual.
+    const [rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}`), apiFetch(`/hce/${id}/flujo`)]);
+    if(mi !== EXP.seq) return;
+    if(rh.status === "rejected") throw rh.reason;
+    raw = rh.value.data;
+    hce = adaptarHce00(raw);
+    if(rf.status === "fulfilled") EXP.flujo = adaptarFlujo(rf.value.data); else EXP.flujoError = true;
+  }catch(err){
+    if(mi !== EXP.seq) return;
+    expedienteError(err, id);
+    return;
+  }
+  EXP.hce = hce; EXP.raw = raw;
+  document.getElementById("expCrumb").textContent = `Expediente · ${`${hce.nombre} ${hce.apellido}`.trim()}`;
+  document.getElementById("expedienteContent").innerHTML = `
+    <div id="expHead">${cabeceraExpHtml(hce)}</div>
+    <div id="expAvisos"></div>
+    <div id="flujoWrap"></div>
     <div id="tabsExpWrap">${tabsExpedienteHtml()}</div>
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
+  pintarAvisosExp(); pintarFlujo();
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
 }
@@ -289,7 +496,6 @@ function abrirExpedienteDemo(id){
       </div>
       <div class="spacer"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-primary" onclick="openEditar(${p.id})">✎ Editar datos</button>
         <button class="btn btn-ghost" onclick="generarInforme(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">🖨 Informe de Cierre Anual</button>
         <button class="btn btn-ghost" onclick="toggleActivo(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
         <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
@@ -298,7 +504,6 @@ function abrirExpedienteDemo(id){
 
     <div class="eval-bar">
       <span class="eval-bar-lbl">Cargar evaluación:</span>
-      <button class="btn btn-ghost" onclick="irAEval('anamnesis', ${p.id})">✎ Editar HCE-00</button>
       <button class="btn btn-ghost" onclick="irAEval('idea', ${p.id})">Evaluación IDEA</button>
       <button class="btn btn-ghost" onclick="irAEval('pa', ${p.id})">Protocolo A (IPPU-TEA)</button>
       <button class="btn btn-ghost" onclick="irAEval('pb', ${p.id})">Protocolo B (IPPU-TEA)</button>
@@ -325,8 +530,6 @@ function abrirExpedienteDemo(id){
         <div class="info-card">
           <h3><span class="ic">▤</span> HCE-00 · Identificación y datos clínicos
             <span class="mbadge mb-borrador" style="margin-left:8px" title="Módulo siempre editable (§3.2): nunca se bloquea, aun con otros módulos firmados">Siempre abierto</span>
-            <span style="flex:1"></span>
-            <button class="btn btn-ghost btn-mini" onclick="openEditar(${p.id},1)">✎ Editar</button>
           </h3>
           <div class="ib">
             <div class="data-row"><dt>Diagnóstico</dt><dd>${p.dx}</dd></div>

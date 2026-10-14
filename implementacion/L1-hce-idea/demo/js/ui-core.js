@@ -40,7 +40,7 @@ function proxEval(nna){
    paginacion viven en LISTA. El servidor busca, filtra y pagina; el navegador solo pinta.
    Unica excepcion: el filtro «Inactivos», que la API no tiene (gap anotado en handoff):
    se trae todo con incluir_inactivos=true y se filtra aca, paginando en el cliente. */
-const LISTA = { q:"", grupo:null, estado:"activos", offset:0, limit:25, total:0, seq:0, kpiSeq:0, timer:null };
+const LISTA = { q:"", grupo:null, estado:"activos", offset:0, limit:25, total:0, seq:0, kpiSeq:0, gruposSeq:0, anioGrupos:null, timer:null };
 let GRUPOS_API = [];
 
 /* Regla de la caja de busqueda -> parametro de GET /hce (una sola vez, aca):
@@ -209,14 +209,18 @@ function setEstadoFiltro(estado){
    queda en «Todos» y el listado sigue funcionando. */
 async function cargarGrupos(){
   const sel = document.getElementById("filtroGrupo");
+  const mi = ++LISTA.gruposSeq;   // misma guardia que las cargas del expediente: una respuesta tardia tras «Salir» se descarta
   try{
     const r = await apiFetch("/grupos");
+    if(mi !== LISTA.gruposSeq) return;
     const anioMax = r.data.reduce((m,g)=>Math.max(m,g.anio), 0);
     const anio = r.data.some(g => g.anio === new Date().getFullYear()) ? new Date().getFullYear() : anioMax;
     GRUPOS_API = r.data.filter(g => g.anio === anio);
+    LISTA.anioGrupos = GRUPOS_API.length ? anio : null;   // el alta pide los grupos de ESTE anio (el que trajo la API)
     sel.innerHTML = `<option value="">Todos</option>` +
       GRUPOS_API.map(g => `<option value="${g.id}">${escHtml(g.nombre)}</option>`).join("");
   }catch(_err){
+    if(mi !== LISTA.gruposSeq) return;
     GRUPOS_API = [];
     sel.innerHTML = `<option value="">Todos (grupos no disponibles)</option>`;
   }
@@ -312,8 +316,6 @@ function irAEval(view, id){
     cargarIC(id);
   } else if(view==="intermedia"){
     go("intermedia");
-  } else if(view==="anamnesis"){
-    openEditar(id, 1);
   }
 }
 /* Navegación intra-vista: scroll suave hacia una sección del expediente o de un grupo.
@@ -642,7 +644,8 @@ function pintarUsuario(u){
 /* Deja la UI sin rastro de la sesion anterior: nada de datos de NNA detras del login. */
 function limpiarUiDeSesion(){
   clearTimeout(LISTA.timer);
-  LISTA.seq++; LISTA.kpiSeq++;
+  LISTA.seq++; LISTA.kpiSeq++; LISTA.gruposSeq++; LISTA.anioGrupos = null;
+  if(typeof cerrarDialogosConectados === "function") cerrarDialogosConectados();   // el dialogo de alta/edicion no queda abierto detras del login
   Object.assign(LISTA, {q:"", grupo:null, estado:"activos", offset:0, total:0});
   GRUPOS_API = [];
   tb.innerHTML = "";
@@ -656,7 +659,7 @@ function limpiarUiDeSesion(){
   ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
   // Cargas en vuelo del expediente: la secuencia sube y se descarta todo lo que tenga datos de un NNA.
   EXP.seq++;
-  Object.assign(EXP, {id:null, hce:null, flujo:null, flujoError:false, tab:"hce00"});
+  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[]});
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";
   _el("userNombre").textContent = "—";

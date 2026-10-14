@@ -20,6 +20,13 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-14 · Sesión Fase 3-b — HCE-00 editable, alta con asistente, CI y stepper conectados** (Lucas + Claude, rama `fase3b-escrituras`). Decisiones **§5.124**; sólo `demo/`, `herramientas/` y docs, backend sin tocar (head `dcc838486407`).
+  - **Código:** `wizard-nna.js` reescrito (alta `POST /hce` y edición `PATCH` sólo con lo que cambió; sin nivel de apoyo ni talleres; técnicos del grupo; errores por campo + resumen `role="alert"`; 409 tal cual la API), `expediente.js` (cabecera editable, tarjeta «Flujo del año» desde `GET /hce/{id}/flujo`, pestaña CI con `GET`/`POST`/`PATCH`, avisos `warnings[]`), `adaptadores.js`, `index.html`, `estilos.css`; el diálogo es modal (`inert`, Esc, foco). Carry-over de 3-a: `cargarGrupos()` con guarda de secuencia y `conectada.js` pasa `?api=`.
+  - **Verificado:** `demo/verificacion/conectada.js` **78/78** sobre una base descartable en `:8001` (alta como técnico, 409 genérico, 409 específico como admin, edición, baja con y sin fecha, CI pendiente → registrado, obligatorios vacíos, 0 errores de JS). `verificar_contraste_ui.js` corre sin tocarlo contra `:5500` con login: **los mismos 14 pares que fallan que la línea base** y los mismos anillos de foco; sin fallas nuevas. `fingerprint.js` acepta una URL.
+  - **Corrección a la entrada de 3-a de más abajo** (esta bitácora no se edita): donde dice «63 pares» se debe leer «**los mismos 14 pares que fallan que la línea base**»; el total de pares depende de las pantallas que recorre la herramienta.
+  - **Docs:** §5.124 (decisiones de 3-b + las de la revisión de 3-a que no tenían entrada: login modal con app `inert`, «Perfil de ejemplo», etiquetas de fase nunca visibles), §5.123 con un solo encabezado, cabecera, §6 3-b, `CLAUDE.md`, README de `demo/verificacion/`.
+  - **Huecos de la API:** `GET /grupos` ofrece a un técnico grupos donde no puede dar de alta (lo sabe por el 403) · el 404 del CI no distingue «sin CI» de «sin expediente».
+
 - **2026-10-14 · Fix de revisión de Fase 3-a** (Lucas + Claude, rama `fase3a-demo-conectada`): desborde horizontal de la lista a 390 px (`.sr-only` dentro de `.tabla-scroll`), sin «Fase 3-x» en texto visible, higiene de sesión con cargas en vuelo, login modal con app inerte y foco al título, tests de búsqueda reales, «Mi usuario» como perfil de ejemplo, docs (`PYTHONUTF8=1`, §5.123 trailer de sesión); `conectada.js` **46/46**, contraste 14/63 = línea base.
 
 - **2026-10-14 · Fix de Fase 3-a — checklist de §6 restaurada, seed con `PYTHONUTF8=1`, Playwright fijado en 1.64.1** (Lucas + Claude, rama `fase3a-demo-conectada`): sólo docs y `demo/verificacion/package.json` (+ lockfile, agregados con `git add -f` porque su `.gitignore` los excluye); `conectada.js` sigue en 32/32.

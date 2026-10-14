@@ -75,7 +75,7 @@
     <section class="view active" id="view-inicio">
       <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
       <h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1>
-      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico (por ahora de solo lectura; los módulos de evaluación se van conectando por etapas).</p>
+      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico (los módulos de evaluación se van conectando por etapas).</p>
 
       <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
            que se derivan de esas respuestas; el resto de la demo vive en vistas marcadas. -->
@@ -90,14 +90,13 @@
         <div class="cardhead">
           <h2>Listado de NNA</h2>
           <div class="cardhead-sp"></div>
-          <!-- El alta (POST /hce) se conecta en la fase siguiente: no se ofrece un alta que no se guarda. -->
-          <span class="hint">Altas y ediciones: todavía no conectadas.</span>
+          <button type="button" class="btn btn-primary" id="btnNuevoNNA" onclick="openAlta()">+ Registrar nuevo NNA</button>
         </div>
         <div class="nna-toolbar">
           <div class="search-wrap">
-            <label for="searchNNA" class="sr-only">Buscar por nombre, N.º de HCE o cédula</label>
+            <label for="searchNNA" class="sr-only">Buscar por nombre, N.º de HC o cédula</label>
             <span class="search-ico" aria-hidden="true">⌕</span>
-            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HCE o cédula…" oninput="onBusquedaNNA()" autocomplete="off">
+            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HC o cédula…" oninput="onBusquedaNNA()" autocomplete="off">
           </div>
           <div class="filtro-grupo">
             <label for="filtroGrupo">Grupo</label>
@@ -112,7 +111,7 @@
         <div class="tabla-scroll">
         <table class="lista" id="tablaNNA">
           <thead>
-            <tr><th scope="col">N.º HCE</th><th scope="col">Cédula</th><th scope="col">Nombres</th><th scope="col">Apellido</th><th scope="col">Edad</th><th scope="col">Grupo</th><th scope="col">Consentimiento (CI)</th><th scope="col">Línea base · PA · PB · IC</th><th scope="col">Estado</th><th scope="col"><span class="sr-only">Acciones</span></th></tr>
+            <tr><th scope="col">N.º de HC</th><th scope="col">Cédula</th><th scope="col">Nombres</th><th scope="col">Apellido</th><th scope="col">Edad</th><th scope="col">Grupo</th><th scope="col">Consentimiento (CI)</th><th scope="col">Línea base · PA · PB · IC</th><th scope="col">Estado</th><th scope="col"><span class="sr-only">Acciones</span></th></tr>
           </thead>
           <tbody id="tbodyNNA"></tbody>
         </table>
@@ -475,144 +474,139 @@
   </main>
 </div>
 
-<!-- ===================== MODAL: ALTA NUEVO NNA ===================== -->
+<!-- ===================== MODAL: ALTA / EDICIÓN DE NNA (conectado a la API · Fase 3-b) =====================
+     Diálogo modal: role="dialog" + aria-modal, la app de atrás queda inerte mientras está abierto (wizard-nna.js),
+     Esc lo cierra y el foco vuelve a quien lo abrió. Errores: uno por campo (aria-describedby) y un resumen
+     role="alert" que recibe el foco. Sin nivel de apoyo ni talleres (§5.24: no hay dónde guardarlos). -->
 <div class="modal-bg" id="modalAlta">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalSub">
     <div class="modal-head">
       <div>
-        <h2 id="modalTitle">Registrar nuevo NNA en la HCE</h2>
+        <h2 id="modalTitle" tabindex="-1">Registrar nuevo NNA en la HCE</h2>
         <p id="modalSub">Alta de expediente clínico · Convenio INAU — Fundación IPPU</p>
       </div>
-      <button class="x" onclick="closeAlta()" title="Cerrar">×</button>
+      <button type="button" class="x" onclick="closeAlta()" aria-label="Cerrar sin guardar">×</button>
     </div>
 
-    <div class="stepper">
-      <div class="step active" id="stp1"><div class="dot">1</div>Datos del NNA</div>
-      <div class="step" id="stp2"><div class="dot">2</div>Datos clínicos</div>
-      <div class="step" id="stp3"><div class="dot">3</div>Anamnesis</div>
-      <div class="step" id="stp4"><div class="dot">4</div>Confirmar</div>
+    <div class="stepper" role="group" aria-label="Pasos del formulario">
+      <div class="step active" id="stp1" aria-current="step"><div class="dot" aria-hidden="true">1</div>Datos del NNA</div>
+      <div class="step" id="stp2"><div class="dot" aria-hidden="true">2</div>Datos clínicos</div>
+      <div class="step" id="stp3"><div class="dot" aria-hidden="true">3</div>Anamnesis</div>
+      <div class="step" id="stp4"><div class="dot" aria-hidden="true">4</div>Confirmar</div>
     </div>
 
     <div class="modal-body">
+      <div id="altaErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
+
       <!-- PASO 1: datos personales -->
       <div class="wizard-step active" data-step="1">
         <div class="section-label">Identificación</div>
         <div class="form-grid">
-          <div class="field"><label>Nombre <span class="req">*</span></label>
-            <input id="f_nombre" placeholder="Ej. Lucas"><div class="err">Ingresá el nombre.</div></div>
-          <div class="field"><label>Apellido <span class="req">*</span></label>
-            <input id="f_apellido" placeholder="Ej. Méndez"><div class="err">Ingresá el apellido.</div></div>
-          <div class="field"><label>Fecha de nacimiento <span class="req">*</span></label>
-            <input id="f_nac" type="date"><div class="err">Ingresá la fecha.</div>
-            <div class="hint">La edad se calcula automáticamente.</div></div>
-          <div class="field"><label>Documento (C.I.)</label>
-            <input id="f_ci" placeholder="Ej. 5.123.456-7"></div>
-          <div class="field"><label>Sexo</label>
-            <select id="f_sexo"><option>Femenino</option><option>Masculino</option><option>Otro / no especifica</option></select></div>
-          <div class="field"><label>Localidad</label>
-            <input id="f_loc" placeholder="Ej. Montevideo" value="Montevideo"></div>
+          <div class="field"><label for="f_nombre">Nombre <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatorio)</span></label>
+            <input id="f_nombre" placeholder="Ej. Lucas" autocomplete="off" aria-required="true"><div class="err"></div></div>
+          <div class="field"><label for="f_apellido">Apellido <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatorio)</span></label>
+            <input id="f_apellido" placeholder="Ej. Méndez" autocomplete="off" aria-required="true"><div class="err"></div></div>
+          <div class="field"><label for="f_nac">Fecha de nacimiento <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatoria)</span></label>
+            <input id="f_nac" type="date" aria-required="true"><div class="err"></div>
+            <div class="hint">La edad se calcula a partir de esta fecha; no se guarda.</div></div>
+          <div class="field"><label for="f_ci">Cédula (C.I.) <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatoria)</span></label>
+            <input id="f_ci" placeholder="Ej. 5.123.456-7" autocomplete="off" aria-required="true"><div class="err"></div>
+            <div class="hint">Con o sin puntos y guion: se guarda sin ellos.</div></div>
+          <div class="field"><label for="f_sexo">Sexo</label>
+            <select id="f_sexo"><option value="">Sin dato</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select><div class="err"></div></div>
+          <div class="field"><label for="f_loc">Localidad</label>
+            <input id="f_loc" placeholder="Ej. Montevideo" autocomplete="off"><div class="err"></div></div>
         </div>
         <div class="section-label">Referente familiar</div>
         <div class="form-grid">
-          <div class="field"><label>Nombre del referente</label>
-            <input id="f_ref" placeholder="Ej. Ana Méndez (madre)"></div>
-          <div class="field"><label>Teléfono de contacto</label>
-            <input id="f_tel" placeholder="Ej. 099 123 456"></div>
+          <div class="field"><label for="f_ref">Nombre del referente</label>
+            <input id="f_ref" placeholder="Ej. Ana Méndez (madre)" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="f_tel">Teléfono de contacto</label>
+            <input id="f_tel" placeholder="Ej. 099 123 456" autocomplete="off"><div class="err"></div></div>
         </div>
       </div>
 
-      <!-- PASO 2: datos clínicos + asignación institucional -->
+      <!-- PASO 2: datos clínicos + grupo -->
       <div class="wizard-step" data-step="2">
         <div class="section-label">Diagnóstico</div>
         <div class="form-grid">
-          <div class="field"><label>Diagnóstico principal <span class="req">*</span></label>
-            <select id="f_dx">
-              <option>TEA — Trastorno del Espectro Autista</option>
-              <option>TEA con discapacidad intelectual asociada</option>
-              <option>TEA — en proceso diagnóstico</option>
-              <option>Trastorno del desarrollo (a especificar)</option>
-            </select></div>
-          <div class="field"><label>Código CIE-11</label>
-            <input id="f_cie11" placeholder="Ej. 6A02.0"></div>
-          <div class="field"><label>Fecha de diagnóstico</label>
-            <input id="f_dxfecha" type="date"></div>
-          <div class="field"><label>Profesional / centro derivante</label>
-            <input id="f_deriv" placeholder="Ej. Neuropediatría — Hospital Pereira Rossell"></div>
-          <div class="field"><label>Nivel de apoyo (DSM-5)</label>
-            <select id="f_apoyo"><option>Grado 1 — Requiere apoyo</option><option selected>Grado 2 — Requiere apoyo sustancial</option><option>Grado 3 — Requiere apoyo muy sustancial</option></select></div>
-          <div class="field"><label>Medicación actual</label>
-            <input id="f_med" placeholder="Ej. Ninguna / Risperidona 0,5 mg"></div>
-          <div class="field"><label>Alertas clínicas</label>
-            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales"></div>
+          <div class="field"><label for="f_dx">Diagnóstico principal</label>
+            <input id="f_dx" list="dxSugeridos" placeholder="Ej. TEA — Trastorno del Espectro Autista" autocomplete="off">
+            <datalist id="dxSugeridos">
+              <option value="TEA — Trastorno del Espectro Autista"></option>
+              <option value="TEA con discapacidad intelectual asociada"></option>
+              <option value="TEA — en proceso diagnóstico"></option>
+              <option value="Trastorno del desarrollo (a especificar)"></option>
+            </datalist><div class="err"></div></div>
+          <div class="field"><label for="f_cie11">Código CIE-11</label>
+            <input id="f_cie11" placeholder="Ej. 6A02.0" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="f_dxfecha">Fecha de diagnóstico</label>
+            <input id="f_dxfecha" type="date"><div class="err"></div></div>
+          <div class="field"><label for="f_deriv">Profesional / centro derivante</label>
+            <input id="f_deriv" placeholder="Ej. Neuropediatría — Hospital Pereira Rossell" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="f_med">Medicación actual</label>
+            <input id="f_med" placeholder="Ej. Ninguna / Risperidona 0,5 mg" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="f_alerta">Alertas clínicas</label>
+            <input id="f_alerta" placeholder="Ej. Epilepsia, alergias, crisis sensoriales" autocomplete="off"><div class="err"></div></div>
         </div>
-        <div class="section-label">Asignación institucional · técnicos responsables (§3.1)</div>
+        <div class="section-label">Grupo y N.º de HC</div>
         <div class="form-grid">
-          <div class="field"><label>Grupo <span class="req">*</span></label>
-            <select id="f_grupo"><option>Azul</option><option>Celeste</option><option>Naranja</option><option>Verde</option></select></div>
-          <div class="field"><label>Técnico/a responsable 1 (Psicólogo/a)</label>
-            <select id="f_tecnico"><option>Dr. González — Psicología</option><option>Lic. Torres — Psicopedagogía</option><option>Lic. Pereira — Fonoaudiología</option><option>Dra. Silva — Neuropediatría</option></select></div>
-          <div class="field"><label>Técnico/a responsable 2 (Maestro/a)</label>
-            <select id="f_tecnico2"><option>Mtra. Torres</option><option>Mtra. Fernández</option><option>Mtro. Álvarez</option></select></div>
+          <div class="field"><label for="f_grupo">Grupo</label>
+            <select id="f_grupo" onchange="wizGrupoCambio()"><option value="">Sin grupo asignado</option></select>
+            <div class="hint" id="f_grupo_estado" role="status"></div><div class="err"></div>
+            <button type="button" class="btn btn-ghost btn-mini" id="btnReintGrupos" onclick="wizCargarGrupos()" hidden>Reintentar</button></div>
+          <div class="field"><label for="f_hc">N.º de HC</label>
+            <input id="f_hc" inputmode="numeric" autocomplete="off"><div class="err"></div>
+            <div class="hint" id="f_hc_hint">Dejalo vacío para que el sistema asigne el siguiente.</div></div>
         </div>
-        <div class="section-label">Talleres asignados (Plan Anual)</div>
-        <!-- Los 14 talleres reales del Prototipo v4 (§5.14 / D5). -->
-        <div class="chips-pick" id="tallerPicker">
-          <span class="chip-pick" data-t="Taller de cuentos y estimulación del lenguaje">Taller de cuentos y estimulación del lenguaje</span>
-          <span class="chip-pick" data-t="Taller de música y expresión">Taller de música y expresión</span>
-          <span class="chip-pick" data-t="Taller de expresión plástica">Taller de expresión plástica</span>
-          <span class="chip-pick" data-t="Taller pedagógico / iniciación a la lógica">Taller pedagógico / iniciación a la lógica</span>
-          <span class="chip-pick" data-t="Taller de cocina">Taller de cocina</span>
-          <span class="chip-pick" data-t="Taller de huerta">Taller de huerta</span>
-          <span class="chip-pick" data-t="Taller de higiene y AVD">Taller de higiene y AVD</span>
-          <span class="chip-pick" data-t="Taller de habilidades sociales">Taller de habilidades sociales</span>
-          <span class="chip-pick" data-t="Taller de TICs">Taller de TICs</span>
-          <span class="chip-pick" data-t="Educación Física">Educación Física</span>
-          <span class="chip-pick" data-t="Actividades lúdicas y de juego">Actividades lúdicas y de juego</span>
-          <span class="chip-pick" data-t="Actividades sensoriales">Actividades sensoriales</span>
-          <span class="chip-pick" data-t="Salidas didácticas / paseos">Salidas didácticas / paseos</span>
-          <span class="chip-pick" data-t="Participación de familia / referentes en actividades">Participación de familia / referentes en actividades</span>
+        <div class="review-note" id="f_tecnicos" aria-live="polite"></div>
+        <div id="wizEstadoSec" hidden>
+          <div class="section-label">Estado del expediente</div>
+          <div class="form-grid">
+            <div class="field"><label for="f_estado">Estado</label>
+              <select id="f_estado" onchange="wizEstadoCambio()"><option value="activo">Activo</option><option value="baja">Dado de baja</option></select><div class="err"></div></div>
+            <div class="field"><label for="f_fecha_baja">Fecha de baja</label>
+              <input id="f_fecha_baja" type="date"><div class="err"></div>
+              <div class="hint">Obligatoria para dar de baja. Al reingresar se borra.</div></div>
+          </div>
         </div>
-        <div class="hint" style="margin-top:8px">Tocá los talleres en los que participará. Podés ajustarlos luego desde el expediente.</div>
       </div>
 
       <!-- PASO 3: anamnesis / historia del desarrollo -->
       <div class="wizard-step" data-step="3">
         <div class="section-label">Anamnesis — Historia clínica del desarrollo</div>
         <div class="form-grid full">
-          <div class="field"><label>Motivo de ingreso / consulta</label>
-            <textarea id="f_motivo" placeholder="Motivo por el que ingresa al programa IPPU y objetivos iniciales…"></textarea></div>
+          <div class="field"><label for="f_motivo">Motivo de ingreso / consulta</label>
+            <textarea id="f_motivo" placeholder="Motivo por el que ingresa al programa IPPU y objetivos iniciales…"></textarea><div class="err"></div></div>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Antecedentes perinatales</label>
-            <textarea id="f_perinatal" placeholder="Embarazo, parto, período neonatal…"></textarea></div>
-          <div class="field"><label>Desarrollo evolutivo</label>
-            <textarea id="f_desarrollo" placeholder="Marcha, lenguaje, control de esfínteres, hitos madurativos…"></textarea></div>
+          <div class="field"><label for="f_perinatal">Antecedentes perinatales</label>
+            <textarea id="f_perinatal" placeholder="Embarazo, parto, período neonatal…"></textarea><div class="err"></div></div>
+          <div class="field"><label for="f_desarrollo">Desarrollo evolutivo</label>
+            <textarea id="f_desarrollo" placeholder="Marcha, lenguaje, control de esfínteres, hitos madurativos…"></textarea><div class="err"></div></div>
         </div>
         <div class="form-grid full">
-          <div class="field"><label>Antecedentes familiares</label>
-            <textarea id="f_famhist" placeholder="Antecedentes familiares relevantes (TEA, neurológicos, psiquiátricos…)"></textarea></div>
-          <div class="field"><label>Antecedentes y observaciones generales</label>
-            <textarea id="f_antec" placeholder="Antecedentes médicos, tratamientos previos, otras observaciones…"></textarea></div>
+          <div class="field"><label for="f_famhist">Antecedentes familiares</label>
+            <textarea id="f_famhist" placeholder="Antecedentes familiares relevantes (TEA, neurológicos, psiquiátricos…)"></textarea><div class="err"></div></div>
+          <div class="field"><label for="f_antec">Observaciones</label>
+            <textarea id="f_antec" placeholder="Antecedentes médicos, tratamientos previos, otras observaciones…"></textarea><div class="err"></div></div>
         </div>
       </div>
 
       <!-- PASO 4: revisión -->
       <div class="wizard-step" data-step="4">
-        <div class="section-label">Revisá los datos antes de crear el expediente</div>
+        <div class="section-label" id="reviewTitulo">Revisá los datos antes de crear el expediente</div>
         <div class="review-box"><dl id="reviewDl"></dl></div>
-        <div class="review-note">
-          <span style="color:var(--orange)">●</span>
-          <span>Al confirmar se crea el expediente en la HCE y el NNA queda disponible para su primera evaluación IDEA. En producción esto sería un <b>POST /api/nna</b> (FastAPI + JWT del terapeuta) con validación Pydantic y registro en PostgreSQL.</span>
-        </div>
+        <div class="review-note" id="reviewNota"></div>
       </div>
     </div>
 
     <div class="modal-foot">
       <span class="left" id="stepInfo">Paso 1 de 4</span>
       <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" id="btnPrev" onclick="wizPrev()" style="display:none">‹ Atrás</button>
-        <button class="btn btn-primary" id="btnNext" onclick="wizNext()">Siguiente ›</button>
-        <button class="btn btn-primary" id="btnCreate" onclick="crearNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
+        <button type="button" class="btn btn-ghost" id="btnPrev" onclick="wizPrev()" style="display:none">‹ Atrás</button>
+        <button type="button" class="btn btn-primary" id="btnNext" onclick="wizNext()">Siguiente ›</button>
+        <button type="button" class="btn btn-primary" id="btnCreate" onclick="guardarNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
       </div>
     </div>
   </div>

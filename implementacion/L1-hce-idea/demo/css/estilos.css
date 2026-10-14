@@ -1242,3 +1242,46 @@
   }
   .exp-tab:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
   dl.ib{margin:0}
+
+  /* ============ FASE 3-b · ESCRITURAS (handoff §5.124) ============
+     Resumen de errores de formulario (role="alert", recibe el foco), tarjeta de flujo del
+     expediente y pantalla de CI. Mismas reglas que 3-a: foco = :focus-visible global, nada de
+     significado solo por color (texto + glifo), rojo solo para lo accionable (error / CI pendiente). */
+  .form-errores{
+    background:var(--bad-soft);color:var(--bad);border:1px solid var(--bad);border-radius:var(--r-sm);
+    padding:var(--s2) var(--s3);margin:var(--s3) 0;font-size:var(--fs-2xs);font-weight:600;line-height:1.5
+  }
+  .form-errores[hidden]{display:none}
+  .form-errores:focus-visible{outline:2px solid var(--bad);outline-offset:2px}
+  .form-errores b{display:block;margin-bottom:var(--s1)}
+  .form-errores ul{margin:0;padding-left:var(--s5)}
+  .form-errores a{color:inherit;text-decoration:underline}
+  .field.invalid textarea{border-color:var(--bad);background:var(--bad-soft)}
+  .field .err:empty{display:none!important}
+  .req-nota{font-size:var(--fs-3xs);color:var(--ink-2)}
+  .check-row{display:flex;gap:var(--s2);align-items:center;font-size:var(--fs-xs);margin-bottom:var(--s2)}
+  .check-row input{width:auto}
+  fieldset.ci-aut{border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s3) var(--s4);margin:var(--s3) 0}
+  fieldset.ci-aut legend{font-size:var(--fs-2xs);font-weight:700;color:var(--ink);padding:0 var(--s1)}
+  .acciones-form{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s3)}
+
+  /* --- Tarjeta de flujo del expediente (estados de GET /hce/{id}/flujo) --- */
+  .flujo-conn{margin-bottom:var(--s4)}
+  .flujo-conn>h3 .spacer{flex:1}
+  .fl-ci{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3);font-size:var(--fs-xs)}
+  .fl-rotulo{font-weight:700;color:var(--ink)}
+  .fl-cadena{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:var(--s2);align-items:stretch}
+  .fl-cadena li{display:flex;align-items:stretch;gap:var(--s2)}
+  .fl-cadena li+li::before{content:"→" / "";align-self:center;color:var(--ink-2)}
+  .fl-btn{
+    display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;cursor:pointer;
+    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r-sm);
+    padding:var(--s2) var(--s3);font-family:inherit;font-size:var(--fs-2xs);min-width:130px
+  }
+  .fl-btn:hover{background:var(--paper-3);border-color:var(--ink-3)}
+  .fl-nombre{font-weight:600}
+  .fl-estado{color:var(--ink-2)}
+  .fl-aviso{color:var(--ink);font-size:var(--fs-3xs);font-weight:600}
+  .avisos-api{margin-bottom:var(--s4)}
+  .avisos-api ul{margin:var(--s1) 0 0;padding-left:var(--s5)}
+  .btn[hidden]{display:none}   /* .btn fija display y pisaba el atributo hidden (Reintentar de grupos se veia siempre) */

@@ -91,6 +91,7 @@ function adaptarHce00(h, hoy){
     referente: per.referente || null,
     tel: per.telefono || null,
     grupo: g ? g.nombre : null,
+    grupoId: g ? g.id : null,
     grupoAnio: g ? g.anio : null,
     // Tecnicos del grupo; `rol` es el rol EN EL GRUPO ("Psicólogo/a", "Maestro/a"), no el de
     // sesion (§5.121 b).
@@ -106,14 +107,29 @@ function adaptarHce00(h, hoy){
     alerta: h.alerta || null,
     anamnesis: an ? {
       motivo: an.motivo || null, perinatal: an.perinatal || null,
-      desarrollo: an.desarrollo || null, familiares: an.familiares || null
+      desarrollo: an.desarrollo || null, familiares: an.familiares || null,
+      observaciones: an.observaciones || null
     } : null
   };
 }
 
-/* GET /hce/{id}/flujo -> { anio, ci, modulos:{ "HCE-LB": {estado, id}, ... } } */
+/* GET /hce/{id}/flujo -> { anio, ci, modulos:{ "HCE-LB": {estado, id, faltantes}, ... } }
+   `faltantes` = eslabones anteriores del mismo anio sin firmar: solo informativo, no bloquea (§5.95). */
 function adaptarFlujo(f){
   const modulos = {};
-  ((f && f.modulos) || []).forEach(m => { modulos[m.modulo] = { estado: m.estado, id: m.id }; });
+  ((f && f.modulos) || []).forEach(m => { modulos[m.modulo] = { estado: m.estado, id: m.id, faltantes: m.faltantes || [] }; });
   return { anio: f ? f.anio : null, ci: f ? f.ci : null, modulos };
+}
+
+/* GET /hce/{id}/consentimiento -> lo que muestra la pantalla de CI. No se expone `firmado`, `firmas`
+   ni `addendas`: el CI no se firma, «registrado» es su estado final (handoff §5.124). */
+function adaptarCi(c){
+  const a = (c && c.autorizaciones) || {};
+  return {
+    firmante: (c && c.firmante) || "",
+    fecha: (c && c.fecha) || "",
+    evaluacion: a.evaluacion === true,
+    registro: a.registro === true,
+    comunicacion: a.comunicacion === true
+  };
 }

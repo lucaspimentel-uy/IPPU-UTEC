@@ -10,10 +10,10 @@ Sirve para una pregunta concreta:
 
 Se captura antes, se captura después, se comparan. Si difieren, algo se rompió.
 
-## Demo conectada a la API — `conectada.js` (Fase 3-a, `handoff.md` §5.122)
+## Demo conectada a la API — `conectada.js` (Fase 3-a y 3-b, `handoff.md` §5.122 y §5.124)
 
 Es **otra cosa** que el *fingerprint* de abajo: no compara dos versiones de la demo estática, sino que
-prueba la demo **contra una API real** (login, listado, HCE-00, modo demostración). Corre en Chromium
+prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, modo demostración). Corre en Chromium
 headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
 
 **Qué necesita** (tres cosas arriba a la vez; el script avisa cuál falta):
@@ -39,27 +39,74 @@ headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
 
 ```bash
 cd implementacion/L1-hce-idea/demo/verificacion
-IPPU_DEMO_PASSWORD=… node conectada.js          # PowerShell: $env:IPPU_DEMO_PASSWORD="…"; node conectada.js
+IPPU_DEMO_PASSWORD=… IPPU_ADMIN_EMAIL=… IPPU_ADMIN_PASSWORD=… node conectada.js
+# PowerShell: $env:IPPU_DEMO_PASSWORD="…"; $env:IPPU_ADMIN_EMAIL="…"; $env:IPPU_ADMIN_PASSWORD="…"; node conectada.js
 ```
+
+`IPPU_ADMIN_EMAIL` / `IPPU_ADMIN_PASSWORD` son el **admin del seed** (los `IPPU_EMAIL` / `IPPU_PASSWORD` con los que
+se corrió `app.seed_demo`): desde la 3-b el chequeo (c) compara el 409 del técnico con el del admin.
 
 Opcionales: `API=` y `DEMO=` (otras URL), `IPPU_DEMO_EMAIL=` (por omisión `gonzalez@demo.ippu.test`),
 `HEADED=1` (ver el navegador). Si Playwright pide un navegador que no está cacheado:
 `npx playwright install chromium`.
 
-**Qué verifica** (46 chequeos): (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
+**`API=` cambia de verdad la API del navegador:** el script abre la demo con `?api=<API>` (`api.js` · `API_BASE`),
+así que `API=http://localhost:8001 node conectada.js` hace que **la prueba y la demo hablen con la misma API**
+(el chequeo `api` lo afirma). Sin eso, la demo seguía usando `:8000` aunque el script consultara otra.
+
+### Base descartable en otro puerto (para revisar sin tocar la base de trabajo)
+
+Desde la 3-b la corrida **escribe**: crea un expediente, lo edita, le da de baja y reingreso y le registra el CI. Los
+conteos del principio (7 activos, 8 con inactivos…) son los del seed recién cargado, así que **cada corrida pide una
+base nueva**. Receta (PowerShell, desde `backend/`, Postgres de `docker compose up -d` arriba):
+
+```powershell
+$env:PYTHONUTF8 = "1"
+docker exec ippu-postgres psql -U ippu -d ippu -c "DROP DATABASE IF EXISTS ippu_3b WITH (FORCE)" -c "CREATE DATABASE ippu_3b"
+$env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_3b"      # pisa el del .env (sólo en esta terminal)
+.venv\Scripts\python -m alembic upgrade head
+.venv\Scripts\python -m app.seed_catalogos
+.venv\Scripts\python -m uvicorn app.main:app --port 8001                         # otra terminal, con el mismo DATABASE_URL
+# con la API arriba, en la primera terminal:
+$env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "…"; $env:IPPU_DEMO_PASSWORD = "…"
+.venv\Scripts\python -m app.seed_demo --url http://localhost:8001
+```
+
+Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; CORS acepta ese origen sea cual sea
+el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
+levantarla y volver a cargar el seed.
+
+**Qué verifica** (78 chequeos): **Fase 3-a** — (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
 mensaje en `role="alert"` con foco y `sessionStorage` vacío · (c) conteos del listado y del filtro de
 grupo **iguales a los de `backend/tests/test_m11_5a_seed_demo.py`** (7 activos · 8 con inactivos ·
-Escolares 3 · Preadolescentes 3 · Adolescentes 2) · (d) búsqueda por la cédula de Martín → 1 fila ·
-(e) Bruno con «CI pendiente» · (f) HCE-00 de Martín contra `GET /hce/{id}` y los técnicos del grupo, sin
-los campos que la API no guarda y sin los colores de grupo de la demo · (g) panel «Modo demostración — no
-se guarda» en pestañas y vistas no conectadas · (h) logout · y además token inválido (401 → login),
-recarga con sesión, API caída (mensaje legible), pestañas por teclado y **0 errores de JavaScript**. Desde el fix de revisión también: la **regla de búsqueda** (cédula de 7/8 dígitos → `ci`, límite 6/7 dígitos, nombre) contra el GET real, el **login como diálogo modal** (app inerte, Tab sin escapes, foco al título tras entrar), **sin desborde horizontal** a 390/1024/1280 px, **sin «Fase …» en texto visible**, y **«Salir» con cargas en vuelo** (detalle y recarga del flujo, con `page.route` demorando la respuesta).
+Escolares 3 · Preadolescentes 3 · Adolescentes 2) · (d) búsqueda (regla de la caja contra el GET real) · (e) Bruno con
+«CI pendiente» · (f) HCE-00 de Martín contra `GET /hce/{id}`, técnicos del grupo y stepper del flujo, sin lo que la API
+no guarda · (g) «Modo demostración» en pestañas y vistas no conectadas · (h) logout, 401, API caída, recarga con
+sesión, login modal con app inerte, sin desborde a 390/1024/1280 px, «Salir» con cargas en vuelo.
+**Fase 3-b** (al final, porque escribe) — diálogo de alta (role/aria-modal, app inerte, Esc, foco, sin nivel de apoyo ni
+talleres) · (a) alta como técnico: `POST /hce` con `grupo_id`, técnicos del grupo, aparece en el listado con «CI
+pendiente» · (b) misma cédula como técnico: 409 **genérico**, foco en el resumen · (c) como admin: mensaje **específico
+junto a la cédula** · (d) editar: `PATCH` sólo con lo que cambió, anamnesis con sus cinco claves, valor visible tras
+recargar, baja sin `fecha_baja` → error por campo y con fecha → guardada, reingreso · (e) sin CI nada se traba (sin
+candado ni «Bloqueado»), el 404 del CI se lee como «pendiente», registrar el CI → fila del listado y stepper
+«Registrado», editar el CI con `PATCH`, sin campo de adjunto · (f) obligatorios vacíos → error por campo con
+`aria-describedby` (alta y CI) · carry-over de la 3-a: `API=` efectivo y `GET /grupos` en vuelo descartado al salir.
+Y **0 errores de JavaScript** en toda la corrida.
 Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.
 
-⚠️ **`fingerprint.js` y `herramientas/verificar_contraste_ui.js` NO corren tal cual desde la Fase 3-a:**
-abren la demo por `file://` y esperan que «Ingresar» entre sin API. Hay que adaptarlos (servir en :5500 y
-loguear con el seed). Para el contraste se usó una copia adaptada (`handoff.md` §5.122); el original sigue
-sin tocar.
+### Las otras dos herramientas también corren contra la demo conectada (3-b)
+
+- **`herramientas/verificar_contraste_ui.js`** (raíz del repo) abre la demo por `http://localhost:5500/index.html?api=<API>`
+  y hace login con el técnico del seed (`IPPU_DEMO_PASSWORD`; opcionales `API=`, `DEMO=`, `IPPU_DEMO_EMAIL=`): corre
+  **sin tocarlo** desde el repo. Recorre las vistas, las 13 pestañas de un expediente de la API, el CI pendiente con sus
+  errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos 14 pares que fallan que
+  la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla.
+  ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
+  `:focus-visible` se miden.
+- **`fingerprint.js`** acepta una **URL** además de una ruta: `node fingerprint.js http://localhost:5500/index.html salida.json`
+  (con `API=` e `IPPU_DEMO_PASSWORD`) hace login y recorre el modo demostración (los ejemplos 101–108 se abren con
+  `abrirExpedienteDemo`). Con una ruta a un `.html` sigue siendo la herramienta de siempre para versiones anteriores a
+  la Fase 3. El modal de edición de ejemplo ya no existe (la edición es la del expediente de la API).
 
 ---
 

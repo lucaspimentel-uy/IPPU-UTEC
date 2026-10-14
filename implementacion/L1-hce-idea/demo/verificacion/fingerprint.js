@@ -5,7 +5,11 @@
  * estado actual; despues del cambio se captura otro y se comparan con comparar.js.
  * Si difieren, algo se rompio. Ver README.md.
  *
- * Uso:  node fingerprint.js <ruta-al-html> <salida.json>
+ * Uso:  node fingerprint.js <ruta-al-html | URL-de-la-demo> <salida.json>
+ *   - URL (http://localhost:5500/index.html): demo CONECTADA (desde la Fase 3). Hace login contra la API
+ *     (env API, por omision http://localhost:8000; IPPU_DEMO_PASSWORD; IPPU_DEMO_EMAIL) y recorre el modo
+ *     demostracion: los expedientes de ejemplo se abren con abrirExpedienteDemo().
+ *   - ruta a un .html: versiones ANTERIORES a la Fase 3 (sin API), como siempre.
  *
  * Cubre: carga sin errores · catalogos y constantes · funciones globales · motor de
  * flujo M1 de los 8 NNA · las 5 vistas · los 8 expedientes · las reglas duras de
@@ -19,9 +23,12 @@ const path = require('path');
 
 const htmlPath = process.argv[2], outPath = process.argv[3];
 if (!htmlPath || !outPath) {
-  console.error('uso: node fingerprint.js <ruta-al-html> <salida.json>');
+  console.error('uso: node fingerprint.js <ruta-al-html | URL-de-la-demo> <salida.json>');
   process.exit(1);
 }
+const CONECTADA = /^https?:\/\//.test(htmlPath);
+const API = process.env.API || 'http://localhost:8000';
+if (CONECTADA && !process.env.IPPU_DEMO_PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD (contraseña del técnico de la demo).'); process.exit(1); }
 
 /* Normaliza lo no determinista (la hora actual aparece en HCE-LOG) para que dos
    corridas en distinto minuto no den un falso positivo. */
@@ -66,10 +73,20 @@ const norm = (s) => (s == null ? s : String(s)
     usuarios:   { entrada: '.userchip',                        contenido: '#usuarioContent' },
   };
 
-  await page.goto('file:///' + path.resolve(htmlPath).replace(/\\/g, '/'));
-  await page.waitForSelector('#loginScreen', { state: 'attached' });
-  await page.click('#loginForm button[type="submit"]');     // login pre-cargado
-  await page.waitForSelector('#loginScreen.hidden', { state: 'attached' });
+  if (CONECTADA) {
+    await page.goto(htmlPath + (htmlPath.includes('?') ? '&' : '?') + 'api=' + encodeURIComponent(API));
+    await page.waitForSelector('#loginScreen', { state: 'attached' });
+    await page.fill('#loginUser', process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test');
+    await page.fill('#loginPass', process.env.IPPU_DEMO_PASSWORD);
+    await page.click('#loginBtn');
+    await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+  } else {
+    await page.goto('file:///' + path.resolve(htmlPath).replace(/\\/g, '/'));
+    await page.waitForSelector('#loginScreen', { state: 'attached' });
+    await page.click('#loginForm button[type="submit"]');     // login pre-cargado
+    await page.waitForSelector('#loginScreen.hidden', { state: 'attached' });
+  }
 
   /* Falla fuerte y con nombre si la nav cambió: antes esto moría en silencio dentro de
      page.click() (timeout genérico de Playwright, sin decir qué vista era). */
@@ -124,7 +141,7 @@ const norm = (s) => (s == null ? s : String(s)
 
   const ids = JSON.parse(F.pasos.A1_catalogos_y_globales).nnaIds || [];
   for (const id of ids) {
-    await page.evaluate(i => abrirExpediente(i), id);
+    await page.evaluate(i => (typeof abrirExpedienteDemo === 'function' ? abrirExpedienteDemo : abrirExpediente)(i), id);   // Fase 3: los ids 101-108 son del ejemplo, no de la API
     await page.waitForTimeout(120);
     await html('A4_expediente_' + id, '#view-expediente');
   }
@@ -252,8 +269,9 @@ const norm = (s) => (s == null ? s : String(s)
   /* C5 · Modales de alta, edicion y "Recibi de la familia". */
   await page.evaluate(() => openAlta());            await html('C5a_modal_alta', '#modalAlta');
   await page.evaluate(() => closeAlta());
-  await page.evaluate(() => openEditar(101));       await html('C5b_modal_editar', '#modalAlta');
-  await page.evaluate(() => closeAlta());
+  /* La edicion ya NO es del ejemplo: openEditar() edita el expediente de la API que esta abierto (Fase 3-b),
+     asi que en la demo conectada no hay modal de edicion de ejemplo que capturar. */
+  if (!CONECTADA) { await page.evaluate(() => openEditar(101)); await html('C5b_modal_editar', '#modalAlta'); await page.evaluate(() => closeAlta()); }
   await page.evaluate(() => openRecibiModal(102));  await html('C5c_modal_recibi', '#modalFlujo');
   await page.evaluate(() => closeFlujoModal());
 

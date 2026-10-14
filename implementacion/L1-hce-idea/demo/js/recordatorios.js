@@ -54,10 +54,8 @@ function subirFotoGrupo(gid){
   toast("Fotografía grupal cargada (demo).");
 }
 
-// cerrar modal al hacer clic en el fondo
-document.getElementById("modalAlta").addEventListener("click", e=>{
-  if(e.target.id==="modalAlta") closeAlta();
-});
+// El dialogo de alta/edicion ya NO se cierra al hacer clic en el fondo (Fase 3-b): es un formulario largo y un
+// clic de mas perderia lo tipeado. Se cierra con «×», con Cancelar o con Escape.
 // cerrar modal con Escape
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeAlta(); });
 

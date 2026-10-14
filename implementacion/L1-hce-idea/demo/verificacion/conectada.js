@@ -8,9 +8,11 @@
  *   - demo servida en http://localhost:5500   (cd demo && python -m http.server 5500)
  *   - IPPU_DEMO_PASSWORD = contraseña del técnico de la demo (la del seed)
  *
- * Uso:  IPPU_DEMO_PASSWORD=... node conectada.js
- * Opcionales: API=http://localhost:8000  DEMO=http://localhost:5500
+ * Uso:  IPPU_DEMO_PASSWORD=... IPPU_ADMIN_EMAIL=... IPPU_ADMIN_PASSWORD=... node conectada.js
+ * Opcionales: API=http://localhost:8000  DEMO=http://localhost:5500   (la demo se abre con ?api=<API>)
  *             IPPU_DEMO_EMAIL=gonzalez@demo.ippu.test   HEADED=1
+ * ⚠️ Desde la Fase 3-b la corrida ESCRIBE (crea un expediente, lo edita, registra su CI): los conteos del
+ *    principio son los del seed recién cargado, así que para repetirla hay que recrear la base (README).
  * Sale 0 si todo pasa, 1 si algo falla (o si la API/la demo no están arriba).
  */
 const { chromium } = require('playwright');
@@ -19,6 +21,8 @@ const API = process.env.API || 'http://localhost:8000';
 const DEMO = process.env.DEMO || 'http://localhost:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
+const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL;        // el admin del seed (IPPU_EMAIL / IPPU_PASSWORD con los que se cargó)
+const ADMIN_PASSWORD = process.env.IPPU_ADMIN_PASSWORD;
 
 const resultados = [];
 function check(id, nombre, ok, detalle) {
@@ -28,13 +32,16 @@ function check(id, nombre, ok, detalle) {
 
 async function preflight() {
   if (!PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD (contraseña del técnico de la demo).'); process.exit(1); }
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) { console.error('Faltan IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD (el admin del seed): el chequeo (c) de la 3-b compara el 409 del admin con el del técnico.'); process.exit(1); }
   for (const [nombre, url] of [['API', API + '/health'], ['demo', DEMO + '/index.html']]) {
     try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); }
     catch (e) { console.error(`No responde la ${nombre} en ${url} (${e.message}). Ver README.md → «Demo conectada».`); process.exit(1); }
   }
 }
 
-const urlDemo = (q) => DEMO + '/index.html' + (q || '');
+/* La demo habla con la API que diga `?api=`; sin él, con la de por omisión (:8000). Por eso SIEMPRE se le pasa la
+   API de esta corrida: si no, `API=http://localhost:8001 node conectada.js` consultaria una API y la demo otra. */
+const urlDemo = (q) => DEMO + '/index.html' + (q && /[?&]api=/.test(q) ? q : (q ? q + '&' : '?') + 'api=' + encodeURIComponent(API));
 const txt = (page, sel) => page.locator(sel).first().innerText();
 
 /* Espera a que el listado termine de cargar un resultado con ese resumen exacto. */
@@ -223,17 +230,20 @@ async function loguear(page) {
     faltan.length === 0 && titulo === `${api.persona.nombre} ${api.persona.apellido}` && /6\.012\.345-1/.test(exp),
     faltan.length ? 'faltan: ' + faltan.join(' | ') : `título="${titulo}" técnicos="${api.grupo.tecnico1.nombre} (${api.grupo.tecnico1.rol}) + ${api.grupo.tecnico2.nombre} (${api.grupo.tecnico2.rol})"`);
   check('f2', 'el foco queda en el título del expediente', foco === 'expTitulo', `foco=${foco}`);
-  const flujoTxt = (await txt(page, '#panelExp')).replace(/\s+/g, ' ');
-  check('f3', 'estado de los módulos del año desde GET /hce/{id}/flujo (Martín: ciclo completo)',
-    /HCE-LB.*firmado.*HCE-PA.*firmado.*HCE-PB.*firmado.*HCE-IC.*firmado/.test(flujoTxt), flujoTxt.slice(flujoTxt.indexOf('Módulos del año'), flujoTxt.indexOf('Módulos del año') + 160));
-  const ocultos = ['Talleres', 'Nivel de soporte', 'Historial clínico', 'Azul', 'Celeste', 'Naranja'].filter((t) => exp.includes(t));
-  check('f4', 'lo que la API no guarda (talleres, nivel de soporte, historial) y los colores de grupo de la demo NO aparecen',
+  const pasosM = await page.$$eval('#flujoWrap .fl-btn', (bs) => bs.map((b) => b.getAttribute('aria-label')));
+  const flujoM = (await txt(page, '#flujoWrap')).replace(/\s+/g, ' ');
+  check('f3', 'stepper del flujo desde GET /hce/{id}/flujo (Martín: CI registrado + LB, PA, PB, IC firmados), con texto y glifo de estado',
+    JSON.stringify(pasosM) === JSON.stringify(['Línea base (IDEA): firmado', 'Protocolo A: firmado', 'Protocolo B: firmado', 'Informe de cierre: firmado']) &&
+    /Registrado/.test(flujoM) && /flujo del año \d{4}/i.test(flujoM) && /●/.test(flujoM), flujoM.slice(0, 150));
+  const ocultos = ['Talleres', 'Nivel de soporte', 'Historial clínico', 'Tendencia', 'Bloquead', '🔒', 'Azul', 'Celeste', 'Naranja'].filter((t) => exp.includes(t));
+  check('f4', 'lo que la API no guarda (talleres, nivel de soporte, historial, tendencia) y los colores de grupo de la demo NO aparecen; tampoco candados ni «Bloqueado»',
     ocultos.length === 0, ocultos.length ? 'aparece: ' + ocultos.join(',') : '');
   const edadEsperada = (() => { const n = new Date(api.persona.fecha_nac); const h = new Date(); let e = h.getFullYear() - n.getFullYear();
     if (h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getUTCDate())) e--; return e; })();
   check('f5', 'la edad sale de persona.fecha_nac (no hay columna edad)', new RegExp(`${edadEsperada} años`).test(exp), `esperada=${edadEsperada}`);
   const hayInputs = await page.locator('#view-expediente input, #view-expediente textarea, #view-expediente select').count();
-  check('f6', 'HCE-00 de solo lectura: sin campos de edición', hayInputs === 0, `inputs=${hayInputs}`);
+  check('f6', 'HCE-00 se lee como texto (sin campos sueltos en la vista); la edición va en un diálogo que se abre con «Editar datos»',
+    hayInputs === 0 && (await page.locator('#expHead >> text=✎ Editar datos').count()) === 1, `inputs=${hayInputs}`);
 
   /* Pestañas: un módulo no conectado muestra el panel de modo demostración y SIN datos; teclado. */
   await page.click('#tabExp-lb');
@@ -248,8 +258,8 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = textosTab.slice(1).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
-  check('f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; las 12 no conectadas dicen «Este módulo todavía no está conectado al servidor.»',
+  const sinFraseNueva = textosTab.slice(2).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
+  check('f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00 y CI están conectadas y las otras 11 dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -381,7 +391,7 @@ async function loguear(page) {
     await esperarResumen(p4, 'Mostrando 7 de 7');
     await p4.route(reFlujo, (route) => route.abort());
     await p4.locator('#tbodyNNA tr[data-hce]', { hasText: 'Martín' }).getByRole('button', { name: /Abrir expediente/ }).click();
-    await p4.waitForSelector('#panelExp >> text=No se pudo cargar el estado de los módulos', { timeout: 8000 });
+    await p4.waitForSelector('#flujoWrap >> text=No se pudo cargar el estado de los módulos', { timeout: 8000 });
     await p4.unroute(reFlujo);
     await p4.route(reFlujo, async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue(); });
     await p4.getByRole('button', { name: 'Reintentar' }).click();
@@ -392,6 +402,352 @@ async function loguear(page) {
     check('s2', '«Salir» con la recarga del flujo en vuelo: al llegar la respuesta no se pinta nada ni queda estado del NNA',
       e2.html === '' && e2.hce === null && e2.flujo === null && e2.flujoError === false && e2.id === null && e2.login, JSON.stringify(e2));
     await c4.close();
+  }
+
+  /* =====================================================================================================
+     FASE 3-b · ESCRITURAS (handoff §5.124). Va AL FINAL: crea y modifica datos, y los conteos de arriba
+     (7 activos, 8 con inactivos…) son los del seed recién cargado. Para repetir la corrida hay que
+     recrear la base (README → «Base descartable»).
+     ===================================================================================================== */
+  const sufijo = String(Date.now()).slice(-7);                 // datos únicos por corrida
+  const ciNueva = '7' + sufijo;                                // 8 dígitos, canónica
+  const ciTipeada = ciNueva.slice(0, 1) + '.' + ciNueva.slice(1, 4) + '.' + ciNueva.slice(4, 7) + '-' + ciNueva.slice(7);
+  const nombreNuevo = 'Prueba' + sufijo;
+  const apellidoNuevo = 'Escrituras';
+
+  const llenarPaso1 = async (p, d) => {
+    await p.fill('#f_nombre', d.nombre); await p.fill('#f_apellido', d.apellido);
+    await p.fill('#f_nac', d.nac || '2016-05-04');
+    if (d.ci !== undefined) await p.fill('#f_ci', d.ci);
+  };
+  const abrirAlta = async (p) => {
+    await p.click('#btnNuevoNNA');
+    await p.waitForSelector('#modalAlta.open');
+    await p.waitForFunction(() => document.querySelectorAll('#f_grupo option').length > 1 || /No hay grupos|No se pudieron/.test(document.getElementById('f_grupo_estado').textContent), null, { timeout: 8000 });
+  };
+  const siguiente = async (p, n) => { for (let i = 0; i < n; i++) await p.click('#btnNext'); };
+  const apiGet = async (p, ruta) => {
+    const t = await p.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const r = await fetch(API + ruta, { headers: { Authorization: 'Bearer ' + t } });
+    return { status: r.status, json: r.status === 204 ? null : await r.json() };
+  };
+  const focoId = (p) => p.evaluate(() => document.activeElement && document.activeElement.id);
+  const loguearComo = async (p, email, pass) => {
+    await p.goto(urlDemo());
+    await p.fill('#loginUser', email); await p.fill('#loginPass', pass);
+    await p.click('#loginBtn');
+    await p.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await esperarResumen(p, 'Mostrando');
+  };
+  const cuerpoDe = (req) => JSON.parse(req.postData() || 'null');
+
+  {
+    const { ctx: c5, page: p5 } = await nuevaPagina();
+    await loguearComo(p5, EMAIL, PASSWORD);
+
+    check('api', 'ítem 8: la demo habla con la API de esta corrida (?api=) — API_BASE == API',
+      (await p5.evaluate(() => API_BASE)) === API.replace(/\/+$/, ''), await p5.evaluate(() => API_BASE));
+
+    /* ---------- diálogo: accesibilidad básica, Esc, foco ---------- */
+    await p5.click('#btnNuevoNNA');
+    await p5.waitForSelector('#modalAlta.open');
+    const dlg2 = await p5.evaluate(() => { const m = document.querySelector('#modalAlta .modal'); return { role: m.getAttribute('role'), modal: m.getAttribute('aria-modal'),
+      nombre: document.getElementById(m.getAttribute('aria-labelledby')).textContent.trim(), inert: document.querySelector('div.layout').inert && document.querySelector('header.topbar').inert,
+      foco: document.activeElement.id, texto: m.innerText }; });
+    check('m5', 'el alta es un diálogo modal (role/aria-modal/nombre), deja la app inerte, toma el foco y NO ofrece nivel de apoyo ni talleres',
+      dlg2.role === 'dialog' && dlg2.modal === 'true' && dlg2.nombre !== '' && dlg2.inert && dlg2.foco === 'modalTitle' && !/Nivel de apoyo|Taller|soporte/i.test(dlg2.texto),
+      JSON.stringify({ role: dlg2.role, modal: dlg2.modal, inert: dlg2.inert, foco: dlg2.foco }));
+    await p5.keyboard.press('Escape');
+    const trasEsc = await p5.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), inert: document.querySelector('div.layout').inert, foco: document.activeElement.id }));
+    check('m6', 'Esc cierra el diálogo, la app deja de estar inerte y el foco vuelve al botón que lo abrió',
+      !trasEsc.abierto && !trasEsc.inert && trasEsc.foco === 'btnNuevoNNA', JSON.stringify(trasEsc));
+
+    /* ---------- (f) campo obligatorio vacío (cédula): error por campo + aria-describedby, y no se manda nada ---------- */
+    const postsAntes = [];
+    p5.on('request', (r) => { if (r.method() === 'POST' && /\/hce$/.test(r.url())) postsAntes.push(r.url()); });
+    await abrirAlta(p5);
+    await llenarPaso1(p5, { nombre: nombreNuevo, apellido: apellidoNuevo });   // sin cédula
+    await p5.click('#btnNext');
+    const f1 = await p5.evaluate(() => { const i = document.getElementById('f_ci'); const r = document.getElementById('altaErrores');
+      return { invalido: i.getAttribute('aria-invalid'), desc: i.getAttribute('aria-describedby'), err: document.getElementById('err_f_ci').textContent,
+        resumenVisible: !r.hidden, rol: r.getAttribute('role'), foco: document.activeElement.id, paso: document.querySelector('.wizard-step.active').dataset.step, resumen: r.innerText }; });
+    check('f', 'cédula vacía → error junto al campo (aria-invalid + aria-describedby→mensaje), resumen role="alert" con foco, sigue en el paso 1 y NO se manda ningún POST',
+      f1.invalido === 'true' && /err_f_ci/.test(f1.desc) && f1.err !== '' && f1.resumenVisible && f1.rol === 'alert' && f1.foco === 'altaErrores' && f1.paso === '1' && postsAntes.length === 0,
+      JSON.stringify({ ...f1, resumen: f1.resumen.replace(/\s+/g, ' ') }));
+    check('f-req', 'los cuatro obligatorios que exige PersonaCrear están marcados como tales (aria-required) en el formulario',
+      (await p5.$$eval('#modalAlta [aria-required="true"]', (e) => e.map((x) => x.id).sort())).join(',') === 'f_apellido,f_ci,f_nac,f_nombre');
+
+    /* ---------- (a) alta como técnico ---------- */
+    await p5.fill('#f_ci', ciTipeada);
+    await p5.click('#btnNext');
+    await p5.waitForFunction(() => document.querySelector('.wizard-step.active').dataset.step === '2');
+    await p5.fill('#f_dx', 'TEA — en proceso diagnóstico');
+    await p5.selectOption('#f_grupo', { label: 'Escolares' });
+    const tecnicos = (await txt(p5, '#f_tecnicos')).replace(/\s+/g, ' ');
+    check('t1', 'al elegir el grupo se muestran SUS técnicos (Dr. González · Mtra. Torres) y no hay selectores de técnico por NNA',
+      /Dr\. González/.test(tecnicos) && /Mtra\. Torres/.test(tecnicos) && (await p5.locator('#f_tecnico, #f_tecnico2').count()) === 0, tecnicos);
+    await p5.click('#btnNext');
+    await p5.fill('#f_motivo', 'Ingreso de prueba de la Fase 3-b.');
+    await p5.fill('#f_antec', 'Observación inicial de prueba.');
+    await p5.click('#btnNext');
+    const review = (await txt(p5, '#reviewDl')).replace(/\s+/g, ' ');
+    const reqAlta = p5.waitForRequest((r) => r.method() === 'POST' && /\/hce$/.test(r.url()));
+    await p5.click('#btnCreate');
+    const reqA = cuerpoDe(await reqAlta);
+    await p5.waitForSelector('#expTitulo', { timeout: 8000 });
+    const idNuevo = await p5.evaluate(() => EXP.id);
+    const apiNuevo = (await apiGet(p5, `/hce/${idNuevo}`)).json;
+    const grupoEscolares = (await (await fetch(API + '/grupos', { headers: { Authorization: 'Bearer ' + (await p5.evaluate(() => sessionStorage.getItem('ippu.token'))) } })).json()).find((g) => g.nombre === 'Escolares');
+    check('a1', 'alta con el asistente: POST /hce con persona + grupo_id (id real de GET /grupos), anamnesis completa, SIN nivel de soporte ni talleres, y abre el expediente nuevo',
+      reqA.persona.ci === ciTipeada && reqA.persona.nombre === nombreNuevo && reqA.grupo_id === grupoEscolares.id && reqA.diagnostico === 'TEA — en proceso diagnóstico' &&
+      Object.keys(reqA.anamnesis).sort().join(',') === 'desarrollo,familiares,motivo,observaciones,perinatal' &&
+      !Object.keys(reqA).some((k) => /soporte|apoyo|taller|tecnico/i.test(k)) && apiNuevo.persona.ci === ciNueva && apiNuevo.grupo.nombre === 'Escolares',
+      JSON.stringify(reqA).slice(0, 220));
+    check('a2', 'la revisión del paso 4 muestra N.º de HC «se asigna el siguiente» y los técnicos del grupo',
+      /N\.º de HC se asigna el siguiente/.test(review) && /Dr\. González/.test(review), review.slice(0, 200));
+    const cabecera = (await txt(p5, '#expHead')).replace(/\s+/g, ' ');
+    check('a3', 'el expediente nuevo se abre con «N.º de HC <hc_historico>» (nunca el id interno) y el foco en el título',
+      new RegExp(`N\\.º de HC ${apiNuevo.hc_historico}\\b`).test(cabecera) && (await focoId(p5)) === 'expTitulo' && apiNuevo.hc_historico >= 1000 && String(apiNuevo.hc_historico) !== String(idNuevo),
+      `hc=${apiNuevo.hc_historico} id=${idNuevo}`);
+    await p5.click('.exp-head .btn-ghost');                       // ‹ Volver al listado
+    await p5.fill('#searchNNA', nombreNuevo);
+    await p5.waitForFunction((n) => document.getElementById('tbodyNNA').textContent.includes(n), nombreNuevo, { timeout: 8000 });
+    const filaNueva = (await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).innerText()).replace(/\s+/g, ' ');
+    check('a4', 'el expediente nuevo aparece en el listado con «CI pendiente»', /CI pendiente/.test(filaNueva) && /Escolares/.test(filaNueva), filaNueva);
+
+    /* ---------- (b) la misma cédula otra vez, como técnico: 409 genérico, foco en el resumen ---------- */
+    await abrirAlta(p5);
+    await llenarPaso1(p5, { nombre: 'Otro' + sufijo, apellido: 'Repetido', ci: ciTipeada });
+    await siguiente(p5, 1);
+    await p5.selectOption('#f_grupo', { label: 'Escolares' });
+    await siguiente(p5, 2);
+    await p5.click('#btnCreate');
+    await p5.waitForFunction(() => !document.getElementById('altaErrores').hidden, null, { timeout: 8000 });
+    const b1 = await p5.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('altaErrores').getAttribute('role'),
+      texto: document.getElementById('altaErrores').innerText.replace(/\s+/g, ' '), camposMarcados: document.querySelectorAll('#modalAlta .field.invalid').length,
+      abierto: document.getElementById('modalAlta').classList.contains('open'), boton: document.getElementById('btnCreate').disabled }));
+    check('b', '409 por cédula repetida como TÉCNICO: mensaje genérico «consultá a dirección», sin nombrar el campo, foco en el resumen role="alert", el diálogo sigue abierto',
+      b1.foco === 'altaErrores' && b1.rol === 'alert' && /No se pudo completar el alta: consultá a dirección\./.test(b1.texto) && !/cédula/i.test(b1.texto.replace('No se pudo guardar:', '')) &&
+      b1.camposMarcados === 0 && b1.abierto && !b1.boton, JSON.stringify(b1));
+    await p5.keyboard.press('Escape');
+
+    /* ---------- (c) la misma cédula, como ADMIN: mensaje y campo específicos ---------- */
+    {
+      const { ctx: c6, page: p6 } = await nuevaPagina();
+      await loguearComo(p6, ADMIN_EMAIL, ADMIN_PASSWORD);
+      await abrirAlta(p6);
+      await llenarPaso1(p6, { nombre: 'Otro' + sufijo, apellido: 'Repetido', ci: ciTipeada });
+      await siguiente(p6, 3);
+      await p6.click('#btnCreate');
+      await p6.waitForFunction(() => !document.getElementById('altaErrores').hidden, null, { timeout: 8000 });
+      const c1 = await p6.evaluate(() => { const i = document.getElementById('f_ci');
+        return { foco: document.activeElement.id, campo: i.getAttribute('aria-invalid'), msg: document.getElementById('err_f_ci').textContent, desc: i.getAttribute('aria-describedby'),
+          paso: document.querySelector('.wizard-step.active').dataset.step, resumen: document.getElementById('altaErrores').innerText.replace(/\s+/g, ' ') }; });
+      check('c', '409 por cédula repetida como ADMIN: «Ya existe una persona con esa cédula» junto al campo cédula (aria-invalid + describedby), vuelve al paso 1, foco en el resumen',
+        /Ya existe una persona con esa cédula/.test(c1.msg) && c1.campo === 'true' && /err_f_ci/.test(c1.desc) && c1.paso === '1' && c1.foco === 'altaErrores' && /Cédula: Ya existe/.test(c1.resumen),
+        JSON.stringify(c1));
+      await c6.close();
+    }
+
+    /* ---------- (d) editar HCE-00: PATCH solo con lo que cambió; el valor sale de la API ---------- */
+    await p5.fill('#searchNNA', nombreNuevo);
+    await p5.waitForFunction((n) => document.getElementById('tbodyNNA').textContent.includes(n), nombreNuevo, { timeout: 8000 });
+    await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).getByRole('button', { name: /Abrir expediente/ }).click();
+    await p5.waitForSelector('#expTitulo');
+    await p5.click('#expHead >> text=✎ Editar datos');
+    await p5.waitForSelector('#modalAlta.open');
+    await p5.waitForFunction(() => document.querySelectorAll('#f_grupo option').length > 1, null, { timeout: 8000 });
+    const pre = await p5.evaluate(() => ({ nombre: f_nombre.value, ci: f_ci.value, dx: f_dx.value, grupo: f_grupo.options[f_grupo.selectedIndex].text, hc: f_hc.value, motivo: f_motivo.value }));
+    check('d0', 'editar: el formulario se precarga desde la API (cédula con formato, grupo, N.º de HC, anamnesis)',
+      pre.nombre === nombreNuevo && pre.ci === ciTipeada && pre.dx === 'TEA — en proceso diagnóstico' && pre.grupo === 'Escolares' && +pre.hc === apiNuevo.hc_historico && pre.motivo === 'Ingreso de prueba de la Fase 3-b.', JSON.stringify(pre));
+    await p5.click('#btnNext'); await p5.fill('#f_med', 'Ibuprofeno 3b');
+    await p5.click('#btnNext'); await p5.click('#btnNext');
+    const revEd = (await txt(p5, '#reviewDl')).replace(/\s+/g, ' ');
+    const reqEd = p5.waitForRequest((r) => r.method() === 'PATCH' && new RegExp(`/hce/${idNuevo}$`).test(r.url()));
+    await p5.click('#btnCreate');
+    const bodyEd = cuerpoDe(await reqEd);
+    await p5.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const apiTras = (await apiGet(p5, `/hce/${idNuevo}`)).json;
+    const enPantalla = await txt(p5, '#panelExp');
+    check('d1', 'editar un campo: PATCH /hce/{id} con SOLO ese campo; el cuadro lo muestra desde la respuesta y GET /hce/{id} coincide',
+      JSON.stringify(Object.keys(bodyEd)) === '["medicacion"]' && bodyEd.medicacion === 'Ibuprofeno 3b' && /Medicación — → Ibuprofeno 3b/.test(revEd) &&
+      apiTras.medicacion === 'Ibuprofeno 3b' && enPantalla.includes('Ibuprofeno 3b'), JSON.stringify(bodyEd) + ' | revisión: ' + revEd);
+    await p5.reload();
+    await p5.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await esperarResumen(p5, 'Mostrando');
+    await p5.evaluate((id) => abrirExpediente(id), idNuevo);
+    await p5.waitForSelector('#expTitulo');
+    check('d2', 'tras recargar la página, el valor guardado sigue ahí (viene de la API, no del navegador)', (await txt(p5, '#panelExp')).includes('Ibuprofeno 3b'));
+
+    // anamnesis: el PATCH la reemplaza entera → siempre las cinco claves, con Observaciones
+    await p5.click('#expHead >> text=✎ Editar datos');
+    await p5.waitForSelector('#modalAlta.open');
+    await p5.click('#btnNext'); await p5.click('#btnNext');
+    await p5.fill('#f_antec', 'Observación cambiada en 3-b.');
+    await p5.click('#btnNext');
+    const reqAn = p5.waitForRequest((r) => r.method() === 'PATCH' && new RegExp(`/hce/${idNuevo}$`).test(r.url()));
+    await p5.click('#btnCreate');
+    const bodyAn = cuerpoDe(await reqAn);
+    await p5.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const anamApi = (await apiGet(p5, `/hce/${idNuevo}`)).json.anamnesis;
+    check('d3', 'editar la anamnesis: el PATCH manda las cinco claves (motivo, perinatal, desarrollo, familiares, observaciones) y la API guarda la observación',
+      Object.keys(bodyAn).join() === 'anamnesis' && Object.keys(bodyAn.anamnesis).sort().join() === 'desarrollo,familiares,motivo,observaciones,perinatal' &&
+      anamApi.observaciones === 'Observación cambiada en 3-b.' && anamApi.motivo === 'Ingreso de prueba de la Fase 3-b.', JSON.stringify(bodyAn));
+    check('d3b', 'las Observaciones se ven en el HCE-00 desde la respuesta', (await txt(p5, '#panelExp')).includes('Observación cambiada en 3-b.'));
+
+    // sin cambios: no se llama a la API
+    await p5.click('#expHead >> text=✎ Editar datos');
+    await p5.waitForSelector('#modalAlta.open');
+    const patchesAntes = [];
+    p5.on('request', (r) => { if (r.method() === 'PATCH') patchesAntes.push(r.url()); });
+    await p5.click('#btnNext'); await p5.click('#btnNext'); await p5.click('#btnNext');
+    await p5.click('#btnCreate');
+    const sinCambios = await p5.evaluate(() => ({ resumen: document.getElementById('altaErrores').innerText.replace(/\s+/g, ' '), foco: document.activeElement.id }));
+    check('d4', 'guardar sin tocar nada: «No hay cambios para guardar», foco en el resumen y NO se manda ningún PATCH',
+      /No hay cambios para guardar/.test(sinCambios.resumen) && sinCambios.foco === 'altaErrores' && patchesAntes.length === 0, JSON.stringify(sinCambios));
+    await p5.keyboard.press('Escape');
+
+    // baja: sin fecha_baja → error por campo (de la API); con fecha → guardada
+    await p5.click('#expHead >> text=✎ Editar datos');
+    await p5.waitForSelector('#modalAlta.open');
+    await p5.click('#btnNext');
+    await p5.selectOption('#f_estado', 'baja');
+    await p5.click('#btnNext'); await p5.click('#btnNext');
+    await p5.click('#btnCreate');
+    await p5.waitForFunction(() => !document.getElementById('altaErrores').hidden, null, { timeout: 8000 });
+    const baja1 = await p5.evaluate(() => { const i = document.getElementById('f_fecha_baja');
+      return { campo: i.getAttribute('aria-invalid'), msg: document.getElementById('err_f_fecha_baja').textContent, desc: i.getAttribute('aria-describedby'), foco: document.activeElement.id,
+        paso: document.querySelector('.wizard-step.active').dataset.step }; });
+    check('d5', 'baja SIN fecha_baja: la API rechaza y el error queda junto al campo «Fecha de baja» (aria-invalid + describedby), foco en el resumen',
+      /fecha/i.test(baja1.msg) && baja1.campo === 'true' && /err_f_fecha_baja/.test(baja1.desc) && baja1.foco === 'altaErrores' && baja1.paso === '2', JSON.stringify(baja1));
+    await p5.fill('#f_fecha_baja', '2026-10-01');
+    await p5.click('#btnNext'); await p5.click('#btnNext');
+    const reqBaja = p5.waitForRequest((r) => r.method() === 'PATCH' && new RegExp(`/hce/${idNuevo}$`).test(r.url()));
+    await p5.click('#btnCreate');
+    const bodyBaja = cuerpoDe(await reqBaja);
+    await p5.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const apiBaja = (await apiGet(p5, `/hce/${idNuevo}`)).json;
+    const cabBaja = (await txt(p5, '#expHead')).replace(/\s+/g, ' ');
+    check('d6', 'baja CON fecha: PATCH {activo:false, fecha_baja}; la API la guarda y la cabecera muestra «Inactivo» y la fecha',
+      bodyBaja.activo === false && bodyBaja.fecha_baja === '2026-10-01' && apiBaja.activo === false && apiBaja.fecha_baja === '2026-10-01' && /Inactivo/.test(cabBaja) && /Baja: 1 oct 2026/.test(cabBaja),
+      JSON.stringify(bodyBaja) + ' | ' + cabBaja.slice(0, 120));
+    // reingreso
+    await p5.click('#expHead >> text=✎ Editar datos');
+    await p5.waitForSelector('#modalAlta.open');
+    await p5.click('#btnNext');
+    await p5.selectOption('#f_estado', 'activo');
+    await p5.click('#btnNext'); await p5.click('#btnNext');
+    const reqRe = p5.waitForRequest((r) => r.method() === 'PATCH' && new RegExp(`/hce/${idNuevo}$`).test(r.url()));
+    await p5.click('#btnCreate');
+    const bodyRe = cuerpoDe(await reqRe);
+    await p5.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const apiRe = (await apiGet(p5, `/hce/${idNuevo}`)).json;
+    check('d7', 'reingreso: PATCH {activo:true}; la API borra fecha_baja', JSON.stringify(bodyRe) === '{"activo":true}' && apiRe.activo === true && apiRe.fecha_baja === null, JSON.stringify(bodyRe));
+
+    /* ---------- (e) CI: sin consentimiento nada se traba; se registra y todo lo muestra registrado ---------- */
+    const flujoTxt = (await txt(p5, '#flujoWrap')).replace(/\s+/g, ' ');
+    const trabas = await p5.evaluate(() => ({ deshabilitados: document.querySelectorAll('#flujoWrap [disabled], #flujoWrap [inert], #flujoWrap [aria-disabled="true"]').length,
+      candado: /🔒|Bloquead/i.test(document.getElementById('flujoWrap').innerText + document.getElementById('tabsExpWrap').innerText),
+      pasos: [...document.querySelectorAll('#flujoWrap .fl-btn')].map((b) => b.getAttribute('aria-label')) }));
+    check('e1', 'nuevo expediente SIN consentimiento: «CI pendiente» visible, los cuatro módulos del año figuran «sin iniciar», ningún candado ni «Bloqueado» ni control deshabilitado',
+      /CI pendiente/.test(flujoTxt) && /no bloquea/.test(flujoTxt) && trabas.deshabilitados === 0 && !trabas.candado &&
+      JSON.stringify(trabas.pasos) === JSON.stringify(['Línea base (IDEA): sin iniciar', 'Protocolo A: sin iniciar', 'Protocolo B: sin iniciar', 'Informe de cierre: sin iniciar']),
+      JSON.stringify(trabas));
+    await p5.click('#flujoWrap .fl-btn >> nth=0');                  // un módulo anual: abre su pestaña, sin traba
+    const lb = await p5.evaluate(() => ({ sel: document.getElementById('tabExp-lb').getAttribute('aria-selected'), panel: document.getElementById('panelExp').innerText }));
+    check('e2', 'un módulo anual (LB) se abre aunque falte el CI: su pestaña se selecciona y muestra el panel de modo demostración (se conecta en su fase), sin candado',
+      lb.sel === 'true' && /Modo demostración — no se guarda/.test(lb.panel) && !/🔒|Bloquead/i.test(lb.panel));
+    await p5.click('#flujoWrap >> text=Ver auditoría');
+    check('e3', '«Ver auditoría» abre el panel de modo demostración compartido', /Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
+
+    // pestaña CI: GET 404 = pendiente (estado, no error)
+    const resp404 = p5.waitForResponse((r) => /\/consentimiento$/.test(r.url()) && r.request().method() === 'GET');
+    await p5.click('#tabExp-ci');
+    const r404 = await resp404;
+    await p5.waitForSelector('#ci_firmante');
+    const ciPend = await p5.evaluate(() => ({ alertas: document.querySelectorAll('#panelExp .empty-state[role="alert"]').length, texto: document.getElementById('panelExp').innerText, adjunto: !!document.querySelector('#panelExp [id*="adjunto" i], #panelExp input[type="file"]') }));
+    check('e4', 'la pestaña CI lee GET /hce/{id}/consentimiento: el 404 se muestra como «CI pendiente» (no como error) con el formulario de registro y SIN campo de adjunto',
+      r404.status() === 404 && ciPend.alertas === 0 && /CI pendiente/i.test(ciPend.texto) && !ciPend.adjunto && !/firmad/i.test(ciPend.texto), `GET → ${r404.status()}`);
+    // (f) también en el CI: obligatorios vacíos → por campo, con aria-describedby
+    await p5.click('#btnCiGuardar');
+    const ciF = await p5.evaluate(() => ({ foco: document.activeElement.id, a: document.getElementById('ci_firmante').getAttribute('aria-invalid'), d: document.getElementById('ci_firmante').getAttribute('aria-describedby'),
+      m: document.getElementById('err_ci_firmante').textContent, b: document.getElementById('ci_fecha').getAttribute('aria-invalid') }));
+    check('f2', 'CI con referente y fecha vacíos → error por campo (aria-invalid + aria-describedby→mensaje) y resumen role="alert" con foco',
+      ciF.foco === 'ciErrores' && ciF.a === 'true' && ciF.b === 'true' && /err_ci_firmante/.test(ciF.d) && ciF.m !== '', JSON.stringify(ciF));
+    await p5.fill('#ci_firmante', 'Referente de prueba 3b');
+    await p5.fill('#ci_fecha', '2026-03-02');
+    await p5.check('#ci_aut_eval'); await p5.check('#ci_aut_reg');
+    const reqCi = p5.waitForRequest((r) => r.method() === 'POST' && /\/consentimiento$/.test(r.url()));
+    const flujoRe = p5.waitForResponse((r) => /\/flujo$/.test(r.url()) && r.request().method() === 'GET');
+    await p5.click('#btnCiGuardar');
+    const bodyCi = cuerpoDe(await reqCi);
+    await flujoRe;
+    await p5.waitForFunction(() => /Registrado/.test(document.getElementById('flujoWrap').innerText));
+    const apiCi = (await apiGet(p5, `/hce/${idNuevo}/consentimiento`)).json;
+    const tras = await p5.evaluate(() => ({ panel: document.getElementById('panelExp').innerText.replace(/\s+/g, ' '), flujo: document.getElementById('flujoWrap').innerText.replace(/\s+/g, ' '),
+      marcaTab: document.getElementById('tabExp-ci').innerText.replace(/\s+/g, ' '), foco: document.activeElement.id }));
+    check('e5', 'registrar el CI: POST {firmante, fecha, autorizaciones} (las tres) → la API lo guarda y la pantalla lo muestra «Registrado» (nunca «firmado»), con el foco en su título',
+      Object.keys(bodyCi).sort().join() === 'autorizaciones,fecha,firmante' && Object.keys(bodyCi.autorizaciones).sort().join() === 'comunicacion,evaluacion,registro' &&
+      apiCi.firmante === 'Referente de prueba 3b' && apiCi.autorizaciones.evaluacion === true && apiCi.autorizaciones.comunicacion === false &&
+      /registrado/i.test(tras.panel) && /Referente de prueba 3b/.test(tras.panel) && !/firmad/i.test(tras.panel) && tras.foco === 'ciTitulo', JSON.stringify(bodyCi));
+    check('e6', 'tras registrar, el flujo se vuelve a pedir a la API: la tarjeta del stepper dice «Registrado» (ya no «CI pendiente») y la pestaña CI lo marca',
+      /Registrado/.test(tras.flujo) && !/CI pendiente/.test(tras.flujo) && /registrado/.test(tras.marcaTab), tras.flujo.slice(0, 120));
+    await p5.click('#tabExp-hce00');
+    await p5.click('.exp-head .btn-ghost');
+    await p5.fill('#searchNNA', nombreNuevo);
+    await p5.waitForFunction((n) => document.getElementById('tbodyNNA').textContent.includes(n), nombreNuevo, { timeout: 8000 });
+    await p5.waitForFunction((n) => { const t = [...document.querySelectorAll('#tbodyNNA tr[data-hce]')].find((r) => r.textContent.includes(n)); return t && /Registrado/.test(t.textContent); }, nombreNuevo, { timeout: 8000 });
+    const filaReg = (await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).innerText()).replace(/\s+/g, ' ');
+    check('e7', 'la fila del listado muestra el CI «Registrado» (no «CI pendiente»)', /Registrado/.test(filaReg) && !/CI pendiente/.test(filaReg), filaReg);
+    // editar el CI: PATCH, y vuelve a mostrar lo que devolvió la API
+    await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).getByRole('button', { name: /Abrir expediente/ }).click();
+    await p5.waitForSelector('#expTitulo');
+    await p5.click('#tabExp-ci');
+    await p5.click('#btnCiEditar');
+    await p5.check('#ci_aut_com');
+    const reqCiP = p5.waitForRequest((r) => r.method() === 'PATCH' && /\/consentimiento$/.test(r.url()));
+    await p5.click('#btnCiGuardar');
+    const bodyCiP = cuerpoDe(await reqCiP);
+    await p5.waitForFunction(() => /Autoriza la comunicación a organismos\s*Sí/.test(document.getElementById('panelExp').innerText.replace(/\n/g, ' ')), null, { timeout: 8000 });
+    check('e8', 'editar el CI registrado: PATCH /consentimiento solo con lo que cambió (autorizaciones) y la pantalla muestra lo que guardó la API',
+      JSON.stringify(Object.keys(bodyCiP)) === '["autorizaciones"]' && bodyCiP.autorizaciones.comunicacion === true && (await apiGet(p5, `/hce/${idNuevo}/consentimiento`)).json.autorizaciones.comunicacion === true, JSON.stringify(bodyCiP));
+    await c5.close();
+  }
+
+  /* ---------- (w2) el diálogo de alta y la pantalla de CI tampoco desbordan a 390 px; «Reintentar» de grupos oculto ---------- */
+  {
+    const { ctx: c8, page: p8 } = await nuevaPagina();
+    await loguearComo(p8, EMAIL, PASSWORD);
+    await p8.setViewportSize({ width: 390, height: 800 });
+    await abrirAlta(p8);
+    const reint = await p8.isVisible('#btnReintGrupos');
+    const ancho1 = await p8.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+    await p8.keyboard.press('Escape');
+    await p8.locator('#tbodyNNA tr[data-hce]', { hasText: 'Bruno' }).getByRole('button', { name: /Abrir expediente/ }).click();
+    await p8.waitForSelector('#expTitulo');
+    await p8.click('#tabExp-ci'); await p8.waitForSelector('#ci_firmante');
+    const ancho2 = await p8.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+    check('w2', 'a 390 px el diálogo de alta y la pestaña CI no desbordan, y el botón «Reintentar» de grupos no se ve cuando los grupos cargaron',
+      ancho1[0] === ancho1[1] && ancho2[0] === ancho2[1] && !reint, `diálogo ${ancho1} · CI ${ancho2} · reintentar visible=${reint}`);
+    await c8.close();
+  }
+
+  /* ---------- (s3) ítem 8: «Salir» con GET /grupos en vuelo — la respuesta tardía se descarta ---------- */
+  {
+    const { ctx: c7, page: p7 } = await nuevaPagina();
+    const reGrupos = /\/grupos(\?.*)?$/;
+    await p7.goto(urlDemo());
+    await p7.route(reGrupos, async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue(); });
+    await p7.fill('#loginUser', EMAIL); await p7.fill('#loginPass', PASSWORD);
+    await p7.click('#loginBtn');
+    await p7.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await p7.click('.btn-exit');                       // «Salir» con GET /grupos todavía sin respuesta
+    await p7.waitForTimeout(2800);                     // la respuesta llega y debe ignorarse
+    const g = await p7.evaluate(() => ({ grupos: GRUPOS_API.length, opciones: [...document.querySelectorAll('#filtroGrupo option')].map((o) => o.textContent.trim()), anio: LISTA.anioGrupos,
+      login: !document.getElementById('loginScreen').classList.contains('hidden') }));
+    check('s3', 'ítem 8 — «Salir» con GET /grupos en vuelo: al llegar la respuesta GRUPOS_API sigue vacío y el filtro de grupo no se llena',
+      g.grupos === 0 && g.opciones.join() === 'Todos' && g.anio === null && g.login, JSON.stringify(g));
+    await c7.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));
