@@ -33,7 +33,7 @@
 
    Los scripts se cargan en orden en index.html: este va ÚLTIMO porque reutiliza
    nroHC() (grupos-usuario.js), abrirGrupo() (grupos-usuario.js),
-   abrirExpediente() (expediente.js), fmtFecha() (utils.js) y go() (ui-core.js). */
+   abrirExpedienteDemo() (expediente.js), fmtFecha() (utils.js) y go() (ui-core.js). */
 
 /* ============ CATÁLOGO DE TIPOS (Prototipo v4 línea 1822) ============
    Los 4 tipos son CONSTANTE, no catálogo editable: el tipo es el discriminador
@@ -139,7 +139,7 @@ function atRefHtml(a){
   if(a.tipo === "Ateneo clínico (NNA)" && a.nna != null){
     const n = NNA.find(x => x.id === a.nna);
     return n
-      ? `<button class="btn btn-link" onclick="abrirExpediente(${n.id})">${n.nombre} ${n.apellido}</button>
+      ? `<button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})">${n.nombre} ${n.apellido}</button>
          <div class="at-hint">${nroHC(n)}${a.grupo ? ` · Grupo ${a.grupo}` : ""}</div>`
       : `<span class="at-hint">Expediente #${a.nna} (no encontrado)</span>`;
   }
@@ -454,7 +454,7 @@ function renderAteneoDetalle(id){
 
 /* ============ PANEL EN EL EXPEDIENTE (mResumen del Prototipo v4, línea 882) ============
    Los ateneos clínicos de un NNA aparecen también en su HCE. Se llama desde
-   abrirExpediente() en expediente.js, igual que docPanelHtml/orgPanelHtml/vfPanelHtml. */
+   abrirExpedienteDemo() en expediente.js, igual que docPanelHtml/orgPanelHtml/vfPanelHtml. */
 function ateneosPanelHtml(p){
   const ats = ATENEOS
     .filter(a => a.tipo === "Ateneo clínico (NNA)" && a.nna === p.id)

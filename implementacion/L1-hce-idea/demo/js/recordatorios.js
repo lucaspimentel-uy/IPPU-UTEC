@@ -22,7 +22,7 @@ function renderRecordatorios(){
     ${RECORDATORIOS.map((r,i)=>{
       const pend = r.activo ? recordatorioPendientes(r.key) : [];
       const pendHtml = !r.activo ? `<span style="color:var(--ink-2);font-size:.76rem">— desactivado —</span>`
-        : pend.length ? pend.map(n=>`<button class="btn btn-link" onclick="abrirExpediente(${n.id})">${n.nombre} ${n.apellido} →</button>`).join(" ")
+        : pend.length ? pend.map(n=>`<button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})">${n.nombre} ${n.apellido} →</button>`).join(" ")
         : `<span style="color:var(--ok);font-size:.78rem;font-weight:700">✓ al día</span>`;
       return `<tr style="${r.activo?"":"opacity:.55"}">
         <td><input type="checkbox" ${r.activo?"checked":""} onchange="recToggle(${i},this.checked)"></td>

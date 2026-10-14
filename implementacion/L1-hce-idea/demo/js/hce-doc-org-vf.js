@@ -433,7 +433,7 @@ function generarReporteVF(id){
         <p>Documento descriptivo para la familia · generable a demanda · vista previa del ${fechaGen}</p></div>
       <div style="display:flex;gap:8px">
         <button class="btn-print" onclick="window.print()">🖨 Imprimir / guardar PDF</button>
-        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
+        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpedienteDemo(${p.id})">‹ Volver</button>
       </div>
     </div>
     <div class="card"><div class="cardbody">

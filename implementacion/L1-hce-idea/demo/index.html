@@ -14,19 +14,21 @@
     <div class="login-logo">IP</div>
     <h1>Fundación IPPU</h1>
     <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
-    <form id="loginForm" onsubmit="return doLogin(event)">
+    <form id="loginForm" onsubmit="return doLogin(event)" novalidate>
+      <div id="loginError" class="login-error" role="alert" tabindex="-1" hidden></div>
+      <div id="loginEstado" class="login-estado" role="status" hidden></div>
       <div class="login-field">
-        <label>Usuario / Email</label>
-        <input id="loginUser" value="gonzalez@fundacionippu.uy" autocomplete="username">
+        <label for="loginUser">Usuario / Email</label>
+        <input id="loginUser" type="text" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" aria-describedby="loginError">
       </div>
       <div class="login-field">
-        <label>Contraseña</label>
-        <input id="loginPass" type="password" value="demo1234" autocomplete="current-password">
+        <label for="loginPass">Contraseña</label>
+        <input id="loginPass" type="password" autocomplete="current-password" aria-describedby="loginError">
       </div>
-      <button class="btn btn-primary login-btn" type="submit">Ingresar</button>
-      <div class="login-hint">Usuario de demostración pre-cargado · <b>Dr. González</b> (Técnico · Psicología). Tocá «Ingresar».</div>
+      <button class="btn btn-primary login-btn" id="loginBtn" type="submit">Ingresar</button>
+      <div class="login-hint">Ingresá con tu usuario de la HCE. La contraseña se envía a la API indicada abajo.</div>
     </form>
-    <div class="login-foot">Demo L1 · IPPU × UTEC-LIDIA · Datos simulados</div>
+    <div class="login-foot">Demo L1 · IPPU × UTEC-LIDIA · Datos de demostración<br>API: <span id="loginApi"></span></div>
   </div>
 </div>
 
@@ -40,10 +42,10 @@
   <div class="spacer"></div>
   <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
        Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
-  <button class="userchip" onclick="go('usuarios'); renderUsuario()"
-          title="Ver mi perfil" aria-label="Mi usuario — Dr. González, Técnico · Psicología">
-    <span class="avatar">DG</span>
-    <span class="userchip-txt">Dr. González<br><span class="rol">Técnico · Psicología</span></span>
+  <button class="userchip" id="userChip" onclick="go('usuarios'); renderUsuario()"
+          title="Ver mi perfil" aria-label="Mi usuario">
+    <span class="avatar" id="userAvatar">··</span>
+    <span class="userchip-txt"><span id="userNombre">—</span><br><span class="rol" id="userRol">&nbsp;</span></span>
   </button>
   <button class="btn-exit" onclick="logout()">Salir</button>
 </header>
@@ -73,38 +75,55 @@
     <section class="view active" id="view-inicio">
       <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
       <h1 class="pagetitle">Niños, niñas y adolescentes en seguimiento</h1>
-      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico, cargar evaluaciones y generar el informe.</p>
+      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico (por ahora de solo lectura; los módulos de evaluación se van conectando por etapas).</p>
 
-      <div class="kpirow">
-        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">30</div></div>
-        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">24</div><div class="sub">Línea base (HCE-LB) firmada</div></div>
-        <div class="kpi kpi-link" onclick="go('pendientes')" title="Ver detalle de pendientes"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">5</div><div class="sub">Sin evaluación anual 2026 ›</div></div>
-        <div class="kpi"><div class="lab">Evaluaciones registradas</div><div class="val purple" id="kpiInf">58</div><div class="sub">IDEA + intermedias en HCE</div></div>
+      <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
+           que se derivan de esas respuestas; el resto de la demo vive en vistas marcadas. -->
+      <div class="kpirow" id="kpiRow" aria-live="polite">
+        <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">…</div></div>
+        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">…</div><div class="sub">Línea base (HCE-LB) firmada, año en curso</div></div>
+        <div class="kpi"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">…</div><div class="sub">Sin línea base firmada este año</div></div>
+        <div class="kpi"><div class="lab">Consentimiento (CI) pendiente</div><div class="val purple" id="kpiCi">…</div><div class="sub">Sin consentimiento informado registrado</div></div>
       </div>
 
       <div class="card">
         <div class="cardhead">
           <h2>Listado de NNA</h2>
           <div class="cardhead-sp"></div>
-          <button class="btn btn-primary" onclick="openAlta()">+ Registrar nuevo NNA</button>
+          <!-- El alta (POST /hce) se conecta en la fase siguiente: no se ofrece un alta que no se guarda. -->
+          <span class="hint">Altas y ediciones: todavía no conectadas (Fase 3-b).</span>
         </div>
         <div class="nna-toolbar">
           <div class="search-wrap">
-            <span class="search-ico">⌕</span>
-            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HCE, cédula o grupo…" oninput="applyNNAFilter()" autocomplete="off">
+            <label for="searchNNA" class="sr-only">Buscar por nombre, N.º de HCE o cédula</label>
+            <span class="search-ico" aria-hidden="true">⌕</span>
+            <input id="searchNNA" type="search" placeholder="Buscar por nombre, N.º de HCE o cédula…" oninput="onBusquedaNNA()" autocomplete="off">
           </div>
-          <div class="estado-chips">
-            <button class="chip-estado active" data-estado="activos" onclick="setEstadoFiltro('activos')">Activos</button>
-            <button class="chip-estado" data-estado="inactivos" onclick="setEstadoFiltro('inactivos')">Inactivos</button>
-            <button class="chip-estado" data-estado="todos" onclick="setEstadoFiltro('todos')">Todos</button>
+          <div class="filtro-grupo">
+            <label for="filtroGrupo">Grupo</label>
+            <select id="filtroGrupo" onchange="onFiltroGrupo()"><option value="">Todos</option></select>
+          </div>
+          <div class="estado-chips" role="group" aria-label="Estado del expediente">
+            <button class="chip-estado active" data-estado="activos" aria-pressed="true" onclick="setEstadoFiltro('activos')">Activos</button>
+            <button class="chip-estado" data-estado="inactivos" aria-pressed="false" onclick="setEstadoFiltro('inactivos')">Inactivos</button>
+            <button class="chip-estado" data-estado="todos" aria-pressed="false" onclick="setEstadoFiltro('todos')">Todos</button>
           </div>
         </div>
-        <table class="lista">
+        <div class="tabla-scroll">
+        <table class="lista" id="tablaNNA">
           <thead>
-            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Estado</th><th></th></tr>
+            <tr><th scope="col">N.º HCE</th><th scope="col">Cédula</th><th scope="col">Nombres</th><th scope="col">Apellido</th><th scope="col">Edad</th><th scope="col">Grupo</th><th scope="col">Consentimiento (CI)</th><th scope="col">Línea base · PA · PB · IC</th><th scope="col">Estado</th><th scope="col"><span class="sr-only">Acciones</span></th></tr>
           </thead>
           <tbody id="tbodyNNA"></tbody>
         </table>
+        </div>
+        <div class="lista-pie">
+          <span id="listaResumen" role="status" aria-live="polite"></span>
+          <span class="hint">Línea base · PA · PB · IC del año: ● firmado · ◐ en curso · ○ sin iniciar</span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost btn-mini" id="pagPrev" onclick="paginaNNA(-1)">‹ Anterior</button>
+          <button class="btn btn-ghost btn-mini" id="pagNext" onclick="paginaNNA(1)">Siguiente ›</button>
+        </div>
       </div>
     </section>
 
@@ -116,6 +135,7 @@
 
     <!-- ============ VISTA: EVALUACIÓN IDEA ============ -->
     <section class="view" id="view-idea">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › Evaluación IDEA › <b>Nueva evaluación</b></div>
       <h1 class="pagetitle">HCE-LB · Línea base — IDEA (Inventario del Espectro Autista)</h1>
       <p class="pagedesc">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. Cada dimensión 0 (sin trastorno) a 8 (afectación severa). <b>Criterio: asignar siempre el valor más bajo posible.</b> Se aplica <b>una sola vez, al ingreso</b>; el progreso del año se mide con la Escala IPPU-TEA (PA/PB), no repitiendo el IDEA.</p>
@@ -159,6 +179,7 @@
 
     <!-- ============ VISTA: ESCALA IPPU-TEA (HCE-PA / HCE-PB) — M5 ============ -->
     <section class="view" id="view-prot">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › Escala IPPU-TEA › <b id="protCrumb">HCE-PA</b></div>
       <h1 class="pagetitle" id="protTitle">HCE-PA · Protocolo A — Escala IPPU-TEA</h1>
       <p class="pagedesc">Instrumento propio de IPPU para medir <b>progreso</b>: 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable/generalizado). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA (§5.2): nunca se comparan puntajes entre ambos instrumentos.</p>
@@ -206,6 +227,7 @@
 
     <!-- ============ VISTA: HCE-IC · INFORME DE CIERRE ANUAL (M6) ============ -->
     <section class="view" id="view-ic">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › Informe de Cierre Anual › <b>HCE-IC</b></div>
       <h1 class="pagetitle">HCE-IC · Informe de Cierre Anual</h1>
       <p class="pagedesc">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. La tabla comparativa y los radares se <b>autogeneran desde los datos firmados</b>. El PDF exportado con membrete es <b>el único informe válido</b>: no se elaboran versiones alternativas para organismos supervisores (§5.3).</p>
@@ -254,6 +276,7 @@
 
     <!-- ============ VISTA: EVAL INTERMEDIA ============ -->
     <section class="view" id="view-intermedia">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › Sofía R. › <b>Evaluación intermedia — Junio 2026</b></div>
       <h1 class="pagetitle">Evaluación intermedia — Escala Likert 1 – 5</h1>
       <p class="pagedesc">Seguimiento semestral abreviado: 3 ítems por dimensión en escala Likert. El sistema convierte el promedio a un <b>equivalente IDEA</b> para mantener la comparabilidad longitudinal con las evaluaciones completas.</p>
@@ -303,12 +326,14 @@
 
     <!-- ============ VISTA: INFORME (por NNA · generado automáticamente) ============ -->
     <section class="view" id="view-informe">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › Expediente › <b>Informe automático</b></div>
       <div id="informeContent"></div>
     </section>
 
     <!-- ============ VISTA: PENDIENTES ============ -->
     <section class="view" id="view-pendientes">
+      <div data-modo-demo></div>
       <div class="crumbs">Inicio › <b>Pendientes</b></div>
       <h1 class="pagetitle">Pendientes de evaluación</h1>
       <p class="pagedesc">NNA activos que aún no tienen <b>firmada su línea base IDEA (HCE-LB)</b>. La IDEA se aplica una sola vez, al ingreso; este listado ayuda a planificar las líneas base pendientes.</p>
@@ -326,6 +351,7 @@
 
     <!-- ============ VISTA: ANALÍTICA INSTITUCIONAL ============ -->
     <section class="view" id="view-analitica">
+      <div data-modo-demo></div>
       <div class="crumbs">Institucional › <b>Analítica institucional</b></div>
       <h1 class="pagetitle">Analítica institucional — Dirección y equipo técnico</h1>
       <p class="pagedesc">Indicadores agregados y anonimizados, <b>calculados sobre los expedientes de la HCE</b>: cobertura de la línea base IDEA, perfil poblacional por escala, evolución del ciclo Protocolo A → B y completitud del flujo. Insumo para el Plan Anual y el reporte a INAU.</p>
@@ -401,6 +427,7 @@
          estático acá — se retira el estático, no F1's markup (handoff §13, sesión pre-reunión
          2026-08-21). -->
     <section class="view" id="view-grupos">
+      <div data-modo-demo></div>
       <div class="kpirow" id="gruposKpi"></div>
       <div id="gruposList"></div>
     </section>
@@ -412,6 +439,7 @@
          En esta ronda sólo entra el TABLERO; el módulo HCE-INC individual (ficha +
          bitácora) se engancha cuando M12 abra HCE-INC como módulo de la HCE. -->
     <section class="view" id="view-inclusion">
+      <div data-modo-demo></div>
       <div class="crumbs">Institucional › <b>Inclusión educativa y social</b></div>
       <h1 class="pagetitle">Tablero del área de Inclusión educativa y social</h1>
       <p class="pagedesc">Situación de inclusión de todos los NNA del servicio. Reemplaza la planilla general del área: cada fila se alimenta automáticamente del módulo HCE-INC de la HCE individual (dato único, sin doble carga).</p>
@@ -428,6 +456,7 @@
          Listado y detalle viven los dos dentro de #ateneosContent (mismo paradigma que
          la vista Grupos post-F1-nav2; el prototipo usa dos rutas de hash). -->
     <section class="view" id="view-ateneos">
+      <div data-modo-demo></div>
       <div class="crumbs">Institucional › <b>Ateneos y capacitación</b></div>
       <h1 class="pagetitle">Ateneos clínicos y jornadas de capacitación</h1>
       <p class="pagedesc">Registro institucional transversal, con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos referidos a un NNA aparecen también en su expediente y heredan su matriz de acceso por roles.</p>
@@ -436,6 +465,7 @@
 
     <!-- ============ VISTA: USUARIO / PERFIL ============ -->
     <section class="view" id="view-usuarios">
+      <div data-modo-demo></div>
       <div class="crumbs">Institucional › <b>Mi usuario</b></div>
       <h1 class="pagetitle">Mi perfil</h1>
       <p class="pagedesc">Información de la cuenta del profesional con sesión iniciada y equipo técnico de la institución.</p>
@@ -603,11 +633,14 @@
 <!-- ===================== TOAST ===================== -->
 <div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
 
-<div class="demo-tag">Demo no funcional · Proyecto L1 — IPPU × UTEC 2026 · Datos simulados</div>
+<div class="demo-tag">Demo parcialmente conectada a la API</div>
 
-<!-- Scripts sin defer ni type=module: el orden de carga ES el orden de ejecucion
-     del monolito original, y asi la demo sigue abriendo por file:// sin servidor. -->
+<!-- Scripts sin defer ni type=module: el orden de carga ES el orden de ejecucion del monolito
+     original. Desde la Fase 3-a la demo se sirve por http (localhost:5500) y habla con la API
+     (CORS solo permite ese origen): por file:// el login no llega a la API. -->
 <script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/adaptadores.js"></script>
 <script src="js/datos.js"></script>
 <script src="js/flujo.js"></script>
 <script src="js/catalogos.js"></script>
@@ -621,5 +654,6 @@
 <script src="js/grupos-usuario.js"></script>
 <script src="js/inclusion.js"></script>
 <script src="js/ateneos.js"></script>
+<script>arrancarSesion();</script>
 </body>
 </html>

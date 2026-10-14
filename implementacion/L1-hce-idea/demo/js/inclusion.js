@@ -137,7 +137,7 @@ function renderInclusion(){
           : ` <span class="hint">(${d} días)</span>`));
     return `<tr>
       <td>
-        <button class="btn btn-link" onclick="abrirExpediente(${n.id})"><b>${n.nombre} ${n.apellido}</b></button>
+        <button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})"><b>${n.nombre} ${n.apellido}</b></button>
         <div class="hint">${nroHC(n)}</div>
       </td>
       <td>${n.grupo || "—"}</td>

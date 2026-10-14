@@ -3,8 +3,231 @@
    Extraido del monolito (lineas 2618-2886) sin cambios de logica.
    Nota: 2774-2780 se movieron a utils.js (ver su cabecera).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
-/* ===================== EXPEDIENTE CLÍNICO (HCE) ===================== */
-function abrirExpediente(id){
+/* ===================== EXPEDIENTE CONECTADO · HCE-00 de solo lectura (Fase 3-a) =====================
+   handoff §5.122. abrirExpediente(id) carga GET /hce/{id} (+ GET /hce/{id}/flujo para el estado de
+   los modulos) y pinta SOLO lo que la API tiene. Lo que la API no guarda (nivel de soporte,
+   talleres, historial, antecedentes) no se muestra. Los modulos que todavia no estan conectados
+   son pestanas con el panel de modo demostracion y SIN datos: no se mezcla una persona de la API
+   con datos de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
+   Nada se edita en esta rebanada. */
+const EXP = { id:null, seq:0, hce:null, flujo:null, tab:"hce00" };
+
+/* `fase`: en que rebanada de la Fase 3 se conecta (propuesta, handoff §6). Sin `fase` = fuera del
+   alcance del 26/11/2026. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
+const TABS_EXP = [
+  {k:"hce00", r:"HCE-00", t:"Identificación y datos clínicos"},
+  {k:"ci",    r:"CI",  t:"Consentimiento informado",        fase:"3-b"},
+  {k:"lb",    r:"LB",  t:"Línea base — IDEA",               fase:"3-c", mod:"HCE-LB"},
+  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          fase:"3-d", mod:"HCE-PA"},
+  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          fase:"3-d", mod:"HCE-PB"},
+  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         fase:"3-e", mod:"HCE-IC"},
+  {k:"vf",    r:"VF",  t:"Valoración funcional",            fase:"3-e"},
+  {k:"doc",   r:"DOC", t:"Documentos y fotos"},
+  {k:"org",   r:"ORG", t:"Áreas INAU y BPS"},
+  {k:"inc",   r:"INC", t:"Inclusión educativa y social"},
+  {k:"pai",   r:"PAI", t:"Propuesta de atención individual"},
+  {k:"sev",   r:"SEV", t:"Severidad (DSM-5-TR)"},
+  {k:"log",   r:"LOG", t:"Registro de cambios"}
+];
+
+function _estadoTab(t){
+  if(!EXP.flujo) return null;
+  if(t.k === "ci") return EXP.flujo.ci === "registrado" ? "firmado" : "ci_pendiente";
+  if(t.mod && EXP.flujo.modulos[t.mod]) return EXP.flujo.modulos[t.mod].estado;
+  return null;
+}
+
+function tabsExpedienteHtml(){
+  return `<div class="exp-tabs" role="tablist" aria-label="Módulos del expediente" onkeydown="teclaTabExp(event)">` +
+    TABS_EXP.map(t=>{
+      const est = _estadoTab(t);
+      const sel = EXP.tab === t.k;
+      let marca = "";
+      if(est === "ci_pendiente") marca = ` <span class="st-mini st-ci-pend"><span aria-hidden="true">⚠</span><span class="sr-only">consentimiento pendiente</span></span>`;
+      else if(est){ const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar; marca = ` <span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">${e.txt}</span></span>`; }
+      return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"
+        aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}"
+        title="${escHtml(t.t)}" onclick="selTabExp('${t.k}')">${t.r}${marca}</button>`;
+    }).join("") + `</div>`;
+}
+
+function teclaTabExp(ev){
+  const ks = TABS_EXP.map(t=>t.k);
+  let i = ks.indexOf(EXP.tab);
+  if(ev.key === "ArrowRight") i = (i + 1) % ks.length;
+  else if(ev.key === "ArrowLeft") i = (i - 1 + ks.length) % ks.length;
+  else if(ev.key === "Home") i = 0;
+  else if(ev.key === "End") i = ks.length - 1;
+  else return;
+  ev.preventDefault();
+  selTabExp(ks[i], true);
+}
+
+function selTabExp(k, enfocar){
+  EXP.tab = k;
+  const cont = document.getElementById("tabsExpWrap");
+  if(cont) cont.innerHTML = tabsExpedienteHtml();
+  const panel = document.getElementById("panelExp");
+  panel.innerHTML = panelTabExpHtml(k);
+  panel.setAttribute("aria-labelledby", "tabExp-" + k);
+  if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
+}
+
+function filaDato(rotulo, valor){
+  const v = (valor === null || valor === undefined || valor === "") ? "—" : escHtml(valor);
+  return `<div class="data-row"><dt>${rotulo}</dt><dd>${v}</dd></div>`;
+}
+function filaTecnico(rotulo, nombre, rol){
+  return `<div class="data-row"><dt>${rotulo}</dt><dd>${nombre
+    ? `${escHtml(nombre)}${rol ? ` · <span style="color:var(--ink-2)">${escHtml(rol)}</span>` : ""}`
+    : "— <span style=\"color:var(--ink-2)\">(sin asignar)</span>"}</dd></div>`;
+}
+
+function hce00Html(p){
+  const a = p.anamnesis;
+  const anam = a
+    ? `${filaDato("Motivo de ingreso", a.motivo)}${filaDato("Perinatales", a.perinatal)}${filaDato("Desarrollo", a.desarrollo)}${filaDato("Ant. familiares", a.familiares)}`
+    : `<div class="hint">Sin anamnesis cargada en el expediente.</div>`;
+  return `<div class="exp-grid">
+    <div>
+      <div class="info-card">
+        <h3><span class="ic" aria-hidden="true">▤</span> HCE-00 · Identificación y datos clínicos
+          <span class="mbadge mb-borrador" title="Módulo siempre editable (§3.2); en esta versión solo lectura">Solo lectura</span></h3>
+        <dl class="ib">
+          ${filaDato("Diagnóstico", p.dx)}
+          ${filaDato("CIE-11", p.cie11)}
+          ${filaDato("Fecha dx.", p.dxFecha ? fmtFecha(p.dxFecha) : null)}
+          ${filaDato("Derivación", p.deriv)}
+          ${filaDato("Grupo", p.grupo ? `${p.grupo}${p.grupoAnio ? " · " + p.grupoAnio : ""}` : null)}
+          ${filaTecnico("Téc. resp. 1", p.tecnico1, p.tecnico1_rol)}
+          ${filaTecnico("Téc. resp. 2", p.tecnico2, p.tecnico2_rol)}
+          ${filaDato("Medicación", p.med)}
+          <div class="data-row"><dt>Alertas</dt><dd>${p.alerta ? `<b><span aria-hidden="true">⚠ </span>${escHtml(p.alerta)}</b>` : "—"}</dd></div>
+        </dl>
+      </div>
+      <div class="info-card">
+        <h3><span class="ic" aria-hidden="true">❏</span> HCE-00 · Anamnesis — Historia del desarrollo</h3>
+        <dl class="ib">${anam}</dl>
+      </div>
+      <div class="info-card">
+        <h3><span class="ic" aria-hidden="true">☎</span> Contacto familiar</h3>
+        <dl class="ib">
+          ${filaDato("Referente", p.referente)}
+          ${filaDato("Teléfono", p.tel)}
+          ${filaDato("Localidad", p.loc)}
+        </dl>
+      </div>
+    </div>
+    <div>${flujoResumenHtml()}</div>
+  </div>`;
+}
+
+/* Estado de la cadena del anio en curso, tal cual lo devuelve GET /hce/{id}/flujo. */
+function flujoResumenHtml(){
+  if(EXP.flujoError){
+    return `<div class="info-card"><h3>Módulos del año</h3><div class="ib"><div class="hint" role="status">No se pudo cargar el estado de los módulos.
+      <button class="btn btn-ghost btn-mini" onclick="recargarFlujoExp()">Reintentar</button></div></div></div>`;
+  }
+  if(!EXP.flujo) return `<div class="info-card"><h3>Módulos del año</h3><div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  const f = EXP.flujo;
+  const filas = MODULOS_CADENA.map(m=>{
+    const mo = f.modulos[m]; const est = mo ? mo.estado : "sin_iniciar";
+    return `<div class="data-row"><dt>${escHtml(m)}</dt><dd>${pillModulo(MOD_CORTO[m], m, est)} <span style="color:var(--ink-2)">${(ESTADO_MOD_TXT[est]||ESTADO_MOD_TXT.sin_iniciar).txt}</span></dd></div>`;
+  }).join("");
+  return `<div class="info-card">
+    <h3><span class="ic" aria-hidden="true">◐</span> Módulos del año ${escHtml(f.anio)}</h3>
+    <dl class="ib">
+      <div class="data-row"><dt>HCE-CI</dt><dd>${pillCi(f.ci)}</dd></div>
+      ${filas}
+    </dl>
+    <div class="ib hint" style="padding-top:0">● firmado · ◐ en curso · ○ sin iniciar. Se completan desde cada pestaña cuando se conecte (Fase 3-b a 3-e).</div>
+  </div>`;
+}
+
+function panelTabExpHtml(k){
+  if(k === "hce00") return hce00Html(EXP.hce);
+  const t = TABS_EXP.find(x => x.k === k);
+  const donde = t.fase ? `se conecta en la Fase ${t.fase}` : "queda fuera del alcance del 26/11/2026";
+  return `<div class="info-card">
+    <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
+    <div class="ib">${panelModoDemo(`${t.t}: este módulo todavía no está conectado a la API (${donde}). No se muestra ni se guarda ningún dato acá.`)}</div>
+  </div>`;
+}
+
+async function recargarFlujoExp(){
+  const mi = EXP.seq;
+  EXP.flujo = null; EXP.flujoError = false;
+  selTabExp(EXP.tab);
+  try{
+    const f = await apiFetch(`/hce/${EXP.id}/flujo`);
+    if(mi !== EXP.seq) return;
+    EXP.flujo = adaptarFlujo(f.data);
+  }catch(_e){
+    if(mi !== EXP.seq) return;
+    EXP.flujoError = true;
+  }
+  selTabExp(EXP.tab);
+}
+
+function expedienteCargando(){
+  document.getElementById("expCrumb").textContent = "Expediente";
+  document.getElementById("expedienteContent").innerHTML =
+    `<div class="card"><div class="cardbody"><div class="empty-state" role="status"><div class="big" aria-hidden="true">…</div>Cargando expediente…</div></div></div>`;
+  go("expediente");
+}
+function expedienteError(err, id){
+  const msg = err instanceof ApiError ? err.message : "No se pudo cargar el expediente.";
+  document.getElementById("expedienteContent").innerHTML =
+    `<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(msg)}<br>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+        ${err && err.status === 404 ? "" : `<button class="btn btn-primary btn-mini" onclick="abrirExpediente(${id})">Reintentar</button>`}
+        <button class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button></div></div></div></div>`;
+}
+
+async function abrirExpediente(id){
+  const mi = ++EXP.seq;
+  Object.assign(EXP, {id, hce:null, flujo:null, flujoError:false, tab:"hce00"});
+  expedienteCargando();
+  let hce;
+  try{
+    // El detalle y el flujo se piden juntos; si el flujo falla, el HCE-00 se muestra igual.
+    const [rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}`), apiFetch(`/hce/${id}/flujo`)]);
+    if(mi !== EXP.seq) return;
+    if(rh.status === "rejected") throw rh.reason;
+    hce = adaptarHce00(rh.value.data);
+    if(rf.status === "fulfilled") EXP.flujo = adaptarFlujo(rf.value.data); else EXP.flujoError = true;
+  }catch(err){
+    if(mi !== EXP.seq) return;
+    expedienteError(err, id);
+    return;
+  }
+  EXP.hce = hce;
+  const nombre = `${hce.nombre} ${hce.apellido}`.trim();
+  document.getElementById("expCrumb").textContent = `Expediente · ${nombre}`;
+  document.getElementById("expedienteContent").innerHTML = `
+    <div class="exp-head">
+      <div class="exp-avatar" aria-hidden="true">${escHtml(inicialesDe(nombre))}</div>
+      <div>
+        <h1 id="expTitulo" tabindex="-1">${escHtml(nombre)}</h1>
+        <div class="meta">${hce.edad === null ? "" : hce.edad + " años · "}${hce.sexo ? escHtml(hce.sexo) + " · " : ""}N.º HCE ${escHtml(hce.hc)} · C.I. ${escHtml(hce.ciTxt)}${!hce.activo && hce.bajaFecha ? ` · Baja: ${fmtFecha(hce.bajaFecha)}` : ""}</div>
+        <div class="badges">
+          ${hce.grupo ? `<span class="bdg">Grupo ${escHtml(hce.grupo)}</span>` : ""}
+          <span class="bdg">${hce.activo ? "Activo" : "Inactivo"}</span>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost" onclick="go('inicio')">‹ Volver al listado</button>
+    </div>
+    <div id="tabsExpWrap">${tabsExpedienteHtml()}</div>
+    <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
+  const h1 = document.getElementById("expTitulo");
+  if(h1) h1.focus();
+}
+
+/* ===================== EXPEDIENTE DE EJEMPLO (modo demostración) =====================
+   Lee el array NNA de datos.js (ids 101–108, NO los de la API). Lo usan solo las vistas de
+   demostración (Grupos, Inclusión, Ateneos, Pendientes…) y lleva el panel de modo demo. */
+function abrirExpedienteDemo(id){
   const p = NNA.find(n=>n.id===id);
   if(!p) return;
   document.getElementById("expCrumb").textContent = `Expediente · ${p.nombre} ${p.apellido}`;
@@ -50,6 +273,7 @@ function abrirExpediente(id){
        <div style="font-size:.74rem;color:var(--ink-2);margin-top:8px">Sin anamnesis estructurada cargada en el expediente (demo).</div>`;
 
   document.getElementById("expedienteContent").innerHTML = `
+    ${panelModoDemo("Expediente de ejemplo con datos ficticios: no es un expediente de la API y nada de lo que se haga acá se guarda.")}
     <div class="exp-head">
       <div class="exp-avatar">${iniciales}</div>
       <div>
@@ -200,7 +424,7 @@ function generarInforme(id){
         <div><h2>Informe de Cierre Anual — ${p.nombre} ${p.apellido}</h2>
           <p>Exp. #${p.id} · ${p.edad} años · Grupo ${p.grupo}</p></div>
         <div class="no-print" style="display:flex;gap:8px">
-          <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
+          <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpedienteDemo(${p.id})">‹ Volver</button>
         </div>
       </div>
       <div class="card"><div class="cardbody">
@@ -211,7 +435,7 @@ function generarInforme(id){
         <div style="display:flex;justify-content:center;gap:10px;margin-top:14px" class="no-print">
           ${st==="borrador"
             ? `<button class="btn btn-primary" onclick="irAEval('ic', ${p.id})">✎ Completar HCE-IC</button>`
-            : `<button class="btn btn-ghost" onclick="abrirExpediente(${p.id})">Ver flujo de módulos</button>`}
+            : `<button class="btn btn-ghost" onclick="abrirExpedienteDemo(${p.id})">Ver flujo de módulos</button>`}
         </div>
       </div></div>`;
     go("informe");
@@ -226,7 +450,7 @@ function generarInforme(id){
       <div style="display:flex;gap:8px">
         <button class="btn-print" onclick="window.print()">🖨 Descargar PDF</button>
         ${!ic.recibi ? `<button class="btn-print" style="background:#FDEBD3;color:#8A5A16" onclick="openRecibiModal(${p.id})">✍ Registrar Recibí</button>` : ""}
-        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpediente(${p.id})">‹ Volver</button>
+        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpedienteDemo(${p.id})">‹ Volver</button>
       </div>
     </div>
 

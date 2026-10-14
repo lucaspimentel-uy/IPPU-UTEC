@@ -170,7 +170,7 @@ function crearNNA(){
     renderNNA();
     closeAlta();
     toast(`Datos de ${g("f_nombre")} ${g("f_apellido")} actualizados`);
-    setTimeout(()=>abrirExpediente(modoEdit), 300);
+    setTimeout(()=>abrirExpedienteDemo(modoEdit), 300);
   } else {
     const nuevo = Object.assign({ id: ++nnaSeq, activo:true, flujo: initFlujo(), hceLog: [],
       docs: [], fotos: [], autImagen: {registrada:false, fecha:"", adjunto:""},
@@ -188,7 +188,7 @@ function crearNNA(){
     renderNNA();
     closeAlta();
     toast(`Expediente de ${nuevo.nombre} ${nuevo.apellido} creado`);
-    setTimeout(()=>abrirExpediente(nuevo.id), 400);
+    setTimeout(()=>abrirExpedienteDemo(nuevo.id), 400);
   }
 }
 

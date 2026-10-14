@@ -35,54 +35,209 @@ function proxEval(nna){
   return "Completa · pendiente";
 }
 
-/* --- Búsqueda + filtro de estado (activo / inactivo) --- */
-let nnaEstadoFiltro = "activos"; // activos | inactivos | todos
-// minúsculas + sin acentos (para búsqueda tolerante: "sofia" encuentra "Sofía")
-const deburr = s => (s||"").toString().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"");
-const norm = s => deburr(s).replace(/[.\-\s]/g,"");
+/* ================= INICIO CONECTADO (Fase 3-a · handoff §5.122) =================
+   El listado sale de GET /hce; ya no se filtra el array NNA de la demo. Estado, filtros y
+   paginacion viven en LISTA. El servidor busca, filtra y pagina; el navegador solo pinta.
+   Unica excepcion: el filtro «Inactivos», que la API no tiene (gap anotado en handoff):
+   se trae todo con incluir_inactivos=true y se filtra aca, paginando en el cliente. */
+const LISTA = { q:"", grupo:null, estado:"activos", offset:0, limit:25, total:0, seq:0, kpiSeq:0, timer:null };
+let GRUPOS_API = [];
 
-function coincideBusqueda(p, q){
-  if(!q) return true;
-  const ql = deburr(q).trim();
-  const qn = norm(q);
-  return deburr(`${p.nombre} ${p.apellido}`).includes(ql)                // nombre y apellido
-      || deburr(`${p.apellido} ${p.nombre}`).includes(ql)
-      || (qn.length>0 && norm(p.ci).includes(qn))                        // cédula (tolerante a puntos/guiones)
-      || (qn.length>0 && String(p.id).includes(qn))                      // N.º de HCE / expediente
-      || deburr(`exp #${p.id}`).includes(ql) || deburr(`hce ${p.id}`).includes(ql)
-      || deburr(`grupo ${p.grupo}`) === ql || deburr(p.grupo) === ql;    // grupo — 3.ª vía (M10): "grupo a" o "a" exacto
+/* Regla de la caja de busqueda -> parametro de GET /hce (una sola vez, aca):
+   - solo digitos/puntos/guiones/espacios:
+       · con punto o guion, o 7+ digitos  -> `ci`  (cedula uruguaya: 7–8 digitos; "6.012.345-1")
+       · hasta 6 digitos sin separadores  -> `numero` (N.º de HCE = hc_historico; hoy 4 digitos, 1001…)
+   - cualquier otra cosa                  -> `nombre` (contiene; sin mayusculas ni acentos)
+   Se manda la cedula canonica (sin puntos ni guiones). Una cedula incompleta, corta y sin
+   separadores (≤6 digitos) se lee como N.º de HCE: es la ambiguedad aceptada de una sola caja. */
+function consultaDeBusqueda(texto){
+  const t = (texto||"").trim();
+  if(!t) return {};
+  if(/^[\d.\-\s]+$/.test(t)){
+    const digitos = t.replace(/[.\-\s]/g, "");
+    if(!digitos) return {nombre:t};
+    if(!/[.\-]/.test(t) && digitos.length <= 6) return {numero:digitos};
+    return {ci:digitos};
+  }
+  return {nombre:t};
+}
+
+/* Estado de modulo (§3.2 de notas-accesibilidad-ui: el estado no depende del color; glifo + texto,
+   y «sin iniciar» (contorno) se distingue de «en curso» (relleno parcial, borde punteado)). */
+const ESTADO_MOD_TXT = {
+  firmado:     {glifo:"●", txt:"firmado"},
+  en_curso:    {glifo:"◐", txt:"en curso"},
+  sin_iniciar: {glifo:"○", txt:"sin iniciar"}
+};
+const MOD_CORTO = {"HCE-LB":"LB","HCE-PA":"PA","HCE-PB":"PB","HCE-IC":"IC"};
+function pillModulo(corto, modulo, estado){
+  const clase = ESTADO_MOD_TXT[estado] ? estado : "sin_iniciar";
+  const e = ESTADO_MOD_TXT[clase];
+  return `<span class="st st-${clase}"><span aria-hidden="true">${corto} ${e.glifo}</span><span class="sr-only">${escHtml(modulo)} ${e.txt}</span></span>`;
+}
+/* Consentimiento informado: pendiente es un bloqueo ACCIONABLE (notas §3.1), el unico rojo de la fila. */
+function pillCi(estado){
+  return estado === "registrado"
+    ? `<span class="st st-firmado"><span aria-hidden="true">●</span> Registrado</span>`
+    : `<span class="st st-ci-pend"><span aria-hidden="true">⚠</span> CI pendiente</span>`;
 }
 
 function filaNNA(p){
   const estadoPill = p.activo
     ? `<span class="pill activo">Activo</span>`
     : `<span class="pill inactivo">Inactivo</span>`;
-  return `<tr class="${p.activo?"":"row-inactiva"}">
-    <td><b>#${p.id}</b></td>
-    <td>${p.ci}</td>
-    <td class="nna-name">${p.nombre}</td>
-    <td class="nna-name">${p.apellido}</td>
+  const nombreCompleto = escHtml(`${p.nombre} ${p.apellido}`.trim());
+  return `<tr data-hce="${p.id}" data-activo="${p.activo}">
+    <td><b>${escHtml(p.hc)}</b></td>
+    <td>${escHtml(p.ciTxt)}</td>
+    <td class="nna-name">${escHtml(p.nombre)}</td>
+    <td class="nna-name">${escHtml(p.apellido)}</td>
+    <td>${p.edad === null ? "—" : p.edad}</td>
+    <td>${p.grupo ? escHtml(p.grupo) : "—"}</td>
+    <td>${pillCi(p.ciEstado)}</td>
+    <td><span class="st-grupo">${MODULOS_CADENA.map(m=>pillModulo(MOD_CORTO[m], m, p.modulos[m])).join(" ")}</span></td>
     <td>${estadoPill}</td>
-    <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})">Abrir expediente →</button></td>
+    <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})" aria-label="Abrir expediente de ${nombreCompleto}">Abrir expediente →</button></td>
   </tr>`;
 }
 
-function applyNNAFilter(){
-  const q = (document.getElementById("searchNNA")?.value) || "";
-  const lista = NNA.filter(p=>{
-    const estadoOk = nnaEstadoFiltro==="todos" ? true
-                   : nnaEstadoFiltro==="activos" ? p.activo : !p.activo;
-    return estadoOk && coincideBusqueda(p, q);
-  });
-  tb.innerHTML = lista.length
-    ? lista.map(filaNNA).join("")
-    : `<tr><td colspan="6"><div class="empty-state"><div class="big">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
+/* Estados de la tabla: cargando · error (con reintento) · vacio · filas. Nunca en blanco. */
+function _tbodyMsg(html){ tb.innerHTML = `<tr><td colspan="10">${html}</td></tr>`; }
+function listaCargando(){
+  _tbodyMsg(`<div class="empty-state" role="status"><div class="big" aria-hidden="true">…</div>Cargando expedientes…</div>`);
+  document.getElementById("listaResumen").textContent = "";
+  document.getElementById("pagPrev").disabled = true;
+  document.getElementById("pagNext").disabled = true;
+}
+function listaError(err){
+  const msg = err instanceof ApiError ? err.message : "No se pudo cargar el listado.";
+  _tbodyMsg(`<div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(msg)}<br>
+    <button class="btn btn-ghost btn-mini" style="margin-top:10px" onclick="cargarLista()">Reintentar</button></div>`);
+  document.getElementById("listaResumen").textContent = "";
 }
 
+/* Todas las paginas de una consulta (el maximo por pedido de la API es 200). */
+async function traerTodo(query){
+  let filas = [], offset = 0, total = Infinity;
+  while(offset < total){
+    const r = await apiFetch("/hce", {query:Object.assign({}, query, {limit:200, offset})});
+    total = r.total === null ? r.data.length : r.total;
+    filas = filas.concat(r.data.map(it => adaptarFilaLista(it)));
+    if(!r.data.length) break;
+    offset += r.data.length;
+  }
+  return filas;
+}
+function _queryLista(){
+  const q = consultaDeBusqueda(LISTA.q);
+  const g = LISTA.grupo;
+  return Object.assign({}, q, {
+    grupo: g ? g.nombre : null, anio: g ? g.anio : null,
+    incluir_inactivos: LISTA.estado !== "activos"
+  });
+}
+
+async function cargarLista(){
+  const mi = ++LISTA.seq;
+  listaCargando();
+  try{
+    let filas, total;
+    if(LISTA.estado === "inactivos"){
+      const inact = (await traerTodo(_queryLista())).filter(f => !f.activo);
+      total = inact.length;
+      filas = inact.slice(LISTA.offset, LISTA.offset + LISTA.limit);
+    }else{
+      const r = await apiFetch("/hce", {query:Object.assign(_queryLista(), {limit:LISTA.limit, offset:LISTA.offset})});
+      filas = r.data.map(it => adaptarFilaLista(it));
+      total = r.total === null ? filas.length : r.total;
+    }
+    if(mi !== LISTA.seq) return;     // llego una respuesta vieja: se ignora
+    LISTA.total = total;
+    pintarLista(filas);
+  }catch(err){
+    if(mi !== LISTA.seq) return;
+    listaError(err);
+  }
+}
+
+function pintarLista(filas){
+  tb.innerHTML = filas.length
+    ? filas.map(filaNNA).join("")
+    : `<tr><td colspan="10"><div class="empty-state"><div class="big" aria-hidden="true">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
+  const paginas = Math.max(1, Math.ceil(LISTA.total / LISTA.limit));
+  const pag = Math.floor(LISTA.offset / LISTA.limit) + 1;
+  document.getElementById("listaResumen").textContent =
+    `Mostrando ${filas.length} de ${LISTA.total} · página ${pag} de ${paginas}`;
+  document.getElementById("pagPrev").disabled = LISTA.offset <= 0;
+  document.getElementById("pagNext").disabled = LISTA.offset + LISTA.limit >= LISTA.total;
+}
+
+function paginaNNA(dir){
+  const nuevo = LISTA.offset + dir * LISTA.limit;
+  if(nuevo < 0 || nuevo >= Math.max(LISTA.total, 1)) return;
+  LISTA.offset = nuevo;
+  cargarLista();
+}
+function onBusquedaNNA(){
+  clearTimeout(LISTA.timer);
+  LISTA.timer = setTimeout(()=>{
+    LISTA.q = document.getElementById("searchNNA").value;
+    LISTA.offset = 0;
+    cargarLista();
+  }, 300);
+}
+function onFiltroGrupo(){
+  const id = document.getElementById("filtroGrupo").value;
+  const g = GRUPOS_API.find(x => String(x.id) === id);
+  LISTA.grupo = g ? {nombre:g.nombre, anio:g.anio} : null;
+  LISTA.offset = 0;
+  cargarLista();
+}
 function setEstadoFiltro(estado){
-  nnaEstadoFiltro = estado;
-  document.querySelectorAll(".chip-estado").forEach(c=>c.classList.toggle("active", c.dataset.estado===estado));
-  applyNNAFilter();
+  LISTA.estado = estado;
+  LISTA.offset = 0;
+  document.querySelectorAll(".chip-estado").forEach(c=>{
+    const on = c.dataset.estado === estado;
+    c.classList.toggle("active", on);
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  cargarLista();
+}
+
+/* Filtro de grupo: GET /grupos, solo los del anio en curso (la API resuelve `grupo` + `anio`).
+   Los colores de grupo de datos.js NO se usan: el nombre es el de la API. Si falla, el filtro
+   queda en «Todos» y el listado sigue funcionando. */
+async function cargarGrupos(){
+  const sel = document.getElementById("filtroGrupo");
+  try{
+    const r = await apiFetch("/grupos");
+    const anioMax = r.data.reduce((m,g)=>Math.max(m,g.anio), 0);
+    const anio = r.data.some(g => g.anio === new Date().getFullYear()) ? new Date().getFullYear() : anioMax;
+    GRUPOS_API = r.data.filter(g => g.anio === anio);
+    sel.innerHTML = `<option value="">Todos</option>` +
+      GRUPOS_API.map(g => `<option value="${g.id}">${escHtml(g.nombre)}</option>`).join("");
+  }catch(_err){
+    GRUPOS_API = [];
+    sel.innerHTML = `<option value="">Todos (grupos no disponibles)</option>`;
+  }
+}
+
+/* KPIs: solo los que se derivan de lo que devuelve GET /hce (activos, con el `flujo` del anio en
+   curso de cada fila). Contar filas es presentacion; ningun valor de negocio se calcula aca. */
+async function cargarKpis(){
+  const mi = ++LISTA.kpiSeq;
+  ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
+  try{
+    const todos = await traerTodo({incluir_inactivos:false});
+    if(mi !== LISTA.kpiSeq) return;
+    setKpi("kpiTotal", todos.length);
+    setKpi("kpiAlDia", todos.filter(f => f.modulos["HCE-LB"] === "firmado").length);
+    setKpi("kpiPend",  todos.filter(f => f.modulos["HCE-LB"] !== "firmado").length);
+    setKpi("kpiCi",    todos.filter(f => f.ciEstado === "pendiente").length);
+  }catch(_err){
+    if(mi !== LISTA.kpiSeq) return;
+    ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "—"));
+  }
 }
 
 function toggleActivo(id){
@@ -97,7 +252,7 @@ function toggleActivo(id){
     p.historial.push({tipo:"note", fecha:hoy, titulo:"Reactivación", desc:"NNA reactivado en el programa (demo)."});
   }
   renderNNA();
-  abrirExpediente(id);
+  abrirExpedienteDemo(id);
   toast(p.activo ? `${p.nombre} reactivado` : `${p.nombre} dado de baja`);
 }
 
@@ -110,16 +265,8 @@ function renderNNA(){
   if(selProt){ const prev = selProt.value; selProt.innerHTML = optsNNA; if(prev) selProt.value = prev; }
   const selIC = document.getElementById("selNNAIC");
   if(selIC){ const prev = selIC.value; selIC.innerHTML = optsNNA; if(prev) selIC.value = prev; }
-  // KPIs dinámicos (frecuencia IDEA anual)
-  const activos    = NNA.filter(p=>p.activo).length;
-  const conIdea    = NNA.filter(p=>p.activo && tieneLBFirmada(p)).length;
-  const pend       = NNA.filter(pendienteIdea).length;
-  const totalEvals = NNA.reduce((a,p)=>a+p.historial.filter(h=>h.tipo==="idea"||h.tipo==="lik").length,0);
-  setKpi("kpiTotal", activos);
-  setKpi("kpiAlDia", conIdea);
-  setKpi("kpiPend", pend);
-  setKpi("kpiInf", totalEvals);
-  applyNNAFilter();
+  // Fase 3-a: el listado y los KPIs de Inicio ya no salen de este array (ver «INICIO CONECTADO»).
+  // Esta funcion sigue para las vistas que quedan en modo demostracion.
   renderPendientes();
   renderAnalitica();   // la analítica institucional se deriva del mismo modelo: se recalcula con cada cambio
 }
@@ -457,19 +604,132 @@ function toast(msg){
   window._toastT = setTimeout(()=>t.classList.remove("show"), 3200);
 }
 
-/* ===================== SESIÓN (login demo · usuario pre-creado) ===================== */
-function doLogin(e){
-  if(e) e.preventDefault();
-  const u = document.getElementById("loginUser").value.trim();
-  if(!u){ toast("Ingresá el usuario"); return false; }
-  document.getElementById("loginScreen").classList.add("hidden");
-  toast("Bienvenido, Dr. González");
-  return false;
+/* ===================== SESIÓN (Fase 3-a · login contra la API) =====================
+   POST /auth/login -> token + usuario, guardados en sessionStorage (api.js · Sesion).
+   Al cargar la pagina con token guardado se valida con GET /auth/yo antes de mostrar nada.
+   Un 401 en cualquier llamada (api.js) vuelve a esta pantalla via alSesionInvalida(). */
+const ROL_TXT = {admin:"Administración", tecnico:"Técnico"};
+
+function _el(id){ return document.getElementById(id); }
+function limpiarErrorLogin(){ const e=_el("loginError"); e.hidden=true; e.textContent=""; }
+/* Mensaje en el role="alert" y foco ahi: el lector de pantalla lo lee y el teclado queda a mano. */
+function mostrarErrorLogin(msg){
+  const e = _el("loginError");
+  e.textContent = msg;
+  e.hidden = false;
+  e.focus();
 }
-function logout(){
-  document.getElementById("loginScreen").classList.remove("hidden");
-  document.getElementById("loginPass").value = "demo1234";
-  go("inicio");
-  window.scrollTo({top:0});
+function estadoLogin(msg){
+  const e = _el("loginEstado");
+  e.textContent = msg || "";
+  e.hidden = !msg;
+}
+function loginOcupado(si){
+  _el("loginBtn").disabled = si;
+  _el("loginUser").disabled = si;
+  _el("loginPass").disabled = si;
+  _el("loginBtn").textContent = si ? "Ingresando…" : "Ingresar";
 }
 
+function pintarUsuario(u){
+  const rol = ROL_TXT[u.rol] || u.rol || "";
+  _el("userAvatar").textContent = inicialesDe(u.nombre);
+  _el("userNombre").textContent = u.nombre;
+  _el("userRol").textContent = rol;
+  _el("userChip").setAttribute("aria-label", `Mi usuario — ${u.nombre}, ${rol}`);
+}
+
+/* Deja la UI sin rastro de la sesion anterior: nada de datos de NNA detras del login. */
+function limpiarUiDeSesion(){
+  clearTimeout(LISTA.timer);
+  LISTA.seq++; LISTA.kpiSeq++;
+  Object.assign(LISTA, {q:"", grupo:null, estado:"activos", offset:0, total:0});
+  GRUPOS_API = [];
+  tb.innerHTML = "";
+  _el("listaResumen").textContent = "";
+  _el("searchNNA").value = "";
+  _el("filtroGrupo").innerHTML = `<option value="">Todos</option>`;
+  document.querySelectorAll(".chip-estado").forEach(c=>{
+    const on = c.dataset.estado === "activos";
+    c.classList.toggle("active", on); c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
+  _el("expedienteContent").innerHTML = "";
+  _el("userAvatar").textContent = "··";
+  _el("userNombre").textContent = "—";
+  _el("userRol").innerHTML = "&nbsp;";
+  _el("userChip").setAttribute("aria-label", "Mi usuario");
+  _el("loginPass").value = "";
+}
+
+function mostrarLogin(mensaje){
+  limpiarUiDeSesion();
+  go("inicio");
+  _el("loginScreen").classList.remove("hidden");
+  estadoLogin("");
+  loginOcupado(false);
+  if(mensaje) mostrarErrorLogin(mensaje);
+  else { limpiarErrorLogin(); _el("loginUser").focus(); }
+}
+/* Gancho que api.js llama ante un 401 con sesion. */
+function alSesionInvalida(mensaje){ mostrarLogin(mensaje); }
+
+function entrar(usuario){
+  pintarUsuario(usuario);
+  _el("loginScreen").classList.add("hidden");
+  limpiarErrorLogin();
+  go("inicio");
+  cargarGrupos();
+  cargarKpis();
+  cargarLista();
+  toast("Bienvenido, " + usuario.nombre);
+}
+
+async function doLogin(e){
+  if(e) e.preventDefault();
+  const email = _el("loginUser").value.trim();
+  const password = _el("loginPass").value;
+  limpiarErrorLogin();
+  if(!email || !password){
+    mostrarErrorLogin("Ingresá tu usuario y tu contraseña.");
+    return false;
+  }
+  loginOcupado(true);
+  let usuario = null;
+  try{
+    const r = await apiFetch("/auth/login", {method:"POST", body:{email, password}, auth:false});
+    Sesion.guardar(r.data.access_token, r.data.usuario);
+    usuario = r.data.usuario;
+  }catch(err){
+    Sesion.limpiar();
+    mostrarErrorLogin(err instanceof ApiError ? err.message : "No se pudo ingresar.");
+  }
+  loginOcupado(false);
+  if(usuario){ _el("loginPass").value = ""; entrar(usuario); }
+  return false;
+}
+
+function logout(){
+  Sesion.limpiar();
+  mostrarLogin();
+}
+
+/* Arranque (index.html, ultima linea): paneles de modo demo + token guardado -> /auth/yo. */
+async function arrancarSesion(){
+  rellenarPanelesDemo();
+  _el("loginApi").textContent = API_BASE;
+  const token = Sesion.token();
+  if(!token){ mostrarLogin(); return; }
+  estadoLogin("Verificando sesión…");
+  try{
+    const r = await apiFetch("/auth/yo");
+    Sesion.guardar(token, r.data);
+    estadoLogin("");
+    entrar(r.data);
+  }catch(err){
+    if(err.status !== 401){        // 401: api.js ya limpio y mostro el login con su aviso
+      Sesion.limpiar();
+      mostrarLogin(err instanceof ApiError ? err.message : "No se pudo verificar la sesión.");
+    }
+  }
+}

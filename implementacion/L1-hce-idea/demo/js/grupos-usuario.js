@@ -104,7 +104,7 @@ function renderGrupos(){
       const miniRows = integrantes.length
         ? integrantes.map(n => {
             const firmados = ["ci","lb","pa","pb","ic"].filter(k=>estadoModulo(n,k)==="firmado").length;
-            return `<tr><td><button class="btn btn-link" onclick="abrirExpediente(${n.id})">${n.nombre} ${n.apellido}</button></td><td style="text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums">${firmados}/5</td></tr>`;
+            return `<tr><td><button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})">${n.nombre} ${n.apellido}</button></td><td style="text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums">${firmados}/5</td></tr>`;
           }).join("")
         : `<tr><td colspan="2" style="color:var(--ink-2);font-size:.78rem">Sin NNA asignados.</td></tr>`;
       return `<div class="card grupo-card">
@@ -157,7 +157,7 @@ function renderGrupoDetalle(gid){
       : `<span class="mbadge mb-bloqueado">Imagen: no</span>`;
     return `<tr>
       <td>
-        <button class="btn btn-link" onclick="abrirExpediente(${n.id})"><b>${n.nombre} ${n.apellido}</b> (${n.sexo?.[0]||"?"}, ${n.edad} años)</button>
+        <button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})"><b>${n.nombre} ${n.apellido}</b> (${n.sexo?.[0]||"?"}, ${n.edad} años)</button>
         <div class="hint">${nroHC(n)} · CI ${n.ci||"—"}</div>
       </td>
       <td>${cie11}<div class="hint">${n.apoyo||"Sin soporte registrado"}</div></td>

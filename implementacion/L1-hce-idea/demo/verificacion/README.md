@@ -10,6 +10,59 @@ Sirve para una pregunta concreta:
 
 Se captura antes, se captura después, se comparan. Si difieren, algo se rompió.
 
+## Demo conectada a la API — `conectada.js` (Fase 3-a, `handoff.md` §5.122)
+
+Es **otra cosa** que el *fingerprint* de abajo: no compara dos versiones de la demo estática, sino que
+prueba la demo **contra una API real** (login, listado, HCE-00, modo demostración). Corre en Chromium
+headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
+
+**Qué necesita** (tres cosas arriba a la vez; el script avisa cuál falta):
+
+1. **API en `http://localhost:8000` con la base cargada por el seed** (desde `backend/`, con el `.venv`
+   y Postgres arriba — ver `backend/README.md`). En Windows, con `PYTHONUTF8=1` (si no, el «→» de un
+   `print` del seed rompe la carga):
+
+   ```powershell
+   $env:PYTHONUTF8=1
+   alembic upgrade head; python -m app.seed_catalogos
+   uvicorn app.main:app --port 8000          # en otra terminal
+   $env:IPPU_EMAIL="admin@…"; $env:IPPU_PASSWORD="…"; $env:IPPU_DEMO_PASSWORD="…"
+   python -m app.seed_demo --url http://localhost:8000
+   ```
+2. **La demo servida en `http://localhost:5500`** (no sirve `file://`: la API sólo acepta ese origen por
+   CORS, y el login necesita la API):
+
+   ```bash
+   cd implementacion/L1-hce-idea/demo && python -m http.server 5500
+   ```
+3. **`IPPU_DEMO_PASSWORD`** = la contraseña de los profesionales de la demo, la misma con la que corrió el seed.
+
+```bash
+cd implementacion/L1-hce-idea/demo/verificacion
+IPPU_DEMO_PASSWORD=… node conectada.js          # PowerShell: $env:IPPU_DEMO_PASSWORD="…"; node conectada.js
+```
+
+Opcionales: `API=` y `DEMO=` (otras URL), `IPPU_DEMO_EMAIL=` (por omisión `gonzalez@demo.ippu.test`),
+`HEADED=1` (ver el navegador). Si Playwright pide un navegador que no está cacheado:
+`npx playwright install chromium`.
+
+**Qué verifica** (32 chequeos): (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
+mensaje en `role="alert"` con foco y `sessionStorage` vacío · (c) conteos del listado y del filtro de
+grupo **iguales a los de `backend/tests/test_m11_5a_seed_demo.py`** (7 activos · 8 con inactivos ·
+Escolares 3 · Preadolescentes 3 · Adolescentes 2) · (d) búsqueda por la cédula de Martín → 1 fila ·
+(e) Bruno con «CI pendiente» · (f) HCE-00 de Martín contra `GET /hce/{id}` y los técnicos del grupo, sin
+los campos que la API no guarda y sin los colores de grupo de la demo · (g) panel «Modo demostración — no
+se guarda» en pestañas y vistas no conectadas · (h) logout · y además token inválido (401 → login),
+recarga con sesión, API caída (mensaje legible), pestañas por teclado y **0 errores de JavaScript**.
+Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.
+
+⚠️ **`fingerprint.js` y `herramientas/verificar_contraste_ui.js` NO corren tal cual desde la Fase 3-a:**
+abren la demo por `file://` y esperan que «Ingresar» entre sin API. Hay que adaptarlos (servir en :5500 y
+loguear con el seed). Para el contraste se usó una copia adaptada (`handoff.md` §5.122); el original sigue
+sin tocar.
+
+---
+
 ## Instalación (una vez)
 
 Playwright no está como dependencia del repo. Se instala suelto:
