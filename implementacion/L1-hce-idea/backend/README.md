@@ -85,8 +85,13 @@ python -m app.seed_catalogos                                                  # 
 $env:IPPU_EMAIL="admin@ippu.test"; $env:IPPU_PASSWORD="<contraseña del admin>"
 python -m app.crear_usuario --email $env:IPPU_EMAIL --nombre "Coordinación" --rol admin   # 3. admin (toma IPPU_PASSWORD)
 uvicorn app.main:app                                                          #    API arriba (otra terminal)
+$env:PYTHONUTF8=1                                                             #    Windows: OBLIGATORIO para el paso 4 (consola cp1252)
 python -m app.seed_demo --url http://localhost:8000                           # 4. la demo, por la API
 ```
+
+⚠️ **En Windows, `python -m app.seed_demo` se corre con `PYTHONUTF8=1`:** con la consola cp1252 el «→» de un
+`print` revienta la carga a mitad de camino (queda carga parcial; ver «Atomicidad» en el docstring de
+`app/seed_demo.py`: se rehace con una base nueva).
 
 Carga los 8 NNA de la demo por la API (Martín = §12-A). Los dos técnicos de la demo («Dr. González»,
 «Mtra. Torres») se crean fuera de la API; si el paso 3 se saltea, el seed crea también el admin con

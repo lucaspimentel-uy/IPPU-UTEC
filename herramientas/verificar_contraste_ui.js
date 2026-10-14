@@ -15,8 +15,8 @@
  *
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una
  * segunda instalación sólo para este script) — si no está, `cd
- * implementacion/L1-hce-idea/demo/verificacion && npm install playwright --no-save` (ver su
- * README.md).
+ * implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium`
+ * (Playwright fijado en su package.json; ver su README.md).
  *
  * Uso:  node herramientas/verificar_contraste_ui.js            (tabla completa)
  *       node herramientas/verificar_contraste_ui.js --json out.json   (además, JSON crudo)
@@ -34,7 +34,7 @@ try {
   chromium = require(path.join(PLAYWRIGHT_DIR, 'playwright')).chromium;
 } catch {
   console.error('No se encontró Playwright en demo/verificacion/node_modules.');
-  console.error('Instalar: cd implementacion/L1-hce-idea/demo/verificacion && npm install playwright --no-save');
+  console.error('Instalar: cd implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium');
   process.exit(1);
 }
 

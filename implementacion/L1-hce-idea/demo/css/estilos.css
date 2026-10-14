@@ -514,7 +514,7 @@
        scrollea en horizontal. Varias ya vienen envueltas en un div con overflow
        desde el JS (Inclusión, Ateneos); las demás se resuelven acá. */
     table.lista,.comp-table,.log-table,.grupo-integrantes,.tec-aut-table,.at-acuerdos{
-      display:block;overflow-x:auto;white-space:nowrap
+      display:block;overflow-x:auto;white-space:nowrap;position:relative
     }
     table.lista td,table.lista th{white-space:nowrap}
     /* La topbar no entra completa: se conserva la identidad (logo + nombre) y la
@@ -1199,7 +1199,7 @@
   .filtro-grupo label{font-size:var(--fs-2xs);font-weight:600;color:var(--ink)}
   #filtroGrupo:focus-visible{outline:2px solid var(--orange);outline-offset:2px;box-shadow:none}
   .chip-estado:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
-  .tabla-scroll{overflow-x:auto}
+  .tabla-scroll{overflow-x:auto;position:relative}   /* contiene a los .sr-only (position:absolute) de la tabla */
   .lista-pie{
     display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
     padding:var(--s3) var(--s4);border-top:1px solid var(--rule);font-size:var(--fs-2xs);color:var(--ink-2)

@@ -327,7 +327,7 @@ function renderUsuario(){
     </div>
     <div class="exp-grid">
       <div class="info-card">
-        <h3><span class="ic">▤</span> Datos de la cuenta</h3>
+        <h3><span class="ic">▤</span> Datos del perfil de ejemplo</h3>
         <div class="ib">
           <div class="data-row"><dt>Nombre</dt><dd>${u.nombre}</dd></div>
           <div class="data-row"><dt>Rol</dt><dd>${u.rol}</dd></div>

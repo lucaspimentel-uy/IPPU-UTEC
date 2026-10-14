@@ -12,16 +12,16 @@
    Nada se edita en esta rebanada. */
 const EXP = { id:null, seq:0, hce:null, flujo:null, tab:"hce00" };
 
-/* `fase`: en que rebanada de la Fase 3 se conecta (propuesta, handoff §6). Sin `fase` = fuera del
-   alcance del 26/11/2026. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
+/* `fase`: campo INTERNO (nunca se muestra), alineado con la checklist de handoff §6: ci→3-b ·
+   lb, pa, pb→3-c · ic, vf→3-d. Sin `fase` = fuera del alcance del 26/11/2026. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
 const TABS_EXP = [
   {k:"hce00", r:"HCE-00", t:"Identificación y datos clínicos"},
   {k:"ci",    r:"CI",  t:"Consentimiento informado",        fase:"3-b"},
   {k:"lb",    r:"LB",  t:"Línea base — IDEA",               fase:"3-c", mod:"HCE-LB"},
-  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          fase:"3-d", mod:"HCE-PA"},
-  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          fase:"3-d", mod:"HCE-PB"},
-  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         fase:"3-e", mod:"HCE-IC"},
-  {k:"vf",    r:"VF",  t:"Valoración funcional",            fase:"3-e"},
+  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          fase:"3-c", mod:"HCE-PA"},
+  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          fase:"3-c", mod:"HCE-PB"},
+  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         fase:"3-d", mod:"HCE-IC"},
+  {k:"vf",    r:"VF",  t:"Valoración funcional",            fase:"3-d"},
   {k:"doc",   r:"DOC", t:"Documentos y fotos"},
   {k:"org",   r:"ORG", t:"Áreas INAU y BPS"},
   {k:"inc",   r:"INC", t:"Inclusión educativa y social"},
@@ -68,6 +68,7 @@ function selTabExp(k, enfocar){
   const cont = document.getElementById("tabsExpWrap");
   if(cont) cont.innerHTML = tabsExpedienteHtml();
   const panel = document.getElementById("panelExp");
+  if(!panel) return;          // sesión cerrada o expediente descartado mientras tanto
   panel.innerHTML = panelTabExpHtml(k);
   panel.setAttribute("aria-labelledby", "tabExp-" + k);
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
@@ -140,21 +141,21 @@ function flujoResumenHtml(){
       <div class="data-row"><dt>HCE-CI</dt><dd>${pillCi(f.ci)}</dd></div>
       ${filas}
     </dl>
-    <div class="ib hint" style="padding-top:0">● firmado · ◐ en curso · ○ sin iniciar. Se completan desde cada pestaña cuando se conecte (Fase 3-b a 3-e).</div>
+    <div class="ib hint" style="padding-top:0">● firmado · ◐ en curso · ○ sin iniciar. Se completan desde cada pestaña cuando se conecte.</div>
   </div>`;
 }
 
 function panelTabExpHtml(k){
   if(k === "hce00") return hce00Html(EXP.hce);
   const t = TABS_EXP.find(x => x.k === k);
-  const donde = t.fase ? `se conecta en la Fase ${t.fase}` : "queda fuera del alcance del 26/11/2026";
   return `<div class="info-card">
     <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
-    <div class="ib">${panelModoDemo(`${t.t}: este módulo todavía no está conectado a la API (${donde}). No se muestra ni se guarda ningún dato acá.`)}</div>
+    <div class="ib">${panelModoDemo("Este módulo todavía no está conectado al servidor.")}</div>
   </div>`;
 }
 
 async function recargarFlujoExp(){
+  if(EXP.id === null) return;   // no hay expediente abierto (p. ej. se cerró la sesión)
   const mi = EXP.seq;
   EXP.flujo = null; EXP.flujoError = false;
   selTabExp(EXP.tab);

@@ -654,6 +654,9 @@ function limpiarUiDeSesion(){
     c.classList.toggle("active", on); c.setAttribute("aria-pressed", on ? "true" : "false");
   });
   ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
+  // Cargas en vuelo del expediente: la secuencia sube y se descarta todo lo que tenga datos de un NNA.
+  EXP.seq++;
+  Object.assign(EXP, {id:null, hce:null, flujo:null, flujoError:false, tab:"hce00"});
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";
   _el("userNombre").textContent = "—";
@@ -662,8 +665,15 @@ function limpiarUiDeSesion(){
   _el("loginPass").value = "";
 }
 
+/* Mientras el login esta a la vista, el resto de la app queda inerte (sin foco, sin clics, fuera del
+   arbol de accesibilidad): el login es un dialogo modal. */
+function appInerte(si){
+  document.querySelectorAll("header.topbar, div.layout").forEach(el => { el.inert = si; });
+}
+
 function mostrarLogin(mensaje){
   limpiarUiDeSesion();
+  appInerte(true);
   go("inicio");
   _el("loginScreen").classList.remove("hidden");
   estadoLogin("");
@@ -677,8 +687,10 @@ function alSesionInvalida(mensaje){ mostrarLogin(mensaje); }
 function entrar(usuario){
   pintarUsuario(usuario);
   _el("loginScreen").classList.add("hidden");
+  appInerte(false);
   limpiarErrorLogin();
   go("inicio");
+  _el("tituloInicio").focus();   // el foco pasa al titulo de la pantalla, no se pierde en el login oculto
   cargarGrupos();
   cargarKpis();
   cargarLista();

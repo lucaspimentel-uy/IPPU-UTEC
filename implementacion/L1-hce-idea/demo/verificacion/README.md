@@ -46,14 +46,14 @@ Opcionales: `API=` y `DEMO=` (otras URL), `IPPU_DEMO_EMAIL=` (por omisión `gonz
 `HEADED=1` (ver el navegador). Si Playwright pide un navegador que no está cacheado:
 `npx playwright install chromium`.
 
-**Qué verifica** (32 chequeos): (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
+**Qué verifica** (46 chequeos): (a) login del técnico y chip con su nombre y rol · (b) contraseña mala →
 mensaje en `role="alert"` con foco y `sessionStorage` vacío · (c) conteos del listado y del filtro de
 grupo **iguales a los de `backend/tests/test_m11_5a_seed_demo.py`** (7 activos · 8 con inactivos ·
 Escolares 3 · Preadolescentes 3 · Adolescentes 2) · (d) búsqueda por la cédula de Martín → 1 fila ·
 (e) Bruno con «CI pendiente» · (f) HCE-00 de Martín contra `GET /hce/{id}` y los técnicos del grupo, sin
 los campos que la API no guarda y sin los colores de grupo de la demo · (g) panel «Modo demostración — no
 se guarda» en pestañas y vistas no conectadas · (h) logout · y además token inválido (401 → login),
-recarga con sesión, API caída (mensaje legible), pestañas por teclado y **0 errores de JavaScript**.
+recarga con sesión, API caída (mensaje legible), pestañas por teclado y **0 errores de JavaScript**. Desde el fix de revisión también: la **regla de búsqueda** (cédula de 7/8 dígitos → `ci`, límite 6/7 dígitos, nombre) contra el GET real, el **login como diálogo modal** (app inerte, Tab sin escapes, foco al título tras entrar), **sin desborde horizontal** a 390/1024/1280 px, **sin «Fase …» en texto visible**, y **«Salir» con cargas en vuelo** (detalle y recarga del flujo, con `page.route` demorando la respuesta).
 Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.
 
 ⚠️ **`fingerprint.js` y `herramientas/verificar_contraste_ui.js` NO corren tal cual desde la Fase 3-a:**

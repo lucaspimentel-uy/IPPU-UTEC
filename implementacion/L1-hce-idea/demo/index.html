@@ -9,10 +9,10 @@
 <body>
 
 <!-- ===================== LOGIN (usuario pre-creado) ===================== -->
-<div class="login-screen" id="loginScreen">
+<div class="login-screen" id="loginScreen" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
   <div class="login-card">
     <div class="login-logo">IP</div>
-    <h1>Fundación IPPU</h1>
+    <h1 id="loginTitulo">Fundación IPPU</h1>
     <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
     <form id="loginForm" onsubmit="return doLogin(event)" novalidate>
       <div id="loginError" class="login-error" role="alert" tabindex="-1" hidden></div>
@@ -33,7 +33,7 @@
 </div>
 
 <!-- ===================== TOPBAR ===================== -->
-<header class="topbar">
+<header class="topbar" inert>
   <div class="logo">IP</div>
   <div class="title">
     <b>Fundación IPPU</b>
@@ -43,14 +43,14 @@
   <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
        Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
   <button class="userchip" id="userChip" onclick="go('usuarios'); renderUsuario()"
-          title="Ver mi perfil" aria-label="Mi usuario">
+          title="Ver perfil de ejemplo (modo demostración)" aria-label="Mi usuario">
     <span class="avatar" id="userAvatar">··</span>
     <span class="userchip-txt"><span id="userNombre">—</span><br><span class="rol" id="userRol">&nbsp;</span></span>
   </button>
   <button class="btn-exit" onclick="logout()">Salir</button>
 </header>
 
-<div class="layout">
+<div class="layout" inert>
 
   <!-- ===================== SIDEBAR ===================== -->
   <nav class="sidebar">
@@ -74,7 +74,7 @@
     <!-- ============ VISTA: INICIO / NNA ============ -->
     <section class="view active" id="view-inicio">
       <div class="crumbs">Inicio › <b>Listado de NNA</b></div>
-      <h1 class="pagetitle">Niños, niñas y adolescentes en seguimiento</h1>
+      <h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1>
       <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá «Abrir expediente» para ver el detalle clínico (por ahora de solo lectura; los módulos de evaluación se van conectando por etapas).</p>
 
       <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
@@ -91,7 +91,7 @@
           <h2>Listado de NNA</h2>
           <div class="cardhead-sp"></div>
           <!-- El alta (POST /hce) se conecta en la fase siguiente: no se ofrece un alta que no se guarda. -->
-          <span class="hint">Altas y ediciones: todavía no conectadas (Fase 3-b).</span>
+          <span class="hint">Altas y ediciones: todavía no conectadas.</span>
         </div>
         <div class="nna-toolbar">
           <div class="search-wrap">
@@ -466,9 +466,9 @@
     <!-- ============ VISTA: USUARIO / PERFIL ============ -->
     <section class="view" id="view-usuarios">
       <div data-modo-demo></div>
-      <div class="crumbs">Institucional › <b>Mi usuario</b></div>
-      <h1 class="pagetitle">Mi perfil</h1>
-      <p class="pagedesc">Información de la cuenta del profesional con sesión iniciada y equipo técnico de la institución.</p>
+      <div class="crumbs">Institucional › <b>Perfil de ejemplo</b></div>
+      <h1 class="pagetitle">Perfil de ejemplo</h1>
+      <p class="pagedesc">Perfil y equipo técnico con datos ficticios. No corresponde a la cuenta con la que ingresaste.</p>
       <div id="usuarioContent"></div>
     </section>
 

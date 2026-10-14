@@ -1,6 +1,8 @@
-# Playwright se instala suelto y a demanda (ver README.md), no se versiona.
+# Playwright está fijado en package.json + package-lock.json (versionados; instalación con `npm ci`, ver README.md).
+# Sólo node_modules/ queda afuera.
 node_modules/
-package-lock.json
 
 # Fingerprints capturados: son artefactos locales de cada comparación.
 *.json
+!package.json
+!package-lock.json
