@@ -27,7 +27,7 @@ headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
    alembic upgrade head; python -m app.seed_catalogos
    uvicorn app.main:app --port 8000          # en otra terminal
    $env:IPPU_EMAIL="admin@…"; $env:IPPU_PASSWORD="…"; $env:IPPU_DEMO_PASSWORD="…"
-   python -m app.seed_demo --url http://localhost:8000
+   python -m app.seed_demo --url http://localhost:8000   # en Windows SIEMPRE con PYTHONUTF8=1 (ver arriba)
    ```
 2. **La demo servida en `http://localhost:5500`** (no sirve `file://`: la API sólo acepta ese origen por
    CORS, y el login necesita la API):
@@ -65,23 +65,18 @@ sin tocar.
 
 ## Instalación (una vez)
 
-Playwright no está como dependencia del repo. Se instala suelto:
+Playwright está **fijado a una versión exacta** en `package.json` (devDependency, sin `^`), con su
+`package-lock.json`: todo el equipo corre el mismo. Desde esta carpeta:
 
 ```bash
 cd implementacion/L1-hce-idea/demo/verificacion
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install playwright --no-save
+npm ci                          # instala lo del lockfile (o `npm install` si no hay lockfile)
+npx playwright install chromium # una vez por máquina y por versión de Playwright
 ```
 
-En PowerShell:
-
-```powershell
-cd implementacion\L1-hce-idea\demo\verificacion
-$env:PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1; npm install playwright --no-save
-```
-
-`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` evita bajar los navegadores de nuevo: en las máquinas
-del equipo ya están cacheados en `~/AppData/Local/ms-playwright`. Si es una máquina nueva y
-falla por falta de navegador, corré `npx playwright install chromium` una vez.
+`npx playwright install chromium` baja el navegador a `~/AppData/Local/ms-playwright`
+(~120 MB; queda cacheado). Si Playwright se actualiza, hay que repetirlo: cada versión pide su build.
+**No** instalar con `npm install playwright --no-save` (sin versión): trae la última y se rompe el pin.
 
 ## Uso
 

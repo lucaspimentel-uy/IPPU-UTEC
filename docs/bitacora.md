@@ -20,6 +20,8 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-14 · Fix de Fase 3-a — checklist de §6 restaurada, seed con `PYTHONUTF8=1`, Playwright fijado en 1.64.1** (Lucas + Claude, rama `fase3a-demo-conectada`): sólo docs y `demo/verificacion/package.json` (+ lockfile, agregados con `git add -f` porque su `.gitignore` los excluye); `conectada.js` sigue en 32/32.
+
 - **2026-10-14 · Sesión Fase 3-a — la demo se conecta a la API** (Lucas + Claude, rama `fase3a-demo-conectada`). Decisiones **§5.122** (las cuatro del equipo + a–e); sólo `demo/` y docs, backend sin tocar (head `dcc838486407`).
   - **Código:** `js/api.js` (cliente `{data, warnings, total}`, `ApiError`, 401 → login, falla de red legible, base en un solo lugar con `?api=`), `js/adaptadores.js` (puros, sin cálculo de negocio), login real con error en `role="alert"` y foco, listado desde `GET /hce` (búsqueda por cédula/N.º/nombre, grupo desde `GET /grupos`, estado, paginación, CI y módulos por fila), HCE-00 de **solo lectura** con técnicos del grupo y 13 pestañas, componente «Modo demostración — no se guarda» + «Solo demo» (`utils.js`, `estilos.css`), `abrirExpedienteDemo()` para las vistas de ejemplo.
   - **Verificado:** `demo/verificacion/conectada.js` (Playwright headless, API :8000 con `app.seed_demo`, demo :5500) → **32/32 OK**: login/chip, contraseña mala (alert + foco + sessionStorage vacío), 7 activos · 8 con inactivos · Escolares 3 · Preadolescentes 3 · Adolescentes 2, cédula de Martín → 1 fila, Bruno con «CI pendiente», HCE-00 contra `GET /hce/{id}`, panel en las 6 vistas demo, token inválido, API caída, logout, 0 errores de JS.
