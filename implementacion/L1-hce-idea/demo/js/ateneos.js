@@ -454,7 +454,7 @@ function renderAteneoDetalle(id){
 
 /* ============ PANEL EN EL EXPEDIENTE (mResumen del Prototipo v4, línea 882) ============
    Los ateneos clínicos de un NNA aparecen también en su HCE. Se llama desde
-   abrirExpedienteDemo() en expediente.js, igual que docPanelHtml/orgPanelHtml/vfPanelHtml. */
+   abrirExpedienteDemo() en expediente.js, igual que docPanelHtml/orgPanelHtml. */
 function ateneosPanelHtml(p){
   const ats = ATENEOS
     .filter(a => a.tipo === "Ateneo clínico (NNA)" && a.nna === p.id)

@@ -1352,3 +1352,80 @@
     .idea-summary{position:static;gap:var(--s3)}
     .ev-confirma{max-width:none}
   }
+
+  /* ============ FASE 3-d · IC y VF CONECTADOS + DOCUMENTO IMPRESO (handoff §5.126) ============
+     Mismas reglas que 3-a…3-c: el foco es el :focus-visible global, ningún significado depende solo del color
+     (glifo + texto, trazo continuo/punteado en los radares) y las categorías y niveles de la VF usan la rampa de un
+     solo matiz de las bandas del IDEA (.banda-1…6, .banda-neutra), nunca ok/warn/bad. */
+  .comp-table th[scope="row"]{
+    text-transform:none;letter-spacing:0;font-family:inherit;font-size:var(--fs-xs);font-weight:600;color:var(--ink);
+    padding:var(--s2);border-bottom:1px solid var(--rule-2)
+  }
+  .comp-table tr:last-child th[scope="row"]{border-bottom:none}
+  .ic-total th,.ic-total td{border-top:2px solid var(--ink-3)}
+  .ic-nota{font-size:var(--fs-3xs);color:var(--ink-2);margin:var(--s2) 0 0;line-height:1.5}
+  .ic-radars-nota{flex:0 0 100%;text-align:center}
+  .ic-legend{align-items:center}
+  .ic-legend span{display:inline-flex;align-items:center;gap:var(--s1)}
+  .fl-lista{list-style:none;margin:var(--s4) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--s2);align-items:center;font-size:var(--fs-xs)}
+  .inf-botones{display:flex;gap:var(--s2);flex-wrap:wrap}
+  .btn-print-acento{background:var(--orange-soft);color:var(--ink)}
+  .btn-print:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .st-registrada{background:var(--paper);color:var(--ink);border:2px solid var(--ink)}
+  /* Documento impreso (IC firmado y reporte de VF) */
+  .doc-p{font-size:var(--fs-xs);margin:0 0 var(--s2);line-height:1.55;white-space:pre-wrap}
+  .doc-nota{font-size:var(--fs-3xs);color:var(--ink-2);margin:var(--s2) 0 0;line-height:1.5}
+  .doc-aviso{
+    font-size:var(--fs-2xs);color:var(--ink-2);border-left:4px solid var(--teal);background:var(--paper-2);
+    padding:var(--s2) var(--s3);border-radius:var(--r-sm);margin:var(--s3) 0 0;line-height:1.55
+  }
+  .doc-aviso b{color:var(--ink)}
+  .doc-pie{font-size:var(--fs-3xs);color:var(--ink-2);margin:var(--s3) 0 0;line-height:1.5}
+  .doc-datos .data-row dd{text-align:right}
+  /* Tabla de maquetacion del documento: en pantalla son bloques y el encabezado de hoja no se ve. */
+  table.print-wrap,.print-wrap>thead,.print-wrap>tbody,.print-wrap>tbody>tr,.print-wrap>tbody>tr>td{display:block;width:100%;padding:0}
+  .print-wrap>thead{display:none}
+  /* VF */
+  .vf-resultado{margin:var(--s3) 0;display:flex;flex-direction:column;gap:var(--s2)}
+  .vf-resultado:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .vf-rot{display:block;font-size:var(--fs-3xs);font-weight:700;color:var(--ink-2);letter-spacing:.03em;margin-bottom:var(--s1)}
+  .vf-impl{font-size:var(--fs-2xs);color:var(--ink-2);margin-left:var(--s2)}
+  .vf-doms th[scope="row"]{white-space:normal;font-weight:600}
+  .vf-doms th[scope="row"] label{font-weight:600;font-size:var(--fs-xs);margin:0}
+  .vf-doms td select{max-width:100%}
+  .vf-ref{color:var(--ink-2);font-size:var(--fs-3xs)}
+  .vf-guia{margin-top:var(--s4)}
+  .vf-guia>summary{cursor:pointer;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
+  .banda-chip,.st-registrada{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* ============ IMPRESIÓN A4 del documento (view-informe) ============
+     Hoja A4 con márgenes propios; el encabezado con los datos del expediente se repite en cada hoja (el documento
+     va dentro de una tabla de maquetación y su <thead> se repite); tablas, radares, firmas y membrete se mantienen
+     enteros dentro de una hoja (break-inside:avoid) y el texto fluye entre hojas. Navegación, botones y banner no se imprimen. */
+  @media print{
+    @page{size:A4;margin:16mm 14mm 16mm 14mm}
+    html,body{background:#fff}
+    body{font-size:10.5pt;color:#000}
+    .modal-bg{display:none!important}
+    #view-informe .crumbs,#view-informe .inf-banner{display:none!important}
+    table.print-wrap{display:table;width:100%;border-collapse:collapse}
+    .print-wrap>thead{display:table-header-group}
+    .print-wrap>tbody{display:table-row-group}
+    .print-wrap>thead>tr,.print-wrap>tbody>tr{display:table-row}
+    .print-wrap>thead>tr>td,.print-wrap>tbody>tr>td{display:table-cell;padding:0}
+    .print-wrap .ph{
+      border-bottom:1px solid #000;padding:0 0 3mm;margin:0 0 4mm;font-size:8.5pt;line-height:1.35;color:#000
+    }
+    #informeContent .card{border:1px solid #888;border-radius:0;box-shadow:none;break-inside:auto;page-break-inside:auto}
+    #informeContent .cardhead{background:#fff;border-bottom:1px solid #888}
+    #informeContent .cardbody,#informeContent .card>.cardbody{padding:4mm}
+    .comp-table,.ic-tabla,.tabla-scroll,.ic-radars,.rwrap,.firmas-grid,.membrete,.vf-doms{break-inside:avoid;page-break-inside:avoid}
+    .comp-table tr,.comp-table th,.comp-table td{break-inside:avoid;page-break-inside:avoid}
+    .tabla-scroll{overflow:visible}
+    .cardhead{break-after:avoid;page-break-after:avoid}
+    /* Los radares son bloques en linea atomicos dentro de un bloque que no se parte: un flex no respetaba break-inside. */
+    .ic-radars{display:block;text-align:center;gap:0}
+    .ic-radars .rwrap{display:inline-block;vertical-align:top;margin:0 4mm;break-inside:avoid;page-break-inside:avoid}
+    .doc-p{orphans:3;widows:3}
+    svg{max-width:100%}
+  }

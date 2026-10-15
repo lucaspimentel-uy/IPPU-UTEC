@@ -47,5 +47,5 @@ function subirFotoGrupo(gid){
 // El dialogo de alta/edicion ya NO se cierra al hacer clic en el fondo (Fase 3-b): es un formulario largo y un
 // clic de mas perderia lo tipeado. Se cierra con «×», con Cancelar o con Escape.
 // cerrar modal con Escape
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeAlta(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeAlta(); closeFlujoModal(); } });
 

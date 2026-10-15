@@ -163,20 +163,8 @@ const norm = (s) => (s == null ? s : String(s)
     };
   });
 
-  /* 7.5: la categoria del baremo sale SOLO del % oficial (BUND), nunca de un puntaje clinico. */
-  await cap('B2_guard_baremo', () => {
-    const t = f => { try { return { ok: true, r: f() }; } catch (e) { return { ok: false, err: e.message }; } };
-    const n = NNA.find(x => x.id === 102);
-    return {
-      pct_0: t(() => categoriaBaremo(0)),      pct_33: t(() => categoriaBaremo(33)),
-      pct_97: t(() => categoriaBaremo(97)),    borde_4: t(() => categoriaBaremo(4)),
-      borde_5: t(() => categoriaBaremo(5)),    fuera_neg: t(() => categoriaBaremo(-1)),
-      fuera_101: t(() => categoriaBaremo(101)), no_numero: t(() => categoriaBaremo('abc')),
-      objeto_pct: t(() => categoriaBaremo({ pct: 42 })),
-      desde_idea: t(() => categoriaBaremo(n.flujo.lb)),                     // debe LANZAR
-      desde_protocolo: t(() => categoriaBaremo(n.flujo.pa)),                // debe LANZAR
-    };
-  });
+  /* 7.5 (categoria del baremo sólo del % oficial): desde la Fase 3-d la deriva la API (conectada.js: 3d-d1…3d-d3);
+     ya no hay guard en el navegador que capturar. */
 
   await cap('B3_calculo_puro', () => ({
     deltaInterpreta: [-20, -8, -7, -6, -1, 0, 1, 6, 7, 12, 13, 30].map(d => [d, deltaInterpreta(d)]),
@@ -258,17 +246,15 @@ const norm = (s) => (s == null ? s : String(s)
   /* La edicion ya NO es del ejemplo: openEditar() edita el expediente de la API que esta abierto (Fase 3-b),
      asi que en la demo conectada no hay modal de edicion de ejemplo que capturar. */
   if (!CONECTADA) { await page.evaluate(() => openEditar(101)); await html('C5b_modal_editar', '#modalAlta'); await page.evaluate(() => closeAlta()); }
-  await page.evaluate(() => openRecibiModal(102));  await html('C5c_modal_recibi', '#modalFlujo');
-  await page.evaluate(() => closeFlujoModal());
+  /* El «recibí» ya no es del ejemplo: es del IC de la API (Fase 3-d; conectada.js 3d-r1…3d-r3). */
 
   /* C6 · Vistas que se arman por JS. */
   /* IDEA, PA y PB dejaron de ser vistas de ejemplo en la Fase 3-c: viven en las pestañas del expediente de la API
      (conectada.js las verifica), asi que ya no hay vista que capturar aqui. */
-  await page.evaluate(() => cargarIC(102));         await html('C6d_vista_ic', '#view-ic');
-  await page.evaluate(() => generarInforme(102));   await html('C6e_vista_informe', '#view-informe');
-  await page.evaluate(() => { try { genVFBorrador(101, true); } catch (e) { window.__vfErr = e.message; } });
-  await page.waitForTimeout(150);
-  await html('C6f_expediente_tras_vf', '#view-expediente');
+  /* IC, su documento impreso y la VF dejaron de ser vistas de ejemplo en la Fase 3-d: viven en las pestañas del
+     expediente de la API (conectada.js los verifica); aca solo queda el expediente de ejemplo. */
+  await page.evaluate(() => abrirExpedienteDemo(101));
+  await html('C6f_expediente_ejemplo', '#view-expediente');
 
   /* ============================================================================
      PARTE D — ESTADO FINAL DEL MODELO tras todas las mutaciones
@@ -277,7 +263,6 @@ const norm = (s) => (s == null ? s : String(s)
   await cap('D2_meta_final', () => ({
     grupos: typeof GRUPOS !== 'undefined' ? GRUPOS : null,
     llamadasAImprimir: window.__printed || 0,
-    errorVF: window.__vfErr || null,
   }));
 
   /* D3 · La analitica institucional es DERIVADA del modelo, no constantes.

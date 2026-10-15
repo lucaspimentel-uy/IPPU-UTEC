@@ -224,12 +224,13 @@ async function cargarModsExp(){
   const mi = EXP.seq, id = EXP.id;
   if(id === null || !EXP.flujo) return;
   const anio = EXP.flujo.anio;
-  const [ri, rp] = await Promise.allSettled([apiFetch(`/hce/${id}/idea`), apiFetch(`/hce/${id}/protocolo`)]);
+  const [ri, rp, rc] = await Promise.allSettled([apiFetch(`/hce/${id}/idea`), apiFetch(`/hce/${id}/protocolo`), apiFetch(`/hce/${id}/informe-cierre`)]);
   if(mi !== EXP.seq) return;
   EXP.mods = {
     lb: ri.status === "fulfilled" ? _recDeLista("lb", ri.value.data, anio) : null,
     pa: rp.status === "fulfilled" ? _recDeLista("pa", rp.value.data, anio) : null,
-    pb: rp.status === "fulfilled" ? _recDeLista("pb", rp.value.data, anio) : null
+    pb: rp.status === "fulfilled" ? _recDeLista("pb", rp.value.data, anio) : null,
+    ic: rc.status === "fulfilled" ? (rc.value.data || []).find(x => x.anio === anio) || null : null
   };
   pintarTabsExp(); pintarFlujo();
 }
@@ -799,6 +800,7 @@ function evCuerpo(ev){
 /* campo de la API -> {ctl, err, rot} */
 function evMapaCampo(ev, campo){
   if(!campo) return null;
+  if(ev.k === "ic") return icMapaCampo(campo);        // el informe de cierre usa estos mismos helpers de error (informe-cierre.js)
   let m;
   const comunes = {
     evaluador_t1_id: {ctl: "ev_t1", err: "err_ev_t1", rot: "Evaluador/a 1"},

@@ -10,10 +10,10 @@ Sirve para una pregunta concreta:
 
 Se captura antes, se captura después, se comparan. Si difieren, algo se rompió.
 
-## Demo conectada a la API — `conectada.js` (Fase 3-a, 3-b y 3-c, `handoff.md` §5.122, §5.124 y §5.125)
+## Demo conectada a la API — `conectada.js` (Fase 3-a, 3-b, 3-c y 3-d, `handoff.md` §5.122, §5.124, §5.125 y §5.126)
 
 Es **otra cosa** que el *fingerprint* de abajo: no compara dos versiones de la demo estática, sino que
-prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, IDEA, protocolos A/B, modo demostración). Corre en Chromium
+prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, IDEA, protocolos A/B, informe de cierre con su documento impreso y recibí, valoración funcional, modo demostración). Corre en Chromium
 headless con Playwright y sale con código 0 si pasa todo, 1 si algo falla.
 
 **Qué necesita** (tres cosas arriba a la vez; el script avisa cuál falta):
@@ -81,7 +81,7 @@ Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; C
 el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
 levantarla y volver a cargar el seed.
 
-**Qué verifica** (113 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`):
+**Qué verifica** (145 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`, `3d-…`):
 
 - **Fase 3-a** — `3a-a` login del técnico y chip con su nombre y rol · `3a-b` contraseña mala → mensaje en
   `role="alert"` con foco y `sessionStorage` vacío · `3a-c…` conteos del listado y del filtro de grupo **iguales a los de
@@ -115,10 +115,15 @@ levantarla y volver a cargar el seed.
   abierto dejan los campos vacíos y `WIZ.orig` null · `3c-j4`/`3c-j5`/`3c-j11` selector de grupos (técnico: sólo los suyos, sin
   «Sin grupo asignado», uno solo → preseleccionado; admin: todos) · `3c-j6` alta del técnico en un grupo ajeno → el 403 de la API
   se muestra · `3c-j7` una escritura que devuelve `warnings` los muestra sin bloquear · `3c-j8` la cédula se compara por valor
-  bruto · `3c-j9` el texto completo de los expedientes de ejemplo 101–108, su HCE-DOC y su vista de IC no dicen «habilitación
+  bruto · `3c-j9` el texto completo de los expedientes de ejemplo 101–108, y su HCE-DOC no dicen «habilitación
   excepcional», «Bloqueado»/«bloqueada» ni llevan candado (salvo el 🔒 del documento histórico, excluido a propósito) · `3c-j9b` guardar
   una foto individual y una grupal sin autorización no bloquea ni avisa (§5.99) · `3c-j10` la marca «Demo
   parcialmente conectada» no tapa contenido a 1280×800 y 1280×900.
+- **Fase 3-d** (escribe: IC, recibí, addenda, VF; **necesita `python` con `pypdf`** para leer el PDF) — contra el seed y tres expedientes (Martín, Valentina, Camila, Sofía):
+  `3d-lay`/`3d-lay2` sin `view-ic`, selector, funciones ni manejadores muertos (8 ejemplos + 13 pestañas) · `3d-a1…a3` **IC de Martín impreso**: IDEA 58 · PA 60 · PB 79 · Δ +19 y por escala 4/6/4/5, **igual a una llamada directa a `GET …/documento`**, sin alerta, cédula y CIE-11 de `GET /hce`, firmas de `informe.firmas[]`, sin «Soporte» ·
+  `3d-b1`/`3d-b2` **`page.pdf()` A4** de ese documento (se guarda en `salidas/ic-martin.pdf`, gitignored): cantidad de hojas, tamaño A4, encabezado del expediente en cada hoja y **ninguna tabla, radar, bloque de firmas ni membrete partido** — se lee el texto de cada hoja con `pypdf` y se exige que los marcadores de inicio y de fin de cada bloque (p. ej. «18 / 24» … «+19» de la tabla) caigan **en la misma hoja**, también con la impresión ampliada 1,25× y 1,5× (otros cortes de página) ·
+  `3d-c0…c5` **IC de Valentina**: crear (`POST` sólo lo tipeado), 422 por campo, dos firmantes iguales → 422, firmar con dos distintos en orden inverso al del grupo, solo lectura, avisos de la API, impreso con las firmas de quienes firmaron · `3d-r1…r3` recibí: diálogo accesible, 422 por campo, Esc y foco, una sola vez (409) · `3d-ad` addenda con autor · `3d-n1…n3` Camila: impreso sin IC / con borrador = estado del flujo (sin `/documento` / con su 409) y 409 al guardar → solo lectura ·
+  `3d-e1…e3` **VF vacía → crear**, sin sugerencia ni «Autogenerar» · `3d-d1…d5` VF de Martín: categoría == API, `PATCH` sólo con `pct`, % rechazado → error por campo, alerta de vigencia de la API, reporte con la lectura del Δ de la API · `3d-d7` categorías y niveles en la rampa de un solo matiz (nunca ok/warn/bad) · `3d-f` el código no usa lbTotales/protTotales/calcularDelta/deltaInterpreta/categoriaBaremo/sugiereNivel… · `3d-ax` toda entrada con su etiqueta · `3d-w` sin desborde a 390/1024 px.
 - `z` — **0 errores de JavaScript** en toda la corrida.
 
 Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.

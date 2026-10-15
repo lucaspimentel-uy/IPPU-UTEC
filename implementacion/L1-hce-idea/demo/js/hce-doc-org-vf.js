@@ -1,6 +1,6 @@
-/* M7 HCE-DOC (documentos y fotos) - M8 HCE-ORG (INAU/BPS) - M9 HCE-VF (BUND/CIF).
+/* M7 HCE-DOC (documentos y fotos) y M8 HCE-ORG (INAU/BPS), en modo demostracion - HCE-VF (BUND/CIF) CONECTADA a la API (Fase 3-d, §5.126).
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
-   Extraido del monolito (lineas 3298-3765) sin cambios de logica.
+   DOC y ORG: extraidos del monolito (lineas 3298-3765) sin cambios de logica. VF: reescrita contra la API (ver su bloque, mas abajo).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 /* ===================== HCE-DOC · DOCUMENTOS Y FOTOS (M7) =====================
    Adjuntos categorizados + fotos individuales condicionadas a la autorización
@@ -230,31 +230,27 @@ function quitarRegOrg(id, org, ix){
   toast("Registro quitado (constancia en HCE-LOG).");
 }
 
-/* ===================== HCE-VF · VALORACIÓN FUNCIONAL (M9) =====================
-   BUND/CIF (Doc. Técnico §7): IPPU registra la valoración oficial, NO certifica.
-   La tabla de categorización es PARAMETRIZABLE (decisión §0.4): una sola constante,
-   cortes a confirmar por IPPU contra el anexo del Decreto 72/025 antes de uso
-   clínico real. Terminología §8.1: «severo / muy severo», nunca «grave». */
-const BUND_CATS = [
-  {min:0,  max:4,   cat:"Sin discapacidad", rango:"0 % a 4 %",   imp:"Observación preventiva."},
-  {min:5,  max:24,  cat:"Leve",             rango:"5 % a 24 %",  imp:"Requiere adaptaciones menores."},
-  {min:25, max:49,  cat:"Moderado",         rango:"25 % a 49 %", imp:"Habilita acceso a prestaciones y amparo en cuota laboral."},
-  {min:50, max:95,  cat:"Severo",           rango:"50 % a 95 %", imp:"Requiere apoyos significativos y permanentes."},
-  {min:96, max:100, cat:"Muy severo",       rango:"96 % a 100 %",imp:"Configura situación de dependencia; apoyo integral."},
+/* ===================== HCE-VF · VALORACIÓN FUNCIONAL — CONECTADA A LA API (Fase 3-d, handoff §5.126) =====================
+   BUND/CIF (Doc. Técnico §7): IPPU registra la valoración oficial, NO certifica. Vive en la pestaña VF del expediente.
+     GET /hce/{id}/valoracion-funcional   404 = todavía no se creó (estado vacío, no un error)
+     POST  …                              crea (una por expediente; 409 la segunda)
+     PATCH …                              edita sólo lo que cambió
+   Reglas duras, todas del servidor (esto es solo presentacion):
+   - la categoría del baremo (`categoria`, `categoria_etiqueta`) y la alerta de vigencia (`alerta_vigencia`) salen SOLO de
+     la respuesta de la API; tras cada guardado se vuelve a pintar desde la respuesta. El navegador no clasifica el %,
+     no calcula vigencias y no sugiere nada: la API no tiene sugerencia de nivel CIF ni borrador autogenerado (los cortes
+     están pendientes con IPPU, §5.118), así que la pantalla no ofrece ninguna;
+   - `pct` viaja como texto (Decimal en la API) y la API lo valida: un valor rechazado vuelve como error por campo;
+   - los niveles y las categorías usan la MISMA rampa de un solo matiz que las bandas del IDEA (notas de accesibilidad
+     §3.1), nunca ok/warn/bad; el nombre va siempre escrito.
+   La «Guía orientativa» (categorías del baremo y prestaciones) es contenido estático y lleva la marca «Solo demo». */
+const BUND_CATS = [      // SOLO para la guía estática de más abajo: nada la usa para clasificar
+  {cat:"Sin discapacidad", rango:"0 % a 4 %",   imp:"Observación preventiva."},
+  {cat:"Leve",             rango:"5 % a 24 %",  imp:"Requiere adaptaciones menores."},
+  {cat:"Moderado",         rango:"25 % a 49 %", imp:"Habilita acceso a prestaciones y amparo en cuota laboral."},
+  {cat:"Severo",           rango:"50 % a 95 %", imp:"Requiere apoyos significativos y permanentes."},
+  {cat:"Muy severo",       rango:"96 % a 100 %",imp:"Configura situación de dependencia; apoyo integral."},
 ];
-/* SALVAGUARDA DURA (§7.5, a nivel de lógica): la categoría del baremo se deriva
-   ÚNICAMENTE del % de la valoración oficial (vf.pct). Si esta función recibe algo
-   con forma de instrumento clínico (IDEA o IPPU-TEA), lanza error — imposible de
-   saltear desde otro punto del código, igual que calcularDelta (M5). */
-function categoriaBaremo(fuente){
-  if(fuente && typeof fuente==="object" &&
-     (fuente.kind==="idea" || fuente.kind==="protocolo" ||
-      Array.isArray(fuente.dim) || Array.isArray(fuente.item) || Array.isArray(fuente.esc)))
-    throw new Error("categoriaBaremo: constructos no equivalentes — el % y la categoría del baremo salen sólo de la valoración oficial (BUND), nunca de puntajes IDEA/IPPU-TEA (§7.5).");
-  const n = parseFloat(fuente && typeof fuente==="object" ? fuente.pct : fuente);
-  if(isNaN(n) || n<0 || n>100) return null;
-  return BUND_CATS.find(c=>n>=c.min && n<=c.max) || null;
-}
 const VF_DOMINIOS = [
   ["comunicacion","Comunicación (comprender y expresarse, con o sin apoyos)","CIF d310–d360"],
   ["autocuidado","Autocuidado (alimentación, higiene, vestido)","CIF d510–d570"],
@@ -264,6 +260,12 @@ const VF_DOMINIOS = [
   ["comunidad","Vida doméstica, comunitaria y uso de servicios","CIF d610–d699 · d910–d999"],
 ];
 const VF_NIVELES = ["","Autónomo","Apoyo ocasional","Apoyo frecuente","Apoyo permanente"];
+const VF_ESTADOS = ["No iniciado","En trámite","Valorado","A revalorar"];
+/* Paso de la rampa por nombre. La API devuelve el NOMBRE de la categoría y el nivel que se registró, no su orden: el
+   paso sale de este mapa y, si el nombre no está (catálogo cambiado), no se infiere nada: chip neutro con el nombre
+   escrito (como `banda.orden` del IDEA, hueco de la API anotado en §5.125/§5.126). */
+const VF_NIVEL_PASO = {"Autónomo":1, "Apoyo ocasional":2, "Apoyo frecuente":4, "Apoyo permanente":6};
+const VF_CAT_PASO = {"Sin discapacidad":1, "Leve":2, "Moderado":3, "Severo":5, "Muy severo":6};
 /* Guía orientativa de prestaciones (§7.7) — contenido informativo estático. */
 const PRESTACIONES = [
   {n:"Registro Nacional de Personas con Discapacidad (RNPcD)", o:"MIDES", d:"Inscripción voluntaria a partir de la valoración con el BUND. Puerta de entrada a prestaciones y programas."},
@@ -276,191 +278,384 @@ const PRESTACIONES = [
   {n:"Apoyos a la inclusión educativa", o:"ANEP · MEC", d:"Adaptaciones curriculares, acompañamiento y protocolos de inclusión según normativa educativa vigente."},
 ];
 
-/* --- Autogeneración descriptiva (§7.4): frases, nunca números crudos ---- */
-function descAfect(v){
-  if(v>=16) return "es actualmente el área donde más apoyo necesita";
-  if(v>=8)  return "requiere apoyos de manera habitual";
-  return "se encuentra relativamente preservada, con apoyos puntuales";
+const VF = {hceId: null, estado: "cargando", rec: null, carga: 0, avisos: [], campos: null, sucio: false, guardando: false, nuevo: false, error: ""};
+const _vfEl = (id) => document.getElementById(id);
+const _vfSel = (v) => v === "" || v === null || v === undefined ? "" : String(v);
+
+function vfReiniciar(){
+  VF.carga++;
+  Object.assign(VF, {hceId: null, estado: "cargando", rec: null, avisos: [], campos: null, sucio: false, guardando: false, nuevo: false, error: ""});
 }
-function sugiereNivel(v){
-  if(v>=16) return "Apoyo frecuente";
-  if(v>=8)  return "Apoyo ocasional";
-  return "Autónomo";
+
+/* ---------- Chips de la rampa (texto + paso; nunca ok/warn/bad) ---------- */
+function vfChipHtml(nombre, paso, extra){
+  const clase = paso === undefined || paso === null ? "neutra" : paso;
+  return `<span class="banda-chip banda-${clase}" data-banda-paso="${clase}">${escHtml(nombre)}${extra ? `<span class="banda-rango"> · ${escHtml(extra)}</span>` : ""}</span>`;
 }
-function descDelta(d){
-  if(d>=7)  return "mostró avances claros y sostenidos durante el año";
-  if(d>=1)  return "mostró avances, todavía en consolidación";
-  if(d===0) return "se mantuvo estable, lo que en varias situaciones constituye en sí mismo un logro";
-  if(d>=-6) return "presentó algunas dificultades que el equipo está acompañando de cerca";
-  return "presentó un retroceso que motivó una revisión del plan de trabajo junto a la familia";
+function vfNivelChipHtml(nivel){
+  if(!nivel) return `<span class="sin-puntuar">sin registrar</span>`;
+  return vfChipHtml(nivel, Object.prototype.hasOwnProperty.call(VF_NIVEL_PASO, nivel) ? VF_NIVEL_PASO[nivel] : null);
 }
-const VF_NOMBRE_ESC = ["la relación con otras personas","la comunicación","el manejo de los cambios y las rutinas","el juego, la imitación y la imaginación"];
-const deArea = n => n.startsWith("el ") ? "del "+n.slice(3) : "de "+n;
-function genVFBorrador(id, force){
-  const p = NNA.find(n=>n.id===id); if(!p) return;
-  const V = p.vf;
-  if(!p.flujo.lb.firmado){ toast("Para autogenerar el borrador se necesita la línea base IDEA (HCE-LB) firmada."); return; }
-  if((V.sintesisFuncional||"").trim() && !force && !window.confirm("Ya existe una síntesis funcional. ¿Reemplazarla por un nuevo borrador autogenerado?")) return;
-  const t = lbTotales(p.flujo.lb.dim);
-  const orden = [0,1,2,3].sort((a,b)=>t.esc[a]-t.esc[b]);   // fortaleza relativa → necesidad de apoyo
-  let txt = "PERFIL ACTUAL. ";
-  txt += "En la evaluación del equipo, "+VF_NOMBRE_ESC[orden[0]]+" aparece como el área de mayor fortaleza relativa, mientras que "+VF_NOMBRE_ESC[orden[3]]+" "+descAfect(t.esc[orden[3]])+". ";
-  txt += [1,2].map(i=>"El área "+deArea(VF_NOMBRE_ESC[orden[i]])+" "+descAfect(t.esc[orden[i]])+".").join(" ");
-  if(p.flujo.pa.firmado && p.flujo.pb.firmado && p.flujo.pb.deltas){
-    txt += "\n\nEVOLUCIÓN DEL AÑO. ";
-    txt += [0,1,2,3].map(i=>"En "+VF_NOMBRE_ESC[i]+" "+descDelta(p.flujo.pb.deltas.esc[i])+".").join(" ");
-  } else if(p.flujo.pa.firmado){
-    txt += "\n\nEVOLUCIÓN DEL PRIMER SEMESTRE. El equipo registró el primer seguimiento semestral; la evolución completa del año se describirá al cierre del segundo semestre.";
+/* La categoría la deriva el servidor (sólo de pct); acá solo se pinta lo que devolvió. */
+function vfCategoriaHtml(rec){
+  const c = rec.categoria;
+  if(!c) return `<span class="banda-chip banda-neutra" data-banda-paso="neutra">${escHtml(rec.categoria_etiqueta || "No corresponde")}</span>`;
+  const paso = Object.prototype.hasOwnProperty.call(VF_CAT_PASO, c.categoria) ? VF_CAT_PASO[c.categoria] : null;
+  return `${vfChipHtml(c.categoria, paso, c.rango)} <span class="vf-impl">${escHtml(c.implicancia)}</span>`;
+}
+const VF_ALERTA_TXT = {vencida: "Vencida", "30_dias": "Vence en 30 días o menos", "90_dias": "Vence en 90 días o menos"};
+function vfAlertaHtml(rec){
+  const a = rec.alerta_vigencia;
+  if(!a) return "";
+  return `<div class="vf-alerta" id="vfAlerta"><span aria-hidden="true">⚠</span> <b>Vigencia — ${escHtml(VF_ALERTA_TXT[a.nivel] || a.nivel)}.</b> ${escHtml(a.mensaje)}</div>`;
+}
+
+/* ======================================================================
+   CARGA
+   ====================================================================== */
+function vfMostrar(){
+  if(VF.hceId === EXP.id && (VF.estado === "listo" || VF.estado === "vacio")){
+    if(VF.sucio || VF.nuevo){ vfRepintar(); return; }
+    vfRepintar();
+    vfCargar(true);
+    return;
   }
-  txt += "\n\n(Nota del equipo: borrador descriptivo generado desde los instrumentos clínicos firmados. Debe ser revisado, ajustado y completado por los técnicos responsables antes de compartirse.)";
-  V.sintesisFuncional = txt;
-  /* Sugerencias de autonomía SÓLO en los 3 dominios con correlato clínico directo
-     (comunicación ← E2 · interacciones ← E1 · aprendizaje ← E4, §7.4) y sólo si están vacíos. */
-  if(!V.dominios.comunicacion)  V.dominios.comunicacion  = sugiereNivel(t.esc[1]);
-  if(!V.dominios.interacciones) V.dominios.interacciones = sugiereNivel(t.esc[0]);
-  if(!V.dominios.aprendizaje)   V.dominios.aprendizaje   = sugiereNivel(t.esc[3]);
-  logEvento(p, {modulo:"vf", tipo:"edicion", detalle:"Borrador de síntesis funcional autogenerado (descriptivo; requiere revisión de los técnicos responsables)."});
-  renderVf(id);
-  toast("Borrador descriptivo generado — revisar y ajustar antes de compartir.");
+  vfCargar(false);
+}
+async function vfCargar(conservar){
+  const mi = EXP.seq, id = EXP.id;
+  if(id === null) return;
+  if(VF.hceId !== id){ vfReiniciar(); VF.hceId = id; }
+  else if(!conservar || (VF.estado !== "listo" && VF.estado !== "vacio")) VF.estado = "cargando";
+  const n = ++VF.carga;
+  const vigente = () => mi === EXP.seq && VF.hceId === id && n === VF.carga;
+  if(VF.estado === "cargando") vfRepintar();
+  let rec = null, vacio = false;
+  try{
+    const r = await apiFetch(`/hce/${id}/valoracion-funcional`);
+    rec = r.data;
+  }catch(err){
+    if(!vigente()) return;
+    if(err instanceof ApiError && err.status === 404) vacio = true;      // 404 = todavía no se creó: un estado, no un error
+    else { VF.estado = "error"; VF.error = err instanceof ApiError ? err.message : "No se pudo cargar la valoración funcional."; vfRepintar(); return; }
+  }
+  if(!vigente()) return;
+  const listoAntes = VF.estado === "listo" || VF.estado === "vacio";
+  if(conservar && listoAntes && (VF.sucio || VF.nuevo)) return;      // se empezó a tipear mientras llegaba la respuesta: no se pisa nada
+  const sinCambios = conservar && listoAntes && JSON.stringify(VF.rec) === JSON.stringify(rec) && vacio === (VF.estado === "vacio");
+  VF.rec = rec;
+  VF.estado = vacio ? "vacio" : "listo";
+  VF.sucio = false; VF.guardando = false; VF.campos = null; VF.nuevo = false;
+  if(!sinCambios) vfRepintar();
+}
+function vfReintentar(){ vfCargar(false); }
+
+/* ======================================================================
+   RENDER
+   ====================================================================== */
+function vfRepintar(){
+  if(EXP.tab !== "vf") return;
+  const p = _vfEl("panelExp"); if(!p) return;
+  p.innerHTML = vfPanelHtml();
+}
+function vfAvisosHtml(){
+  const a = VF.avisos || [];
+  if(!a.length) return "";
+  return `<b>Avisos de la API (no bloquean):</b><ul>${a.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+    <button type="button" class="btn btn-ghost btn-mini" onclick="vfCerrarAvisos()">Entendido</button>`;
+}
+function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){ el.innerHTML = ""; el.hidden = true; } }
+
+function vfPanelHtml(){
+  const cab = (extra) => `<h3 id="vfTitulo" tabindex="-1"><span class="ic" aria-hidden="true">♿</span> VF · Valoración funcional (BUND / CIF) ${extra || ""}</h3>`;
+  if(VF.hceId !== EXP.id || VF.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(VF.estado === "error"){
+    return `<div class="info-card">${cab()}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(VF.error)}<br>
+      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="vfReintentar()">Reintentar</button></div></div></div>`;
+  }
+  if(VF.estado === "vacio" && !VF.nuevo){
+    return `<div class="info-card">${cab()}<div class="ib">
+      <div class="empty-state" role="status"><div class="big" aria-hidden="true">♿</div>
+        Todavía no se registró una valoración funcional para este expediente.<br>
+        <span class="hint">Es un estado normal: se registra cuando el equipo cuenta con la información. Todos los campos son opcionales.</span><br>
+        <button type="button" class="btn btn-primary" id="btnVfNuevo" style="margin-top:12px" onclick="vfNuevo()">+ Registrar valoración funcional</button></div>
+    </div></div>`;
+  }
+  return vfEditorHtml();
+}
+function vfNuevo(){
+  VF.nuevo = true; VF.campos = null; VF.sucio = false;
+  vfRepintar();
+  const t = _vfEl("vf_estado"); if(t) t.focus();
 }
 
-/* Alerta única del módulo (§7.8): vencimiento/revisión a 90 y 30 días. */
-function vfAlertaVigencia(V){
-  if(!V.vigencia) return null;
-  const dias = Math.round((new Date(V.vigencia+"T00:00:00") - new Date(HOY+"T00:00:00"))/86400000);
-  if(dias < 0)   return {nivel:"bad",  txt:`⚠ Valoración oficial vencida el ${fmtFecha(V.vigencia)} — corresponde gestionar la revaloración (§7.8).`};
-  if(dias <= 30) return {nivel:"bad",  txt:`⚠ La valoración oficial vence en ${dias} día(s) (${fmtFecha(V.vigencia)}) — alerta de 30 días (§7.8).`};
-  if(dias <= 90) return {nivel:"warn", txt:`La valoración oficial vence en ${dias} día(s) (${fmtFecha(V.vigencia)}) — alerta de 90 días (§7.8).`};
-  return null;
-}
+const _cvV = (id, base) => (VF.campos && Object.prototype.hasOwnProperty.call(VF.campos, id)) ? VF.campos[id] : base;
+function vfEditorHtml(){
+  const rec = VF.rec, crear = !rec, r = rec || {}, dom = r.dominios || {};
+  const campo = (id, rot, base, area, extra) => area
+    ? `<div class="field"><label for="${id}">${rot}</label><textarea id="${id}" data-vf aria-describedby="err_${id}" oninput="vfSucio()"${extra || ""}>${escHtml(_cvV(id, base || ""))}</textarea><div class="ev-err" id="err_${id}"></div></div>`
+    : "";
+  const input = (id, rot, base, tipo, hint, modo) => `<div class="field"><label for="${id}">${rot}</label>
+    <input id="${id}" type="${tipo || "text"}" data-vf${modo ? ` inputmode="${modo}"` : ""} value="${escHtml(_cvV(id, base === null || base === undefined ? "" : base))}" aria-describedby="${hint ? "hint_" + id + " " : ""}err_${id}" oninput="vfSucio()" autocomplete="off">
+    ${hint ? `<div class="hint" id="hint_${id}">${hint}</div>` : ""}<div class="ev-err" id="err_${id}"></div></div>`;
+  const estadoActual = _cvV("vf_estado", r.estado || "");
+  const estadosOpc = (VF_ESTADOS.includes(estadoActual) || !estadoActual ? VF_ESTADOS : [estadoActual, ...VF_ESTADOS])
+    .map(c => `<option value="${escHtml(c)}"${c === estadoActual ? " selected" : ""}>${escHtml(c)}</option>`).join("");
+  const filasDom = VF_DOMINIOS.map(([k, n, ref]) => {
+    const id = "vf_dom_" + k, actual = _cvV(id, _vfSel(dom[k]));
+    const opts = (actual && !VF_NIVELES.includes(actual) ? [actual, ...VF_NIVELES] : VF_NIVELES)
+      .map(x => `<option value="${escHtml(x)}"${x === actual ? " selected" : ""}>${escHtml(x || "— sin registrar —")}</option>`).join("");
+    return `<tr><th scope="row"><label for="${id}">${escHtml(n)}</label></th><td class="vf-ref">${escHtml(ref)}</td>
+      <td><select id="${id}" data-vf aria-describedby="err_${id}" onchange="vfSucio();vfNivelActualizar('${k}')">${opts}</select><div class="ev-err" id="err_${id}"></div></td>
+      <td id="vf_chip_${k}">${vfNivelChipHtml(actual)}</td></tr>`;
+  }).join("");
+  const resultado = rec
+    ? `<div class="vf-resultado" id="vfResultado" tabindex="-1" aria-label="Resultado calculado por el servidor">
+        <div><span class="vf-rot">Categoría según el baremo (la calcula el servidor desde el %)</span> ${vfCategoriaHtml(rec)}</div>
+        ${vfAlertaHtml(rec)}</div>`
+    : `<p class="hint">La categoría según el baremo y la alerta de vigencia las calcula el servidor cuando se guarda la valoración.</p>`;
+  return `<div class="info-card ev-card"><div class="ev-cab"><h3 id="vfTitulo" tabindex="-1"><span class="ic" aria-hidden="true">♿</span> VF · Valoración funcional (BUND / CIF)</h3>
+      <span class="ev-estado"><span class="st ${rec ? "st-registrada" : "st-sin_iniciar"}"><span aria-hidden="true">${rec ? "●" : "○"}</span> ${rec ? "Registrada" : "Por registrar"}</span></span></div>
+    <div class="ib">
+      <p class="hint"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</p>
+      <div id="vfAvisos" class="review-note avisos-api" role="status"${(VF.avisos || []).length ? "" : " hidden"}>${vfAvisosHtml()}</div>
+      <div id="vfErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
+    </div></div>
 
-/* --- Panel HCE-VF en el expediente ----------------------------------- */
-function vfBodyHtml(p){
-  const V = p.vf; const cat = categoriaBaremo(V); const alerta = vfAlertaVigencia(V);
-  const set = campo => `onchange="vfSet(${p.id},'${campo}',this.value)"`;
-  const catColor = cat ? (cat.cat==="Sin discapacidad" ? "var(--ok)" : (cat.cat==="Leve"||cat.cat==="Moderado") ? "var(--warn)" : "var(--bad)") : "";
-  return `
-    <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:12px"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</div>
-    <div class="section-label">Valoración oficial (BUND) — registro</div>
-    <div class="form-grid">
-      <div class="field"><label>Estado</label><select ${set("estado")}>${["No iniciado","En trámite","Valorado","A revalorar"].map(c=>`<option ${V.estado===c?"selected":""}>${c}</option>`).join("")}</select></div>
-      <div class="field"><label>Fecha de valoración</label><input type="date" value="${V.fecha}" ${set("fecha")}></div>
-      <div class="field"><label>Organismo / equipo valorador</label><input value="${V.organismo}" ${set("organismo")}></div>
-      <div class="field"><label>Porcentaje de discapacidad (%)</label><input type="number" min="0" max="100" value="${V.pct}" ${set("pct")}></div>
-      <div class="field"><label>Vigencia / próxima revisión</label><input type="date" value="${V.vigencia}" ${set("vigencia")}></div>
-      <div class="field"><label>N.º RNPcD (si está inscripto)</label><input value="${V.rnpcd}" ${set("rnpcd")}></div>
-    </div>
-    <div style="margin:6px 0 0;font-size:.8rem">Categoría según baremo (tabla parametrizable, §0.4): ${cat
-      ? `<span class="vf-cat" style="background:${catColor}22;color:${catColor}">${cat.cat} · ${cat.rango}</span> <span style="color:var(--ink-2)">${cat.imp}</span>`
-      : `<span style="color:var(--ink-2)">se deriva automáticamente al ingresar el % oficial</span>`}</div>
-    ${alerta ? `<div class="vf-alerta ${alerta.nivel==="bad"?"bad":""}">${alerta.txt}</div>` : ""}
-    <div class="vf-salva"><b>Salvaguarda dura (§7.5):</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al % del baremo — miden constructos distintos. Este módulo nunca autocalcula la categoría desde los instrumentos clínicos (guard a nivel de lógica, como el delta de M5).</div>
+    <div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoración oficial (BUND) — registro</h2></div>
+      <div style="padding:16px 18px">
+        <div class="form-grid">
+          <div class="field"><label for="vf_estado">Estado</label>
+            <select id="vf_estado" data-vf aria-describedby="err_vf_estado" onchange="vfSucio()"><option value="">— sin registrar —</option>${estadosOpc}</select><div class="ev-err" id="err_vf_estado"></div></div>
+          ${input("vf_fecha", "Fecha de valoración", r.fecha, "date")}
+          ${input("vf_organismo", "Organismo / equipo valorador", r.organismo)}
+          ${input("vf_pct", "Porcentaje de discapacidad (%)", r.pct, "text", "0 a 100, con hasta 2 decimales. Solo del dictamen oficial (BUND).", "decimal")}
+          ${input("vf_vigencia", "Vigencia / próxima revisión", r.vigencia, "date")}
+          ${input("vf_rnpcd", "N.º RNPcD (si está inscripto)", r.rnpcd)}
+        </div>
+        ${resultado}
+        <div class="vf-salva"><b>Salvaguarda dura (§7.5):</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al % del baremo — miden constructos distintos. La categoría la deriva el servidor únicamente del % oficial; el navegador no la calcula.</div>
+      </div></div>
 
-    <div class="section-label" style="margin-top:16px">Perfil funcional en clave CIF (§7.3) — capacidades, autonomía, barreras y apoyos</div>
-    <table class="comp-table"><thead><tr><th>Dominio de la vida diaria</th><th>Referencia CIF</th><th style="width:190px">Nivel de autonomía</th></tr></thead><tbody>
-      ${VF_DOMINIOS.map(([k,n,ref])=>`<tr><td>${n}</td><td style="color:var(--ink-2);font-size:.74rem">${ref}</td>
-        <td><select onchange="vfSetDom(${p.id},'${k}',this.value)">${VF_NIVELES.map(x=>`<option ${V.dominios[k]===x?"selected":""} value="${x}">${x||"— sin registrar —"}</option>`).join("")}</select></td></tr>`).join("")}
-    </tbody></table>
-    <div class="form-grid full" style="margin-top:12px">
-      <div class="field"><label>Capacidades y fortalezas (qué puede, qué disfruta, qué lo motiva)</label><textarea ${set("capacidades")}>${V.capacidades}</textarea></div>
-      <div class="field"><label>Barreras del entorno (físicas, comunicacionales, actitudinales, de servicios)</label><textarea ${set("barreras")}>${V.barreras}</textarea></div>
-      <div class="field"><label>Apoyos y facilitadores existentes</label><textarea ${set("apoyos")}>${V.apoyos}</textarea></div>
-      <div class="field"><label>Observaciones (consultas de la familia, gestiones en curso)</label><textarea ${set("obs")}>${V.obs}</textarea></div>
-      <div class="field"><label>Síntesis funcional descriptiva (base del reporte a la familia — editable)</label><textarea style="min-height:110px" ${set("sintesisFuncional")}>${V.sintesisFuncional}</textarea></div>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-      <button class="btn btn-ghost btn-mini" onclick="genVFBorrador(${p.id})">✦ Autogenerar borrador desde IDEA y protocolos</button>
-      <button class="btn btn-primary btn-mini" onclick="generarReporteVF(${p.id})">🖨 Reporte de Valoración Funcional (familia)</button>
-    </div>
-    <div style="font-size:.72rem;color:var(--ink-2);margin-top:8px">El borrador usa <b>sólo lenguaje descriptivo</b> (nunca números crudos ni porcentajes) desde los instrumentos firmados, y sugiere autonomía únicamente en los 3 dominios con correlato clínico directo (comunicación ← E2 · interacciones ← E1 · aprendizaje ← E4) como propuesta editable. Nada de esto genera % ni categorías del baremo.</div>
+    <div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Perfil funcional en clave CIF (§7.3) — autonomía, capacidades, barreras y apoyos</h2></div>
+      <div style="padding:16px 18px">
+        <div class="tabla-scroll"><table class="comp-table vf-doms"><caption class="sr-only">Nivel de autonomía por dominio de la vida diaria</caption>
+          <thead><tr><th scope="col">Dominio de la vida diaria</th><th scope="col">Referencia CIF</th><th scope="col">Nivel de autonomía</th><th scope="col">Registrado</th></tr></thead><tbody>${filasDom}</tbody></table></div>
+        <div class="form-grid full" style="margin-top:12px">
+          ${campo("vf_capacidades", "Capacidades y fortalezas (qué puede, qué disfruta, qué lo motiva)", r.capacidades, true)}
+          ${campo("vf_barreras", "Barreras del entorno (físicas, comunicacionales, actitudinales, de servicios)", r.barreras, true)}
+          ${campo("vf_apoyos", "Apoyos y facilitadores existentes", r.apoyos, true)}
+          ${campo("vf_obs", "Observaciones (consultas de la familia, gestiones en curso)", r.obs, true)}
+          <div class="field"><label for="vf_sintesis">Síntesis funcional descriptiva (base del reporte a la familia)</label>
+            <textarea id="vf_sintesis" data-vf style="min-height:110px" aria-describedby="hint_vf_sintesis err_vf_sintesis" oninput="vfSucio()">${escHtml(_cvV("vf_sintesis", r.sintesis_funcional || ""))}</textarea>
+            <div class="hint" id="hint_vf_sintesis">La escriben los técnicos responsables: no se autogenera.</div><div class="ev-err" id="err_vf_sintesis"></div></div>
+        </div>
+      </div></div>
 
-    <details style="margin-top:14px"><summary style="cursor:pointer;font-size:.8rem;font-weight:700;color:var(--ink-2)">Guía orientativa para la familia — categorías del baremo y prestaciones (§7.7, contenido estático)</summary>
-      <table class="comp-table" style="margin-top:10px"><thead><tr><th>Categoría</th><th>Rango</th><th>Implicancia práctica orientativa</th></tr></thead><tbody>
-        ${BUND_CATS.map(c=>`<tr ${cat&&cat.cat===c.cat?'style="background:#FDF6EA"':""}><td><b>${c.cat}</b></td><td class="num" style="text-align:left">${c.rango}</td><td>${c.imp}</td></tr>`).join("")}
-      </tbody></table>
-      <table class="comp-table" style="margin-top:12px"><thead><tr><th>Prestación / beneficio</th><th>Organismo</th><th>Orientación</th></tr></thead><tbody>
-        ${PRESTACIONES.map(x=>`<tr><td><b>${x.n}</b></td><td>${x.o}</td><td style="color:var(--ink-2);font-size:.76rem">${x.d}</td></tr>`).join("")}
-      </tbody></table>
-      <div style="font-size:.72rem;color:var(--ink-2);margin-top:8px">Contenido informativo mantenido por coordinación. No genera trámites dentro de la HCE: la HCE orienta, los organismos resuelven. Las gestiones concretas se registran en HCE-ORG.</div>
+    <div class="idea-summary" id="vfResumen">
+      <div class="nota">${crear ? "Se crea con lo que completes: todos los campos son opcionales." : "Se guarda sólo lo que cambiaste."} Después de guardar, la categoría y la alerta se muestran como las devolvió el servidor.</div>
+      <div class="spacer"></div>
+      <div class="ev-acciones" id="vfAcciones">${vfAccionesHtml()}</div>
+    </div>
+
+    <details class="vf-guia"><summary>Guía orientativa para la familia — categorías del baremo y prestaciones (§7.7) ${badgeSoloDemo()}</summary>
+      <div class="tabla-scroll"><table class="comp-table" style="margin-top:10px"><caption class="sr-only">Categorías del baremo (guía estática)</caption><thead><tr><th scope="col">Categoría</th><th scope="col">Rango</th><th scope="col">Implicancia práctica orientativa</th></tr></thead><tbody>
+        ${BUND_CATS.map(c => `<tr><th scope="row">${escHtml(c.cat)}</th><td class="num" style="text-align:left">${escHtml(c.rango)}</td><td>${escHtml(c.imp)}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="tabla-scroll"><table class="comp-table" style="margin-top:12px"><caption class="sr-only">Prestaciones y beneficios (guía estática)</caption><thead><tr><th scope="col">Prestación / beneficio</th><th scope="col">Organismo</th><th scope="col">Orientación</th></tr></thead><tbody>
+        ${PRESTACIONES.map(x => `<tr><th scope="row">${escHtml(x.n)}</th><td>${escHtml(x.o)}</td><td class="vf-ref">${escHtml(x.d)}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="hint" style="margin-top:8px">Contenido informativo mantenido por coordinación, <b>sin respaldo en la API</b>: no clasifica nada ni genera trámites dentro de la HCE. La HCE orienta, los organismos resuelven; las gestiones concretas se registran en HCE-ORG.</p>
     </details>`;
 }
-function vfPanelHtml(p){
-  return `<div class="flujo-card" id="anchor-vf">
-    <h3><span class="ic">♿</span> HCE-VF · Valoración funcional (BUND / CIF)
-      <span class="spacer"></span>
-      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${p.vf.estado}${categoriaBaremo(p.vf)?` · ${categoriaBaremo(p.vf).cat}`:""}</span>
-    </h3>
-    <div class="flujo-body" id="vfPanelBody">${vfBodyHtml(p)}</div>
-  </div>`;
+function vfAccionesHtml(){
+  const occ = VF.guardando, crear = !VF.rec;
+  return `<button type="button" class="btn btn-primary" id="btnVfGuardar" onclick="vfGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : (crear ? "✓ Crear valoración funcional" : "✓ Guardar cambios")}</button>
+    ${crear ? `<button type="button" class="btn btn-ghost" id="btnVfCancelar" onclick="vfCancelarNuevo()"${occ ? " disabled" : ""}>Cancelar</button>`
+            : `<button type="button" class="btn btn-ghost" id="btnVfReporte" onclick="vfAbrirReporte()"${occ ? " disabled" : ""}>🖨 Reporte de Valoración Funcional (familia)</button>`}`;
 }
-function renderVf(id){
-  const p = NNA.find(n=>n.id===id);
-  const el = document.getElementById("vfPanelBody");
-  if(p && el) el.innerHTML = vfBodyHtml(p);
+function vfPintarAcciones(){ const a = _vfEl("vfAcciones"); if(a) a.innerHTML = vfAccionesHtml(); }
+function vfSucio(){ if(VF.estado === "listo" || VF.estado === "vacio") VF.sucio = true; }
+function vfNivelActualizar(k){
+  const sel = _vfEl("vf_dom_" + k), c = _vfEl("vf_chip_" + k);
+  if(sel && c) c.innerHTML = vfNivelChipHtml(sel.value);
 }
-function vfSet(id, campo, valor){
-  const p = NNA.find(n=>n.id===id); if(!p) return;
-  p.vf[campo] = valor;
-  if(campo==="pct" || campo==="estado" || campo==="vigencia") renderVf(id);   // refresca categoría/alerta
-}
-function vfSetDom(id, k, valor){
-  const p = NNA.find(n=>n.id===id); if(!p) return;
-  p.vf.dominios[k] = valor;
+function vfCancelarNuevo(){ VF.nuevo = false; VF.campos = null; VF.sucio = false; vfRepintar(); const b = _vfEl("btnVfNuevo"); if(b) b.focus(); }
+function vfSincronizar(){        // lo tipeado sin guardar no se pierde al cambiar de pestaña
+  if((VF.estado !== "listo" && VF.estado !== "vacio") || EXP.tab !== "vf") return;
+  const c = {};
+  document.querySelectorAll("#panelExp [data-vf]").forEach(e => { if(e.id) c[e.id] = e.value; });
+  if(Object.keys(c).length) VF.campos = c;
 }
 
-/* --- Reporte de Valoración Funcional (§7.6): descriptivo, a demanda, ---
-   las secciones vacías NO aparecen; no es certificado ni informe clínico. */
-function generarReporteVF(id){
-  const p = NNA.find(n=>n.id===id); if(!p) return;
-  const V = p.vf; const cat = categoriaBaremo(V);
-  const cont = document.getElementById("informeContent");
+/* ======================================================================
+   ESCRITURA
+   ====================================================================== */
+const VF_CAMPOS = [["estado", "vf_estado"], ["fecha", "vf_fecha"], ["organismo", "vf_organismo"], ["pct", "vf_pct"], ["vigencia", "vf_vigencia"],
+  ["rnpcd", "vf_rnpcd"], ["capacidades", "vf_capacidades"], ["barreras", "vf_barreras"], ["apoyos", "vf_apoyos"], ["obs", "vf_obs"], ["sintesis_funcional", "vf_sintesis"]];
+/* Solo lo que cambio respecto de lo guardado (valores tal cual; `pct` va como texto, el servidor lo valida). */
+function vfCuerpo(){
+  const rec = VF.rec, body = {};
+  VF_CAMPOS.forEach(([campo, id]) => {
+    const ahora = _bruto(id), base = rec ? _baseTxt(rec[campo]) : "";
+    if(ahora !== base) body[campo] = ahora;
+  });
+  const dominios = {};
+  VF_DOMINIOS.forEach(([k]) => {
+    const ahora = _bruto("vf_dom_" + k), base = rec && rec.dominios ? _vfSel(rec.dominios[k]) : "";
+    if(ahora !== base) dominios[k] = ahora;      // "" = borrar ese nivel (PATCH fusiona dominio por dominio)
+  });
+  if(Object.keys(dominios).length) body.dominios = dominios;
+  return body;
+}
+function vfMapaCampo(campo){
+  if(!campo) return null;
+  let m;
+  if((m = /^dominios\.(\w+)/.exec(campo))){
+    const d = VF_DOMINIOS.find(x => x[0] === m[1]);
+    return {ctl: "vf_dom_" + m[1], err: "err_vf_dom_" + m[1], rot: "Nivel — " + (d ? d[1].split(" (")[0] : m[1])};
+  }
+  const t = {estado: ["vf_estado", "Estado"], fecha: ["vf_fecha", "Fecha de valoración"], organismo: ["vf_organismo", "Organismo"], pct: ["vf_pct", "Porcentaje de discapacidad"],
+    vigencia: ["vf_vigencia", "Vigencia"], rnpcd: ["vf_rnpcd", "N.º RNPcD"], capacidades: ["vf_capacidades", "Capacidades"], barreras: ["vf_barreras", "Barreras"],
+    apoyos: ["vf_apoyos", "Apoyos"], obs: ["vf_obs", "Observaciones"], sintesis_funcional: ["vf_sintesis", "Síntesis funcional"], dominios: ["vf_dom_comunicacion", "Dominios"]}[campo];
+  return t ? {ctl: t[0], err: "err_" + t[0], rot: t[1]} : null;
+}
+function vfLimpiarErrores(){
+  const p = _vfEl("panelExp"); if(!p) return;
+  p.querySelectorAll(".ev-err").forEach(e => { e.textContent = ""; });
+  p.querySelectorAll("[aria-invalid]").forEach(e => e.removeAttribute("aria-invalid"));
+  p.querySelectorAll(".field.invalid").forEach(e => e.classList.remove("invalid"));
+  const r = _vfEl("vfErrores"); if(r){ r.hidden = true; r.innerHTML = ""; }
+}
+function vfMostrarErrores(err, titulo){
+  const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo: null, mensaje: err.message || "No se pudo completar la acción."}];
+  const items = detalle.map(d => { const m = vfMapaCampo(d.campo); if(m) evMarcar(m, d.mensaje); return {m, mensaje: d.mensaje}; });
+  const r = _vfEl("vfErrores"); if(!r) return;
+  r.innerHTML = `<b>${escHtml(titulo)}</b><ul>` + items.map(it => it.m
+    ? `<li><a href="#${escHtml(it.m.ctl)}" onclick="return evIr('${escHtml(it.m.ctl)}')">${escHtml(it.m.rot)}: ${escHtml(it.mensaje)}</a></li>`
+    : `<li>${escHtml(it.mensaje)}</li>`).join("") + `</ul>`;
+  r.hidden = false; r.scrollIntoView({block: "center"}); r.focus({preventScroll: true});
+}
+
+async function vfGuardar(){
+  if(VF.guardando || (VF.estado !== "listo" && VF.estado !== "vacio")) return;
+  const mi = EXP.seq, id = EXP.id, crear = !VF.rec;
+  vfLimpiarErrores();
+  const body = vfCuerpo();
+  if(!crear && !Object.keys(body).length){ VF.avisos = []; vfCerrarAvisos(); toast("No hay cambios para guardar"); return; }
+  VF.guardando = true; vfPintarAcciones();
+  try{
+    const r = crear
+      ? await apiFetch(`/hce/${id}/valoracion-funcional`, {method: "POST", body})
+      : await apiFetch(`/hce/${id}/valoracion-funcional`, {method: "PATCH", body});
+    if(mi !== EXP.seq || VF.hceId !== id) return;
+    // Se vuelve a pintar TODO desde la respuesta: la categoría y la alerta son las del servidor, no las del formulario.
+    VF.rec = r.data; VF.estado = "listo"; VF.nuevo = false; VF.sucio = false; VF.campos = null; VF.guardando = false; VF.avisos = r.warnings || [];
+    vfRepintar();
+    const t = _vfEl("vfResultado") || _vfEl("vfTitulo"); if(t) t.focus();
+    toast(crear ? "Valoración funcional creada" : "Valoración funcional guardada");
+  }catch(err){
+    if(mi !== EXP.seq || VF.hceId !== id) return;
+    VF.guardando = false; vfPintarAcciones();
+    if(err instanceof ApiError && err.status === 409){       // otro usuario ya la creó: se muestra lo que hay en el servidor
+      VF.avisos = [{mensaje: err.message + " Se muestra la valoración tal como está en el servidor."}];
+      VF.sucio = false; VF.nuevo = false;
+      await vfCargar(false);
+      const t = _vfEl("vfTitulo"); if(t) t.focus();
+      return;
+    }
+    vfMostrarErrores(err, crear ? "No se pudo crear la valoración:" : "No se pudo guardar:");
+  }
+}
+
+/* ======================================================================
+   REPORTE IMPRESO (§7.6): descriptivo, a demanda, para la familia. Las secciones vacías NO aparecen.
+   Todo sale de la API: VF (con su categoría), PB del año (la lectura del Δ B−A la hizo el servidor) y el expediente.
+   ====================================================================== */
+const VF_NOMBRE_ESC = ["la relación con otras personas", "la comunicación", "el manejo de los cambios y las rutinas", "el juego, la imitación y la imaginación"];
+const INF_VOLVER_VF = `<button type="button" class="btn-print" onclick="vfVolverAlExpediente()">‹ Volver al expediente</button>`;
+function vfVolverAlExpediente(){
+  go("expediente");
+  if(EXP.id !== null) selTabExp("vf", true);
+}
+async function vfAbrirReporte(){
+  const mi = EXP.seq, id = EXP.id;
+  if(id === null) return;
+  const n = ++ICDOC.seq;                          // el contador del documento impreso es uno solo (IC y reporte comparten la vista)
+  const cont = _vfEl("informeContent"); if(!cont) return;
+  const nombre = EXP.hce ? `${EXP.hce.nombre} ${EXP.hce.apellido}`.trim() : "";
+  const titulo = `Reporte de Valoración Funcional — ${nombre}`;
+  go("informe");
+  cont.innerHTML = `${infBannerHtml(titulo, "Cargando el reporte…", INF_VOLVER_VF)}<div class="card"><div class="cardbody"><div class="hint" role="status">Cargando el reporte…</div></div></div>`;
+  _infEnfocar();
+  const [rv, rp, rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}/valoracion-funcional`), apiFetch(`/hce/${id}/protocolo`), apiFetch(`/hce/${id}`), evCargarProfesionales()]);
+  if(mi !== EXP.seq || n !== ICDOC.seq) return;
+  if(rv.status === "rejected" || rh.status === "rejected"){
+    const e = (rv.status === "rejected" ? rv : rh).reason;
+    cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el reporte", INF_VOLVER_VF)}<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(e instanceof ApiError ? e.message : "No se pudo cargar el reporte.")}<br>
+      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="vfAbrirReporte()">Reintentar</button></div></div></div>`;
+    _infEnfocar();
+    return;
+  }
+  const anio = EXP.flujo ? EXP.flujo.anio : null;
+  const pb = rp.status === "fulfilled" && anio !== null ? _recDeLista("pb", rp.value.data, anio) : null;
+  cont.innerHTML = vfReporteHtml(rv.value.data, rh.value.data, pb);
+  _infEnfocar();
+}
+function vfReporteHtml(V, hce, pb){
+  const per = hce.persona || {}, g = hce.grupo || null;
+  const nombre = `${per.nombre || ""} ${per.apellido || ""}`.trim();
+  const edad = edadAnios(per.fecha_nac);
   const hoy = new Date();
-  const fechaGen = `${String(hoy.getDate()).padStart(2,"0")}/${String(hoy.getMonth()+1).padStart(2,"0")}/${hoy.getFullYear()}`;
-  const doms = VF_DOMINIOS.filter(([k])=>V.dominios[k]);
-  let evol = "";
-  if(p.flujo.pa.firmado && p.flujo.pb.firmado && p.flujo.pb.deltas)
-    evol = [0,1,2,3].map(i=>`<p style="font-size:.85rem;margin-bottom:6px"><b>${VF_NOMBRE_ESC[i].charAt(0).toUpperCase()+VF_NOMBRE_ESC[i].slice(1)}:</b> ${descDelta(p.flujo.pb.deltas.esc[i])}.</p>`).join("");
-  const card = (titulo, inner) => `<div class="card" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${inner}</div></div>`;
-  cont.innerHTML = `
-    <div class="inf-banner no-print">
-      <div><h2>Reporte de Valoración Funcional — ${p.nombre} ${p.apellido}</h2>
-        <p>Documento descriptivo para la familia · generable a demanda · vista previa del ${fechaGen}</p></div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-print" onclick="window.print()">🖨 Imprimir / guardar PDF</button>
-        <button class="btn-print" style="background:#EEF3F8;color:var(--ink)" onclick="abrirExpedienteDemo(${p.id})">‹ Volver</button>
-      </div>
-    </div>
+  const fechaGen = `${String(hoy.getDate()).padStart(2, "0")}/${String(hoy.getMonth() + 1).padStart(2, "0")}/${hoy.getFullYear()}`;
+  const dom = V.dominios || {};
+  const doms = VF_DOMINIOS.filter(([k]) => dom[k]);
+  const lleno = (t) => t !== null && t !== undefined && String(t).trim() !== "";
+  const parrafos = (t) => String(t).split("\n").filter(x => x.trim()).map(x => `<p class="doc-p">${escHtml(x)}</p>`).join("");
+  const card = (titulo, inner) => `<div class="card doc-seccion" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${inner}</div></div>`;
+  // Evolución del año en palabras: la lectura del Δ B−A de cada escala la calculó el servidor (sin números crudos).
+  const interp = pb && pb.firmado && pb.deltas ? pb.interpretacion : null;
+  const evol = interp ? IC_ESC_PROT.map((c, i) => interp[c]
+    ? `<p class="doc-p"><b>${escHtml(VF_NOMBRE_ESC[i].charAt(0).toUpperCase() + VF_NOMBRE_ESC[i].slice(1))}:</b> ${escHtml(interp[c].etiqueta)}.</p>` : "").join("") : "";
+  const tecnicos = g ? [g.tecnico1, g.tecnico2].filter(Boolean).map(t => escHtml(t.nombre)).join(" · ") : "";
+  const oficial = [
+    V.estado ? `<b>Estado:</b> ${escHtml(V.estado)}` : "",
+    V.fecha ? `valorado el ${fmtFecha(V.fecha)}` : "", V.organismo ? `por ${escHtml(V.organismo)}` : "",
+    V.vigencia ? `vigencia hasta ${fmtFecha(V.vigencia)}` : "", V.rnpcd ? `inscripto en el RNPcD (${escHtml(V.rnpcd)})` : ""].filter(Boolean).join(" · ");
+  const cuerpo = `
     <div class="card"><div class="cardbody">
       <div class="membrete">
         <h2>FUNDACIÓN IPPU · Instituto Psico Pedagógico Uruguayo</h2>
         <div class="sub">INAU · MSP · BPS · ECOSOC/ONU · Montevideo, Uruguay</div>
         <h3>Reporte de Valoración Funcional — documento descriptivo y orientativo</h3>
       </div>
-      <div class="ib">
-        <div class="data-row"><dt>Nombre</dt><dd>${p.nombre} ${p.apellido} · ${p.edad} años</dd></div>
-        <div class="data-row"><dt>Expediente</dt><dd>#${p.id} · Grupo ${p.grupo}</dd></div>
+      <dl class="ib doc-datos">
+        <div class="data-row"><dt>Nombre</dt><dd>${escHtml(nombre)}${edad === null ? "" : " · " + edad + " años"}</dd></div>
+        <div class="data-row"><dt>N.º de HC</dt><dd>${escHtml(hce.hc_historico)}</dd></div>
+        <div class="data-row"><dt>Grupo</dt><dd>${g ? "Grupo " + escHtml(g.nombre) : "—"}</dd></div>
         <div class="data-row"><dt>Fecha del reporte</dt><dd>${fechaGen}</dd></div>
-      </div>
-      <div style="font-size:.78rem;color:var(--ink-2);border-left:4px solid var(--teal);background:#F2F7FA;padding:10px 14px;border-radius:8px;margin-top:10px">Este reporte describe capacidades, autonomía, barreras y apoyos para acompañar a la familia en la planificación cotidiana y la gestión de prestaciones. <b>No es un certificado de discapacidad ni un informe clínico:</b> la valoración oficial corresponde a los equipos habilitados mediante el BUND (Ley N.º 20.378), y el documento clínico anual es el Informe de Cierre (HCE-IC).</div>
+      </dl>
+      <p class="doc-aviso">Este reporte describe capacidades, autonomía, barreras y apoyos para acompañar a la familia en la planificación cotidiana y la gestión de prestaciones. <b>No es un certificado de discapacidad ni un informe clínico:</b> la valoración oficial corresponde a los equipos habilitados mediante el BUND (Ley N.º 20.378), y el documento clínico anual es el Informe de Cierre (HCE-IC).</p>
     </div></div>
-    ${(V.capacidades||"").trim() ? card("Capacidades y fortalezas", `<p style="font-size:.85rem">${V.capacidades}</p>`) : ""}
-    ${(V.sintesisFuncional||"").trim() ? card("Perfil funcional descriptivo", V.sintesisFuncional.split("\n").filter(x=>x.trim()).map(x=>`<p style="font-size:.85rem;margin-bottom:8px">${x}</p>`).join("")) : ""}
-    ${evol ? card("Evolución del año, en palabras", evol+`<div style="font-size:.72rem;color:var(--ink-2)">Descripción cualitativa del seguimiento semestral del equipo. Los detalles clínicos completos están en el Informe de Cierre Anual (documento único).</div>`) : ""}
-    ${doms.length ? card("Autonomía en la vida diaria", `<table class="comp-table"><tbody>${doms.map(([k,n])=>`<tr><td>${n.split(" (")[0]}</td><td class="num"><b>${V.dominios[k]}</b></td></tr>`).join("")}</tbody></table><div style="font-size:.72rem;color:var(--ink-2);margin-top:6px">«Apoyo» refiere a la ayuda de otra persona, una adaptación o un producto de apoyo para realizar la actividad.</div>`) : ""}
-    ${(V.barreras||"").trim()||(V.apoyos||"").trim() ? card("Barreras del entorno y apoyos con los que cuenta",
-      `${(V.barreras||"").trim()?`<p style="font-size:.85rem;margin-bottom:8px"><b>Barreras identificadas:</b> ${V.barreras}</p>`:""}
-       ${(V.apoyos||"").trim()?`<p style="font-size:.85rem"><b>Apoyos y facilitadores:</b> ${V.apoyos}</p>`:""}`) : ""}
+    ${lleno(V.capacidades) ? card("Capacidades y fortalezas", parrafos(V.capacidades)) : ""}
+    ${lleno(V.sintesis_funcional) ? card("Perfil funcional descriptivo", parrafos(V.sintesis_funcional)) : ""}
+    ${evol ? card("Evolución del año, en palabras", evol + `<p class="doc-nota">Lectura del seguimiento del año, calculada por el servidor a partir de los protocolos A y B. Los detalles clínicos completos están en el Informe de Cierre Anual (documento único).</p>`) : ""}
+    ${doms.length ? card("Autonomía en la vida diaria", `<table class="comp-table"><caption class="sr-only">Nivel de autonomía por dominio</caption><tbody>${doms.map(([k, n]) => `<tr><th scope="row">${escHtml(n.split(" (")[0])}</th><td>${vfNivelChipHtml(dom[k])}</td></tr>`).join("")}</tbody></table>
+      <p class="doc-nota">«Apoyo» refiere a la ayuda de otra persona, una adaptación o un producto de apoyo para realizar la actividad.</p>`) : ""}
+    ${lleno(V.barreras) || lleno(V.apoyos) ? card("Barreras del entorno y apoyos con los que cuenta",
+      `${lleno(V.barreras) ? `<p class="doc-p"><b>Barreras identificadas:</b> ${escHtml(V.barreras)}</p>` : ""}${lleno(V.apoyos) ? `<p class="doc-p"><b>Apoyos y facilitadores:</b> ${escHtml(V.apoyos)}</p>` : ""}`) : ""}
     ${card("Situación de la valoración oficial y orientación sobre prestaciones",
-      `<p style="font-size:.85rem;margin-bottom:8px"><b>Estado:</b> ${V.estado}${V.fecha?` · valorado el ${fmtFecha(V.fecha)}`:""}${V.organismo?` por ${V.organismo}`:""}${V.vigencia?` · vigencia hasta ${fmtFecha(V.vigencia)}`:""}${V.rnpcd?` · inscripto en el RNPcD (${V.rnpcd})`:""}.</p>
-       ${cat?`<p style="font-size:.85rem;margin-bottom:8px"><b>Categoría según el baremo:</b> ${cat.cat} (${cat.rango}). ${cat.imp}</p>`:""}
-       <p style="font-size:.74rem;color:var(--ink-2)">La familia puede consultar al equipo de IPPU por la gestión de prestaciones (BPS, MIDES, Sistema de Cuidados, transporte, apoyos educativos). El otorgamiento de cada prestación es resolución del organismo competente.</p>`)}
-    <div class="card" style="margin-top:16px"><div class="cardbody">
+      `${oficial ? `<p class="doc-p">${oficial}.</p>` : ""}
+       ${V.categoria ? `<p class="doc-p"><b>Categoría según el baremo:</b> ${escHtml(V.categoria.categoria)} (${escHtml(V.categoria.rango)}). ${escHtml(V.categoria.implicancia)}</p>` : ""}
+       <p class="doc-nota">La familia puede consultar al equipo de IPPU por la gestión de prestaciones (BPS, MIDES, Sistema de Cuidados, transporte, apoyos educativos). El otorgamiento de cada prestación es resolución del organismo competente.</p>`)}
+    <div class="card doc-seccion" style="margin-top:16px"><div class="cardbody">
       <div class="firmas-grid" style="grid-template-columns:1fr 1fr">
-        <div><label>Por el equipo técnico</label><div class="flin"></div><div class="fnom">${p.tecnico1||"—"} · ${p.tecnico2||"—"}</div></div>
-        <div><label>Recibido por la familia</label><div class="flin"></div><div class="fnom">${p.referente||""}</div></div>
+        <div><label>Por el equipo técnico</label><div class="flin"></div><div class="fnom">${tecnicos || "—"}</div></div>
+        <div><label>Recibido por la familia</label><div class="flin"></div><div class="fnom">${escHtml(per.referente || "")}</div></div>
       </div>
-      <div style="font-size:.72rem;color:var(--ink-2);margin-top:14px">Documento descriptivo generado desde la HCE de IPPU · Uso familiar y de orientación · No es certificado de discapacidad ni informe clínico · Ley N.º 18.331/2008 · Demo — datos simulados</div>
+      <p class="doc-pie">Documento descriptivo generado desde la HCE de IPPU · Uso familiar y de orientación · No es certificado de discapacidad ni informe clínico · Ley N.º 18.331/2008 · Demo — datos simulados</p>
     </div></div>`;
-  go("informe");
+  const encabezado = `<b>Fundación IPPU · Reporte de Valoración Funcional</b> — ${escHtml(nombre)} · N.º de HC ${escHtml(hce.hc_historico)} · C.I. ${escHtml(ciFormateada(per.ci))}`;
+  return `${infBannerHtml(`Reporte de Valoración Funcional — ${nombre}`, `Documento descriptivo para la familia · generable a demanda · vista previa del ${fechaGen}`,
+    `<button type="button" class="btn-print" onclick="window.print()">🖨 Imprimir / guardar como PDF</button>${INF_VOLVER_VF}`)}${infHojaHtml(encabezado, cuerpo)}`;
 }
-

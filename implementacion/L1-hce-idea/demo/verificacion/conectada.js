@@ -252,10 +252,10 @@ async function loguear(page) {
     hayInputs === 0 && (await page.locator('#expHead >> text=✎ Editar datos').count()) === 1, `inputs=${hayInputs}`);
 
   /* Pestañas: un módulo no conectado muestra el panel de modo demostración y SIN datos; teclado. */
-  await page.click('#tabExp-vf');
+  await page.click('#tabExp-doc');
   const panelLb = (await txt(page, '#panelExp')).replace(/\s+/g, ' ');
-  const tabSel = await page.getAttribute('#tabExp-vf', 'aria-selected');
-  check('3a-g1', 'pestaña no conectada (VF): panel «Modo demostración — no se guarda» con role="note" y badge «Solo demo»',
+  const tabSel = await page.getAttribute('#tabExp-doc', 'aria-selected');
+  check('3a-g1', 'pestaña no conectada (DOC): panel «Modo demostración — no se guarda» con role="note" y badge «Solo demo»',
     /Modo demostración — no se guarda/.test(panelLb) && (await page.locator('#panelExp [role="note"]').count()) === 1 &&
     (await page.locator('#panelExp .solo-demo').count()) >= 1 && tabSel === 'true', panelLb.slice(0, 140));
   const textosTab = [];
@@ -264,8 +264,8 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = textosTab.slice(5).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA y PB están conectadas y las otras 8 dicen «Este módulo todavía no está conectado al servidor.»',
+  const sinFraseNueva = textosTab.slice(7).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC y VF están conectadas (3-d) y las otras 6 dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -303,14 +303,12 @@ async function loguear(page) {
 
   const humo = await page.evaluate(() => {
     try {
-      go('ic'); cargarIC(102);
-      generarInforme(102); abrirExpedienteDemo(102); renderUsuario(); renderNNA();
+      abrirExpedienteDemo(102); renderUsuario(); renderNNA();
       return 'ok';
     } catch (e) { return 'ERROR: ' + e.message; }
   });
-  const vistasDemo = await Promise.all(['ic', 'informe'].map((v) => page.locator(`#view-${v} .demo-panel`).count()));
-  check('3a-g5', 'los flujos de ejemplo que quedan en modo demostración (IC, informe impreso, expediente de ejemplo) siguen andando y llevan su panel',
-    humo === 'ok' && vistasDemo.every((n) => n === 1), `humo=${humo} paneles=${vistasDemo.join(',')}`);
+  check('3a-g5', 'el expediente de ejemplo que queda en modo demostración sigue andando y lleva su panel (el IC y la VF ya no son de ejemplo: viven en el expediente de la API, 3-d)',
+    humo === 'ok' && (await page.locator('#expedienteContent .demo-panel').count()) === 1, `humo=${humo}`);
 
   /* ---------- (w) la página no desborda horizontalmente: lista y HCE-00 a 390, 1024 y 1280 px ---------- */
   const anchos = [];
@@ -1204,7 +1202,7 @@ async function loguear(page) {
 
     /* demo de ejemplo: ni candados, ni «Bloqueado», ni modal de excepción — ni siquiera con el CI pendiente (Bruno, 107).
        Se lee el TEXTO COMPLETO de los ocho expedientes de ejemplo (101–108: stepper, HCE-DOC, fotos, todo lo que arma
-       abrirExpedienteDemo) y de su vista de IC (cargarIC). El único 🔒 permitido es el del DOCUMENTO HISTÓRICO
+       abrirExpedienteDemo) (el IC ya no es una vista de ejemplo, 3-d). El único 🔒 permitido es el del DOCUMENTO HISTÓRICO
        (HCE anterior, firmado e inmutable: «solo lectura»), que no es un bloqueo de secuencia: se lo quita fila por fila
        —sólo en las filas con `.doc-hist`— antes de buscar, y se exige que haya al menos uno para probar que la exclusión se ejerce. */
     const demo = await pj.evaluate(() => {
@@ -1218,16 +1216,15 @@ async function loguear(page) {
       for (let id = 101; id <= 108; id++) {
         abrirExpedienteDemo(id);
         const f = document.getElementById('flujoPanelBody'), e = sinHistoricos(document.getElementById('view-expediente'));
-        cargarIC(id); const ic = sinHistoricos(document.getElementById('view-ic'));
         historicos += e.historicos;
         salida[id] = { bloqueados: document.querySelectorAll('.fstep.s-bloqueado').length, flujo: PROHIBIDO.test(f.innerText),
-          expediente: (e.texto.match(PROHIBIDO) || [null])[0], ic: (ic.texto.match(PROHIBIDO) || [null])[0] };
+          expediente: (e.texto.match(PROHIBIDO) || [null])[0] };
       }
       go('grupos'); salida.grupos = (document.getElementById('view-grupos').innerText.match(PROHIBIDO) || [null])[0];
       return { salida, historicos, funciones: [typeof openExcepcionModal, typeof habilitarExcepcional, typeof confirmarExcepcion], modal: !!document.getElementById('mfMotivo') };
     });
-    check('3c-j9', 'el texto completo de los expedientes de EJEMPLO 101–108 (también Bruno, sin CI), su HCE-DOC y su vista de IC, y la vista Grupos no dicen «habilitación excepcional», «Bloqueado»/«bloqueada» ni llevan candado (salvo el 🔒 del documento histórico, excluido); el modal y las funciones de excepción ya no existen',
-      Object.entries(demo.salida).filter(([k]) => k !== 'grupos').every(([, v]) => !v.flujo && v.bloqueados === 0 && v.expediente === null && v.ic === null) && demo.salida.grupos === null
+    check('3c-j9', 'el texto completo de los expedientes de EJEMPLO 101–108 (también Bruno, sin CI), su HCE-DOC, y la vista Grupos no dicen «habilitación excepcional», «Bloqueado»/«bloqueada» ni llevan candado (salvo el 🔒 del documento histórico, excluido); el modal y las funciones de excepción ya no existen',
+      Object.entries(demo.salida).filter(([k]) => k !== 'grupos').every(([, v]) => !v.flujo && v.bloqueados === 0 && v.expediente === null) && demo.salida.grupos === null
         && demo.historicos > 0 && demo.funciones.every((t) => t === 'undefined') && !demo.modal, JSON.stringify({ historicos: demo.historicos, funciones: demo.funciones, salida: demo.salida }).slice(0, 600));
 
     /* §5.99: guardar una foto no requiere autorización y no produce aviso ni bloqueo, ni individual ni grupal (demo de ejemplo) */
@@ -1279,6 +1276,444 @@ async function loguear(page) {
     const opA = await pa.evaluate(() => [...document.querySelectorAll('#f_grupo option')].map((o) => o.textContent.trim()));
     check('3c-j11', 'el admin ve TODOS los grupos del año y «Sin grupo asignado»', opA[0] === 'Sin grupo asignado' && JSON.stringify(opA.slice(1).sort()) === JSON.stringify(todos) && todos.length === 5, opA.join(' | '));
     await ca.close();
+  }
+
+  /* =====================================================================================================
+     FASE 3-d · IC con documento impreso y recibí, y VF (handoff §5.126). También ESCRIBE: crea y firma el IC de
+     Valentina y de Camila, registra el recibí, agrega una addenda y crea la VF de Martín y de Sofía.
+     ===================================================================================================== */
+  {
+    const fs = require('fs');
+    const path = require('path');
+    const { execFileSync } = require('child_process');
+    const { ctx: cd, page: pd } = await nuevaPagina();
+    await loguearComo(pd, EMAIL, PASSWORD);
+    const tkD = await pd.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const send = async (metodo, ruta, body) => {
+      const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + tkD, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: r.status, json: r.status === 204 ? null : await r.json() };
+    };
+    const get = (ruta) => send('GET', ruta);
+    const idDe = async (nombre) => (await get('/hce?nombre=' + encodeURIComponent(nombre) + '&limit=20')).json.find((h) => h.persona.nombre === nombre).id;
+    const norm = (t) => String(t).replace(/\s+/g, ' ').trim();
+    const fmtD = (d) => (d > 0 ? '+' : '') + d;
+    const abrirD = async (id, tab) => {
+      await pd.evaluate((i) => abrirExpediente(i), id);
+      await pd.waitForSelector('#expTitulo');
+      await pd.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      if (tab) {
+        await pd.click('#tabExp-' + tab);
+        await pd.waitForFunction(() => { const p = document.getElementById('panelExp'); return p && !/Cargando/.test(p.innerText); }, null, { timeout: 8000 });
+      }
+    };
+    const verImpreso = async () => {
+      await pd.click('#btnIcImpreso');
+      await pd.waitForFunction(() => { const c = document.getElementById('informeContent'); return document.getElementById('view-informe').classList.contains('active') && c && !/Cargando el/.test(c.innerText) && c.innerText.trim() !== ''; }, null, { timeout: 8000 });
+    };
+    const volverDelImpreso = async () => { await pd.click('#informeContent .inf-banner button:has-text("Volver al expediente")'); await pd.waitForFunction(() => document.getElementById('view-expediente').classList.contains('active')); };
+    const profs = (await get('/profesionales')).json;
+    const idGonzalez = profs.find((x) => x.nombre === 'Dr. González').id, idTorres = profs.find((x) => x.nombre === 'Mtra. Torres').id;
+    const idMartinD = await idDe('Martín');
+    const icMartin = (await get(`/hce/${idMartinD}/informe-cierre`)).json[0];
+    const docApi = (await get(`/informe-cierre/${icMartin.id}/documento`)).json;
+
+    /* ---------- 3d-lay: sin vistas, selectores ni manejadores muertos; nada de lo retirado queda ---------- */
+    const lay = await pd.evaluate(() => {
+      const retiradas = ['cargarIC', 'guardarIC', 'firmarIC', 'generarInforme', 'irAEval', 'categoriaBaremo', 'sugiereNivel', 'genVFBorrador', 'vfAlertaVigencia',
+        'generarReporteVF', 'icDatosFirmados', 'renderVf', 'vfSet'];
+      return {
+        viewIc: !!document.getElementById('view-ic'), selector: !!document.getElementById('selNNAIC'),
+        vistasMuertas: [...document.querySelectorAll('.navitem')].map((b) => b.dataset.view).filter((v) => !document.getElementById('view-' + v)),
+        funciones: retiradas.filter((n) => typeof window[n] !== 'undefined'),
+        bundcats: typeof BUND_CATS
+      };
+    });
+    check('3d-lay', 'view-ic y el selector de NNA del IC ya no existen; ninguna entrada de la barra lateral apunta a una vista retirada; las funciones del IC y de la VF de ejemplo (cargarIC, generarInforme, categoriaBaremo, sugiereNivel, genVFBorrador, vfAlertaVigencia, irAEval…) están retiradas',
+      !lay.viewIc && !lay.selector && lay.vistasMuertas.length === 0 && lay.funciones.length === 0, JSON.stringify(lay));
+
+    /* manejadores muertos: todo onclick/onchange/oninput de las pantallas recorridas llama a funciones que existen */
+    const muertos = await pd.evaluate(async (idM) => {
+      const falta = new Set();
+      const barrer = () => document.querySelectorAll('[onclick],[onchange],[oninput],[onkeydown]').forEach((el) => {
+        ['onclick', 'onchange', 'oninput', 'onkeydown'].forEach((a) => {
+          const v = el.getAttribute(a); if (!v) return;
+          (v.match(/(?<![.\w$])[A-Za-z_$][\w$]*(?=\()/g) || []).forEach((fn) => { if (!['if', 'return', 'parseInt', 'confirm', 'alert'].includes(fn) && typeof window[fn] !== 'function') falta.add(fn + ' ← ' + a + ' en <' + el.tagName.toLowerCase() + '>'); });
+        });
+      });
+      for (let id = 101; id <= 108; id++) { abrirExpedienteDemo(id); barrer(); }
+      await abrirExpediente(idM);
+      await new Promise((r) => setTimeout(r, 600));
+      for (const k of TABS_EXP.map((t) => t.k)) { selTabExp(k); await new Promise((r) => setTimeout(r, 250)); barrer(); }
+      go('inicio'); barrer();
+      return [...falta];
+    }, idMartinD);
+    check('3d-lay2', 'ningún manejador (onclick/onchange/oninput) de los expedientes de ejemplo 101–108, ni de las 13 pestañas del expediente de la API, llama a una función que no existe',
+      muertos.length === 0, muertos.join(' | ') || '8 ejemplos + 13 pestañas');
+
+    /* ---------- (a) IC de Martín: documento impreso == GET …/documento ---------- */
+    await abrirD(idMartinD, 'ic');
+    const edTabla = await pd.evaluate(() => [...document.querySelectorAll('#panelExp .ic-tabla tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())));
+    await verImpreso();
+    const reqDoc = [];
+    const imp = await pd.evaluate(() => {
+      const t = [...document.querySelectorAll('#informeContent .ic-tabla tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim()));
+      const c = document.getElementById('informeContent');
+      return { tabla: t, texto: c.innerText.replace(/\s+/g, ' '), alertas: c.querySelectorAll('.ev-alerta').length, hojaHead: !!c.querySelector('.print-head .ph'),
+        radares: c.querySelectorAll('.ic-radars svg[role="img"]').length, firmas: [...c.querySelectorAll('.firmas-grid .fnom')].map((e) => e.innerText.trim()),
+        datos: [...c.querySelectorAll('.doc-datos .data-row')].map((r) => [r.querySelector('dt').innerText.trim(), r.querySelector('dd').innerText.trim()]) };
+    });
+    const idea = docApi.idea, pa = docApi.protocolos.a, pb = docApi.protocolos.b, dl = docApi.protocolos.deltas;
+    const esperaFilas = [0, 1, 2, 3].map((i) => [`${idea[['esc_a', 'esc_b', 'esc_c', 'esc_d'][i]]} / 24`, `${pa['esc_' + (i + 1)]} / 30`, `${pb['esc_' + (i + 1)]} / 30`, fmtD(dl['esc_' + (i + 1)])]);
+    const filasOk = esperaFilas.every((e, i) => imp.tabla[i] && e.every((v, j) => imp.tabla[i][j + 1] === v));
+    const tot = imp.tabla[4] || [];
+    check('3d-a1', 'IC de Martín impreso: IDEA 58 · PA 60 · PB 79 · Δ +19 y, por escala, Δ 4/6/4/5 — iguales a una llamada directa a GET /informe-cierre/{id}/documento',
+      idea.total === 58 && pa.total === 60 && pb.total === 79 && dl.total === 19 && JSON.stringify([1, 2, 3, 4].map((i) => dl['esc_' + i])) === '[4,6,4,5]'
+        && filasOk && tot[1] === '58 / 96' && tot[2] === '60 / 120' && tot[3] === '79 / 120' && tot[4].startsWith('+19') && tot[4].includes(docApi.protocolos.interpretacion.total.etiqueta),
+      JSON.stringify({ filas: imp.tabla.map((f) => f.slice(1).join(' | ')) }));
+    check('3d-a2', 'sin alerta institucional (el documento coincide con alertas:[]), 2 radares con texto alternativo, y el editor de la pestaña IC muestra la MISMA tabla que el impreso',
+      docApi.protocolos.alertas.length === 0 && imp.alertas === 0 && !/Alerta institucional/.test(imp.texto) && imp.radares === 2 && JSON.stringify(edTabla) === JSON.stringify(imp.tabla),
+      `alertas API=${docApi.protocolos.alertas.length} DOM=${imp.alertas} radares=${imp.radares}`);
+    const hceM = (await get(`/hce/${idMartinD}`)).json;
+    const firmasApi = docApi.informe.firmas.map((f) => `${f.nombre} · ${f.rol}`);
+    const dato = (k) => (imp.datos.find((d) => d[0] === k) || [])[1];
+    check('3d-a3', 'cédula y CIE-11 salen de GET /hce/{id}; el año, de documento.anio; las dos firmas son las de informe.firmas[] (nombre · rol tal como los devuelve la API) y el recibí figura con su firmante; sin fila «Soporte»',
+      dato('N.º de HC / C.I.') === `${docApi.expediente.hc_numero} · 6.012.345-1` && hceM.persona.ci === '60123451' && dato('CIE-11') === hceM.cie11 && hceM.cie11 === '6A02.1'
+        && imp.texto.includes(`Año lectivo ${docApi.anio}`) && dato('Profesional firmante 1') === firmasApi[0] && dato('Profesional firmante 2') === firmasApi[1]
+        && imp.firmas[0] === firmasApi[0] && imp.firmas[1] === firmasApi[1] && imp.firmas[2].includes(docApi.informe.recibi.firmante) && !/Soporte|Nivel de soporte/i.test(imp.texto) && !/Técnico\/a responsable/.test(imp.texto),
+      JSON.stringify({ datos: imp.datos, firmas: imp.firmas }).slice(0, 400));
+
+    /* ---------- (b) page.pdf() en A4: páginas, encabezado en cada hoja y ninguna tabla/radar/firma partida ---------- */
+    const salidas = path.join(__dirname, 'salidas');
+    fs.mkdirSync(salidas, { recursive: true });
+    const pdfPath = path.join(salidas, 'ic-martin.pdf');
+    const py = `
+import sys, json
+from pypdf import PdfReader
+r = PdfReader(sys.argv[1])
+print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width),1), round(float(p.mediabox.height),1)] for p in r.pages], "textos": [p.extract_text() for p in r.pages]}))
+`;
+    const leerPdf = (ruta) => JSON.parse(execFileSync('python', ['-I', '-c', py, ruta], { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, maxBuffer: 1 << 26 }));
+    const bloques = {
+      tabla: ['18 / 24', '58 / 96', '60 / 120', '79 / 120', '+19'],
+      radares: ['perfil idea', 'progreso ippu-tea', 'protocolo b (continuo)'],     // los dos títulos y la leyenda del gráfico (el SVG es un elemento atómico: va con su título)
+      firmas: ['profesional 1', 'recibí de la familia', 'documento generado desde la hce'],
+      membrete: ['fundación ippu', 'profesional firmante 2']
+    };
+    const compacto = (t) => String(t).replace(/\s+/g, '').toLowerCase();       // pypdf separa letras por el interletrado: se compara sin espacios
+    const paginaDe = (textos, s) => textos.findIndex((t) => compacto(t).includes(compacto(s)));
+    const resultadosPdf = [];
+    for (const zoom of [1, 1.25, 1.5]) {         // 3 tamaños: los cortes de página caen en lugares distintos, así «nada partido» no es casualidad de un solo diseño
+      const estilo = await pd.addStyleTag({ content: `@media print{#informeContent{zoom:${zoom}}}` });
+      const ruta = zoom === 1 ? pdfPath : path.join(salidas, `ic-martin-zoom${String(zoom).replace('.', '_')}.pdf`);
+      await pd.pdf({ path: ruta, format: 'A4', printBackground: true });
+      await estilo.evaluate((n) => n.remove());
+      const info = leerPdf(ruta);
+      const partidos = [];
+      for (const [nombre, marcas] of Object.entries(bloques)) {
+        const paginas = marcas.map((m) => paginaDe(info.textos, m));
+        if (paginas.some((p) => p < 0) || new Set(paginas).size !== 1) partidos.push(`${nombre}:${paginas.join(',')}`);
+      }
+      const cab = info.textos.every((t) => ['informedecierreanual2026', 'martíng.', 'n.ºdehc1002'].every((m) => compacto(t).includes(m)));
+      const a4 = info.tam.every(([w, h]) => Math.abs(w - 595.3) < 1.5 && Math.abs(h - 841.9) < 1.5);
+      resultadosPdf.push({ zoom, paginas: info.paginas, partidos, cab, a4 });
+    }
+    const base = resultadosPdf[0];
+    check('3d-b1', `page.pdf() A4 del IC impreso de Martín guardado en demo/verificacion/salidas/ic-martin.pdf (${fs.statSync(pdfPath).size} bytes): ${base.paginas} hoja(s) A4, con el encabezado del expediente (nombre, N.º de HC, año) en CADA hoja`,
+      fs.existsSync(pdfPath) && base.paginas >= 1 && base.a4 && base.cab, JSON.stringify(base));
+    check('3d-b2', 'ninguna tabla, radar, bloque de firmas ni membrete queda partido entre hojas: los marcadores de inicio y fin de cada bloque (p. ej. «18 / 24» … «+19» de la tabla) caen en la MISMA hoja; se repite con la impresión ampliada 1,25× y 1,5×, donde los cortes caen en otro lugar',
+      resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
+    await volverDelImpreso();
+    await pd.waitForFunction(() => document.getElementById('panelExp') && !/Cargando/.test(document.getElementById('panelExp').innerText));
+
+    /* ---------- IC de Valentina: crear, error por campo, firmar con dos firmantes, solo lectura, recibí, addenda ---------- */
+    const idVal = await idDe('Valentina');
+    const hceVal = (await get(`/hce/${idVal}`)).json;
+    const anio = (await get(`/hce/${idVal}/flujo`)).json.anio;
+    await abrirD(idVal, 'ic');
+    const ideaVal = (await get(`/hce/${idVal}/idea`)).json[0];
+    const ini = await pd.evaluate(() => ({ estado: document.getElementById('icEstado').innerText.replace(/\s+/g, ' ').trim(), tabla: [...document.querySelectorAll('#panelExp .ic-tabla tbody tr')].map((tr) => [...tr.children].map((c) => c.innerText.replace(/\s+/g, ' ').trim())),
+      f: [document.getElementById('ic_f1').value, document.getElementById('ic_f2').value] }));
+    check('3d-c0', 'IC sin crear: estado «Sin iniciar»; la tabla muestra el IDEA firmado tal como lo devuelve la API y «—» donde falta PA/PB; los firmantes se precargan con los técnicos del grupo',
+      /Sin iniciar/.test(ini.estado) && ini.tabla[4][1] === `${ideaVal.total} / 96` && ini.tabla[4][2] === '—' && ini.tabla[4][3] === '—' && ini.tabla[4][4] === '—'
+        && ini.f[0] === String(hceVal.grupo.tecnico1.id) && ini.f[1] === String(hceVal.grupo.tecnico2.id), JSON.stringify(ini));
+    // crear el borrador con lo mínimo (POST: sólo lo tipeado + anio)
+    await pd.fill('#ic_esc1', 'Síntesis E1 de prueba.'); await pd.fill('#ic_esc2', 'Síntesis E2 de prueba.'); await pd.fill('#ic_esc3', 'Síntesis E3 de prueba.');
+    await pd.fill('#ic_fecha', '2026-12-01');
+    const reqPost = pd.waitForRequest((r) => r.method() === 'POST' && new RegExp(`/hce/${idVal}/informe-cierre$`).test(r.url()));
+    await pd.click('#btnIcGuardar');
+    const cuerpoPost = cuerpoDe(await reqPost);
+    await pd.waitForFunction(() => /Sin iniciar/.test(document.getElementById('icEstado').innerText) === false);
+    const listaVal = (await get(`/hce/${idVal}/informe-cierre`)).json;
+    check('3d-c1', 'crear el borrador: POST /hce/{id}/informe-cierre con el año del flujo y sólo lo tipeado; queda «En curso» (borrador) y en la API existe',
+      cuerpoPost.anio === anio && JSON.stringify(Object.keys(cuerpoPost).sort()) === '["anio","fecha","sint_escala"]' && JSON.stringify(Object.keys(cuerpoPost.sint_escala).sort()) === '["esc_1","esc_2","esc_3"]'
+        && listaVal.length === 1 && listaVal[0].estado === 'en_curso' && /En curso/.test(await txt(pd, '#icEstado')), JSON.stringify(cuerpoPost).slice(0, 200));
+
+    // firmar incompleto → 422 por campo (resumen role=alert con foco, aria-invalid + aria-describedby)
+    await pd.click('#btnIcFirmar'); await pd.waitForSelector('#btnIcConfirmar');
+    const resp422 = pd.waitForResponse((r) => r.request().method() === 'POST' && /\/informe-cierre\/\d+\/firmar$/.test(r.url()));
+    await pd.click('#btnIcConfirmar');
+    const r422 = await resp422;
+    const j422 = await r422.json();
+    await pd.waitForSelector('#evErrores:not([hidden])');
+    const ui422 = await pd.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('evErrores').getAttribute('role'),
+      marcados: [...document.querySelectorAll('#panelExp [aria-invalid="true"]')].map((e) => ({ id: e.id, desc: e.getAttribute('aria-describedby'), err: (document.getElementById('err_' + e.id) || {}).textContent })) }));
+    const camposApi = j422.detail.map((d) => d.campo).filter(Boolean);
+    const idDeCampo = (c) => ({ 'sint_escala.esc_4': 'ic_esc4', val_tec1: 'ic_val1', val_tec2: 'ic_val2', recomendaciones: 'ic_recom', orientaciones: 'ic_orient', fecha: 'ic_fecha' }[c] || c);
+    check('3d-c2', 'firmar con el borrador incompleto: la API devuelve 422 por campo y la pantalla lo muestra junto a cada campo (aria-invalid + aria-describedby al mensaje) y en un resumen role="alert" que recibe el foco',
+      r422.status() === 422 && ui422.foco === 'evErrores' && ui422.rol === 'alert' && camposApi.length >= 5
+        && camposApi.every((c) => ui422.marcados.some((m) => m.id === idDeCampo(c) && m.desc.includes('err_' + m.id) && m.err && m.err.length > 3)), JSON.stringify({ camposApi, marcados: ui422.marcados.map((m) => m.id) }));
+
+    // completar y repetir el mismo firmante → 422 en firmantes; los firmantes se eligen al firmar (no están en el borrador)
+    await pd.fill('#ic_esc4', 'Síntesis E4 de prueba.'); await pd.fill('#ic_val1', 'Valoración del técnico 1.'); await pd.fill('#ic_val2', 'Valoración del técnico 2.');
+    await pd.fill('#ic_recom', 'Recomendaciones de prueba.'); await pd.fill('#ic_orient', 'Orientaciones de prueba.');
+    await pd.selectOption('#ic_f1', String(idTorres)); await pd.selectOption('#ic_f2', String(idTorres));
+    await pd.click('#btnIcFirmar'); await pd.waitForSelector('#btnIcConfirmar');
+    const reqPatch = pd.waitForRequest((r) => r.method() === 'PATCH' && /\/informe-cierre\/\d+$/.test(r.url()));
+    await pd.click('#btnIcConfirmar');
+    const cuerpoPatch = cuerpoDe(await reqPatch);
+    await pd.waitForSelector('#evErrores:not([hidden])');
+    const ui422b = await pd.evaluate(() => ({ foco: document.activeElement.id, f1: document.getElementById('ic_f1').getAttribute('aria-invalid') || document.getElementById('ic_f2').getAttribute('aria-invalid'), txt: document.getElementById('err_ic_f1').textContent + document.getElementById('err_ic_f2').textContent, resumen: document.getElementById('evErrores').innerText.replace(/\s+/g, ' ') }));
+    check('3d-c3', 'dos firmantes iguales: la API rechaza con 422 en `firmantes` y se ve junto al primer selector; el PATCH previo manda SOLO lo que se completó (4 campos + síntesis E4) y el IC sigue sin firmar',
+      ui422b.foco === 'evErrores' && ui422b.f1 === 'true' && ui422b.txt.length > 3 && JSON.stringify(Object.keys(cuerpoPatch).sort()) === '["orientaciones","recomendaciones","sint_escala","val_tec1","val_tec2"]'
+        && JSON.stringify(Object.keys(cuerpoPatch.sint_escala)) === '["esc_4"]' && (await get(`/hce/${idVal}/informe-cierre`)).json[0].firmado === false, JSON.stringify({ ...ui422b, cuerpoPatch }).slice(0, 380));
+
+    // firmar con dos firmantes DISTINTOS y en orden inverso al del grupo: Torres, González
+    await pd.selectOption('#ic_f1', String(idTorres)); await pd.selectOption('#ic_f2', String(idGonzalez));
+    await pd.click('#btnIcFirmar'); await pd.waitForSelector('#btnIcConfirmar');
+    const respFirma = pd.waitForResponse((r) => r.request().method() === 'POST' && /\/informe-cierre\/\d+\/firmar$/.test(r.url()));
+    const reqFirma = pd.waitForRequest((r) => r.method() === 'POST' && /\/informe-cierre\/\d+\/firmar$/.test(r.url()));
+    await pd.click('#btnIcConfirmar');
+    const cuerpoFirma = cuerpoDe(await reqFirma);
+    const jFirma = await (await respFirma).json();
+    await pd.waitForFunction(() => document.querySelectorAll('#panelExp [data-ic]').length === 0 && /Firmado/.test(document.getElementById('icEstado').innerText));
+    const ro = await pd.evaluate(() => ({ foco: document.activeElement.id, habilitados: [...document.querySelectorAll('#panelExp input,#panelExp select,#panelExp textarea')].filter((e) => !e.disabled && e.id !== 'ic_add_texto').length,
+      avisos: [...document.querySelectorAll('#icAvisos li')].map((l) => l.innerText.trim()), rol: (document.getElementById('icAvisos') || {}).getAttribute && document.getElementById('icAvisos').getAttribute('role'),
+      oculto: document.getElementById('icAvisos').hidden, firmas: document.querySelector('#panelExp .data-row dd').innerText.replace(/\s+/g, ' ') }));
+    const apiVal = (await get(`/hce/${idVal}/informe-cierre`)).json[0];
+    check('3d-c4', 'IC firmado con dos firmantes (POST …/firmar {firmantes:[Torres, González]}): queda de solo lectura (ningún campo editable), el foco va al título, los avisos de la API se muestran en role="status" tal cual (sin bloquear) y la API lo confirma firmado con esas dos firmas',
+      JSON.stringify(cuerpoFirma) === JSON.stringify({ firmantes: [idTorres, idGonzalez] }) && apiVal.firmado && JSON.stringify(apiVal.firmas.map((f) => f.profesional_id)) === JSON.stringify([idTorres, idGonzalez])
+        && ro.foco === 'icTitulo' && ro.habilitados === 0 && ro.rol === 'status' && !ro.oculto && jFirma.warnings.length >= 1 && JSON.stringify(ro.avisos) === JSON.stringify(jFirma.warnings.map((w) => w.mensaje)),
+      JSON.stringify({ warnings: jFirma.warnings.map((w) => w.code), ro: { ...ro, avisos: ro.avisos.length } }));
+
+    // recibí: modal accesible, error por campo, una sola vez
+    await pd.click('#btnIcRecibi');
+    await pd.waitForSelector('#modalFlujo.open');
+    await pd.waitForFunction(() => document.activeElement && document.activeElement.id === 'mfFirmante');
+    const mod = await pd.evaluate(() => { const d = document.querySelector('#modalFlujo .modal'); const lab = document.getElementById(d.getAttribute('aria-labelledby'));
+      return { role: d.getAttribute('role'), modal: d.getAttribute('aria-modal'), nombre: lab.textContent.trim(), inert: document.querySelector('div.layout').inert, foco: document.activeElement.id,
+        etiquetas: ['mfFirmante', 'mfFecha'].map((i) => !!document.querySelector(`label[for="${i}"]`)) }; });
+    await pd.fill('#mfFirmante', '');
+    const reqNo = pd.waitForResponse((r) => r.request().method() === 'POST' && /\/recibi$/.test(r.url()));
+    await pd.click('#btnRecibiOk');
+    const noOk = await reqNo;
+    await pd.waitForSelector('#recibiErrores:not([hidden])');
+    const errR = await pd.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('recibiErrores').getAttribute('role'),
+      campos: ['mfFirmante', 'mfFecha'].map((i) => ({ id: i, inv: document.getElementById(i).getAttribute('aria-invalid'), desc: document.getElementById(i).getAttribute('aria-describedby'), err: document.getElementById('err_' + i).textContent })) }));
+    check('3d-r1', 'el recibí se registra en un diálogo modal accesible (role=dialog, aria-modal, nombre, app inerte, foco al primer campo); vacío, la API responde 422 y los errores salen junto a cada campo (aria-describedby) y en un resumen role="alert" con foco',
+      mod.role === 'dialog' && mod.modal === 'true' && mod.nombre !== '' && mod.inert && mod.foco === 'mfFirmante' && mod.etiquetas.every(Boolean)
+        && noOk.status() === 422 && errR.foco === 'recibiErrores' && errR.rol === 'alert' && errR.campos.every((c) => c.inv === 'true' && c.desc.includes('err_' + c.id) && c.err.length > 3), JSON.stringify({ mod, errR: errR.campos.map((c) => c.id + ':' + c.err) }).slice(0, 300));
+    await pd.keyboard.press('Escape');
+    const trasEsc = await pd.evaluate(() => ({ abierto: document.getElementById('modalFlujo').classList.contains('open'), inert: document.querySelector('div.layout').inert, foco: document.activeElement.id }));
+    check('3d-r2', 'Esc cierra el diálogo del recibí, la app deja de estar inerte y el foco vuelve al botón que lo abrió; no se registró nada',
+      !trasEsc.abierto && !trasEsc.inert && trasEsc.foco === 'btnIcRecibi' && (await get(`/hce/${idVal}/informe-cierre`)).json[0].recibi === null, JSON.stringify(trasEsc));
+    await pd.click('#btnIcRecibi'); await pd.waitForSelector('#modalFlujo.open');
+    await pd.fill('#mfFirmante', 'Valeria P. (madre)'); await pd.fill('#mfFecha', '2026-12-05');
+    const reqRecibi = pd.waitForRequest((r) => r.method() === 'POST' && /\/recibi$/.test(r.url()));
+    await pd.click('#btnRecibiOk');
+    const cuerpoRecibi = cuerpoDe(await reqRecibi);
+    await pd.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+    await pd.waitForFunction(() => /Valeria P/.test(document.getElementById('icRecibiTxt').innerText));
+    const dosVeces = await send('POST', `/informe-cierre/${apiVal.id}/recibi`, { firmante: 'Otra persona', fecha: '2026-12-06' });
+    check('3d-r3', 'recibí registrado una sola vez: POST …/recibi {firmante, fecha} desde el diálogo, la pestaña lo muestra y desaparece el botón; un segundo intento da 409 en la API',
+      JSON.stringify(cuerpoRecibi) === JSON.stringify({ firmante: 'Valeria P. (madre)', fecha: '2026-12-05' }) && (await pd.locator('#btnIcRecibi').count()) === 0 && dosVeces.status === 409
+        && (await get(`/hce/${idVal}/informe-cierre`)).json[0].recibi.firmante === 'Valeria P. (madre)', `segundo=${dosVeces.status}`);
+
+    // addenda: el autor es el usuario del token y se resuelve por nombre
+    await pd.fill('#ic_add_texto', 'Addenda de prueba 3-d.');
+    await pd.click('#btnIcAdd');
+    await pd.waitForFunction(() => document.querySelectorAll('#icAddendas .ev-add-lista li').length === 1);
+    const addTxt = await txt(pd, '#icAddendas .ev-add-lista li');
+    check('3d-ad', 'addenda al IC firmado: aparece con el nombre del autor (el usuario del token, resuelto con GET /profesionales) y la marca «con 1 addenda» en el encabezado y la pestaña',
+      /Dr\. González/.test(addTxt) && /Addenda de prueba 3-d/.test(addTxt) && /con 1 addenda/.test(await txt(pd, '#icEstado')) && (await get(`/hce/${idVal}/informe-cierre`)).json[0].addendas.length === 1, addTxt);
+
+    // (c) impreso de Valentina: firmas = quienes firmaron (Torres primero), no el grupo; recibí y addenda
+    await verImpreso();
+    const impV = await pd.evaluate(() => { const c = document.getElementById('informeContent'); return { datos: [...c.querySelectorAll('.doc-datos .data-row')].map((r) => [r.querySelector('dt').innerText.trim(), r.querySelector('dd').innerText.trim()]),
+      firmas: [...c.querySelectorAll('.firmas-grid .fnom')].map((e) => e.innerText.trim()), texto: c.innerText.replace(/\s+/g, ' '), recibiBtn: !!document.getElementById('btnInfRecibi') }; });
+    check('3d-c5', 'impreso del IC firmado en la sesión: firmante 1 = Mtra. Torres y firmante 2 = Dr. González (el orden de informe.firmas[], NO el de los técnicos del grupo, que es el inverso); el recibí registrado figura, ya no se ofrece registrarlo y la addenda aparece con su autor',
+      impV.datos.find((d) => d[0] === 'Profesional firmante 1')[1].startsWith('Mtra. Torres') && impV.datos.find((d) => d[0] === 'Profesional firmante 2')[1].startsWith('Dr. González')
+        && hceVal.grupo.tecnico1.nombre === 'Dr. González' && impV.firmas[2].includes('Valeria P. (madre)') && !impV.recibiBtn && /Addenda de prueba 3-d/.test(impV.texto) && /Dr\. González: Addenda/.test(impV.texto), JSON.stringify(impV.datos).slice(0, 300));
+    await volverDelImpreso();
+
+    /* ---------- Camila: sin IC → impreso = estado del flujo (sin llamar a /documento); 409 del documento; 409 al guardar → solo lectura ---------- */
+    const idCam = await idDe('Camila');
+    await abrirD(idCam, 'ic');
+    const llamadasDoc = [];
+    const onReq = (r) => { if (/\/documento$/.test(r.url())) llamadasDoc.push(r.url()); };
+    pd.on('request', onReq);
+    await verImpreso();
+    const sinIc = await pd.evaluate(() => ({ texto: document.getElementById('informeContent').innerText.replace(/\s+/g, ' '), estados: [...document.querySelectorAll('#informeContent .fl-lista li')].map((l) => l.innerText.replace(/\s+/g, ' ').trim()), tabla: !!document.querySelector('#informeContent .ic-tabla') }));
+    check('3d-n1', 'IC sin crear: «Ver informe impreso» muestra el estado del flujo (cuatro módulos con glifo y texto) en lugar del documento, sin pedir /documento ni mostrar tablas',
+      /No hay un Informe de Cierre Anual firmado/.test(sinIc.texto) && sinIc.estados.length === 4 && sinIc.estados.every((e) => /(firmado|en curso|sin iniciar)/i.test(e)) && !sinIc.tabla && llamadasDoc.length === 0, JSON.stringify(sinIc.estados));
+    await volverDelImpreso();
+    await pd.fill('#ic_esc1', 'Borrador de Camila.');
+    await pd.click('#btnIcGuardar');
+    await pd.waitForFunction(() => /En curso/.test(document.getElementById('icEstado').innerText));
+    const resp409doc = pd.waitForResponse((r) => /\/documento$/.test(r.url()));
+    await verImpreso();
+    const r409d = await resp409doc;
+    const conBorrador = await pd.evaluate(() => ({ texto: document.getElementById('informeContent').innerText.replace(/\s+/g, ' '), tabla: !!document.querySelector('#informeContent .ic-tabla') }));
+    check('3d-n2', 'IC en borrador: GET …/documento responde 409 y el impreso muestra el estado del flujo (no el documento)',
+      r409d.status() === 409 && /No hay un Informe de Cierre Anual firmado/.test(conBorrador.texto) && !conBorrador.tabla, `documento → ${r409d.status()}`);
+    pd.off('request', onReq);
+    await volverDelImpreso();
+    await pd.waitForFunction(() => document.getElementById('icEstado'));
+    // otra sesión completa y firma ese IC; esta pantalla sigue con el borrador viejo y al guardar recibe 409
+    const icCam = (await get(`/hce/${idCam}/informe-cierre`)).json[0];
+    const pat = await send('PATCH', `/informe-cierre/${icCam.id}`, { fecha: '2026-12-02', sint_escala: { esc_2: 'e2', esc_3: 'e3', esc_4: 'e4' }, val_tec1: 'v1', val_tec2: 'v2', recomendaciones: 'r', orientaciones: 'o' });
+    const fir = await send('POST', `/informe-cierre/${icCam.id}/firmar`, { firmantes: [idGonzalez, idTorres] });
+    await pd.fill('#ic_val1', 'Cambio que llega tarde');
+    const resp409 = pd.waitForResponse((r) => r.request().method() === 'PATCH' && /\/informe-cierre\/\d+$/.test(r.url()));
+    await pd.click('#btnIcGuardar');
+    const r409 = await resp409;
+    await pd.waitForFunction(() => document.querySelectorAll('#panelExp [data-ic]').length === 0 && /Firmado/.test(document.getElementById('icEstado').innerText));
+    const ro409 = await pd.evaluate(() => ({ avisos: document.getElementById('icAvisos').innerText.replace(/\s+/g, ' '), val: document.getElementById('panelExp').innerText.includes('Cambio que llega tarde') }));
+    check('3d-n3', 'un 409 al guardar (otra sesión ya firmó el IC) pasa la pantalla a solo lectura con lo que hay en el servidor: se descarta el cambio tardío, se avisa y el IC figura firmado',
+      pat.status === 200 && fir.status === 200 && r409.status() === 409 && !ro409.val && /ya está firmado|firmado/i.test(ro409.avisos), `PATCH=${r409.status()} ${ro409.avisos.slice(0, 120)}`);
+
+    /* ---------- (d) VF de Martín: categoría = la de la API; un valor rechazado da error por campo ---------- */
+    await abrirD(idMartinD, 'vf');
+    const vacioM = await pd.evaluate(() => ({ rol: (document.querySelector('#panelExp [role="status"].empty-state') || {}).tagName, alert: document.querySelectorAll('#panelExp [role="alert"]').length, texto: document.getElementById('panelExp').innerText.replace(/\s+/g, ' ') }));
+    check('3d-e1', 'VF de un expediente sin valoración (GET → 404): estado vacío con botón «Registrar valoración funcional», NO un error (sin role="alert")',
+      (await get(`/hce/${idMartinD}/valoracion-funcional`)).status === 404 && /Todavía no se registró una valoración funcional/.test(vacioM.texto) && vacioM.alert === 0 && (await pd.locator('#btnVfNuevo').count()) === 1, vacioM.texto.slice(0, 120));
+    await pd.click('#btnVfNuevo');
+    await pd.waitForSelector('#vf_pct');
+    const sinSugerencia = await pd.evaluate(() => { const t = document.getElementById('panelExp').innerText; const botones = [...document.querySelectorAll('#panelExp button')].map((b) => b.innerText.trim());
+      return { botones, sugerencia: /autogener|sugerencia|sugiere|borrador autom/i.test(t.replace(/no se autogenera/gi, '')), fns: ['sugiereNivel', 'genVFBorrador', 'categoriaBaremo', 'vfAlertaVigencia'].map((n) => typeof window[n]) }; });
+    check('3d-e2', 'la pantalla de VF conectada no ofrece ninguna sugerencia de nivel CIF ni «Autogenerar borrador» (sin botón, sin texto, sin funciones); la síntesis dice que la escriben los técnicos',
+      !sinSugerencia.sugerencia && !sinSugerencia.botones.some((b) => /autogener|sugerir|borrador/i.test(b)) && sinSugerencia.fns.every((t) => t === 'undefined') && /no se autogenera/i.test(await txt(pd, '#hint_vf_sintesis')), JSON.stringify(sinSugerencia));
+    // crear con pct 58 (+ estado, fecha, vigencia lejana)
+    await pd.selectOption('#vf_estado', 'Valorado'); await pd.fill('#vf_fecha', '2026-05-14'); await pd.fill('#vf_organismo', 'Equipo valorador BPS'); await pd.fill('#vf_pct', '58');
+    await pd.fill('#vf_vigencia', '2030-05-14'); await pd.fill('#vf_rnpcd', 'RNPcD-10452');
+    const reqVf = pd.waitForRequest((r) => r.method() === 'POST' && /valoracion-funcional$/.test(r.url()));
+    await pd.click('#btnVfGuardar');
+    const cuerpoVf = cuerpoDe(await reqVf);
+    await pd.waitForFunction(() => document.getElementById('vfResultado'));
+    const vf1 = (await get(`/hce/${idMartinD}/valoracion-funcional`)).json;
+    const ui1 = await pd.evaluate(() => { const c = document.querySelector('#vfResultado .banda-chip'); return { chip: c.innerText.replace(/\s+/g, ' ').trim(), impl: document.querySelector('#vfResultado .vf-impl').innerText.trim(), foco: document.activeElement.id, clase: c.className }; });
+    check('3d-d1', 'VF: se ingresa un % y la categoría que se muestra es la de la respuesta de la API (categoria.categoria · rango + implicancia); pct viaja como texto; el foco va al resultado',
+      typeof cuerpoVf.pct === 'string' && cuerpoVf.pct === '58' && vf1.categoria.categoria === 'Severo' && ui1.chip === `${vf1.categoria.categoria} · ${vf1.categoria.rango}` && ui1.impl === vf1.categoria.implicancia && ui1.foco === 'vfResultado', JSON.stringify({ cuerpoVf, ui1, api: vf1.categoria }).slice(0, 300));
+    // editar sólo pct: PATCH sólo con pct, la categoría se vuelve a pintar desde la respuesta
+    await pd.fill('#vf_pct', '30');
+    const reqP = pd.waitForRequest((r) => r.method() === 'PATCH' && /valoracion-funcional$/.test(r.url()));
+    const respP = pd.waitForResponse((r) => r.request().method() === 'PATCH' && /valoracion-funcional$/.test(r.url()));
+    await pd.click('#btnVfGuardar');
+    const cuerpoP = cuerpoDe(await reqP); const jP = await (await respP).json();
+    await pd.waitForFunction(() => /Moderado/.test(document.querySelector('#vfResultado .banda-chip').innerText));
+    const ui2 = await pd.evaluate(() => ({ chip: document.querySelector('#vfResultado .banda-chip').innerText.replace(/\s+/g, ' ').trim(), pct: document.getElementById('vf_pct').value }));
+    const vf2 = (await get(`/hce/${idMartinD}/valoracion-funcional`)).json;
+    check('3d-d2', 'editar el %: PATCH sólo con {pct:"30"}; tras guardar todo se vuelve a pintar desde la respuesta: la categoría pasa a la que devolvió la API (Moderado) y el campo muestra el % como lo devolvió («30.00»)',
+      JSON.stringify(cuerpoP) === '{"pct":"30"}' && jP.data.categoria.categoria === 'Moderado' && ui2.chip === `${vf2.categoria.categoria} · ${vf2.categoria.rango}` && ui2.pct === vf2.pct && vf2.pct === '30.00', JSON.stringify({ cuerpoP, ui2 }));
+    // valores que la API rechaza: error por campo, sin guardar nada
+    const malos = [];
+    for (const [valor, campoApi] of [['150', 'pct'], ['abc', 'pct']]) {
+      await pd.fill('#vf_pct', valor);
+      const respX = pd.waitForResponse((r) => r.request().method() === 'PATCH' && /valoracion-funcional$/.test(r.url()));
+      await pd.click('#btnVfGuardar');
+      const rx = await respX; const jx = await rx.json();
+      await pd.waitForSelector('#vfErrores:not([hidden])');
+      malos.push(await pd.evaluate(([v, st, det]) => ({ v, status: st, campos: det.map((d) => d.campo), foco: document.activeElement.id, rol: document.getElementById('vfErrores').getAttribute('role'),
+        inv: document.getElementById('vf_pct').getAttribute('aria-invalid'), desc: document.getElementById('vf_pct').getAttribute('aria-describedby'), err: document.getElementById('err_vf_pct').textContent, valor: document.getElementById('vf_pct').value,
+        chip: document.querySelector('#vfResultado .banda-chip').innerText.replace(/\s+/g, ' ').trim() }), [valor, rx.status(), jx.detail]));
+    }
+    check('3d-d3', 'un % que la API rechaza («150», «abc») da 422 y se muestra como error del campo % (aria-invalid + aria-describedby al mensaje) y en un resumen role="alert" con foco; lo tipeado queda, y la categoría y lo guardado no cambian',
+      malos.every((m) => m.status === 422 && m.campos.includes('pct') && m.foco === 'vfErrores' && m.rol === 'alert' && m.inv === 'true' && m.desc.includes('err_vf_pct') && m.err.length > 3 && m.chip.startsWith('Moderado'))
+        && (await get(`/hce/${idMartinD}/valoracion-funcional`)).json.pct === '30.00', JSON.stringify(malos.map((m) => [m.v, m.status, m.err])));
+    // nivel de autonomía + vigencia vencida: la alerta es la de la API
+    await pd.fill('#vf_pct', '30.00'); await pd.fill('#vf_fecha', '2019-06-01');      // la API exige vigencia >= fecha de valoración
+    await pd.selectOption('#vf_dom_comunicacion', 'Apoyo permanente'); await pd.selectOption('#vf_dom_movilidad', 'Autónomo');
+    await pd.selectOption('#vf_dom_autocuidado', 'Apoyo ocasional'); await pd.selectOption('#vf_dom_aprendizaje', 'Apoyo frecuente'); await pd.fill('#vf_vigencia', '2020-01-31');
+    const chipsAntes = await pd.evaluate(() => ({ com: document.querySelector('#vf_chip_comunicacion .banda-chip').dataset.bandaPaso, mov: document.querySelector('#vf_chip_movilidad .banda-chip').dataset.bandaPaso }));
+    await pd.click('#btnVfGuardar');
+    await pd.waitForFunction(() => document.getElementById('vfAlerta'));
+    const vf3 = (await get(`/hce/${idMartinD}/valoracion-funcional`)).json;
+    const ui3 = await pd.evaluate(() => ({ alerta: document.getElementById('vfAlerta').innerText.replace(/\s+/g, ' ').trim(), glifo: !!document.querySelector('#vfAlerta [aria-hidden="true"]'),
+      niv: document.querySelector('#vf_chip_comunicacion .banda-chip').dataset.bandaPaso, nivTxt: document.querySelector('#vf_chip_comunicacion .banda-chip').innerText.trim() }));
+    check('3d-d4', 'la alerta de vigencia es la de la API (nivel + mensaje tal cual, con glifo y texto) y los niveles de autonomía se guardan por dominio (PATCH fusiona) y se ven con su nombre en la rampa',
+      vf3.alerta_vigencia && vf3.alerta_vigencia.nivel === 'vencida' && ui3.alerta.includes(vf3.alerta_vigencia.mensaje) && /Vencida/.test(ui3.alerta) && ui3.glifo && vf3.dominios.comunicacion === 'Apoyo permanente' && vf3.dominios.movilidad === 'Autónomo'
+        && ui3.nivTxt === 'Apoyo permanente' && chipsAntes.com === '6' && chipsAntes.mov === '1', JSON.stringify({ ui3, antes: chipsAntes }));
+
+    /* ---------- (D7) rampa de un solo matiz: categorías y niveles de la VF, nunca ok/warn/bad ---------- */
+    const rampa = await pd.evaluate(() => {
+      const raiz = getComputedStyle(document.documentElement);
+      const prohib = ['--ok', '--warn', '--bad', '--ok-soft', '--warn-soft', '--bad-soft'].map((v) => raiz.getPropertyValue(v).trim().toLowerCase());
+      const rgb = (c) => { const m = c.match(/\d+/g).map(Number); return '#' + m.slice(0, 3).map((x) => x.toString(16).padStart(2, '0')).join(''); };
+      const chips = [...document.querySelectorAll('#vfResultado .banda-chip, #vf_chip_comunicacion .banda-chip, .vf-doms .banda-chip')];
+      return { n: chips.length, mal: chips.filter((c) => { const bg = rgb(getComputedStyle(c).backgroundColor), fg = rgb(getComputedStyle(c).color);
+        return prohib.includes(bg) || prohib.includes(fg) || !/banda-(\d|neutra)/.test(c.className); }).length,
+        pasos: chips.map((c) => c.dataset.bandaPaso) };
+    });
+    check('3d-d7', 'D7 (regla 5 del encargo): las categorías del baremo y los niveles de autonomía de la VF usan la misma rampa de un solo matiz que las bandas del IDEA (clases banda-1…6 / neutra, nombre escrito): ningún fondo ni texto coincide con --ok/--warn/--bad',
+      rampa.n >= 5 && rampa.mal === 0 && ['6', '2', '1', '4'].every((p) => rampa.pasos.includes(p)), JSON.stringify(rampa));
+
+    // reporte impreso de la VF: todo de la API; la lectura del Δ es la del servidor (sin números ni Δ locales)
+    await pd.click('#btnVfReporte');
+    await pd.waitForFunction(() => document.getElementById('view-informe').classList.contains('active') && /Reporte de Valoración Funcional/.test(document.getElementById('informeContent').innerText) && !/Cargando el reporte/.test(document.getElementById('informeContent').innerText));
+    const repo = await pd.evaluate(() => { const c = document.getElementById('informeContent'); return { texto: c.innerText.replace(/\s+/g, ' '), evol: [...c.querySelectorAll('.doc-seccion')].find((s) => /Evolución del año/.test(s.innerText)) ? [...[...c.querySelectorAll('.doc-seccion')].find((s) => /Evolución del año/.test(s.innerText)).querySelectorAll('.doc-p')].map((p) => p.innerText.trim()) : [],
+      head: !!c.querySelector('.print-wrap > thead .ph') }; });
+    const pbApi = (await get(`/hce/${idMartinD}/protocolo`)).json.find((p) => p.tipo === 'B');
+    const evEsperada = ['esc_1', 'esc_2', 'esc_3', 'esc_4'].map((k) => pbApi.interpretacion[k].etiqueta);
+    check('3d-d5', 'reporte impreso de la VF: la «Evolución del año» usa la lectura del Δ B−A que devuelve la API (protocolo B firmado) y no lleva ningún Δ ni cifra de evolución; muestra la categoría de la API y el encabezado repetible de la hoja',
+      repo.evol.length === 4 && repo.evol.every((p, i) => p.endsWith(evEsperada[i] + '.')) && !/Δ|\+\d/.test(repo.texto) && /Categoría según el baremo: Moderado/.test(repo.texto) && repo.head, JSON.stringify(repo.evol));
+    await pd.click('#informeContent .inf-banner button:has-text("Volver al expediente")');
+    await pd.waitForSelector('#vf_pct');
+
+    /* ---------- (e) VF de Sofía: vacío → crear con un solo campo; categoría «No corresponde» ---------- */
+    const idSof = await idDe('Sofía');
+    await abrirD(idSof, 'vf');
+    const e0 = (await get(`/hce/${idSof}/valoracion-funcional`)).status;
+    await pd.click('#btnVfNuevo'); await pd.waitForSelector('#vf_estado');
+    await pd.selectOption('#vf_estado', 'En trámite');
+    const reqS = pd.waitForRequest((r) => r.method() === 'POST' && /valoracion-funcional$/.test(r.url()));
+    await pd.click('#btnVfGuardar');
+    const cuerpoS = cuerpoDe(await reqS);
+    await pd.waitForFunction(() => document.getElementById('vfResultado'));
+    const sof = (await get(`/hce/${idSof}/valoracion-funcional`)).json;
+    const uiS = await pd.evaluate(() => ({ chip: document.querySelector('#vfResultado .banda-chip').innerText.replace(/\s+/g, ' ').trim(), paso: document.querySelector('#vfResultado .banda-chip').dataset.bandaPaso, alerta: !!document.getElementById('vfAlerta'), errores: !document.getElementById('vfErrores').hidden }));
+    check('3d-e3', 'crear una VF desde el estado vacío con un solo campo: POST {estado}; sin % la categoría es «No corresponde» (neutra, sin paso inferido), sin alerta y sin errores',
+      e0 === 404 && JSON.stringify(cuerpoS) === '{"estado":"En trámite"}' && sof.categoria === null && uiS.chip === sof.categoria_etiqueta && uiS.chip === 'No corresponde' && uiS.paso === 'neutra' && !uiS.alerta && !uiS.errores, JSON.stringify({ cuerpoS, uiS }));
+
+    /* ---------- fuentes: ni IC ni VF calculan nada en el navegador ---------- */
+    const fuentes = await Promise.all(['informe-cierre.js', 'hce-doc-org-vf.js'].map(async (f) => (await (await fetch(DEMO + '/js/' + f)).text())));
+    const codigo = fuentes.join('\n').replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // sin comentarios: primero los de bloque, después los de línea
+    const prohibidos = ['lbTotales', 'protTotales', 'calcularDelta', 'deltaInterpreta', 'ALERTA_DELTA', 'categoriaBaremo', 'sugiereNivel', 'genVFBorrador', 'vfAlertaVigencia', 'descDelta', 'colorBanda', 'bandaIdea'].filter((n) => new RegExp('\\b' + n + '\\b').test(codigo));
+    check('3d-f', 'el código del IC y de la VF no usa lbTotales/protTotales/calcularDelta/deltaInterpreta/categoriaBaremo/sugiereNivel/genVFBorrador/vfAlertaVigencia (nada de negocio se calcula en el navegador)', prohibidos.length === 0, prohibidos.join(',') || 'limpio');
+
+    /* ---------- accesibilidad: cada campo con su etiqueta; sin desborde horizontal a 390 px ---------- */
+    const etiquetas = [];
+    for (const [id, tab] of [[idMartinD, 'ic'], [idMartinD, 'vf'], [idSof, 'ic']]) {
+      await abrirD(id, tab);
+      etiquetas.push(...await pd.evaluate((t) => [...document.querySelectorAll('#panelExp input:not([type=hidden]), #panelExp select, #panelExp textarea')].filter((e) => !(t === 'ic' && e.id === 'ic_add_texto' && false)).map((e) => {
+        const l = e.id && document.querySelector(`label[for="${e.id}"]`);
+        return { tab: t, id: e.id, nombre: ((l && l.innerText) || e.getAttribute('aria-label') || '').trim() };
+      }), tab));
+    }
+    check('3d-ax', 'todos los campos de las pestañas IC (sin crear y firmada) y VF tienen una etiqueta asociada',
+      etiquetas.length > 20 && etiquetas.every((e) => e.nombre), `${etiquetas.length} campos · sin etiqueta: ${etiquetas.filter((e) => !e.nombre).map((e) => e.id).join(',') || 'ninguno'}`);
+    const anchos = [];
+    for (const w of [390, 1024]) {
+      await pd.setViewportSize({ width: w, height: 800 });
+      for (const [id, tab] of [[idMartinD, 'ic'], [idMartinD, 'vf'], [idVal, 'ic']]) {
+        await abrirD(id, tab);
+        await pd.waitForTimeout(300);
+        anchos.push(await pd.evaluate(([t, ww]) => ({ t, ww, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }), [tab, w]));
+      }
+      await abrirD(idMartinD, 'ic'); await verImpreso();
+      anchos.push(await pd.evaluate((ww) => ({ t: 'impreso', ww, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }), w));
+    }
+    await pd.setViewportSize({ width: 1280, height: 720 });
+    check('3d-w', 'la página no desborda horizontalmente a 390 y 1024 px en la pestaña IC (Martín y Valentina), la pestaña VF y el documento impreso', anchos.every((a) => a.sw <= a.cw), anchos.map((a) => `${a.t}@${a.ww}:${a.sw}/${a.cw}`).join(' '));
+    await cd.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

@@ -2,7 +2,7 @@
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
    Fase 3-c (handoff §5.125): ningun modulo se bloquea ni por CI ni por secuencia (§5.94, §5.95) y ya no hay
    «habilitacion excepcional». LB, PA y PB se editan y firman SOLO contra la API (evaluaciones.js); aca queda
-   el expediente de ejemplo (datos de datos.js, ids 101-108) y el IC, que se conecta en la fase siguiente.
+   el expediente de ejemplo (datos de datos.js, ids 101-108). Fase 3-d (§5.126): el IC y la VF tambien se conectaron, y el ejemplo ya no los ofrece.
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 /* =================================================================
    M1 · MOTOR DE FLUJO DE EJEMPLO (estado · firma · addenda)
@@ -60,18 +60,9 @@ function estadoModulo(nna, key){
   return nna.flujo[key].firmado ? "firmado" : "borrador";
 }
 
-/* Validación de integridad del IC de ejemplo (§4.3). LB, PA y PB ya no se validan en el navegador:
-   la API devuelve un 422 con el detalle por campo (evaluaciones.js). */
+/* Ningun modulo se valida en el navegador: LB, PA, PB e IC devuelven un 422 con el detalle por campo (API).
+   Se conserva el nombre porque lo llama firmarModulo() del flujo de ejemplo. */
 function validarIntegridad(nna, key){
-  if(key==="ic"){                                   // HCE-IC · Informe de Cierre Anual (M6, §4.3)
-    const ic = nna.flujo.ic;
-    const faltan = ic.sintEsc.map((t,i)=>(t||"").trim()?null:`E${i+1}`).filter(x=>x);
-    if(faltan.length)       return {ok:false, msg:`Falta la síntesis cualitativa por escala: ${faltan.join(", ")}.`};
-    if(!ic.valTec1 || !ic.valTec2) return {ok:false, msg:"Faltan las valoraciones anuales de ambos técnicos."};
-    if(!ic.recomendaciones) return {ok:false, msg:"Faltan las recomendaciones y ajustes de tratamiento."};
-    if(!ic.orientaciones)   return {ok:false, msg:"Faltan las orientaciones concretas a la familia."};
-    if(!ic.fecha)           return {ok:false, msg:"Falta la fecha del informe."};
-  }
   return {ok:true, msg:""};
 }
 
@@ -106,7 +97,6 @@ function confirmarFirma(id, key){
   }
   f.firmado = true;
   closeFlujoModal(); renderFlujo(id);
-  if(key==="ic" && document.getElementById("view-ic") && document.getElementById("view-ic").classList.contains("active")) cargarIC(nna.id);
   if(typeof renderNNA==="function") renderNNA();
   toast(`${modInfo(key).full} firmado: ya no se edita, se corrige por addenda.`);
 }
@@ -126,14 +116,43 @@ function confirmarAddenda(id, key){
 }
 
 /* --- Modales de flujo (reusan #modalFlujo) --------------------------- */
+/* Dialogo modal accesible (Fase 3-d, §5.126; lo usa el «recibí» del IC conectado y los modales del expediente de ejemplo):
+   role="dialog" + aria-modal en index.html; la app de atras queda inerte, el foco entra al primer campo (o al titulo),
+   Tab no sale del dialogo, Esc lo cierra (recordatorios.js) y el foco vuelve a quien lo abrio. */
+let FLUJO_MODAL_OPENER = null;
 function openFlujoModal(title, sub, bodyHtml, footHtml){
+  const m = document.getElementById("modalFlujo");
   document.getElementById("mfTitle").textContent = title;
   document.getElementById("mfSub").textContent = sub;
   document.getElementById("mfBody").innerHTML = bodyHtml;
   document.getElementById("mfFoot").innerHTML = footHtml;
-  document.getElementById("modalFlujo").classList.add("open");
+  if(!m.classList.contains("open")) FLUJO_MODAL_OPENER = document.activeElement;
+  m.classList.add("open");
+  appInerte(true);
+  setTimeout(() => {
+    if(!m.classList.contains("open")) return;
+    const primero = document.querySelector("#mfBody input:not([type=hidden]), #mfBody textarea, #mfBody select");
+    (primero || document.getElementById("mfTitle")).focus();
+  }, 0);
 }
-function closeFlujoModal(){ document.getElementById("modalFlujo").classList.remove("open"); }
+/* sinFoco: el cierre es por cerrar la sesion (el foco va al login, no a quien abrio el dialogo). */
+function closeFlujoModal(sinFoco){
+  const m = document.getElementById("modalFlujo");
+  if(!m.classList.contains("open")) return;          // Esc lo llama aunque no este abierto
+  m.classList.remove("open");
+  appInerte(false);
+  const o = FLUJO_MODAL_OPENER; FLUJO_MODAL_OPENER = null;
+  if(!sinFoco && o && document.contains(o)){ try{ o.focus(); }catch(_e){ /* nada */ } }
+}
+document.getElementById("modalFlujo").addEventListener("keydown", e => {
+  if(e.key !== "Tab") return;
+  const foco = [...document.querySelectorAll("#modalFlujo button:not([disabled]):not([hidden]), #modalFlujo input:not([disabled]), #modalFlujo select:not([disabled]), #modalFlujo textarea, #modalFlujo a[href]")]
+    .filter(el => el.offsetParent !== null);
+  if(!foco.length) return;
+  const a = foco[0], z = foco[foco.length - 1];
+  if(e.shiftKey && (document.activeElement === a || document.activeElement.id === "mfTitle")){ e.preventDefault(); z.focus(); }
+  else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
+});
 function openFirmaModal(id, key){
   const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
   const body = key==="ci"
@@ -274,16 +293,12 @@ function flujoBodyHtml(nna){
       if(m.key==="ic") meta += f.recibi ? ` · Recibí de la familia: ${fmtFecha(f.recibi.fecha)}` : ` · Recibí de la familia PENDIENTE`;
       const verBtn = m.key==="ci" ? `<button class="btn btn-ghost btn-mini" onclick="verCI(${nna.id})">Ver</button>`
                    : m.key==="lb" ? `<button class="btn btn-ghost btn-mini" onclick="verLB(${nna.id})">Ver</button>`
-                   : (m.key==="pa"||m.key==="pb") ? `<button class="btn btn-ghost btn-mini" onclick="verProt(${nna.id},'${m.key}')">Ver</button>`
-                   : m.key==="ic" ? `<button class="btn btn-ghost btn-mini" onclick="generarInforme(${nna.id})">Ver informe</button>` : "";
-      const recibiBtn = (m.key==="ic" && !f.recibi) ? `<button class="btn btn-ghost btn-mini" style="color:var(--warn)" onclick="openRecibiModal(${nna.id})">✍ Recibí</button>` : "";
-      actions = `${verBtn}${recibiBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
+                   : (m.key==="pa"||m.key==="pb") ? `<button class="btn btn-ghost btn-mini" onclick="verProt(${nna.id},'${m.key}')">Ver</button>` : "";
+      actions = `${verBtn}<button class="btn btn-ghost btn-mini" onclick="addendaModulo(${nna.id},'${m.key}')">+ Addenda</button>`;
     } else {
       meta = "En borrador · editable";
-      // LB, PA y PB se editan y firman contra la API (pestañas del expediente de verdad); acá sólo el IC de ejemplo.
-      actions = m.key==="ic"
-        ? `<button class="btn btn-ghost btn-mini" onclick="irAEval('ic', ${nna.id})">✎ Editar Informe</button><button class="btn btn-primary btn-mini" style="background:var(--ok)" onclick="firmarModulo(${nna.id},'${m.key}')">Firmar</button>`
-        : "";
+      // LB, PA, PB e IC se editan y firman contra la API (pestañas del expediente de verdad): el de ejemplo no ofrece acciones.
+      actions = "";
     }
     return `<div class="flujo-row">
       <span class="fr-code">${m.code}</span>
@@ -316,9 +331,6 @@ NNA.forEach(n=>{
   n.docs = []; n.fotos = []; n.autImagen = {registrada:false, fecha:"", adjunto:""};   // HCE-DOC (M7)
   n.inau = {sipi:"", convenio:"", referente:"", ingreso:"", obs:"", envios:[]};        // HCE-ORG (M8)
   n.bps  = {prestacion:"", tramite:"", estado:"", vencimiento:"", obs:"", gestiones:[]};
-  n.vf = {estado:"No iniciado", fecha:"", organismo:"", pct:"", vigencia:"", rnpcd:"", // HCE-VF (M9)
-    dominios:{comunicacion:"",autocuidado:"",movilidad:"",aprendizaje:"",interacciones:"",comunidad:""},
-    capacidades:"", barreras:"", apoyos:"", obs:"", sintesisFuncional:""};
   if(!n.cie11) n.cie11 = (CIE_SEED[n.id]||"6A02.Z") + " — Trastorno del espectro del autismo";
   if(!n.tecnico1){ n.tecnico1 = (n.tecnico||"Dr. González — Psicología").split("—")[0].trim(); n.tecnico1_rol = "Psicólogo/a"; }
   if(!n.tecnico2){ n.tecnico2 = "Mtra. Torres"; n.tecnico2_rol = "Maestro/a"; }
@@ -448,25 +460,6 @@ NNA.forEach(n=>{
   if(byId(104)) Object.assign(byId(104).inau, {sipi:"SIPI 987.654", convenio:"Derivación CAIF → Convenio INAU",
     referente:"Lic. P. Suárez (INAU Oeste)", ingreso:"2026-06-10",
     obs:"Ingreso reciente. Coordinar informe de ingreso con el referente.", envios:[]});
-
-  /* --- M9 · HCE-VF: valoración funcional seed. -----------------------------
-     El % y la categoría provienen SIEMPRE de la valoración oficial (BUND),
-     nunca de los puntajes clínicos (§7.5). Martín completo · Sofía parcial. */
-  if(byId(102)) Object.assign(byId(102).vf, {
-    estado:"Valorado", fecha:"2026-05-14", organismo:"Equipo valorador BPS (BUND)", pct:"58",
-    vigencia:"2028-05-14", rnpcd:"RNPcD-10452",
-    dominios:{comunicacion:"Apoyo frecuente", autocuidado:"Apoyo ocasional", movilidad:"Autónomo",
-      aprendizaje:"Apoyo frecuente", interacciones:"Apoyo frecuente", comunidad:"Apoyo permanente"},
-    capacidades:"Disfruta de la música y de las actividades con agua. Reconoce rutinas visuales y anticipa actividades preferidas. Vínculo afectivo sólido con su madre y su hermana; busca al adulto de referencia para pedir ayuda.",
-    barreras:"Entornos ruidosos y con mucha gente le generan malestar. La escuela aún no cuenta con apoyos visuales sistemáticos en todos los espacios.",
-    apoyos:"Agenda visual individual (hogar y IPPU). Acompañante terapéutico escolar 3 veces por semana. Sistema aumentativo de comunicación en consolidación.",
-    obs:"La familia consultó por la renovación de la AYEX (se sigue en HCE-ORG).",
-    sintesisFuncional:""});
-  if(byId(101)) Object.assign(byId(101).vf, {
-    estado:"En trámite", fecha:"", organismo:"", pct:"", vigencia:"", rnpcd:"",
-    dominios:{comunicacion:"Autónomo", autocuidado:"Autónomo", movilidad:"", aprendizaje:"", interacciones:"Apoyo ocasional", comunidad:""},
-    capacidades:"Lenguaje oral fluido; le gusta conversar sobre sus intereses. Buena memoria y disposición para las actividades estructuradas.",
-    barreras:"", apoyos:"", obs:"", sintesisFuncional:""});
 })();
 
 /* Helpers de historial → derivan el estado de evaluaciones desde el historial */

@@ -260,11 +260,6 @@ function toggleActivo(id){
 }
 
 function renderNNA(){
-  // Dropdown de NNA (todos) para el Informe de Cierre de ejemplo
-  const optsNNA = NNA.map(p=>
-    `<option value="${p.id}">#${p.id} · ${p.nombre} ${p.apellido} · Grupo ${p.grupo}</option>`).join("");
-  const selIC = document.getElementById("selNNAIC");
-  if(selIC){ const prev = selIC.value; selIC.innerHTML = optsNNA; if(prev) selIC.value = prev; }
   // Fase 3-a: el listado y los KPIs de Inicio ya no salen de este array (ver «INICIO CONECTADO»).
   // Esta funcion sigue para las vistas que quedan en modo demostracion.
   renderPendientes();
@@ -297,15 +292,6 @@ function renderPendientes(){
   }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
 }
 
-/* --- Navegación al Informe de Cierre de ejemplo preseleccionando el NNA (LB/PA/PB: pestañas del expediente) --- */
-function irAEval(view, id){
-  if(view==="ic"){
-    go("ic");
-    cargarIC(id);
-  } else if(view==="intermedia"){
-    go("intermedia");
-  }
-}
 /* Navegación intra-vista: scroll suave hacia una sección del expediente o de un grupo.
    El contexto (NNA abierto, o vista Grupos) no cambia — es puro atajo visual. */
 function scrollASeccion(anchorId){
@@ -536,6 +522,9 @@ function limpiarUiDeSesion(){
   EXP.seq++;
   Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null});
   if(typeof evReiniciar === "function") evReiniciar(true);     // evaluaciones: ni borradores ni profesionales de la sesión anterior
+  if(typeof icReiniciar === "function") icReiniciar();         // informe de cierre y su documento impreso: nada del NNA anterior detrás del login
+  if(typeof vfReiniciar === "function") vfReiniciar();         // valoración funcional
+  if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";
   _el("userNombre").textContent = "—";

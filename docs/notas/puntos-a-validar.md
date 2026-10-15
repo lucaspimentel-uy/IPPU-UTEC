@@ -1131,3 +1131,9 @@ barato corregirla ahora:
 > | Una persona puede existir **sin** expediente de Atención Diurna | **CONFIRMADO**, y con un caso concreto: un NNA puede **dejar la diurna y seguir en clínica** (consulta §2.6) |
 > | Reingreso >12 meses = **línea base nueva** | ✅ **CERRADO el 2026-10-05** (B10: «no, no cambia nada», `handoff.md` §5.96). Con el IDEA anual hay uno por año igual y un reingreso no abre ninguna instancia especial. Antes: «hay que revisarlo» |
 > | Taller Terapéutico y Clínica **fuera de alcance** | ⚠️ **Tensión, no contradicción.** §5.12 / D3 sigue en pie, pero la **transición** diurna → clínica **tiene que poder registrarse**: es un hecho del expediente de diurna |
+
+---
+
+## Nota (2026-10-15, Fase 3-d): la UI no muestra sugerencia CIF hasta que IPPU envíe los cortes
+
+La pantalla de **HCE-VF conectada** (pestaña VF del expediente) **no ofrece ninguna sugerencia de nivel CIF ni borrador autogenerado**, y la API tampoco (`handoff.md` §5.118, §5.126): los documentos sancionan el mapeo (comunicación ← E2, interacciones ← E1, aprendizaje ← E4) pero **no definen los cortes** que llevan de la escala IDEA a un nivel de apoyo; los únicos que existen están en el JS del Prototipo v4 (`sugiereNivel`), que dejó de ser fuente normativa (§5.92). Mientras **IPPU no envíe esos cortes**, los niveles de autonomía y la síntesis funcional los escriben los técnicos. Cuando lleguen, se implementan en el servidor (como la categoría del baremo) y la pantalla los muestra tal cual los devuelva la API, nunca calculados en el navegador. Pregunta para **IPPU**; no bloquea el 26/11.

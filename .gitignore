@@ -35,3 +35,6 @@ graphify-out/
 # NOTA (2026-08-03): handoff.md y CLAUDE.md salieron de esta lista a propósito.
 # Son el contexto compartido del equipo: si no están versionados, cada integrante
 # trabaja sin conocer el estado ni las decisiones ya tomadas (ver handoff.md §13).
+
+# Salidas de la verificacion de la demo (PDF de page.pdf() de conectada.js): artefactos generados
+implementacion/L1-hce-idea/demo/verificacion/salidas/

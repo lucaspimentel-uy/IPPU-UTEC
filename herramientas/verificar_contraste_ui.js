@@ -427,6 +427,48 @@ async function medirAnillosDeFoco(page, selectores) {
   await page.evaluate(() => evPedirFirma()); await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await page.waitForTimeout(150);
   todosPares = todosPares.concat(await extraerParesVivos(page));             // errores del PA (fecha, síntesis)
 
+  // Fase 3-d: IC (sin crear con la confirmación de firma, firmado con radares/tabla, documento impreso) y VF (estado vacío,
+  // formulario de alta y la valoración con categoría, alerta y niveles). Sólo se lee: ni se guarda el IC de Valentina ni se crea
+  // una VF (el botón «Firmar» se detiene en la confirmación, y «Registrar valoración» sólo abre el formulario).
+  const abrirIc = async (nombre, tab) => {
+    await page.click('.navitem[data-view="inicio"]');
+    await page.evaluate(async (n) => {
+      const r = await fetch(API_BASE + '/hce?nombre=' + encodeURIComponent(n) + '&limit=5', { headers: { Authorization: 'Bearer ' + Sesion.token() } });
+      await abrirExpediente((await r.json()).find((h) => h.persona.nombre === n).id);
+    }, nombre);
+    await page.waitForSelector('#expTitulo', { timeout: 8000 });
+    await page.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+    await page.click('#tabExp-' + tab);
+    await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    await page.waitForTimeout(200);
+  };
+  await abrirIc('Valentina', 'ic');
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // IC sin crear: tabla con «—», editor, firmantes
+  await page.evaluate(() => icPedirFirma()); await page.waitForTimeout(100);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // barra con la confirmación de firma
+  await abrirIc('Martín', 'ic');
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // IC firmado: tabla, radares, firmas, recibí
+  await page.click('#btnIcImpreso'); await page.waitForSelector('.print-wrap', { timeout: 8000 }); await page.waitForTimeout(300);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // documento impreso (vista en pantalla)
+  await abrirIc('Martín', 'vf');
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // VF: estado vacío
+  await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await page.waitForTimeout(100);
+  todosPares = todosPares.concat(await extraerParesVivos(page));             // VF: formulario de alta
+  // La VF con datos: se pinta el componente real con una valoración de muestra (no se escribe nada en la API) para medir la
+  // categoría (cada una de las cinco), los niveles de autonomía en la rampa y la alerta de vigencia.
+  for (const cat of [['Sin discapacidad', '0 % a 4 %'], ['Leve', '5 % a 24 %'], ['Moderado', '25 % a 49 %'], ['Severo', '50 % a 95 %'], ['Muy severo', '96 % a 100 %'], [null, null]]) {
+    await page.evaluate(([nombre, rango]) => {
+      VF.rec = { hce_id: 0, estado: 'Valorado', fecha: '2019-06-01', organismo: 'Equipo', pct: '58.00', vigencia: '2020-01-31', rnpcd: null,
+        dominios: { comunicacion: 'Apoyo permanente', autocuidado: 'Apoyo ocasional', movilidad: 'Autónomo', aprendizaje: 'Apoyo frecuente' },
+        capacidades: null, barreras: null, apoyos: null, obs: null, sintesis_funcional: null,
+        categoria: nombre ? { id: 1, categoria: nombre, rango, implicancia: 'Implicancia de muestra.' } : null, categoria_etiqueta: nombre || 'No corresponde',
+        alerta_vigencia: { nivel: 'vencida', dias: -100, mensaje: 'La valoración venció (muestra).' } };
+      VF.estado = 'listo'; VF.nuevo = false; VF.campos = null; vfRepintar();
+    }, cat);
+    todosPares = todosPares.concat(await extraerParesVivos(page));
+  }
+  await page.evaluate(() => vfReiniciar());
+
   // Deduplicar por (fg,bg,esGrande)
   const mapaPares = new Map();
   for (const p of todosPares) {

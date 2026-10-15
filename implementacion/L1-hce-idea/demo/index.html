@@ -136,54 +136,9 @@
     <!-- LB (IDEA), PA y PB ya no son vistas sueltas: se editan y firman en las pestañas del expediente
          (js/evaluaciones.js), contra la API. -->
 
-    <!-- ============ VISTA: HCE-IC · INFORME DE CIERRE ANUAL (M6) ============ -->
-    <section class="view" id="view-ic">
-      <div data-modo-demo></div>
-      <div class="crumbs">Inicio › Informe de Cierre Anual › <b>HCE-IC</b></div>
-      <h1 class="pagetitle">HCE-IC · Informe de Cierre Anual</h1>
-      <p class="pagedesc">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. La tabla comparativa y los radares se <b>autogeneran desde los datos firmados</b>. El PDF exportado con membrete es <b>el único informe válido</b>: no se elaboran versiones alternativas para organismos supervisores (§5.3).</p>
-
-      <div class="selector">
-        <label for="selNNAIC"><b>NNA:</b></label>
-        <select id="selNNAIC" onchange="cargarIC(parseInt(this.value))"></select>
-        <span id="icEstadoBadge"></span>
-        <span style="color:var(--ink-2)">Elaboración sugerida: en los días posteriores al cierre del Protocolo B</span>
-      </div>
-      <div id="icAviso"></div>
-
-      <div id="icAuto"></div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Síntesis cualitativa por escala (extensión sugerida: ≈100 palabras por escala)</h2></div>
-        <div style="padding:16px 18px">
-          <div class="form-grid full" id="icEscFields"></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoraciones anuales, recomendaciones y orientaciones</h2></div>
-        <div style="padding:16px 18px">
-          <div class="form-grid full">
-            <div class="field"><label>Valoración anual — Técnico 1 (Psicólogo/a) <span class="req">*</span></label><textarea id="ic_val1" placeholder="Valoración anual del técnico responsable 1."></textarea></div>
-            <div class="field"><label>Valoración anual — Técnico 2 (Maestro/a) <span class="req">*</span></label><textarea id="ic_val2" placeholder="Valoración anual del técnico responsable 2."></textarea></div>
-            <div class="field"><label>Recomendaciones y ajustes de tratamiento <span class="req">*</span></label><textarea id="ic_recom" placeholder="Recomendaciones para el próximo período."></textarea></div>
-            <div class="field"><label>Orientaciones concretas a la familia <span class="req">*</span></label><textarea id="ic_orient" placeholder="Orientaciones prácticas para el hogar."></textarea></div>
-          </div>
-          <div class="form-grid">
-            <div class="field"><label>Fecha del informe <span class="req">*</span></label><input id="ic_fecha" type="date"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="idea-summary">
-        <div class="nota">Para firmar: síntesis de las 4 escalas + valoraciones de ambos técnicos + recomendaciones + orientaciones + fecha (§4.3). La firma (doble) bloquea el informe; luego se registra el «Recibí» de la familia y se exporta el PDF con membrete.</div>
-        <div class="spacer"></div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-ghost" onclick="guardarIC()">Guardar borrador</button>
-          <button class="btn btn-primary" style="background:var(--ok)" onclick="firmarIC()">✓ Firmar Informe de Cierre</button>
-        </div>
-      </div>
-    </section>
+    <!-- IC y VF ya no son vistas sueltas: viven en las pestañas del expediente (js/informe-cierre.js y
+         js/hce-doc-org-vf.js), contra la API, sin selector de NNA. El documento impreso del IC y el reporte de la
+         VF se muestran en la vista de más abajo («view-informe»), que se abre desde esas pestañas. -->
 
     <!-- ============ VISTA: EVAL INTERMEDIA ============ -->
     <section class="view" id="view-intermedia">
@@ -235,10 +190,11 @@
       </div>
     </section>
 
-    <!-- ============ VISTA: INFORME (por NNA · generado automáticamente) ============ -->
+    <!-- ============ VISTA: DOCUMENTO IMPRESO (conectada a la API · Fase 3-d) ============
+         Informe de Cierre Anual firmado (GET /informe-cierre/{id}/documento) y Reporte de Valoración Funcional.
+         Se abre desde las pestañas IC y VF del expediente; imprime en A4 (@media print en css/estilos.css). -->
     <section class="view" id="view-informe">
-      <div data-modo-demo></div>
-      <div class="crumbs">Inicio › Expediente › <b>Informe automático</b></div>
+      <div class="crumbs">Inicio › Expediente › <b>Documento impreso</b></div>
       <div id="informeContent"></div>
     </section>
 
@@ -525,11 +481,13 @@
 </div>
 
 <!-- ============ M1 · MODAL DE FLUJO (firma / addenda / HCE-LOG) ============ -->
+<!-- Diálogo modal (lo usa el «recibí» del informe de cierre): role="dialog" + aria-modal, la app de atrás queda inerte
+     mientras está abierto, Esc lo cierra y el foco vuelve a quien lo abrió (js/flujo.js · openFlujoModal). -->
 <div class="modal-bg" id="modalFlujo">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mfTitle" aria-describedby="mfSub">
     <div class="modal-head">
-      <div><h2 id="mfTitle">—</h2><p id="mfSub">—</p></div>
-      <button class="x" onclick="closeFlujoModal()" title="Cerrar">×</button>
+      <div><h2 id="mfTitle" tabindex="-1">—</h2><p id="mfSub">—</p></div>
+      <button type="button" class="x" onclick="closeFlujoModal()" aria-label="Cerrar">×</button>
     </div>
     <div class="modal-body" id="mfBody"></div>
     <div class="modal-foot" id="mfFoot"></div>
