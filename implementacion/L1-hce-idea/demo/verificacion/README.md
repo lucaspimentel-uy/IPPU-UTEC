@@ -81,7 +81,7 @@ Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; C
 el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
 levantarla y volver a cargar el seed.
 
-**Qué verifica** (107 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`):
+**Qué verifica** (113 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`):
 
 - **Fase 3-a** — `3a-a` login del técnico y chip con su nombre y rol · `3a-b` contraseña mala → mensaje en
   `role="alert"` con foco y `sessionStorage` vacío · `3a-c…` conteos del listado y del filtro de grupo **iguales a los de
@@ -107,11 +107,17 @@ levantarla y volver a cargar el seed.
   `3c-prov` suma «provisorio» en vivo, sin banda · `3c-c` PB creado y firmado: **Δ, lectura y alerta mostrados == API** ·
   `3c-i` IDEA en un expediente **sin CI**, sin candados · `3c-f` PA con el LB sin firmar → «fuera de secuencia» que no bloquea ·
   `3c-pa-pb` PB firmado antes que su PA: al firmar el PA se vuelve a leer el PB y aparece su Δ ·
+  `3c-add1` la addenda a medio escribir sobrevive al cambio de pestaña y al re-clic en la misma · `3c-add2` relectura en segundo plano
+  (GET demorado) mientras otro usuario agrega una addenda: lo tipeado sobrevive y la nueva aparece (**falla sin la guarda de
+  `evRepintar`**) · `3c-banda` `total_min` 56 → su paso; 60, 7 y null → estilo neutro con el nombre escrito · `3c-tecla` firmar
+  sólo con teclado: Esc cancela sin pedido y Enter×3 hace un único `POST …/firmar` ·
   `3c-j1` la guarda `CONFIRMA_BASE_DESCARTABLE` (exit 1 antes de pedir nada) · `3c-j2`/`3c-j3` «Salir» y 401 con el diálogo
   abierto dejan los campos vacíos y `WIZ.orig` null · `3c-j4`/`3c-j5`/`3c-j11` selector de grupos (técnico: sólo los suyos, sin
   «Sin grupo asignado», uno solo → preseleccionado; admin: todos) · `3c-j6` alta del técnico en un grupo ajeno → el 403 de la API
   se muestra · `3c-j7` una escritura que devuelve `warnings` los muestra sin bloquear · `3c-j8` la cédula se compara por valor
-  bruto · `3c-j9` el expediente de ejemplo no muestra candados ni «Bloqueado» ni modal de excepción · `3c-j10` la marca «Demo
+  bruto · `3c-j9` el texto completo de los expedientes de ejemplo 101–108, su HCE-DOC y su vista de IC no dicen «habilitación
+  excepcional», «Bloqueado»/«bloqueada» ni llevan candado (salvo el 🔒 del documento histórico, excluido a propósito) · `3c-j9b` guardar
+  una foto individual y una grupal sin autorización no bloquea ni avisa (§5.99) · `3c-j10` la marca «Demo
   parcialmente conectada» no tapa contenido a 1280×800 y 1280×900.
 - `z` — **0 errores de JavaScript** en toda la corrida.
 
@@ -125,7 +131,7 @@ Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra 
   errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos 14 pares que fallan que
   la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
   confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable): **los mismos 14 pares que fallan**
-  (62 → 72 pares distintos; los 11 pares nuevos —rampa de bandas, marca de NS, addenda, barra— miden **entre 4,85:1 y 13,78:1**).
+  (62 → 71 pares distintos; los pares nuevos —13 por clase/etiqueta: rampa de bandas, marca de NS, addenda, barra— miden **entre 4,90:1 y 13,78:1**, medido sobre una base recién cargada y contra la punta de 3-b; el paso 4 de la rampa, 5,05:1).
   Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
   ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
   `:focus-visible` se miden.
@@ -187,7 +193,7 @@ divergen, con contexto alrededor).
 |---|---|
 | **A — Estado inicial** | Carga sin errores · catálogos y constantes · **lista de funciones globales** (delata una función perdida al mover código) · motor de flujo M1 de los 8 NNA · las 5 vistas · los 8 expedientes |
 | **B — Reglas duras** | **No-homologabilidad (§5.2):** `calcularDelta` debe *lanzar* si se le pasa el IDEA en vez de un protocolo. **Baremo (§7.5):** `categoriaBaremo` debe *lanzar* si se le pasa un puntaje clínico en vez del % oficial. Más bordes del baremo y cálculo puro |
-| **C — Interacciones** | Firma de CI (con autorizaciones y adjunto) · firma PA + PB con **delta B−A y alerta institucional** (M5.3) · addenda sobre módulo firmado y rechazo sobre no firmado · habilitación excepcional · modales de alta/edición/recibí · vistas armadas por JS (IDEA, protocolos, informe de cierre, HCE-VF) |
+| **C — Interacciones** | Firma de CI (con autorizaciones y adjunto) · firma PA + PB con **delta B−A y alerta institucional** (M5.3) · addenda sobre módulo firmado y rechazo sobre no firmado · modales de alta/edición/recibí · vistas armadas por JS (IDEA, protocolos, informe de cierre, HCE-VF) |
 | **D — Modelo final** | Volcado JSON completo de los 8 expedientes tras todas las mutaciones · **analítica institucional derivada** (`D3`): agregados y KPIs recalculados al final, más una aserción `derivadoOk` que contrasta el panel contra un recálculo hecho en el momento |
 
 ## Cosas a tener en cuenta
@@ -294,11 +300,11 @@ guardas nuevas, las dos con mensaje que nombra la vista — no un timeout genér
    cargar.
 
 > **Vocabulario, para no repetir la confusión de sesiones anteriores:** un **paso** es una clave
-> de `F.pasos` — lo que `fingerprint.js` captura (hoy: **42**, `pasos capturados` en su propia
-> salida). Un **campo comparado** es lo que `comparar.js` reporta por fila — los 42 pasos **más**
-> el campo `errors` (comparado aparte, bajo «ERRORES DE CONSOLA / PAGINA») — hoy: **43**. Todo lo
+> de `F.pasos` — lo que `fingerprint.js` captura (hoy: **36** contra la demo conectada —la Fase 3-c retiró el paso de excepción, las tres vistas de LB/PA/PB y, en conectada, el modal de edición de ejemplo—, `pasos capturados` en su propia
+> salida). Un **campo comparado** es lo que `comparar.js` reporta por fila — los 36 pasos **más**
+> el campo `errors` (comparado aparte, bajo «ERRORES DE CONSOLA / PAGINA») — hoy: **37**. Todo lo
 > que hable de un `.json` capturado dice "pasos"; todo lo que hable de una corrida de
-> `comparar.js` (`X iguales · Y distintos`, o "X/43") dice "campos comparados". Los dos números
+> `comparar.js` (`X iguales · Y distintos`, o "X/37") dice "campos comparados". Los dos números
 > son reales y **distintos a propósito** — no es un typo si en un párrafo dice 42 y en el de al
 > lado dice 43.
 

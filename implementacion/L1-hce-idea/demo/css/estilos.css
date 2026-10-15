@@ -701,7 +701,6 @@
   .fstep.s-firmado .fname{color:var(--ok)}
   .fstep.s-borrador .fdot{background:var(--paper);border-color:var(--warn);color:var(--warn)}
   .fstep.s-borrador .fname{color:var(--ink)}
-  .fstep.s-bloqueado .fdot{background:var(--paper-2);border-color:var(--rule);color:var(--ink-3)}
   .fstep.exc .fdot{box-shadow:0 0 0 3px var(--warn-soft)}
   .fstep .fexc{display:block;color:var(--warn);font-weight:700;font-size:var(--fs-3xs);margin-top:2px}
   .flujo-row{
@@ -742,7 +741,6 @@
     font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;border:1px solid transparent
   }
   .lt-firma{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
-  .lt-excepcion{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
   .lt-addenda{background:var(--teal-soft);color:var(--teal);border-color:#9ED4CB}
   .lt-edicion{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
   .lt-alerta{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
@@ -1095,14 +1093,6 @@
   .foto-thumb{width:150px;border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden;background:var(--paper)}
   .foto-thumb .ph{height:88px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);background:var(--paper-3);color:var(--ink-3)}
   .foto-thumb .cap{padding:var(--s2);font-size:var(--fs-3xs);color:var(--ink-2);line-height:1.45}
-  .aut-ok{
-    border:1px solid var(--ok-line);border-left:3px solid var(--ok);background:var(--ok-soft);
-    padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-xs);margin-bottom:var(--s3);line-height:1.55
-  }
-  .aut-no{
-    border:1px solid var(--warn-line);border-left:3px solid var(--warn);background:var(--warn-soft);
-    padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-xs);margin-bottom:var(--s3);line-height:1.55
-  }
   .doc-hist{font-family:var(--f-dato);color:var(--ink-2);font-size:var(--fs-3xs)}
   /* M6 · HCE-IC — Informe de Cierre Anual: tabla comparativa, radares y membrete */
   .comp-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
@@ -1304,6 +1294,7 @@
   .banda-4{background:var(--rampa-4);color:var(--rampa-txt-claro)}
   .banda-5{background:var(--rampa-5);color:#fff}
   .banda-6{background:var(--rampa-6);color:#fff;border-color:#fff}
+  .banda-neutra{background:var(--paper-3);color:var(--ink)}      /* total_min fuera del mapa o no numerico: sin paso inferido */
   .idea-summary .banda-chip{border-width:2px;border-color:#fff}
   .ev-nota-banda{font-size:var(--fs-2xs);color:#C2D2DB}
   /* Insignia del puntaje de cada descripcion (0 … 8): misma rampa, con el numero siempre visible. */

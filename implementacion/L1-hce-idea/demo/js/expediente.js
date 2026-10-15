@@ -515,6 +515,7 @@ function abrirExpedienteDemo(id){
     <div class="eval-bar">
       <span class="eval-bar-lbl">Cargar evaluación:</span>
       <button class="btn btn-ghost" onclick="irAEval('ic', ${p.id})">Informe de Cierre (IC)</button>
+      <span class="hint">LB, PA y PB se editan en los expedientes conectados (pestañas del expediente).</span>
       <!-- M5.3: "Eval. intermedia" (Likert 3 ítems/dim) reemplazada por la Escala IPPU-TEA (PA/PB);
            el código de la vista se conserva sin exponer, como áreas/general. -->
       <!-- M0 (2026-07-15): "Eval. por áreas" y "Eval. general" descartadas como módulos activos

@@ -252,20 +252,6 @@ const norm = (s) => (s == null ? s : String(s)
              modalAbierto: document.getElementById('modalFlujo').classList.contains('open') };
   }, 107);
 
-  /* C4 · Habilitacion excepcional con constancia obligatoria. */
-  await page.evaluate(() => habilitarExcepcional(104, 'pa'));
-  await html('C4a_modal_excepcion', '#modalFlujo');
-  await page.evaluate(() => {
-    const m = document.getElementById('mfMotivo'); if (m && m.options.length) m.selectedIndex = 0;
-    document.getElementById('mfTexto').value = 'Motivo de prueba para el fingerprint.';
-    confirmarExcepcion(104, 'pa');
-  });
-  await page.waitForTimeout(120);
-  await capArg('C4b_tras_excepcion', id => {
-    const n = NNA.find(x => x.id === id);
-    return { excepcion: n.flujo.pa.excepcion, estados: MODULOS_FLUJO.map(m => [m.key, estadoModulo(n, m.key), moduloHabilitado(n, m.key)]), log: n.hceLog };
-  }, 104);
-
   /* C5 · Modales de alta, edicion y "Recibi de la familia". */
   await page.evaluate(() => openAlta());            await html('C5a_modal_alta', '#modalAlta');
   await page.evaluate(() => closeAlta());

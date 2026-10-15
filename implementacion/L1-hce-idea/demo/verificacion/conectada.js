@@ -851,6 +851,67 @@ async function loguear(page) {
     check('3c-d2', 'addenda vacía: el 422 de la API se muestra junto al campo (aria-invalid + aria-describedby) y en un resumen role="alert" con foco',
       addVacia.err !== '' && addVacia.inv === 'true' && /err_ev_add_texto/.test(addVacia.desc) && addVacia.rol === 'alert' && addVacia.foco === 'evAddErrores', JSON.stringify(addVacia));
 
+    /* ---------- (d3) la addenda a medio escribir sobrevive al cambio de pestaña y al re-clic en la misma pestaña ---------- */
+    const borrador = 'Borrador de addenda que no se debe perder (3-c).';
+    await pc.click('#tabExp-lb'); await pc.waitForSelector('#ev_add_texto');
+    await pc.fill('#ev_add_texto', borrador);
+    await pc.click('#tabExp-pa'); await pc.waitForFunction(() => /PA ·/.test((document.getElementById('evTitulo') || {}).textContent || ''), null, { timeout: 8000 });
+    await pc.click('#tabExp-lb'); await pc.waitForSelector('#ev_add_texto');
+    const trasTab = await pc.inputValue('#ev_add_texto');
+    await pc.click('#tabExp-lb');                                  // re-clic en la MISMA pestaña: se repinta y se vuelve a leer
+    const trasReclic = await pc.inputValue('#ev_add_texto');
+    await pc.waitForTimeout(700);
+    const trasLectura = await pc.inputValue('#ev_add_texto');
+    check('3c-add1', 'la addenda a medio escribir sobrevive a cambiar de pestaña (LB → PA → LB) y a re-hacer clic en la misma pestaña (también cuando termina la relectura)',
+      trasTab === borrador && trasReclic === borrador && trasLectura === borrador, JSON.stringify({ trasTab, trasReclic, trasLectura }));
+
+    /* ---------- (d4) relectura en segundo plano: lo tipeado mientras llega la respuesta no se pisa y la addenda ajena aparece ---------- */
+    {
+      const reIdea = new RegExp(`/hce/${idMartin3}/idea(\\?.*)?$`);
+      await pc.route(reIdea, async (route) => { if (route.request().method() !== 'GET') return route.continue(); await new Promise((x) => setTimeout(x, 2500)); return route.continue(); });
+      const rel = pc.waitForResponse((r) => r.request().method() === 'GET' && reIdea.test(r.url()));
+      await pc.click('#tabExp-lb');                                // empieza la relectura (la respuesta tarda 2,5 s)
+      await pc.waitForSelector('#ev_add_texto');
+      const tipeado = 'Lo que se escribe mientras llega la relectura (3-c).';
+      await pc.fill('#ev_add_texto', tipeado);
+      const tkT = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'torres@demo.ippu.test', password: PASSWORD }) })).json()).access_token;
+      const ajena = await fetch(API + `/idea/${ideaM.id}/addendas`, { method: 'POST', headers: { Authorization: 'Bearer ' + tkT, 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: 'Addenda de otro usuario (3-c).' }) });
+      await rel;
+      await pc.waitForFunction(() => /Addenda de otro usuario/.test((document.querySelector('#evAddendas .ev-add-lista') || {}).innerText || ''), null, { timeout: 8000 });
+      const guard = await pc.evaluate(() => ({ campo: document.getElementById('ev_add_texto').value, lista: document.querySelector('#evAddendas .ev-add-lista').innerText.replace(/\s+/g, ' '), items: document.querySelectorAll('#evAddendas .ev-add-lista li').length }));
+      await pc.unroute(reIdea);
+      check('3c-add2', 'relectura en segundo plano (GET /hce/{id}/idea demorado) mientras otro usuario agrega una addenda por la API: lo tipeado en la addenda sigue en el campo y la addenda nueva aparece en la lista',
+        ajena.status === 201 && guard.campo === tipeado && guard.items === 2 && /Addenda de otro usuario/.test(guard.lista), JSON.stringify({ status: ajena.status, ...guard }).slice(0, 300));
+      await pc.fill('#ev_add_texto', '');
+      await pc.click('#tabExp-pa'); await pc.click('#tabExp-lb'); await pc.waitForSelector('#ev_add_texto');      // el borrador queda vacío también en el estado
+    }
+
+    /* ---------- (d5) banda desconocida o no numérica: estilo neutro, nombre y rango escritos, nunca un paso inferido ---------- */
+    {
+      const reIdea = new RegExp(`/hce/${idMartin3}/idea(\\?.*)?$`);
+      let minForzado;
+      await pc.route(reIdea, async (route) => {
+        if (route.request().method() !== 'GET') return route.continue();
+        const r = await route.fetch(); const j = await r.json();
+        if (minForzado !== undefined) j.forEach((x) => { if (x.banda) x.banda = { ...x.banda, total_min: minForzado }; });
+        return route.fulfill({ response: r, json: j });
+      });
+      const chipDe = () => pc.evaluate(() => { const c = document.querySelector('#evBanda .banda-chip'), e = getComputedStyle(c);
+        return { paso: c.dataset.bandaPaso, clase: c.className, txt: c.innerText.replace(/\s+/g, ' '), bg: e.backgroundColor, color: e.color, borde: e.borderTopWidth + ' ' + e.borderTopColor }; });
+      const bandas = {};
+      for (const v of [56, 60, 7, null]) {                              // 56 primero: el paso 4 de referencia (el real de Martín es 56–75)
+        minForzado = v;
+        const rel = pc.waitForResponse((r) => r.request().method() === 'GET' && reIdea.test(r.url()));
+        await pc.click('#tabExp-lb'); await rel; await pc.waitForTimeout(250);
+        bandas[String(v)] = await chipDe();
+      }
+      await pc.unroute(reIdea);
+      const ref = bandas['56'], neutras = ['60', '7', 'null'].map((k) => bandas[k]);
+      check('3c-banda', 'total_min 56 → su paso (4, azul de la rampa); 60, 7 y null → estilo neutro (banda-neutra: fondo neutro, texto de tinta, mismo borde), con el nombre de la banda y su rango escritos',
+        ref.paso === '4' && ref.bg === 'rgb(92, 146, 204)' && neutras.every((n) => n.paso === 'neutra' && /banda-neutra/.test(n.clase) && n.bg === 'rgb(237, 241, 243)' && n.color === 'rgb(22, 35, 44)' && n.borde === ref.borde && /Moderado/.test(n.txt)) && /7–/.test(bandas['7'].txt) && /60–/.test(bandas['60'].txt),
+        JSON.stringify(bandas).slice(0, 500));
+    }
+
     /* ---------- (e) NS con su marca propia + (h) evaluador faltante, en el borrador de Joaquín ---------- */
     const idJoaquin = await idDe('Joaquín');
     await abrir(idJoaquin, 'lb');
@@ -992,6 +1053,33 @@ async function loguear(page) {
     check('3c-pa-pb', 'PB firmado ANTES que su PA: sin Δ («todavía no se calculó»); al firmar el PA la pantalla vuelve a leer el PB (GET /protocolo/{id}) y muestra el Δ que completó el servidor',
       pbFirma.status === 200 && pbPrimero.deltas === null && /todavía no se calculó/.test(nota) && pbTras.deltas !== null && claves.every((c) => filasT[c] === fmtD(pbTras.deltas[c])) && filasT.total === '+24', `Δ total ${filasT.total}`);
 
+    /* ---------- confirmación de la firma, SOLO con teclado: Firmar → Enter → Confirmar → Esc cancela (sin pedido) → un único POST /firmar ---------- */
+    {
+      const nuevo3 = await send('POST', '/hce', { persona: { nombre: 'Tecla' + sufijo3, apellido: 'Tresc', ci: '7' + sufijo3 + '3', fecha_nac: '2015-04-04' }, grupo_id: escolares.id });
+      const idTecla = nuevo3.json.data.id;
+      await send('POST', `/hce/${idTecla}/protocolo`, cuerpoProt('A', 3));
+      const firmas = [];
+      const alPedir = (r) => { if (r.method() === 'POST' && /\/protocolo\/\d+\/firmar$/.test(r.url())) firmas.push(r.url()); };
+      pc.on('request', alPedir);
+      await abrir(idTecla, 'pa');
+      await pc.focus('#btnEvFirmar');
+      const foco = () => pc.evaluate(() => document.activeElement.id);
+      await pc.keyboard.press('Enter');
+      const tras1 = { foco: await foco(), desc: await pc.evaluate(() => ['btnEvConfirmar', 'btnEvCancelar'].map((i) => document.getElementById(i).getAttribute('aria-describedby'))), txt: await pc.evaluate(() => document.getElementById('evConfirmaTxt').textContent) };
+      await pc.keyboard.press('Escape');
+      await pc.waitForTimeout(300);
+      const trasEsc = { foco: await foco(), confirma: await pc.locator('#evConfirmaTxt').count(), firmas: firmas.length };
+      await pc.keyboard.press('Enter'); const foco2 = await foco();
+      await pc.keyboard.press('Enter'); await pc.keyboard.press('Enter');
+      await pc.waitForSelector('#evEstado .st-firmado', { timeout: 8000 });
+      await pc.waitForTimeout(500);
+      pc.off('request', alPedir);
+      const paT = (await get(`/hce/${idTecla}/protocolo`)).json.find((x) => x.tipo === 'A');
+      check('3c-tecla', 'confirmar la firma solo con teclado: Firmar → Enter lleva el foco a «Confirmar firma» (ambos botones con aria-describedby del texto), Esc cancela sin ningún pedido y devuelve el foco a «Firmar»; Enter → Enter → Enter hace exactamente UN POST …/firmar',
+        tras1.foco === 'btnEvConfirmar' && tras1.desc.every((d) => d === 'evConfirmaTxt') && /Firmar/.test(tras1.txt) && trasEsc.foco === 'btnEvFirmar' && trasEsc.confirma === 0 && trasEsc.firmas === 0 && foco2 === 'btnEvConfirmar' && firmas.length === 1 && paT.firmado === true,
+        JSON.stringify({ tras1, trasEsc, foco2, firmas: firmas.length }));
+    }
+
     /* ---------- a 390 px el editor, la lectura y la tabla del Δ no desbordan ---------- */
     await pc.setViewportSize({ width: 390, height: 800 });
     const anch = [];
@@ -1114,16 +1202,51 @@ async function loguear(page) {
       cam1.inicial === cam1.campo && cam1.lista === 0 && cam2.ci === '60123451' && cam2.n === 1 && !/replace\(/.test(cam1.fuente), JSON.stringify({ cam1: { ...cam1, fuente: undefined }, cam2 }));
     await pj.keyboard.press('Escape');
 
-    /* demo de ejemplo: ni candados, ni «Bloqueado», ni modal de excepción — ni siquiera con el CI pendiente (Bruno, 107) */
+    /* demo de ejemplo: ni candados, ni «Bloqueado», ni modal de excepción — ni siquiera con el CI pendiente (Bruno, 107).
+       Se lee el TEXTO COMPLETO de los ocho expedientes de ejemplo (101–108: stepper, HCE-DOC, fotos, todo lo que arma
+       abrirExpedienteDemo) y de su vista de IC (cargarIC). El único 🔒 permitido es el del DOCUMENTO HISTÓRICO
+       (HCE anterior, firmado e inmutable: «solo lectura»), que no es un bloqueo de secuencia: se lo quita fila por fila
+       —sólo en las filas con `.doc-hist`— antes de buscar, y se exige que haya al menos uno para probar que la exclusión se ejerce. */
     const demo = await pj.evaluate(() => {
-      const salida = {};
-      [107, 104, 102].forEach((id) => { abrirExpedienteDemo(id); const f = document.getElementById('flujoPanelBody');
-        salida[id] = { txt: f.innerText, bloqueados: document.querySelectorAll('.fstep.s-bloqueado, .mb-bloqueado').length, candado: /🔒|Bloquead|excepci|Habilitar/i.test(f.innerText) }; });
-      go('grupos'); salida.grupos = /🔒|Bloquead|excepci/i.test(document.getElementById('view-grupos').innerText);
-      return { salida, funciones: [typeof openExcepcionModal, typeof habilitarExcepcional, typeof confirmarExcepcion], modal: !!document.getElementById('mfMotivo') };
+      const PROHIBIDO = /habilitaci[oó]n excepcional|bloquead|🔒|excepci[oó]n|habilitar/i;
+      const sinHistoricos = (raiz) => {
+        const c = raiz.cloneNode(true); let n = 0;
+        c.querySelectorAll('tr').forEach((tr) => { if (tr.querySelector('.doc-hist')) { const td = tr.querySelector('td'); td.textContent = td.textContent.replace('🔒 ', ''); n++; } });
+        return { texto: c.textContent, historicos: n };
+      };
+      const salida = {}; let historicos = 0;
+      for (let id = 101; id <= 108; id++) {
+        abrirExpedienteDemo(id);
+        const f = document.getElementById('flujoPanelBody'), e = sinHistoricos(document.getElementById('view-expediente'));
+        cargarIC(id); const ic = sinHistoricos(document.getElementById('view-ic'));
+        historicos += e.historicos;
+        salida[id] = { bloqueados: document.querySelectorAll('.fstep.s-bloqueado').length, flujo: PROHIBIDO.test(f.innerText),
+          expediente: (e.texto.match(PROHIBIDO) || [null])[0], ic: (ic.texto.match(PROHIBIDO) || [null])[0] };
+      }
+      go('grupos'); salida.grupos = (document.getElementById('view-grupos').innerText.match(PROHIBIDO) || [null])[0];
+      return { salida, historicos, funciones: [typeof openExcepcionModal, typeof habilitarExcepcional, typeof confirmarExcepcion], modal: !!document.getElementById('mfMotivo') };
     });
-    check('3c-j9', 'el expediente de EJEMPLO (también Bruno, sin CI) y la vista Grupos no muestran candados, «Bloqueado», «excepción» ni «Habilitar»; el modal y las funciones de excepción ya no existen',
-      Object.entries(demo.salida).filter(([k]) => k !== 'grupos').every(([, v]) => !v.candado && v.bloqueados === 0) && demo.salida.grupos === false && demo.funciones.every((t) => t === 'undefined') && !demo.modal, JSON.stringify(demo.funciones));
+    check('3c-j9', 'el texto completo de los expedientes de EJEMPLO 101–108 (también Bruno, sin CI), su HCE-DOC y su vista de IC, y la vista Grupos no dicen «habilitación excepcional», «Bloqueado»/«bloqueada» ni llevan candado (salvo el 🔒 del documento histórico, excluido); el modal y las funciones de excepción ya no existen',
+      Object.entries(demo.salida).filter(([k]) => k !== 'grupos').every(([, v]) => !v.flujo && v.bloqueados === 0 && v.expediente === null && v.ic === null) && demo.salida.grupos === null
+        && demo.historicos > 0 && demo.funciones.every((t) => t === 'undefined') && !demo.modal, JSON.stringify({ historicos: demo.historicos, funciones: demo.funciones, salida: demo.salida }).slice(0, 600));
+
+    /* §5.99: guardar una foto no requiere autorización y no produce aviso ni bloqueo, ni individual ni grupal (demo de ejemplo) */
+    const fotos = await pj.evaluate(() => {
+      const sin = NNA.find((n) => !(n.autImagen && n.autImagen.registrada)) || null;
+      if (!sin) return { sin: null };
+      abrirExpedienteDemo(sin.id);
+      const antes = sin.fotos.length, tostAntes = document.getElementById('toast') ? document.getElementById('toast').textContent : '';
+      document.getElementById('foto_desc').value = 'foto de prueba 3c';
+      subirFoto(sin.id);
+      const tost = document.querySelector('.toast, #toast');
+      const g = sin.grupo; const gAntes = (GRUPOS_FOTOS[g] || []).length; go('grupos'); renderGrupoDetalle(g);
+      const hayCargaGrupal = !!document.getElementById('gf_desc_' + g), txtGrupo = document.getElementById('view-grupos').innerText;
+      subirFotoGrupo(g);
+      return { sin: sin.id, individual: sin.fotos.length - antes, grupal: (GRUPOS_FOTOS[g] || []).length - gAntes, hayCargaGrupal,
+        toast: tost ? tost.textContent : '', txtGrupo: /deshabilitada|bloquead/i.test(txtGrupo) };
+    });
+    check('3c-j9b', 'en el expediente de EJEMPLO sin autorización de imagen se guarda una foto individual y una grupal: sin bloqueo, sin «Carga deshabilitada» ni «bloqueada» (§5.99)',
+      fotos.sin !== null && fotos.individual === 1 && fotos.grupal === 1 && fotos.hayCargaGrupal && !fotos.txtGrupo && !/bloquead|🚫/i.test(fotos.toast), JSON.stringify(fotos));
 
     /* la marca «Demo parcialmente conectada» no tapa contenido a 1280×800 y 1280×900 */
     const marcas = [];

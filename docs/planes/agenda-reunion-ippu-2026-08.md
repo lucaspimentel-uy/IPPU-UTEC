@@ -123,7 +123,7 @@ cuestionario enviado) — **no prometer que se administra sola.**
 
 ## 3. El IDEA: ¿una línea base o todos los años? — **donde IPPU ya se contradijo consigo mismo**
 
-**Pantalla:** expediente → **IDEA (HCE-LB)** · `#view-idea`
+**Pantalla:** expediente → **IDEA (HCE-LB)** · pestaña LB del expediente
 
 **Qué supusimos.** Que el IDEA se aplica **una sola vez**, como **línea base** del NNA, repitiéndose sólo
 ante un reingreso a más de 12 meses. Es lo que dice el Documento Técnico v1.0 y la razón por la que la demo

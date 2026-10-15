@@ -34,7 +34,7 @@ const TECNICOS = [
 
 /* Objeto de flujo por defecto: todo en borrador, nada bloqueado. */
 function initFlujo(){
-  const mk = () => ({firmado:false, firmas:[], addendas:[], excepcion:null});
+  const mk = () => ({firmado:false, firmas:[], addendas:[]});
   const f = {ci:mk(), lb:mk(), pa:mk(), pb:mk(), ic:mk()};
   f.ci.autorizaciones = {evaluacion:false, registro:false, comunicacion:false};  // HCE-CI (M3)
   f.ci.adjunto = "";
@@ -52,7 +52,7 @@ function initFlujo(){
 /* --- Secuencia (§5.94, §5.95): la secuencia sólo AVISA; nada se bloquea ni por CI ni por el eslabón anterior. ---
    Se conserva el nombre porque lo llaman las vistas de ejemplo; siempre está habilitado. */
 function moduloHabilitado(nna, key){
-  return {habilitado:true, exceptuable:false, motivoBloqueo:""};
+  return {habilitado:true};
 }
 
 /* Estado visible DERIVADO (nunca se almacena → sin drift): firmado | borrador. */
@@ -172,7 +172,7 @@ function openAddendaModal(id, key){
 function verHceLog(id){
   const nna = NNA.find(n=>n.id===id);
   const evs = [...nna.hceLog].reverse();          // más reciente primero (orden de inserción)
-  const tag = {firma:["lt-firma","Firma"], excepcion:["lt-excepcion","Excepción"], addenda:["lt-addenda","Addenda"], edicion:["lt-edicion","Edición"], alerta:["lt-alerta","Alerta"]};
+  const tag = {firma:["lt-firma","Firma"], addenda:["lt-addenda","Addenda"], edicion:["lt-edicion","Edición"], alerta:["lt-alerta","Alerta"]};
   const body = evs.length
     ? `<table class="log-table"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Módulo</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>
         ${evs.map(e=>{ const [c,t]=tag[e.tipo]||["lt-edicion",e.tipo]; const mod=moduloLabel(e.modulo);

@@ -375,7 +375,7 @@ function analiticaAgregados(){
   lbs.forEach(t=>banda[bandaIdea(t.total)]++);
 
   /* IPPU-TEA — sólo NNA con Protocolo A y B firmados y con el delta ya registrado por el
-     motor (M5.3). Si el B se firmó por habilitación excepcional sin A, `deltas` es null y
+     motor (M5.3). Si el B se firmó sin A (la secuencia sólo avisa, §5.95), `deltas` es null y
      el NNA queda fuera del promedio: no hay evolución que medir. */
   const conAB    = activos.filter(n=>n.flujo.pa.firmado && n.flujo.pb.firmado && n.flujo.pb.deltas);
   const paEsc    = [0,1,2,3].map(i=>promedio(conAB.map(n=>protTotales(n.flujo.pa.item).esc[i])));

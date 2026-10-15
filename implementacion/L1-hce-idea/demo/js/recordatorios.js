@@ -36,19 +36,9 @@ function renderRecordatorios(){
 function recToggle(i,v){ RECORDATORIOS[i].activo = v; renderRecordatorios(); }
 function recPeriodo(i,v){ RECORDATORIOS[i].periodo = v; }
 
-/* Fotos grupales (§8.4): requieren autorización de TODAS las familias del grupo. */
+/* Fotos grupales: guardar no requiere autorización ni produce aviso (§5.99). */
 const GRUPOS_FOTOS = {};   // grupo -> [{desc, fecha}] (en memoria, demo)
-function grupoAutImagen(gid){
-  const miembros = NNA.filter(n=>n.grupo===gid && n.activo);
-  const faltan = miembros.filter(n=>!(n.autImagen && n.autImagen.registrada));
-  return {miembros, faltan, ok: miembros.length>0 && faltan.length===0};
-}
 function subirFotoGrupo(gid){
-  const g = grupoAutImagen(gid);
-  if(!g.ok){
-    toast(`🚫 Foto grupal bloqueada (§8.4): falta autorización de uso de imagen de ${g.faltan.map(n=>n.nombre+" "+n.apellido).join(", ")||"(grupo sin integrantes activos)"}.`);
-    return;
-  }
   (GRUPOS_FOTOS[gid] = GRUPOS_FOTOS[gid]||[]).push({desc:"Registro grupal", fecha:HOY});
   renderGrupos();
   toast("Fotografía grupal cargada (demo).");

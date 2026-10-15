@@ -37,15 +37,14 @@ function docBodyHtml(p){
       <div class="field"><label>Fecha original</label><input id="doc_fecha" type="date" value="${HOY}"></div>
       <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="subirDoc(${p.id})">+ Adjuntar</button></div>
     </div>
-    <div class="section-label" style="margin-top:16px">Fotografías individuales — protección de imagen de NNA (§8.4)</div>
-    ${a.registrada
-      ? `<div class="aut-ok">✓ <b>Autorización de uso de imagen registrada</b> (${fmtFecha(a.fecha)} · copia en documentos: ${a.adjunto||"—"}). Carga de fotografías individuales habilitada.</div>
-         <div class="doc-uprow">
-           <div class="field"><label>Descripción / contexto</label><input id="foto_desc" placeholder="Ej. actividad de juego estructurado, taller de cocina…"></div>
-           <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="subirFoto(${p.id})">+ Cargar foto</button></div>
-         </div>`
-      : `<div class="aut-no">🚫 <b>Carga de fotografías bloqueada:</b> no hay autorización de uso de imagen registrada — protección de la imagen de NNA (art. 11, Código de la Niñez y la Adolescencia, Ley N.º 17.823; Ley N.º 18.331/2008).
-         <div style="margin-top:8px"><button class="btn btn-ghost btn-mini" onclick="openAutImagenModal(${p.id})">✍ Registrar autorización de imagen</button></div></div>`}
+    <div class="section-label" style="margin-top:16px">Fotografías individuales</div>
+    <div class="doc-uprow">
+      <div class="field"><label>Descripción / contexto</label><input id="foto_desc" placeholder="Ej. actividad de juego estructurado, taller de cocina…"></div>
+      <div style="flex:0"><button class="btn btn-primary btn-mini" onclick="subirFoto(${p.id})">+ Cargar foto</button></div>
+    </div>
+    <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:var(--s3)">Autorización de uso de imagen: ${a.registrada
+      ? `registrada (${fmtFecha(a.fecha)} · copia en documentos: ${a.adjunto||"—"})`
+      : `no registrada <button class="btn btn-ghost btn-mini" onclick="openAutImagenModal(${p.id})">✍ Registrar autorización de imagen</button>`}</div>
     <div class="foto-thumbs">${fotosHtml}</div>`;
 }
 function docPanelHtml(p){
@@ -111,17 +110,12 @@ function confirmarAutImagen(id){
   logEvento(nna, {modulo:"doc", tipo:"firma", detalle:`Autorización de uso de imagen registrada — ${firmante}. Copia adjunta en HCE-DOC.`});
   closeFlujoModal(); renderDoc(id);
   if(typeof renderGrupos==="function") renderGrupos();
-  toast("Autorización de imagen registrada. Fotos individuales habilitadas.");
+  toast("Autorización de imagen registrada.");
 }
 
-/* REGLA DURA (§8.4): la verificación vive acá, no en la UI — llamar subirFoto
-   sin autorización registrada se bloquea aunque el botón no exista en pantalla. */
+/* Guardar una foto no requiere autorización y no produce aviso ni bloqueo (§5.99); la autorización sólo regula COMPARTIR. */
 function subirFoto(id){
   const p = NNA.find(n=>n.id===id); if(!p) return;
-  if(!(p.autImagen && p.autImagen.registrada)){
-    toast("🚫 Carga bloqueada: falta la autorización de uso de imagen registrada (art. 11, CNA — Ley N.º 17.823). Registrala en HCE-DOC.");
-    return;
-  }
   const descEl = document.getElementById("foto_desc");
   const desc = descEl ? descEl.value.trim() : "";
   p.fotos.push({desc: desc||"Sin descripción", fecha:HOY});

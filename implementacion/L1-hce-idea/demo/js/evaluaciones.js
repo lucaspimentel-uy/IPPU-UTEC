@@ -50,7 +50,9 @@ const _vacio = (v) => v === null || v === undefined || v === "";
 const cv = (ev, id, base) => (ev.campos && Object.prototype.hasOwnProperty.call(ev.campos, id)) ? ev.campos[id] : base;
 /* Guarda en el estado lo tipeado en los campos del formulario, para poder volver a pintarlo sin perderlo. */
 function evSincronizar(){
-  const ev = _ev(); if(!ev || ev.estado !== "listo" || (ev.rec && ev.rec.firmado)) return;
+  const ev = _ev();
+  const ta = _evEl("ev_add_texto"); if(ev && ta) ev.addBorrador = ta.value;     // la addenda a medio escribir sobrevive al cambio de pestaña
+  if(!ev || ev.estado !== "listo" || (ev.rec && ev.rec.firmado)) return;
   const c = {};
   document.querySelectorAll("#panelExp [data-ev]").forEach(e => { if(e.id && e.matches("input,select,textarea")) c[e.id] = e.value; });
   if(Object.keys(c).length) ev.campos = c;
@@ -60,19 +62,19 @@ const _num = (v) => _vacio(v) ? "—" : escHtml(v);
 
 /* Rampa de UN solo matiz para las 6 bandas del IDEA (notas de accesibilidad §3.1): banda 1 = claro, banda 6 = oscuro.
    La API devuelve el nombre y el rango de la banda pero no su orden; el PASO de color se toma del `total_min` que
-   devuelve (nunca del total) y, si el catalogo cambiara, de su posicion proporcional. Es solo color: el nombre
-   de la banda se escribe SIEMPRE como texto. (Hueco de la API anotado: `banda.orden`.) */
+   devuelve (nunca del total). Si ese `total_min` no esta en el mapa (catalogo cambiado) o no es un numero, NO se
+   infiere un paso: el chip sale con el estilo neutro (`banda-neutra`) y el nombre y el rango siguen escritos.
+   Es solo color: el nombre de la banda se escribe SIEMPRE como texto. (Hueco de la API: `banda.orden`, §5.125.) */
 const BANDA_PASO_POR_MIN = {0: 1, 16: 2, 31: 3, 56: 4, 76: 5, 91: 6};
 function pasoDeBanda(b){
-  if(!b) return 1;
-  if(BANDA_PASO_POR_MIN[b.total_min] !== undefined) return BANDA_PASO_POR_MIN[b.total_min];
-  return Math.min(6, Math.max(1, Math.floor((b.total_min / 97) * 6) + 1));
+  if(!b || typeof b.total_min !== "number" || !Object.prototype.hasOwnProperty.call(BANDA_PASO_POR_MIN, b.total_min)) return null;
+  return BANDA_PASO_POR_MIN[b.total_min];
 }
 /* Chip de banda: texto (nombre + rango) + paso de la rampa. NUNCA `nivel_dsm` (no es el nivel de apoyo del NNA). */
 function bandaChipHtml(b){
   if(!b) return "";
-  const paso = pasoDeBanda(b);
-  return `<span class="banda-chip banda-${paso}" data-banda-paso="${paso}"><span class="banda-rot">Banda</span> ${escHtml(b.perfil)}<span class="banda-rango"> · ${escHtml(b.total_min)}–${escHtml(b.total_max)}</span></span>`;
+  const paso = pasoDeBanda(b), clase = paso === null ? "neutra" : paso;
+  return `<span class="banda-chip banda-${clase}" data-banda-paso="${clase}"><span class="banda-rot">Banda</span> ${escHtml(b.perfil)}<span class="banda-rango"> · ${_num(b.total_min)}–${_num(b.total_max)}</span></span>`;
 }
 /* NS: marca propia, neutra y distinta de cualquier numero (notas §3.2 B). */
 function nsMarcaHtml(){
@@ -292,10 +294,9 @@ function evPanelHtml(k){
 function evRepintar(k){
   if(EXP.tab !== k) return;
   const p = _evEl("panelExp"); if(!p) return;
-  const add = _evEl("ev_add_texto"), textoAdd = add ? add.value : "";    // una addenda a medio escribir sobrevive a un repintado
-  p.innerHTML = evPanelHtml(k);
-  const add2 = _evEl("ev_add_texto"); if(add2 && textoAdd) add2.value = textoAdd;
   const ev = EVS[k];
+  const add = _evEl("ev_add_texto"); if(ev && add) ev.addBorrador = add.value;    // una addenda a medio escribir sobrevive a un repintado (evAddendasHtml la restaura)
+  p.innerHTML = evPanelHtml(k);
   if(ev && ev.estado === "listo" && !(ev.rec && ev.rec.firmado)) evActualizar();   // subtotales y barra desde el estado
 }
 
@@ -465,10 +466,10 @@ function evTotalEtiqueta(ev, num){
 function evAccionesHtml(ev){
   const occ = ev.guardando;
   if(ev.confirmando && !occ){
-    return `<div class="ev-confirma" role="group" aria-label="Confirmar la firma">
+    return `<div class="ev-confirma" role="group" aria-label="Confirmar la firma" onkeydown="evTeclaConfirma(event)">
       <span id="evConfirmaTxt">¿Firmar ${ev.k === "lb" ? "la línea base" : "el protocolo"}? La firma bloquea el registro: después sólo se corrige por addenda.</span>
-      <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnEvConfirmar" onclick="evFirmar()">✓ Confirmar firma</button>
-      <button type="button" class="btn btn-ghost" id="btnEvCancelar" onclick="evCancelarFirma()">Cancelar</button></div>`;
+      <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnEvConfirmar" aria-describedby="evConfirmaTxt" onclick="evFirmar()">✓ Confirmar firma</button>
+      <button type="button" class="btn btn-ghost" id="btnEvCancelar" aria-describedby="evConfirmaTxt" onclick="evCancelarFirma()">Cancelar</button></div>`;
   }
   return `<button type="button" class="btn btn-ghost" id="btnEvGuardar" onclick="evGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : "Guardar borrador"}</button>
     <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnEvFirmar" onclick="evPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar ${ev.k === "lb" ? "línea base" : "protocolo"}</button>`;
@@ -554,7 +555,7 @@ function evAddendasHtml(ev){
       ${lista ? `<ol class="ev-add-lista">${lista}</ol>` : `<p class="hint">Sin addendas. El registro firmado no se edita: toda corrección se agrega acá, con su fecha y su autor (quien tiene la sesión iniciada).</p>`}
       <div id="evAddErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
       <div class="field"><label for="ev_add_texto">Nueva addenda (corrección o aclaración)</label>
-        <textarea id="ev_add_texto" aria-describedby="err_ev_add_texto"></textarea><div class="ev-err" id="err_ev_add_texto"></div></div>
+        <textarea id="ev_add_texto" aria-describedby="err_ev_add_texto">${escHtml(ev.addBorrador || "")}</textarea><div class="ev-err" id="err_ev_add_texto"></div></div>
       <div class="acciones-form"><button type="button" class="btn btn-primary" id="btnEvAdd" onclick="evAddenda()">+ Agregar addenda</button></div>
     </div></div>`;
 }
@@ -914,6 +915,12 @@ function evPedirFirma(){
   const a = _evEl("evAcciones"); if(a) a.innerHTML = evAccionesHtml(ev);
   const b = _evEl("btnEvConfirmar"); if(b) b.focus();
 }
+/* Esc dentro de la confirmacion = Cancelar: no se pide nada a la API y el foco vuelve a «Firmar». */
+function evTeclaConfirma(e){
+  if(e.key !== "Escape") return;
+  e.preventDefault(); e.stopPropagation();
+  evCancelarFirma();
+}
 function evCancelarFirma(){
   const ev = _ev(); if(!ev) return;
   ev.confirmando = false;
@@ -986,7 +993,8 @@ async function evAddenda(){
     ev.rec = r.data;
     ev.avisos = r.warnings || [];
     if(EXP.mods) EXP.mods[ev.k] = ev.rec;
-    const ta = _evEl("ev_add_texto"); if(ta) ta.value = "";      // ya quedó guardada: no se restaura al repintar
+    const ta = _evEl("ev_add_texto"); if(ta) ta.value = "";      // ya quedó guardada: ni el campo ni el borrador se restauran al repintar
+    ev.addBorrador = "";
     evRepintar(ev.k);
     toast("Addenda registrada");
     const t = _evEl("evAddTitulo"); if(t) t.focus();

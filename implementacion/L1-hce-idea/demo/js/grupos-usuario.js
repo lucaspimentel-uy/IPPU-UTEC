@@ -205,18 +205,14 @@ function renderGrupoDetalle(gid){
       </div>
     </div></div>` : "";
   // Bloque fotografía grupal
-  const gi = grupoAutImagen(g.id);
   const fotos = GRUPOS_FOTOS[g.id]||[];
   const fotosCard = `
     <div class="card"><div class="cardbody"><h3>Registro fotográfico grupal</h3>
-      ${gi.ok
-        ? `<div class="notice ok" style="margin-bottom:10px">Todas las familias del grupo registran autorización de uso de imagen. Se habilita la carga de fotografías grupales.</div>
-           <div class="uprow no-print">
-             <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Fotografía grupal</label><input type="file" id="gf_file_${g.id}" accept="image/*"></div>
-             <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Descripción / actividad</label><input type="text" id="gf_desc_${g.id}" placeholder="Ej.: salida didáctica, taller de música…"></div>
-             <div style="flex:0;align-self:end"><button class="btn btn-primary" onclick="subirFotoGrupo('${g.id}')">Cargar</button></div>
-           </div>`
-        : `<div class="notice warn"><b>Carga deshabilitada:</b> para publicar fotografías grupales, <u>todas</u> las familias de los NNA del grupo deben tener registrada la autorización de uso de imagen en su HCE (art. 11, CNA — Ley N.º 17.823). Integrantes sin autorización: <b>${gi.faltan.map(n=>n.nombre+" "+n.apellido).join(", ")||"—"}</b>.</div>`}
+      <div class="uprow no-print">
+        <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Fotografía grupal</label><input type="file" id="gf_file_${g.id}" accept="image/*"></div>
+        <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Descripción / actividad</label><input type="text" id="gf_desc_${g.id}" placeholder="Ej.: salida didáctica, taller de música…"></div>
+        <div style="flex:0;align-self:end"><button class="btn btn-primary" onclick="subirFotoGrupo('${g.id}')">Cargar</button></div>
+      </div>
       ${fotos.length
         ? `<div class="thumbs" style="margin-top:12px">${fotos.map(f=>`<div class="thumb"><div class="thumb-img">📷</div><div class="cap">${f.desc||"Sin descripción"}<br><span class="hint">${f.fecha}</span></div></div>`).join("")}</div>`
         : `<div class="hint" style="margin-top:10px">Sin fotografías grupales registradas.</div>`}
