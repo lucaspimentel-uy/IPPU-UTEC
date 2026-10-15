@@ -119,14 +119,18 @@ function confirmarAddenda(id, key){
 /* Dialogo modal accesible (Fase 3-d, §5.126; lo usa el «recibí» del IC conectado y los modales del expediente de ejemplo):
    role="dialog" + aria-modal en index.html; la app de atras queda inerte, el foco entra al primer campo (o al titulo),
    Tab no sale del dialogo, Esc lo cierra (recordatorios.js) y el foco vuelve a quien lo abrio. */
-let FLUJO_MODAL_OPENER = null;
+let FLUJO_MODAL_OPENER = null, FLUJO_MODAL_OPENER_ID = "", FLUJO_MODAL_ANCLA = null;
 function openFlujoModal(title, sub, bodyHtml, footHtml){
   const m = document.getElementById("modalFlujo");
   document.getElementById("mfTitle").textContent = title;
   document.getElementById("mfSub").textContent = sub;
   document.getElementById("mfBody").innerHTML = bodyHtml;
   document.getElementById("mfFoot").innerHTML = footHtml;
-  if(!m.classList.contains("open")) FLUJO_MODAL_OPENER = document.activeElement;
+  if(!m.classList.contains("open")){
+    FLUJO_MODAL_OPENER = document.activeElement;
+    FLUJO_MODAL_OPENER_ID = (FLUJO_MODAL_OPENER && FLUJO_MODAL_OPENER.id) || "";
+    FLUJO_MODAL_ANCLA = FLUJO_MODAL_OPENER && FLUJO_MODAL_OPENER.closest ? FLUJO_MODAL_OPENER.closest(".card,.info-card,.flujo-card,section") : null;
+  }
   m.classList.add("open");
   appInerte(true);
   setTimeout(() => {
@@ -141,8 +145,25 @@ function closeFlujoModal(sinFoco){
   if(!m.classList.contains("open")) return;          // Esc lo llama aunque no este abierto
   m.classList.remove("open");
   appInerte(false);
-  const o = FLUJO_MODAL_OPENER; FLUJO_MODAL_OPENER = null;
-  if(!sinFoco && o && document.contains(o)){ try{ o.focus(); }catch(_e){ /* nada */ } }
+  const o = FLUJO_MODAL_OPENER, oid = FLUJO_MODAL_OPENER_ID, ancla = FLUJO_MODAL_ANCLA;
+  FLUJO_MODAL_OPENER = null; FLUJO_MODAL_OPENER_ID = ""; FLUJO_MODAL_ANCLA = null;
+  if(sinFoco) return;
+  if(o && document.contains(o)){ try{ o.focus(); }catch(_e){ /* nada */ } }
+  /* Quien llama cierra y despues vuelve a pintar: si quien abrio ya no existe (o se pierde el foco en el repintado), el
+     foco no se queda en <body>: pasa al mismo control si reaparece, o al encabezado de su tarjeta / del expediente. */
+  setTimeout(() => focoEstableTrasDialogo(oid, ancla), 0);
+}
+function focoEstableTrasDialogo(oid, ancla){
+  if(document.getElementById("modalFlujo").classList.contains("open")) return;
+  const a = document.activeElement;
+  if(a && a !== document.body && a !== document.documentElement) return;
+  const visible = el => el && el.offsetParent !== null;
+  let dest = oid ? document.getElementById(oid) : null;
+  if(!visible(dest)) dest = ancla && document.contains(ancla) ? ancla.querySelector("h1,h2,h3,.section-label") : null;
+  if(!visible(dest)) dest = document.querySelector("#icTitulo, #infTitulo, #expTitulo, .view.active h1, .view.active h2");
+  if(!dest) return;
+  if(!dest.hasAttribute("tabindex")) dest.setAttribute("tabindex", "-1");
+  dest.focus();
 }
 document.getElementById("modalFlujo").addEventListener("keydown", e => {
   if(e.key !== "Tab") return;

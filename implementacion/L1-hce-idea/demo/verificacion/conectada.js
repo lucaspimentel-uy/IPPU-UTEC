@@ -1390,38 +1390,72 @@ async function loguear(page) {
 import sys, json
 from pypdf import PdfReader
 r = PdfReader(sys.argv[1])
-print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width),1), round(float(p.mediabox.height),1)] for p in r.pages], "textos": [p.extract_text() for p in r.pages]}))
+def maxx(p):
+    m = [0.0]
+    def v(text, cm, tm, fd, fs):
+        if text.strip():
+            m[0] = max(m[0], tm[4] * cm[0] + tm[5] * cm[2] + cm[4])
+    p.extract_text(visitor_text=v)
+    return round(m[0], 1)
+print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width),1), round(float(p.mediabox.height),1)] for p in r.pages], "textos": [p.extract_text() for p in r.pages], "maxx": [maxx(p) for p in r.pages]}))
 `;
     const leerPdf = (ruta) => JSON.parse(execFileSync('python', ['-I', '-c', py, ruta], { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, maxBuffer: 1 << 26 }));
     const bloques = {
       tabla: ['18 / 24', '58 / 96', '60 / 120', '79 / 120', '+19'],
       radares: ['perfil idea', 'progreso ippu-tea', 'protocolo b (continuo)'],     // los dos títulos y la leyenda del gráfico (el SVG es un elemento atómico: va con su título)
-      firmas: ['profesional 1', 'recibí de la familia', 'documento generado desde la hce'],
+      firmas: ['profesional 1', 'recibí de la familia', 'documento generado desde la hce'],   // las firmas y el pie legal: el pie nunca queda solo en una hoja
       membrete: ['fundación ippu', 'profesional firmante 2']
     };
     const compacto = (t) => String(t).replace(/\s+/g, '').toLowerCase();       // pypdf separa letras por el interletrado: se compara sin espacios
     const paginaDe = (textos, s) => textos.findIndex((t) => compacto(t).includes(compacto(s)));
+
+    /* (1) Maquetación de impresión: en media print, a los tres anchos efectivos de la hoja (688 px a escala 1; 550 a 1,25×; 459 a 1,5×)
+       el documento mide EXACTAMENTE el ancho de la ventana: ninguna tabla, firma ni encabezado tiene un ancho mínimo mayor que la hoja
+       (el bug era un @media(max-width:760px) de pantalla que dejaba la tabla en `display:block; white-space:nowrap`). */
+    const VIEWPORT_BASE = pd.viewportSize();
+    await pd.emulateMedia({ media: 'print' });
+    const anchosPrint = [];
+    for (const w of [688, 550, 459]) {
+      await pd.setViewportSize({ width: w, height: 1000 });
+      anchosPrint.push(await pd.evaluate((vw) => {
+        const pw = document.querySelector('#informeContent .print-wrap');
+        const tabla = document.querySelector('#informeContent .ic-tabla');
+        const firmas = document.querySelector('#informeContent .firmas-grid');
+        const fuera = [...document.querySelectorAll('#informeContent *')].filter((e) => e.getBoundingClientRect().right > vw + 1).length;
+        return { vw, scrollWidth: pw.scrollWidth, tablaDisplay: getComputedStyle(tabla).display, tablaNowrap: getComputedStyle(tabla.querySelector('th')).whiteSpace,
+          firmasCols: getComputedStyle(firmas).gridTemplateColumns.split(' ').length, fuera };
+      }, w));
+    }
+    check('3d-b0', 'media print a 688 / 550 / 459 px (la hoja A4 a escala 1 / 1,25 / 1,5): .print-wrap mide exactamente el ancho de la ventana, la tabla sigue siendo tabla (sin nowrap), las firmas en 3 columnas y ningún elemento sobresale a la derecha',
+      anchosPrint.every((a) => a.scrollWidth === a.vw && a.tablaDisplay === 'table' && a.tablaNowrap === 'normal' && a.firmasCols === 3 && a.fuera === 0), JSON.stringify(anchosPrint));
+    await pd.setViewportSize(VIEWPORT_BASE);
+    await pd.emulateMedia({ media: null });
+
+    /* (2) page.pdf() A4 a escala de Playwright 1, 1,25 y 1,5 (no CSS zoom): los cortes de hoja caen en lugares distintos, así que «nada
+       partido» no es casualidad de un solo diseño. Encabezado en cada hoja; tabla, cada radar, firmas y membrete en UNA hoja; ningún texto
+       pasa del margen derecho. */
     const resultadosPdf = [];
-    for (const zoom of [1, 1.25, 1.5]) {         // 3 tamaños: los cortes de página caen en lugares distintos, así «nada partido» no es casualidad de un solo diseño
-      const estilo = await pd.addStyleTag({ content: `@media print{#informeContent{zoom:${zoom}}}` });
-      const ruta = zoom === 1 ? pdfPath : path.join(salidas, `ic-martin-zoom${String(zoom).replace('.', '_')}.pdf`);
-      await pd.pdf({ path: ruta, format: 'A4', printBackground: true });
-      await estilo.evaluate((n) => n.remove());
+    for (const escala of [1, 1.25, 1.5]) {
+      const ruta = escala === 1 ? pdfPath : path.join(salidas, `ic-martin-escala${String(escala).replace('.', '_')}.pdf`);
+      await pd.pdf({ path: ruta, format: 'A4', printBackground: true, scale: escala });
       const info = leerPdf(ruta);
       const partidos = [];
       for (const [nombre, marcas] of Object.entries(bloques)) {
         const paginas = marcas.map((m) => paginaDe(info.textos, m));
         if (paginas.some((p) => p < 0) || new Set(paginas).size !== 1) partidos.push(`${nombre}:${paginas.join(',')}`);
       }
+      const radares = ['perfil idea', 'protocolo b (continuo)'].map((m) => paginaDe(info.textos, m));     // cada radar con su título, en una hoja
+      const pieSolo = info.textos.some((t) => compacto(t).includes('documentogeneradodesdelahce') && !compacto(t).includes('recibídelafamilia'));
       const cab = info.textos.every((t) => ['informedecierreanual2026', 'martíng.', 'n.ºdehc1002'].every((m) => compacto(t).includes(m)));
       const a4 = info.tam.every(([w, h]) => Math.abs(w - 595.3) < 1.5 && Math.abs(h - 841.9) < 1.5);
-      resultadosPdf.push({ zoom, paginas: info.paginas, partidos, cab, a4 });
+      const dentro = info.maxx.every((x) => x <= 595.3 - 39.7 + 2);        // inicio de texto dentro del margen derecho de 14 mm (+2 pt de tolerancia)
+      resultadosPdf.push({ escala, paginas: info.paginas, partidos, radares, pieSolo, cab, a4, dentro, maxx: Math.max(...info.maxx) });
     }
     const base = resultadosPdf[0];
     check('3d-b1', `page.pdf() A4 del IC impreso de Martín guardado en demo/verificacion/salidas/ic-martin.pdf (${fs.statSync(pdfPath).size} bytes): ${base.paginas} hoja(s) A4, con el encabezado del expediente (nombre, N.º de HC, año) en CADA hoja`,
       fs.existsSync(pdfPath) && base.paginas >= 1 && base.a4 && base.cab, JSON.stringify(base));
-    check('3d-b2', 'ninguna tabla, radar, bloque de firmas ni membrete queda partido entre hojas: los marcadores de inicio y fin de cada bloque (p. ej. «18 / 24» … «+19» de la tabla) caen en la MISMA hoja; se repite con la impresión ampliada 1,25× y 1,5×, donde los cortes caen en otro lugar',
-      resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
+    check('3d-b2', 'page.pdf() con escala de Playwright 1 / 1,25 / 1,5: encabezado repetido en cada hoja; la tabla, cada radar con su título, el bloque de firmas con el pie legal y el membrete caen en UNA sola hoja; el pie legal nunca solo; ningún texto pasa del margen derecho. Páginas por escala: ' + resultadosPdf.map((r) => `${r.escala}→${r.paginas}`).join(' · '),
+      resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4 && r.dentro && !r.pieSolo && r.radares.every((p) => p >= 0)) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
     await volverDelImpreso();
     await pd.waitForFunction(() => document.getElementById('panelExp') && !/Cargando/.test(document.getElementById('panelExp').innerText));
 
@@ -1581,6 +1615,26 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('3d-n3', 'un 409 al guardar (otra sesión ya firmó el IC) pasa la pantalla a solo lectura con lo que hay en el servidor: se descarta el cambio tardío, se avisa y el IC figura firmado',
       pat.status === 200 && fir.status === 200 && r409.status() === 409 && !ro409.val && /ya está firmado|firmado/i.test(ro409.avisos), `PATCH=${r409.status()} ${ro409.avisos.slice(0, 120)}`);
 
+    // el 409 NO es un aviso de la API: se rotula «Cambió en el servidor» (role="status") y nunca bajo «Avisos de la API (no bloquean)»
+    const rot409 = await pd.evaluate(() => { const el = document.getElementById('icAvisos'); return { rol: el.getAttribute('role'), oculto: el.hidden, texto: el.innerText.replace(/\s+/g, ' '), foco: document.activeElement.id }; });
+    check('3d-n4', 'el 409 del IC se muestra como «Cambió en el servidor: …» en un role="status" propio y NO bajo «Avisos de la API (no bloquean)»; el foco queda en el título del IC',
+      rot409.rol === 'status' && !rot409.oculto && /Cambió en el servidor:/.test(rot409.texto) && !/Avisos de la API/.test(rot409.texto) && rot409.foco === 'icTitulo', JSON.stringify(rot409).slice(0, 260));
+
+    // 409 del recibí: otra sesión lo registra mientras el diálogo está abierto → al confirmar, el diálogo se cierra, la pantalla se repinta
+    // (el botón que abrió el diálogo desaparece) y el foco NO se pierde en <body>
+    await pd.click('#btnIcRecibi'); await pd.waitForSelector('#modalFlujo.open');
+    const otraSesion = await send('POST', `/informe-cierre/${icCam.id}/recibi`, { firmante: 'Otra sesión', fecha: '2026-12-03' });
+    await pd.fill('#mfFirmante', 'Segundo intento'); await pd.fill('#mfFecha', '2026-12-04');
+    const resp409r = pd.waitForResponse((r) => r.request().method() === 'POST' && /\/recibi$/.test(r.url()));
+    await pd.click('#btnRecibiOk');
+    const r409r = await resp409r;
+    await pd.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open') && /Otra sesi/.test(document.getElementById('icRecibiTxt') ? document.getElementById('icRecibiTxt').innerText : ''));
+    await pd.waitForTimeout(150);
+    const foco409 = await pd.evaluate(() => ({ foco: document.activeElement.id || document.activeElement.tagName, enBody: document.activeElement === document.body, inerte: document.querySelector('div.layout').inert,
+      boton: !!document.getElementById('btnIcRecibi'), avisos: document.getElementById('icAvisos').innerText.replace(/\s+/g, ' ') }));
+    check('3d-n5', 'recibí con 409 (otra sesión ya lo registró): el diálogo se cierra, la app deja de estar inerte, se muestra lo que hay en el servidor («Cambió en el servidor», no «Avisos de la API») y el foco queda en el título del IC, no en <body>',
+      otraSesion.status < 300 && r409r.status() === 409 && !foco409.enBody && foco409.foco === 'icTitulo' && !foco409.inerte && !foco409.boton && /Cambió en el servidor:/.test(foco409.avisos) && !/Avisos de la API/.test(foco409.avisos), JSON.stringify(foco409).slice(0, 300));
+
     /* ---------- (d) VF de Martín: categoría = la de la API; un valor rechazado da error por campo ---------- */
     await abrirD(idMartinD, 'vf');
     const vacioM = await pd.evaluate(() => ({ rol: (document.querySelector('#panelExp [role="status"].empty-state') || {}).tagName, alert: document.querySelectorAll('#panelExp [role="alert"]').length, texto: document.getElementById('panelExp').innerText.replace(/\s+/g, ' ') }));
@@ -1682,6 +1736,56 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const uiS = await pd.evaluate(() => ({ chip: document.querySelector('#vfResultado .banda-chip').innerText.replace(/\s+/g, ' ').trim(), paso: document.querySelector('#vfResultado .banda-chip').dataset.bandaPaso, alerta: !!document.getElementById('vfAlerta'), errores: !document.getElementById('vfErrores').hidden }));
     check('3d-e3', 'crear una VF desde el estado vacío con un solo campo: POST {estado}; sin % la categoría es «No corresponde» (neutra, sin paso inferido), sin alerta y sin errores',
       e0 === 404 && JSON.stringify(cuerpoS) === '{"estado":"En trámite"}' && sof.categoria === null && uiS.chip === sof.categoria_etiqueta && uiS.chip === 'No corresponde' && uiS.paso === 'neutra' && !uiS.alerta && !uiS.errores, JSON.stringify({ cuerpoS, uiS }));
+
+    /* ---------- edad en los documentos impresos: a la fecha del PROPIO documento, nunca al reloj del navegador ---------- */
+    const edadEn = (nac, ref) => { const [a0, m0, d0] = nac.split('-').map(Number), [a1, m1, d1] = ref.split('-').map(Number); return a1 - a0 - ((m1 < m0 || (m1 === m0 && d1 < d0)) ? 1 : 0); };
+    const usuarioIC = imp.datos.find((d) => d[0] === 'Usuario')[1];                                    // con el reloj real
+    const vfMartin = (await get(`/hce/${idMartinD}/valoracion-funcional`)).json;
+    {
+      const { ctx: cc, page: pc } = await nuevaPagina();
+      await loguearComo(pc, EMAIL, PASSWORD);
+      await pc.clock.setFixedTime(new Date('2033-03-15T12:00:00'));                                      // el reloj de la página queda 7 años más tarde
+      const anioPagina = await pc.evaluate(() => new Date().getFullYear());
+      await pc.evaluate((i) => abrirExpediente(i), idMartinD);
+      await pc.waitForSelector('#expTitulo');
+      await pc.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      await pc.click('#tabExp-ic'); await pc.waitForSelector('#btnIcImpreso'); await pc.click('#btnIcImpreso');
+      await pc.waitForFunction(() => document.querySelector('#informeContent .doc-datos'), null, { timeout: 8000 });
+      const usuarioIC2 = await pc.evaluate(() => [...document.querySelectorAll('#informeContent .doc-datos .data-row')].find((r) => r.querySelector('dt').innerText.trim() === 'Usuario').querySelector('dd').innerText.trim());
+      const esperadoIC = `${docApi.expediente.nombre} ${docApi.expediente.apellido}`.trim() + ` · ${edadEn(docApi.expediente.fecha_nac, docApi.informe.fecha)} años`;
+      check('3d-edad1', `IC impreso con el reloj del navegador en ${anioPagina}: la edad de Martín no cambia (sigue siendo la de la fecha del informe, ${docApi.informe.fecha})`,
+        anioPagina === 2033 && usuarioIC2 === usuarioIC && usuarioIC2 === esperadoIC, JSON.stringify({ real: usuarioIC, simulado: usuarioIC2, esperado: esperadoIC }));
+      await pc.click('#informeContent .inf-banner button:has-text("Volver al expediente")');
+      await pc.waitForFunction(() => document.getElementById('view-expediente').classList.contains('active'));
+      await pc.click('#tabExp-vf'); await pc.waitForSelector('#btnVfReporte'); await pc.click('#btnVfReporte');
+      await pc.waitForFunction(() => /Reporte de Valoración Funcional/.test(document.getElementById('informeContent').innerText) && document.querySelector('#informeContent .doc-datos'), null, { timeout: 8000 });
+      const rep = await pc.evaluate(() => Object.fromEntries([...document.querySelectorAll('#informeContent .doc-datos .data-row')].map((r) => [r.querySelector('dt').innerText.trim(), r.querySelector('dd').innerText.trim()])));
+      const nomM = `${hceM.persona.nombre} ${hceM.persona.apellido}`.trim();
+      const eVF = vfMartin.fecha ? edadEn(hceM.persona.fecha_nac, vfMartin.fecha) : null;
+      const esperadoVF = eVF === null ? nomM : `${nomM} · ${eVF} ${eVF === 1 ? 'año' : 'años'}`;
+      check('3d-edad2', 'reporte de la VF con el reloj en 2033: la edad es la de la fecha de la valoración (no la del navegador), y la fecha del reporte se rotula «Fecha de impresión» (esa sí es la de hoy: 15/03/2033)',
+        rep['Nombre'] === esperadoVF && !('Fecha del reporte' in rep) && rep['Fecha de impresión'] === '15/03/2033', JSON.stringify({ rep, esperadoVF }));
+      await cc.close();
+    }
+
+    /* ---------- el diálogo compartido en un expediente de EJEMPLO: tras confirmar y repintar el panel, el foco no queda en <body> ---------- */
+    {
+      const { ctx: ce, page: pe } = await nuevaPagina();
+      await loguearComo(pe, EMAIL, PASSWORD);
+      await pe.evaluate(() => abrirExpedienteDemo(101));
+      const boton = pe.locator('button:has-text("Registrar autorización de imagen")').first();
+      await boton.waitFor({ timeout: 8000 });
+      await boton.focus(); await boton.click();
+      await pe.waitForSelector('#modalFlujo.open');
+      await pe.click('#modalFlujo button:has-text("Registrar autorización")');
+      await pe.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+      await pe.waitForTimeout(150);
+      const fe = await pe.evaluate(() => ({ enBody: document.activeElement === document.body, tag: document.activeElement.tagName, enTarjeta: !!document.activeElement.closest('#anchor-doc'),
+        inerte: document.querySelector('div.layout').inert, botonViejo: !!document.querySelector('#docPanelBody button[onclick^="openAutImagenModal"]') }));
+      check('3d-foco', 'expediente de ejemplo: al confirmar «Registrar autorización de imagen» el panel se repinta (el botón que abrió el diálogo desaparece) y el foco pasa al encabezado de esa tarjeta, no a <body>; la app no queda inerte',
+        !fe.botonViejo && !fe.enBody && fe.enTarjeta && !fe.inerte, JSON.stringify(fe));
+      await ce.close();
+    }
 
     /* ---------- fuentes: ni IC ni VF calculan nada en el navegador ---------- */
     const fuentes = await Promise.all(['informe-cierre.js', 'hce-doc-org-vf.js'].map(async (f) => (await (await fetch(DEMO + '/js/' + f)).text())));

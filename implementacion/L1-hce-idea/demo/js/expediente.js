@@ -145,11 +145,18 @@ function hce00Html(p){
 }
 
 /* ---------- Avisos de la API (warnings[]): se muestran, nunca bloquean ---------- */
+/* Un 409 (otro usuario cambió o firmó el registro) NO es un aviso: se marca {conflicto: true} y se rotula aparte
+   («Cambió en el servidor»), nunca bajo «Avisos de la API (no bloquean)», que es para los warnings[] de una escritura que salió bien. */
+function avisosCuerpoHtml(lista){
+  const conf = (lista || []).filter(w => w && w.conflicto), av = (lista || []).filter(w => !(w && w.conflicto));
+  return (conf.length ? `<p class="aviso-conflicto"><b>Cambió en el servidor:</b> ${conf.map(w => escHtml(w.mensaje)).join(" ")}</p>` : "")
+    + (av.length ? `<b>Avisos de la API (no bloquean):</b><ul>${av.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>` : "");
+}
 function avisosHtml(avisos){
   if(!avisos || !avisos.length) return "";
   return `<div class="review-note avisos-api" role="status">
     <span aria-hidden="true">ℹ</span>
-    <div><b>Avisos de la API (no bloquean):</b><ul>${avisos.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+    <div>${avisosCuerpoHtml(avisos)}
     <button type="button" class="btn btn-ghost btn-mini" onclick="EXP.avisos=[];pintarAvisosExp()">Entendido</button></div>
   </div>`;
 }
@@ -355,7 +362,7 @@ async function ciGuardar(){
     formResumen("ciErrores", items, "No se pudo guardar:").focus();
     if(err instanceof ApiError && err.status === 409 && registrar){
       // Otro usuario ya lo registró: se vuelve a leer para mostrar lo que hay realmente.
-      EXP.avisos = [{mensaje: err.message}]; pintarAvisosExp();
+      EXP.avisos = [{mensaje: err.message, conflicto: true}]; pintarAvisosExp();
       cargarCi(); recargarFlujoExp(true); refrescarListaTrasEscritura();
     }
   }

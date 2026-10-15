@@ -318,7 +318,7 @@ function evEncabezadoHtml(ev){
 function evAvisosHtml(ev){
   const a = ev.avisos || [];
   if(!a.length) return "";
-  return `<b>Avisos de la API (no bloquean):</b><ul>${a.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+  return `${avisosCuerpoHtml(a)}
     <button type="button" class="btn btn-ghost btn-mini" onclick="evCerrarAvisos()">Entendido</button>`;
 }
 function evCerrarAvisos(){ const ev = _ev(); if(!ev) return; ev.avisos = []; evPintarAvisos(); }
@@ -902,7 +902,7 @@ async function evGuardar(opts){
 
 /* 409: el registro ya esta firmado (o ya existe): se vuelve a leer y se muestra lo que hay. */
 async function evResolver409(ev, err){
-  ev.avisos = [{mensaje: err.message + " Se muestra el registro tal como está en el servidor."}];
+  ev.avisos = [{mensaje: err.message + " Se muestra el registro tal como está en el servidor.", conflicto: true}];
   ev.sucio = false;
   await evCargar(ev.k, true);
   const e2 = EVS[ev.k];

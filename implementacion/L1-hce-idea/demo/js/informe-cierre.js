@@ -216,7 +216,7 @@ function icEncabezadoHtml(){
 function icAvisosHtml(){
   const a = IC.avisos || [];
   if(!a.length) return "";
-  return `<b>Avisos de la API (no bloquean):</b><ul>${a.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+  return `${avisosCuerpoHtml(a)}
     <button type="button" class="btn btn-ghost btn-mini" onclick="icCerrarAvisos()">Entendido</button>`;
 }
 function icCerrarAvisos(){ IC.avisos = []; icPintarAvisos(); }
@@ -442,7 +442,7 @@ async function icGuardar(opts){
 
 /* 409: el informe ya esta firmado (o ya existe): se vuelve a leer y se muestra lo que hay. */
 async function icResolver409(err){
-  IC.avisos = [{mensaje: err.message + " Se muestra el informe tal como está en el servidor."}];
+  IC.avisos = [{mensaje: err.message + " Se muestra el informe tal como está en el servidor.", conflicto: true}];
   IC.sucio = false;
   await icCargar(true);
   icPintarAvisos();
@@ -571,11 +571,12 @@ async function confirmarRecibi(){
     const items = detalle.map(d => ({id: d.campo && mapa[d.campo] ? mapa[d.campo][0] : null, rot: d.campo && mapa[d.campo] ? mapa[d.campo][1] : "", mensaje: d.mensaje}));
     formResumen("recibiErrores", items, "No se pudo registrar el recibí:").focus();
     if(err instanceof ApiError && err.status === 409){        // ya estaba registrado (u otro cambio): se muestra lo que hay en el servidor
-      IC.avisos = [{mensaje: err.message}];
+      IC.avisos = [{mensaje: err.message, conflicto: true}];
       closeFlujoModal();
       await icCargar(true);
       icPintarAvisos();
       if(_icEl("view-informe").classList.contains("active")) icCargarDocumento();
+      else { const t = _icEl("icTitulo"); if(t) t.focus(); }       // el repintado destruyo a quien abrio el dialogo: el foco no queda en <body>
     }
   }
 }
@@ -672,7 +673,7 @@ function icDocumentoHtml(){
   const d = ICDOC.data, h = ICDOC.hce, per = (h && h.persona) || {};
   const e = d.expediente, inf = d.informe, pr = d.protocolos || {};
   const nombre = `${e.nombre} ${e.apellido}`.trim();
-  const edad = edadAnios(e.fecha_nac);
+  const edad = edadALaFecha(e.fecha_nac, inf.fecha);      // a la fecha del propio informe, no al reloj del navegador
   const firmas = inf.firmas || [];
   const firmaTxt = (f) => f ? `${escHtml(f.nombre || nombreProfesional(f.profesional_id))}${f.rol ? " · " + escHtml(f.rol) : ""}` : "—";
   const fechaFirma = firmas[0] && firmas[0].fecha ? firmas[0].fecha : inf.fecha;
@@ -684,7 +685,7 @@ function icDocumentoHtml(){
   const botones = `<button type="button" class="btn-print" onclick="window.print()">🖨 Imprimir / guardar como PDF</button>
     ${!inf.recibi ? `<button type="button" class="btn-print btn-print-acento" id="btnInfRecibi" onclick="openRecibiModal()">✍ Registrar recibí</button>` : ""}${INF_VOLVER}`;
   const adds = (inf.addendas || []);
-  const card = (titulo, interior) => `<div class="card doc-seccion" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${interior}</div></div>`;
+  const card = (titulo, interior, cls = "") => `<div class="card doc-seccion${cls ? " " + cls : ""}" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${interior}</div></div>`;
   const cuerpo = `
     <div class="card"><div class="cardbody">
       <div class="membrete">
@@ -693,7 +694,7 @@ function icDocumentoHtml(){
         <h3>Informe de Evolución y Cierre Anual · Año lectivo ${escHtml(d.anio)}</h3>
       </div>
       <dl class="ib doc-datos">
-        <div class="data-row"><dt>Usuario</dt><dd>${escHtml(nombre)}${edad === null ? "" : " · " + edad + " años"}</dd></div>
+        <div class="data-row"><dt>Usuario</dt><dd>${escHtml(nombre)}${edad === null ? "" : " · " + edad + (edad === 1 ? " año" : " años")}</dd></div>
         <div class="data-row"><dt>N.º de HC / C.I.</dt><dd>${escHtml(hc)} · ${escHtml(ciFormateada(per.ci))}</dd></div>
         <div class="data-row"><dt>Grupo de referencia</dt><dd>${e.grupo ? "Grupo " + escHtml(e.grupo.nombre) : "—"}</dd></div>
         <div class="data-row"><dt>CIE-11</dt><dd>${_txt(h && h.cie11)}</dd></div>
@@ -702,14 +703,14 @@ function icDocumentoHtml(){
       </dl>
     </div></div>
 
-    ${card("1. Análisis cuantitativo — desde los módulos firmados", `${icTablaHtml(datos)}${icRadaresHtml(datos)}`)}
+    ${card("1. Análisis cuantitativo — desde los módulos firmados", `${icTablaHtml(datos)}${icRadaresHtml(datos)}`, "doc-cuant")}
     ${card("2. Análisis cualitativo por escala", IPPU_ESCALAS.map((n, i) => `<p class="doc-p"><b>E${i + 1} · ${escHtml(n)}.</b> ${_txt(se["esc_" + (i + 1)])}</p>`).join(""))}
     ${card("3. Síntesis interdisciplinaria", `<p class="doc-p"><b>Valoración anual — técnico/a 1:</b> ${_txt(inf.val_tec1)}</p><p class="doc-p"><b>Valoración anual — técnico/a 2:</b> ${_txt(inf.val_tec2)}</p>`)}
     ${card("4. Recomendaciones y ajustes de tratamiento", `<p class="doc-p">${_txt(inf.recomendaciones)}</p>`)}
     ${card("5. Orientaciones a la familia", `<p class="doc-p">${_txt(inf.orientaciones)}</p>`)}
     ${adds.length ? card("Addendas", adds.map(a => `<p class="doc-p"><b>${a.fecha ? fmtFecha(a.fecha) : "—"} · ${escHtml(nombreProfesional(a.profesional_id))}:</b> ${escHtml(a.texto)}</p>`).join("")) : ""}
 
-    <div class="card doc-seccion" style="margin-top:16px"><div class="cardbody">
+    <div class="card doc-seccion doc-cierre" style="margin-top:16px"><div class="cardbody">
       <div class="firmas-grid">
         <div><label>Firma — profesional 1</label><div class="flin"></div><div class="fnom">${firmaTxt(firmas[0])}</div></div>
         <div><label>Firma — profesional 2</label><div class="flin"></div><div class="fnom">${firmaTxt(firmas[1])}</div></div>

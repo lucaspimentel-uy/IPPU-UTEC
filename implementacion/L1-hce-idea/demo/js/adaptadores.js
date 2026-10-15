@@ -32,6 +32,14 @@ function edadAnios(fechaNac, hoy){
   return edad >= 0 ? edad : null;
 }
 
+/* Edad cumplida a la fecha PROPIA de un documento (no al reloj del navegador): un documento impreso no cambia de edad
+   al reimprimirlo. `fechaRef` es un ISO yyyy-mm-dd; si falta o no es valida, null (el documento no imprime edad). */
+function edadALaFecha(fechaNac, fechaRef){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaRef || "");
+  if(!m) return null;
+  return edadAnios(fechaNac, new Date(+m[1], +m[2] - 1, +m[3]));
+}
+
 /* Iniciales para avatar: primeras letras de las dos primeras palabras ("Dr. González" -> "DG"). */
 function inicialesDe(nombre){
   const partes = String(nombre || "").trim().split(/\s+/).filter(Boolean);

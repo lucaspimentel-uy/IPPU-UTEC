@@ -361,7 +361,7 @@ function vfRepintar(){
 function vfAvisosHtml(){
   const a = VF.avisos || [];
   if(!a.length) return "";
-  return `<b>Avisos de la API (no bloquean):</b><ul>${a.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>
+  return `${avisosCuerpoHtml(a)}
     <button type="button" class="btn btn-ghost btn-mini" onclick="vfCerrarAvisos()">Entendido</button>`;
 }
 function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){ el.innerHTML = ""; el.hidden = true; } }
@@ -558,7 +558,7 @@ async function vfGuardar(){
     if(mi !== EXP.seq || VF.hceId !== id) return;
     VF.guardando = false; vfPintarAcciones();
     if(err instanceof ApiError && err.status === 409){       // otro usuario ya la creó: se muestra lo que hay en el servidor
-      VF.avisos = [{mensaje: err.message + " Se muestra la valoración tal como está en el servidor."}];
+      VF.avisos = [{mensaje: err.message + " Se muestra la valoración tal como está en el servidor.", conflicto: true}];
       VF.sucio = false; VF.nuevo = false;
       await vfCargar(false);
       const t = _vfEl("vfTitulo"); if(t) t.focus();
@@ -605,7 +605,7 @@ async function vfAbrirReporte(){
 function vfReporteHtml(V, hce, pb){
   const per = hce.persona || {}, g = hce.grupo || null;
   const nombre = `${per.nombre || ""} ${per.apellido || ""}`.trim();
-  const edad = edadAnios(per.fecha_nac);
+  const edad = edadALaFecha(per.fecha_nac, V.fecha);      // a la fecha de la propia valoración, no al reloj del navegador
   const hoy = new Date();
   const fechaGen = `${String(hoy.getDate()).padStart(2, "0")}/${String(hoy.getMonth() + 1).padStart(2, "0")}/${hoy.getFullYear()}`;
   const dom = V.dominios || {};
@@ -630,10 +630,10 @@ function vfReporteHtml(V, hce, pb){
         <h3>Reporte de Valoración Funcional — documento descriptivo y orientativo</h3>
       </div>
       <dl class="ib doc-datos">
-        <div class="data-row"><dt>Nombre</dt><dd>${escHtml(nombre)}${edad === null ? "" : " · " + edad + " años"}</dd></div>
+        <div class="data-row"><dt>Nombre</dt><dd>${escHtml(nombre)}${edad === null ? "" : " · " + edad + (edad === 1 ? " año" : " años")}</dd></div>
         <div class="data-row"><dt>N.º de HC</dt><dd>${escHtml(hce.hc_historico)}</dd></div>
         <div class="data-row"><dt>Grupo</dt><dd>${g ? "Grupo " + escHtml(g.nombre) : "—"}</dd></div>
-        <div class="data-row"><dt>Fecha del reporte</dt><dd>${fechaGen}</dd></div>
+        <div class="data-row"><dt>Fecha de impresión</dt><dd>${fechaGen}</dd></div>
       </dl>
       <p class="doc-aviso">Este reporte describe capacidades, autonomía, barreras y apoyos para acompañar a la familia en la planificación cotidiana y la gestión de prestaciones. <b>No es un certificado de discapacidad ni un informe clínico:</b> la valoración oficial corresponde a los equipos habilitados mediante el BUND (Ley N.º 20.378), y el documento clínico anual es el Informe de Cierre (HCE-IC).</p>
     </div></div>
@@ -648,7 +648,7 @@ function vfReporteHtml(V, hce, pb){
       `${oficial ? `<p class="doc-p">${oficial}.</p>` : ""}
        ${V.categoria ? `<p class="doc-p"><b>Categoría según el baremo:</b> ${escHtml(V.categoria.categoria)} (${escHtml(V.categoria.rango)}). ${escHtml(V.categoria.implicancia)}</p>` : ""}
        <p class="doc-nota">La familia puede consultar al equipo de IPPU por la gestión de prestaciones (BPS, MIDES, Sistema de Cuidados, transporte, apoyos educativos). El otorgamiento de cada prestación es resolución del organismo competente.</p>`)}
-    <div class="card doc-seccion" style="margin-top:16px"><div class="cardbody">
+    <div class="card doc-seccion doc-cierre" style="margin-top:16px"><div class="cardbody">
       <div class="firmas-grid" style="grid-template-columns:1fr 1fr">
         <div><label>Por el equipo técnico</label><div class="flin"></div><div class="fnom">${tecnicos || "—"}</div></div>
         <div><label>Recibido por la familia</label><div class="flin"></div><div class="fnom">${escHtml(per.referente || "")}</div></div>

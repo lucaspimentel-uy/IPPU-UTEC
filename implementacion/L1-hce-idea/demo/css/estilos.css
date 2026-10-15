@@ -1270,6 +1270,7 @@
   .fl-aviso{color:var(--ink);font-size:var(--fs-3xs);font-weight:600}
   .avisos-api{margin-bottom:var(--s4)}
   .avisos-api ul{margin:var(--s1) 0 0;padding-left:var(--s5)}
+  .avisos-api .aviso-conflicto{margin:0 0 var(--s1)}
   .btn[hidden]{display:none}   /* .btn fija display y pisaba el atributo hidden (Reintentar de grupos se veia siempre) */
 
 
@@ -1421,7 +1422,19 @@
     #informeContent .cardbody,#informeContent .card>.cardbody{padding:4mm}
     .comp-table,.ic-tabla,.tabla-scroll,.ic-radars,.rwrap,.firmas-grid,.membrete,.vf-doms{break-inside:avoid;page-break-inside:avoid}
     .comp-table tr,.comp-table th,.comp-table td{break-inside:avoid;page-break-inside:avoid}
+    /* El ancho de la hoja A4 (688 px, o 459/550 con la impresión ampliada) cae dentro de los @media(max-width:760px/700px) de pantalla:
+       acá se restaura la maquetación de documento (tabla real, sin nowrap, firmas en tres columnas) para que ningún elemento
+       tenga un ancho mínimo mayor que la hoja y nada se recorte a la derecha ni se achique solo. */
+    .comp-table,.ic-tabla{display:table;width:100%;white-space:normal;overflow:visible;table-layout:auto}
+    .comp-table th,.comp-table td{white-space:normal;overflow-wrap:break-word}
+    .comp-table th,.comp-table td{padding:var(--s1) 4px}
+    .comp-table th{letter-spacing:.02em}
     .tabla-scroll{overflow:visible}
+    .firmas-grid{grid-template-columns:repeat(3,1fr)}
+    .doc-datos .data-row{flex-wrap:wrap}
+    .doc-datos .data-row dd,.membrete h2,.membrete h3,.print-wrap .ph{overflow-wrap:anywhere}
+    /* El bloque de cierre (firmas + pie legal) y el análisis cuantitativo no se parten: el pie nunca queda solo en una hoja. */
+    #informeContent .doc-cierre,#informeContent .doc-cuant{break-inside:avoid;page-break-inside:avoid}
     .cardhead{break-after:avoid;page-break-after:avoid}
     /* Los radares son bloques en linea atomicos dentro de un bloque que no se parte: un flex no respetaba break-inside. */
     .ic-radars{display:block;text-align:center;gap:0}
