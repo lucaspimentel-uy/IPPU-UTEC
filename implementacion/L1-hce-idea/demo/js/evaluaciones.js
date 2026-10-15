@@ -902,7 +902,7 @@ async function evGuardar(opts){
 
 /* 409: el registro ya esta firmado (o ya existe): se vuelve a leer y se muestra lo que hay. */
 async function evResolver409(ev, err){
-  ev.avisos = [{mensaje: err.message + " Se muestra el registro tal como está en el servidor.", conflicto: true}];
+  ev.avisos = [{mensaje: err.message.replace(/[.\s]+$/, "") + ". Se muestra el registro tal como está en el servidor.", conflicto: true}];
   ev.sucio = false;
   await evCargar(ev.k, true);
   const e2 = EVS[ev.k];

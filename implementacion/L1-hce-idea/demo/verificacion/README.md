@@ -81,7 +81,7 @@ Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; C
 el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
 levantarla y volver a cargar el seed.
 
-**Qué verifica** (151 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`, `3d-…`):
+**Qué verifica** (155 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`, `3d-…`):
 
 - **Fase 3-a** — `3a-a` login del técnico y chip con su nombre y rol · `3a-b` contraseña mala → mensaje en
   `role="alert"` con foco y `sessionStorage` vacío · `3a-c…` conteos del listado y del filtro de grupo **iguales a los de
@@ -121,8 +121,8 @@ levantarla y volver a cargar el seed.
   parcialmente conectada» no tapa contenido a 1280×800 y 1280×900.
 - **Fase 3-d** (escribe: IC, recibí, addenda, VF; **necesita `python` con `pypdf`** para leer el PDF) — contra el seed y tres expedientes (Martín, Valentina, Camila, Sofía):
   `3d-lay`/`3d-lay2` sin `view-ic`, selector, funciones ni manejadores muertos (8 ejemplos + 13 pestañas) · `3d-a1…a3` **IC de Martín impreso**: IDEA 58 · PA 60 · PB 79 · Δ +19 y por escala 4/6/4/5, **igual a una llamada directa a `GET …/documento`**, sin alerta, cédula y CIE-11 de `GET /hce`, firmas de `informe.firmas[]`, sin «Soporte» ·
-  `3d-b0` en **media print a 688 / 550 / 459 px** (la hoja A4 a escala 1 / 1,25 / 1,5) `.print-wrap` mide exactamente el ancho de la ventana (tabla real, firmas en 3 columnas, nada sobresale a la derecha) · `3d-b1`/`3d-b2` **`page.pdf()` A4** de ese documento (se guarda en `salidas/ic-martin.pdf`, gitignored) con la opción **`scale` de Playwright 1 / 1,25 / 1,5** (no CSS `zoom`, que no cambia el ancho de maquetación): cantidad de hojas por escala, tamaño A4, encabezado del expediente en cada hoja, **ninguna tabla, radar, bloque de firmas con su pie legal ni membrete partido** y ningún texto pasado del margen derecho — se lee el texto y la posición de cada hoja con `pypdf` y se exige que los marcadores de inicio y de fin de cada bloque (p. ej. «18 / 24» … «+19» de la tabla) caigan **en la misma hoja** ·
-  `3d-edad1`/`3d-edad2` con el reloj de la página adelantado a 2033, la edad del IC y del reporte de la VF **no cambia** (es la de la fecha del documento) y el reporte rotula «Fecha de impresión» · `3d-n4`/`3d-n5` un 409 se rotula «Cambió en el servidor» (no «Avisos de la API») y tras el recibí con 409 el foco queda en el título del IC · `3d-foco` el diálogo compartido de un expediente de ejemplo no deja el foco en `<body>` ·
+  `3d-b0` en **media print a 688 / 550 / 459 px** (la hoja A4 a escala 1 / 1,25 / 1,5) `.print-wrap` mide exactamente el ancho de la ventana (tabla real, firmas en 3 columnas, nada sobresale a la derecha) · `3d-b1`/`3d-b2` **`page.pdf()` A4** de ese documento (se guarda en `salidas/ic-martin.pdf`, gitignored) con la opción **`scale` de Playwright 1 / 1,25 / 1,5** (no CSS `zoom`, que no cambia el ancho de maquetación): cantidad de hojas por escala (hoy 3 / 5 / 6), tamaño A4, encabezado del expediente en cada hoja, **ninguna tabla, radar, bloque de firmas con su pie legal ni membrete partido** y (el margen derecho lo cubre `3d-b0`: medirlo desde el PDF con `pypdf` daba un `maxx` erróneo a escala 1 —≈2046 pt para texto que está a ≤ 544 pt— y hacía fallar la corrida siempre; esa medición se retiró y no se agregó ninguna dependencia) — se lee el **texto** de cada hoja con `pypdf` y se exige que los marcadores de inicio y de fin de cada bloque (p. ej. «18 / 24» … «+19» de la tabla) caigan **en la misma hoja** ·
+  `3d-edad1`/`3d-edad2` con el reloj de la página adelantado a 2033, la edad del IC y del reporte de la VF **no cambia** (es la de la fecha del documento) y el reporte rotula «Fecha de impresión» · `3d-n4`/`3d-n5` un 409 se rotula «Cambió en el servidor» (no «Avisos de la API») y tras el recibí con 409 el foco queda en el título del IC · `3d-ci409` y `3d-ev409-lb`/`-pa`/`-pb` un 409 con una **escritura concurrente real** (otra sesión por la API registra el CI, o firma el borrador de IDEA/PA/PB, mientras esta pantalla tiene el formulario abierto): «Cambió en el servidor» (no «Avisos de la API» ni un «No se pudo guardar» huérfano), el registro que se muestra es el del servidor, solo lectura en IDEA/PA/PB, y el foco en el título (`#ciTitulo` / `#evTitulo`), nunca en `<body>` · `3d-foco` el diálogo compartido de un expediente de ejemplo no deja el foco en `<body>` ·
   `3d-c0…c5` **IC de Valentina**: crear (`POST` sólo lo tipeado), 422 por campo, dos firmantes iguales → 422, firmar con dos distintos en orden inverso al del grupo, solo lectura, avisos de la API, impreso con las firmas de quienes firmaron · `3d-r1…r3` recibí: diálogo accesible, 422 por campo, Esc y foco, una sola vez (409) · `3d-ad` addenda con autor · `3d-n1…n3` Camila: impreso sin IC / con borrador = estado del flujo (sin `/documento` / con su 409) y 409 al guardar → solo lectura ·
   `3d-e1…e3` **VF vacía → crear**, sin sugerencia ni «Autogenerar» · `3d-d1…d5` VF de Martín: categoría == API, `PATCH` sólo con `pct`, % rechazado → error por campo, alerta de vigencia de la API, reporte con la lectura del Δ de la API · `3d-d7` categorías y niveles en la rampa de un solo matiz (nunca ok/warn/bad) · `3d-f` el código no usa lbTotales/protTotales/calcularDelta/deltaInterpreta/categoriaBaremo/sugiereNivel… · `3d-ax` toda entrada con su etiqueta · `3d-w` sin desborde a 390/1024 px.
 - `z` — **0 errores de JavaScript** en toda la corrida.
@@ -134,10 +134,9 @@ Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra 
 - **`herramientas/verificar_contraste_ui.js`** (raíz del repo) abre la demo por `http://localhost:5500/index.html?api=<API>`
   y hace login con el técnico del seed (`IPPU_DEMO_PASSWORD`; opcionales `API=`, `DEMO=`, `IPPU_DEMO_EMAIL=`): corre
   **sin tocarlo** desde el repo. Recorre las vistas, las 13 pestañas de un expediente de la API, el CI pendiente con sus
-  errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos 14 pares que fallan que
-  la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
-  confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable): **los mismos 14 pares que fallan**
-  (los mismos 14 pares que fallan que la línea base; todo par nuevo —rampa de bandas, marca de NS, addenda, barra— ≥ 4,5:1; medido sobre una base recién cargada y contra la punta de 3-b).
+  errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos pares que fallan que la línea base** (misma tabla, mismos ratios; no se reproduce ningún conteo exacto) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla: **todo par nuevo ≥ 4,5:1**. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
+  confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable). Se mide sobre una base recién cargada y se compara contra la punta anterior de la rama (`git stash` y repetir): el conjunto de pares que fallan tiene que ser idéntico.
+  El glifo grande de los estados vacíos (`.empty-state .big`, ≈3:1) es **puramente decorativo**: lleva `aria-hidden="true"` (el mensaje va en el texto que lo acompaña, que sí cumple), así que no es un par a corregir.
   Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
   ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
   `:focus-visible` se miden.
@@ -306,11 +305,11 @@ guardas nuevas, las dos con mensaje que nombra la vista — no un timeout genér
    cargar.
 
 > **Vocabulario, para no repetir la confusión de sesiones anteriores:** un **paso** es una clave
-> de `F.pasos` — lo que `fingerprint.js` captura (hoy: **36** contra la demo conectada —la Fase 3-c retiró el paso de excepción, las tres vistas de LB/PA/PB y, en conectada, el modal de edición de ejemplo—, `pasos capturados` en su propia
-> salida). Un **campo comparado** es lo que `comparar.js` reporta por fila — los 36 pasos **más**
-> el campo `errors` (comparado aparte, bajo «ERRORES DE CONSOLA / PAGINA») — hoy: **37**. Todo lo
+> de `F.pasos` — lo que `fingerprint.js` captura (hoy: **32** contra la demo conectada —la Fase 3-c retiró el paso de excepción, las tres vistas de LB/PA/PB y, en conectada, el modal de edición de ejemplo—, `pasos capturados` en su propia
+> salida). Un **campo comparado** es lo que `comparar.js` reporta por fila — los 32 pasos **más**
+> el campo `errors` (comparado aparte, bajo «ERRORES DE CONSOLA / PAGINA») — hoy: **33**. Todo lo
 > que hable de un `.json` capturado dice "pasos"; todo lo que hable de una corrida de
-> `comparar.js` (`X iguales · Y distintos`, o "X/37") dice "campos comparados". Los dos números
+> `comparar.js` (`X iguales · Y distintos`, o "X/33") dice "campos comparados". Los dos números
 > son reales y **distintos a propósito** — no es un typo si en un párrafo dice 42 y en el de al
 > lado dice 43.
 

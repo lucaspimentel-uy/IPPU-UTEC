@@ -289,7 +289,7 @@ function renderPendientes(){
       <td>Grupo ${p.grupo}</td><td>${estadoTxt}</td>
       <td><button class="btn btn-link" onclick="go('inicio')">Ir al listado →</button></td>
     </tr>`;
-  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
+  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big" aria-hidden="true">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
 }
 
 /* Navegación intra-vista: scroll suave hacia una sección del expediente o de un grupo.
@@ -412,7 +412,7 @@ function renderAnalitica(){
           <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(v)}</div></div></div>
       `).join("") +
       `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto de la línea base, no una evolución: desde el Documento Técnico el IDEA se toma una sola vez por NNA (§5.1.1).</div>`
-    : `<div class="empty-state"><div class="big">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
+    : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
 
   /* --- Evolución Protocolo A → B: Escala IPPU-TEA (máx. 30 por escala) --- */
   document.getElementById("protChart").innerHTML = a.conAB.length
@@ -423,7 +423,7 @@ function renderAnalitica(){
           <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(a.pbEsc[i])}</div></div></div>
       `).join("") +
       `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`
-    : `<div class="empty-state"><div class="big">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
+    : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
 
   /* --- Distribución por banda de severidad (6 bandas §5.13/D4) --- */
   const BANDAS = IDEA_BANDAS.map((b,i)=>{

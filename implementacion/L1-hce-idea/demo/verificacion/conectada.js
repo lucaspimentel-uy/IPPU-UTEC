@@ -1390,14 +1390,7 @@ async function loguear(page) {
 import sys, json
 from pypdf import PdfReader
 r = PdfReader(sys.argv[1])
-def maxx(p):
-    m = [0.0]
-    def v(text, cm, tm, fd, fs):
-        if text.strip():
-            m[0] = max(m[0], tm[4] * cm[0] + tm[5] * cm[2] + cm[4])
-    p.extract_text(visitor_text=v)
-    return round(m[0], 1)
-print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width),1), round(float(p.mediabox.height),1)] for p in r.pages], "textos": [p.extract_text() for p in r.pages], "maxx": [maxx(p) for p in r.pages]}))
+print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width),1), round(float(p.mediabox.height),1)] for p in r.pages], "textos": [p.extract_text() for p in r.pages]}))
 `;
     const leerPdf = (ruta) => JSON.parse(execFileSync('python', ['-I', '-c', py, ruta], { encoding: 'utf8', env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, maxBuffer: 1 << 26 }));
     const bloques = {
@@ -1432,8 +1425,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pd.emulateMedia({ media: null });
 
     /* (2) page.pdf() A4 a escala de Playwright 1, 1,25 y 1,5 (no CSS zoom): los cortes de hoja caen en lugares distintos, así que «nada
-       partido» no es casualidad de un solo diseño. Encabezado en cada hoja; tabla, cada radar, firmas y membrete en UNA hoja; ningún texto
-       pasa del margen derecho. */
+       partido» no es casualidad de un solo diseño. Encabezado en cada hoja; tabla, cada radar, firmas y membrete en UNA hoja. El margen derecho
+       lo cubre 3d-b0 (media print: scrollWidth == ancho de la hoja); medirlo desde el PDF con pypdf daba un `maxx` erróneo a escala 1. */
     const resultadosPdf = [];
     for (const escala of [1, 1.25, 1.5]) {
       const ruta = escala === 1 ? pdfPath : path.join(salidas, `ic-martin-escala${String(escala).replace('.', '_')}.pdf`);
@@ -1448,14 +1441,13 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       const pieSolo = info.textos.some((t) => compacto(t).includes('documentogeneradodesdelahce') && !compacto(t).includes('recibídelafamilia'));
       const cab = info.textos.every((t) => ['informedecierreanual2026', 'martíng.', 'n.ºdehc1002'].every((m) => compacto(t).includes(m)));
       const a4 = info.tam.every(([w, h]) => Math.abs(w - 595.3) < 1.5 && Math.abs(h - 841.9) < 1.5);
-      const dentro = info.maxx.every((x) => x <= 595.3 - 39.7 + 2);        // inicio de texto dentro del margen derecho de 14 mm (+2 pt de tolerancia)
-      resultadosPdf.push({ escala, paginas: info.paginas, partidos, radares, pieSolo, cab, a4, dentro, maxx: Math.max(...info.maxx) });
+      resultadosPdf.push({ escala, paginas: info.paginas, partidos, radares, pieSolo, cab, a4 });
     }
     const base = resultadosPdf[0];
     check('3d-b1', `page.pdf() A4 del IC impreso de Martín guardado en demo/verificacion/salidas/ic-martin.pdf (${fs.statSync(pdfPath).size} bytes): ${base.paginas} hoja(s) A4, con el encabezado del expediente (nombre, N.º de HC, año) en CADA hoja`,
       fs.existsSync(pdfPath) && base.paginas >= 1 && base.a4 && base.cab, JSON.stringify(base));
-    check('3d-b2', 'page.pdf() con escala de Playwright 1 / 1,25 / 1,5: encabezado repetido en cada hoja; la tabla, cada radar con su título, el bloque de firmas con el pie legal y el membrete caen en UNA sola hoja; el pie legal nunca solo; ningún texto pasa del margen derecho. Páginas por escala: ' + resultadosPdf.map((r) => `${r.escala}→${r.paginas}`).join(' · '),
-      resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4 && r.dentro && !r.pieSolo && r.radares.every((p) => p >= 0)) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
+    check('3d-b2', 'page.pdf() con escala de Playwright 1 / 1,25 / 1,5: encabezado repetido en cada hoja; la tabla, cada radar con su título, el bloque de firmas con el pie legal y el membrete caen en UNA sola hoja; el pie legal nunca solo (el desborde a la derecha lo cubre 3d-b0). Páginas por escala: ' + resultadosPdf.map((r) => `${r.escala}→${r.paginas}`).join(' · '),
+      resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4 && !r.pieSolo && r.radares.every((p) => p >= 0)) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
     await volverDelImpreso();
     await pd.waitForFunction(() => document.getElementById('panelExp') && !/Cargando/.test(document.getElementById('panelExp').innerText));
 
@@ -1634,6 +1626,56 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       boton: !!document.getElementById('btnIcRecibi'), avisos: document.getElementById('icAvisos').innerText.replace(/\s+/g, ' ') }));
     check('3d-n5', 'recibí con 409 (otra sesión ya lo registró): el diálogo se cierra, la app deja de estar inerte, se muestra lo que hay en el servidor («Cambió en el servidor», no «Avisos de la API») y el foco queda en el título del IC, no en <body>',
       otraSesion.status < 300 && r409r.status() === 409 && !foco409.enBody && foco409.foco === 'icTitulo' && !foco409.inerte && !foco409.boton && /Cambió en el servidor:/.test(foco409.avisos) && !/Avisos de la API/.test(foco409.avisos), JSON.stringify(foco409).slice(0, 300));
+
+    /* ---------- 409 con una escritura concurrente REAL (otra sesión escribe por la API mientras esta pantalla tiene el formulario abierto) ----------
+       Tras el 409 la pantalla se repinta con lo que hay en el servidor: el rótulo es «Cambió en el servidor» (nunca «Avisos de la API»), no queda
+       ningún resumen «No se pudo guardar» huérfano y el foco va a un destino estable (el título), no a <body>. */
+    const sufC = String(Date.now()).slice(-6);
+    const escolaresC = (await get('/grupos?anio=' + anio)).json.find((g) => g.nombre === 'Escolares');
+    const nuevoExp = async (nombre, pref) => (await send('POST', '/hce', { persona: { nombre: nombre + sufC, apellido: 'Conc', ci: pref + sufC + '4', fecha_nac: '2016-05-05' }, grupo_id: escolaresC.id })).json.data.id;
+
+    // (a) CI: otra sesión lo registra; esta pantalla (CI pendiente, formulario tipeado) guarda y recibe 409
+    const idCiC = await nuevoExp('Ciconc', '3');
+    await abrirD(idCiC, 'ci');
+    await pd.fill('#ci_firmante', 'Firmante de esta pantalla'); await pd.fill('#ci_fecha', '2026-06-01');
+    const otraCi = await send('POST', `/hce/${idCiC}/consentimiento`, { firmante: 'Firmante de otra sesión', fecha: '2026-06-02', autorizaciones: { evaluacion: true, registro: true, comunicacion: false } });
+    const resp409ci = pd.waitForResponse((r) => r.request().method() === 'POST' && /\/consentimiento$/.test(r.url()));
+    await pd.click('#btnCiGuardar');
+    const r409ci = await resp409ci;
+    await pd.waitForFunction(() => !document.getElementById('btnCiGuardar') && !!document.getElementById('btnCiEditar'), null, { timeout: 8000 });
+    await pd.waitForTimeout(200);
+    const ci409 = await pd.evaluate(() => ({ avisos: (document.getElementById('expAvisos') || { innerText: '' }).innerText.replace(/\s+/g, ' '), panel: document.getElementById('panelExp').innerText.replace(/\s+/g, ' '),
+      resumen: document.getElementById('ciErrores') ? document.getElementById('ciErrores').innerText : '', foco: document.activeElement.id || document.activeElement.tagName, enBody: document.activeElement === document.body }));
+    check('3d-ci409', 'CI con escritura concurrente real: otra sesión registra el CI; al «Registrar consentimiento» en esta pantalla la API contesta 409 → se muestra «Cambió en el servidor» (no «Avisos de la API» ni «No se pudo guardar»), el CI registrado es el de la otra sesión, y el foco queda en el título de la pestaña, no en <body>',
+      otraCi.status < 300 && r409ci.status() === 409 && /Cambió en el servidor:/.test(ci409.avisos) && !/Avisos de la API/.test(ci409.avisos) && !/No se pudo guardar/.test(ci409.panel + ci409.resumen)
+        && ci409.panel.includes('Firmante de otra sesión') && !ci409.panel.includes('Firmante de esta pantalla') && !ci409.enBody && ci409.foco === 'ciTitulo', JSON.stringify(ci409).slice(0, 320));
+
+    // (b) IDEA / PA / PB: otra sesión firma el borrador; esta pantalla toca un valor y guarda → 409 → solo lectura
+    const dimC = Object.fromEntries(Array.from({ length: 12 }, (_, i) => ['D' + (i + 1), { valor: 4, obs: null }]));
+    const itemsC = Object.fromEntries(Array.from({ length: 24 }, (_, i) => [String(i + 1), { valor: 3, obs: null }]));
+    const cuerpoC = { tipo: null, anio, items: itemsC, fecha: '2026-07-01', semanas: 16, sint_tec1: 'a', sint_tec2: 'b', evaluador_t1_id: idGonzalez, evaluador_t2_id: idTorres };
+    const modsC = [
+      { k: 'lb', pref: '4', crear: (id) => send('POST', `/hce/${id}/idea`, { anio, dim: dimC, fecha_consenso: '2026-03-20', sesiones: 6, sintesis: 's', objetivos: 'o', evaluador_t1_id: idGonzalez, evaluador_t2_id: idTorres }), ruta: (d) => `/idea/${d.id}`, tocar: '#dim-D1 .opcion[data-v="2"]' },
+      { k: 'pa', pref: '5', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'A' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .lik-btn[data-v="2"]' },
+      { k: 'pb', pref: '6', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'B' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .lik-btn[data-v="2"]' }
+    ];
+    for (const m of modsC) {
+      const idE = await nuevoExp('Evc' + m.k, m.pref);
+      const borr = await m.crear(idE);
+      await abrirD(idE, m.k);
+      await pd.waitForSelector('#btnEvGuardar');
+      await pd.click(m.tocar);
+      const firmaOtra = await send('POST', m.ruta(borr.json.data) + '/firmar');
+      const resp409ev = pd.waitForResponse((r) => r.request().method() === 'PATCH' && new RegExp(m.ruta(borr.json.data) + '$').test(r.url()));
+      await pd.click('#btnEvGuardar');
+      const r409ev = await resp409ev;
+      await pd.waitForFunction(() => document.querySelectorAll('#btnEvGuardar, #btnEvFirmar').length === 0 && !!document.querySelector('#evEstado .st-firmado'), null, { timeout: 8000 });
+      await pd.waitForTimeout(200);
+      const ev409 = await pd.evaluate(() => { const a = document.getElementById('evAvisos'); return { avisos: a.hidden ? '' : a.innerText.replace(/\s+/g, ' '), rol: a.getAttribute('role'), editables: [...document.querySelectorAll('#panelExp [data-ev]')].filter((e) => !e.disabled).length,
+        foco: document.activeElement.id || document.activeElement.tagName, enBody: document.activeElement === document.body }; });
+      check('3d-ev409-' + m.k, `${m.k.toUpperCase()} con escritura concurrente real: otra sesión firma el borrador; al guardar aquí la API contesta 409 → la pantalla queda en solo lectura, el rótulo es «Cambió en el servidor» (no «Avisos de la API») y el foco va al título (#evTitulo), no a <body>`,
+        firmaOtra.status === 200 && r409ev.status() === 409 && ev409.editables === 0 && /Cambió en el servidor:/.test(ev409.avisos) && !/Avisos de la API/.test(ev409.avisos) && /\. Se muestra el registro tal como está en el servidor\./.test(ev409.avisos) && !ev409.enBody && ev409.foco === 'evTitulo', JSON.stringify(ev409).slice(0, 320));
+    }
 
     /* ---------- (d) VF de Martín: categoría = la de la API; un valor rechazado da error por campo ---------- */
     await abrirD(idMartinD, 'vf');

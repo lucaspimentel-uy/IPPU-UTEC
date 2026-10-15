@@ -358,13 +358,18 @@ async function ciGuardar(){
       const campo = d.campo ? String(d.campo).split(".")[0] : null;
       return {id: mapa[campo] || null, rot: campo === "firmante" ? "Referente" : campo === "fecha" ? "Fecha" : campo === "autorizaciones" ? "Autorizaciones" : "", mensaje: d.mensaje};
     });
+    if(err instanceof ApiError && err.status === 409 && registrar){
+      // Otro usuario ya lo registró: se vuelve a leer y se muestra lo que hay realmente. El repintado destruye el formulario (y con él
+      // el resumen de errores), así que NO se arma «No se pudo guardar» y el foco va a un destino estable: el título de la pestaña.
+      EXP.avisos = [{mensaje: err.message, conflicto: true}]; pintarAvisosExp();
+      recargarFlujoExp(true); refrescarListaTrasEscritura();
+      await cargarCi();
+      if(mi !== EXP.seq) return;
+      const t = document.getElementById("ciTitulo"); if(t) t.focus();
+      return;
+    }
     // El formulario no se vuelve a pintar: lo tipeado se conserva y los errores quedan junto a cada campo.
     formResumen("ciErrores", items, "No se pudo guardar:").focus();
-    if(err instanceof ApiError && err.status === 409 && registrar){
-      // Otro usuario ya lo registró: se vuelve a leer para mostrar lo que hay realmente.
-      EXP.avisos = [{mensaje: err.message, conflicto: true}]; pintarAvisosExp();
-      cargarCi(); recargarFlujoExp(true); refrescarListaTrasEscritura();
-    }
   }
 }
 
@@ -596,7 +601,7 @@ function abrirExpedienteDemo(id){
           <h3><span class="ic">◷</span> Historial clínico</h3>
           <div class="ib">
             ${eventos.length ? `<div class="tline">${timelineHtml}</div>` :
-              `<div class="empty-state"><div class="big">◷</div>Sin eventos registrados todavía.</div>`}
+              `<div class="empty-state"><div class="big" aria-hidden="true">◷</div>Sin eventos registrados todavía.</div>`}
           </div>
         </div>
       </div>

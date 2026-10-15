@@ -1433,8 +1433,10 @@
     .firmas-grid{grid-template-columns:repeat(3,1fr)}
     .doc-datos .data-row{flex-wrap:wrap}
     .doc-datos .data-row dd,.membrete h2,.membrete h3,.print-wrap .ph{overflow-wrap:anywhere}
-    /* El bloque de cierre (firmas + pie legal) y el análisis cuantitativo no se parten: el pie nunca queda solo en una hoja. */
-    #informeContent .doc-cierre,#informeContent .doc-cuant{break-inside:avoid;page-break-inside:avoid}
+    /* El bloque de cierre (firmas + pie legal) no se parte: el pie nunca queda solo en una hoja. El análisis cuantitativo SÍ puede
+       cortarse entre la tabla y los radares (cada uno sigue entero): si no, el bloque entero no entraba en la hoja 1 y ésta quedaba
+       con el membrete y media hoja en blanco. */
+    #informeContent .doc-cierre{break-inside:avoid;page-break-inside:avoid}
     .cardhead{break-after:avoid;page-break-after:avoid}
     /* Los radares son bloques en linea atomicos dentro de un bloque que no se parte: un flex no respetaba break-inside. */
     .ic-radars{display:block;text-align:center;gap:0}
