@@ -20,6 +20,7 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · §5.126: 151/151 → 155/155 (cifra real tras §5.127 e); README sin ratio del glifo decorativo** (rama `fase3d-cierre-vf`; docs, sin código).
 - **2026-10-15 · Mini-revisión de Fase 3-d: corrección de cifras** (rama `fase3d-cierre-vf`; `demo/` y docs, sin backend). **Corrige las dos entradas de 3-d de abajo, que no se tocan:** el «**151/151**» y las «**3 / 5 / 7 hojas**» **no se reproducían** — `3d-b2` fallaba siempre por una medición de margen derecho con `pypdf` (`maxx`) que daba ≈2046 pt para texto que está a ≤ 544 pt. Real tras el arreglo: **`conectada.js` 155/155** (151 + `3d-ci409` + `3d-ev409-lb/-pa/-pb`; base descartable :8001, nunca :8000) y **hojas por escala 1 / 1,25 / 1,5 → 3 / 5 / 6**. Decisiones **§5.127 e–f**.
   - `3d-b2` ya no mide el margen derecho (lo cubre `3d-b0`). Prueba: con sólo el `estilos.css` de `b08f040` fallan `3d-b0` y `3d-b2`; restaurado, pasan. La tabla del IC empieza en la hoja 1 a escala 1 (`.doc-cuant` puede cortarse entre tabla y radares).
   - Un 409 al registrar el CI ya no deja el foco en `<body>` ni el resumen «No se pudo guardar» junto a «Cambió en el servidor»; el foco va a `#ciTitulo`. Los 4 chequeos nuevos usan una escritura concurrente real y **fallan sobre el código anterior**.

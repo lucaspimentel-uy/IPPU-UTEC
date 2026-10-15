@@ -136,7 +136,7 @@ Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra 
   **sin tocarlo** desde el repo. Recorre las vistas, las 13 pestañas de un expediente de la API, el CI pendiente con sus
   errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos pares que fallan que la línea base** (misma tabla, mismos ratios; no se reproduce ningún conteo exacto) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla: **todo par nuevo ≥ 4,5:1**. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
   confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable). Se mide sobre una base recién cargada y se compara contra la punta anterior de la rama (`git stash` y repetir): el conjunto de pares que fallan tiene que ser idéntico.
-  El glifo grande de los estados vacíos (`.empty-state .big`, ≈3:1) es **puramente decorativo**: lleva `aria-hidden="true"` (el mensaje va en el texto que lo acompaña, que sí cumple), así que no es un par a corregir.
+  El glifo grande de los estados vacíos (`.empty-state .big`, decorativo, aria-hidden) es **puramente decorativo**: lleva `aria-hidden="true"` (el mensaje va en el texto que lo acompaña, que sí cumple), así que no es un par a corregir.
   Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
   ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
   `:focus-visible` se miden.
