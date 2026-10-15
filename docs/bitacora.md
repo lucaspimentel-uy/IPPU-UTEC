@@ -20,6 +20,14 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — plan de arranque del asistente virtual** (Claude, rama `docs/L3-plan` **sobre `cb9030a`** = `fase3d-cierre-vf`, que no está en `main`). Sólo docs: `docs/planes/L3-asistente-plan.md` + una línea `- [ ]` en `handoff.md` §6. No toca L1 ni `implementacion/`.
+  - **Excepción explícita y acotada a §5.114 f**, pedida por Lucas: el plan es un documento nuevo; no habilita otros.
+  - **Verificado:** L3 en el repo = `handoff.md` §2, `README.md`, *Documento de trabajo* «Proyecto 3», presentación del 13.05, Protocolo §6.7 (nombra a los «asistentes virtuales», cita literal en el plan), Q47 y `preguntas-ippu.md` C9 (Catálogo de puertas: generado con IA, no validado). El convenio no está en el repo. JWT con sólo `sub`/`exp`; imagen `postgres:16-alpine` sin pgvector.
+  - **Supuesto:** umbrales de evaluación, compuerta (F0 ≤ ~2 h/semana; pausa si la Fase 3-e no cerró al 2026-11-06; L3 congelada del 19 al 26/11) y criterios de UI fuera de `notas-accesibilidad-ui.md`.
+  - **Pendiente del equipo (3):** audiencia de v1 y compuerta · arquitectura separada con almacén propio · dueño de L3 y quién lleva las preguntas a IPPU (no Lucas por defecto).
+  - Sin §5: no se decidió nada. Nada de L3 se envía a IPPU antes del 2026-11-26 salvo decisión del equipo.
+  - ⚠️ **No hacer ff-merge de `docs/L3-plan` a `main` antes de mergear `fase3d-cierre-vf`, o hacerlo a sabiendas (arrastra los commits de cierre de la 3-d).**
+
 - **2026-10-15 · Mini-revisión de Fase 3-d: corrección de cifras** (rama `fase3d-cierre-vf`; `demo/` y docs, sin backend). **Corrige las dos entradas de 3-d de abajo, que no se tocan:** el «**151/151**» y las «**3 / 5 / 7 hojas**» **no se reproducían** — `3d-b2` fallaba siempre por una medición de margen derecho con `pypdf` (`maxx`) que daba ≈2046 pt para texto que está a ≤ 544 pt. Real tras el arreglo: **`conectada.js` 155/155** (151 + `3d-ci409` + `3d-ev409-lb/-pa/-pb`; base descartable :8001, nunca :8000) y **hojas por escala 1 / 1,25 / 1,5 → 3 / 5 / 6**. Decisiones **§5.127 e–f**.
   - `3d-b2` ya no mide el margen derecho (lo cubre `3d-b0`). Prueba: con sólo el `estilos.css` de `b08f040` fallan `3d-b0` y `3d-b2`; restaurado, pasan. La tabla del IC empieza en la hoja 1 a escala 1 (`.doc-cuant` puede cortarse entre tabla y radares).
   - Un 409 al registrar el CI ya no deja el foco en `<body>` ni el resumen «No se pudo guardar» junto a «Cambió en el servidor»; el foco va a `#ciTitulo`. Los 4 chequeos nuevos usan una escritura concurrente real y **fallan sobre el código anterior**.
