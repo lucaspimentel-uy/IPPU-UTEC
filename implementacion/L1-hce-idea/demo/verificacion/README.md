@@ -131,7 +131,7 @@ Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra 
   errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos 14 pares que fallan que
   la línea base** (misma tabla, mismos ratios) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
   confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable): **los mismos 14 pares que fallan**
-  (62 → 71 pares distintos; los pares nuevos —13 por clase/etiqueta: rampa de bandas, marca de NS, addenda, barra— miden **entre 4,90:1 y 13,78:1**, medido sobre una base recién cargada y contra la punta de 3-b; el paso 4 de la rampa, 5,05:1).
+  (los mismos 14 pares que fallan que la línea base; todo par nuevo —rampa de bandas, marca de NS, addenda, barra— ≥ 4,5:1; medido sobre una base recién cargada y contra la punta de 3-b).
   Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
   ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
   `:focus-visible` se miden.
