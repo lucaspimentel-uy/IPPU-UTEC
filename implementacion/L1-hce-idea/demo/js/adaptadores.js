@@ -77,8 +77,9 @@ function adaptarFilaLista(it, hoy){
   };
 }
 
-/* GET /hce/{id} -> expediente con los nombres del NNA de la demo. Los campos que la API no
-   guarda (apoyo/SEV, talleres, historial, antecedentes) NO se agregan: la pantalla los oculta. */
+/* GET /hce/{id} -> objeto plano con los nombres de campo de la demo. Copia sólo lo que la API devuelve (persona, grupo con
+   sus dos técnicos, diagnóstico, derivación, medicación, alerta, anamnesis); lo que no guarda (apoyo/SEV, talleres,
+   historial, antecedentes) no se inventa acá: queda sin definir y el expediente conectado no lo muestra. */
 function adaptarHce00(h, hoy){
   const per = h.persona || {};
   const g = h.grupo || null;

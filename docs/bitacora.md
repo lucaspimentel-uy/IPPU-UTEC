@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-16 · Fase 3-e fix — cierre de la revisión (cambios pedidos)** (Lucas con Claude, rama `fase3e-accesibilidad`; §5.135 (h), §5.99). Sin backend, sin DDL, sin cambio de la ruta conectada.
+  - **`verificar_contraste_ui.js` ya no puede escribir:** `ctx.route` sobre la API deja pasar sólo GET/OPTIONS y `POST /auth/login`; las confirmaciones de firma (IDEA de Joaquín, PA de Sofía) reciben un 422 enlatado copiado de uno real de `/idea/{id}/firmar` y `/protocolo/{id}/firmar`; cualquier otro no-GET se aborta y sale con código 1 nombrándolo. Autoprueba `VERIFICAR_AUTOPRUEBA=1`. README de `verificacion/` actualizado.
+  - **§5.99:** el «la demo todavía bloquea» pasó a pasado con nota fechada: `recordatorios.js` (`subirFotoGrupo`) no bloquea y `3c-j9b` ya cubre individual y grupal; no hizo falta quitar código ni agregar chequeo.
+  - **Docs:** cabecera de `handoff.md` y §6 nombran igual el trabajo diferido; §6 suma el pendiente de `seed_demo` (`DATABASE_URL` explícita, antes del reseed del 13/11); `notas-accesibilidad-ui.md` sin la cifra «2,6:1»; comentario de `adaptadores.js` corregido; §5.135 (h).
+  - **Verificado** (base descartable `ippu_3efix`, API :8001, demo :5500): contraste sin fallas, GET 107 · login 2 · 422 enlatados 2 · abortados 0, y el log de acceso de la API sólo muestra `POST /auth/login` en la ventana de la corrida; autoprueba → código 1; `conectada.js` **181/181** sobre base nueva (sin chequeo nuevo: ver §5.99).
+
 - **2026-10-16 · Fase 3-e — accesibilidad y pasada visual de las pantallas conectadas** (Lucas con Claude, rama `fase3e-accesibilidad`; §5.135). Sin backend ni DDL.
   - **Foco:** un solo anillo sólido (`--ring` / `--ring-dark` sobre el cromo oscuro), sin `outline:none` ni `box-shadow` de foco; enlace «Saltar al contenido»; `#panelExp` con `tabindex="0"` si no hay nada operable; tabindex móvil en el editor del IDEA (un punto de Tab por dimensión).
   - **Diálogos:** Tab atrapado en login, alta/edición y recibí; foco de vuelta a quien abrió o al título; ×, Cancelar y Esc piden confirmación si hay datos tipeados (banda destructiva dentro del diálogo); «Salir» y el 401 no preguntan.

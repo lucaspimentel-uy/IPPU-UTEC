@@ -23,7 +23,7 @@
 ## 1. Relación con el restyle de F1
 
 F1 (`5544e71`, «restyle visual completo») ya corrigió una instancia de esta misma familia de problemas: oscureció el naranja
-institucional de `#DD7B0C` a `#B4590A` porque «se usa como texto y daba 2,6:1 (no AA)». Es la prueba de que el criterio de
+institucional de `#DD7B0C` a `#B4590A` porque «se usa como texto y no llegaba a AA». Es la prueba de que el criterio de
 este documento se aplica y se verifica. Lo que vino después —la pasada de la Fase 3-e— generaliza ese criterio a todo el
 cromo, a los estados, a los campos y al foco.
 

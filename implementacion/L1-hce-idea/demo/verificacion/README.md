@@ -145,7 +145,7 @@ Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra 
 
 - **`herramientas/verificar_contraste_ui.js`** (raíz del repo) abre la demo por `http://localhost:5500/index.html?api=<API>`
   y hace login con el técnico del seed (`IPPU_DEMO_PASSWORD`; opcionales `API=`, `DEMO=`, `IPPU_DEMO_EMAIL=`): corre
-  **sólo leyendo**, sin tocar la API. **Desde la 3-e** mide, además de los pares texto/fondo, **el texto que escribe una persona en un campo**
+  **sólo leyendo**, sin tocar la API — y eso se **garantiza** (desde el cierre de la revisión de 3-e): un `ctx.route` deja pasar sólo `GET` y `POST /auth/login`; las dos confirmaciones de firma que pulsa para medir la pantalla de errores reciben un **422 enlatado** (copiado de uno real de `/firmar`, forma `{code, detail[]}`) y cualquier otro `POST/PATCH/PUT/DELETE` se **aborta** y hace salir con código 1 nombrándolo. Al final imprime los contadores (GET · login · 422 enlatados · abortados). `VERIFICAR_AUTOPRUEBA=1` emite un `POST` sin ruta desde la página y debe terminar en código 1. **Desde la 3-e** mide, además de los pares texto/fondo, **el texto que escribe una persona en un campo**
   (valor y `placeholder`), **el borde de los campos** (3:1, 1.4.11) y **el anillo de foco con teclado real** contra el fondo que de verdad queda detrás
   (esconde el control y mira a su lado), y separa lo que falla en **pantallas conectadas** de lo que sólo falla en **vistas de modo demostración**.
   Su cobertura —login y su error, listado con todos sus estados, el expediente con sus 13 pestañas, CI, IDEA, PA/PB, IC, informe impreso, VF y

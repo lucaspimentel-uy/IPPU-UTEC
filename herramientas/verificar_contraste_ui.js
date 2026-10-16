@@ -31,7 +31,15 @@
  * «Base descartable») y ANTES de conectada.js (que escribe). Esta herramienta sólo LEE: lo que no existe en el seed (el
  * recibí pendiente, los errores de firma, el conflicto) se pinta con los componentes reales de la demo, sin pedirle nada a la API.
  *
- * Variables: API (por omisión http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL.
+ * NUNCA ESCRIBE EN LA API, y no por buena conducta sino por construcción: todo pedido del navegador a la base de la API pasa por
+ * un filtro (`ctx.route`) que deja pasar sólo GET (y OPTIONS, que no lleva datos) y `POST /auth/login`. Las dos confirmaciones de
+ * firma que la herramienta pulsa para medir la pantalla de errores (IDEA de Joaquín y PA de Sofía) reciben un 422 ENLATADO con
+ * la forma del contrato {code, detail[]}, copiado de un 422 real del mismo endpoint (ver ENLATADOS_422): el pedido ni sale. Cualquier
+ * otro POST/PATCH/PUT/DELETE se ABORTA, se anota, y la corrida termina con código 1 nombrándolo. Al final se imprimen los contadores.
+ * Autoprueba del filtro: `VERIFICAR_AUTOPRUEBA=1` emite un POST sin ruta desde la página y debe terminar en código 1.
+ *
+ * Variables: API (por omisión http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL ·
+ * VERIFICAR_AUTOPRUEBA (=1: sólo la autoprueba del filtro).
  */
 const fs = require('fs');
 const path = require('path');
@@ -43,6 +51,48 @@ const DEMO = process.env.DEMO || 'http://localhost:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
 const URL_DEMO = DEMO + '/index.html?api=' + encodeURIComponent(API);
+
+/* 422 reales de POST /idea/{id}/firmar y POST /protocolo/{id}/firmar sobre el seed recién cargado (Joaquín · IDEA en borrador con
+   D3 y D12 en NS; Sofía · PA en borrador sin fecha ni síntesis), capturados el 2026-10-16 contra la API de la rama. No se inventan:
+   si el contrato cambia, se vuelven a copiar de una respuesta real. */
+const ENLATADOS_422 = {
+  idea: { code: 'validation_error', detail: [
+    { campo: 'dim.D3', mensaje: 'Está en NS (observación insuficiente): puntuala para firmar' },
+    { campo: 'dim.D12', mensaje: 'Está en NS (observación insuficiente): puntuala para firmar' },
+    { campo: 'fecha_consenso', mensaje: 'Es obligatoria para firmar' },
+    { campo: 'sintesis', mensaje: 'La síntesis clínica es obligatoria para firmar' },
+    { campo: 'objetivos', mensaje: 'Los objetivos del período son obligatorios para firmar' }] },
+  protocolo: { code: 'validation_error', detail: [
+    { campo: 'fecha', mensaje: 'Es obligatoria para firmar' },
+    { campo: 'sint_tec1', mensaje: 'La síntesis del técnico 1 es obligatoria para firmar' },
+    { campo: 'sint_tec2', mensaje: 'La síntesis del técnico 2 es obligatoria para firmar' }] },
+};
+const intercepcion = { get: 0, login: 0, preflight: 0, enlatados: 0, abortados: [] };
+/* Instala el filtro de escritura; los contadores quedan en `intercepcion`. */
+async function instalarFiltroDeEscritura(ctx) {
+  await ctx.route((u) => u.href.startsWith(API + '/'), async (route) => {
+    const req = route.request();
+    const m = req.method();
+    const ruta = new URL(req.url()).pathname;
+    if (m === 'GET') { intercepcion.get++; return route.continue(); }
+    if (m === 'OPTIONS') { intercepcion.preflight++; return route.continue(); }
+    if (m === 'POST' && ruta === '/auth/login') { intercepcion.login++; return route.continue(); }
+    const firma = m === 'POST' && /^\/(idea|protocolo)\/\d+\/firmar$/.exec(ruta);
+    if (firma) {
+      intercepcion.enlatados++;
+      return route.fulfill({
+        status: 422, contentType: 'application/json',
+        headers: { 'access-control-allow-origin': new URL(DEMO).origin },
+        body: JSON.stringify(ENLATADOS_422[firma[1]]),
+      });
+    }
+    intercepcion.abortados.push(`${m} ${ruta}`);
+    return route.abort('blockedbyclient');
+  });
+}
+function imprimirIntercepcion() {
+  console.log(`\nInterceptación de la API (la herramienta no escribe): GET pasados = ${intercepcion.get} · POST /auth/login = ${intercepcion.login} · preflight = ${intercepcion.preflight} · 422 enlatados de firma = ${intercepcion.enlatados} · escrituras abortadas = ${intercepcion.abortados.length}${intercepcion.abortados.length ? ' → ' + intercepcion.abortados.join(' · ') : ''}`);
+}
 const PLAYWRIGHT_DIR = path.join(REPO, 'implementacion/L1-hce-idea/demo/verificacion/node_modules');
 
 let chromium;
@@ -237,6 +287,7 @@ function buscarContornosApagados() {
   }
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await instalarFiltroDeEscritura(ctx);
   const page = await ctx.newPage();
   const errores = [];
   page.on('pageerror', (e) => errores.push(e.message));
@@ -274,6 +325,21 @@ function buscarContornosApagados() {
   await page.click('#loginBtn');
   await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
   await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+
+  if (process.env.VERIFICAR_AUTOPRUEBA === '1') {
+    // Autoprueba: un POST de escritura SIN ruta enlatada, emitido desde la página con el token real. El filtro debe abortarlo
+    // (la API no lo ve) y la corrida terminar en 1 nombrándolo.
+    const resultado = await ev(async () => {
+      try { await fetch(API_BASE + '/hce', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + Sesion.token() }, body: '{}' }); return 'llegó a la API'; }
+      catch (e) { return 'abortado en el navegador (' + e.message + ')'; }
+    });
+    console.log('AUTOPRUEBA · POST /hce desde la página: ' + resultado);
+    await browser.close();
+    imprimirIntercepcion();
+    if (!intercepcion.abortados.length) { console.error('AUTOPRUEBA FALLIDA: el filtro no registró el POST.'); process.exit(2); }
+    console.error(`AUTOPRUEBA OK: escritura bloqueada (${intercepcion.abortados.join(' · ')}); la corrida termina con código 1 a propósito.`);
+    process.exit(1);
+  }
 
   // ---------------------------------------------------------------- LISTADO (conectado)
   await esperar(500);
@@ -447,6 +513,7 @@ function buscarContornosApagados() {
   anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
 
   await browser.close();
+  imprimirIntercepcion();
 
   // ---------------------------------------------------------------- RESULTADOS
   const filas = [...mapa.values()].map(p => {
@@ -512,5 +579,10 @@ function buscarContornosApagados() {
     fs.writeFileSync(process.argv[jsonIdx + 1], JSON.stringify(salida, null, 2), 'utf8');
     console.log(`\nJSON crudo -> ${process.argv[jsonIdx + 1]}`);
   }
-  process.exit(fallanConectadas.length || anilloMal.length || apagados.length ? 1 : 0);
-})().catch((e) => { console.error('ERROR del script:', e); process.exit(2); });
+  if (intercepcion.abortados.length) console.error(`\nESCRITURA BLOQUEADA: la página intentó ${intercepcion.abortados.join(' · ')} (no salió del navegador). La medición no es válida.`);
+  process.exit(fallanConectadas.length || anilloMal.length || apagados.length || intercepcion.abortados.length ? 1 : 0);
+})().catch((e) => {
+  console.error('ERROR del script:', e);
+  if (intercepcion.abortados.length) { console.error(`ESCRITURA BLOQUEADA: ${intercepcion.abortados.join(' · ')}`); process.exit(1); }
+  process.exit(2);
+});
