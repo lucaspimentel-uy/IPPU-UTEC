@@ -235,8 +235,11 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
   - **F1-c2 · Corredor de evaluación y umbral — HECHA (2026-10-15).** Corredor sobre el banco, calibración del umbral y LIM-5 por umbral.
   - **F1-c3 · Set retenido y diagnóstico — HECHA (2026-10-15).** `eval/retenido-v0.md` (24 casos escritos por el revisor sin ver
     las reglas; no se usa para ajustarlas) y `--diagnostico` de recuperación. Sólo mide.
-  - **F1-c4 · Recuperación y categoría 2 — pendiente.** Corregir lo que midió la F1-c3 con casos aparte, sumar casos «sin respaldo»
-    y recién ahí fijar el umbral.
+  - **F1-c4 · Límites por caso particular — HECHA (2026-10-15).** LIM-1, 2, 3, 4, 8 y 10 por «caso particular + pedido de
+    juicio o acción» y LIM-6 con nombres en mayúscula (§5.133), ajustados con casos propios.
+  - **F1-c5 · Retenido v1 — pendiente.** Un set nuevo, escrito sin ver las reglas, para medir la F1-c4 (el v0 ya está visto).
+  - **F1-c6 · Recuperación y categoría 2 — pendiente.** Secciones «imán», vocabulario y casos «sin respaldo» escritos por
+    Samuel; recién ahí se fija el umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 

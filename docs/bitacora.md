@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-c4: límites por caso particular y enmascarado de nombres** (Samuel con Claude, rama `l3/f1c4-limites`). Cambia sólo la parte clínica de `limites.py`; el bloque de LIM-7 y LIM-9 queda igual. No toca índice, flujo, umbral ni sets de evaluación.
+  - Dos detectores, `caso_particular()` y `pedido_clinico()`, y `clasificar()` con el orden de §5.133. LIM-6 suma el enmascarado de 2 o más palabras con mayúscula fuera del comienzo de la oración, con una lista corta de excepciones (IDEA, IPPU, HCE, Documento Técnico, Protocolo, INAU…).
+  - Tests: 136 en verde; 43 nuevos (20 casos de ajuste, 15 gemelas, 6 de LIM-6 y 2 de los detectores), escritos sin tomar formulaciones del retenido. Ningún test existente cambió.
+  - Banco v0 igual: 29/30, cita 84,2 %, rechazo correcto cat. 3 100 %, indebido cat. 1 0 %.
+  - Retenido v0 (**contaminado: ya visto**, sólo informativo): crisis 3/3, rechazo correcto 10/10, indebido 1/12 (R04), enmascarado 2/2. No vale como medición; la da el retenido v1 (F1-c5).
+  - Huecos conocidos: un nombre de 2 palabras al comienzo de la oración no se enmascara; «CIE-10» se enmascara como código desde la F1-c1. §5.133.
 - **2026-10-15 · L3 — F1-c3: set retenido de límites y diagnóstico de recuperación** (Samuel con Claude, rama `l3/f1c3-retenido`). Sólo mide: no cambian `limites.py`, `indice.py`, `flujo.py` ni el umbral.
   - `eval/retenido-v0.md`: 24 casos escritos por el revisor sin ver las reglas (copiados tal cual). `banco.py` acepta ids `R..`; `evaluar_banco --retenido` puntúa sólo comportamiento y `--diagnostico` da secciones «imán» y puestos, sin texto.
   - **Retenido:** crisis 3/3, rechazo correcto **5/10**, rechazo indebido 1/12, enmascarado **1/2**; comportamiento 17/24. Fallan:

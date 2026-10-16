@@ -1,7 +1,7 @@
 """Límites del asistente (plan §8) por reglas deterministas, antes del modelo y fuera de él.
 
 Orden fijo: LIM-7 (crisis) → LIM-9 (inyección / rol declarado) → LIM-6 (enmascarar datos)
-→ LIM-1, 2, 3, 4, 8, 10 → recuperación. LIM-5 (sin respaldo) se decide después de buscar, con el umbral
+→ LIM-10, LIM-1 y «caso particular + pedido» (LIM-8, 3, 4, 2) → recuperación. LIM-5 (sin respaldo) se decide después de buscar, con el umbral
 (F1-c2); LIM-11 lo arma asistente/respuesta.py cuando hay dos fragmentos que no coinciden.
 
 Los patrones se escriben en minúsculas y sin tildes, y se comparan contra el texto normalizado con la misma
@@ -66,72 +66,144 @@ _NOMBRE_TRAS_MARCADOR = re.compile(
 )
 _NOMBRE_ENTRE_COMILLAS = re.compile(rf"[\"«“]({_MAYUSCULA}(?:\s+{_MAYUSCULA}){{1,3}})[\"»”]")
 _CODIGO = re.compile(r"\b[A-ZÁÉÍÓÚÑ]{3,}-\d{2,}\b")
+# Dos o más palabras seguidas con mayúscula inicial, fuera del comienzo de la oración (F1-c4). No se enmascaran
+# siglas ni estos nombres de documentos e instituciones; ante la duda, se enmascara.
+_SECUENCIA_MAYUSCULAS = re.compile(r"(?<![\w\[])[A-ZÁÉÍÓÚÑ][\wáéíóúüñ]*(?:[ \t]+[A-ZÁÉÍÓÚÑ][\wáéíóúüñ]*)+")
+_NO_SON_NOMBRES = frozenset("IDEA IPPU UTEC LIDIA HCE Protocolo MIDES BPS ASSE INAU ANEP".split())
+_COMIENZO_DE_ORACION = re.compile(r"(^|[.?!:;]\s*)[¿¡«\"(\s]*$")
 _FECHA = re.compile(r"\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}")
 
-# --- LIM-1 · diagnóstico ----------------------------------------------------------------------------
-DIAGNOSTICO = _r(
+# --- LIM-1, 2, 3, 4, 8 y 10 · «caso particular + pedido de juicio o acción» (F1-c4) ------------------
+# Dos detectores sobre la consulta ya limpia (LIM-9) y enmascarada (LIM-6), en texto normalizado.
+# Ante la duda, se rechaza. Reglas de decisión, en este orden:
+#   redactar + objeto de registro → LIM-10 · diagnóstico pedido → LIM-1 (las dos, haya caso o no)
+#   caso particular + compartir con terceros → LIM-8
+#   caso particular + interpretar → LIM-3 · + decidir → LIM-4 · + tratar (o no se distingue) → LIM-2
+# Una pregunta general (sin caso particular) sobre el IDEA, el flujo o los procedimientos NO se rechaza.
+
+_VERBOS_CON_CLITICO = (
+    "doy|damos|das|da|dan|mando|mandamos|manda|paso|pasamos|cambio|cambiamos|subo|subimos|bajo|bajamos|dejo|dejamos"
+    "|saco|sacamos|derivo|derivamos|reingreso|reingresamos|egreso|egresamos|aplico|aplicamos|indico|indicamos"
+    "|recomiendo|recomendamos|recomiendan|digo|decimos|envio|enviamos|entrego|entregamos|muestro|mostramos|comparto"
+    "|compartimos|puedo|podemos|debo|debemos|tengo|tenemos|hago|hacemos|pongo|ponemos|medico|medicamos|interno"
+    "|internamos|conviene|convendria|sirve|serviria|toca|dio|salio|calmo|calmamos|trato|tratamos|manejo|manejamos"
+)
+CASO_PARTICULAR = _r(
+    rf"\b(se )?(le|lo|la|les|los|las) ({_VERBOS_CON_CLITICO})\b",                      # «le doy», «lo pasamos», «se lo mando»
+    r"\b\w+(ar|er|ir)(selo|sela|selos|selas|le|lo|la|les|los|las)\b",                # «derivarlo», «entregarla»
+    r"\bmi (hij[oa]|nen[ea]|alumn[oa]|paciente|sobrin[oa]|niet[oa]|guri|gurisa)\b",
+    r"\b(este|esta|ese|esa|aquel|aquella) (nen[ea]|nin[oa]|guri|gurisa|chiquilin[a]?|alumn[oa]|paciente|nna"
+    r"|adolescente|joven|chic[oa]|muchach[oa])\b",
+    r"\b(el|la|del|de la|al|a la) (nen[ea]|nin[oa]|guri|gurisa|chiquilin[a]?|chic[oa])\b",
+    r"\b(el|la) (de|del) (la sala|sala|grupo|taller|turno)\b",
+    r"\btiene \d+ (anos|meses)\b", r"\bde \d+ anos\b",                                   # edad concreta
+    r"\b(saco|obtuvo|le dio|dio|le salio|puntuo|tuvo|saca|obtiene)\s+(un |una )?-?\d+(?!\s*(anos|meses|semanas|dias))",
+    r"\b(hoy|ayer|anoche|esta manana|esta tarde|esta semana|la semana pasada|desde hace|todas las (noches|mananas)"
+    r"|cada vez que)\b",                                                                  # situación observada
+    r"\[nombre\]",                                                                        # un nombre ya enmascarado
+)
+
+DIAGNOSTICO_PEDIDO = _r(
     r"\bdiagnostic(a|ame|ale|alo|ala|ar|ari\w*)\b",
-    r"\b(que|cual) (es el |seria el |seria su |es su )?diagnostico\b",
-    r"\bdiagnostico (tiene|le corresponde|le pondrias|le pones|seria)\b",
-    r"\b(tiene|es|seria) (tea|autismo|autista|asperger)\b",
+    r"\b(que|cual) (seria|es|sera|podria ser) (el |su )?diagnostico\b",
+    r"\b(que|cual) diagnostico\b",
+    r"\bdiagnostico (mas probable|probable|posible|presuntivo|tiene|le corresponde|le pondrias|le pones|seria)\b",
+    r"\b(dame|decime|deci|dime|tirame|pasame|sugerime|sugeri) (el |un |su )?diagnostico\b",
+    r"\b(es|sera|seria|podria ser|puede ser|tiene|tendra|podria tener) (un |una )?(tea|autismo|autista|asperger|tgd)\b",
+    r"\b(esta|estara|estaria) (dentro del|en el) espectro\b",
     r"\besto (que describo )?es (tea|autismo)\b",
     r"\bque nivel de (apoyo|soporte)[^?]* (tiene|le corresponde|es)\b",
     r"\b(que|cual) (nivel|grado) (de \w+ )?tiene\b",
     r"\bque tiene\s*\?\s*$",
 )
 
-# --- LIM-2 · indicación terapéutica individual ------------------------------------------------------
-TERAPIA = _r(
-    r"\b(que|cual)\b[^?.]{0,40}\b(metodo|tecnica|terapia|tratamiento|medicacion|medicamento|taller|intervencion"
-    r"|abordaje|actividad|estrategia)\w*\b[^?.]{0,40}\b(convien|recomend|sirv|aplic|indic|deberi|elegi|usar|uso|damos)\w*",
-    r"\b(medicac|medicament|dosis|farmac|psicofarmac|pastilla)\w*",
-    r"\b(le|les) (doy|damos|aplico|aplicamos|indico|indicamos|recomiendo|recomendamos)\b(?! (de |el )?alta)",
+_OBJETOS_DE_REGISTRO = (r"(evolucion|evoluciones|informe|nota|notas|registro|historia|ficha|sintesis|anamnesis"
+                        r"|valoracion|addenda|adenda|objetivos|recomendaciones|orientaciones|epicrisis|acta|ic|vf|pa|pb)")
+REDACTAR = re.compile(
+    rf"\b(?P<verbo>(redact|escrib|complet|confeccion|elabor|rellen|llen|arm|hac|gener)\w*)\b[^?.]{{0,40}}\b"
+    rf"{_OBJETOS_DE_REGISTRO}\b"
 )
+# Si el verbo viene después de alguna de estas marcas, la pregunta es sobre el procedimiento, no un pedido.
+_PROCEDIMIENTO = re.compile(r"\b(quien|quienes|se|como|cuando|donde|debe|deben|tiene que|tienen que|hay que|cada cuanto)"
+                            r"\b[^?.]{0,12}$")
 
-# --- LIM-3 · interpretar el caso de un NNA concreto -------------------------------------------------
-CASO_PARTICULAR = _r(
-    r"\b(saco|obtuvo|le dio|le salio|puntuo|tuvo|saca|obtiene)\s+(un |una )?-?\d+(?!\s*(anos|meses|semanas|dias))",
-    r"\bsignifica[^?]{0,30}\bpara (el|ella|mi \w+|su \w+|este \w+|esta \w+|el nino|la nina)\b",
-    r"\b(su|sus) (puntaje|resultado|total|delta|perfil|evaluacion|idea)\w*\b[^?]{0,40}\b(significa|indica|quiere decir|muestra)",
-    r"\b(mi hij[oa]|este nna|este nino|esta nina|el nene|la nena)\b[^?]{0,60}\b(significa|quiere decir|esta (bien|mal)|es grave|retroced|avanz)",
-)
-
-# --- LIM-4 · decisión clínica -----------------------------------------------------------------------
-DECISION = _r(
-    r"\b(lo|la|los|las|le|les) (damos|doy|dan) (de |el )?alta\b",
-    r"\bdar(le|les)? (el )?alta\b",
-    r"\b(lo|la|los|las) (cambio|cambiamos|paso|pasamos|reingreso|reingresamos|derivo|derivamos|egreso|egresamos"
-    r"|internamos|sacamos|dejamos)\b",
-    r"\b(deberiamos|debemos|conviene|corresponde|hay que) (darle|darlo|cambiarlo|cambiarla|derivarlo|derivarla"
-    r"|reingresarlo|reingresarla|egresarlo|egresarla|internarlo|internarla|sacarlo|sacarla)\b",
-)
-
-# --- LIM-8 · compartir con terceros o consejo legal sobre un caso -----------------------------------
-TERCEROS = _r(
-    r"\b(puedo|podemos|se puede|debo|debemos|tengo que|tenemos que)\b[^?.]{0,20}\b(mandar|enviar|pasar|compartir"
-    r"|entregar|dar|mostrar|reenviar)\w*\b[^?.]{0,60}\b(escuela|maestr|colegio|liceo|docente|inau|bps|msp|juez"
-    r"|juzgado|fiscal|abogad|policia|familia|padre|madre|otra institucion|tercer|prensa)",
+COMPARTIR = _r(
+    r"\b(mand|envi|pas|compart|entreg|doy|dar|damos|muestr|mostr|reenvi)\w*\b[^?.]{0,50}\b(escuela|maestr|profesor"
+    r"|colegio|liceo|docente|inau|bps|msp|asse|juez|juzgado|fiscal|abogad|policia|prensa|otra institucion"
+    r"|mutualista|medico de afuera|tercer|club|empresa)",
+    r"\bse (lo|la|los|las) (mando|mandamos|paso|pasamos|doy|damos|envio|enviamos|entrego|entregamos|muestro"
+    r"|mostramos|reenvio|comparto|compartimos)\b",
     r"\b(estoy|estamos) obligad", r"\bme (pueden|podrian) (demandar|denunciar)", r"\bes (legal|ilegal)\b",
     r"\b(oficio judicial|orden del juez|citacion judicial)\b", r"\bnos (estan|esta) pidiendo la (hc|historia)",
 )
-
-# --- LIM-10 · redactar o completar registros clínicos ----------------------------------------------
-_REGISTRO = (r"(informe|sintesis|evaluacion|registro|protocolo|anamnesis|valoracion|historia|addenda|objetivos"
-             r"|recomendaciones|orientaciones|ic|vf|pa|pb)\b")
-REDACCION = _r(
-    rf"\b(redact|escrib|complet|arm|hac|gener|llen|rellen)\w*me\b[^?]{{0,40}}\b{_REGISTRO}",
-    rf"\b(podes|puedes|podrias|me) (redactar|escribir|completar|armar|hacer|generar|llenar)\b[^?]{{0,40}}\b{_REGISTRO}",
-    rf"(^|[.?!:]\s*)(redacta|escribi|completa|arma|genera|llena)\b[^?]{{0,40}}\b{_REGISTRO}",
+INTERPRETAR = _r(
+    r"\b(que significa|que quiere decir|que indica|como (lo |la )?interpreto|como se interpreta|que lectura)\b",
+    r"\bsignifica\b",
+    r"\bes (grave|preocupante|normal|bueno|malo|mucho|poco|bajo|alto|leve|severo|esperable)\b",
+    r"\besta (bien|mal|grave|atrasad\w*|adelantad\w*|dentro de lo esperable)\b",
+    r"\b(retrocedi\w*|empeor\w*|va bien|va mal)\b",
+)
+DECIDIR = _r(
+    r"\balta\b", r"\bcambi\w* de grupo\b", r"\bpas\w* (a|al) (otro )?grupo\b", r"\bpas\w* de grupo\b",
+    r"\b(subir|bajar)(lo|la)?\b", r"\breingres\w*", r"\begres\w*", r"\bderiv\w*", r"\bintern\w*",
+    r"\bsac\w* del (grupo|taller|servicio)\b", r"\besperamos\b", r"\b(ya )?(esta|estaria) para\b",
+    r"\b(dejarlo|dejarla|lo dejamos|la dejamos)\b",
+)
+TRATAR = _r(
+    r"\b(que|cual)\b[^?.]{0,40}\b(metodo|tecnica|terapia|tratamiento|medicacion|medicamento|actividad|estrategia"
+    r"|taller|abordaje|intervencion|ejercicio)\w*",
+    r"\b(dosis|medicac|medicament|pastilla|remedio|melatonina|jarabe|gotas|farmac|psicofarmac|suplemento)\w*",
+    r"\bque (le )?(doy|damos|puedo dar|podemos dar|aplico|aplicamos|hago|hacemos|indico|recomiendan|recomendas"
+    r"|recomiendo)\b",
+    r"\bque (le )?(puedo|podemos) (dar|hacer|aplicar|indicar)\b",
+    r"\bque hago con (el|ella|\[nombre\])\b",
+    r"\bcomo (lo|la) (calmo|calmamos|trato|tratamos|manejo|manejamos|ayudo|ayudamos)\b",
 )
 
-_CLINICOS = (
-    ("LIM-1", DIAGNOSTICO, RECHAZAR, mensajes.A),
-    ("LIM-2", TERAPIA, RECHAZAR, mensajes.A),
-    ("LIM-3", CASO_PARTICULAR, RECHAZAR, mensajes.A),
-    ("LIM-4", DECISION, RECHAZAR, mensajes.A),
-    ("LIM-8", TERCEROS, CITAR_Y_DERIVAR, mensajes.DERIVACION),
-    ("LIM-10", REDACCION, RECHAZAR, mensajes.A),
-)
+
+def caso_particular(consulta: str) -> bool:
+    """La consulta refiere a un NNA concreto (pronombres con verbo, «mi hijo», «este nene», edad, puntaje, …)."""
+    return bool(CASO_PARTICULAR.search(normalizar(consulta)))
+
+
+def _pide_redactar(normal: str) -> bool:
+    for m in REDACTAR.finditer(normal):
+        if m.group("verbo").endswith(("an", "en")):             # «hacen», «completan»: describe, no pide
+            continue
+        if not _PROCEDIMIENTO.search(normal[: m.start()]):
+            return True
+    return False
+
+
+def pedido_clinico(consulta: str) -> set[str]:
+    """Qué juicio o acción pide la consulta: diagnostico, redactar, compartir, interpretar, decidir, tratar."""
+    normal = normalizar(consulta)
+    pedidos = {nombre for nombre, patron in (("diagnostico", DIAGNOSTICO_PEDIDO), ("compartir", COMPARTIR),
+                                             ("interpretar", INTERPRETAR), ("decidir", DECIDIR), ("tratar", TRATAR))
+               if patron.search(normal)}
+    if _pide_redactar(normal):
+        pedidos.add("redactar")
+    return pedidos
+
+
+def clasificar(consulta: str) -> tuple[str, str, str] | None:
+    """(LIM, acción, mensaje) para LIM-1, 2, 3, 4, 8 y 10, o None si la consulta no es un pedido clínico."""
+    pedidos = pedido_clinico(consulta)
+    if "redactar" in pedidos:
+        return "LIM-10", RECHAZAR, mensajes.A
+    if "diagnostico" in pedidos:
+        return "LIM-1", RECHAZAR, mensajes.A
+    if not caso_particular(consulta):
+        return None
+    if "compartir" in pedidos:
+        return "LIM-8", CITAR_Y_DERIVAR, mensajes.DERIVACION
+    if "interpretar" in pedidos:
+        return "LIM-3", RECHAZAR, mensajes.A
+    if "decidir" in pedidos:
+        return "LIM-4", RECHAZAR, mensajes.A
+    if "tratar" in pedidos:
+        return "LIM-2", RECHAZAR, mensajes.A
+    return None
 
 
 @dataclass(frozen=True)
@@ -172,7 +244,23 @@ def enmascarar(texto: str) -> tuple[str, bool]:
     texto = _CODIGO.sub("[ID]", texto)
     texto = _NOMBRE_ENTRE_COMILLAS.sub("[NOMBRE]", texto)
     texto = _NOMBRE_TRAS_MARCADOR.sub(lambda m: m.group(0).replace(m.group(1), "[NOMBRE]"), texto)
+    texto = _enmascarar_secuencias(texto)
     return texto, texto != original
+
+
+def _enmascarar_secuencias(texto: str) -> str:
+    partes, desde = [], 0
+    for m in _SECUENCIA_MAYUSCULAS.finditer(texto):
+        palabras, inicio = m.group().split(), m.start()
+        if _COMIENZO_DE_ORACION.search(texto[: m.start()]):          # la primera va con mayúscula por gramática
+            inicio = m.start() + texto[m.start():].index(palabras[1], len(palabras[0]))
+            palabras = palabras[1:]
+        if (len(palabras) < 2 or "Documento Técnico" in m.group() or _NO_SON_NOMBRES & set(palabras)
+                or all(p.isupper() for p in palabras)):
+            continue
+        partes.append(texto[desde:inicio] + "[NOMBRE]")
+        desde = m.end()
+    return "".join(partes) + texto[desde:]
 
 
 def evaluar(consulta: str) -> Decision:
@@ -194,11 +282,11 @@ def evaluar(consulta: str) -> Decision:
         disparados.append("LIM-6")
         avisos.append(mensajes.AVISO_DATOS)
 
-    normal = normalizar(texto)
-    for lim, patron, accion, mensaje in _CLINICOS:
-        if patron.search(normal):
-            disparados.append(lim)
-            return Decision(lim, accion, mensaje, texto, True, tuple(disparados), tuple(avisos))
+    clinico = clasificar(texto)
+    if clinico:
+        lim, accion, mensaje = clinico
+        disparados.append(lim)
+        return Decision(lim, accion, mensaje, texto, True, tuple(disparados), tuple(avisos))
 
     if hubo_instrucciones and len(tokenizar(texto)) < 2:
         return Decision("LIM-9", RECHAZAR, mensajes.B, texto, True, tuple(disparados), tuple(avisos))
