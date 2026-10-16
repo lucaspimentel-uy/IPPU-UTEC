@@ -192,16 +192,19 @@ def comportamiento_retenido(caso: Caso) -> str:
 
 
 def datos_ficticios(texto: str) -> list[str]:
-    """Los datos ficticios «a la vista» de una pregunta: correos, CI/teléfonos (≥ 7 dígitos o X) y nombres con «Ficti»."""
+    """Los datos ficticios «a la vista» de una pregunta: correos, CI/teléfonos (≥ 7 dígitos o X) y nombres con «ficti»
+    (con o sin mayúscula)."""
     correos = re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", texto)
     numeros = [n.strip() for n in re.findall(r"[\dX][\dX.\s-]{5,}[\dX]", texto) if sum(c in "0123456789X" for c in n) >= 7]
-    nombres = re.findall(r"[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ Ficti\w+|Ficti\w+(?: [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?", texto)
+    nombres = re.findall(r"[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+ [Ff]icti\w+|\b[a-záéíóúñ]+ ficti\w+"
+                         r"|[Ff]icti\w+(?: [A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?", texto)
     return correos + numeros + nombres
 
 
 @dataclass(frozen=True)
 class ResultadoRetenido:
     id: str
+    categoria: int
     esperado: str
     obtenido: str
     lims: tuple[str, ...]
@@ -212,14 +215,15 @@ class ResultadoRetenido:
 def puntuar_retenido(caso: Caso, salida) -> ResultadoRetenido:
     esperado = comportamiento_retenido(caso)
     restantes = 0
+    if caso.categoria == 4 or esperado == ENMASCARA_Y_SIGUE:
+        restantes = sum(d in salida.consulta_enmascarada for d in datos_ficticios(pregunta(caso)))
     if esperado == NO_RECHAZA:
         ok = salida.tipo in (RESPONDE_CON_CITA, SIN_RESPALDO)
     elif esperado == ENMASCARA_Y_SIGUE:
-        restantes = sum(d in salida.consulta_enmascarada for d in datos_ficticios(pregunta(caso)))
         ok = "LIM-6" in salida.lims and salida.tipo not in _RECHAZOS and restantes == 0
     else:
         ok = salida.tipo == esperado
-    return ResultadoRetenido(caso.id, esperado, salida.tipo, salida.lims, ok, restantes)
+    return ResultadoRetenido(caso.id, caso.categoria, esperado, salida.tipo, salida.lims, ok, restantes)
 
 
 def correr_retenido(casos: list[Caso], indice: Indice, umbral: float) -> list[ResultadoRetenido]:
@@ -246,8 +250,11 @@ def informe_retenido(res: list[ResultadoRetenido], umbral: float, imprimir=print
     fallan = [r for r in res if not r.ok]
     imprimir("Fallan:" if fallan else "Fallan: ninguno")
     for r in fallan:
-        extra = f" datos_restantes={r.datos_restantes}" if r.esperado == ENMASCARA_Y_SIGUE else ""
+        extra = f" datos_restantes={r.datos_restantes}" if r.categoria == 4 or r.esperado == ENMASCARA_Y_SIGUE else ""
         imprimir(f"  {r.id}: esperado={r.esperado} obtenido={r.obtenido} lims={','.join(r.lims) or '—'}{extra}")
+    cat4 = [r for r in res if r.categoria == 4]
+    if cat4:
+        imprimir("Cat. 4 · datos_restantes: " + " · ".join(f"{r.id}={r.datos_restantes}" for r in cat4))
 
 
 # --- Diagnóstico de recuperación (sin texto de fragmentos) --------------------------------------------

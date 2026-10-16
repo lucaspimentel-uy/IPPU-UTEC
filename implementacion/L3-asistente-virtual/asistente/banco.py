@@ -1,4 +1,4 @@
-"""Lectura del banco de evaluación (eval/banco-v0.md, ids B..) y del set retenido (eval/retenido-v0.md, ids R..).
+"""Lectura del banco de evaluación (eval/banco-v0.md, ids B..) y de los sets retenidos (retenido-v0 R.., retenido-v1 V..).
 
 El banco es una tabla Markdown con columnas: Id | Cat. | Pregunta | Comportamiento esperado | LIM | Cita | Par.
 En la columna LIM, «(no se dispara)» marca la gemela que se responde; las demás filas disparan su límite.
@@ -9,7 +9,7 @@ from pathlib import Path
 
 RUTA_BANCO = Path(__file__).resolve().parent.parent / "eval" / "banco-v0.md"
 
-_FILA = re.compile(r"^\| ([BR]\d\d) \|")
+_FILA = re.compile(r"^\| ([BRV]\d\d) \|")
 _LIM = re.compile(r"LIM-(\d+)")
 _MENSAJE = re.compile(r"[Mm]ensaje fijo \*\*([ABC])\*\*")
 

@@ -20,6 +20,19 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-c5: retenido v1 de límites, medición y crisis fijada** (Samuel con Claude, rama `l3/f1c5-retenido-v1`). Sólo mide: no cambian `limites.py`, `indice.py`, `flujo.py` ni el umbral.
+  - `eval/retenido-v1.md`: 32 casos del revisor (copiados tal cual), en parte adversariales. `banco.py` acepta ids `V..`.
+  - `--retenido` muestra `datos_restantes` en toda la cat. 4. El medidor `datos_ficticios()` ahora también ve nombres «ficti…» en minúscula.
+  - **Retenido v1: crisis 1/3 · rechazo correcto 5/15 · rechazo indebido 2/13 · enmascarado 0/3 · comportamiento 16/32.** Muy por debajo de la referencia (100 / 100 / ≤ 10 / 100).
+  - Patrones del fallo:
+    - Crisis con otras formas: «se quiere matar», «cortes».
+    - Palabras clave en preguntas generales: «urgencia», «diagnóstico».
+    - Pedidos sin el vocabulario de las listas.
+    - Destino o tercero antes del verbo, o fuera de la lista.
+    - Forma de procedimiento sobre un caso concreto.
+    - Nombres de una palabra, en minúscula o al comienzo de la oración.
+    - Pedido de exfiltrar las instrucciones.
+  - `tests/test_crisis_fijada.py` fija los patrones de LIM-7. Tests: 137 en verde. Banco v0 igual (29/30, cita 84,2 %). §5.134.
 - **2026-10-15 · L3 — F1-c4: límites por caso particular y enmascarado de nombres** (Samuel con Claude, rama `l3/f1c4-limites`). Cambia sólo la parte clínica de `limites.py`; el bloque de LIM-7 y LIM-9 queda igual. No toca índice, flujo, umbral ni sets de evaluación.
   - Dos detectores, `caso_particular()` y `pedido_clinico()`, y `clasificar()` con el orden de §5.133. LIM-6 suma el enmascarado de 2 o más palabras con mayúscula fuera del comienzo de la oración, con una lista corta de excepciones (IDEA, IPPU, HCE, Documento Técnico, Protocolo, INAU…).
   - Tests: 136 en verde; 43 nuevos (20 casos de ajuste, 15 gemelas, 6 de LIM-6 y 2 de los detectores), escritos sin tomar formulaciones del retenido. Ningún test existente cambió.

@@ -237,7 +237,8 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     las reglas; no se usa para ajustarlas) y `--diagnostico` de recuperación. Sólo mide.
   - **F1-c4 · Límites por caso particular — HECHA (2026-10-15).** LIM-1, 2, 3, 4, 8 y 10 por «caso particular + pedido de
     juicio o acción» y LIM-6 con nombres en mayúscula (§5.133), ajustados con casos propios.
-  - **F1-c5 · Retenido v1 — pendiente.** Un set nuevo, escrito sin ver las reglas, para medir la F1-c4 (el v0 ya está visto).
+  - **F1-c5 · Retenido v1 — HECHA (2026-10-15).** `eval/retenido-v1.md` (32 casos, en parte adversariales), medido sin ajustar;
+    los patrones de LIM-7 quedan fijados por un test.
   - **F1-c6 · Recuperación y categoría 2 — pendiente.** Secciones «imán», vocabulario y casos «sin respaldo» escritos por
     Samuel; recién ahí se fija el umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
