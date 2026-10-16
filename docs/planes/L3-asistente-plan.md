@@ -5,11 +5,12 @@
 > **L1 tiene prioridad** y su fecha es el 2026-11-26.
 >
 > **Etiquetas.** **[verificado]** = leído en el archivo y la sección citados. **[supuesto]** = inferencia o
-> propuesta nuestra, sin respaldo escrito en el repo. **Referencias:** «§5.N» = `handoff.md`; «§1»–«§7» sin
+> propuesta nuestra, sin respaldo escrito en el repo. **[declarado]** = lo afirmó la persona involucrada, sin
+> otro respaldo escrito. **Referencias:** «§5.N» = `handoff.md`; «§1»–«§7» sin
 > archivo = este plan.
 >
-> **Base.** Las citas de `handoff.md` y `docs/bitacora.md` se tomaron de `cb9030a` (rama `fase3d-cierre-vf`,
-> cabecera del 2026-10-15).
+> **Base.** Las citas de `handoff.md` y `docs/bitacora.md` se tomaron de `cb9030a`, que ya está incluido en
+> `main`.
 >
 > **Aviso de nombres.** El «(L3)» que aparece en `handoff.md` §5.56 es la serie de decisiones «L», no esta línea
 > (§5.77) [verificado].
@@ -136,8 +137,8 @@ que la regula]. La elección queda **bloqueada por IPPU** hasta que respondan.
   como dato sensible, con retención mínima, acceso restringido y, en el piloto, sin texto libre salvo que IPPU lo
   autorice [supuesto]. El «feedback loop» de la presentación necesita esa misma autorización.
 - **Vínculo con el registro de accesos.** Si alguna vez el asistente lee la HCE, cada consulta es un **acceso a
-  una HC** y tiene que quedar registrada con fecha, persona, HC y **motivo** (Protocolo §4 y §8;
-  `puntos-a-validar.md` §2.17) [verificado]. Ese registro no existe hoy y es posterior al 26/11 (`handoff.md`
+  una HC** y tiene que quedar registrada con fecha, persona, HC, **motivo** y firma (Protocolo §4, principio
+  «Trazabilidad», y §8; planilla modelo en el Anexo III; `puntos-a-validar.md` §2.17) [verificado]. Ese registro no existe hoy y es posterior al 26/11 (`handoff.md`
   §5.88) [verificado]: es otro motivo para dejar la HCE fuera de v1.
 
 ### 2.6 Canal e interfaz
@@ -209,6 +210,8 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en
 - **Criterio de salida (verificable):** (a), (b) y (c) existen; cada pregunta del banco tiene categoría, respuesta
   esperada y cita a una sección; el equipo los revisó (queda en la bitácora). Quedan **listos para enviar, sin
   enviar**: nada de L3 va a IPPU antes del 2026-11-26, salvo que el equipo lo decida.
+- **Si no cerró al 2026-11-19** (inicio del congelamiento, §5): la F0 queda como está y se retoma después del
+  2026-11-26. El tope de ~2 h por semana **no se extiende** para cerrarla antes.
 - **De IPPU:** nada.
 
 ### F1 — Prototipo RAG para técnicos (después del 2026-11-26)
@@ -246,8 +249,8 @@ Las familias y los docentes quedan **fuera de estas tres fases**.
      de la Fase 3-e en `docs/bitacora.md` y su casilla de §6 está tildada.
   3. **Del 2026-11-19 al 2026-11-26, L3 se congela** por completo.
   4. **La F1 no arranca antes de la entrega del 2026-11-26**, salvo por una decisión explícita en `handoff.md` §5.
-- **Responsable: Samuel** (§5.32: firma en git como Boris Furtado; tomó L3 el 2026-10-15). No hay dueños exclusivos: se avisa en el grupo qué se
-  toma y se anota en §6 (§5.6) [verificado]. **Quién lleva las preguntas de L3 a IPPU sigue abierto.** Lucas es
+- **Responsable: Samuel** (firma en git como Boris Furtado, §5.32 [verificado]); tomó L3 el 2026-10-15
+  [declarado]. No hay dueños exclusivos: se avisa en el grupo qué se toma y se anota en §6 (§5.6) [verificado]. **Quién lleva las preguntas de L3 a IPPU sigue abierto.** Lucas es
   el dueño de M11.3 (§5.67) y el contacto con IPPU (cabecera de `preguntas-ippu.md`) [verificado]: no debería
   recaer en él por defecto [supuesto], porque cargarlo con L3 es cargar el camino crítico de L1.
 
