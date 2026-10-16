@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 (a): lista de límites** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). §8 nuevo en `docs/planes/L3-asistente-plan.md`, con una revisión aplicada.
+  - **11 límites (LIM-1 a LIM-11)** con lo que hace el asistente en su lugar y tres mensajes fijos (A rechazo clínico, B sin respaldo, C crisis).
+  - LIM-1 a 4 salen del *Documento de trabajo* (no normativo: los confirma IPPU). LIM-6 (a) y LIM-8 del Protocolo §6.7 y §6.2 (verificado: «una institución educativa» está en el texto literal).
+  - Los temas ajenos se unifican con «sin respaldo» (LIM-5, mensaje B); §3 categoría 2 actualizada. Crisis (LIM-7): no corta la sesión; el contacto es un placeholder y queda **bloqueado por IPPU para producción**.
+  - **A decidir por el equipo:** LIM-10 (no redacta registros clínicos) y LIM-11 (documentos en conflicto: muestra los dos, no elige).
+  - F0 sigue abierta: faltan (b) preguntas para IPPU y (c) banco v0. Casilla de §6 sin tildar; sin §5.
 - **2026-10-15 · L3 — responsable y rama al día** (Samuel con Claude, rama `docs/L3-plan`; sólo docs). **Corrige la entrada «L3 — plan de arranque» de abajo, que no se toca:** la excepción a §5.114 f la pidió **Samuel** (§5.32), no Lucas.
   - **Samuel toma L3** (§5.6: se avisa, no se pide permiso). Queda abierto quién lleva las preguntas de L3 a IPPU. Actualizados el plan (§5 y §7.2) y la línea de §6.
   - `fase3d-cierre-vf` ya está en `main`: se mergeó `origin/main` en `docs/L3-plan` y la advertencia de ff-merge de abajo deja de aplicar.
