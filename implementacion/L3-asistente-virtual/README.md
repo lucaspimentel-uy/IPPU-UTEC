@@ -22,6 +22,6 @@ python -m pytest -q
 ```
 
 ## Reglas
-- No se toca `implementacion/L1-hce-idea/` ni se importa nada de L1. Entorno y dependencias propios.
+- No se toca la carpeta de la HCE (Línea 1) ni se importa nada de ella. Entorno y dependencias propios.
 - Sólo datos simulados. Ningún documento de IPPU va a una API hospedada sin autorización escrita (plan §2.4).
 - Ramas cortas `l3/<tema>`; al cerrar, entrada en `docs/bitacora.md` y casilla de `handoff.md` §6.

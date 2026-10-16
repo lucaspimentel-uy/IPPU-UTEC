@@ -38,12 +38,20 @@ class Resultado:
     texto: str
 
 
+def _normalizar_caracter(c: str) -> str:
+    base = "".join(x for x in unicodedata.normalize("NFKD", c) if not unicodedata.combining(x)).lower()
+    return base if len(base) == 1 else c
+
+
+def normalizar(texto: str) -> str:
+    """Minúsculas y sin tildes, carácter por carácter: el resultado tiene el mismo largo que el original,
+    así una posición encontrada en el texto normalizado sirve en el original."""
+    return "".join(_normalizar_caracter(c) for c in texto)
+
+
 def tokenizar(texto: str) -> list[str]:
     """Minúsculas, sin tildes, sin palabras vacías."""
-    sin_tildes = "".join(
-        c for c in unicodedata.normalize("NFKD", texto.lower()) if not unicodedata.combining(c)
-    )
-    return [t for t in _PALABRA.findall(sin_tildes) if t not in _VACIAS]
+    return [t for t in _PALABRA.findall(normalizar(texto)) if t not in _VACIAS]
 
 
 def _contar_palabras(texto: str) -> int:

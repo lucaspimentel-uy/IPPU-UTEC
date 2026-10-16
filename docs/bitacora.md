@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-c1: límites por reglas, mensajes A/B/C y un test por rechazo** (Samuel con Claude, rama `l3/f1c1-limites`). Sin modelo, sin dependencias nuevas; no toca L1 ni el banco.
+  - `asistente/limites.py`: `evaluar(consulta)` → `Decision(lim, accion, mensaje, consulta_enmascarada, continuar, disparados, avisos)`. Orden fijo: LIM-7 → LIM-9 → LIM-6 → LIM-1, 2, 3, 4, 8, 10 → recuperar. Patrones sin tildes y en minúsculas, con la misma normalización que el índice (`normalizar()` sale de `indice.py` y conserva el largo del texto).
+  - LIM-7 da el mensaje C y la sesión sigue abierta. LIM-9 quita la instrucción o el rol y sigue con la pregunta legítima (si no queda ninguna, B); `limpiar_instrucciones()` sirve también para fragmentos recuperados. LIM-6 enmascara CI, teléfonos, correos, códigos y nombres, avisa y sigue. LIM-8 deriva sin decidir.
+  - `asistente/mensajes.py`: A/B/C literales del plan (comprobado en un test), más DERIVACION y AVISO_DATOS, que son borradores nuevos. `asistente/respuesta.py`: `formatear_contradiccion()` para LIM-11.
+  - Tests: 70 en verde (40 nuevos). Informativo sobre el banco (categorías 3–5 y sus gemelas, 26 casos): 10/10 rechazos correctos, 0 indebidos; el detector dice LIM-1 en B07, donde el banco dice LIM-3 (ambigüedad 1). Ojo: las reglas se escribieron conociendo esas preguntas.
+  - §5.130 (Samuel). Sigue la F1-c2: corredor de evaluación y umbral.
 - **2026-10-15 · L3 — F1-b: índice léxico y recuperación con cita** (Samuel con Claude, rama `l3/f1b-indice`). Sin modelo de lenguaje, sin dependencias nuevas; no toca L1.
   - `asistente/indice.py`: fragmenta por `##` y `###` (sección = ruta «## > ###»; más de 400 palabras → por párrafos, y una tabla larga por líneas) y busca con BM25 en biblioteca estándar (sin tildes ni palabras vacías). `buscar(consulta, k, umbral)` devuelve documento, sección, puntaje y texto, o `[]` si nada supera el umbral.
   - `python -m asistente.indexar` escribe `indice/indice.json` (ignorado en git) e imprime sólo conteos: DT 23 fragmentos en 23 secciones, Prot 23 en 22.

@@ -230,8 +230,9 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     propios; el banco pasa a `eval/` con `git mv` y se actualizan sus rutas en este plan.
   - **F1-b · Índice y recuperación con cita — HECHA (2026-10-15).** Índice en archivo sobre el Documento Técnico y el Protocolo
     (`docs/markdown/`), cada fragmento con documento y sección. Sin modelo de lenguaje todavía.
-  - **F1-c · Límites en código.** LIM-1 a 11 y los mensajes A/B/C; corredor de evaluación sobre el banco; un
-    test por cada rechazo (§6, criterio 3).
+  - **F1-c1 · Límites por reglas — HECHA (2026-10-15).** LIM-1 a 4 y 6 a 10 por reglas antes del modelo; LIM-11
+    al armar la respuesta; mensajes A/B/C; un test por cada rechazo y su gemela (§6, criterio 3).
+  - **F1-c2 · Corredor de evaluación y umbral.** Corredor sobre el banco, calibración del umbral y LIM-5 por umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
