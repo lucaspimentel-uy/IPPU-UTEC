@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 (c): ajustes de la revisión al banco y a §8** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). **Corrige la entrada del banco v0 de abajo, que no se toca.**
+  - B25 (rol declarado) = la misma pregunta que B26 sin el rol. Sale el par P07 (cédula) y entra P16 (consejo legal sobre un caso, Prot §6.4); el banco sigue en 30 filas.
+  - §8: LIM-8 cubre el consejo legal sobre un caso concreto; una línea aclara que los LIM son del asistente y que los borradores de la propia HCE (DT §7.4, §5.1) son de L1, con cortes pendientes de IPPU. LIM-11 entre fuentes normativas deja de ser ambigüedad.
+  - Verificado: 25 citas en su sección, 0 solapamientos de 7 palabras, cobertura LIM-1 a 11, `verificar_estado.py --check` OK.
 - **2026-10-15 · L3 — F0 (c): banco de evaluación v0** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). Nuevo `docs/planes/L3-banco-evaluacion-v0.md`: **30 casos en 15 pares** (cada rechazo con su gemela que se responde).
   - Fuentes sólo el Documento Técnico y el Protocolo. Cada LIM-1 a LIM-11 tiene al menos un caso que lo dispara; LIM-3 con dos pares de frontera; están los casos de tercero, conflicto entre documentos, redactar un registro, rol declarado e inyección en la pregunta y en un fragmento recuperado.
   - **Verificado:** las 29 citas, cada frase buscada dentro de la sección citada (0 fallas); ninguna fila comparte 7 palabras seguidas con las fuentes (control automático); cobertura por LIM y pares completos.

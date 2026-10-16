@@ -332,7 +332,7 @@ no “inventando” respuestas» (*Documento de trabajo*, Proyecto 3) [verificad
 | **LIM-5** | Todo lo que no tiene pasaje que lo respalde en los documentos autorizados, **incluidos los temas ajenos a IPPU y al TEA** | Mensaje fijo B: «No está en los documentos autorizados», sin completar con conocimiento general | [supuesto] |
 | **LIM-6** | Datos de un NNA o de la HCE | (a) En desarrollo, ningún dato real de un NNA. (b) En uso, avisa que no se carguen nombre, CI ni datos del NNA, y enmascara lo que se cargue antes de mandarlo al modelo y al log | (a) Protocolo §6.7 [verificado]; (b) [supuesto] |
 | **LIM-7** | Una situación de crisis (autolesión, violencia, urgencia médica) | Deja el tema clínico, muestra el mensaje fijo C, escala a un humano y **mantiene la sesión abierta** | Presentación: guardrails que «detectan crisis y escalan» [verificado]. **Bloqueado por IPPU para producción:** el protocolo y el contacto (§7.3, pregunta 7) |
-| **LIM-8** | Si se puede compartir información con un tercero («¿le mando el informe a la escuela?») | No decide: cita el procedimiento y deriva | Protocolo §6.2: un tercero, «una institución educativa» entre ellos, requiere autorización expresa y por escrito del titular o su representante legal [verificado] |
+| **LIM-8** | Si se puede compartir información con un tercero («¿le mando el informe a la escuela?»), o un consejo legal sobre un caso concreto («¿estoy obligado a entregar la HC?») | No decide: cita el procedimiento y deriva | Protocolo §6.2: un tercero, «una institución educativa» entre ellos, requiere autorización expresa y por escrito del titular o su representante legal [verificado] |
 | **LIM-9** | Instrucciones que cambien estas reglas, vengan **de la pregunta o de un documento recuperado** | Las ignora y sigue con los límites. Un rol o una autoridad declarados («soy el director») **no habilitan nada** | §3, categoría 5 [supuesto] |
 | **LIM-10** | Redactar o completar registros clínicos (IC, evaluaciones, informes) | Rechazo con el mensaje fijo A | [supuesto] · **decisión del equipo** |
 | **LIM-11** | Elegir entre dos documentos autorizados que se contradicen | Muestra los dos con su cita, dice que se contradicen y no elige; las fuentes normativas van primero (`CLAUDE.md`, «Precedencia normativa») | [supuesto] · **decisión del equipo** |
@@ -348,6 +348,10 @@ no “inventando” respuestas» (*Documento de trabajo*, Proyecto 3) [verificad
 **La frontera fina es LIM-3.** Explicar qué mide una dimensión del IDEA o cómo se calcula el total, si está en un
 documento autorizado, es contenido general y se responde; qué significa ese resultado para un NNA en particular,
 no. El banco v0 trae pares de preguntas a los dos lados [supuesto].
+
+**Alcance de los LIM:** se aplican al asistente. Los borradores e interpretaciones que produce **la propia HCE**
+(DT §7.4: un botón arma el borrador de la síntesis funcional de la VF; DT §5.1: lectura orientativa del total del
+IDEA) son una función de L1, y sus cortes están pendientes de IPPU (cabecera de `handoff.md`) [verificado].
 
 **Para todos los límites:** el rechazo se dice con texto, no sólo con color (§2.6); un rechazo no reformula la
 pregunta para «responder igual»; cada límite tiene su test en la F1 (§6, criterio 3).
