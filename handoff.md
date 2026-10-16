@@ -3151,6 +3151,14 @@ Sin cambio de backend ni de DDL. Corrige y completa §5.126 en su misma rama (`f
 - **(c) El plan queda en `docs/planes/L3-asistente-plan.md`.** El README de la carpeta, que se escribe en la F1, es corto, enlaza al plan y no lo reemplaza; es el único documento nuevo permitido.
 - **(d) Reversible:** L3 se puede extraer con su historial. **Sigue pendiente** la decisión de arquitectura (servicio separado con almacén propio, plan §2.3).
 
+### 5.129 L3: Samuel la lleva solo, recomendaciones del plan adoptadas y sin compuerta frente a L1 (2026-10-15, Samuel)
+- **(a)** L3 la lleva **Samuel solo**: sus decisiones no esperan revisión del equipo. La regla anti-contradicción frente a §5 sigue rigiendo.
+- **(b) v1 sólo para técnicos**; fuentes de v1, sólo documentos institucionales: el Catálogo de puertas y la HCE quedan fuera (plan §2.1 y §2.2). Lo confirma IPPU (IPPU-L3-1 y 2).
+- **(c) Servicio separado** que no importa `app.models`, con almacén propio (plan §2.3). El hosting sigue abierto (`puntos-a-validar.md` §2.5).
+- **(d) Se aceptan LIM-10** (no redacta registros clínicos) **y LIM-11** (documentos en conflicto: muestra los dos y no elige) (plan §8).
+- **(e) Las preguntas de L3 a IPPU las lleva Samuel**, no Lucas; cuándo se mandan lo decide él.
+- **(f) Sin compuerta:** L3 avanza a su ritmo, sin tope de horas ni pausas atadas al calendario de L1, y la F1 arranca ya. Siguen: no tocar `implementacion/L1-hce-idea/`, sólo datos simulados (§5.104) y ningún documento de IPPU en una API hospedada sin autorización escrita (plan §2.4).
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -3638,7 +3646,8 @@ Sin cambio de backend ni de DDL. Corrige y completa §5.126 en su misma rama (`f
 - [ ] **Fase 4:** auth JWT por terapeuta + roles. · **Fase 5:** tests + docs. · **Fase 6:** Docker + PostgreSQL. ⚠️ **Del 26/11 entra sólo el login mínimo `admin` \| `tecnico`** (§5.101, rebanada M11.3-d); roles y matriz completos son posteriores.
 - [ ] **Micro-tarea:** importar a `nivel_idea` los descriptores oficiales (texto largo por nivel) desde `docs/markdown/escala-...idea.md`.
 - [ ] **Con IPPU:** definir el protocolo real de "áreas" y "general" (hoy modeladas como provisionales, indicadores en texto libre).
-- [ ] **L3 · asistente virtual — plan de arranque** → `docs/planes/L3-asistente-plan.md` (2026-10-15; decidido en §5.128: monorepo, carpeta y ubicación del plan; el resto sigue como propuesta). **Propuesta:** sin construcción de L3 antes de la compuerta (ver plan, §5). **Responsable: Samuel** (desde el 2026-10-15, §5.6). Faltan **3 decisiones del equipo**: (1) audiencia de v1 y compuerta frente a L1; (2) arquitectura separada de L1 con almacén propio; (3) quién lleva las preguntas de L3 a IPPU (legal y validación clínica), sin que recaiga por defecto en Lucas.
+- [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y `docs/planes/L3-banco-evaluacion-v0.md`. **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129).
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 - **Numeración de líneas:** la presentación y la demo usan L1=HCE. El *Documento de trabajo* y el cuestionario Q47 usan numeraciones distintas. Confirmar la oficial (no bloquea; el foco L1=HCE es consistente y el Documento Técnico lo ratifica).
 - **Cortes del baremo BUND:** que IPPU confirme los porcentajes exactos contra el anexo del Decreto 72/025 antes de un uso clínico real (decisión §5.1.4). No bloquea la demo (tabla parametrizable, M9). ⚠️ **Nunca se preguntó por escrito.** El borrador de `consulta-a-ippu.md` traía dos preguntas sobre esto (§2.7 y §2.8) y **el equipo las retiró en la revisión del 19/08** (§5.34, verificado: 0 ocurrencias de «baremo», «BUND» y «72/025» en el documento enviado). No está «preguntado y esperando respuesta»: está **sin preguntar**, y su único canal hoy es la reunión. Redacción original conservada en `puntos-a-validar.md` §1.2.

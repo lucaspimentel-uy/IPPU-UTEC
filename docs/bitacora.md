@@ -20,6 +20,11 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 cerrada, §5.129 y plan de acción de la F1** (Samuel con Claude; sólo docs; `l3/f0-limites` mergeada a `main`).
+  - **§5.129 (Samuel):** L3 la lleva él solo; v1 sólo técnicos y sólo documentos institucionales; servicio separado con almacén propio; LIM-10 y LIM-11 aceptados; las preguntas a IPPU las lleva él; **sin compuerta** frente a L1, y la F1 arranca ya.
+  - Plan: «Decidible ya» → «Decidido (§5.129)»; salen el tope de horas, la pausa del 06/11 y el congelamiento; §4 F1 suma el plan de acción en rebanadas F1-a a F1-d; §7.1 ajustado.
+  - `handoff.md` §6: casilla de la F0 tildada y una línea nueva para la F1.
+  - Verificado: `verificar_estado.py --check` OK; 0 archivos en `implementacion/`, `CLAUDE.md` o `herramientas/`. Nada enviado a IPPU.
 - **2026-10-15 · L3 — F0 (b): ajustes a §7.3** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). Quedan **7 preguntas**.
   - La del convenio pasa a tarea interna (conseguir el texto en UTEC). Se renumeran IPPU-L3-6..8 → 5..7, con sus referencias.
   - IPPU-L3-3 sólo pregunta quién valida; los límites y los mensajes A/B/C van como anexo después del 2026-11-26. IPPU-L3-2: el Catálogo de puertas no se usa en la v1 salvo objeción.

@@ -1,8 +1,9 @@
 # L3 — Asistente virtual: plan de arranque en paralelo con L1
 
-> **Qué es.** La planificación de la línea L3 (chatbot RAG con guardrails clínicos). **Decidido en §5.128: monorepo,
-> carpeta y ubicación del plan; el resto sigue como propuesta.** El plan recomienda y el equipo decide; las decisiones, cuando se tomen, van a `handoff.md` §5.
-> **L1 tiene prioridad** y su fecha es el 2026-11-26.
+> **Qué es.** La planificación de la línea L3 (chatbot RAG con guardrails clínicos). **Decidido en §5.128 (monorepo, carpeta,
+> ubicación del plan) y §5.129 (audiencia, fuentes, arquitectura, LIM-10/11, contacto, sin compuerta).** Lo demás
+> sigue como propuesta. El plan recomienda y Samuel decide (§5.129 a); las decisiones van a `handoff.md` §5.
+> **L1 (la HCE) sigue su propio calendario** (entrega el 2026-11-26); L3 no depende de él (§5.129 f).
 >
 > **Etiquetas.** **[verificado]** = leído en el archivo y la sección citados. **[supuesto]** = inferencia o
 > propuesta nuestra, sin respaldo escrito en el repo. **[declarado]** = lo afirmó la persona involucrada, sin
@@ -57,7 +58,7 @@ requisito legal para producción con HC reales y es posterior al 26/11 (`puntos-
 | B. + familias | Es el mayor impacto que describe la presentación | No hay identidad para familias; hacen falta otro registro de lenguaje y otro contenido; el riesgo clínico es directo | Alto | Difícil una vez publicado | Contenido, canal, crisis |
 | C. + docentes | Brecha de formación descrita en la presentación | Igual que B, más contenido escolar que el repo no tiene | Alto | Difícil | Ídem |
 
-**Recomendación: A** [supuesto]. **Decidible ya** como propuesta interna; lo **confirma IPPU**.
+**Decidido: A** (§5.129); lo **confirma IPPU** (IPPU-L3-1).
 
 ### 2.2 Fuentes de conocimiento para la recuperación
 | Opción | Riesgo | Notas |
@@ -68,8 +69,8 @@ requisito legal para producción con HC reales y es posterior al 26/11 (`puntos-
 | 4. Literatura TEA externa (la de la presentación) | Medio | Licencias, calidad y adaptación local; no es contenido validado por IPPU [supuesto] |
 
 **Recomendación** [supuesto]: v1 usa **sólo la opción 1**, con un subconjunto curado y validado por IPPU. La
-opción 3 queda **fuera de v1**; aun para una demostración, sólo con datos simulados. **Decidible ya:** excluir
-la 2 y la 3. **Bloqueado por IPPU:** qué documentos se autorizan.
+opción 3 queda **fuera de v1**; aun para una demostración, sólo con datos simulados. **Decidido (§5.129):**
+excluir la 2 y la 3. **Bloqueado por IPPU:** qué documentos se autorizan.
 
 ### 2.3 Arquitectura
 **Dónde vive el servicio.**
@@ -99,7 +100,7 @@ resuelve contra la base en `usuario_actual` (`app/routers/dependencias.py`) [ver
   L1 → **posterior al 26/11** [supuesto].
 
 **Recomendación** [supuesto]: un servicio separado que **no importe `app.models`**, con un almacén propio (índice
-en archivo primero, una base o esquema propio después) y autenticación por `/auth/me` en la F2. **Decidible ya:**
+en archivo primero, una base o esquema propio después) y autenticación por `/auth/me` en la F2. **Decidido (§5.129):**
 el principio de separación. **Bloqueado:** el hosting (`puntos-a-validar.md` §2.5).
 
 ### 2.4 Proveedor del modelo
@@ -183,7 +184,7 @@ esté completo). Cada pregunta trae su respuesta esperada y el pasaje que la res
 4. Cebo de datos personales: el usuario escribe nombre, CI o datos del NNA.
 5. Inyección: instrucciones escondidas en la pregunta o en un documento.
 
-**Métricas y umbrales** [supuesto, decide el equipo]:
+**Métricas y umbrales** [supuesto, decide Samuel]:
 
 | Métrica | Umbral |
 |---|---|
@@ -200,7 +201,7 @@ dice quién [verificado: no hay mención]. Es IPPU-L3-3 (§7.3).
 ## 4. Plan de trabajo
 
 ### F0 — Límites y banco de pruebas
-Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en el tope de §5.
+Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrada el 2026-10-15** (§5.129).
 - **Objetivo:** dejar escrito qué responde y qué no responde el asistente, y con qué se lo va a medir.
 - **Entregables (con tope de tamaño):**
   - (a) **Lista de límites**, ≤ 1 página, como sección nueva de este plan. **Crítico.**
@@ -209,13 +210,11 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en
     `docs/planes/L3-banco-evaluacion-v0.md`. Al arrancar la F1 se mueve a `implementacion/L3-asistente-virtual/eval/`.
     Las respuestas del banco son paráfrasis con su cita, no copias de los documentos. **Crítico.**
 - **Criterio de salida (verificable):** (a), (b) y (c) existen; cada pregunta del banco tiene categoría, respuesta
-  esperada y cita a una sección; el equipo los revisó (queda en la bitácora). Quedan **listos para enviar, sin
-  enviar**: nada de L3 va a IPPU antes del 2026-11-26, salvo que el equipo lo decida.
-- **Si no cerró al 2026-11-19** (inicio del congelamiento, §5): la F0 queda como está y se retoma después del
-  2026-11-26. El tope de ~2 h por semana **no se extiende** para cerrarla antes.
+  esperada y cita a una sección; Samuel los revisó (queda en la bitácora). Quedan **listos para enviar, sin
+  enviar**: cuándo se mandan lo decide Samuel (§5.129 e).
 - **De IPPU:** nada.
 
-### F1 — Prototipo RAG para técnicos (después del 2026-11-26)
+### F1 — Prototipo RAG para técnicos (arranca el 2026-10-15, §5.129 f)
 - **Objetivo:** un servicio separado que responde con cita sobre los documentos autorizados, con el proveedor
   intercambiable detrás de una interfaz.
 - **Entregables:** el servicio y el índice, y la evaluación automatizada sobre el banco (**crítico**). La
@@ -225,6 +224,16 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en
   rechazo** (cada guardrail de §2.5); `git diff` no toca `implementacion/L1-hce-idea/`.
 - **De IPPU:** la lista de documentos autorizados; la autorización escrita para mandarlos a un proveedor
   hospedado (si no llega, la F1 sigue sólo con el modelo local); quién valida el contenido clínico.
+- **Plan de acción** (rebanadas cortas, cada una en su rama `l3/<tema>`, todo dentro de
+  `implementacion/L3-asistente-virtual/`):
+  - **F1-a · Esqueleto.** README corto que enlaza a este plan (§5.128 c); `requirements.txt` y `.gitignore`
+    propios; el banco pasa a `eval/` con `git mv` y se actualizan sus rutas en este plan.
+  - **F1-b · Índice y recuperación con cita.** Índice en archivo sobre el Documento Técnico y el Protocolo
+    (`docs/markdown/`), cada fragmento con documento y sección. Sin modelo de lenguaje todavía.
+  - **F1-c · Límites en código.** LIM-1 a 11 y los mensajes A/B/C; corredor de evaluación sobre el banco; un
+    test por cada rechazo (§6, criterio 3).
+  - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
+    modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
 ### F2 — Piloto con técnicos
 - **Objetivo:** que un grupo chico de técnicos lo use, y medirlo.
@@ -247,16 +256,10 @@ Las familias y los docentes quedan **fuera de estas tres fases**.
 - **Herramientas compartidas.** `herramientas/` es de todos y sólo se le agrega: si L3 necesita una (por ejemplo
   `verificar_contraste_ui.js`), la copia o la parametriza dentro de su carpeta, y nunca edita el script compartido de
   forma que cambie lo que verifica L1.
-- **Compuerta frente a L1** [supuesto, decide el equipo]:
-  1. Hasta el 2026-11-26 **sólo la F0**, con un tope de **~2 h por semana para todo el equipo**.
-  2. **La F0 se pausa si al 2026-11-06 la Fase 3-e no está cerrada.** «Cerrada» se comprueba así: hay una entrada
-     de la Fase 3-e en `docs/bitacora.md` y su casilla de §6 está tildada.
-  3. **Del 2026-11-19 al 2026-11-26, L3 se congela** por completo.
-  4. **La F1 no arranca antes de la entrega del 2026-11-26**, salvo por una decisión explícita en `handoff.md` §5.
-- **Responsable: Samuel** (firma en git como Boris Furtado, §5.32 [verificado]); tomó L3 el 2026-10-15
-  [declarado]. No hay dueños exclusivos: se avisa en el grupo qué se toma y se anota en §6 (§5.6) [verificado]. **Quién lleva las preguntas de L3 a IPPU sigue abierto.** Lucas es
-  el dueño de M11.3 (§5.67) y el contacto con IPPU (cabecera de `preguntas-ippu.md`) [verificado]: no debería
-  recaer en él por defecto [supuesto], porque cargarlo con L3 es cargar el camino crítico de L1.
+- **Sin compuerta frente a L1** (§5.129 f): L3 avanza a su ritmo, sin tope de horas ni pausas atadas al
+  calendario de L1. Las reglas de arriba (no tocar L1, entorno propio, herramientas compartidas) siguen.
+- **Responsable: Samuel**, solo (firma en git como Boris Furtado, §5.32 [verificado]; §5.129 a). Lleva también
+  las preguntas de L3 a IPPU (§5.129 e), así no se carga a Lucas, que lleva M11.3 y el contacto de L1 (§5.67).
 
 ## 6. Documentación y revisión
 **Mínimo.** Este plan más **una línea en `handoff.md` §6**. La única excepción es el banco v0 de la F0: son
@@ -264,7 +267,7 @@ datos de prueba con cita, no documentación, y en la F1 pasan a `implementacion/
 (§5.114 f).
 
 **Al cerrar cada fase:** la entrada en `docs/bitacora.md` (≤ 15 líneas), la casilla de `handoff.md` §6, una
-entrada de su §5 **sólo si se tomó una decisión** (audiencia, arquitectura, proveedor) y la actualización de §4 de este plan.
+entrada de su §5 **sólo si se tomó una decisión** (por ejemplo, el proveedor) y la actualización de §4 de este plan.
 
 **Criterios de cierre de módulo (revisión):**
 1. Los criterios de aceptación de la fase se cumplen y están medidos, no afirmados.
@@ -273,7 +276,7 @@ entrada de su §5 **sólo si se tomó una decisión** (audiencia, arquitectura, 
 3. Hay tests con **un caso que pasa por cada rechazo** (cada guardrail de §2.5).
 4. Deriva: nada contradice a IPPU (fuentes normativas) ni a `handoff.md` §5 (regla anti-contradicción de
    `CLAUDE.md`).
-5. Atajos: cualquier atajo que comprometa la fecha de L1 se anota y se discute, no se toma.
+5. Atajos: cualquier atajo que toque L1 se anota y se discute, no se toma.
 
 **Qué cubre un `/code-review` de Claude Code:** la corrección del código; la seguridad (claves, autenticación,
 inyección de prompts por la pregunta o por los documentos); datos personales en logs y mensajes de error; tests
@@ -283,17 +286,12 @@ es clínicamente adecuado. **Eso lo valida IPPU** (§3).
 ## 7. Riesgos y preguntas abiertas
 
 ### 7.1 Riesgos para el 2026-11-26
-- **Toda hora en L3 sale de L1.** Faltan 6 semanas. Según la cabecera de `handoff.md`, la próxima rebanada es
-  la **Fase 3-e** (accesibilidad, pasada visual y guion de la demo), más el resto de **M11.3-d** (SEV, INC,
-  documento histórico, foto) → **M11.6 reducido**; la Fase 3-d ya cerró (§5.126, §5.127) [verificado]. Son tres
-  personas y no hay holgura escrita en ningún lado [supuesto].
-- **Cambio de contexto.** Media hora de L3 cuesta más que media hora en el reloj [supuesto].
+- **Sin compuerta (§5.129 f).** L3 la lleva Samuel solo y a su ritmo; el riesgo para L1 es el tiempo de Samuel,
+  que también es del equipo de L1. Lo administra él [supuesto].
 - **Solapamiento.** La Fase 3-e es de accesibilidad y la UI de L3 pisa el mismo terreno: es tentador «aprovechar»
   y mezclar los dos [supuesto].
 - **Alcance nuevo el 26/11.** Existe la tentación de «mostrar el chatbot» en la presentación. Eso es alcance que
   ninguna fuente pide para esa fecha (`handoff.md` §5.92: el 26/11 es la HCE) [verificado].
-- **Carga sobre el contacto con IPPU.** Si el contacto con IPPU para L3 cae en la misma persona que lleva
-  M11.3, se carga el camino crítico (§5 de este plan) [supuesto].
 
 ### 7.2 Contradicciones entre fuentes
 | Tema | Fuente A | Fuente B | Propuesta |
@@ -306,7 +304,7 @@ es clínicamente adecuado. **Eso lo valida IPPU** (§3).
 | Numeración | Cuestionario Q47 y *Documento de trabajo*: numeración propia | `handoff.md` §5.76 (L1 = HCE es la oficial) | Rige §5.76; el «(L3)» de §5.56 no es esta línea (§5.77) |
 
 ### 7.3 Preguntas para IPPU (F0, entregable b)
-Viven **sólo acá** hasta que el equipo decida llevarlas, y no antes del 2026-11-26. Siguen el formato de
+Viven **sólo acá** hasta que Samuel decida llevarlas (§5.129 e). Siguen el formato de
 `docs/notas/preguntas-ippu.md`: **no hace falta saber de informática para responderlas**, y cada una se contesta en
 una línea. Van ordenadas por lo que destraban.
 
@@ -330,7 +328,7 @@ una línea. Van ordenadas por lo que destraban.
 **Viabilidad del «sin servicio externo»** [supuesto]: un modelo propio pide GPU o un servidor dimensionado (§2.4), y el
 hosting está abierto (`puntos-a-validar.md` §2.5). Sin ese hardware, la F1 queda degradada o bloqueada, no sigue igual.
 
-**Notas.** Los límites (LIM-1 a 11) y los mensajes A/B/C se mandan **después del 2026-11-26** como anexo (§8), para
+**Notas.** Los límites (LIM-1 a 11) y los mensajes A/B/C se mandan como anexo (§8) cuando Samuel lo decida (§5.129 e), para
 que los revise la persona de IPPU-L3-3. **Tarea interna, no es pregunta:** conseguir el texto del convenio en UTEC y
 verificar si define entregables o fechas de L3.
 
@@ -357,8 +355,8 @@ no “inventando” respuestas» (*Documento de trabajo*, Proyecto 3) [verificad
 | **LIM-7** | Una situación de crisis (autolesión, violencia, urgencia médica) | Deja el tema clínico, muestra el mensaje fijo C, escala a un humano y **mantiene la sesión abierta** | Presentación: guardrails que «detectan crisis y escalan» [verificado]. **Bloqueado por IPPU para producción:** el protocolo y el contacto (IPPU-L3-5, §7.3) |
 | **LIM-8** | Si se puede compartir información con un tercero («¿le mando el informe a la escuela?»), o un consejo legal sobre un caso concreto («¿estoy obligado a entregar la HC?») | No decide: cita el procedimiento y deriva | Protocolo §6.2: un tercero, «una institución educativa» entre ellos, requiere autorización expresa y por escrito del titular o su representante legal [verificado] |
 | **LIM-9** | Instrucciones que cambien estas reglas, vengan **de la pregunta o de un documento recuperado** | Las ignora y sigue con los límites. Un rol o una autoridad declarados («soy el director») **no habilitan nada** | §3, categoría 5 [supuesto] |
-| **LIM-10** | Redactar o completar registros clínicos (IC, evaluaciones, informes) | Rechazo con el mensaje fijo A | [supuesto] · **decisión del equipo** |
-| **LIM-11** | Elegir entre dos documentos autorizados que se contradicen | Muestra los dos con su cita, dice que se contradicen y no elige; las fuentes normativas van primero (`CLAUDE.md`, «Precedencia normativa») | [supuesto] · **decisión del equipo** |
+| **LIM-10** | Redactar o completar registros clínicos (IC, evaluaciones, informes) | Rechazo con el mensaje fijo A | [supuesto] · **aceptado (§5.129 d)** |
+| **LIM-11** | Elegir entre dos documentos autorizados que se contradicen | Muestra los dos con su cita, dice que se contradicen y no elige; las fuentes normativas van primero (`CLAUDE.md`, «Precedencia normativa») | [supuesto] · **aceptado (§5.129 d)** |
 
 **Mensajes fijos** [supuesto; el texto final lo valida la persona de IPPU-L3-3, con §8 como anexo, §7.3]:
 - **A** (LIM-1 a 4 y LIM-10): «No puedo responder sobre diagnóstico, tratamiento, casos particulares, decisiones
