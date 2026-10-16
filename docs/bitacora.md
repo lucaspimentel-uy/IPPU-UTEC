@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 (b): ajustes a §7.3** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). Quedan **7 preguntas**.
+  - La del convenio pasa a tarea interna (conseguir el texto en UTEC). Se renumeran IPPU-L3-6..8 → 5..7, con sus referencias.
+  - IPPU-L3-3 sólo pregunta quién valida; los límites y los mensajes A/B/C van como anexo después del 2026-11-26. IPPU-L3-2: el Catálogo de puertas no se usa en la v1 salvo objeción.
+  - Nueva línea de viabilidad [supuesto]: sin GPU o servidor, el «sin servicio externo» deja la F1 degradada o bloqueada. Plan +6 líneas; `verificar_estado.py --check` OK. No se envió nada.
 - **2026-10-15 · L3 — F0 (b): preguntas para IPPU** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). §7.3 del plan reescrito: **8 preguntas, IPPU-L3-1 a 8**, en dos tablas (bloquean la F1 / la F2), cada una con qué se pregunta, por qué, qué bloquea, dónde aterriza y qué se hace si no contestan.
   - Se fusionaron «quién valida» y «confirmar los límites y los mensajes» (IPPU-L3-3). El proveedor (IPPU-L3-4) y los datos de salud (IPPU-L3-7) quedan separados y planteados como opciones simples.
   - No se duplica: el Manual es B1 de `preguntas-ippu.md` y el hosting es `puntos-a-validar.md` §2.5. Se sacó el Catálogo de puertas: su origen ya es C9 y la v1 no lo usa.
