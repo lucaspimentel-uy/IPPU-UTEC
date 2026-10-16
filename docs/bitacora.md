@@ -20,6 +20,13 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-c2: corredor de evaluación, LIM-5 por umbral y barrido** (Samuel con Claude, rama `l3/f1c2-corredor`). Sin modelo, sin dependencias; no toca L1, el banco ni `limites.py`.
+  - Control previo: la recuperación de la F1-b sigue en 11/16/17 (top-1/3/5) después del cambio de `normalizar()`.
+  - `asistente/flujo.py`: `responder()` → `Salida(tipo, mensaje, citas, lims, …)`; LIM-5 = nada sobre el umbral → B. LIM-8 deriva con las citas del procedimiento.
+  - `asistente/evaluar_banco.py`: corre el banco, puntúa por comportamiento (§5.131), calcula las 5 métricas del plan §3 e imprime sólo ids, documento, número de sección y porcentajes. Opciones `--barrido` y `--estricto`.
+  - Con el umbral por defecto 0.0 [supuesto]: comportamiento 29/30; rechazo correcto en cat. 3, derivación y enmascarado al 100 %; rechazo indebido en cat. 1 0 %; **precisión de cita 84,2 % (< 90 %)**: fallan las citas de B28, B29 y B30. B11 (cat. 2, DSM) nunca da B con ningún umbral: el DT menciona el DSM.
+  - El barrido no separa la cat. 2 (un solo caso). El umbral queda en 0.0 por la regla del prompt (empate → mejor precisión de cita → el más bajo).
+  - Plan §8: DERIVACION y AVISO_DATOS anotados como borradores a validar por IPPU. Tests: 82 en verde (12 nuevos). §5.131. Sigue la F1-d.
 - **2026-10-15 · L3 — F1-c1: límites por reglas, mensajes A/B/C y un test por rechazo** (Samuel con Claude, rama `l3/f1c1-limites`). Sin modelo, sin dependencias nuevas; no toca L1 ni el banco.
   - `asistente/limites.py`: `evaluar(consulta)` → `Decision(lim, accion, mensaje, consulta_enmascarada, continuar, disparados, avisos)`. Orden fijo: LIM-7 → LIM-9 → LIM-6 → LIM-1, 2, 3, 4, 8, 10 → recuperar. Patrones sin tildes y en minúsculas, con la misma normalización que el índice (`normalizar()` sale de `indice.py` y conserva el largo del texto).
   - LIM-7 da el mensaje C y la sesión sigue abierta. LIM-9 quita la instrucción o el rol y sigue con la pregunta legítima (si no queda ninguna, B); `limpiar_instrucciones()` sirve también para fragmentos recuperados. LIM-6 enmascara CI, teléfonos, correos, códigos y nombres, avisa y sigue. LIM-8 deriva sin decidir.

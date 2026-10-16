@@ -232,7 +232,7 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     (`docs/markdown/`), cada fragmento con documento y sección. Sin modelo de lenguaje todavía.
   - **F1-c1 · Límites por reglas — HECHA (2026-10-15).** LIM-1 a 4 y 6 a 10 por reglas antes del modelo; LIM-11
     al armar la respuesta; mensajes A/B/C; un test por cada rechazo y su gemela (§6, criterio 3).
-  - **F1-c2 · Corredor de evaluación y umbral.** Corredor sobre el banco, calibración del umbral y LIM-5 por umbral.
+  - **F1-c2 · Corredor de evaluación y umbral — HECHA (2026-10-15).** Corredor sobre el banco, calibración del umbral y LIM-5 por umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
@@ -366,6 +366,8 @@ no “inventando” respuestas» (*Documento de trabajo*, Proyecto 3) [verificad
   si sale sin un clasificador de temas; si no, v1 usa B para todo.
 - **C** (LIM-7): «Esto requiere atención de una persona ahora. Contacto: **[CONTACTO Y PROTOCOLO DE CRISIS — A
   DEFINIR POR IPPU]**. Ya avisé al equipo; podés seguir escribiendo acá.»
+- **Derivación** (LIM-8) — **borrador, a validar por IPPU (IPPU-L3-3)**: «Esto no lo decide el asistente. Te muestro el procedimiento de los documentos autorizados; la decisión es del equipo de IPPU.»
+- **Aviso de datos** (LIM-6) — **borrador, a validar por IPPU (IPPU-L3-3)**: «No cargues nombres, cédulas ni otros datos del NNA: los quité de tu consulta antes de seguir.»
 
 **La frontera fina es LIM-3.** Explicar qué mide una dimensión del IDEA o cómo se calcula el total, si está en un
 documento autorizado, es contenido general y se responde; qué significa ese resultado para un NNA en particular,
