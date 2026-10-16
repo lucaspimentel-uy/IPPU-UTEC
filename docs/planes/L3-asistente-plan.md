@@ -1,7 +1,7 @@
 # L3 — Asistente virtual: plan de arranque en paralelo con L1
 
-> **Qué es.** La planificación de la línea L3 (chatbot RAG con guardrails clínicos). **Es una propuesta: no hay
-> nada decidido.** El plan recomienda y el equipo decide; las decisiones, cuando se tomen, van a `handoff.md` §5.
+> **Qué es.** La planificación de la línea L3 (chatbot RAG con guardrails clínicos). **Decidido en §5.128: monorepo,
+> carpeta y ubicación del plan; el resto sigue como propuesta.** El plan recomienda y el equipo decide; las decisiones, cuando se tomen, van a `handoff.md` §5.
 > **L1 tiene prioridad** y su fecha es el 2026-11-26.
 >
 > **Etiquetas.** **[verificado]** = leído en el archivo y la sección citados. **[supuesto]** = inferencia o
@@ -36,7 +36,7 @@ datos identificables requiere acuerdo de confidencialidad previo y justificació
 
 **Lo que no está** [verificado]: `docs/notas/respuestas-ippu-2026-10-05.txt` no menciona a L3; no hay código,
 carpeta ni rama de L3 (`implementacion/` sólo tiene `L1-hce-idea/`); y **el texto del convenio no está en el
-repo**, así que no sabemos si define entregables, fechas o criterios de aceptación para L3 (pregunta 1 de §7.3).
+repo**, así que no sabemos si define entregables, fechas o criterios de aceptación para L3 (IPPU-L3-5, §7.3).
 
 **Lo que no se sabe:** quién es el dueño de L3; si hay presupuesto para una API; quién valida el contenido
 clínico en IPPU; qué documentos autoriza IPPU como base de conocimiento; y si el Manual de Procedimientos
@@ -195,7 +195,7 @@ esté completo). Cada pregunta trae su respuesta esperada y el pasaje que la res
 | Utilidad para técnicos de IPPU (escala corta) | Se mide en el piloto |
 
 **Quién valida el contenido clínico:** una persona del equipo clínico de IPPU, a designar por IPPU. El repo no
-dice quién [verificado: no hay mención]. Es la pregunta 3 de §7.3.
+dice quién [verificado: no hay mención]. Es IPPU-L3-3 (§7.3).
 
 ## 4. Plan de trabajo
 
@@ -305,18 +305,32 @@ es clínicamente adecuado. **Eso lo valida IPPU** (§3).
 | Documentación | §5.114 f: «sin notas, relevamientos ni resúmenes nuevos» | Este plan es un documento nuevo; `docs/estructura-repositorio.md` dice «Nuevos planes van acá» (`docs/planes/`) | Es una excepción explícita y acotada, pedida por Samuel; no abre la puerta a más |
 | Numeración | Cuestionario Q47 y *Documento de trabajo*: numeración propia | `handoff.md` §5.76 (L1 = HCE es la oficial) | Rige §5.76; el «(L3)» de §5.56 no es esta línea (§5.77) |
 
-### 7.3 Preguntas candidatas para IPPU
-Viven **sólo en este documento** hasta que el equipo decida llevarlas, y no antes del 2026-11-26.
-1. ¿Qué dice el convenio sobre L3: entregables, fechas, criterios de aceptación?
-2. ¿v1 sólo para técnicos? ¿Cuándo entrarían las familias y los docentes, y por qué canal?
-3. ¿Quién del equipo clínico valida las respuestas y los límites?
-4. ¿Qué documentos se autorizan como base de conocimiento? ¿Está completo el Manual (B1)?
-5. ¿Se autoriza por escrito mandar esos documentos a un proveedor hospedado, incluso fuera del país?
-6. ¿Puede algún dato de salud de un NNA llegar a un proveedor externo? (Ley 18.331)
-7. ¿Cuál es el protocolo de crisis y el contacto al que se deriva?
-8. ¿Qué retención y qué acceso quieren para los registros de conversación?
-9. ¿El «Catálogo de puertas» tiene fuentes validadas? ¿Quién lo validaría entrada por entrada?
-10. ¿Dónde se alojaría el servicio en producción (ligado a `puntos-a-validar.md` §2.5)?
+### 7.3 Preguntas para IPPU (F0, entregable b)
+Viven **sólo acá** hasta que el equipo decida llevarlas, y no antes del 2026-11-26. Siguen el formato de
+`docs/notas/preguntas-ippu.md`: **no hace falta saber de informática para responderlas**, y cada una se contesta en
+una línea. Van ordenadas por lo que destraban.
+
+**Bloquean la F1**
+
+| Id | Qué se pregunta | Por qué importa | Bloquea | Dónde aterriza | Si no contestan |
+|---|---|---|---|---|---|
+| **IPPU-L3-1** | ¿Arrancamos el asistente **sólo para los técnicos** de IPPU? (sí / no). Familias y docentes: ¿después de un piloto, o tienen una fecha? | Define para quién se escribe todo lo demás | F1 | Plan §2.1 · `handoff.md` §5 | v1 es sólo para técnicos |
+| **IPPU-L3-2** | ¿Qué documentos puede usar el asistente para responder? Marquen: Documento Técnico · Protocolo de acceso · el instrumento IDEA (`escala-del-inventario-del-espectro-autista-idea.md`) · el Manual cuando esté completo | El asistente sólo contesta lo que está en esos documentos. El IDEA cerraría la mitad sin fuente de LIM-3 | F1 | Plan §2.2 · banco (ambigüedad 2) | Sólo el Documento Técnico y el Protocolo |
+| **IPPU-L3-3** | ¿Quién de su equipo clínico puede revisar una vez la lista de lo que el asistente **no** responde (LIM-1 a 11, una página) y sus tres mensajes fijos? | LIM-1 a 4 salen de un documento que no es normativo; el texto de los mensajes lo valida IPPU | F1 | Plan §8 · §3 | Los límites siguen como propuesta y nada pasa a la F2 |
+| **IPPU-L3-4** | Para hacer pruebas, ¿podemos mandar los **documentos institucionales** (nunca datos de un NNA) a un servicio de IA externo? Opciones: (a) sí, aunque esté fuera del país · (b) sí, sólo dentro del país · (c) no, sólo en una máquina nuestra | Elige entre un servicio externo y un modelo propio | F1, en parte | Plan §2.4 | (c): la F1 sigue sólo con un modelo local |
+| **IPPU-L3-5** | ¿El convenio fija entregables o fechas para el asistente? Si es así, ¿nos pasan esa parte? | Hoy no sabemos si hay un compromiso escrito | Nada | Plan §4 | Se sigue el plan por fases, sin fecha comprometida |
+
+**Bloquean la F2 (el piloto)**
+
+| Id | Qué se pregunta | Por qué importa | Bloquea | Dónde aterriza | Si no contestan |
+|---|---|---|---|---|---|
+| **IPPU-L3-6** | Si un técnico escribe que hay una situación de riesgo ahora, ¿qué contacto o protocolo de IPPU tiene que mostrar el asistente? | Sin eso, el mensaje de crisis (C) no puede salir a uso real | F2 | Plan §8 (LIM-7, mensaje C) | No hay piloto |
+| **IPPU-L3-7** | Aparte de los documentos: ¿algún **dato de salud de un NNA** puede llegar a un servicio externo? Opciones: (a) no, nunca · (b) sólo anonimizado · (c) otro | Es dato sensible (Ley 18.331). En el piloto alguien puede escribir datos aunque se le pida que no | F2 | Plan §2.4 y §2.5 · `handoff.md` §5 | (a) |
+| **IPPU-L3-8** | En el piloto, ¿qué guardamos de las conversaciones y quién lo lee? Opciones: (a) sólo conteos, sin el texto · (b) el texto 30 días, sólo el equipo · (c) otro | Lo que se escribe puede traer datos sensibles | F2 | Plan §2.5 | (a) |
+
+**Ya preguntado en otro lado (no se duplica):** el Manual completo es **B1** de `preguntas-ippu.md`; el hosting de
+producción, **`puntos-a-validar.md` §2.5**. **Se sacó** la pregunta del Catálogo de puertas: su origen ya está en
+**C9** de `preguntas-ippu.md`, y la v1 no lo usa (§2.2), así que validarlo entrada por entrada no bloquea nada.
 
 ## 8. Límites del asistente (F0, entregable a)
 Para v1, sólo técnicos (§2.1). Se numeran **LIM-n** para no confundirlos con las líneas L1–L4. Cada límite dice
@@ -334,13 +348,13 @@ no “inventando” respuestas» (*Documento de trabajo*, Proyecto 3) [verificad
 | **LIM-4** | Decisión clínica («¿le damos el alta?», «¿lo cambio de grupo?») | Ídem | Ídem |
 | **LIM-5** | Todo lo que no tiene pasaje que lo respalde en los documentos autorizados, **incluidos los temas ajenos a IPPU y al TEA** | Mensaje fijo B: «No está en los documentos autorizados», sin completar con conocimiento general | [supuesto] |
 | **LIM-6** | Datos de un NNA o de la HCE | (a) En desarrollo, ningún dato real de un NNA. (b) En uso, avisa que no se carguen nombre, CI ni datos del NNA, y enmascara lo que se cargue antes de mandarlo al modelo y al log | (a) Protocolo §6.7 [verificado]; (b) [supuesto] |
-| **LIM-7** | Una situación de crisis (autolesión, violencia, urgencia médica) | Deja el tema clínico, muestra el mensaje fijo C, escala a un humano y **mantiene la sesión abierta** | Presentación: guardrails que «detectan crisis y escalan» [verificado]. **Bloqueado por IPPU para producción:** el protocolo y el contacto (§7.3, pregunta 7) |
+| **LIM-7** | Una situación de crisis (autolesión, violencia, urgencia médica) | Deja el tema clínico, muestra el mensaje fijo C, escala a un humano y **mantiene la sesión abierta** | Presentación: guardrails que «detectan crisis y escalan» [verificado]. **Bloqueado por IPPU para producción:** el protocolo y el contacto (IPPU-L3-6, §7.3) |
 | **LIM-8** | Si se puede compartir información con un tercero («¿le mando el informe a la escuela?»), o un consejo legal sobre un caso concreto («¿estoy obligado a entregar la HC?») | No decide: cita el procedimiento y deriva | Protocolo §6.2: un tercero, «una institución educativa» entre ellos, requiere autorización expresa y por escrito del titular o su representante legal [verificado] |
 | **LIM-9** | Instrucciones que cambien estas reglas, vengan **de la pregunta o de un documento recuperado** | Las ignora y sigue con los límites. Un rol o una autoridad declarados («soy el director») **no habilitan nada** | §3, categoría 5 [supuesto] |
 | **LIM-10** | Redactar o completar registros clínicos (IC, evaluaciones, informes) | Rechazo con el mensaje fijo A | [supuesto] · **decisión del equipo** |
 | **LIM-11** | Elegir entre dos documentos autorizados que se contradicen | Muestra los dos con su cita, dice que se contradicen y no elige; las fuentes normativas van primero (`CLAUDE.md`, «Precedencia normativa») | [supuesto] · **decisión del equipo** |
 
-**Mensajes fijos** [supuesto; el texto final lo valida IPPU, §7.3, pregunta 3]:
+**Mensajes fijos** [supuesto; el texto final lo valida IPPU, IPPU-L3-3, §7.3]:
 - **A** (LIM-1 a 4 y LIM-10): «No puedo responder sobre diagnóstico, tratamiento, casos particulares, decisiones
   clínicas ni redactar registros clínicos. Consultalo con el profesional tratante o con el equipo de IPPU.»
 - **B** (LIM-5): «No está en los documentos autorizados.» Un mensaje aparte de «Fuera de alcance» se agrega sólo

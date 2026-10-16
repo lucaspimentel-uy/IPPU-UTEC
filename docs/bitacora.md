@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 (b): preguntas para IPPU** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). §7.3 del plan reescrito: **8 preguntas, IPPU-L3-1 a 8**, en dos tablas (bloquean la F1 / la F2), cada una con qué se pregunta, por qué, qué bloquea, dónde aterriza y qué se hace si no contestan.
+  - Se fusionaron «quién valida» y «confirmar los límites y los mensajes» (IPPU-L3-3). El proveedor (IPPU-L3-4) y los datos de salud (IPPU-L3-7) quedan separados y planteados como opciones simples.
+  - No se duplica: el Manual es B1 de `preguntas-ippu.md` y el hosting es `puntos-a-validar.md` §2.5. Se sacó el Catálogo de puertas: su origen ya es C9 y la v1 no lo usa.
+  - «Nada decidido» → «decidido en §5.128…» en el encabezado del plan y en la línea de §6. Referencias cruzadas a «pregunta n» → IPPU-L3-n.
+  - **No se envió nada a IPPU.** `preguntas-ippu.md` no se tocó. El plan pasa de 360 a 374 líneas; `verificar_estado.py --check` OK.
+  - F0 completa en contenido (a, b, c); se cierra después de la revisión del equipo. Casilla de §6 abierta; sin §5.
 - **2026-10-15 · L3 — monorepo y nombre de carpeta, §5.128** (Samuel con Claude, rama `l3/f0-limites`; sólo docs).
   - La ruta futura pasa a `implementacion/L3-asistente-virtual/` en el plan (4 lugares) y en el banco (la ruta de la F1). La carpeta no se crea hasta la F1. Las entradas viejas de la bitácora conservan `L3-asistente/`.
   - §5.128 (Samuel): monorepo; plan en `docs/planes/`; el README de la F1 enlaza al plan. Reversible. La arquitectura sigue pendiente.
