@@ -246,10 +246,10 @@ Las familias y los docentes quedan **fuera de estas tres fases**.
      de la Fase 3-e en `docs/bitacora.md` y su casilla de §6 está tildada.
   3. **Del 2026-11-19 al 2026-11-26, L3 se congela** por completo.
   4. **La F1 no arranca antes de la entrega del 2026-11-26**, salvo por una decisión explícita en `handoff.md` §5.
-- **Dueño: «a definir por el equipo».** El repo no lo dice y no hay dueños exclusivos (§5.6) [verificado].
-  Lucas es el dueño de M11.3 (§5.67) y el contacto con IPPU (cabecera de `preguntas-ippu.md`) [verificado]:
-  **ni el dueño de L3 ni quien lleve las preguntas de L3 a IPPU deberían recaer en Lucas por defecto**
-  [supuesto], porque cargarlo con L3 es cargar el camino crítico de L1.
+- **Responsable: Boris Furtado** (tomó L3 el 2026-10-15). No hay dueños exclusivos: se avisa en el grupo qué se
+  toma y se anota en §6 (§5.6) [verificado]. **Quién lleva las preguntas de L3 a IPPU sigue abierto.** Lucas es
+  el dueño de M11.3 (§5.67) y el contacto con IPPU (cabecera de `preguntas-ippu.md`) [verificado]: no debería
+  recaer en él por defecto [supuesto], porque cargarlo con L3 es cargar el camino crítico de L1.
 
 ## 6. Documentación y revisión
 **Mínimo.** Este plan más **una línea en `handoff.md` §6**. La única excepción es el banco v0 de la F0: son
@@ -295,7 +295,7 @@ es clínicamente adecuado. **Eso lo valida IPPU** (§3).
 | HCE como fuente | Presentación: «búsqueda en HCE» y L4→L3 con datos del NNA | Protocolo §6.7 (disociados o anonimizados) y *Documento de trabajo* (sin casos particulares) | **Prevalece el Protocolo**, que es normativo |
 | Aprender de las conversaciones | Presentación: «feedback loop: interacciones anonimizadas» | Sin acuerdo firmado (`preguntas-ippu.md` A1; `CLAUDE.md`) | Prevalece la regla de `CLAUDE.md`: nada sin autorización |
 | Proveedor | Presentación: «Claude / GPT-4 API» | La pregunta legal sigue abierta (§2.4) | No hay decisión: la nombra la presentación, no IPPU |
-| Documentación | §5.114 f: «sin notas, relevamientos ni resúmenes nuevos» | Este plan es un documento nuevo; `docs/estructura-repositorio.md` dice «Nuevos planes van acá» (`docs/planes/`) | Es una excepción explícita y acotada, pedida por Lucas; no abre la puerta a más |
+| Documentación | §5.114 f: «sin notas, relevamientos ni resúmenes nuevos» | Este plan es un documento nuevo; `docs/estructura-repositorio.md` dice «Nuevos planes van acá» (`docs/planes/`) | Es una excepción explícita y acotada, pedida por Boris Furtado; no abre la puerta a más |
 | Numeración | Cuestionario Q47 y *Documento de trabajo*: numeración propia | `handoff.md` §5.76 (L1 = HCE es la oficial) | Rige §5.76; el «(L3)» de §5.56 no es esta línea (§5.77) |
 
 ### 7.3 Preguntas candidatas para IPPU
