@@ -20,8 +20,8 @@
 
 ## 13. Bitácora de sesiones
 
-- **2026-10-15 · L3 — responsable y rama al día** (Boris Furtado con Claude, rama `docs/L3-plan`; sólo docs). **Corrige la entrada «L3 — plan de arranque» de abajo, que no se toca:** la excepción a §5.114 f la pidió **Boris Furtado**, no Lucas.
-  - **Boris Furtado toma L3** (§5.6: se avisa, no se pide permiso). Queda abierto quién lleva las preguntas de L3 a IPPU. Actualizados el plan (§5 y §7.2) y la línea de §6.
+- **2026-10-15 · L3 — responsable y rama al día** (Samuel con Claude, rama `docs/L3-plan`; sólo docs). **Corrige la entrada «L3 — plan de arranque» de abajo, que no se toca:** la excepción a §5.114 f la pidió **Samuel** (§5.32), no Lucas.
+  - **Samuel toma L3** (§5.6: se avisa, no se pide permiso). Queda abierto quién lleva las preguntas de L3 a IPPU. Actualizados el plan (§5 y §7.2) y la línea de §6.
   - `fase3d-cierre-vf` ya está en `main`: se mergeó `origin/main` en `docs/L3-plan` y la advertencia de ff-merge de abajo deja de aplicar.
   - Sin §5: tomar un módulo no es una decisión (§5.6).
 - **2026-10-15 · L3 — plan de arranque del asistente virtual** (Claude, rama `docs/L3-plan` **sobre `cb9030a`** = `fase3d-cierre-vf`, que no está en `main`). Sólo docs: `docs/planes/L3-asistente-plan.md` + una línea `- [ ]` en `handoff.md` §6. No toca L1 ni `implementacion/`.
