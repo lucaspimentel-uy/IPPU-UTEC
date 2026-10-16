@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-a: esqueleto de `implementacion/L3-asistente-virtual/`** (Samuel con Claude, rama `l3/f1a-esqueleto`). Primer código de L3; no toca L1.
+  - README corto que enlaza al plan (§5.128 c), `requirements.txt` (sólo pytest), `.gitignore`, `pytest.ini` y venv propio en `.venv/` (ignorado).
+  - El banco pasa a `eval/banco-v0.md` con `git mv` (historia conservada); se actualizan sus rutas en el plan y en `handoff.md` §6.
+  - `asistente/banco.py` lee la tabla del banco; `tests/test_banco.py` controla sus reglas: 20–30 casos, ids únicos, cada par con un caso que dispara y su gemela, LIM-1 a 11 cubiertos, gemelas con cita, citas sólo del DT o el Protocolo, y mensaje fijo donde no hay cita.
+  - Verificado: la corrida de pytest de L3 en verde (desde la carpeta de L3, con su venv); prueba de mutación: sin B17 y B18 se pierden LIM-7 y el par P09. `verificar_estado.py --check` OK; 0 archivos en `implementacion/L1-hce-idea/`.
+  - Sigue la F1-b: índice en archivo y recuperación con cita.
 - **2026-10-15 · L3 — F0 cerrada, §5.129 y plan de acción de la F1** (Samuel con Claude; sólo docs; `l3/f0-limites` mergeada a `main`).
   - **§5.129 (Samuel):** L3 la lleva él solo; v1 sólo técnicos y sólo documentos institucionales; servicio separado con almacén propio; LIM-10 y LIM-11 aceptados; las preguntas a IPPU las lleva él; **sin compuerta** frente a L1, y la F1 arranca ya.
   - Plan: «Decidible ya» → «Decidido (§5.129)»; salen el tope de horas, la pausa del 06/11 y el congelamiento; §4 F1 suma el plan de acción en rebanadas F1-a a F1-d; §7.1 ajustado.

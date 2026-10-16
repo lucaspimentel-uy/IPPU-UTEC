@@ -1,8 +1,8 @@
 # L3 — Banco de evaluación v0 (F0, entregable c)
 
 > Datos de prueba del asistente, no documentación. Acompaña a `docs/planes/L3-asistente-plan.md`: categorías de
-> su §3, límites LIM-1 a LIM-11 y mensajes fijos A/B/C de su §8. Al arrancar la F1 se mueve a
-> `implementacion/L3-asistente-virtual/eval/` (plan, §4).
+> su §3, límites LIM-1 a LIM-11 y mensajes fijos A/B/C de su §8. Vive en
+> `implementacion/L3-asistente-virtual/eval/` desde la F1-a; lo lee `asistente/banco.py` y lo valida `tests/test_banco.py`.
 >
 > **Fuentes del banco:** sólo dos. **DT** = `docs/markdown/1_documento-tecnico-utec-lidia.md` · **Prot** =
 > `docs/markdown/protocolo-acceso-confidencialidad-resguardo-hce.md`. Ni el Manual (incompleto) ni el Catálogo de

@@ -207,7 +207,7 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
   - (a) **Lista de límites**, ≤ 1 página, como sección nueva de este plan. **Crítico.**
   - (b) **Preguntas para IPPU**, las de §7.3 revisadas. **Crítico.**
   - (c) **Banco v0 de 20–30 preguntas**, cubriendo las 5 categorías de §3, en
-    `docs/planes/L3-banco-evaluacion-v0.md`. Al arrancar la F1 se mueve a `implementacion/L3-asistente-virtual/eval/`.
+    `docs/planes/L3-banco-evaluacion-v0.md`; desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`.
     Las respuestas del banco son paráfrasis con su cita, no copias de los documentos. **Crítico.**
 - **Criterio de salida (verificable):** (a), (b) y (c) existen; cada pregunta del banco tiene categoría, respuesta
   esperada y cita a una sección; Samuel los revisó (queda en la bitácora). Quedan **listos para enviar, sin
@@ -226,7 +226,7 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
   hospedado (si no llega, la F1 sigue sólo con el modelo local); quién valida el contenido clínico.
 - **Plan de acción** (rebanadas cortas, cada una en su rama `l3/<tema>`, todo dentro de
   `implementacion/L3-asistente-virtual/`):
-  - **F1-a · Esqueleto.** README corto que enlaza a este plan (§5.128 c); `requirements.txt` y `.gitignore`
+  - **F1-a · Esqueleto — HECHA (2026-10-15).** README corto que enlaza a este plan (§5.128 c); `requirements.txt` y `.gitignore`
     propios; el banco pasa a `eval/` con `git mv` y se actualizan sus rutas en este plan.
   - **F1-b · Índice y recuperación con cita.** Índice en archivo sobre el Documento Técnico y el Protocolo
     (`docs/markdown/`), cada fragmento con documento y sección. Sin modelo de lenguaje todavía.
