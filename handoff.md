@@ -3170,6 +3170,11 @@ Sin cambio de backend ni de DDL. Corrige y completa §5.126 en su misma rama (`f
 - **(b) Cita correcta** = la sección esperada, su padre o su hija, entre las 3 citadas.
 - El valor del umbral de LIM-5 **no** se registra acá: es [supuesto] en `asistente/flujo.py` (`UMBRAL_DEFECTO`).
 
+### 5.132 L3: set retenido intocable, umbral provisional y orden F1-c3 → F1-c4 → F1-d (2026-10-15, Samuel)
+- **(a)** El set retenido (`eval/retenido-v0.md`) **no se usa para ajustar reglas**: sus fallos se registran y se arreglan con casos aparte, nunca mirando el retenido.
+- **(b)** `UMBRAL_DEFECTO = 0.0` es **provisional**: no se fija hasta tener más casos de la categoría 2 («sin respaldo»).
+- **(c) Orden:** F1-c3 (medición) → F1-c4 (recuperación y categoría 2) → F1-d (proveedor).
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **La cola resuelta de §6 se archivó el 2026-09-11 (sesión M12.8b-3a), medido y aprobado en
@@ -3658,7 +3663,7 @@ Sin cambio de backend ni de DDL. Corrige y completa §5.126 en su misma rama (`f
 - [ ] **Micro-tarea:** importar a `nivel_idea` los descriptores oficiales (texto largo por nivel) desde `docs/markdown/escala-...idea.md`.
 - [ ] **Con IPPU:** definir el protocolo real de "áreas" y "general" (hoy modeladas como provisionales, indicadores en texto libre).
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-a, F1-b y F1-c hechas** (umbral de LIM-5 a confirmar); sigue la F1-d.
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-a, F1-b y F1-c hechas; F1-c3 medida** (retenido y diagnóstico); sigue la F1-c4 (recuperación y casos de la cat. 2).
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 - **Numeración de líneas:** la presentación y la demo usan L1=HCE. El *Documento de trabajo* y el cuestionario Q47 usan numeraciones distintas. Confirmar la oficial (no bloquea; el foco L1=HCE es consistente y el Documento Técnico lo ratifica).
 - **Cortes del baremo BUND:** que IPPU confirme los porcentajes exactos contra el anexo del Decreto 72/025 antes de un uso clínico real (decisión §5.1.4). No bloquea la demo (tabla parametrizable, M9). ⚠️ **Nunca se preguntó por escrito.** El borrador de `consulta-a-ippu.md` traía dos preguntas sobre esto (§2.7 y §2.8) y **el equipo las retiró en la revisión del 19/08** (§5.34, verificado: 0 ocurrencias de «baremo», «BUND» y «72/025» en el documento enviado). No está «preguntado y esperando respuesta»: está **sin preguntar**, y su único canal hoy es la reunión. Redacción original conservada en `puntos-a-validar.md` §1.2.
