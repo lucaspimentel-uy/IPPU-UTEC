@@ -20,6 +20,11 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — monorepo y nombre de carpeta, §5.128** (Samuel con Claude, rama `l3/f0-limites`; sólo docs).
+  - La ruta futura pasa a `implementacion/L3-asistente-virtual/` en el plan (4 lugares) y en el banco (la ruta de la F1). La carpeta no se crea hasta la F1. Las entradas viejas de la bitácora conservan `L3-asistente/`.
+  - §5.128 (Samuel): monorepo; plan en `docs/planes/`; el README de la F1 enlaza al plan. Reversible. La arquitectura sigue pendiente.
+  - Plan §5: `herramientas/` es compartida y sólo se le agrega; L3 copia o parametriza dentro de su carpeta.
+  - Verificado: ningún `L3-asistente/` fuera de la bitácora; `verificar_estado.py --check` OK. Casilla de §6 abierta; las líneas del tope de horas no se tocan hasta cerrar la F0.
 - **2026-10-15 · L3 — F0 (c): ajustes de la revisión al banco y a §8** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). **Corrige la entrada del banco v0 de abajo, que no se toca.**
   - B25 (rol declarado) = la misma pregunta que B26 sin el rol. Sale el par P07 (cédula) y entra P16 (consejo legal sobre un caso, Prot §6.4); el banco sigue en 30 filas.
   - §8: LIM-8 cubre el consejo legal sobre un caso concreto; una línea aclara que los LIM son del asistente y que los borradores de la propia HCE (DT §7.4, §5.1) son de L1, con cortes pendientes de IPPU. LIM-11 entre fuentes normativas deja de ser ambigüedad.

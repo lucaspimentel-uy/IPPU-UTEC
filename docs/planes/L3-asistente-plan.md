@@ -77,7 +77,7 @@ la 2 y la 3. **Bloqueado por IPPU:** qué documentos se autorizan.
 | Opción | A favor | En contra |
 |---|---|---|
 | Módulo dentro de la FastAPI de L1 | Reusa el login y la sesión | Toca `implementacion/L1-hce-idea/` antes del 26/11; mete dependencias de ML en el backend de L1 |
-| **Servicio separado** (`implementacion/L3-asistente/`, desde la F1) | No toca L1; se puede descartar | Hay que resolver la autenticación entre servicios |
+| **Servicio separado** (`implementacion/L3-asistente-virtual/`, desde la F1) | No toca L1; se puede descartar | Hay que resolver la autenticación entre servicios |
 | Página sin autenticación (sólo demo) | Lo más rápido | No sirve para piloto |
 
 **Almacén de vectores.**
@@ -145,7 +145,7 @@ que la regula]. La elección queda **bloqueada por IPPU** hasta que respondan.
 | Opción | A favor | En contra |
 |---|---|---|
 | Panel dentro de la demo de la HCE | Contexto único para el técnico | Toca `demo/index.html` y `js/utils.js`, que son compartidos (`CLAUDE.md`, «Arranque de sesión») [verificado] → **no antes del 26/11** |
-| **Página aparte** (`implementacion/L3-asistente/`) | No toca L1 | Otro login hasta la F2 |
+| **Página aparte** (`implementacion/L3-asistente-virtual/`) | No toca L1 | Otro login hasta la F2 |
 | Mensajería (tipo WhatsApp) | Llega a las familias | Plataforma de un tercero y datos fuera de control; sólo después de v1 [supuesto] |
 
 **Recomendación: página aparte** [supuesto].
@@ -206,7 +206,7 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en
   - (a) **Lista de límites**, ≤ 1 página, como sección nueva de este plan. **Crítico.**
   - (b) **Preguntas para IPPU**, las de §7.3 revisadas. **Crítico.**
   - (c) **Banco v0 de 20–30 preguntas**, cubriendo las 5 categorías de §3, en
-    `docs/planes/L3-banco-evaluacion-v0.md`. Al arrancar la F1 se mueve a `implementacion/L3-asistente/eval/`.
+    `docs/planes/L3-banco-evaluacion-v0.md`. Al arrancar la F1 se mueve a `implementacion/L3-asistente-virtual/eval/`.
     Las respuestas del banco son paráfrasis con su cita, no copias de los documentos. **Crítico.**
 - **Criterio de salida (verificable):** (a), (b) y (c) existen; cada pregunta del banco tiene categoría, respuesta
   esperada y cita a una sección; el equipo los revisó (queda en la bitácora). Quedan **listos para enviar, sin
@@ -238,12 +238,15 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. Entra en
 Las familias y los docentes quedan **fuera de estas tres fases**.
 
 ## 5. Reglas de paralelismo con L1
-- **Carpetas.** `docs/planes/L3-*` (desde ya) e `implementacion/L3-asistente/` (se crea en la F1). Desde una
+- **Carpetas.** `docs/planes/L3-*` (desde ya) e `implementacion/L3-asistente-virtual/` (se crea en la F1). Desde una
   rama de L3 **nunca** se toca `implementacion/L1-hce-idea/**`, `CLAUDE.md` ni la cabecera de `handoff.md`; de
   `handoff.md`, sólo la línea de L3 en su §6 y una entrada de su §5 cuando haya decisión.
 - **Ramas.** `l3/<tema>`, cortas: vida máxima de ~1 semana (`handoff.md` §12) [verificado].
 - **Entorno propio.** venv, dependencias y proyecto de compose propios, con puertos distintos de 5440 (Postgres),
   8000 (API) y 5500 (demo) [verificado: `CLAUDE.md`, «Stack objetivo»].
+- **Herramientas compartidas.** `herramientas/` es de todos y sólo se le agrega: si L3 necesita una (por ejemplo
+  `verificar_contraste_ui.js`), la copia o la parametriza dentro de su carpeta, y nunca edita el script compartido de
+  forma que cambie lo que verifica L1.
 - **Compuerta frente a L1** [supuesto, decide el equipo]:
   1. Hasta el 2026-11-26 **sólo la F0**, con un tope de **~2 h por semana para todo el equipo**.
   2. **La F0 se pausa si al 2026-11-06 la Fase 3-e no está cerrada.** «Cerrada» se comprueba así: hay una entrada
