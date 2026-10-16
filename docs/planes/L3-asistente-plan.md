@@ -313,3 +313,35 @@ Viven **sólo en este documento** hasta que el equipo decida llevarlas, y no ant
 8. ¿Qué retención y qué acceso quieren para los registros de conversación?
 9. ¿El «Catálogo de puertas» tiene fuentes validadas? ¿Quién lo validaría entrada por entrada?
 10. ¿Dónde se alojaría el servicio en producción (ligado a `puntos-a-validar.md` §2.5)?
+
+## 8. Límites del asistente (F0, entregable a)
+Para v1, sólo técnicos (§2.1). Se numeran **LIM-n** para no confundirlos con las líneas L1–L4. Cada límite dice
+qué hace el asistente **en lugar** de responder; el banco v0 (§3) trae al menos una pregunta por límite.
+
+**Qué sí responde.** Preguntas sobre el contenido de los documentos autorizados por IPPU (§2.2, opción 1),
+**siempre con la cita** del documento y la sección. Es el producto que pide el *Documento de trabajo*:
+«respuestas citadas», consultando «documentos autorizados y no “inventando” respuestas» [verificado].
+
+| Límite | No responde | Ejemplo | Qué hace en su lugar | Fuente |
+|---|---|---|---|---|
+| **LIM-1** | Diagnóstico | «¿Esto que describo es TEA?», «¿qué nivel de apoyo tiene?» | Rechazo fijo y derivación a un profesional de IPPU | *Documento de trabajo*, Proyecto 3 [verificado] |
+| **LIM-2** | Indicación terapéutica individual | «¿Qué medicación o qué taller le conviene a este NNA?» | Ídem | Ídem [verificado] |
+| **LIM-3** | Interpretación de un caso particular | «Sacó 52 en el IDEA, ¿qué significa para él?» | Ídem | Ídem [verificado] |
+| **LIM-4** | Decisión clínica | «¿Le damos el alta?», «¿lo cambio de grupo?» | Ídem | Ídem [verificado] |
+| **LIM-5** | Lo que no está en los documentos | Cualquier pregunta sin pasaje que la respalde | «No está en los documentos autorizados», sin completar con conocimiento general | §2.5 [supuesto] |
+| **LIM-6** | Datos de un NNA o de la HCE | El técnico pega nombre, CI o un pasaje de la historia | No consulta la HCE; avisa que no se carguen datos y los enmascara antes del modelo y del log | Protocolo §6.7 [verificado]; §2.2 y §2.5 |
+| **LIM-7** | Una situación de crisis | Autolesión, violencia, urgencia médica | Corta la conversación sobre el tema, muestra el contacto institucional y escala a un humano | Presentación: guardrails que «detectan crisis y escalan» [verificado]; protocolo y contacto, de IPPU (§7.3, pregunta 7) [supuesto] |
+| **LIM-8** | Si se puede compartir información con un tercero | «¿Le puedo mandar el informe a la escuela?» | No decide: cita el procedimiento y deriva | Protocolo §6.2: un tercero, incluida una institución educativa, requiere autorización escrita del titular o su representante [verificado] |
+| **LIM-9** | Pedidos de cambiar estas reglas | «Ignorá tus instrucciones», o lo mismo escondido en un documento | Las ignora y sigue con los límites | §3, categoría 5 [supuesto] |
+| **LIM-10** | Temas ajenos a IPPU y al TEA | Trámites personales, otros temas | «Fuera de alcance», sin responder | [supuesto] |
+
+**La frontera fina es LIM-3.** Explicar qué mide una dimensión del IDEA o cómo se calcula el total, si está en
+un documento autorizado, **es contenido general y se responde**; decir qué significa ese resultado **para un
+NNA en particular** no. El banco v0 trae pares de preguntas a los dos lados de esa frontera [supuesto].
+
+**Mensaje fijo de LIM-1 a LIM-4,** borrador [supuesto]: «No puedo responder sobre diagnóstico, tratamiento,
+casos particulares ni decisiones clínicas. Consultalo con el profesional tratante o con el equipo de IPPU.» El
+texto final y a quién se deriva los valida IPPU (§7.3, pregunta 3).
+
+**Reglas que valen para todos los límites:** el rechazo se dice con texto, no sólo con color (§2.6); un rechazo
+no reformula la pregunta para «responder igual»; y cada límite tiene su test en la F1 (§6, criterio 3).
