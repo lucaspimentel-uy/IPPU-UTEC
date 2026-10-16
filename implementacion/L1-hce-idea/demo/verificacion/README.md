@@ -10,7 +10,7 @@ Sirve para una pregunta concreta:
 
 Se captura antes, se captura después, se comparan. Si difieren, algo se rompió.
 
-## Demo conectada a la API — `conectada.js` (Fase 3-a, 3-b, 3-c y 3-d, `handoff.md` §5.122, §5.124, §5.125 y §5.126)
+## Demo conectada a la API — `conectada.js` (Fase 3-a, 3-b, 3-c, 3-d y 3-e, `handoff.md` §5.122, §5.124, §5.125, §5.126 y §5.135)
 
 Es **otra cosa** que el *fingerprint* de abajo: no compara dos versiones de la demo estática, sino que
 prueba la demo **contra una API real** (login, listado, HCE-00 y su edición, alta, CI, flujo, IDEA, protocolos A/B, informe de cierre con su documento impreso y recibí, valoración funcional, modo demostración). Corre en Chromium
@@ -81,7 +81,7 @@ Y la suite contra ella: `API=http://localhost:8001` (la demo sigue en `:5500`; C
 el puerto de la API). Para repetir la corrida: parar la API, repetir el `DROP/CREATE` + migración + catálogos,
 levantarla y volver a cargar el seed.
 
-**Qué verifica** (155 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`, `3d-…`):
+**Qué verifica** (181 chequeos). **Los identificadores llevan la fase como prefijo** (`3a-…`, `3b-…`, `3c-…`, `3d-…`, `3e-…`):
 
 - **Fase 3-a** — `3a-a` login del técnico y chip con su nombre y rol · `3a-b` contraseña mala → mensaje en
   `role="alert"` con foco y `sessionStorage` vacío · `3a-c…` conteos del listado y del filtro de grupo **iguales a los de
@@ -125,21 +125,37 @@ levantarla y volver a cargar el seed.
   `3d-edad1`/`3d-edad2` con el reloj de la página adelantado a 2033, la edad del IC y del reporte de la VF **no cambia** (es la de la fecha del documento) y el reporte rotula «Fecha de impresión» · `3d-n4`/`3d-n5` un 409 se rotula «Cambió en el servidor» (no «Avisos de la API») y tras el recibí con 409 el foco queda en el título del IC · `3d-ci409` y `3d-ev409-lb`/`-pa`/`-pb` un 409 con una **escritura concurrente real** (otra sesión por la API registra el CI, o firma el borrador de IDEA/PA/PB, mientras esta pantalla tiene el formulario abierto): «Cambió en el servidor» (no «Avisos de la API» ni un «No se pudo guardar» huérfano), el registro que se muestra es el del servidor, solo lectura en IDEA/PA/PB, y el foco en el título (`#ciTitulo` / `#evTitulo`), nunca en `<body>` · `3d-foco` el diálogo compartido de un expediente de ejemplo no deja el foco en `<body>` ·
   `3d-c0…c5` **IC de Valentina**: crear (`POST` sólo lo tipeado), 422 por campo, dos firmantes iguales → 422, firmar con dos distintos en orden inverso al del grupo, solo lectura, avisos de la API, impreso con las firmas de quienes firmaron · `3d-r1…r3` recibí: diálogo accesible, 422 por campo, Esc y foco, una sola vez (409) · `3d-ad` addenda con autor · `3d-n1…n3` Camila: impreso sin IC / con borrador = estado del flujo (sin `/documento` / con su 409) y 409 al guardar → solo lectura ·
   `3d-e1…e3` **VF vacía → crear**, sin sugerencia ni «Autogenerar» · `3d-d1…d5` VF de Martín: categoría == API, `PATCH` sólo con `pct`, % rechazado → error por campo, alerta de vigencia de la API, reporte con la lectura del Δ de la API · `3d-d7` categorías y niveles en la rampa de un solo matiz (nunca ok/warn/bad) · `3d-f` el código no usa lbTotales/protTotales/calcularDelta/deltaInterpreta/categoriaBaremo/sugiereNivel… · `3d-ax` toda entrada con su etiqueta · `3d-w` sin desborde a 390/1024 px.
+- **Fase 3-e** (accesibilidad y pasada visual, §5.135; **con teclado donde la prueba es de teclado**: `keyboard.press`, sin clics, porque un clic cambia la modalidad del navegador y con ella el anillo de `:focus-visible`):
+  `3e-skip`/`3e-skip2` el enlace «Saltar al contenido» es el primer Tab, aparece a la vista y Enter lleva el foco a `<main>` · `3e-kbd` login → listado → abrir a Martín → HCE-00, CI, LB, PA, PB, IC, VF → informe impreso → volver, el foco nunca cae en `<body>` ·
+  `3e-ring`/`3e-ring2` un control de cada familia alcanzado con Tab (enlace, ítem de la barra lateral, botón, campo de texto, lista, pestaña, botón de puntaje, área de texto) tiene contorno sólido y ≥ 3:1 contra lo que queda detrás; el CSS no apaga ningún contorno ·
+  `3e-roving` un punto de Tab por dimensión del IDEA y flechas dentro de ella · `3e-trap1…4` login, alta/edición, recibí y confirmación de firma: Tab no sale, Esc cierra y el foco vuelve a quien abrió o a un destino estable ·
+  `3e-confirm1…4` cerrar con datos tipeados (×, Cancelar o Esc) pide confirmación; sin datos no; «Salir» no pregunta ·
+  `3e-flow`/`3e-flow2` sin desborde horizontal a 1280 y 1024 px en todas las pantallas conectadas (y a 320 px en listado y HCE-00); tablas anchas en su propio contenedor ·
+  `3e-i18n1…4` mensajes de validación en castellano (un % «abc», un tipo sin traducción, un 422 de negocio que pasa intacto) ·
+  `3e-color1`/`3e-color2` la regla de color en las vistas de demostración · `3e-estados` un solo componente de cargando/error/vacío · `3e-panel` el tabpanel sin controles es alcanzable con Tab · `3e-demo` el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes · `3e-hoja1` a escala 1 la tabla del IC empieza en la hoja 1.
 - `z` — **0 errores de JavaScript** en toda la corrida.
 
 Depende de que la base sea la del seed (8 NNA, Tomás dado de baja): sobre otra base los conteos no dan.
 
-### Las otras dos herramientas también corren contra la demo conectada (3-b y 3-c)
+### Capturas de pantalla — `capturas.js` (Fase 3-e)
+
+`CONFIRMA_BASE_DESCARTABLE=1 API=http://localhost:8001 IPPU_DEMO_PASSWORD=… node capturas.js` deja una imagen por pantalla (login, listado, HCE-00, CI, LB, PA, PB con Δ, editor del IC, informe impreso, VF y una vista de modo demostración) a **1280×800 y a 1024×768** en `salidas/` (gitignored). **Escribe** (crea una valoración funcional para mostrar la VF con datos): sólo contra una base descartable recién cargada. No compara nada: es para mirar.
+
+### Las otras dos herramientas también corren contra la demo conectada (3-b, 3-c y 3-e)
 
 - **`herramientas/verificar_contraste_ui.js`** (raíz del repo) abre la demo por `http://localhost:5500/index.html?api=<API>`
   y hace login con el técnico del seed (`IPPU_DEMO_PASSWORD`; opcionales `API=`, `DEMO=`, `IPPU_DEMO_EMAIL=`): corre
-  **sin tocarlo** desde el repo. Recorre las vistas, las 13 pestañas de un expediente de la API, el CI pendiente con sus
-  errores y el diálogo de alta/edición en sus cuatro pasos. Resultado de referencia: **los mismos pares que fallan que la línea base** (misma tabla, mismos ratios; no se reproduce ningún conteo exacto) y los mismos anillos de foco; ninguna pantalla nueva agrega una falla: **todo par nuevo ≥ 4,5:1**. **Desde la 3-c** también recorre las pantallas de IDEA y protocolos (Joaquín: borrador con `NS`, barra de totales,
-  confirmación de firma y 422; Martín: LB firmado con banda, PB con Δ; Sofía: PA editable). Se mide sobre una base recién cargada y se compara contra la punta anterior de la rama (`git stash` y repetir): el conjunto de pares que fallan tiene que ser idéntico.
-  El glifo grande de los estados vacíos (`.empty-state .big`, decorativo, aria-hidden) es **puramente decorativo**: lleva `aria-hidden="true"` (el mensaje va en el texto que lo acompaña, que sí cumple), así que no es un par a corregir.
-  Conviene correrla sobre el seed recién cargado y **antes** de `conectada.js` (que firma lo que el seed deja en borrador).
-  ⚠️ La herramienta no pulsa teclas: una tecla pasa Chromium a modalidad de teclado y cambiaría qué anillos de
-  `:focus-visible` se miden.
+  **sólo leyendo**, sin tocar la API. **Desde la 3-e** mide, además de los pares texto/fondo, **el texto que escribe una persona en un campo**
+  (valor y `placeholder`), **el borde de los campos** (3:1, 1.4.11) y **el anillo de foco con teclado real** contra el fondo que de verdad queda detrás
+  (esconde el control y mira a su lado), y separa lo que falla en **pantallas conectadas** de lo que sólo falla en **vistas de modo demostración**.
+  Su cobertura —login y su error, listado con todos sus estados, el expediente con sus 13 pestañas, CI, IDEA, PA/PB, IC, informe impreso, VF y
+  su reporte, el diálogo de alta y el del recibí con sus confirmaciones, los estados compartidos, el aviso y el enlace de salto— se **imprime al final de cada
+  corrida** («Cobertura»). Con `--tabla` imprime los pares que fallan como tabla Markdown (elemento · primer plano · fondo · criterio) y con `--json archivo`
+  el resultado crudo. **Línea base (2026-10-16): ningún par ni borde falla.** «Los mismos pares que fallan que la línea base» significa hoy **ninguno**, y **todo par nuevo ≥ 4,5:1**
+  (`docs/guias/notas-accesibilidad-ui.md` §2.3). Sale con código 1 si falla algo en una pantalla conectada, si falla un anillo o si el CSS apaga un contorno.
+  El glifo grande de los estados vacíos (`.empty-state .big`, decorativo, `aria-hidden`) también se mide y cumple.
+  Se mide sobre una base **recién cargada** y **antes** de `conectada.js` (que firma lo que el seed deja en borrador): el recibí pendiente, los errores de firma o el
+  «Cambió en el servidor» se pintan con los componentes reales sin pedirle nada a la API.
 - **`fingerprint.js`** acepta una **URL** además de una ruta: `node fingerprint.js http://localhost:5500/index.html salida.json`
   (con `API=` e `IPPU_DEMO_PASSWORD`) hace login y recorre el modo demostración (los ejemplos 101–108 se abren con
   `abrirExpedienteDemo`). Con una ruta a un `.html` sigue siendo la herramienta de siempre para versiones anteriores a

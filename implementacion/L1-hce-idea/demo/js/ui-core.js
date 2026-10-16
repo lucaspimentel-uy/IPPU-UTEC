@@ -16,24 +16,6 @@ document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>
 /* ================= INICIO: TABLA NNA (re-renderizable) ================= */
 const tb = document.getElementById("tbodyNNA");
 
-function pillEval(ev){
-  if(!ev) return `<span class="pill due">sin evaluar</span>`;
-  return `<span class="pill done">${ev.score} pts</span>`;
-}
-function pillLik(ev, tieneInicial){
-  if(ev) return `<span class="pill done">${ev.score} pts</span>`;
-  return tieneInicial ? `<span class="pill pend">pendiente</span>` : `<span class="pill due">—</span>`;
-}
-function proxEval(nna){
-  const final = getEval(nna,"final");
-  if(final) return "Ciclo completo ✓";
-  const lik = getEval(nna,"lik");
-  if(lik) return "Completa · 11/2026";
-  const ini = getEval(nna,"inicial");
-  if(ini) return "Intermedia · 06/2026";
-  return "Completa · pendiente";
-}
-
 /* ================= INICIO CONECTADO (Fase 3-a · handoff §5.122) =================
    El listado sale de GET /hce; ya no se filtra el array NNA de la demo. Estado, filtros y
    paginacion viven en LISTA. El servidor busca, filtra y pagina; el navegador solo pinta.
@@ -277,7 +259,7 @@ function renderPendientes(){
     const cobertura = activos ? Math.round((activos-pend.length)/activos*100) : 0;
     kpi.innerHTML = `
       <div class="kpi"><div class="lab">Sin línea base IDEA</div><div class="val orange">${pend.length}</div><div class="sub">NNA activos sin HCE-LB firmada</div></div>
-      <div class="kpi"><div class="lab">Cobertura línea base</div><div class="val ok">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
+      <div class="kpi"><div class="lab">Cobertura línea base</div><div class="val">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
       <div class="kpi"><div class="lab">Sin iniciar</div><div class="val purple">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
   }
   tb2.innerHTML = pend.length ? pend.map(p=>{
@@ -393,7 +375,7 @@ function renderAnalitica(){
     {lab:"IDEA promedio — línea base", val:`${fmt1(a.ideaTot)}<span class="kpi-den"> / 96</span>`,
      sub: a.ideaTot==null ? "Sin líneas base firmadas todavía"
         : `Banda ${bandaIdea(a.ideaTot)} · promedio de ${a.lbs.length} ${plural(a.lbs.length,"línea base","líneas base")}`},
-    {lab:"Δ B−A · Escala IPPU-TEA", val:dTxt, color: dInt ? dInt.c : null,
+    {lab:"Δ B−A · Escala IPPU-TEA", val:dTxt,
      sub: a.conAB.length ? `${dInt.t} · ${a.conAB.length} de ${nAct} con ciclo A → B cerrado`
                          : "Ningún NNA con Protocolo A y B firmados"},
     {lab:"Ciclos completos", val:`${a.ciclos.length}<span class="kpi-den"> / ${nAct}</span>`, cls:"purple",
@@ -408,7 +390,7 @@ function renderAnalitica(){
   document.getElementById("escalasChart").innerHTML = a.lbs.length
     ? a.ideaEsc.map((v,i)=>`
         <div class="hbarrow"><div class="lab">${ESCALAS_IDEA[i]}</div>
-          <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(v)}</div></div></div>
+          <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
       `).join("") +
       `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto de la línea base, no una evolución: desde el Documento Técnico el IDEA se toma una sola vez por NNA (§5.1.1).</div>`
     : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
@@ -417,9 +399,9 @@ function renderAnalitica(){
   document.getElementById("protChart").innerHTML = a.conAB.length
     ? a.paEsc.map((v,i)=>`
         <div class="hbarrow"><div class="lab">${IPPU_ESCALAS[i]}</div>
-          <div class="track"><div class="fill" style="width:${ancho(v,MAX_PROT_ESC)}%;background:#B9C6D6">${fmt1(v)}</div></div></div>
+          <div class="track"><div class="fill" style="width:${ancho(v,MAX_PROT_ESC)}%;background:#B9C6D6"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
         <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:.68rem">→ Protocolo B</div>
-          <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}">${fmt1(a.pbEsc[i])}</div></div></div>
+          <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(a.pbEsc[i])}</span></div>
       `).join("") +
       `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`
     : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
@@ -428,12 +410,12 @@ function renderAnalitica(){
   const BANDAS = IDEA_BANDAS.map((b,i)=>{
     const min = i===0 ? 0 : IDEA_BANDAS[i-1].max+1;
     const nombreCorto = b.perfil.split(" (")[0]; // corta el paréntesis descriptivo largo
-    return [`${nombreCorto} (${min} – ${b.max}) · ${b.ns}`, b.perfil, b.color];
+    return [`${nombreCorto} (${min} – ${b.max}) · ${b.ns}`, b.perfil, b.paso];
   });
   const nLb = a.lbs.length, sinLB = nAct - a.conLB.length;
   document.getElementById("distChart").innerHTML = BANDAS.map(b=>`
     <div class="hbarrow"><div class="lab">${b[0]}</div>
-      <div class="track" style="height:24px"><div class="fill" style="width:${nLb ? a.banda[b[1]]/nLb*100 : 0}%;background:${b[2]}">${a.banda[b[1]]} NNA</div></div></div>
+      <div class="track" style="height:24px"><div class="fill" style="width:${nLb ? a.banda[b[1]]/nLb*100 : 0}%;background:var(--rampa-${b[2]});box-shadow:inset 0 0 0 1px var(--rampa-borde)"></div></div><span class="hbar-num">${a.banda[b[1]]} NNA</span></div>
   `).join("") +
     `<div class="note">Distribución de ${nLb} ${plural(nLb,"línea base IDEA firmada","líneas base IDEA firmadas")} según la banda orientativa del puntaje total, con el soporte DSM-5-TR orientativo asociado. ` +
     (sinLB ? `Quedan fuera ${sinLB} ${plural(sinLB,"NNA activo sin línea base firmada","NNA activos sin línea base firmada")}.`
@@ -450,10 +432,12 @@ const talleres = [
   ["Taller de música y expresión",[0.9,1.1,0.7,1.2]],
   ["Taller de higiene y AVD",[0.4,0.3,1.6,0.2]]
 ];
-const heatColor = v => v>=1.5 ? "#0E8F7E" : v>=0.9 ? "#6FBF9E" : v>=0.4 ? "#D9C26B" : "#C9CFD8";
+/* Heatmap de muestra: el texto de cada celda se elige contra SU fondo (blanco solo sobre el verde oscuro; tinta sobre los claros). */
+const heatColor = v => v>=1.5 ? "#0A6B5E" : v>=0.9 ? "#6FBF9E" : v>=0.4 ? "#D9C26B" : "#C9CFD8";
+const heatTexto = v => v>=1.5 ? "#FFFFFF" : "var(--ink)";
 document.getElementById("heatTable").innerHTML =
   `<tr><th class="row">Taller</th><th>Rel. Soc.</th><th>Comun.</th><th>Anticip.</th><th>Simbol.</th></tr>` +
-  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td><div class="heat-cell" style="background:${heatColor(v)}">${v.toFixed(1)}</div></td>`).join("")}</tr>`).join("");
+  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td><div class="heat-cell" style="background:${heatColor(v)};color:${heatTexto(v)}">${v.toFixed(1)}</div></td>`).join("")}</tr>`).join("");
 
 // La distribución por banda de severidad se calcula en renderAnalitica() (más arriba),
 // junto con los KPIs y los dos gráficos por escala.

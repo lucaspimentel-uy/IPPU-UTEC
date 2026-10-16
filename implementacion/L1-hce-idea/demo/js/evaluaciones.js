@@ -362,18 +362,23 @@ function ideaDimHtml(ev, ei, di){
   const d = DIMENSIONES[ei].dims[di];
   const key = "D" + (ei * 3 + di + 1);
   const st = ev.dim[key];
+  /* Un solo punto de Tab por dimensión (tabindex móvil, Fase 3-e): el botón elegido, o el primero si no hay ninguno. Las flechas
+     mueven el foco dentro de la dimensión (evTeclaDim); Tab pasa a la siguiente parte de la pantalla. */
+  const orden = d.opciones.map(([pts]) => pts).concat([1, 3, 5, 7, "NS"]);
+  const activo = orden.includes(st.valor) ? st.valor : orden[0];
+  const ti = (v) => ` tabindex="${v === activo ? 0 : -1}"`;
   const opc = d.opciones.map(([pts, desc]) =>
-    `<button type="button" class="opcion${st.valor === pts ? " sel" : ""}" data-ev data-dim="${key}" data-v="${pts}" aria-pressed="${st.valor === pts}" onclick="evDim('${key}',${pts})">
+    `<button type="button" class="opcion${st.valor === pts ? " sel" : ""}"${ti(pts)} data-ev data-dim="${key}" data-v="${pts}" aria-pressed="${st.valor === pts}" onclick="evDim('${key}',${pts})">
        <span class="score-badge sb-${pts}">${pts}</span><span class="desc">${escHtml(desc)}</span></button>`).join("");
   const inter = [1, 3, 5, 7].map(v =>
-    `<button type="button" class="inter-btn${st.valor === v ? " sel" : ""}" data-ev data-dim="${key}" data-inter="${v}" aria-pressed="${st.valor === v}" onclick="evDim('${key}',${v})">Puntaje ${v}</button>`).join("");
-  return `<div class="dimension" id="dim-${key}">
+    `<button type="button" class="inter-btn${st.valor === v ? " sel" : ""}"${ti(v)} data-ev data-dim="${key}" data-inter="${v}" aria-pressed="${st.valor === v}" onclick="evDim('${key}',${v})">Puntaje ${v}</button>`).join("");
+  return `<div class="dimension" id="dim-${key}" onkeydown="evTeclaDim(event)">
     <div class="dname" id="dname-${key}">${escHtml(d.label)}</div>
     <div class="dinstr">Elegí la descripción que mejor caracterice al NNA — asignar siempre la puntuación más baja posible. Tocá de nuevo la elegida para dejarla sin puntuar.</div>
     <div class="opciones" id="dimgrp-${key}" role="group" aria-labelledby="dname-${key}" aria-describedby="err_dim_${key}" tabindex="-1">${opc}</div>
     <div class="inter-row" role="group" aria-label="Puntajes intermedios y NS de ${escHtml(d.label)}">
       <span class="inter-label">¿El caso se sitúa claramente entre dos niveles?</span>${inter}
-      <button type="button" class="inter-btn inter-ns${st.valor === "NS" ? " sel" : ""}" data-ev data-dim="${key}" data-ns="1" aria-pressed="${st.valor === "NS"}" aria-label="NS: observación insuficiente" onclick="evDim('${key}','NS')"><span aria-hidden="true">◌ </span>NS</button>
+      <button type="button" class="inter-btn inter-ns${st.valor === "NS" ? " sel" : ""}"${ti("NS")} data-ev data-dim="${key}" data-ns="1" aria-pressed="${st.valor === "NS"}" aria-label="NS: observación insuficiente" onclick="evDim('${key}','NS')"><span aria-hidden="true">◌ </span>NS</button>
       <span class="inter-nota">Intermedias (Rivière) · NS = observación insuficiente (impide firmar)</span>
     </div>
     <div class="dsel" id="dsel-${key}">Seleccionado: ${valorDimHtml(st.valor)}</div>
@@ -528,14 +533,40 @@ function evDim(key, v){
   const st = ev.dim[key];
   st.valor = st.valor === v ? null : v;
   ev.sucio = true;
-  document.querySelectorAll(`#dim-${key} [data-dim="${key}"]`).forEach(b => {
+  const botones = [...document.querySelectorAll(`#dim-${key} [data-dim="${key}"]`)];
+  const foco = botones.includes(document.activeElement) ? document.activeElement : null;
+  botones.forEach(b => {
     const val = b.dataset.ns ? "NS" : (b.dataset.v !== undefined ? +b.dataset.v : +b.dataset.inter);
     const on = st.valor === val;
     b.classList.toggle("sel", on);
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
+  evRovingDim(key, foco);
   const s = _evEl("dsel-" + key); if(s) s.innerHTML = `Seleccionado: ${valorDimHtml(st.valor)}`;
   evActualizar();
+}
+
+/* Tabindex móvil: un solo punto de Tab por dimensión. Activo = el elegido; si no hay, el que tiene el foco; si no, el primero. */
+function evRovingDim(key, preferido){
+  const bs = [...document.querySelectorAll(`#dim-${key} [data-dim="${key}"]`)];
+  if(!bs.length) return;
+  const act = bs.find(b => b.getAttribute("aria-pressed") === "true") || (preferido && bs.includes(preferido) ? preferido : bs[0]);
+  bs.forEach(b => { b.tabIndex = b === act ? 0 : -1; });
+}
+/* Flechas, Inicio y Fin mueven el foco dentro de la dimensión; no cambian la selección (eso es Enter o Espacio). */
+function evTeclaDim(e){
+  const b = e.target && e.target.closest ? e.target.closest("button[data-dim]") : null;
+  if(!b) return;
+  const bs = [...b.closest(".dimension").querySelectorAll("button[data-dim]")];
+  let i = bs.indexOf(b);
+  if(e.key === "ArrowRight" || e.key === "ArrowDown") i = (i + 1) % bs.length;
+  else if(e.key === "ArrowLeft" || e.key === "ArrowUp") i = (i - 1 + bs.length) % bs.length;
+  else if(e.key === "Home") i = 0;
+  else if(e.key === "End") i = bs.length - 1;
+  else return;
+  e.preventDefault();
+  bs.forEach(x => { x.tabIndex = x === bs[i] ? 0 : -1; });
+  bs[i].focus();
 }
 
 /* ======================================================================

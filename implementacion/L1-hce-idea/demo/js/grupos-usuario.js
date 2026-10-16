@@ -88,7 +88,7 @@ function renderGrupos(){
   const tecnicosUnicos = new Set(GRUPOS.flatMap(g=>todosTecnicosDelGrupo(g).map(t=>t.nombre)));
   kpi.innerHTML = `
     <div class="kpi"><div class="lab">Grupos de referencia</div><div class="val">${GRUPOS.length}</div><div class="sub">Por edad y modalidad</div></div>
-    <div class="kpi"><div class="lab">NNA en seguimiento</div><div class="val ok">${NNA.length}</div><div class="sub">Distribuidos en grupos</div></div>
+    <div class="kpi"><div class="lab">NNA en seguimiento</div><div class="val">${NNA.length}</div><div class="sub">Distribuidos en grupos</div></div>
     <div class="kpi"><div class="lab">Técnicos asignados</div><div class="val purple">${tecnicosUnicos.size}</div><div class="sub">Responsables + habilitados (§21.1)</div></div>
     <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 14 institucionales</div></div>`;
   cont.innerHTML = `
@@ -112,7 +112,7 @@ function renderGrupos(){
           <h2><button class="btn-link h2-link" onclick="abrirGrupo('${g.id}')">Grupo ${g.id}</button>
             <span style="font-weight:400;color:var(--ink-2);font-size:.8rem">· ${g.franja}</span></h2>
           <div style="flex:1"></div>
-          <span class="pill done">${integrantes.length} NNA</span>
+          <span class="pill neutro">${integrantes.length} NNA</span>
         </div>
         <div class="cardbody">
           <div class="hint" style="margin-bottom:8px">Técnicos responsables: ${r1} · ${r2}</div>
@@ -154,7 +154,7 @@ function renderGrupoDetalle(gid){
     const imgOk = !!(n.autImagen && n.autImagen.registrada);
     const imgBadge = imgOk
       ? `<span class="mbadge mb-firmado">Imagen: sí</span>`
-      : `<span class="mbadge mb-bloqueado">Imagen: no</span>`;
+      : `<span class="mbadge mb-sin">Imagen: no</span>`;
     return `<tr>
       <td>
         <button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})"><b>${n.nombre} ${n.apellido}</b> (${n.sexo?.[0]||"?"}, ${n.edad} años)</button>

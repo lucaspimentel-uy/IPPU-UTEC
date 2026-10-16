@@ -43,7 +43,7 @@ function rellenarPanelesDemo(){
   });
 }
 
-/* ===== Estados compartidos: cargando · error (con Reintentar) · vacío (Fase 3-e, handoff §5.128) =====
+/* ===== Estados compartidos: cargando · error (con Reintentar) · vacío (Fase 3-e, handoff §5.135) =====
    UN componente para todas las pantallas conectadas (antes cada una armaba el suyo, con roles y botones distintos):
    - cargando: role="status" (se anuncia sin interrumpir);
    - error:    role="alert", el mensaje de la API tal cual y «Reintentar» (primario) + acciones extra opcionales;
@@ -101,10 +101,16 @@ function pedirDescarte(modal, alDescartar, alSeguir){
   banda.innerHTML = `<span class="cd-txt" id="cdTxt"><span class="cd-glifo" aria-hidden="true">⚠</span>Hay datos sin guardar. Si cerrás, se pierden.</span>
     <span class="cd-acciones"><button type="button" class="btn btn-ghost" id="btnCdSeguir" aria-describedby="cdTxt">Seguir editando</button>
     <button type="button" class="btn btn-descartar" id="btnCdDescartar" aria-describedby="cdTxt">Descartar y cerrar</button></span>`;
+  const previo = document.activeElement;                    // el campo donde se estaba: «Seguir editando» vuelve ahí
   const cab = modal.querySelector(".modal-head");
   cab.insertAdjacentElement("afterend", banda);
   const quitar = () => { banda.remove(); };
-  banda.querySelector("#btnCdSeguir").onclick = () => { quitar(); if(alSeguir) alSeguir(); };
+  banda.querySelector("#btnCdSeguir").onclick = () => {
+    quitar();
+    const vuelta = previo && modal.contains(previo) && previo.offsetParent !== null ? previo : modal.querySelector("h2[tabindex]");
+    if(vuelta) vuelta.focus();
+    if(alSeguir) alSeguir();
+  };
   banda.querySelector("#btnCdDescartar").onclick = () => { quitar(); alDescartar(); };
   banda.addEventListener("keydown", ev => { if(ev.key === "Escape"){ ev.preventDefault(); ev.stopPropagation(); banda.querySelector("#btnCdSeguir").click(); } });
   banda.querySelector("#btnCdSeguir").focus();

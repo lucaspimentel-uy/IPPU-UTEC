@@ -67,6 +67,24 @@ function teclaTabExp(ev){
   selTabExp(ks[i], true);
 }
 
+/* El panel de la pestaña (role="tabpanel") es alcanzable con Tab SOLO cuando no tiene nada operable adentro (los módulos en modo
+   demostración son un texto): sin eso, quien navega con teclado no puede llegar a leerlo ni a desplazarlo (patrón de tabpanel del APG).
+   Se recalcula con cada repintado del panel, venga de donde venga (un módulo conectado escribe en #panelExp por su cuenta). */
+const _PANEL_OPERABLE = "button:not([disabled]), a[href], input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex='-1'])";
+function ajustarFocoPanelExp(){
+  const p = document.getElementById("panelExp");
+  if(!p) return;
+  const operable = p.querySelector(_PANEL_OPERABLE);
+  if(operable){ if(p.getAttribute("tabindex") === "0") p.removeAttribute("tabindex"); }
+  else if(p.getAttribute("tabindex") !== "0") p.setAttribute("tabindex", "0");
+}
+function vigilarPanelExp(){
+  const p = document.getElementById("panelExp");
+  if(!p) return;
+  new MutationObserver(ajustarFocoPanelExp).observe(p, {childList: true, subtree: true});
+  ajustarFocoPanelExp();
+}
+
 /* Solo las marcas de estado de las pestanas (el panel no depende del flujo, asi no pierde el foco ni lo tipeado). */
 function pintarTabsExp(){
   const cont = document.getElementById("tabsExpWrap");
@@ -450,7 +468,7 @@ async function abrirExpediente(id, opts){
     <div id="flujoWrap"></div>
     <div id="tabsExpWrap">${tabsExpedienteHtml()}</div>
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
-  pintarAvisosExp(); pintarFlujo();
+  pintarAvisosExp(); pintarFlujo(); vigilarPanelExp();
   cargarModsExp(); cargarIdeaVigente();         // addendas por modulo (marcas) y «qué IDEA rige» (§5.97), de la API
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
@@ -584,7 +602,7 @@ function abrirExpedienteDemo(id){
           <h3><span class="ic">◐</span> Línea base — IDEA (HCE-LB)</h3>
           <div class="ib">
             ${(()=>{ const lb=p.flujo.lb; const t=lbTotales(lb.dim); const est=estadoModulo(p,"lb");
-              if(est==="firmado") return `<div class="data-row"><dt>Total IDEA</dt><dd>${t.total} / 96 · <b style="color:${colorBanda(t.total)}">${bandaIdea(t.total)}</b></dd></div>
+              if(est==="firmado") return `<div class="data-row"><dt>Total IDEA</dt><dd>${t.total} / 96 · <b>${bandaIdea(t.total)}</b></dd></div>
                 <div class="data-row"><dt>Fecha de consenso</dt><dd>${fmtFecha(lb.fecha)}</dd></div>
                 <div class="data-row"><dt>Estado</dt><dd>${estadoBadgeM(est)}</dd></div>`;
               if(est==="borrador") return `<div class="data-row"><dt>Línea base</dt><dd>${estadoBadgeM(est)} · ${t.count}/12 dim.${t.hayNS?" (incluye NS)":""}</dd></div>`;

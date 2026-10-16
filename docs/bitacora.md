@@ -20,6 +20,15 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-16 · Fase 3-e — accesibilidad y pasada visual de las pantallas conectadas** (Lucas con Claude, rama `fase3e-accesibilidad`; §5.135). Sin backend ni DDL.
+  - **Foco:** un solo anillo sólido (`--ring` / `--ring-dark` sobre el cromo oscuro), sin `outline:none` ni `box-shadow` de foco; enlace «Saltar al contenido»; `#panelExp` con `tabindex="0"` si no hay nada operable; tabindex móvil en el editor del IDEA (un punto de Tab por dimensión).
+  - **Diálogos:** Tab atrapado en login, alta/edición y recibí; foco de vuelta a quien abrió o al título; ×, Cancelar y Esc piden confirmación si hay datos tipeados (banda destructiva dentro del diálogo); «Salir» y el 401 no preguntan.
+  - **Color:** ok/warn/bad nunca en una clasificación clínica; tokens con nombre (rampa, estados, NS, anillo, acciones); `IDEA_BANDAS[].color` y `colorBanda()` retirados; cifras de Analítica fuera del relleno; CSS muerto retirado.
+  - **Contraste:** `verificar_contraste_ui.js` ampliado (todas las pantallas y diálogos conectados, texto de campos, borde de campos, anillo con teclado real y fondo real detrás). **Línea base nueva: ningún par ni borde falla.**
+  - **Texto:** mensajes de validación de Pydantic en castellano (sólo presentación; el backend sigue mandando inglés); la autorización de imagen regula compartir, no guardar (§5.99).
+  - **Verificación:** `conectada.js` **181/181** (155 + 26 `3e-…`); `capturas.js` (nuevo): 22 imágenes a 1280×800 y 1024×768; `verificar_estado.py --check` OK. Tropiezos: §5.128–§5.134 ya eran de L3 (esta decisión es §5.135); una limpieza de `ui-core.js` borró de más y se restauró desde git antes de seguir.
+  - **Pendiente:** sin prueba con lector de pantalla; Likert de PA/PB sin tabindex móvil; reflow a 320 px sólo en listado y HCE-00 (`notas-accesibilidad-ui.md` §6). **Próximo:** guion de la demo (aparte), reseed después del 2026-11-13, ensayo.
+
 - **2026-10-15 · L3 — F1-c5: retenido v1 de límites, medición y crisis fijada** (Samuel con Claude, rama `l3/f1c5-retenido-v1`). Sólo mide: no cambian `limites.py`, `indice.py`, `flujo.py` ni el umbral.
   - `eval/retenido-v1.md`: 32 casos del revisor (copiados tal cual), en parte adversariales. `banco.py` acepta ids `V..`.
   - `--retenido` muestra `datos_restantes` en toda la cat. 4. El medidor `datos_ficticios()` ahora también ve nombres «ficti…» en minúscula.

@@ -12,18 +12,19 @@ function tieneIdeaAnio(nna, anio){ return ideaEvals(nna).some(e => anioDe(e.fech
 function tieneLBFirmada(nna){ return !!(nna.flujo && nna.flujo.lb.firmado); }
 function pendienteIdea(nna){ return nna.activo && !tieneLBFirmada(nna); }
 /* 6 bandas del IDEA con soporte DSM-5-TR (§5.13 / D4, Prototipo v4).
-   Texto orientativo copiado tal cual (M12.1): es deliberadamente neutro. */
+   Texto orientativo copiado tal cual (M12.1): es deliberadamente neutro.
+   `paso` = lugar en la rampa SECUENCIAL de un solo matiz (--rampa-1…6, estilos.css): una banda es una clasificación clínica, no un
+   estado, así que nunca usa ok/warn/bad (Fase 3-e, handoff §5.135). El nombre de la banda va siempre escrito. */
 const IDEA_BANDAS = [
-  {max:15, perfil:"Muy leve",                                                ns:"Nivel 1",   color:"var(--ok)",   txt:"Sugerencia: priorizar los objetivos en las dimensiones del IDEA con mayor puntaje individual."},
-  {max:30, perfil:"Leve",                                                    ns:"Nivel 1",   color:"var(--ok)",   txt:"Sugerencia: revisar el perfil por escala del IDEA para focalizar los apoyos donde la afectación relativa es mayor."},
-  {max:55, perfil:"Leve a moderado",                                         ns:"Nivel 1–2", color:"var(--warn)", txt:"Sugerencia: atender especialmente las Escalas 1 y 2 del IDEA (Relación Social y Comunicación) al definir objetivos del semestre."},
-  {max:75, perfil:"Moderado",                                                ns:"Nivel 2",   color:"var(--warn)", txt:"Sugerencia: el perfil por escala del IDEA orienta la priorización de apoyos; valorar en equipo la necesidad de apoyos a la comunicación (Escala 2)."},
-  {max:90, perfil:"Moderado a severo (alta necesidad de apoyo)",             ns:"Nivel 2–3", color:"var(--bad)",  txt:"Sugerencia: perfil de alta necesidad de apoyo; leer las cuatro escalas del IDEA en conjunto para estructurar los apoyos del entorno grupal."},
-  {max:96, perfil:"Severo a muy severo (necesidad de apoyo muy sustancial)", ns:"Nivel 3",   color:"var(--bad)",  txt:"Sugerencia: apoyo muy sustancial en todas las áreas; los objetivos se anclan en las dimensiones del IDEA de mayor puntaje."}
+  {max:15, perfil:"Muy leve",                                                ns:"Nivel 1",   paso:1, txt:"Sugerencia: priorizar los objetivos en las dimensiones del IDEA con mayor puntaje individual."},
+  {max:30, perfil:"Leve",                                                    ns:"Nivel 1",   paso:2, txt:"Sugerencia: revisar el perfil por escala del IDEA para focalizar los apoyos donde la afectación relativa es mayor."},
+  {max:55, perfil:"Leve a moderado",                                         ns:"Nivel 1–2", paso:3, txt:"Sugerencia: atender especialmente las Escalas 1 y 2 del IDEA (Relación Social y Comunicación) al definir objetivos del semestre."},
+  {max:75, perfil:"Moderado",                                                ns:"Nivel 2",   paso:4, txt:"Sugerencia: el perfil por escala del IDEA orienta la priorización de apoyos; valorar en equipo la necesidad de apoyos a la comunicación (Escala 2)."},
+  {max:90, perfil:"Moderado a severo (alta necesidad de apoyo)",             ns:"Nivel 2–3", paso:5, txt:"Sugerencia: perfil de alta necesidad de apoyo; leer las cuatro escalas del IDEA en conjunto para estructurar los apoyos del entorno grupal."},
+  {max:96, perfil:"Severo a muy severo (necesidad de apoyo muy sustancial)", ns:"Nivel 3",   paso:6, txt:"Sugerencia: apoyo muy sustancial en todas las áreas; los objetivos se anclan en las dimensiones del IDEA de mayor puntaje."}
 ];
 const ideaInterpreta = t => IDEA_BANDAS.find(b => t <= b.max) || IDEA_BANDAS[IDEA_BANDAS.length-1];
 const bandaIdea  = s => ideaInterpreta(s).perfil;
-const colorBanda = s => ideaInterpreta(s).color;
 /* Totales de la línea base IDEA desde flujo.lb.dim (0–8 | 'NS' | null). */
 function lbTotales(dim){
   const esc=[0,0,0,0]; let total=0, hayNS=false, count=0;
@@ -82,14 +83,15 @@ function calcularDelta(protoA, protoB){
 }
 /* Interpretación del delta por rango (§5.2, Prototipo v4 · deltaInterpreta).
    Texto y acción copiados tal cual del prototipo (M12.1). Un tramo lleva alerta=true:
-   la alerta institucional Δ ≤ −7 se deriva del catálogo, no de un número suelto. */
+   la alerta institucional Δ ≤ −7 se deriva del catálogo, no de un número suelto.
+   Sin color de estado: la lectura de un Δ es una clasificación clínica, no un estado (Fase 3-e, handoff §5.135). */
 function deltaInterpreta(d){
-  if(d>=13) return {t:"Progreso muy significativo", a:"Documentar y analizar qué estrategias lo produjeron para replicarlas.", c:"var(--ok)"};
-  if(d>=7)  return {t:"Progreso significativo",     a:"Documentar; mantener la línea de intervención.",                        c:"var(--ok)"};
-  if(d>=1)  return {t:"Progreso leve",              a:"Revisar si los objetivos de esa escala son suficientemente ambiciosos.",c:"var(--ok)"};
-  if(d===0) return {t:"Sin cambio",                 a:"Analizar si el área está consolidada o requiere mayor intensidad.",     c:"var(--ink-2)"};
-  if(d>=-6) return {t:"Regresión leve",             a:"Identificar factores contextuales; revisar estrategias.",               c:"var(--warn)"};
-  return       {t:"Regresión significativa",         a:"Reunión técnica urgente; contacto con familia; posible revisión del plan.", c:"var(--bad)", alerta:true};
+  if(d>=13) return {t:"Progreso muy significativo", a:"Documentar y analizar qué estrategias lo produjeron para replicarlas."};
+  if(d>=7)  return {t:"Progreso significativo",     a:"Documentar; mantener la línea de intervención."};
+  if(d>=1)  return {t:"Progreso leve",              a:"Revisar si los objetivos de esa escala son suficientemente ambiciosos."};
+  if(d===0) return {t:"Sin cambio",                 a:"Analizar si el área está consolidada o requiere mayor intensidad."};
+  if(d>=-6) return {t:"Regresión leve",             a:"Identificar factores contextuales; revisar estrategias."};
+  return       {t:"Regresión significativa",         a:"Reunión técnica urgente; contacto con familia; posible revisión del plan.", alerta:true};
 }
 const fmtDelta = d => (d>0?"+":"")+d;
 /* Umbral de alerta institucional derivado: el mayor Δ que aún dispara alerta:true.

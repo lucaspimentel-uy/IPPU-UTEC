@@ -100,7 +100,7 @@
     --shadow-modal:0 24px 60px rgba(22,35,44,.28), 0 2px 8px rgba(22,35,44,.14);
     font-size:16px;
 
-    /* ============ TOKENS DE LA PASADA DE ACCESIBILIDAD (Fase 3-e, handoff §5.128) ============
+    /* ============ TOKENS DE LA PASADA DE ACCESIBILIDAD (Fase 3-e, handoff §5.135) ============
        Regla de color (notas-accesibilidad-ui.md §3): --ok / --warn / --bad NUNCA pintan una clasificación clínica
        (bandas del IDEA, insignias de puntaje, categorías y niveles de la VF): para eso está la rampa de un solo matiz.
        Quedan para: error de validación y resumen de errores (bad), confirmación destructiva o irreversible (bad),
@@ -141,6 +141,7 @@
     /* --- acciones --- */
     --accion-firma:#0E7A46;      /* «Firmar»: irreversible, pero no es un error ni un estado */
     --accion-destructiva:#B3261E;
+    --control-borde:#7E8D95;     /* borde de input / select / textarea: 3,4:1 sobre blanco (1.4.11); --rule es un filete, no el límite de un control */
     --warn-ink:#5C4713;          /* texto de --warn sobre --warn-soft (el --warn puro daba 4,3:1) */
     --teal-ink:#0A6B5E;          /* texto de --teal sobre --teal-soft (el --teal puro daba 3,5:1) */
   }
@@ -153,18 +154,20 @@
     -webkit-font-smoothing:antialiased;
   }
   button{font-family:inherit;cursor:pointer}
-  /* ============ FOCO — un solo anillo (Fase 3-e, handoff §5.128; notas §«Foco») ============
+  /* ============ FOCO — un solo anillo (Fase 3-e, handoff §5.135; notas §«Foco») ============
      Contorno SÓLIDO de --ring-w con --ring-off de separación, en TODO lo operable y en lo que recibe el foco por
      programa (títulos con tabindex="-1", resúmenes de error). Ningún selector lo reemplaza por un box-shadow
      translúcido ni lo apaga con `outline:none`: el anillo no se pierde ni sobre un campo con borde de color.
      Sobre el cromo oscuro la variable --ring cambia a --ring-dark (se hereda a todos los controles de adentro). */
   :focus-visible{outline:var(--ring-w) solid var(--ring);outline-offset:var(--ring-off)}
+  /* WCAG 2.4.11: lo enfocado no queda tapado por la barra superior ni por la barra de totales pegada abajo. */
+  html{scroll-padding-top:76px;scroll-padding-bottom:132px}
   .topbar,.sidebar,.exp-head,.idea-summary,.inf-banner,.modal-head,.skip-link{--ring:var(--ring-dark)}
   main:focus,main:focus-visible{outline:none}   /* destino del enlace «Saltar al contenido»: un contenedor, no un control */
   .skip-link{
     position:fixed;top:8px;left:8px;z-index:300;padding:10px var(--s4);background:var(--ink);color:#fff;
     font-weight:700;font-size:var(--fs-sm);border-radius:var(--r-sm);border:2px solid #fff;text-decoration:none;
-    transform:translateY(-220%);transition:transform .12s ease
+    transform:translateY(-220%)
   }
   .skip-link:focus,.skip-link:focus-visible{transform:none}
   @media (prefers-reduced-motion:reduce){
@@ -291,11 +294,9 @@
     font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.02em;
     border:1px solid transparent;white-space:nowrap
   }
-  .pill.done{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
   .pill.pend{background:var(--warn-soft);color:var(--warn-ink);border-color:var(--warn-line)}
   .pill.due{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
   .nna-name{font-weight:600;color:var(--ink)}
-  .nna-meta{font-size:var(--fs-2xs);color:var(--ink-2)}
 
   /* --- botones: una sola familia, misma altura, foco visible --- */
   .btn{
@@ -305,7 +306,7 @@
     transition:background .12s ease,border-color .12s ease,color .12s ease;
   }
   /* Sin border-color propio: varios botones del JS pisan sólo el `background` por
-     estilo en línea (firmar = --ok, addenda = --teal, excepción = --warn). Si el
+     estilo en línea (addenda = --teal). Si el
      borde quedara naranja, esos botones saldrían con el filete de otro color. */
   .btn-primary{background:var(--orange);color:#fff}
   .btn-primary:hover{background:var(--orange-hover)}
@@ -331,9 +332,7 @@
   }
   .kpi .val .kpi-den{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);letter-spacing:0}
   .kpi .sub{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1);line-height:1.45}
-  .kpi .val.ok{color:var(--ok)} .kpi .val.orange{color:var(--orange)} .kpi .val.purple{color:var(--purple)}
-  .kpi-link{cursor:pointer;transition:border-color .12s ease}
-  .kpi-link:hover{border-color:var(--orange-line)}
+  .kpi .val.orange{color:var(--orange)} .kpi .val.purple{color:var(--purple)}   /* decorativos: ok/warn/bad no colorean cifras sueltas */
 
   /* ============ FORMULARIO IDEA ============
      Es un instrumento en papel: 4 escalas × 3 dimensiones, y en cada dimensión hay
@@ -422,13 +421,6 @@
   .idea-summary .btn-ghost{background:transparent;color:var(--on-dark-2);border-color:var(--navy-3)}
   .idea-summary .btn-ghost:hover{background:var(--navy-3);color:#fff;border-color:var(--navy-3)}
   /* Progreso de las 12 dimensiones: cuadrícula de casillas, como el pie de un protocolo. */
-  .prog-dims{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:var(--s3)}
-  .prog-dim{
-    width:24px;height:24px;border-radius:var(--r-sm);background:var(--paper);
-    border:1px solid var(--rule);font-family:var(--f-dato);font-size:var(--fs-3xs);
-    font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--ink-2)
-  }
-  .prog-dim.filled{background:var(--ink);border-color:var(--ink);color:#fff}
 
   /* ============ EVAL INTERMEDIA (vista legada, no expuesta desde M5.3) ============ */
   .lik-head{
@@ -452,12 +444,6 @@
   .lik-opts button:hover{border-color:var(--ink-3);color:var(--ink)}
   .lik-opts button.sel{background:var(--teal);border-color:var(--teal);color:#fff}
   /* Escala IPPU-TEA · tabs A|B del editor PA/PB (M5.2) */
-  .prot-tab{
-    padding:6px var(--s3);border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);
-    font-family:var(--f-dato);font-size:var(--fs-2xs);font-weight:700;color:var(--ink-2);cursor:pointer
-  }
-  .prot-tab:hover{border-color:var(--ink-3);color:var(--ink)}
-  .prot-tab.active{background:var(--ink);border-color:var(--ink);color:#fff}
   .formula{
     margin:var(--s3) var(--s4) var(--s4);padding:var(--s3) var(--s4);
     border:1px dashed var(--teal);border-radius:var(--r-sm);
@@ -470,7 +456,7 @@
   }
   select{
     font-family:inherit;font-size:var(--fs-xs);padding:7px var(--s2);
-    border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
+    border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
   }
   select:focus{border-color:var(--orange)}
 
@@ -489,33 +475,6 @@
     padding:8px var(--s3);font-weight:600;font-size:var(--fs-xs)
   }
   .btn-print:hover{background:var(--paper-3)}
-  .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:var(--s4)}
-  @media(max-width:920px){.grid2{grid-template-columns:1fr}}
-  table.comp{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
-  table.comp th{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em;
-    color:var(--ink-2);text-align:left;padding:var(--s2);border-bottom:1px solid var(--rule);font-weight:700
-  }
-  table.comp td{padding:var(--s2);border-bottom:1px solid var(--rule-2)}
-  .score-chip{
-    display:inline-block;min-width:30px;text-align:center;padding:2px var(--s2);border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-weight:700;font-size:var(--fs-2xs)
-  }
-  .s-high{background:var(--bad-soft);color:var(--bad)}
-  .s-mid{background:var(--warn-soft);color:var(--warn)}
-  .s-low{background:var(--ok-soft);color:var(--ok)}
-  .resumen .big{font-family:var(--f-dato);font-size:var(--fs-xl);font-weight:700}
-  .resumen .delta{color:var(--ok);font-weight:700;font-size:var(--fs-sm);font-family:var(--f-dato)}
-  .resumen dt{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em;
-    color:var(--ink-2);margin-top:var(--s3);font-weight:700
-  }
-  .resumen dd{font-size:var(--fs-sm);font-weight:600;margin-top:2px}
-  .barchart{display:flex;align-items:flex-end;gap:var(--s7);height:190px;padding:var(--s2) var(--s4) 0;justify-content:center}
-  .barchart .bar{width:64px;border-radius:var(--r-sm) var(--r-sm) 0 0;position:relative;transition:height .5s ease}
-  .barchart .bar span{position:absolute;top:-22px;left:0;right:0;text-align:center;font-family:var(--f-dato);font-weight:700;font-size:var(--fs-sm)}
-  .barchart .bar i{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-style:normal;font-size:var(--fs-2xs);color:var(--ink-2)}
-  .chart-wrap{padding-bottom:var(--s7)}
 
   /* ============ ANALÍTICA ============ */
   .heat{border-collapse:collapse;font-size:var(--fs-2xs);width:100%;table-layout:fixed}
@@ -538,8 +497,9 @@
   .hbarrow .track{flex:1;background:var(--paper-3);border-radius:var(--r-sm);height:16px;overflow:hidden}
   .hbarrow .fill{
     height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;
-    padding-right:6px;color:#fff;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;min-width:34px
+    padding-right:6px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700
   }
+  .hbarrow .hbar-num{flex:0 0 auto;min-width:56px;font-family:var(--f-dato);font-size:var(--fs-2xs);font-weight:700;color:var(--ink)}
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--s4)}
   .note{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);line-height:1.55}
 
@@ -622,7 +582,7 @@
   .field label{display:block;font-size:var(--fs-2xs);font-weight:600;color:var(--ink);margin-bottom:var(--s1)}
   .field label .req{color:var(--bad)}
   .field input, .field select, .field textarea{
-    width:100%;font-family:inherit;font-size:var(--fs-xs);padding:8px 10px;border:1px solid var(--rule);
+    width:100%;font-family:inherit;font-size:var(--fs-xs);padding:8px 10px;border:1px solid var(--control-borde);
     border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
   }
   .field input::placeholder,.field textarea::placeholder{color:var(--ink-2)}
@@ -641,13 +601,6 @@
     padding-bottom:var(--s1);border-bottom:1px solid var(--rule)
   }
   .section-label:first-child{margin-top:var(--s2)}
-  .chips-pick{display:flex;flex-wrap:wrap;gap:var(--s1)}
-  .chip-pick{
-    padding:6px var(--s3);border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);
-    font-size:var(--fs-2xs);cursor:pointer;color:var(--ink-2)
-  }
-  .chip-pick:hover{border-color:var(--ink-3);color:var(--ink)}
-  .chip-pick.sel{background:var(--orange-soft);border-color:var(--orange);color:var(--orange-hover);font-weight:600}
   .review-box{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--r);padding:var(--s4)}
   .review-box dl{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);font-size:var(--fs-xs)}
   .review-box dt{color:var(--ink-2);font-weight:600}
@@ -716,7 +669,7 @@
      del producto y aparece en tres lugares (expediente, detalle de grupo, informe sin
      firmar), antes con tres tratamientos distintos. Ahora es un solo componente: cinco
      casillas mono sobre un filete, donde firmado = sello macizo, borrador = sello
-     abierto, bloqueado = casilla hueca. Los códigos van en la cara de dato porque
+     abierto, sin iniciar = casilla hueca. Los códigos van en la cara de dato porque
      CI · LB · PA · PB · IC son literalmente los códigos del expediente. */
   .flujo-card{
     background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);
@@ -750,8 +703,6 @@
   .fstep.s-firmado .fname{color:var(--ok)}
   .fstep.s-borrador .fdot{background:var(--paper);border-color:var(--warn);color:var(--warn)}
   .fstep.s-borrador .fname{color:var(--ink)}
-  .fstep.exc .fdot{box-shadow:0 0 0 3px var(--warn-soft)}
-  .fstep .fexc{display:block;color:var(--warn);font-weight:700;font-size:var(--fs-3xs);margin-top:2px}
   .flujo-row{
     display:flex;align-items:center;gap:var(--s3);padding:var(--s3);
     border:1px solid var(--rule);border-radius:var(--r-sm);margin-bottom:var(--s1);background:var(--paper)
@@ -771,8 +722,7 @@
   }
   .mb-firmado{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
   .mb-borrador{background:var(--warn-soft);color:var(--warn-ink);border-color:var(--warn-line)}
-  .mb-bloqueado{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
-  .fr-exc-tag{font-family:var(--f-dato);font-size:var(--fs-3xs);color:var(--warn);font-weight:700}
+  .mb-sin{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
   .btn-mini{padding:4px var(--s2);font-size:var(--fs-2xs)}
   .btn-mini[disabled]{opacity:.45;cursor:not-allowed}
   .log-table{width:100%;border-collapse:collapse;font-size:var(--fs-2xs)}
@@ -828,14 +778,9 @@
   .prot-obs .lbl{font-size:var(--fs-3xs);color:var(--warn);font-weight:700;margin-bottom:var(--s1)}
   .prot-obs textarea{
     width:100%;font-family:inherit;font-size:var(--fs-xs);padding:8px 10px;
-    border:1px solid var(--warn-line);border-radius:var(--r-sm);background:var(--warn-soft);min-height:44px
+    border:1px solid var(--warn);border-radius:var(--r-sm);background:var(--warn-soft);min-height:44px
   }
   .prot-obs textarea:focus{border-color:var(--warn)}
-  .prot-obs textarea.obs-req{border-color:var(--bad);background:var(--bad-soft)}
-  .prot-sub{
-    padding:var(--s2) var(--s4);background:var(--paper-2);border-top:1px solid var(--rule);
-    font-family:var(--f-dato);font-size:var(--fs-xs);text-align:right;font-weight:700;color:var(--ink)
-  }
 
   /* Historial clínico: línea de tiempo del expediente. */
   .tline{position:relative;padding-left:var(--s6)}
@@ -877,7 +822,6 @@
     background:var(--paper-2);color:var(--ink);border:1px solid var(--rule);
     padding:4px var(--s3);border-radius:var(--r-sm);font-size:var(--fs-2xs);font-weight:500
   }
-  .row-actions{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s1)}
 
   /* ============ TOAST ============
      Confirmación de una acción, no una celebración: tinta plana, no verde. El color
@@ -916,7 +860,7 @@
   .login-field label{display:block;font-size:var(--fs-2xs);font-weight:600;color:var(--ink);margin-bottom:var(--s1)}
   .login-field input{
     width:100%;font-family:inherit;font-size:var(--fs-sm);padding:10px var(--s3);
-    border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
+    border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
   }
   .login-field input:focus{border-color:var(--orange)}
   .login-btn{width:100%;padding:11px;font-size:var(--fs-sm);margin-top:var(--s2)}
@@ -940,7 +884,7 @@
   .search-wrap .search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-2);font-size:var(--fs-md);pointer-events:none}
   .search-wrap input{
     width:100%;font-family:inherit;font-size:var(--fs-xs);padding:8px var(--s3) 8px 32px;
-    border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
+    border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
   }
   .search-wrap input::placeholder{color:var(--ink-2)}
   .search-wrap input:focus{border-color:var(--orange)}
@@ -952,17 +896,12 @@
   .chip-estado:hover{border-color:var(--ink-3);color:var(--ink)}
   .chip-estado.active{background:var(--ink);border-color:var(--ink);color:#fff}
   .pill.activo{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
-  .pill.inactivo{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
-  tr.row-inactiva td:not(:last-child){opacity:.55}
+  .pill.inactivo,.pill.neutro{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
 
   /* ============ BARRA DE EVALUACIONES EN EXPEDIENTE ============ */
   .eval-bar{
     display:flex;align-items:center;gap:var(--s1);flex-wrap:wrap;background:var(--paper);
     border:1px solid var(--rule);border-radius:var(--r);padding:var(--s3) var(--s4);margin-bottom:var(--s2)
-  }
-  .eval-bar-lbl{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink-2);
-    margin-right:var(--s1);text-transform:uppercase;letter-spacing:.09em
   }
   .eval-bar .btn-ghost{border:1px solid var(--rule)}
 
@@ -992,7 +931,7 @@
     padding-top:var(--s3);border-top:1px dashed var(--rule)
   }
   .tec-aut-alta input{
-    flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--rule);
+    flex:1;min-width:140px;padding:7px 10px;border:1px solid var(--control-borde);
     border-radius:var(--r-sm);font-size:var(--fs-xs);font-family:inherit
   }
   .tec-aut-alta input:focus{border-color:var(--orange)}
@@ -1057,7 +996,7 @@
   .at-acuerdos td:last-child{text-align:right;white-space:nowrap}
   .at-acuerdos input,.at-acuerdos textarea{
     width:100%;font-family:inherit;font-size:var(--fs-xs);padding:7px 9px;
-    border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
+    border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
   }
   .at-acuerdos input:focus,.at-acuerdos textarea:focus{border-color:var(--orange)}
   .at-acuerdos textarea{resize:vertical;min-height:44px;line-height:1.5}
@@ -1097,7 +1036,7 @@
   /* Fila de carga (fotos, alta): pattern del prototipo v4. */
   .uprow{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:flex-end;margin-top:var(--s3)}
   .uprow input[type="file"],.uprow input[type="text"]{
-    padding:7px 10px;border:1px solid var(--rule);border-radius:var(--r-sm);
+    padding:7px 10px;border:1px solid var(--control-borde);border-radius:var(--r-sm);
     font-size:var(--fs-xs);font-family:inherit;width:100%;background:var(--paper);color:var(--ink)
   }
   .uprow input:focus{border-color:var(--orange)}
@@ -1117,10 +1056,6 @@
     padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-xs);margin:var(--s3) 0;line-height:1.55
   }
   .vf-alerta.bad{border-color:var(--bad-line);border-left-color:var(--bad);background:var(--bad-soft)}
-  .vf-cat{
-    display:inline-block;padding:3px var(--s3);border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-size:var(--fs-2xs);font-weight:700
-  }
   .vf-salva{
     border:1px solid var(--rule);border-left:3px solid var(--ink-3);background:var(--paper-2);
     padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-2xs);
@@ -1185,7 +1120,7 @@
     .card,.info-card,.flujo-card,.inf-banner,.kpi{box-shadow:none;break-inside:avoid}
     .card,.info-card,.flujo-card{border-color:#BBB}
     .inf-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .score-chip,.bar,.mbadge,.pill,.at-chip,.inc-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mbadge,.pill,.at-chip,.inc-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 
   /* ============ FASE 3-a · DEMO CONECTADA (handoff §5.122) ============
@@ -1289,7 +1224,6 @@
   .form-errores a{color:inherit;text-decoration:underline}
   .field.invalid textarea{border-color:var(--bad);background:var(--bad-soft)}
   .field .err:empty{display:none!important}
-  .req-nota{font-size:var(--fs-3xs);color:var(--ink-2)}
   .check-row{display:flex;gap:var(--s2);align-items:center;font-size:var(--fs-xs);margin-bottom:var(--s2)}
   .check-row input{width:auto}
   fieldset.ci-aut{border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s3) var(--s4);margin:var(--s3) 0}
@@ -1438,7 +1372,7 @@
   .vf-guia>summary{cursor:pointer;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
   .banda-chip,.st-registrada{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
-  /* ============ FASE 3-e · PASADA DE ACCESIBILIDAD Y VISUAL (handoff §5.128) ============
+  /* ============ FASE 3-e · PASADA DE ACCESIBILIDAD Y VISUAL (handoff §5.135) ============
      Componentes compartidos por todas las pantallas conectadas: estados de carga / error / vacío, avisos de la API,
      botones de acción y confirmación al cerrar con datos sin guardar. */
 

@@ -1449,13 +1449,16 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       const pieSolo = info.textos.some((t) => compacto(t).includes('documentogeneradodesdelahce') && !compacto(t).includes('recibídelafamilia'));
       const cab = info.textos.every((t) => ['informedecierreanual2026', 'martíng.', 'n.ºdehc1002'].every((m) => compacto(t).includes(m)));
       const a4 = info.tam.every(([w, h]) => Math.abs(w - 595.3) < 1.5 && Math.abs(h - 841.9) < 1.5);
-      resultadosPdf.push({ escala, paginas: info.paginas, partidos, radares, pieSolo, cab, a4 });
+      const tablaHoja = paginaDe(info.textos, '18 / 24');                            // hoja (desde 0) donde cae la tabla cuantitativa
+      resultadosPdf.push({ escala, paginas: info.paginas, partidos, radares, pieSolo, cab, a4, tablaHoja });
     }
     const base = resultadosPdf[0];
     check('3d-b1', `page.pdf() A4 del IC impreso de Martín guardado en demo/verificacion/salidas/ic-martin.pdf (${fs.statSync(pdfPath).size} bytes): ${base.paginas} hoja(s) A4, con el encabezado del expediente (nombre, N.º de HC, año) en CADA hoja`,
       fs.existsSync(pdfPath) && base.paginas >= 1 && base.a4 && base.cab, JSON.stringify(base));
     check('3d-b2', 'page.pdf() con escala de Playwright 1 / 1,25 / 1,5: encabezado repetido en cada hoja; la tabla, cada radar con su título, el bloque de firmas con el pie legal y el membrete caen en UNA sola hoja; el pie legal nunca solo (el desborde a la derecha lo cubre 3d-b0). Páginas por escala: ' + resultadosPdf.map((r) => `${r.escala}→${r.paginas}`).join(' · '),
       resultadosPdf.every((r) => r.partidos.length === 0 && r.cab && r.a4 && !r.pieSolo && r.radares.every((p) => p >= 0)) && resultadosPdf.some((r) => r.paginas > 1), JSON.stringify(resultadosPdf));
+    check('3e-hoja1', '3-e: a escala 1 (A4 de verdad) la tabla cuantitativa del IC empieza en la HOJA 1 (a 1,25 y 1,5 puede caer en la 2: aceptado). Hoja de la tabla por escala: ' + resultadosPdf.map((r) => `${r.escala}→${r.tablaHoja + 1}`).join(' · '),
+      resultadosPdf[0].escala === 1 && resultadosPdf[0].tablaHoja === 0 && resultadosPdf.every((r) => r.tablaHoja >= 0 && r.tablaHoja <= 1), JSON.stringify(resultadosPdf.map((r) => ({ escala: r.escala, tablaHoja: r.tablaHoja, paginas: r.paginas }))));
     await volverDelImpreso();
     await pd.waitForFunction(() => document.getElementById('panelExp') && !/Cargando/.test(document.getElementById('panelExp').innerText));
 
@@ -1868,6 +1871,456 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pd.setViewportSize({ width: 1280, height: 720 });
     check('3d-w', 'la página no desborda horizontalmente a 390 y 1024 px en la pestaña IC (Martín y Valentina), la pestaña VF y el documento impreso', anchos.every((a) => a.sw <= a.cw), anchos.map((a) => `${a.t}@${a.ww}:${a.sw}/${a.cw}`).join(' '));
     await cd.close();
+  }
+
+  /* ===================================================================================================================
+     FASE 3-e · PASADA DE ACCESIBILIDAD Y VISUAL (handoff §5.135)
+     Todo con el TECLADO donde la prueba es de teclado (keyboard.press, sin clics): un clic cambia la modalidad del navegador
+     y el anillo de foco (:focus-visible) ya no es el que ve quien navega con Tab.
+     =================================================================================================================== */
+  {
+    const { ctx: ce, page: pe } = await nuevaPagina();
+    await pe.setViewportSize({ width: 1280, height: 800 });
+    const enBody = (p) => p.evaluate(() => document.activeElement === document.body || document.activeElement === document.documentElement || !document.activeElement);
+    const idActivo = (p) => p.evaluate(() => { const a = document.activeElement; return a ? (a.id || a.tagName) : null; });
+    const reiniciarInicioTab = (p) => p.evaluate(() => { const b = document.body; b.setAttribute('tabindex', '-1'); b.focus(); b.removeAttribute('tabindex'); });
+    /* Tab hasta que el foco coincida con `selector` (o con un predicado en el navegador); devuelve cuántos Tab hicieron falta o -1 */
+    const alcanzar = async (p, selector, max = 140) => {
+      for (let i = 1; i <= max; i++) {
+        await p.keyboard.press('Tab');
+        if (await p.evaluate((s) => !!document.activeElement && document.activeElement.matches(s), selector)) return i;
+      }
+      return -1;
+    };
+    const rgbA = (s) => { const m = /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)/.exec(s || ''); return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] } : null; };
+    const lum = ({ r, g, b }) => { const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const razon = (fg, bg) => { const f = rgbA(fg), b = rgbA(bg); if (!f || !b) return 0;
+      const o = f.a < 1 ? { r: f.r * f.a + b.r * (1 - f.a), g: f.g * f.a + b.g * (1 - f.a), b: f.b * f.a + b.b * (1 - f.a) } : f;
+      const [x, y] = [lum(o), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+    /* Contorno del control enfocado y el fondo que realmente queda detrás (se esconde el control y se mira a su lado). */
+    const anilloActual = (p) => p.evaluate(() => {
+      const el = document.activeElement; if (!el || el === document.body) return null;
+      const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+      const ring = { estilo: cs.outlineStyle, ancho: parseFloat(cs.outlineWidth), color: cs.outlineColor, offset: parseFloat(cs.outlineOffset) };
+      const opaco = (n) => { while (n) { const bg = getComputedStyle(n).backgroundColor; const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/); if (m && (m[4] === undefined || +m[4] === 1)) return bg; n = n.parentElement; } return 'rgb(255, 255, 255)'; };
+      let bg;
+      if (ring.offset < 0) bg = opaco(el);
+      else {
+        const sep = ring.offset + ring.ancho / 2 + 1;
+        const x = Math.max(1, Math.min(innerWidth - 1, r.left - sep)), y = Math.max(1, Math.min(innerHeight - 1, r.top + r.height / 2));
+        const v = el.style.visibility; el.style.visibility = 'hidden';
+        const pila = document.elementsFromPoint(x, y).filter((e) => e !== el && !el.contains(e));
+        el.style.visibility = v; bg = opaco(pila[0] || el.parentElement);
+      }
+      return { id: el.id || el.className || el.tagName, tag: el.tagName, fv: el.matches(':focus-visible'), ring, bg };
+    });
+
+    // ---------- sesión por teclado: login → listado ----------
+    await pe.goto(urlDemo());
+    await pe.waitForFunction(() => document.activeElement && document.activeElement.id === 'loginUser');
+    await pe.keyboard.type(EMAIL); await pe.keyboard.press('Tab'); await pe.keyboard.type(PASSWORD); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await pe.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const pasos = [];
+    pasos.push(['login → listado', await idActivo(pe), await enBody(pe)]);
+
+    /* ---------- 3e-skip: el enlace de salto es el primer Tab y Enter lleva el foco a <main> ---------- */
+    await reiniciarInicioTab(pe);
+    await pe.keyboard.press('Tab');
+    const skip1 = await pe.evaluate(() => { const a = document.activeElement; const r = a.getBoundingClientRect();
+      return { clase: a.className, texto: a.textContent.trim(), visible: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.width > 40, inerte: !!a.closest('[inert]') }; });
+    await pe.keyboard.press('Enter');
+    const skip2 = await pe.evaluate(() => { const a = document.activeElement, m = document.querySelector('main'); return { id: a.id, tag: a.tagName, dentro: m.contains(a) || a === m, main: a === m }; });
+    check('3e-skip', 'el enlace «Saltar al contenido» es el PRIMER Tab, aparece a la vista al enfocarse y Enter lleva el foco a <main> (id=contenido)',
+      /skip-link/.test(skip1.clase) && /Saltar al contenido/.test(skip1.texto) && skip1.visible && !skip1.inerte && skip2.dentro && skip2.id === 'contenido', JSON.stringify({ skip1, skip2 }));
+    await pe.keyboard.press('Tab');
+    const trasSalto = await pe.evaluate(() => ({ dentroDeMain: document.querySelector('main').contains(document.activeElement), id: document.activeElement.id || document.activeElement.tagName }));
+    check('3e-skip2', 'después del salto, el siguiente Tab es un control de la pantalla (dentro de <main>), no la barra lateral ni la superior',
+      trasSalto.dentroDeMain, JSON.stringify(trasSalto));
+
+    /* ---------- 3e-kbd: login → listado → abrir a Martín → cada pestaña → IC impreso → volver, solo con el teclado ---------- */
+    await reiniciarInicioTab(pe);
+    const nTab = await alcanzar(pe, 'button[aria-label^="Abrir expediente de Martín"]', 120);
+    pasos.push(['Tab hasta «Abrir expediente» de Martín', nTab, await enBody(pe)]);
+    await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#expTitulo', { timeout: 8000 });
+    await pe.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+    pasos.push(['Enter abre el expediente', await idActivo(pe), await enBody(pe)]);
+    const nTabs = await alcanzar(pe, '.exp-tab[aria-selected="true"]', 60);
+    pasos.push(['Tab hasta la pestaña HCE-00', nTabs, await enBody(pe)]);
+    for (const k of ['ci', 'lb', 'pa', 'pb', 'ic', 'vf']) {
+      await pe.keyboard.press('ArrowRight');
+      await pe.waitForFunction((t) => document.getElementById('tabExp-' + t).getAttribute('aria-selected') === 'true' && document.activeElement.id === 'tabExp-' + t, k, { timeout: 4000 });
+      await pe.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+      pasos.push(['pestaña ' + k.toUpperCase(), await idActivo(pe), await enBody(pe)]);
+    }
+    await pe.keyboard.press('ArrowLeft');                                                // vuelve a IC: es la que tiene «Ver informe impreso»
+    await pe.waitForFunction(() => document.activeElement.id === 'tabExp-ic' && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const nImp = await alcanzar(pe, '#btnIcImpreso', 40);
+    await pe.keyboard.press('Enter');
+    await pe.waitForSelector('.print-wrap', { timeout: 8000 });
+    await pe.waitForFunction(() => document.activeElement.id === 'infTitulo', null, { timeout: 4000 });
+    pasos.push(['IC impreso', await idActivo(pe), await enBody(pe)]);
+    const nVol = await alcanzar(pe, '.inf-botones .btn-print:last-child', 12);
+    await pe.keyboard.press('Enter');
+    await pe.waitForFunction(() => document.activeElement.id === 'tabExp-ic', null, { timeout: 4000 });
+    pasos.push(['volver al expediente', await idActivo(pe), await enBody(pe)]);
+    check('3e-kbd', 'solo teclado (keyboard.press, sin clics): login → listado → abrir a Martín → HCE-00, CI, LB, PA, PB, IC, VF → informe impreso → volver; el foco nunca cae en <body> después de una acción',
+      nTab > 0 && nTabs > 0 && nImp > 0 && nVol > 0 && pasos.every(([, , cuerpo]) => cuerpo === false) && pasos.length === 12,
+      pasos.map(([n, id, c]) => `${n}→${id}${c === true ? ' (BODY)' : ''}`).join(' · ').slice(0, 520));
+
+    // ---------- datos de los pasos siguientes: un expediente nuevo (editores vacíos) y un IC firmado sin recibí ----------
+    const token = await pe.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const api = async (metodo, ruta, body) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: r.status, json: r.status === 204 ? null : await r.json() }; };
+    const sufE = String(Date.now()).slice(-6);
+    const gruposE = (await api('GET', '/grupos')).json;
+    const anioE = Math.max(...gruposE.map((g) => g.anio));
+    const escolaresE = gruposE.find((g) => g.nombre === 'Escolares' && g.anio === anioE);
+    const profsE = (await api('GET', '/profesionales')).json;
+    const idGonE = profsE.find((x) => x.nombre === 'Dr. González').id, idTorE = profsE.find((x) => x.nombre === 'Mtra. Torres').id;
+    const nuevoE = async (nombre, pref) => (await api('POST', '/hce', { persona: { nombre: nombre + sufE, apellido: 'Tresé', ci: pref + sufE + '5', fecha_nac: '2016-06-06' }, grupo_id: escolaresE.id })).json.data.id;
+    const idEditor = await nuevoE('Editor', '1');
+    const idRecibi = await nuevoE('Recibi', '2');
+    const icBody = { anio: anioE, fecha: '2026-11-20', val_tec1: 'Valoración 1.', val_tec2: 'Valoración 2.', recomendaciones: 'Recomendaciones.', orientaciones: 'Orientaciones.', sint_escala: { esc_1: 'a', esc_2: 'b', esc_3: 'c', esc_4: 'd' } };
+    const icCreado = await api('POST', `/hce/${idRecibi}/informe-cierre`, icBody);
+    const icFirmado = await api('POST', `/informe-cierre/${icCreado.json.data.id}/firmar`, { firmantes: [idGonE, idTorE] });
+    const abrirE = async (id, tab) => {
+      await pe.evaluate((i) => abrirExpediente(i), id);
+      await pe.waitForSelector('#expTitulo');
+      await pe.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      if (tab) { await pe.click('#tabExp-' + tab); await pe.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 }); await pe.waitForTimeout(150); }
+    };
+
+    /* ---------- 3e-ring: un control de cada familia alcanzado con Tab tiene contorno computado y ≥ 3:1 contra el fondo de detrás ---------- */
+    const familias = [];
+    const medir = async (familia, selector, preparar) => {
+      if (preparar) await preparar();
+      await reiniciarInicioTab(pe);
+      const n = await alcanzar(pe, selector, 160);
+      const a = n > 0 ? await anilloActual(pe) : null;
+      familias.push({ familia, selector, n, a, r: a ? razon(a.ring.color, a.bg) : 0 });
+    };
+    await pe.evaluate(() => go('inicio'));
+    await medir('enlace', 'a.skip-link');
+    await medir('ítem de la barra lateral', '.navitem');
+    await medir('botón', '#btnNuevoNNA');
+    await medir('campo de texto', '#searchNNA');
+    await medir('lista desplegable', '#filtroGrupo');
+    await abrirE(idEditor, 'lb');
+    await medir('pestaña', '.exp-tab[aria-selected="true"]');
+    await medir('botón de puntaje', '#dim-D1 .opcion');
+    await medir('área de texto', '#lb_sintesis');
+    check('3e-ring', 'un control de cada familia alcanzado con Tab (enlace, ítem de la barra lateral, botón, campo de texto, lista, pestaña, botón de puntaje, área de texto) tiene un contorno sólido y ≥ 3:1 contra el fondo que queda detrás',
+      familias.length === 8 && familias.every((f) => f.n > 0 && f.a && f.a.fv && f.a.ring.estilo === 'solid' && f.a.ring.ancho >= 2 && f.r >= 3),
+      familias.map((f) => `${f.familia}: ${f.a ? f.a.ring.color.replace(/\s/g, '') + ' ' + f.a.ring.ancho + 'px sobre ' + f.a.bg.replace(/\s/g, '') + ' → ' + f.r.toFixed(2) : 'NO ALCANZADO'}`).join(' · ').slice(0, 700));
+    const sinApagar = await pe.evaluate(async () => { const css = await (await fetch('css/estilos.css')).text(); const re = /([^{}\n]+)\{([^}]*)\}/g; const out = []; let m;
+      while ((m = re.exec(css))) if (/outline\s*:\s*(none|0)\b/.test(m[2]) && !/^\s*main\b/.test(m[1])) out.push(m[1].trim()); return out; });
+    check('3e-ring2', 'ningún selector del CSS apaga el contorno (`outline:none`/`0`) ni lo reemplaza por un box-shadow de foco; la única excepción es <main>, el destino del salto', sinApagar.length === 0, sinApagar.join(' · '));
+
+    /* ---------- 3e-roving: el editor de IDEA tiene UN punto de Tab por dimensión y las flechas mueven el foco dentro de ella ---------- */
+    const rov0 = await pe.evaluate(() => ({ dims: document.querySelectorAll('#ideaForm .dimension').length, paradas: [...document.querySelectorAll('#ideaForm .dimension')].map((d) => [...d.querySelectorAll('button[data-dim]')].filter((b) => b.tabIndex === 0).length) }));
+    const ordenD2 = await pe.evaluate(() => [...document.querySelectorAll('#dim-D2 button[data-dim]')].map((b) => b.dataset.ns ? 'NS' : (b.dataset.v !== undefined ? b.dataset.v : b.dataset.inter)));
+    await pe.focus('#dim-D2 button[data-dim]:not([tabindex="-1"])');
+    const rov0b = await pe.evaluate(() => (document.activeElement.dataset.v !== undefined ? document.activeElement.dataset.v : document.activeElement.dataset.inter));
+    await pe.keyboard.press('ArrowRight');
+    const rov1 = await pe.evaluate(() => ({ foco: document.activeElement.dataset.v || document.activeElement.dataset.inter || document.activeElement.dataset.ns, dim: document.activeElement.dataset.dim, ti: document.activeElement.tabIndex }));
+    await pe.keyboard.press('End');
+    const rov2 = await pe.evaluate(() => ({ ns: !!document.activeElement.dataset.ns }));
+    await pe.keyboard.press('Enter');
+    const rov3 = await pe.evaluate(() => ({ sel: document.querySelector('#dim-D2 .inter-ns').getAttribute('aria-pressed'), paradas: [...document.querySelectorAll('#dim-D2 button[data-dim]')].filter((b) => b.tabIndex === 0).length, activo: document.activeElement.dataset.ns }));
+    await pe.keyboard.press('Home');
+    const rov4 = await pe.evaluate(() => ({ paradas: [...document.querySelectorAll('#dim-D2 button[data-dim]')].filter((b) => b.tabIndex === 0).length, v: document.activeElement.dataset.v, sigueNS: document.querySelector('#dim-D2 .inter-ns').getAttribute('aria-pressed') }));
+    const totalParadas = await pe.evaluate(() => [...document.querySelectorAll('#panelExp button, #panelExp input, #panelExp select, #panelExp textarea, #panelExp summary, #panelExp a')].filter((e) => e.tabIndex === 0 && !e.disabled && e.offsetParent !== null).length);
+    check('3e-roving', 'editor de IDEA: un punto de Tab por dimensión (12 de 12, no 120), las flechas/Inicio/Fin mueven el foco dentro de la dimensión sin cambiar la selección, Enter elige y el punto de Tab sigue al elegido',
+      rov0.dims === 12 && rov0.paradas.every((n) => n === 1) && rov0b === ordenD2[0] && rov1.dim === 'D2' && rov1.foco === ordenD2[1] && rov1.ti === 0 && rov2.ns && rov3.sel === 'true' && rov3.paradas === 1 && rov3.activo === '1' && rov4.paradas === 1 && rov4.v === ordenD2[0] && rov4.sigueNS === 'true',
+      JSON.stringify({ orden: ordenD2.join(','), rov0: { dims: rov0.dims, unaPorDim: rov0.paradas.every((n) => n === 1) }, rov1, rov2, rov3, rov4, paradasEnLaPantalla: totalParadas }));
+
+    /* ---------- 3e-trap: cada diálogo atrapa el foco y lo devuelve al cerrar ---------- */
+    // alta
+    await pe.evaluate(() => go('inicio'));
+    await pe.focus('#btnNuevoNNA'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open');
+    await pe.waitForFunction(() => document.querySelectorAll('#f_grupo option').length > 1 && !document.getElementById('f_grupo').disabled, null, { timeout: 8000 });
+    const dentro = [];
+    for (let i = 0; i < 40; i++) { await pe.keyboard.press('Tab'); dentro.push(await pe.evaluate(() => !!document.activeElement.closest('#modalAlta'))); }
+    for (let i = 0; i < 6; i++) { await pe.keyboard.press('Shift+Tab'); dentro.push(await pe.evaluate(() => !!document.activeElement.closest('#modalAlta'))); }
+    await pe.keyboard.press('Escape');
+    await pe.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const alta1 = await pe.evaluate(() => ({ foco: document.activeElement.id, inerte: document.querySelector('div.layout').inert || document.querySelector('header.topbar').inert }));
+    // alta abierta desde un botón que desaparece (se repinta el expediente): el foco cae en un destino estable, nunca en <body>
+    await abrirE(idEditor, 'hce00');
+    await pe.focus('#expHead .btn-primary'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open');
+    await pe.evaluate(() => { pintarCabeceraExp(); });           // el repintado destruye el botón que abrió el diálogo
+    await pe.keyboard.press('Escape');
+    await pe.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    await pe.waitForTimeout(100);
+    const alta2 = await pe.evaluate(() => ({ foco: document.activeElement.id || document.activeElement.tagName, enBody: document.activeElement === document.body }));
+    check('3e-trap1', 'diálogo de alta/edición: Tab y Mayús+Tab nunca salen del diálogo (46 pulsaciones), Esc lo cierra devolviendo el foco a quien lo abrió; si quien lo abrió ya no existe, el foco va a un destino estable (el título del expediente), no a <body>',
+      dentro.every(Boolean) && alta1.foco === 'btnNuevoNNA' && !alta1.inerte && !alta2.enBody && alta2.foco === 'expTitulo', JSON.stringify({ alta1, alta2, salidas: dentro.filter((d) => !d).length }));
+    // recibí (diálogo del flujo): abierto desde su botón real; Tab atrapado; Esc devuelve el foco al botón
+    await abrirE(idRecibi, 'ic');
+    await pe.focus('#btnIcRecibi'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalFlujo.open'); await pe.waitForFunction(() => document.activeElement.id === 'mfFirmante');
+    const dentro2 = [];
+    for (let i = 0; i < 14; i++) { await pe.keyboard.press('Tab'); dentro2.push(await pe.evaluate(() => !!document.activeElement.closest('#modalFlujo'))); }
+    await pe.keyboard.press('Shift+Tab'); dentro2.push(await pe.evaluate(() => !!document.activeElement.closest('#modalFlujo')));
+    await pe.keyboard.press('Escape');
+    await pe.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+    const rec1 = await pe.evaluate(() => ({ foco: document.activeElement.id, inerte: document.querySelector('div.layout').inert }));
+    check('3e-trap2', 'diálogo del recibí (#modalFlujo): Tab/Mayús+Tab quedan dentro; Esc lo cierra (sin tipear nada, sin preguntar) y el foco vuelve a «Registrar recibí»',
+      dentro2.every(Boolean) && rec1.foco === 'btnIcRecibi' && !rec1.inerte, JSON.stringify({ rec1, salidas: dentro2.filter((d) => !d).length }));
+    // login: Tab no sale (el enlace de salto y la app están inertes)
+    const pl = (await nuevaPagina()); await pl.page.goto(urlDemo());
+    await pl.page.waitForFunction(() => document.activeElement && document.activeElement.id === 'loginUser');
+    const enLogin = [];
+    for (let i = 0; i < 8; i++) { await pl.page.keyboard.press('Tab'); enLogin.push(await pl.page.evaluate(() => ({ dentro: !!document.activeElement.closest('#loginScreen'), skip: document.activeElement.classList.contains('skip-link') }))); }
+    for (let i = 0; i < 4; i++) { await pl.page.keyboard.press('Shift+Tab'); enLogin.push(await pl.page.evaluate(() => ({ dentro: !!document.activeElement.closest('#loginScreen'), skip: document.activeElement.classList.contains('skip-link') }))); }
+    const skipInerte = await pl.page.evaluate(() => document.querySelector('a.skip-link').inert);
+    check('3e-trap3', 'login: Tab y Mayús+Tab quedan dentro del diálogo y nunca llegan al enlace de salto ni a la app (inertes) mientras se ve',
+      enLogin.every((x) => x.dentro && !x.skip) && skipInerte, JSON.stringify({ salidas: enLogin.filter((x) => !x.dentro || x.skip).length, skipInerte }));
+    await pl.ctx.close();
+    // confirmaciones de firma (en la barra de la pantalla, no son diálogos modales): Esc cancela y el foco vuelve a «Firmar»
+    await abrirE(idEditor, 'lb');
+    await pe.focus('#btnEvFirmar'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#btnEvConfirmar');
+    const conf1 = await idActivo(pe);
+    await pe.keyboard.press('Tab'); const conf2 = await pe.evaluate(() => !!document.activeElement.closest('.ev-confirma'));
+    await pe.keyboard.press('Escape');
+    const conf3 = await pe.evaluate(() => ({ foco: document.activeElement.id, sigue: !!document.getElementById('btnEvConfirmar') }));
+    check('3e-trap4', 'confirmación de firma (barra del editor): el foco entra en «Confirmar firma», Tab recorre sus botones y Esc la cancela devolviendo el foco a «Firmar» (sin pedirle nada a la API)',
+      conf1 === 'btnEvConfirmar' && conf2 && conf3.foco === 'btnEvFirmar' && !conf3.sigue, JSON.stringify({ conf1, conf2, conf3 }));
+
+    /* ---------- 3e-confirm: cerrar con datos tipeados pide confirmación; sin datos, no ---------- */
+    await pe.evaluate(() => go('inicio'));
+    await pe.focus('#btnNuevoNNA'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open'); await pe.waitForFunction(() => !document.getElementById('f_grupo').disabled, null, { timeout: 8000 });
+    await pe.keyboard.press('Escape');                                                  // sin tipear nada: cierra sin preguntar
+    const sinDatos = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), banda: !!document.querySelector('.confirmar-descarte') }));
+    await pe.focus('#btnNuevoNNA'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open'); await pe.waitForFunction(() => !document.getElementById('f_grupo').disabled, null, { timeout: 8000 });
+    await pe.fill('#f_nombre', 'Dato tipeado'); await pe.fill('#f_ci', '1.234.567-8');
+    await pe.keyboard.press('Escape');
+    await pe.waitForSelector('.confirmar-descarte');
+    const c1 = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), rol: document.querySelector('.confirmar-descarte').getAttribute('role'), foco: document.activeElement.id,
+      texto: document.querySelector('.confirmar-descarte').innerText.replace(/\s+/g, ' '), nombre: document.getElementById('f_nombre').value }));
+    await pe.keyboard.press('Escape');                                                  // Esc sobre la confirmación = seguir editando
+    const c2 = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), banda: !!document.querySelector('.confirmar-descarte'), nombre: document.getElementById('f_nombre').value, ci: document.getElementById('f_ci').value, foco: document.activeElement.id }));
+    await pe.click('.modal-head .x');                                                   // × = lo mismo que Esc
+    await pe.waitForSelector('.confirmar-descarte');
+    await pe.click('#btnCdSeguir');
+    const c3 = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), banda: !!document.querySelector('.confirmar-descarte'), nombre: document.getElementById('f_nombre').value }));
+    await pe.keyboard.press('Escape'); await pe.waitForSelector('.confirmar-descarte');
+    await pe.click('#btnCdDescartar');
+    await pe.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const c4 = await pe.evaluate(() => ({ foco: document.activeElement.id, inerte: document.querySelector('div.layout').inert, nombre: document.getElementById('f_nombre').value, ci: document.getElementById('f_ci').value, banda: !!document.querySelector('.confirmar-descarte') }));
+    check('3e-confirm1', 'alta: sin tipear nada Esc cierra sin preguntar; con datos tipeados Esc pide confirmación (role=alert, foco en «Seguir editando»); Esc otra vez o «Seguir editando» conservan lo tipeado y el diálogo; ×  también pregunta; «Descartar y cerrar» cierra, borra los campos y devuelve el foco',
+      !sinDatos.abierto && !sinDatos.banda && c1.abierto && c1.rol === 'alert' && c1.foco === 'btnCdSeguir' && /datos sin guardar/.test(c1.texto) && c1.nombre === 'Dato tipeado'
+        && c2.abierto && !c2.banda && c2.nombre === 'Dato tipeado' && c2.ci === '1.234.567-8' && c2.foco === 'f_ci' && c3.abierto && !c3.banda && c3.nombre === 'Dato tipeado'
+        && c4.foco === 'btnNuevoNNA' && !c4.inerte && c4.nombre === '' && c4.ci === '' && !c4.banda, JSON.stringify({ sinDatos, c1, c2, c3, c4 }).slice(0, 600));
+    // edición: cambiar un campo y volver a dejar el original NO cuenta como datos sin guardar
+    await abrirE(idEditor, 'hce00');
+    await pe.focus('#expHead .btn-primary'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open'); await pe.waitForFunction(() => !document.getElementById('f_grupo').disabled && document.querySelectorAll('#f_grupo option').length > 1, null, { timeout: 8000 });
+    const orig = await pe.inputValue('#f_loc');
+    await pe.fill('#f_loc', 'Otra localidad'); await pe.fill('#f_loc', orig);
+    await pe.keyboard.press('Escape');
+    const edRevertido = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), banda: !!document.querySelector('.confirmar-descarte') }));
+    check('3e-confirm2', 'edición: tipear y volver al valor original no cuenta como datos sin guardar (Esc cierra sin preguntar)', !edRevertido.abierto && !edRevertido.banda, JSON.stringify(edRevertido));
+    // recibí: tipear, Cancelar → confirmación; descartar
+    await abrirE(idRecibi, 'ic');
+    await pe.focus('#btnIcRecibi'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalFlujo.open'); await pe.waitForFunction(() => document.activeElement.id === 'mfFirmante');
+    await pe.fill('#mfFirmante', 'Otra persona'); await pe.click('#modalFlujo .modal-foot .btn-ghost');          // Cancelar
+    await pe.waitForSelector('#modalFlujo .confirmar-descarte');
+    const r1 = await pe.evaluate(() => ({ abierto: document.getElementById('modalFlujo').classList.contains('open'), foco: document.activeElement.id, valor: document.getElementById('mfFirmante').value }));
+    await pe.click('#btnCdDescartar');
+    await pe.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+    const r2 = await pe.evaluate(() => ({ foco: document.activeElement.id, valor: (document.getElementById('mfFirmante') || { value: null }).value, inerte: document.querySelector('div.layout').inert }));
+    check('3e-confirm3', 'recibí: tipear y pulsar Cancelar (o ×, o Esc) pide confirmación; descartar cierra, vacía los campos y devuelve el foco a «Registrar recibí»',
+      r1.abierto && r1.foco === 'btnCdSeguir' && r1.valor === 'Otra persona' && r2.foco === 'btnIcRecibi' && r2.valor === '' && !r2.inerte, JSON.stringify({ r1, r2 }));
+    // «Salir» con el diálogo abierto y datos tipeados: limpia SIN preguntar
+    await pe.evaluate(() => go('inicio'));
+    await pe.focus('#btnNuevoNNA'); await pe.keyboard.press('Enter');
+    await pe.waitForSelector('#modalAlta.open'); await pe.fill('#f_nombre', 'Dato tipeado antes de salir');
+    await pe.evaluate(() => logout());
+    await pe.waitForSelector('#loginScreen:not(.hidden)');
+    const salir = await pe.evaluate(() => ({ abierto: document.getElementById('modalAlta').classList.contains('open'), banda: !!document.querySelector('.confirmar-descarte'), nombre: document.getElementById('f_nombre').value, login: !document.getElementById('loginScreen').classList.contains('hidden'), foco: document.activeElement.id }));
+    check('3e-confirm4', '«Salir» con el diálogo abierto y datos tipeados cierra y limpia SIN pedir confirmación (el foco queda en el login)', !salir.abierto && !salir.banda && salir.nombre === '' && salir.login && salir.foco === 'loginUser', JSON.stringify(salir));
+    await ce.close();
+  }
+
+  /* ---------- 3e-flow: sin desborde horizontal en 1280, 1024 (y 320 en el listado y HCE-00) en TODAS las pantallas conectadas ---------- */
+  {
+    const { ctx: cf, page: pf } = await nuevaPagina();
+    await loguear(pf);
+    await pf.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const tokenF = await pf.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const idMartinF = (await (await fetch(API + '/hce?nombre=Mart%C3%ADn&limit=5', { headers: { Authorization: 'Bearer ' + tokenF } })).json()).find((h) => h.persona.nombre === 'Martín').id;
+    const abrirF = async (id, tab) => {
+      await pf.evaluate((i) => abrirExpediente(i), id); await pf.waitForSelector('#expTitulo');
+      await pf.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      if (tab && tab !== 'hce00') { await pf.click('#tabExp-' + tab); }
+      await pf.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+      await pf.waitForTimeout(200);
+    };
+    const medidas = [];
+    const ancho = async (nombre, w) => { await pf.waitForTimeout(80); medidas.push(await pf.evaluate(([n, ww]) => ({ n, ww, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, iw: innerWidth }), [nombre, w])); };
+    for (const w of [1280, 1024, 320]) {
+      await pf.setViewportSize({ width: w, height: w === 320 ? 640 : (w === 1024 ? 768 : 800) });
+      await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+      await ancho('listado', w);
+      await abrirF(idMartinF, 'hce00'); await ancho('HCE-00', w);
+      if (w === 320) continue;                                  // el 320 px es de la pantalla de listado y de HCE-00
+      for (const t of ['ci', 'lb', 'pa', 'pb', 'ic', 'vf']) { await abrirF(idMartinF, t); await ancho(t.toUpperCase(), w); }
+      await abrirF(idMartinF, 'ic'); await pf.click('#btnIcImpreso'); await pf.waitForSelector('.print-wrap'); await pf.waitForTimeout(250); await ancho('IC impreso', w);
+      await pf.evaluate(() => openAlta()); await pf.waitForSelector('#modalAlta.open'); await pf.waitForTimeout(150); await ancho('diálogo de alta', w);
+      await pf.evaluate(() => closeAlta()); await pf.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    }
+    // el editor de IDEA y el de protocolos (borradores vacíos) también
+    const sufF = String(Date.now()).slice(-6);
+    const gF = (await (await fetch(API + '/grupos', { headers: { Authorization: 'Bearer ' + tokenF } })).json());
+    const escF = gF.find((g) => g.nombre === 'Escolares');
+    const idEdF = (await (await fetch(API + '/hce', { method: 'POST', headers: { Authorization: 'Bearer ' + tokenF, 'Content-Type': 'application/json' }, body: JSON.stringify({ persona: { nombre: 'Flow' + sufF, apellido: 'Ancho', ci: '4' + sufF + '6', fecha_nac: '2016-07-07' }, grupo_id: escF.id }) })).json()).data.id;
+    for (const w of [1280, 1024]) {
+      await pf.setViewportSize({ width: w, height: w === 1024 ? 768 : 800 });
+      for (const t of ['lb', 'pa', 'pb', 'ic', 'vf']) { await abrirF(idEdF, t); await ancho('editor ' + t.toUpperCase(), w); }
+      await abrirF(idEdF, 'ci'); await ancho('CI pendiente', w);
+    }
+    const mal = medidas.filter((m) => m.sw !== m.cw);
+    check('3e-flow', 'sin desborde horizontal de la página (scrollWidth == ancho de la ventana) a 1280 y 1024 px en listado, HCE-00, CI, LB, PA, PB, IC, VF, informe impreso, diálogo de alta y los editores vacíos, y a 320 px en el listado y HCE-00',
+      medidas.length >= 30 && mal.length === 0, mal.length ? 'DESBORDAN: ' + mal.map((m) => `${m.n}@${m.ww}:${m.sw}/${m.cw}`).join(', ') : `${medidas.length} medidas · ${medidas.filter((m) => m.ww === 320).map((m) => m.n + '@320').join(',')}`);
+    // tablas anchas: scrollean DENTRO de su contenedor, no ensanchan la página
+    await pf.setViewportSize({ width: 1024, height: 768 });
+    await abrirF(idMartinF, 'ic');
+    const tab1024 = await pf.evaluate(() => { const t = document.querySelector('#panelExp .tabla-scroll'); return t ? { sw: t.scrollWidth, cw: t.clientWidth, over: getComputedStyle(t).overflowX } : null; });
+    check('3e-flow2', 'las tablas anchas (tabla cuantitativa del IC) viven en un contenedor con scroll propio (overflow-x:auto)', !!tab1024 && /auto|scroll/.test(tab1024.over), JSON.stringify(tab1024));
+    await cf.close();
+  }
+
+  /* ---------- 3e-i18n: mensajes de validación en castellano (solo presentación) ---------- */
+  {
+    const { ctx: ci, page: pi } = await nuevaPagina();
+    await loguear(pi);
+    await pi.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const tokenI = await pi.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const apiI = async (metodo, ruta, body) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + tokenI, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, json: r.status === 204 ? null : await r.json() }; };
+    const sufI = String(Date.now()).slice(-6);
+    const gI = (await apiI('GET', '/grupos')).json, escI = gI.find((g) => g.nombre === 'Escolares');
+    const idVfI = (await apiI('POST', '/hce', { persona: { nombre: 'Idioma' + sufI, apellido: 'Vf', ci: '5' + sufI + '7', fecha_nac: '2016-08-08' }, grupo_id: escI.id })).json.data.id;
+    await apiI('POST', `/hce/${idVfI}/valoracion-funcional`, { estado: 'En trámite' });
+    const abrirI = async (id, tab) => { await pi.evaluate((i) => abrirExpediente(i), id); await pi.waitForSelector('#expTitulo'); await pi.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      await pi.click('#tabExp-' + tab); await pi.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 }); await pi.waitForTimeout(150); };
+    // 1) un % que Pydantic rechaza ("abc") → mensaje en castellano junto al campo, el campo se conserva
+    await abrirI(idVfI, 'vf');
+    await pi.fill('#vf_pct', 'abc');
+    const rVf = pi.waitForResponse((r) => r.request().method() === 'PATCH' && /valoracion-funcional/.test(r.url()));
+    await pi.click('#btnVfGuardar');
+    const respVf = await rVf; const jsonVf = await respVf.json();
+    await pi.waitForSelector('#vfErrores:not([hidden])');
+    const i1 = await pi.evaluate(() => ({ campo: document.getElementById('err_vf_pct').textContent, resumen: document.getElementById('vfErrores').innerText.replace(/\s+/g, ' '), invalido: document.getElementById('vf_pct').getAttribute('aria-invalid'), valor: document.getElementById('vf_pct').value }));
+    check('3e-i18n1', 'VF con % «abc»: la API contesta 422 con el mensaje de Pydantic en inglés («Input should be a valid decimal») y la pantalla lo muestra en castellano junto al campo % (y en el resumen), sin tocar el campo ni lo tipeado',
+      respVf.status() === 422 && /valid decimal/i.test(jsonVf.detail[0].mensaje) && jsonVf.detail[0].campo === 'pct' && /número válido/i.test(i1.campo) && !/Input should/i.test(i1.campo + i1.resumen)
+        && /Porcentaje de discapacidad: .*número válido/.test(i1.resumen) && i1.invalido === 'true' && i1.valor === 'abc', JSON.stringify({ api: jsonVf.detail[0], ui: i1 }).slice(0, 420));
+    // 2) un tipo de Pydantic que no está en la tabla → mensaje genérico en castellano (la respuesta se simula en la red, no se toca la API)
+    await pi.route(/\/valoracion-funcional$/, (route) => route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'validation_error', detail: [{ campo: 'pct', mensaje: 'Input should be a valid frobnicator' }] }) }) : route.continue());
+    await pi.click('#btnVfGuardar');
+    await pi.waitForFunction(() => /válido/.test(document.getElementById('err_vf_pct').textContent) && !/frobnicator/.test(document.getElementById('err_vf_pct').textContent), null, { timeout: 4000 });
+    const i2 = await pi.evaluate(() => ({ campo: document.getElementById('err_vf_pct').textContent, resumen: document.getElementById('vfErrores').innerText.replace(/\s+/g, ' ') }));
+    await pi.unroute(/\/valoracion-funcional$/);
+    check('3e-i18n2', 'un tipo de Pydantic sin traducción («Input should be a valid frobnicator») se muestra con el mensaje genérico en castellano, nunca en inglés',
+      i2.campo === 'El valor ingresado no es válido.' && !/Input should|frobnicator/i.test(i2.campo + i2.resumen), JSON.stringify(i2));
+    // 3) un 422 de negocio ya en castellano (PA: puntaje 1 sin observación) pasa SIN cambios
+    const idPaI = (await apiI('POST', '/hce', { persona: { nombre: 'Negocio' + sufI, apellido: 'Pa', ci: '6' + sufI + '8', fecha_nac: '2016-09-09' }, grupo_id: escI.id })).json.data.id;
+    const anioI = Math.max(...gI.map((g) => g.anio));
+    const profsI = (await apiI('GET', '/profesionales')).json;
+    const itemsI = Object.fromEntries(Array.from({ length: 24 }, (_, i) => [String(i + 1), { valor: 3, obs: null }])); itemsI['1'] = { valor: 1, obs: null };
+    await apiI('POST', `/hce/${idPaI}/protocolo`, { tipo: 'A', anio: anioI, items: itemsI, fecha: '2026-07-01', semanas: 16, sint_tec1: 'a', sint_tec2: 'b', evaluador_t1_id: profsI[0].id, evaluador_t2_id: profsI[1].id });
+    await abrirI(idPaI, 'pa');
+    const rFirma = pi.waitForResponse((r) => r.request().method() === 'POST' && /\/firmar$/.test(r.url()));
+    await pi.click('#btnEvFirmar'); await pi.click('#btnEvConfirmar');
+    const respFirma = await rFirma; const jsonFirma = await respFirma.json();
+    await pi.waitForSelector('#evErrores:not([hidden])');
+    const i3 = await pi.evaluate(() => ({ resumen: document.getElementById('evErrores').innerText.replace(/\s+/g, ' '), item: document.getElementById('err_pobs-1').textContent + document.getElementById('err_pitem-1').textContent }));
+    const msgApi = jsonFirma.detail.find((d) => /items\.1/.test(d.campo || '')) || jsonFirma.detail[0];
+    check('3e-i18n3', 'un 422 de negocio ya en castellano (PA: ítem 1 con puntaje 1 sin observación) se muestra EXACTAMENTE como lo dijo la API',
+      respFirma.status() === 422 && !/[A-Za-z]+ should /.test(msgApi.mensaje) && i3.resumen.includes(msgApi.mensaje) && i3.item.includes(msgApi.mensaje), JSON.stringify({ api: msgApi, campo: i3.item }).slice(0, 380));
+    const trad = await pi.evaluate(() => ['Field required', 'Input should be a valid integer', 'Input should be a valid date', 'Input should be less than or equal to 100', 'Input should be greater than or equal to 0', 'String should have at most 20 characters', 'Un puntaje 1 requiere observación.', 'Ya existe una persona con esa cédula']
+      .map((m) => traducirMensajeApi(m)));
+    check('3e-i18n4', 'tabla de traducción: obligatorio, entero, fecha, menor o igual, mayor o igual y largo máximo salen en castellano; los mensajes en castellano del servicio pasan intactos',
+      trad[0] === 'Este campo es obligatorio.' && /entero/.test(trad[1]) && /fecha/.test(trad[2]) && trad[3] === 'Tiene que ser menor o igual a 100.' && trad[4] === 'Tiene que ser mayor o igual a 0.' && /máximo 20 caracteres/.test(trad[5])
+        && trad[6] === 'Un puntaje 1 requiere observación.' && trad[7] === 'Ya existe una persona con esa cédula', JSON.stringify(trad));
+    await ci.close();
+  }
+
+  /* ---------- 3e-vistas / 3e-color: la regla de color (ok/warn/bad nunca en clasificaciones clínicas) y los estados compartidos ---------- */
+  {
+    const { ctx: cv, page: pv } = await nuevaPagina();
+    await loguear(pv);
+    await pv.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const js = await Promise.all(['catalogos.js', 'ui-core.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'expediente.js', 'flujo.js'].map(async (f) => [f, await (await fetch(DEMO + '/js/' + f)).text()]));
+    const css = await (await fetch(DEMO + '/css/estilos.css')).text();
+    const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
+    const lineasConEstado = (t) => sinComentarios(t).split('\n').filter((l) => /var\(--(ok|warn|bad)\)/.test(l));
+    const enBandas = js.filter(([f]) => f === 'catalogos.js').flatMap(([, t]) => lineasConEstado(sinComentarios(t).split('\n').filter((l) => /IDEA_BANDAS|^\s*\{max:/.test(l)).join('\n')));
+    const reglasClinicas = sinComentarios(css).split('}').filter((r) => /(\.banda-|\.score-badge|\.banda-chip|\.vf-cat)/.test(r.split('{')[0]) && /--(ok|warn|bad)\b/.test(r));
+    const demo = await pv.evaluate(() => ({ bandas: IDEA_BANDAS.every((b) => Number.isInteger(b.paso) && b.paso >= 1 && b.paso <= 6 && !('color' in b)), colorBanda: typeof colorBanda, pasos: IDEA_BANDAS.map((b) => b.paso).join('') }));
+    await pv.evaluate(() => { go('analitica'); });
+    await pv.waitForTimeout(150);
+    const ana = await pv.evaluate(() => ({ bandasFill: [...document.querySelectorAll('#distChart .fill')].map((f) => f.getAttribute('style')), cifrasFuera: document.querySelectorAll('#view-analitica .hbar-num').length, textoEnFill: [...document.querySelectorAll('#view-analitica .fill')].filter((f) => f.textContent.trim()).length,
+      heat: [...document.querySelectorAll('.heat-cell')].map((c) => [getComputedStyle(c).backgroundColor, getComputedStyle(c).color]) }));
+    check('3e-color1', 'la regla de color: las 6 bandas del IDEA del modo demostración usan un paso de la rampa de un solo matiz (sin ok/warn/bad, sin colorBanda), la distribución por banda de Analítica pinta con var(--rampa-N) y ninguna regla de .banda-*/.score-badge del CSS usa ok/warn/bad',
+      demo.bandas && demo.colorBanda === 'undefined' && demo.pasos === '123456' && enBandas.length === 0 && reglasClinicas.length === 0 && ana.bandasFill.length === 6 && ana.bandasFill.every((s) => /var\(--rampa-[1-6]\)/.test(s) && !/--(ok|warn|bad)/.test(s)),
+      JSON.stringify({ demo, enBandas: enBandas.length, reglasClinicas: reglasClinicas.length, fills: ana.bandasFill.length }));
+    check('3e-color2', 'Analítica (modo demostración): las cifras de las barras viven fuera del relleno (nada de texto sobre el color de la serie) y cada celda del heatmap usa un texto elegido contra su fondo',
+      ana.cifrasFuera >= 10 && ana.textoEnFill === 0 && ana.heat.length === 24, JSON.stringify({ cifrasFuera: ana.cifrasFuera, textoEnFill: ana.textoEnFill, celdas: ana.heat.length }));
+    // los estados cargando / error / vacío son UN componente en todas las pantallas conectadas
+    const fuenteConectada = js.filter(([f]) => ['ui-core.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'expediente.js'].includes(f)).map(([f, t]) => [f, sinComentarios(t)]);
+    const artesanales = fuenteConectada.flatMap(([f, t]) => t.split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => /class="hint" role="status">Cargando|class="empty-state" role="(alert|status)"|<div class="big" aria-hidden="true">!<\/div>\$\{escHtml/.test(l)));
+    const comp = await pv.evaluate(() => { const d = document.createElement('div'); d.innerHTML = estadoCargandoHtml('x') + estadoErrorHtml('x', 'void(0)') + estadoVacioHtml('◌', 'x') + estadoErrorInlineHtml('x', 'void(0)');
+      return [...d.children].map((e) => [e.className.split(' ').slice(0, 2).join('.'), e.getAttribute('role')]); });
+    check('3e-estados', 'cargando · error · vacío son UN componente compartido (utils.js): las pantallas conectadas no arman el suyo (cargando role=status, error role=alert con «Reintentar», vacío role=status)',
+      artesanales.length === 0 && JSON.stringify(comp) === JSON.stringify([['empty-state.estado-carga', 'status'], ['empty-state.estado-error', 'alert'], ['empty-state.estado-vacio', 'status'], ['estado-inline', 'alert']]),
+      JSON.stringify({ artesanales: artesanales.map(([f, n]) => f + ':' + n), comp }).slice(0, 400));
+
+    /* ---------- 3e-panel: el tabpanel es alcanzable con Tab sólo si no tiene nada operable adentro ---------- */
+    const tokenV = await pv.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const idMartinV = (await (await fetch(API + '/hce?nombre=Mart%C3%ADn&limit=5', { headers: { Authorization: 'Bearer ' + tokenV } })).json()).find((h) => h.persona.nombre === 'Martín').id;
+    await pv.evaluate((i) => abrirExpediente(i), idMartinV);
+    await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+    const paneles = {};
+    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'log', 'lb']) {
+      await pv.evaluate((t) => selTabExp(t), k);
+      await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+      await pv.waitForTimeout(80);
+      paneles[k] = await pv.evaluate(() => ({ ti: document.getElementById('panelExp').getAttribute('tabindex'), operables: document.querySelectorAll('#panelExp button:not([disabled]), #panelExp a[href], #panelExp input, #panelExp select, #panelExp textarea, #panelExp summary').length }));
+    }
+    await pv.evaluate(() => selTabExp('doc'));
+    await pv.waitForTimeout(80);
+    await pv.focus('#tabExp-doc'); await pv.keyboard.press('Tab');
+    const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
+    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV, LOG) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al panel; en LB (con controles adentro) no lleva tabindex',
+      ['doc', 'org', 'inc', 'pai', 'sev', 'log'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlPanel }).slice(0, 420));
+
+    /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
+    const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
+    const leer = async (nombre) => { const r = await pv.evaluate(() => ({
+      paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
+      marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
+      r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
+    for (const v of ['pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos']) { await pv.evaluate((x) => go(x), v); await pv.waitForTimeout(60); await leer(v); }
+    await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
+    await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
+    await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'log']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
+    await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
+    const sinTitulos = [...firmas].map((f) => JSON.parse(f));
+    check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto',
+      nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 6 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+    await cv.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

@@ -170,8 +170,10 @@ function cerrarFlujoModalUsuario(){
 }
 function focoEstableTrasDialogo(oid, ancla){
   if(document.querySelector(".modal-bg.open")) return;
+  /* El diálogo recién cerrado todavía puede figurar como elemento activo (el navegador corrige el foco recién en el próximo
+     cuadro): un activo que ya no se ve está perdido igual que <body>. */
   const a = document.activeElement;
-  if(a && a !== document.body && a !== document.documentElement) return;
+  if(a && a !== document.body && a !== document.documentElement && a.offsetParent !== null) return;
   const visible = el => el && el.offsetParent !== null;
   let dest = oid ? document.getElementById(oid) : null;
   if(!visible(dest)) dest = ancla && document.contains(ancla) ? ancla.querySelector("h1,h2,h3,.section-label") : null;
@@ -257,7 +259,7 @@ function verLB(id){
     <div class="data-row"><dt>Fecha de consenso</dt><dd>${fmtFecha(lb.fecha)}</dd></div>
     <div class="data-row"><dt>Sesiones de observación</dt><dd>${lb.sesiones||"—"}</dd></div>
     ${filas}
-    <div class="data-row"><dt><b>Total IDEA</b></dt><dd><b>${t.total} / 96</b> · <span style="color:${colorBanda(t.total)};font-weight:700">${bandaIdea(t.total)}</span></dd></div>
+    <div class="data-row"><dt><b>Total IDEA</b></dt><dd><b>${t.total} / 96</b> · <b>${bandaIdea(t.total)}</b></dd></div>
     <div class="section-label">Síntesis clínica</div><p style="font-size:.83rem;color:var(--ink)">${lb.sintesis||"—"}</p>
     <div class="section-label">Objetivos del período</div><p style="font-size:.83rem;color:var(--ink)">${lb.objetivos||"—"}</p>
     ${lb.migrado&&lb.migrado.es?`<div class="review-note">Migrado del sistema anterior.</div>`:""}
@@ -277,8 +279,8 @@ function verProt(id, key){
       const itT = deltaInterpreta(pr.deltas.total);
       deltasHtml = `<div class="section-label">Delta B − A por escala (§5.2 · sólo entre protocolos IPPU-TEA)</div>` +
         IPPU_ESCALAS.map((n,i)=>{ const d = pr.deltas.esc[i]; const it = deltaInterpreta(d);
-          return `<div class="data-row"><dt>E${i+1} · ${n}</dt><dd style="color:${it.c};font-weight:700">${fmtDelta(d)} · ${it.t}${d<=ALERTA_DELTA?" ⚠ alerta":""}</dd></div>`; }).join("") +
-        `<div class="data-row"><dt><b>Δ total</b></dt><dd style="color:${itT.c};font-weight:800">${fmtDelta(pr.deltas.total)} · ${itT.t}</dd></div>`;
+          return `<div class="data-row"><dt>E${i+1} · ${n}</dt><dd style="font-weight:700">${fmtDelta(d)} · ${it.t}${d<=ALERTA_DELTA?" ⚠ alerta":""}</dd></div>`; }).join("") +
+        `<div class="data-row"><dt><b>Δ total</b></dt><dd style="font-weight:800">${fmtDelta(pr.deltas.total)} · ${itT.t}</dd></div>`;
     } else {
       deltasHtml = `<div class="review-note">Delta B−A no calculado: el Protocolo A no estaba firmado al firmar el B (constancia en HCE-LOG).</div>`;
     }

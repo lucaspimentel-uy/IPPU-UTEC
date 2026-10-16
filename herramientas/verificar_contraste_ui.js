@@ -1,33 +1,37 @@
 /* Mide contraste WCAG sobre la demo L1 HCE+IDEA (IPPU x UTEC-LIDIA), por script — no a mano.
- * Reemplaza el método de docs/guias/notas-accesibilidad-ui.md §2.6 (fórmula de luminancia
- * relativa calculada a mano, "no verificado con herramienta").
+ * Sucesor del método de docs/guias/notas-accesibilidad-ui.md (§«Contraste y foco»).
  *
- * Dos fuentes, las dos con file:line:
- *   (1) ESTÁTICA — colores declarados en demo/css/estilos.css: variables custom (--x:#hex)
- *       primero, después literales (hex/rgb/rgba) en cualquier declaración, clasificados por
- *       rol según la propiedad CSS (background/texto/borde/foco).
- *   (2) VIVA — pares primer-plano/fondo que REALMENTE aparecen en el DOM renderizado: se abre
- *       la demo con Playwright, se recorren las mismas vistas que fingerprint.js
- *       (implementacion/L1-hce-idea/demo/verificacion/), se lee getComputedStyle() de cada
- *       elemento con texto visible, y de los 10 selectores que reemplazan el outline nativo
- *       por box-shadow (mismo hallazgo que la sesión de accesibilidad, §2.6) se dispara :focus
- *       y se lee el anillo real.
+ * Qué mide (todo sobre el DOM realmente renderizado, con los colores ya resueltos por el navegador):
+ *   (1) PARES TEXTO/FONDO de todo elemento con texto propio visible (1.4.3: 4,5:1, o 3:1 si el texto es grande), más el
+ *       texto que escribe una persona en un campo (color del valor y de su placeholder).
+ *   (2) BORDE DE LOS CAMPOS (input/select/textarea): 3:1 contra lo que tienen detrás (1.4.11).
+ *   (3) ANILLO DE FOCO (2.4.7 / 1.4.11): se enfoca con el TECLADO (:focus-visible de verdad, no un .focus() a secas), se lee
+ *       el contorno computado (color, ancho, separación) y se compara con el fondo que realmente queda detrás del anillo
+ *       (se esconde el control y se mira qué hay a su lado: sirve también para el enlace de salto, que flota sobre la barra).
+ *       Un selector que apague el contorno (`outline:none`) en el CSS se informa aparte.
  *
- * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una
- * segunda instalación sólo para este script) — si no está, `cd
- * implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium`
- * (Playwright fijado en su package.json; ver su README.md).
+ * Pantallas y diálogos que recorre (la lista exacta se imprime al final como «Cobertura»):
+ *   CONECTADAS: login (y su error), listado (cargando · error · vacío · filas · filtros), expediente de la API con sus 13
+ *   pestañas, CI (pendiente con errores · registrado · edición), IDEA (borrador con NS · firmado con banda · firma y 422 ·
+ *   addendas), PA y PB (borrador · Δ), IC (sin crear · firmado · avisos y «Cambió en el servidor» · errores), documento
+ *   impreso del IC, VF (vacía · formulario · categorías y niveles), reporte de la VF, diálogo de alta/edición en sus cuatro
+ *   pasos y su confirmación de descarte, diálogo del recibí y su confirmación, estados compartidos, toast, enlace de salto,
+ *   y el cromo de la app (barra lateral, cabecera) en todas ellas.
+ *   MODO DEMOSTRACIÓN (se informan aparte): Pendientes, Analítica, Grupos, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
+ *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
- * Uso:  IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js            (tabla completa)
- *       IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js --json out.json   (además, JSON crudo)
+ * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
+ * está, `cd implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium`.
  *
- * Desde la Fase 3 la demo NO abre por file://: el login es contra la API y ésta sólo acepta el origen
- * localhost:5500 (CORS). Igual que demo/verificacion/conectada.js, hace falta (README de esa carpeta):
- *   - la demo servida en DEMO   (por omisión http://localhost:5500;  cd demo && python -m http.server 5500)
- *   - la API en API             (por omisión http://localhost:8000, con la base cargada por `python -m app.seed_demo`)
- *   - IPPU_DEMO_PASSWORD        contraseña del técnico de la demo (la del seed)
- *   - opcional: IPPU_DEMO_EMAIL (por omisión gonzalez@demo.ippu.test)
- * La demo se abre con ?api=<API>: API=http://localhost:8001 sirve para una base descartable.
+ * Uso:  API=http://localhost:8001 IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js [--json out.json] [--tabla]
+ *   --json   además vuelca el resultado crudo;
+ *   --tabla  imprime los pares que fallan como tabla Markdown (elemento · primer plano · fondo · criterio), sin cifras.
+ *
+ * ⚠️ NO corre contra la base de presentación: medir sobre una base descartable recién cargada (README de verificacion/,
+ * «Base descartable») y ANTES de conectada.js (que escribe). Esta herramienta sólo LEE: lo que no existe en el seed (el
+ * recibí pendiente, los errores de firma, el conflicto) se pinta con los componentes reales de la demo, sin pedirle nada a la API.
+ *
+ * Variables: API (por omisión http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL.
  */
 const fs = require('fs');
 const path = require('path');
@@ -51,258 +55,173 @@ try {
 }
 
 /* ============================================================================
-   PARTE 1 — EXTRACCIÓN ESTÁTICA (colores declarados en el CSS, con file:line)
+   PARTE 1 — MATEMÁTICA WCAG (luminancia relativa, contraste)
    ============================================================================ */
-
-function extraerColoresCSS() {
-  const src = fs.readFileSync(CSS_PATH, 'utf8');
-  const lineas = src.split('\n');
-  const colorRe = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]+\)/g;
-
-  const variables = [];   // --nombre: valor
-  const literales = [];   // propiedad: valor (con color literal, no var())
-
-  let dentroRoot = false;
-  lineas.forEach((linea, i) => {
-    const n = i + 1;
-    if (/:root\s*\{/.test(linea)) dentroRoot = true;
-    if (dentroRoot && /^\s*\}/.test(linea)) dentroRoot = false;
-
-    const varMatch = linea.match(/^\s*(--[\w-]+)\s*:\s*([^;]+);/);
-    if (dentroRoot && varMatch) {
-      const val = varMatch[2].trim();
-      const colores = val.match(colorRe);
-      if (colores) variables.push({ nombre: varMatch[1], valor: val, linea: n, archivo: 'css/estilos.css' });
-      return;
-    }
-
-    // Literal: declaración propiedad:valor que NO sea la definición de una variable
-    // y cuyo valor contenga un color directo (no var(--x)).
-    const propMatch = linea.match(/([\w-]+)\s*:\s*([^;]+);/g);
-    if (propMatch) {
-      propMatch.forEach(decl => {
-        const m = decl.match(/([\w-]+)\s*:\s*([^;]+);/);
-        if (!m) return;
-        const [, prop, val] = m;
-        if (prop.startsWith('--')) return; // ya cubierto arriba
-        const colores = val.match(colorRe);
-        if (colores) literales.push({ propiedad: prop.trim(), valor: val.trim(), linea: n, archivo: 'css/estilos.css' });
-      });
-    }
-  });
-
-  return { variables, literales };
-}
-
-function rolPorPropiedad(prop) {
-  if (/^background/.test(prop)) return 'fondo';
-  if (prop === 'color') return 'texto';
-  if (/^(border|outline)/.test(prop)) return 'borde';
-  if (prop === 'box-shadow') return 'foco/estado';
-  return 'otro';
-}
-
-/* ============================================================================
-   PARTE 2 — MATEMÁTICA WCAG (luminancia relativa, contraste)
-   ============================================================================ */
-
 function parseColor(str) {
-  str = str.trim();
+  str = String(str).trim();
   let m = str.match(/^#([0-9a-fA-F]{3})$/);
-  if (m) {
-    const [r, g, b] = m[1].split('').map(c => parseInt(c + c, 16));
-    return { r, g, b, a: 1 };
-  }
+  if (m) { const [r, g, b] = m[1].split('').map(c => parseInt(c + c, 16)); return { r, g, b, a: 1 }; }
   m = str.match(/^#([0-9a-fA-F]{6})$/);
-  if (m) {
-    const hex = m[1];
-    return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16), a: 1 };
-  }
-  m = str.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+))?\s*\)$/);
-  if (m) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+  if (m) { const h = m[1]; return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: 1 }; }
+  m = str.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)\s*(?:[,/]\s*([\d.]+%?))?\s*\)$/);
+  if (m) { let a = m[4] === undefined ? 1 : (m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]); return { r: +m[1], g: +m[2], b: +m[3], a }; }
   return null;
 }
-
-/* Compone `fg` (puede tener alpha<1, p.ej. un anillo de foco) sobre `bg` (opaco). */
-function componer(fg, bg) {
-  const a = fg.a;
-  return {
-    r: fg.r * a + bg.r * (1 - a),
-    g: fg.g * a + bg.g * (1 - a),
-    b: fg.b * a + bg.b * (1 - a),
-    a: 1,
-  };
-}
-
+function componer(fg, bg) { const a = fg.a; return { r: fg.r * a + bg.r * (1 - a), g: fg.g * a + bg.g * (1 - a), b: fg.b * a + bg.b * (1 - a), a: 1 }; }
 function luminanciaRelativa({ r, g, b }) {
   const canal = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
   return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b);
 }
-
-function ratio(colorA, colorB) {
-  const la = luminanciaRelativa(colorA), lb = luminanciaRelativa(colorB);
+function ratio(a, b) {
+  const la = luminanciaRelativa(a), lb = luminanciaRelativa(b);
   const [claro, oscuro] = la >= lb ? [la, lb] : [lb, la];
   return (claro + 0.05) / (oscuro + 0.05);
 }
-
-/* Dado un color de primer plano (posiblemente con alpha) y un fondo opaco, devuelve el
- * ratio de contraste ya compuesto. */
 function ratioConAlpha(fgStr, bgStr) {
   const fg = parseColor(fgStr), bg = parseColor(bgStr);
   if (!fg || !bg) return null;
-  const fgOpaco = fg.a < 1 ? componer(fg, bg) : fg;
-  return ratio(fgOpaco, bg);
+  return ratio(fg.a < 1 ? componer(fg, bg) : fg, bg);
 }
-
-function criterioYVeredicto(r, { esGrande = false, esNoTexto = false } = {}) {
-  if (esNoTexto) return { criterio: '3:1 (1.4.11/2.4.11, no-texto)', pasa: r >= 3 };
+function criterioYVeredicto(r, { esGrande = false, esNoTexto = false, etiqueta = '' } = {}) {
+  if (esNoTexto) return { criterio: `3:1 (1.4.11${etiqueta ? ', ' + etiqueta : ''})`, pasa: r >= 3 };
   const umbral = esGrande ? 3 : 4.5;
   return { criterio: `${umbral}:1 (1.4.3, texto ${esGrande ? 'grande' : 'normal'})`, pasa: r >= umbral };
 }
+const aHex = (rgbStr) => {
+  const c = parseColor(rgbStr); if (!c) return rgbStr;
+  const h = (n) => Math.round(n).toString(16).padStart(2, '0').toUpperCase();
+  return '#' + h(c.r) + h(c.g) + h(c.b) + (c.a < 1 ? ` (α${c.a.toFixed(2)})` : '');
+};
 
 /* ============================================================================
-   PARTE 3 — EXTRACCIÓN VIVA (qué pares realmente se renderizan)
+   PARTE 2 — EXTRACCIÓN VIVA
    ============================================================================ */
-
+/* Todo lo que corre en el navegador va en UNA función para poder pasarla a page.evaluate. */
 async function extraerParesVivos(page) {
-  // Pares texto/fondo de todo elemento con contenido de texto directo y visible.
-  const pares = await page.evaluate(() => {
+  return page.evaluate(() => {
+    function opaco(bg) {
+      if (!bg || bg === 'transparent') return null;
+      const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+      if (!m) return null;
+      return (m[4] === undefined || +m[4] === 1) ? bg : (+m[4] === 0 ? null : bg);
+    }
+    /* Fondo efectivo: compone las capas translúcidas sobre lo que haya detrás. */
     function fondoEfectivo(el) {
+      const capas = [];
       let n = el;
       while (n) {
-        const cs = getComputedStyle(n);
-        const bg = cs.backgroundColor;
-        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-          const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
-          if (m && (m[4] === undefined || +m[4] === 1)) return bg;
+        const bg = getComputedStyle(n).backgroundColor;
+        const o = opaco(bg);
+        if (o) {
+          const m = o.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+          const a = m[4] === undefined ? 1 : +m[4];
+          capas.push([+m[1], +m[2], +m[3], a]);
+          if (a === 1) break;
         }
         n = n.parentElement;
       }
-      return 'rgb(255, 255, 255)'; // canvas por defecto
+      let base = [255, 255, 255];
+      for (let i = capas.length - 1; i >= 0; i--) { const [r, g, b, a] = capas[i]; base = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a)]; }
+      return `rgb(${Math.round(base[0])}, ${Math.round(base[1])}, ${Math.round(base[2])})`;
     }
+    const visible = (el) => {
+      if (el.offsetParent === null && el !== document.body && getComputedStyle(el).position !== 'fixed') return false;
+      const cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0;
+    };
     const out = [];
     const vistos = new Set();
+    const identK = (el) => el.tagName.toLowerCase() + (el.type && el.tagName !== 'BUTTON' ? '[' + el.type + ']' : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') + (el.parentElement && el.parentElement.className && typeof el.parentElement.className === 'string' ? ' en .' + el.parentElement.className.trim().split(/\s+/)[0] : '');
+    const ident = (el) => identK(el) + (el.id ? '#' + el.id : '');
     document.querySelectorAll('body *').forEach(el => {
-      if (el.offsetParent === null && el !== document.body) return; // no visible
+      if (!visible(el)) return;
+      if (el.closest('script,style,svg')) return;
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+        const cs = getComputedStyle(el), bg = fondoEfectivo(el);
+        const t = el.type;
+        if (t === 'checkbox' || t === 'radio' || t === 'hidden' || t === 'file') return;
+        const fs = parseFloat(cs.fontSize);
+        const key = 'v|' + cs.color + '|' + bg + '|' + identK(el);
+        if (!vistos.has(key)) { vistos.add(key); out.push({ tipo: 'texto', fg: cs.color, bg, esGrande: false, ident: ident(el) + ' (valor)', dk: identK(el) + ' (valor)' }); }
+        if ((tag === 'input' || tag === 'textarea') && el.placeholder) {
+          const ph = getComputedStyle(el, '::placeholder').color;
+          const k2 = 'p|' + ph + '|' + bg + '|' + identK(el);
+          if (!vistos.has(k2)) { vistos.add(k2); out.push({ tipo: 'texto', fg: ph, bg, esGrande: false, ident: ident(el) + '::placeholder', dk: identK(el) + '::placeholder' }); }
+        }
+        // Borde del campo contra lo que tiene detrás (1.4.11): el borde es lo que lo delimita.
+        const bw = parseFloat(cs.borderTopWidth) || 0;
+        const padre = el.parentElement ? fondoEfectivo(el.parentElement) : 'rgb(255, 255, 255)';
+        const k3 = 'b|' + cs.borderTopColor + '|' + padre + '|' + identK(el);
+        if (!vistos.has(k3)) { vistos.add(k3); out.push({ tipo: 'borde-campo', fg: bw > 0 ? cs.borderTopColor : 'rgba(0, 0, 0, 0)', bg: padre, ancho: bw, esGrande: false, ident: ident(el) + ' (borde)', dk: identK(el) + ' (borde)' }); }
+        return;
+      }
       const tieneTextoPropio = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 0);
       if (!tieneTextoPropio) return;
       const cs = getComputedStyle(el);
-      const fg = cs.color;
-      const bg = fondoEfectivo(el);
-      const fs = parseFloat(cs.fontSize);
-      const fw = parseInt(cs.fontWeight, 10) || 400;
+      const fg = cs.color, bg = fondoEfectivo(el);
+      const fs = parseFloat(cs.fontSize), fw = parseInt(cs.fontWeight, 10) || 400;
       const esGrande = fs >= 24 || (fs >= 18.66 && fw >= 700);
       const key = fg + '|' + bg + '|' + esGrande + '|' + el.className;
       if (vistos.has(key)) return;
       vistos.add(key);
-      out.push({ fg, bg, esGrande, clase: (el.className || '').toString().slice(0, 60), tag: el.tagName.toLowerCase() });
+      out.push({ tipo: 'texto', fg, bg, esGrande, ident: ident(el), dk: identK(el), tag });
     });
     return out;
   });
-  return pares;
 }
 
-/* Los N selectores que reemplazan outline nativo por box-shadow: se extraen del CSS mismo
- * (no se hardcodea una lista de líneas — si el patrón se mueve, esto lo vuelve a encontrar). */
-function extraerSelectoresDeAnilloFoco() {
+/* Anillo de foco con TECLADO real: se pulsa una tecla (el navegador pasa a modalidad de teclado y :focus-visible aplica a
+ * cualquier .focus() posterior), se enfoca el control y se lee el contorno computado. El fondo «detrás del anillo» es lo que
+ * hay a su lado: se esconde el control y se mira con elementsFromPoint 3 px más allá del borde (o su propio fondo si el
+ * contorno va hacia adentro, outline-offset < 0). */
+async function medirAnilloTeclado(page, selector, nombre) {
+  await page.keyboard.press('Shift');
+  return page.evaluate(({ selector, nombre }) => {
+    const candidatos = [...document.querySelectorAll(selector)];
+    const el = candidatos.find(c => c.offsetParent !== null || getComputedStyle(c).position === 'fixed') || null;
+    if (!el) return { nombre, selector, error: 'sin elemento visible' };
+    const previo = document.activeElement;
+    el.focus({ preventScroll: false });
+    const enfocado = document.activeElement === el;
+    const focusVisible = el.matches(':focus-visible');
+    const cs = getComputedStyle(el);
+    const ring = { color: cs.outlineColor, ancho: parseFloat(cs.outlineWidth), estilo: cs.outlineStyle, offset: parseFloat(cs.outlineOffset), sombra: cs.boxShadow };
+    const r = el.getBoundingClientRect();
+    function opaco(n) {
+      while (n) {
+        const bg = getComputedStyle(n).backgroundColor;
+        const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+        if (m && (m[4] === undefined || +m[4] === 1)) return bg;
+        n = n.parentElement;
+      }
+      return 'rgb(255, 255, 255)';
+    }
+    let bgDetras;
+    if (ring.offset < 0) bgDetras = opaco(el);
+    else {
+      const sep = Math.max(ring.offset, 0) + ring.ancho / 2 + 1;
+      const x = Math.max(1, Math.min(window.innerWidth - 1, r.left - sep)), y = Math.max(1, Math.min(window.innerHeight - 1, r.top + r.height / 2));
+      const vis = el.style.visibility; el.style.visibility = 'hidden';
+      const pila = document.elementsFromPoint(x, y).filter(e => e !== el && !el.contains(e));
+      el.style.visibility = vis;
+      bgDetras = opaco(pila[0] || el.parentElement);
+    }
+    const pantalla = { enfocado, focusVisible };
+    el.blur(); if (previo && previo.focus && previo !== document.body) previo.focus();
+    return { nombre, selector, ...pantalla, ring, bgDetras, ident: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : '') };
+  }, { selector, nombre });
+}
+
+/* Selectores del CSS que apagan el contorno (`outline:none/0`): cada uno es un anillo perdido salvo que sea el de un contenedor
+ * que sólo recibe foco por programa (main). Se informan, no se asumen. */
+function buscarContornosApagados() {
   const src = fs.readFileSync(CSS_PATH, 'utf8');
-  const bloques = src.split(/(?=[.#:\w][^{}]*\{)/); // approx: no es un parser CSS real
-  const encontrados = [];
-  const re = /([^{}\n]+)\{([^}]*outline\s*:\s*none[^}]*box-shadow\s*:[^}]*|[^}]*box-shadow\s*:[^}]*outline\s*:\s*none[^}]*)\}/g;
+  const out = [];
+  const re = /([^{}\n]+)\{([^}]*)\}/g;
   let m;
   while ((m = re.exec(src))) {
-    const selector = m[1].trim();
-    const cuerpo = m[2];
-    const bs = cuerpo.match(/box-shadow\s*:\s*([^;]+);?/);
-    const lineaHastaAqui = src.slice(0, m.index).split('\n').length;
-    if (bs) encontrados.push({ selector, boxShadow: bs[1].trim(), linea: lineaHastaAqui });
-  }
-  return encontrados;
-}
-
-/* Cada selector vive en una vista/estado distinto (login, listado, formulario condicional).
- * Declarado en un solo lugar, igual que VISTAS en fingerprint.js — nada de "if selector===X"
- * suelto en el loop de abajo. `prep` corre ANTES de intentar enfocar; si no se sabe cómo
- * llegar a un selector en esta corrida, se deja sin `prep` y el resultado lo dice honestamente
- * ("sin elemento en el DOM") en vez de simular un número que no se verificó. */
-/* Abre un expediente DE LA API por nombre y su pestaña de evaluación (LB/PA/PB), esperando a que cargue. */
-async function abrirPorNombre(page, nombre, tab) {
-  await page.evaluate(async (n) => {
-    const r = await fetch(API_BASE + '/hce?nombre=' + encodeURIComponent(n) + '&limit=5', { headers: { Authorization: 'Bearer ' + Sesion.token() } });
-    const j = await r.json();
-    await abrirExpediente(j.find((h) => h.persona.nombre === n).id);
-  }, nombre);
-  await page.waitForSelector('#expTitulo', { timeout: 8000 });
-  await page.click('#tabExp-' + tab);
-  await page.waitForFunction(() => document.getElementById('evResumen') || document.getElementById('evEstado'), null, { timeout: 8000 });
-  await page.waitForTimeout(200);
-}
-
-const PREP_ANILLO = {
-  '.login-field input': null, // se mide aparte, ANTES de loguearse (ver main)
-  'select': async (page) => { await page.evaluate(() => go('ateneos')); await page.waitForTimeout(80); },
-  '.field input': async (page) => { await page.evaluate(() => go('ateneos')); await page.waitForTimeout(80); },
-  '.search-wrap input': async (page) => { await page.evaluate(() => go('inicio')); await page.waitForTimeout(80); },
-  '.prot-obs textarea': async (page) => {
-    // Martín tiene el PA firmado => de sólo lectura (no hay formulario). Sofía (seed) tiene el PA en
-    // borrador: ahí el campo es editable de verdad (Fase 3-c: pestaña PA del expediente de la API).
-    await abrirPorNombre(page, 'Sofía', 'pa');
-    // .prot-obs sólo se muestra si el ítem vale 1/5 — se fuerza la clase para medir el anillo del
-    // campo, no para afirmar que el seed tiene ese puntaje.
-    await page.evaluate(() => { const w = document.querySelector('.prot-obs'); if (w) w.classList.add('show'); });
-  },
-};
-/* .btn:focus-visible y .opcion:focus-visible NO se resuelven acá: `:focus-visible` en
-   Chromium sólo se activa con modalidad de teclado real, y un `.focus()` programático
-   (aunque venga de un Tab de Playwright) no lo garantiza de forma confiable en headless.
-   No se fuerza — se reporta sin medir en vez de simular un número no verificado. Igual
-   comparten el mismo `--focus` que sí se midió en 3 selectores independientes (login,
-   búsqueda, select/field) — ver §2.6 del doc. */
-/* Selector real a interrogar una vez preparada la vista: por defecto es el selBase, salvo
- * cuando (como .prot-obs) sólo un elemento puntual queda visible/habilitado. */
-const SEL_OVERRIDE = {
-  '.prot-obs textarea': '.prot-obs.show textarea',
-};
-
-async function medirAnillosDeFoco(page, selectores) {
-  const out = [];
-  for (const { selector, boxShadow, linea } of selectores) {
-    const primerSel = selector.split(',')[0].trim();
-    // querySelector no puede matchear ":focus"/":focus-visible" sin foco real: se saca el
-    // pseudo-selector para ubicar el elemento base, se lo enfoca, y RECIÉN ahí el pseudo-
-    // selector empieza a aplicar y getComputedStyle lo refleja.
-    const selBase = primerSel.replace(/:focus(-visible)?\s*$/, '').trim();
-    if (selBase in PREP_ANILLO) {
-      if (PREP_ANILLO[selBase] === null) { out.push({ selector: primerSel, boxShadowDeclarado: boxShadow, linea, resultado: null, nota: 'medido aparte (login)' }); continue; }
-      await PREP_ANILLO[selBase](page);
-    }
-    const selConsulta = SEL_OVERRIDE[selBase] || selBase;
-    const res = await page.evaluate((sel) => {
-      // El mismo selector puede matchear varios elementos repetidos en distintas vistas
-      // (p. ej. hay un <select> por cada formulario). go() no los saca del DOM, sólo los
-      // esconde — así que se toma el primero VISIBLE, no el primero en orden de documento.
-      const candidatos = [...document.querySelectorAll(sel)];
-      const el = candidatos.find(c => c.offsetParent !== null) || null;
-      if (!el) return null;
-      const activoAntes = document.activeElement;
-      el.focus();
-      const enfocado = document.activeElement === el;
-      const cs = getComputedStyle(el);
-      const bg = (() => {
-        let n = el;
-        while (n) {
-          const c = getComputedStyle(n).backgroundColor;
-          if (c && c !== 'rgba(0, 0, 0, 0)') return c;
-          n = n.parentElement;
-        }
-        return 'rgb(255,255,255)';
-      })();
-      const boxShadowComputado = cs.boxShadow;
-      el.blur();
-      if (activoAntes && activoAntes.focus) activoAntes.focus();
-      return { boxShadowComputado, bg, enfocado };
-    }, selConsulta);
-    out.push({ selector: primerSel, boxShadowDeclarado: boxShadow, linea, resultado: res });
+    if (/outline\s*:\s*(none|0)\b/.test(m[2]) && !/^main\b/.test(m[1].trim())) out.push(m[1].trim().replace(/\s+/g, ' '));   // main: contenedor que sólo recibe foco por programa (destino del salto)
   }
   return out;
 }
@@ -310,127 +229,91 @@ async function medirAnillosDeFoco(page, selectores) {
 /* ============================================================================
    MAIN
    ============================================================================ */
-
 (async () => {
-  console.log('=== 1. Colores declarados en estilos.css (estático) ===\n');
-  const { variables, literales } = extraerColoresCSS();
-  console.log(`Variables custom con color: ${variables.length}`);
-  console.log(`Declaraciones literales con color: ${literales.length}\n`);
-
   if (!PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD (contraseña del técnico de la demo; la del seed).'); process.exit(1); }
   for (const [nombre, url] of [['API', API + '/health'], ['demo', DEMO + '/index.html']]) {
     try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); }
     catch (e) { console.error(`No responde la ${nombre} en ${url} (${e.message}). Ver demo/verificacion/README.md → «Demo conectada».`); process.exit(1); }
   }
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on('pageerror', (e) => errores.push(e.message));
+
+  const capturas = [];          // {pantalla, grupo, n}
+  const mapa = new Map();       // pares únicos: fg|bg|grande|tipo|ident
+  const anillos = [];
+  async function cap(pantalla, grupo = 'conectada') {
+    const pares = await extraerParesVivos(page);
+    capturas.push({ pantalla, grupo, n: pares.length });
+    for (const p of pares) {
+      const key = [p.tipo, p.fg, p.bg, p.esGrande, p.dk].join('|');
+      const e = mapa.get(key) || { ...p, pantallas: new Set(), grupos: new Set() };
+      e.pantallas.add(pantalla); e.grupos.add(grupo);
+      mapa.set(key, e);
+    }
+  }
+  const ev = (f, arg) => page.evaluate(f, arg);
+  const esperar = (ms) => page.waitForTimeout(ms);
+
+  // ---------------------------------------------------------------- LOGIN
   await page.goto(URL_DEMO);
   await page.waitForSelector('#loginScreen', { state: 'attached' });
-
-  // El anillo de .login-field input SOLO existe con la pantalla de login activa —
-  // se mide acá, antes de loguearse, y no en el loop general de la Parte 3.
-  const anilloLogin = await page.evaluate(() => {
-    const el = document.querySelector('.login-field input');
-    if (!el) return null;
-    el.focus();
-    const cs = getComputedStyle(el);
-    const bg = (() => {
-      let n = el;
-      while (n) { const c = getComputedStyle(n).backgroundColor; if (c && c !== 'rgba(0, 0, 0, 0)') return c; n = n.parentElement; }
-      return 'rgb(255,255,255)';
-    })();
-    const boxShadowComputado = cs.boxShadow;
-    el.blur();
-    return { boxShadowComputado, bg };
-  });
-
+  await esperar(300);
+  await cap('Login');
+  anillos.push(await medirAnilloTeclado(page, '#loginUser', 'campo de texto (login)'));
+  anillos.push(await medirAnilloTeclado(page, '#loginBtn', 'botón (login)'));
   await page.fill('#loginUser', EMAIL);
+  await page.fill('#loginPass', 'clave-incorrecta-para-medir-el-error');
+  await page.click('#loginBtn');
+  await page.waitForSelector('#loginError:not([hidden])');
+  await cap('Login · error de credenciales');
+  await ev(() => estadoLogin('Verificando sesión…')); await cap('Login · estado «verificando»'); await ev(() => estadoLogin(''));
   await page.fill('#loginPass', PASSWORD);
   await page.click('#loginBtn');
   await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
   await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
 
-  const VISTAS = ['inicio', 'pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos'];
-  let todosPares = [];
-  for (const v of VISTAS) {
-    await page.click(`.navitem[data-view="${v}"]`);
-    await page.waitForTimeout(80);
-    todosPares = todosPares.concat(await extraerParesVivos(page));
+  // ---------------------------------------------------------------- LISTADO (conectado)
+  await esperar(500);
+  await cap('Inicio · listado con el aviso «Bienvenido» (toast)');
+  await ev(() => listaCargando());                                  await cap('Inicio · listado cargando');
+  await ev(() => listaError(new ApiError(500, 'internal_error', [], 'No se pudo cargar el listado (muestra).'))); await cap('Inicio · listado con error');
+  await ev(() => { pintarLista([]); });                              await cap('Inicio · listado vacío');
+  await ev(() => cargarLista());
+  await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+  await page.click('.chip-estado[data-estado="todos"]'); await page.waitForFunction(() => /Mostrando 8 de 8/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+  await cap('Inicio · listado con inactivos (filtro «Todos»)');
+  await page.click('.chip-estado[data-estado="activos"]'); await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+
+  // ---------------------------------------------------------------- VISTAS EN MODO DEMOSTRACIÓN
+  for (const v of ['pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos']) {
+    await page.click(`.navitem[data-view="${v}"]`); await esperar(120);
+    await cap(`Vista ${v} (modo demostración)`, 'demo');
   }
-  await page.click('.userchip');
-  await page.waitForTimeout(80);
-  todosPares = todosPares.concat(await extraerParesVivos(page));
-  // Un expediente DE LA API (el primero de la lista), con cada una de sus pestañas; después el
-  // expediente de EJEMPLO (modo demostración) y el formulario IDEA, que traen los componentes que la
-  // línea base ya medía (heatmap, barras, íconos).
+  await page.click('.userchip'); await esperar(120);
+  await cap('Perfil de ejemplo (modo demostración)', 'demo');
   await page.click('.navitem[data-view="inicio"]');
+
+  // ---------------------------------------------------------------- EXPEDIENTE DE LA API: 13 pestañas
   await page.locator('#tbodyNNA tr[data-hce]').first().getByRole('button', { name: /Abrir expediente/ }).click();
   await page.waitForSelector('#expTitulo', { timeout: 8000 });
   await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').textContent), null, { timeout: 8000 });
   for (const k of await page.$$eval('.exp-tab', (bs) => bs.map((b) => b.dataset.tab))) {
-    await page.click('#tabExp-' + k);
-    await page.waitForTimeout(150);
-    todosPares = todosPares.concat(await extraerParesVivos(page));
+    await page.click('#tabExp-' + k); await esperar(200);
+    await cap(`Expediente · pestaña ${k.toUpperCase()}`);
   }
-  // Pantallas de escritura (Fase 3-b): CI pendiente con sus errores de formulario, y el diálogo de
-  // alta/edición en sus cuatro pasos, con el resumen de errores a la vista. Se busca a Bruno (seed: sin CI);
-  // si la base no es la del seed, se usa el expediente ya abierto y el CI que tenga.
-  await page.click('.navitem[data-view="inicio"]');
-  const bruno = page.locator('#tbodyNNA tr[data-hce]', { hasText: 'Bruno' });
-  if (await bruno.count()) {
-    await bruno.getByRole('button', { name: /Abrir expediente/ }).click();
-    await page.waitForSelector('#expTitulo', { timeout: 8000 });
-    await page.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-  }
-  await page.click('#tabExp-ci');
-  await page.waitForTimeout(400);
-  todosPares = todosPares.concat(await extraerParesVivos(page));            // CI: pendiente (formulario) o registrado
-  if (await page.locator('#btnCiGuardar').count()) {
-    await page.click('#btnCiGuardar');                                       // obligatorios vacíos → errores + resumen
-    await page.waitForTimeout(100);
-    todosPares = todosPares.concat(await extraerParesVivos(page));
-  }
-  await page.evaluate(() => openEditar());                                   // el diálogo, paso por paso
-  await page.waitForSelector('#modalAlta.open');
-  await page.waitForTimeout(300);
-  const nombreOrig = await page.inputValue('#f_nombre');
-  await page.fill('#f_nombre', ''); await page.click('#btnNext'); await page.waitForTimeout(400);   // paso 1 con el resumen de errores
-  todosPares = todosPares.concat(await extraerParesVivos(page));
-  await page.fill('#f_nombre', nombreOrig);
-  for (let paso = 2; paso <= 4; paso++) {                                    // pasos 2 (grupo, estado), 3 (anamnesis) y 4 (revisión)
-    await page.click('#btnNext'); await page.waitForTimeout(400);   // el .dot del paso activo anima su fondo (.2s): se mide ya asentado
-    todosPares = todosPares.concat(await extraerParesVivos(page));
-  }
-  // Se cierra por script, NO con Escape: una tecla pulsada pasa el navegador a modalidad de teclado y entonces
-  // `.focus()` cumple :focus-visible, lo que cambiaria cuales anillos de la parte 3 se miden (ver nota arriba).
-  await page.evaluate(() => closeAlta());
-  await page.evaluate(() => abrirExpedienteDemo(102));
-  await page.waitForTimeout(120);
-  todosPares = todosPares.concat(await extraerParesVivos(page));
-  // Fase 3-c: IDEA y protocolos de la API. Joaquín = borrador con NS (editable, barra de totales, confirmación de
-  // firma y 422); Martín = LB firmado con banda, addendas y PB firmado con Δ (solo lectura); Sofía = PA editable.
-  // Todo con el seed recién cargado: sólo se lee (firmar con campos incompletos da 422 y no escribe nada).
-  await page.click('.navitem[data-view="inicio"]');
-  await abrirPorNombre(page, 'Joaquín', 'lb');
-  todosPares = todosPares.concat(await extraerParesVivos(page));
-  await page.evaluate(() => evPedirFirma()); await page.waitForTimeout(100);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // barra con la confirmación de firma
-  await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await page.waitForTimeout(150);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // 422 por dimensión y por campo
-  await abrirPorNombre(page, 'Martín', 'lb');
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // LB firmado: puntaje, banda (rampa), dimensiones
-  await page.click('#tabExp-pb'); await page.waitForSelector('#evDeltaTabla', { timeout: 8000 }); await page.waitForTimeout(150);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // PB firmado: Δ e interpretación
-  await abrirPorNombre(page, 'Sofía', 'pa');
-  await page.evaluate(() => document.querySelectorAll('.prot-obs').forEach((w) => w.classList.add('show')));
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // PA editable con las observaciones a la vista
-  await page.evaluate(() => evPedirFirma()); await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await page.waitForTimeout(150);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // errores del PA (fecha, síntesis)
+  // Estados compartidos (cargando · error · vacío · error en línea) con los componentes reales
+  await page.click('#tabExp-hce00'); await esperar(150);
+  await ev(() => { document.getElementById('panelExp').innerHTML = estadoCargandoHtml('Cargando (muestra)…') + estadoErrorHtml('No se pudo cargar (muestra).', 'void(0)', '<button type="button" class="btn btn-ghost btn-mini">Acción extra</button>') + estadoVacioHtml('◌', 'Todavía no hay nada (muestra).', '<button type="button" class="btn btn-primary">Crear</button>') + estadoErrorInlineHtml('Error en una parte de la pantalla (muestra).', 'void(0)'); });
+  await cap('Estados compartidos: cargando · error · vacío · error en línea');
+  await ev(() => { EXP.avisos = [{ mensaje: 'Aviso no bloqueante de la API (muestra).' }, { mensaje: 'El registro ya estaba firmado. Se muestra tal como está en el servidor.', conflicto: true }]; pintarAvisosExp(); });
+  await cap('Avisos de la API y «Cambió en el servidor»');
+  await ev(() => { EXP.avisos = []; pintarAvisosExp(); selTabExp('hce00'); });
 
-  // Fase 3-d: IC (sin crear con la confirmación de firma, firmado con radares/tabla, documento impreso) y VF (estado vacío,
-  // formulario de alta y la valoración con categoría, alerta y niveles). Sólo se lee: ni se guarda el IC de Valentina ni se crea
-  // una VF (el botón «Firmar» se detiene en la confirmación, y «Registrar valoración» sólo abre el formulario).
-  const abrirIc = async (nombre, tab) => {
+  // ---------------------------------------------------------------- CI: pendiente (Bruno) con errores · registrado (Martín) y su edición
+  async function abrirPorNombre(nombre, tab) {
     await page.click('.navitem[data-view="inicio"]');
     await page.evaluate(async (n) => {
       const r = await fetch(API_BASE + '/hce?nombre=' + encodeURIComponent(n) + '&limit=5', { headers: { Authorization: 'Bearer ' + Sesion.token() } });
@@ -440,85 +323,194 @@ async function medirAnillosDeFoco(page, selectores) {
     await page.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
     await page.click('#tabExp-' + tab);
     await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
-    await page.waitForTimeout(200);
-  };
-  await abrirIc('Valentina', 'ic');
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // IC sin crear: tabla con «—», editor, firmantes
-  await page.evaluate(() => icPedirFirma()); await page.waitForTimeout(100);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // barra con la confirmación de firma
-  await abrirIc('Martín', 'ic');
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // IC firmado: tabla, radares, firmas, recibí
-  await page.click('#btnIcImpreso'); await page.waitForSelector('.print-wrap', { timeout: 8000 }); await page.waitForTimeout(300);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // documento impreso (vista en pantalla)
-  await abrirIc('Martín', 'vf');
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // VF: estado vacío
-  await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await page.waitForTimeout(100);
-  todosPares = todosPares.concat(await extraerParesVivos(page));             // VF: formulario de alta
-  // La VF con datos: se pinta el componente real con una valoración de muestra (no se escribe nada en la API) para medir la
-  // categoría (cada una de las cinco), los niveles de autonomía en la rampa y la alerta de vigencia.
-  for (const cat of [['Sin discapacidad', '0 % a 4 %'], ['Leve', '5 % a 24 %'], ['Moderado', '25 % a 49 %'], ['Severo', '50 % a 95 %'], ['Muy severo', '96 % a 100 %'], [null, null]]) {
-    await page.evaluate(([nombre, rango]) => {
+    await esperar(200);
+  }
+  await abrirPorNombre('Bruno', 'ci');
+  await cap('CI · pendiente (formulario)');
+  anillos.push(await medirAnilloTeclado(page, '#ci_aut_eval', 'casilla (CI)'));
+  await page.click('#btnCiGuardar'); await esperar(150);
+  await cap('CI · pendiente con errores de formulario');
+  anillos.push(await medirAnilloTeclado(page, '#ciErrores a', 'enlace (resumen de errores)'));
+  await abrirPorNombre('Martín', 'ci');
+  await cap('CI · registrado');
+  await ev(() => ciEditar()); await esperar(150);
+  await cap('CI · edición');
+
+  // ---------------------------------------------------------------- DIÁLOGO DE ALTA / EDICIÓN (cuatro pasos) y su confirmación
+  await ev(() => openEditar());
+  await page.waitForSelector('#modalAlta.open'); await esperar(300);
+  const nombreOrig = await page.inputValue('#f_nombre');
+  await page.fill('#f_nombre', ''); await page.click('#btnNext'); await esperar(400);
+  await cap('Diálogo de alta/edición · paso 1 con resumen de errores');
+  anillos.push(await medirAnilloTeclado(page, '#f_nombre', 'campo de texto (diálogo)'));
+  await page.fill('#f_nombre', nombreOrig);
+  for (let paso = 2; paso <= 4; paso++) { await page.click('#btnNext'); await esperar(400); await cap(`Diálogo de alta/edición · paso ${paso}`); }
+  await ev(() => closeAlta());                                         // sin cambios: cierra sin preguntar
+  await ev(() => openAlta()); await page.waitForSelector('#modalAlta.open'); await esperar(200);
+  await page.fill('#f_nombre', 'Dato tipeado');
+  await page.keyboard.press('Escape'); await page.waitForSelector('.confirmar-descarte', { timeout: 3000 });
+  await cap('Diálogo de alta · confirmar descarte');
+  anillos.push(await medirAnilloTeclado(page, '#btnCdDescartar', 'botón destructivo (confirmación)'));
+  await page.click('#btnCdDescartar'); await esperar(150);
+
+  // ---------------------------------------------------------------- IDEA y PROTOCOLOS
+  await abrirPorNombre('Joaquín', 'lb');
+  await cap('LB · borrador con NS');
+  anillos.push(await medirAnilloTeclado(page, '#panelExp .opcion', 'botón de puntaje (LB)'));
+  anillos.push(await medirAnilloTeclado(page, '#panelExp .inter-btn', 'botón de puntaje intermedio (LB)'));
+  anillos.push(await medirAnilloTeclado(page, '#lb_sintesis', 'área de texto (LB)'));
+  anillos.push(await medirAnilloTeclado(page, '#panelExp .dobs summary', 'resumen desplegable (LB)'));
+  anillos.push(await medirAnilloTeclado(page, '#evResumen .btn-ghost', 'botón sobre cromo oscuro (barra de totales)'));
+  await ev(() => evPedirFirma()); await esperar(100);
+  await cap('LB · confirmación de firma');
+  await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await esperar(150);
+  await cap('LB · 422 por dimensión y por campo');
+  await abrirPorNombre('Martín', 'lb');
+  await cap('LB · firmado con banda y addendas');
+  await page.click('#tabExp-pb'); await page.waitForSelector('#evDeltaTabla', { timeout: 8000 }); await esperar(150);
+  await cap('PB · firmado con Δ');
+  await abrirPorNombre('Sofía', 'pa');
+  await ev(() => document.querySelectorAll('.prot-obs').forEach((w) => w.classList.add('show')));
+  await cap('PA · borrador con observaciones');
+  anillos.push(await medirAnilloTeclado(page, '#panelExp .lik-btn', 'botón de puntaje (PA)'));
+  anillos.push(await medirAnilloTeclado(page, '.prot-obs.show textarea', 'área de texto sobre fondo ámbar (PA)'));
+  await ev(() => evPedirFirma()); await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await esperar(150);
+  await cap('PA · errores de firma');
+
+  // ---------------------------------------------------------------- IC, documento impreso, recibí
+  await abrirPorNombre('Valentina', 'ic');
+  await cap('IC · sin crear (editor)');
+  await ev(() => icPedirFirma()); await esperar(100);
+  await cap('IC · confirmación de firma');
+  await ev(() => icCancelarFirma());
+  await ev(() => evMostrarErrores({ k: 'ic' }, new ApiError(422, 'validation_error', [{ campo: 'fecha', mensaje: 'Ingresá la fecha del informe (muestra).' }, { campo: 'firmantes', mensaje: 'Elegí dos profesionales distintos (muestra).' }], ''), 'No se pudo firmar:'));
+  await cap('IC · errores de firma');
+  await ev(() => { IC.avisos = [{ mensaje: 'El informe ya está firmado. Se muestra el informe tal como está en el servidor.', conflicto: true }, { mensaje: 'Aviso no bloqueante (muestra).' }]; icPintarAvisos(); });
+  await cap('IC · avisos y «Cambió en el servidor»');
+  await abrirPorNombre('Martín', 'ic');
+  await cap('IC · firmado (tabla, radares, firmas, recibí)');
+  // Recibí: Martín ya lo tiene registrado; se abre el componente real con el recibí vacío (sin llamar a la API).
+  await ev(() => { window.__recibi = IC.rec.recibi; IC.rec.recibi = null; openRecibiModal(); });
+  await page.waitForSelector('#modalFlujo.open'); await esperar(250);
+  await cap('Diálogo del recibí');
+  anillos.push(await medirAnilloTeclado(page, '#mfFirmante', 'campo de texto (recibí)'));
+  await page.fill('#mfFirmante', 'Dato tipeado'); await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await cap('Diálogo del recibí · confirmar descarte');
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await ev(() => { IC.rec.recibi = window.__recibi; });
+  await page.click('#btnIcImpreso'); await page.waitForSelector('.print-wrap', { timeout: 8000 }); await esperar(300);
+  await cap('IC · documento impreso (vista en pantalla)');
+  await abrirPorNombre('Martín', 'vf');
+  await cap('VF · estado vacío');
+  await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await esperar(100);
+  await cap('VF · formulario de alta');
+  anillos.push(await medirAnilloTeclado(page, '#vf_pct', 'campo de texto (VF)'));
+  anillos.push(await medirAnilloTeclado(page, '#vf_estado', 'lista desplegable (VF)'));
+  for (const [nombre, rango] of [['Sin discapacidad', '0 % a 4 %'], ['Leve', '5 % a 24 %'], ['Moderado', '25 % a 49 %'], ['Severo', '50 % a 95 %'], ['Muy severo', '96 % a 100 %'], [null, null]]) {
+    await ev(([n, r]) => {
       VF.rec = { hce_id: 0, estado: 'Valorado', fecha: '2019-06-01', organismo: 'Equipo', pct: '58.00', vigencia: '2020-01-31', rnpcd: null,
         dominios: { comunicacion: 'Apoyo permanente', autocuidado: 'Apoyo ocasional', movilidad: 'Autónomo', aprendizaje: 'Apoyo frecuente' },
-        capacidades: null, barreras: null, apoyos: null, obs: null, sintesis_funcional: null,
-        categoria: nombre ? { id: 1, categoria: nombre, rango, implicancia: 'Implicancia de muestra.' } : null, categoria_etiqueta: nombre || 'No corresponde',
+        capacidades: 'Muestra.', barreras: 'Muestra.', apoyos: 'Muestra.', obs: null, sintesis_funcional: 'Muestra.',
+        categoria: n ? { id: 1, categoria: n, rango: r, implicancia: 'Implicancia de muestra.' } : null, categoria_etiqueta: n || 'No corresponde',
         alerta_vigencia: { nivel: 'vencida', dias: -100, mensaje: 'La valoración venció (muestra).' } };
       VF.estado = 'listo'; VF.nuevo = false; VF.campos = null; vfRepintar();
-    }, cat);
-    todosPares = todosPares.concat(await extraerParesVivos(page));
+    }, [nombre, rango]);
+    await cap(`VF · valoración con categoría ${nombre || 'sin categoría'}`);
   }
-  await page.evaluate(() => vfReiniciar());
+  await ev(() => vfAbrirReporte()); await esperar(700);
+  await cap('VF · reporte impreso (con la valoración de muestra)');
+  await ev(() => vfReiniciar());
 
-  // Deduplicar por (fg,bg,esGrande)
-  const mapaPares = new Map();
-  for (const p of todosPares) {
-    const key = p.fg + '|' + p.bg + '|' + p.esGrande;
-    if (!mapaPares.has(key)) mapaPares.set(key, p);
-  }
-  const paresUnicos = [...mapaPares.values()];
+  // ---------------------------------------------------------------- EXPEDIENTE DE EJEMPLO (modo demostración)
+  await page.click('.navitem[data-view="inicio"]');
+  await ev(() => abrirExpedienteDemo(102)); await esperar(150);
+  await cap('Expediente de ejemplo (modo demostración)', 'demo');
 
-  console.log(`=== 2. Pares texto/fondo distintos renderizados: ${paresUnicos.length} ===\n`);
-  const filas = paresUnicos.map(p => {
-    const r = ratioConAlpha(p.fg, p.bg);
-    if (r === null) return null;
-    const { criterio, pasa } = criterioYVeredicto(r, { esGrande: p.esGrande });
-    return { ...p, ratio: r, criterio, pasa };
-  }).filter(Boolean).sort((a, b) => a.ratio - b.ratio);
-
-  const peores = filas.filter(f => !f.pasa);
-  console.log(`Fallan su criterio: ${peores.length} de ${filas.length}\n`);
-  peores.slice(0, 25).forEach(f => {
-    console.log(`  ${f.ratio.toFixed(2)}:1  FALLA (${f.criterio})  fg=${f.fg} bg=${f.bg}  <${f.tag} class="${f.clase}">`);
-  });
-
-  console.log('\n=== 3. Anillos de foco (outline:none + box-shadow) — extraídos del CSS, no hardcodeados ===\n');
-  const selectoresFoco = extraerSelectoresDeAnilloFoco();
-  console.log(`Selectores encontrados: ${selectoresFoco.length}\n`);
-  const anillos = await medirAnillosDeFoco(page, selectoresFoco);
-  const filasAnillo = [];
-  for (const a of anillos) {
-    if (a.nota === 'medido aparte (login)' && anilloLogin) a.resultado = anilloLogin;
-    if (!a.resultado) { console.log(`  (sin elemento en el DOM: ${a.selector}${a.nota ? ' — ' + a.nota : ''})`); continue; }
-    const { boxShadowComputado, bg, enfocado } = a.resultado;
-    // boxShadowComputado puede traer varias sombras separadas por coma; nos interesa el color rgba.
-    const m = boxShadowComputado.match(/rgba?\([^)]+\)/);
-    const colorAnillo = m ? m[0] : null;
-    let r = null, criterio = null, pasa = null;
-    if (colorAnillo) {
-      r = ratioConAlpha(colorAnillo, bg);
-      ({ criterio, pasa } = criterioYVeredicto(r, { esNoTexto: true }));
-    }
-    filasAnillo.push({ ...a, colorAnillo, bg, enfocado, ratio: r, criterio, pasa });
-    console.log(`  ${a.selector} (css:${a.linea})  anillo=${colorAnillo || '(no se resolvió)'}  sobre fondo=${bg}` +
-      (r !== null ? `  → ${r.toFixed(2)}:1  ${pasa ? 'PASA' : 'FALLA'} (${criterio})` : '  (no medible)'));
-  }
+  // ---------------------------------------------------------------- ENLACE DE SALTO + ANILLOS CON TECLADO (cromo de la app)
+  await page.click('.navitem[data-view="inicio"]');
+  await ev(() => { document.body.setAttribute('tabindex', '-1'); document.body.focus(); document.body.removeAttribute('tabindex'); });
+  await page.keyboard.press('Tab'); await esperar(150);
+  await cap('Enlace «Saltar al contenido» (enfocado)');
+  anillos.push(await medirAnilloTeclado(page, 'a.skip-link', 'enlace (salto al contenido, sobre la barra oscura)'));
+  anillos.push(await medirAnilloTeclado(page, '.navitem[data-view="analitica"]', 'ítem de la barra lateral'));
+  anillos.push(await medirAnilloTeclado(page, '.userchip', 'perfil (barra superior)'));
+  anillos.push(await medirAnilloTeclado(page, '.btn-exit', 'botón «Salir» (barra superior)'));
+  anillos.push(await medirAnilloTeclado(page, '#searchNNA', 'campo de búsqueda'));
+  anillos.push(await medirAnilloTeclado(page, '#filtroGrupo', 'lista desplegable (filtro de grupo)'));
+  anillos.push(await medirAnilloTeclado(page, '.chip-estado', 'botón de filtro (chip)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnNuevoNNA', 'botón primario'));
+  anillos.push(await medirAnilloTeclado(page, '#tbodyNNA .btn-link', 'botón de enlace (tabla)'));
+  await abrirPorNombre('Martín', 'lb');
+  anillos.push(await medirAnilloTeclado(page, '.exp-tab[aria-selected="true"]', 'pestaña'));
+  anillos.push(await medirAnilloTeclado(page, '.exp-head .btn-ghost', 'botón sobre la cabecera oscura'));
+  anillos.push(await medirAnilloTeclado(page, '.fl-btn', 'botón del flujo'));
+  anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
 
   await browser.close();
 
-  const salida = { variables, literales, paresVivos: filas, anillosFoco: filasAnillo };
+  // ---------------------------------------------------------------- RESULTADOS
+  const filas = [...mapa.values()].map(p => {
+    let r, c;
+    if (p.tipo === 'borde-campo') {
+      if (!(p.ancho > 0)) return { ...p, ratio: 1, criterio: '3:1 (1.4.11, borde de campo)', pasa: false, sinBorde: true };
+      r = ratioConAlpha(p.fg, p.bg); if (r === null) return null;
+      c = criterioYVeredicto(r, { esNoTexto: true, etiqueta: 'borde de campo' });
+    } else {
+      r = ratioConAlpha(p.fg, p.bg); if (r === null) return null;
+      c = criterioYVeredicto(r, { esGrande: p.esGrande });
+    }
+    return { ...p, ratio: r, ...c };
+  }).filter(Boolean).sort((a, b) => a.ratio - b.ratio);
+  const enConectada = (f) => f.grupos.has('conectada');
+  const fallan = filas.filter(f => !f.pasa);
+  const fallanConectadas = fallan.filter(enConectada);
+  const fallanSoloDemo = fallan.filter(f => !enConectada(f));
+
+  console.log('=== Cobertura: pantallas y diálogos recorridos ===\n');
+  const porGrupo = { conectada: [], demo: [] };
+  capturas.forEach(c => porGrupo[c.grupo].push(c.pantalla));
+  console.log(`Conectadas (${porGrupo.conectada.length}):`); porGrupo.conectada.forEach(p => console.log('  · ' + p));
+  console.log(`\nModo demostración (${porGrupo.demo.length}):`); porGrupo.demo.forEach(p => console.log('  · ' + p));
+
+  console.log(`\n=== Pares y bordes distintos medidos: ${filas.length} ===`);
+  const imprimir = (lista) => lista.forEach(f => {
+    console.log(`  ${f.ratio.toFixed(2)}:1  FALLA (${f.criterio})  ${aHex(f.fg)} sobre ${aHex(f.bg)}  <${f.ident}>  [${[...f.pantallas].slice(0, 2).join(' | ')}${f.pantallas.size > 2 ? ' …' : ''}]`);
+  });
+  console.log(`\n--- Fallan en pantallas CONECTADAS, diálogos o cromo: ${fallanConectadas.length} ---`); imprimir(fallanConectadas);
+  console.log(`\n--- Fallan SOLO en vistas de modo demostración: ${fallanSoloDemo.length} ---`); imprimir(fallanSoloDemo);
+
+  console.log('\n=== Anillos de foco (teclado real; fondo = lo que queda detrás del anillo) ===\n');
+  const filasAnillo = anillos.map(a => {
+    if (a.error) return { ...a, pasa: false };
+    const noVisible = !a.focusVisible;
+    const color = a.ring.color;
+    const hayAnillo = a.ring.estilo !== 'none' && a.ring.ancho > 0;
+    let r = null, pasa = false;
+    if (hayAnillo && !noVisible) { r = ratioConAlpha(color, a.bgDetras); pasa = r !== null && r >= 3; }
+    return { ...a, ratio: r, pasa, hayAnillo, noVisible };
+  });
+  filasAnillo.forEach(a => {
+    if (a.error) { console.log(`  ✗ ${a.nombre}: ${a.error} (${a.selector})`); return; }
+    console.log(`  ${a.pasa ? 'PASA ' : 'FALLA'} ${a.nombre}  <${a.ident}>  anillo=${aHex(a.ring.color)} ${a.ring.ancho}px ${a.ring.estilo} (separación ${a.ring.offset}px) sobre ${aHex(a.bgDetras)}  → ${a.ratio === null ? 'sin anillo / sin :focus-visible' : a.ratio.toFixed(2) + ':1 (mínimo 3:1)'}${a.noVisible ? '  [no coincidió :focus-visible]' : ''}`);
+  });
+  const apagados = buscarContornosApagados();
+  console.log(`\nSelectores del CSS con \`outline:none/0\`: ${apagados.length}${apagados.length ? ' → ' + apagados.join(' · ') : ''}`);
+
+  const anilloMal = filasAnillo.filter(a => a.error || !a.pasa);
+  console.log(`\nErrores de JavaScript en la página: ${errores.length}${errores.length ? ' → ' + errores.join(' | ') : ''}`);
+  console.log(`\nRESUMEN: pares/bordes que fallan en conectadas = ${fallanConectadas.length} · solo demo = ${fallanSoloDemo.length} · anillos que fallan = ${anilloMal.length} de ${filasAnillo.length} · contornos apagados = ${apagados.length}`);
+
+  if (process.argv.includes('--tabla')) {
+    const fila = (f) => `| \`${f.ident}\` | \`${aHex(f.fg)}\` | \`${aHex(f.bg)}\` | ${f.criterio} |`;
+    console.log('\n| Elemento | Primer plano | Fondo | Criterio |\n|---|---|---|---|');
+    fallan.forEach(f => console.log(fila(f)));
+  }
+
+  const salida = { cobertura: porGrupo, pares: filas.map(f => ({ ...f, pantallas: [...f.pantallas], grupos: [...f.grupos] })), anillos: filasAnillo, contornosApagados: apagados, errores };
   const jsonIdx = process.argv.indexOf('--json');
   if (jsonIdx !== -1 && process.argv[jsonIdx + 1]) {
     fs.writeFileSync(process.argv[jsonIdx + 1], JSON.stringify(salida, null, 2), 'utf8');
     console.log(`\nJSON crudo -> ${process.argv[jsonIdx + 1]}`);
   }
-})();
+  process.exit(fallanConectadas.length || anilloMal.length || apagados.length ? 1 : 0);
+})().catch((e) => { console.error('ERROR del script:', e); process.exit(2); });

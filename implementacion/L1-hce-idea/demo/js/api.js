@@ -65,7 +65,7 @@ class ApiError extends Error {
   }
 }
 
-/* ---------- Mensajes de validacion en castellano (Fase 3-e, handoff §5.128) ----------
+/* ---------- Mensajes de validacion en castellano (Fase 3-e, handoff §5.135) ----------
    Un 422 puede venir de DOS lugares: de las reglas del servicio (mensaje ya en castellano, se muestra tal cual) o de
    Pydantic/FastAPI antes de llegar al servicio (tipo, largo, rango: mensaje en inglés, p. ej. «Input should be a valid
    decimal»). Esto es SOLO presentación: no valida nada en el navegador ni cambia el `campo`; traduce el texto de los

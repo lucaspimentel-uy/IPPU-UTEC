@@ -86,7 +86,7 @@
            que se derivan de esas respuestas; el resto de la demo vive en vistas marcadas. -->
       <div class="kpirow" id="kpiRow" aria-live="polite">
         <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">…</div></div>
-        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val ok" id="kpiAlDia">…</div><div class="sub">Línea base (HCE-LB) firmada, año en curso</div></div>
+        <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val" id="kpiAlDia">…</div><div class="sub">Línea base (HCE-LB) firmada, año en curso</div></div>
         <div class="kpi"><div class="lab">Pendientes de IDEA</div><div class="val orange" id="kpiPend">…</div><div class="sub">Sin línea base firmada este año</div></div>
         <div class="kpi"><div class="lab">Consentimiento (CI) pendiente</div><div class="val purple" id="kpiCi">…</div><div class="sub">Sin consentimiento informado registrado</div></div>
       </div>
@@ -256,7 +256,7 @@
           <div class="cardbody">
             <table class="heat" id="heatTable"></table>
             <div class="legend">
-              <span><i style="background:#0E8F7E"></i>Mejora alta (≥ 1,5 pts)</span>
+              <span><i style="background:#0A6B5E"></i>Mejora alta (≥ 1,5 pts)</span>
               <span><i style="background:#6FBF9E"></i>Mejora media</span>
               <span><i style="background:#D9C26B"></i>Mejora leve</span>
               <span><i style="background:#C9CFD8"></i>Sin cambio</span>
@@ -499,7 +499,7 @@
 </div>
 
 <!-- ===================== TOAST ===================== -->
-<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Listo</span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span aria-hidden="true">✓</span><span id="toastMsg">Listo</span></div>
 
 <!-- Scripts sin defer ni type=module: el orden de carga ES el orden de ejecucion del monolito
      original. Desde la Fase 3-a la demo se sirve por http (localhost:5500) y habla con la API
