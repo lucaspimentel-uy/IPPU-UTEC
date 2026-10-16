@@ -8,6 +8,10 @@
 </head>
 <body>
 
+<!-- Enlace de salto (Fase 3-e, WCAG 2.4.1): primer elemento enfocable de la app; lleva el foco a <main>. Queda inerte mientras
+     un diálogo modal (login, alta, recibí) está abierto (ui-core.js · appInerte). -->
+<a class="skip-link" href="#contenido" onclick="return saltarAlContenido(event)" inert>Saltar al contenido</a>
+
 <!-- ===================== LOGIN (usuario pre-creado) ===================== -->
 <div class="login-screen" id="loginScreen" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
   <div class="login-card">
@@ -70,7 +74,7 @@
   </nav>
 
   <!-- ===================== MAIN ===================== -->
-  <main>
+  <main id="contenido" tabindex="-1">
 
     <!-- ============ VISTA: INICIO / NNA ============ -->
     <section class="view active" id="view-inicio">
@@ -474,7 +478,7 @@
       <div style="display:flex;gap:10px">
         <button type="button" class="btn btn-ghost" id="btnPrev" onclick="wizPrev()" style="display:none">‹ Atrás</button>
         <button type="button" class="btn btn-primary" id="btnNext" onclick="wizNext()">Siguiente ›</button>
-        <button type="button" class="btn btn-primary" id="btnCreate" onclick="guardarNNA()" style="display:none;background:var(--teal)">✓ Crear expediente</button>
+        <button type="button" class="btn btn-primary" id="btnCreate" onclick="guardarNNA()" style="display:none">✓ Crear expediente</button>
       </div>
     </div>
   </div>
@@ -487,7 +491,7 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mfTitle" aria-describedby="mfSub">
     <div class="modal-head">
       <div><h2 id="mfTitle" tabindex="-1">—</h2><p id="mfSub">—</p></div>
-      <button type="button" class="x" onclick="closeFlujoModal()" aria-label="Cerrar">×</button>
+      <button type="button" class="x" onclick="cerrarFlujoModalUsuario()" aria-label="Cerrar">×</button>
     </div>
     <div class="modal-body" id="mfBody"></div>
     <div class="modal-foot" id="mfFoot"></div>

@@ -50,6 +50,14 @@ async function preflight() {
 const urlDemo = (q) => DEMO + '/index.html' + (q && /[?&]api=/.test(q) ? q : (q ? q + '&' : '?') + 'api=' + encodeURIComponent(API));
 const txt = (page, sel) => page.locator(sel).first().innerText();
 
+/* Esc sobre un diálogo con lo tipeado SIN guardar pide confirmación (Fase 3-e): este helper la contesta con «Descartar y cerrar».
+   Si el diálogo no tenía nada sin guardar, Esc lo cierra sin preguntar y no hay nada que contestar. */
+async function escDescartando(page) {
+  await page.keyboard.press('Escape');
+  const hay = await page.locator('.confirmar-descarte').count();
+  if (hay) await page.click('#btnCdDescartar');
+}
+
 /* Espera a que el listado termine de cargar un resultado con ese resumen exacto. */
 async function esperarResumen(page, esperado) {
   await page.waitForFunction((e) => document.getElementById('listaResumen').textContent.startsWith(e), esperado, { timeout: 8000 });
@@ -533,7 +541,7 @@ async function loguear(page) {
     check('3b-b', '409 por cédula repetida como TÉCNICO: mensaje genérico «consultá a dirección», sin nombrar el campo, foco en el resumen role="alert", el diálogo sigue abierto',
       b1.foco === 'altaErrores' && b1.rol === 'alert' && /No se pudo completar el alta: consultá a dirección\./.test(b1.texto) && !/cédula/i.test(b1.texto.replace('No se pudo guardar:', '')) &&
       b1.camposMarcados === 0 && b1.abierto && !b1.boton, JSON.stringify(b1));
-    await p5.keyboard.press('Escape');
+    await escDescartando(p5);
 
     /* ---------- (c) la misma cédula, como ADMIN: mensaje y campo específicos ---------- */
     {
@@ -774,7 +782,7 @@ async function loguear(page) {
       await pc.waitForSelector('#expTitulo');
       if (tab) {
         await pc.click('#tabExp-' + tab);
-        await pc.waitForFunction(() => document.getElementById('evResumen') || document.getElementById('evTotal') || document.querySelector('#panelExp .empty-state'), null, { timeout: 8000 });
+        await pc.waitForFunction(() => document.getElementById('evResumen') || document.getElementById('evTotal') || document.querySelector('#panelExp .empty-state:not(.estado-carga)'), null, { timeout: 8000 });
       }
     };
     const habilitados = () => pc.evaluate(() => [...document.querySelectorAll('#panelExp [data-ev]')].filter((e) => !e.disabled).length);
@@ -1158,7 +1166,7 @@ async function loguear(page) {
 
     /* 403: alta en un grupo ajeno (se simula la opción, que la UI ya no ofrece) → la API lo rechaza y se muestra */
     const sufj = String(Date.now()).slice(-6);
-    await pj.keyboard.press('Escape');
+    await escDescartando(pj);
     await abrirAlta(pj);
     await llenarPaso1(pj, { nombre: 'Ajeno' + sufj, apellido: 'Cuatrocientos', ci: '5' + sufj + '3' });
     await siguiente(pj, 1);
@@ -1172,7 +1180,7 @@ async function loguear(page) {
     const creada = (await getJ('/hce?nombre=Ajeno' + sufj)).json;
     check('3c-j6', 'técnico, alta en un grupo ajeno: la API contesta 403 y la pantalla muestra SU mensaje (resumen role="alert" con foco, diálogo abierto, nada creado)',
       r403.status() === 403 && t403.txt.includes(j403.detail[0].mensaje) && t403.rol === 'alert' && t403.foco === 'altaErrores' && t403.abierto && creada.length === 0, `403 · «${j403.detail[0].mensaje}»`);
-    await pj.keyboard.press('Escape');
+    await escDescartando(pj);
 
     /* una escritura que devuelve avisos: se muestran y no bloquean (se agrega un aviso a la respuesta real del PATCH) */
     await pj.route(new RegExp(`/hce/${idMartinJ}$`), async (route) => {
@@ -1198,7 +1206,7 @@ async function loguear(page) {
     const cam2 = await pj.evaluate(() => { const c = wizCambios(); return { ci: c.body.persona && c.body.persona.ci, n: c.lista.length }; });
     check('3c-j8', 'wizCambios compara la cédula por valor bruto contra lo que se mostró: sin tocar no hay cambios; reescrita con otro formato se manda tal cual («60123451») y la canonicalización queda en la API (sin regex de limpieza en el navegador)',
       cam1.inicial === cam1.campo && cam1.lista === 0 && cam2.ci === '60123451' && cam2.n === 1 && !/replace\(/.test(cam1.fuente), JSON.stringify({ cam1: { ...cam1, fuente: undefined }, cam2 }));
-    await pj.keyboard.press('Escape');
+    await escDescartando(pj);
 
     /* demo de ejemplo: ni candados, ni «Bloqueado», ni modal de excepción — ni siquiera con el CI pendiente (Bruno, 107).
        Se lee el TEXTO COMPLETO de los ocho expedientes de ejemplo (101–108: stepper, HCE-DOC, fotos, todo lo que arma
@@ -1538,7 +1546,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('3d-r1', 'el recibí se registra en un diálogo modal accesible (role=dialog, aria-modal, nombre, app inerte, foco al primer campo); vacío, la API responde 422 y los errores salen junto a cada campo (aria-describedby) y en un resumen role="alert" con foco',
       mod.role === 'dialog' && mod.modal === 'true' && mod.nombre !== '' && mod.inert && mod.foco === 'mfFirmante' && mod.etiquetas.every(Boolean)
         && noOk.status() === 422 && errR.foco === 'recibiErrores' && errR.rol === 'alert' && errR.campos.every((c) => c.inv === 'true' && c.desc.includes('err_' + c.id) && c.err.length > 3), JSON.stringify({ mod, errR: errR.campos.map((c) => c.id + ':' + c.err) }).slice(0, 300));
-    await pd.keyboard.press('Escape');
+    await escDescartando(pd);
     const trasEsc = await pd.evaluate(() => ({ abierto: document.getElementById('modalFlujo').classList.contains('open'), inert: document.querySelector('div.layout').inert, foco: document.activeElement.id }));
     check('3d-r2', 'Esc cierra el diálogo del recibí, la app deja de estar inerte y el foco vuelve al botón que lo abrió; no se registró nada',
       !trasEsc.abierto && !trasEsc.inert && trasEsc.foco === 'btnIcRecibi' && (await get(`/hce/${idVal}/informe-cierre`)).json[0].recibi === null, JSON.stringify(trasEsc));
@@ -1679,7 +1687,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
 
     /* ---------- (d) VF de Martín: categoría = la de la API; un valor rechazado da error por campo ---------- */
     await abrirD(idMartinD, 'vf');
-    const vacioM = await pd.evaluate(() => ({ rol: (document.querySelector('#panelExp [role="status"].empty-state') || {}).tagName, alert: document.querySelectorAll('#panelExp [role="alert"]').length, texto: document.getElementById('panelExp').innerText.replace(/\s+/g, ' ') }));
+    const vacioM = await pd.evaluate(() => ({ rol: (document.querySelector('#panelExp .estado-vacio[role="status"]') || {}).tagName, alert: document.querySelectorAll('#panelExp [role="alert"]').length, texto: document.getElementById('panelExp').innerText.replace(/\s+/g, ' ') }));
     check('3d-e1', 'VF de un expediente sin valoración (GET → 404): estado vacío con botón «Registrar valoración funcional», NO un error (sin role="alert")',
       (await get(`/hce/${idMartinD}/valoracion-funcional`)).status === 404 && /Todavía no se registró una valoración funcional/.test(vacioM.texto) && vacioM.alert === 0 && (await pd.locator('#btnVfNuevo').count()) === 1, vacioM.texto.slice(0, 120));
     await pd.click('#btnVfNuevo');

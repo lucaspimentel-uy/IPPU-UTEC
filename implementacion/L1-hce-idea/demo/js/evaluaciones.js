@@ -254,10 +254,9 @@ async function cargarIdeaVigente(){
 function ideaVigenteCardHtml(){
   const cab = `<h3 id="ideaVigenteTitulo"><span class="ic" aria-hidden="true">◐</span> Línea base IDEA vigente</h3>`;
   const i = EXP.idea;
-  if(!i || i.estado === "cargando") return `<div class="info-card">${cab}<div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(!i || i.estado === "cargando") return `<div class="info-card">${cab}<div class="ib">${estadoCargandoHtml("Cargando la línea base vigente…")}</div></div>`;
   if(i.estado === "error"){
-    return `<div class="info-card">${cab}<div class="ib"><div class="hint" role="alert">${escHtml(i.mensaje)}
-      <button type="button" class="btn btn-ghost btn-mini" onclick="cargarIdeaVigente()">Reintentar</button></div></div></div>`;
+    return `<div class="info-card">${cab}<div class="ib">${estadoErrorHtml(i.mensaje, "cargarIdeaVigente()")}</div></div>`;
   }
   const v = i.vigente, c = i.en_curso;
   let cuerpo;
@@ -284,10 +283,9 @@ function evPanelHtml(k){
   const ev = EVS[k];
   const inf = EV_INFO[k];
   const cab = (extra) => `<h3 id="evTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> ${inf.corto} · ${escHtml(inf.nombre)}${ev && ev.anio ? " — " + escHtml(ev.anio) : ""} ${extra || ""}</h3>`;
-  if(!ev || ev.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(!ev || ev.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando " + inf.corto + "…")}</div></div>`;
   if(ev.estado === "error"){
-    return `<div class="info-card">${cab()}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(ev.error)}<br>
-      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="evReintentar()">Reintentar</button></div></div></div>`;
+    return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(ev.error, "evReintentar()")}</div></div>`;
   }
   return k === "lb" ? ideaHtml(ev) : protHtml(ev);
 }
@@ -351,7 +349,7 @@ function evEvaluadoresHtml(ev){
   };
   return `<div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Evaluadores (firman los dos, en un solo acto)</h2></div>
     <div style="padding:16px 18px">
-      ${PROF_ERROR ? `<p class="hint" role="alert">No se pudo cargar la lista de profesionales. <button type="button" class="btn btn-ghost btn-mini" onclick="evReintentar()">Reintentar</button></p>` : ""}
+      ${PROF_ERROR ? estadoErrorInlineHtml("No se pudo cargar la lista de profesionales.", "evReintentar()") : ""}
       <div class="form-grid">${sel(1)}${sel(2)}</div>
       <p class="hint">Se precargan los técnicos del grupo; quedan guardados en el borrador. Para firmar tienen que ser dos profesionales activos y distintos.</p>
     </div></div>`;
@@ -469,11 +467,11 @@ function evAccionesHtml(ev){
   if(ev.confirmando && !occ){
     return `<div class="ev-confirma" role="group" aria-label="Confirmar la firma" onkeydown="evTeclaConfirma(event)">
       <span id="evConfirmaTxt">¿Firmar ${ev.k === "lb" ? "la línea base" : "el protocolo"}? La firma bloquea el registro: después sólo se corrige por addenda.</span>
-      <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnEvConfirmar" aria-describedby="evConfirmaTxt" onclick="evFirmar()">✓ Confirmar firma</button>
+      <button type="button" class="btn btn-firmar" id="btnEvConfirmar" aria-describedby="evConfirmaTxt" onclick="evFirmar()">✓ Confirmar firma</button>
       <button type="button" class="btn btn-ghost" id="btnEvCancelar" aria-describedby="evConfirmaTxt" onclick="evCancelarFirma()">Cancelar</button></div>`;
   }
   return `<button type="button" class="btn btn-ghost" id="btnEvGuardar" onclick="evGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : "Guardar borrador"}</button>
-    <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnEvFirmar" onclick="evPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar ${ev.k === "lb" ? "línea base" : "protocolo"}</button>`;
+    <button type="button" class="btn btn-firmar" id="btnEvFirmar" onclick="evPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar ${ev.k === "lb" ? "línea base" : "protocolo"}</button>`;
 }
 function evResumenHtml(ev){
   const num = evNumeros(ev);

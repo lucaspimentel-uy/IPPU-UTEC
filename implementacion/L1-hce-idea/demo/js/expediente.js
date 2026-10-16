@@ -171,10 +171,9 @@ function flujoCardHtml(){
       <span class="spacer"></span>${extra || ""}
       <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('log', true)">Ver auditoría</button></h3>`;
   if(EXP.flujoError){
-    return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib"><div class="hint" role="status">No se pudo cargar el estado de los módulos.
-      <button class="btn btn-ghost btn-mini" onclick="recargarFlujoExp()">Reintentar</button></div></div></section>`;
+    return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib">${estadoErrorHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()")}</div></section>`;
   }
-  if(!EXP.flujo) return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib"><div class="hint" role="status">Cargando…</div></div></section>`;
+  if(!EXP.flujo) return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib">${estadoCargandoHtml("Cargando el flujo del año…")}</div></section>`;
   const f = EXP.flujo;
   const ci = f.ci === "registrado"
     ? `${pillCi("registrado")}`
@@ -276,10 +275,9 @@ function ciFormHtml(d, registrar){
 function ciPanelHtml(){
   const ci = _ci();
   const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✍</span> CI · Consentimiento informado ${estado || ""}</h3>`;
-  if(ci.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib"><div class="hint" role="status">Cargando consentimiento…</div></div></div>`;
+  if(ci.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando consentimiento…")}</div></div>`;
   if(ci.estado === "error"){
-    return `<div class="info-card">${cab()}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(ci.mensaje)}<br>
-      <button class="btn btn-primary btn-mini" style="margin-top:10px" onclick="cargarCi()">Reintentar</button></div></div></div>`;
+    return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(ci.mensaje, "cargarCi()")}</div></div>`;
   }
   if(ci.estado === "pendiente"){
     return `<div class="info-card">${cab(pillCi("pendiente"))}<div class="ib">
@@ -389,16 +387,14 @@ function panelTabExpHtml(k){
 function expedienteCargando(){
   document.getElementById("expCrumb").textContent = "Expediente";
   document.getElementById("expedienteContent").innerHTML =
-    `<div class="card"><div class="cardbody"><div class="empty-state" role="status"><div class="big" aria-hidden="true">…</div>Cargando expediente…</div></div></div>`;
+    `<div class="card"><div class="cardbody">${estadoCargandoHtml("Cargando expediente…")}</div></div>`;
   go("expediente");
 }
 function expedienteError(err, id){
   const msg = err instanceof ApiError ? err.message : "No se pudo cargar el expediente.";
   document.getElementById("expedienteContent").innerHTML =
-    `<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(msg)}<br>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
-        ${err && err.status === 404 ? "" : `<button class="btn btn-primary btn-mini" onclick="abrirExpediente(${id})">Reintentar</button>`}
-        <button class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button></div></div></div></div>`;
+    `<div class="card"><div class="cardbody">${estadoErrorHtml(msg, err && err.status === 404 ? "" : `abrirExpediente(${id})`,
+      `<button type="button" class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button>`)}</div></div>`;
 }
 
 /* Cabecera del expediente (se vuelve a pintar tras editar HCE-00, con lo que devolvio la API). */

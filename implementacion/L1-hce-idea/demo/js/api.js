@@ -65,6 +65,43 @@ class ApiError extends Error {
   }
 }
 
+/* ---------- Mensajes de validacion en castellano (Fase 3-e, handoff §5.128) ----------
+   Un 422 puede venir de DOS lugares: de las reglas del servicio (mensaje ya en castellano, se muestra tal cual) o de
+   Pydantic/FastAPI antes de llegar al servicio (tipo, largo, rango: mensaje en inglés, p. ej. «Input should be a valid
+   decimal»). Esto es SOLO presentación: no valida nada en el navegador ni cambia el `campo`; traduce el texto de los
+   tipos comunes y, si el mensaje es de Pydantic pero no está en la tabla, usa un mensaje genérico en castellano en vez de
+   mostrar inglés. El texto original queda en `mensajeOriginal` (para soporte). */
+const _PYD_PREFIJO = /^(Input|Field|String|Value|List|Set|Tuple|Dict|Dictionary|Decimal|Extra|Object|Date|Datetime|Time|UUID|URL|Unexpected|Assertion|Arguments|JSON|Iterable|Mapping|Union|Model|Bytes|Float|Integer|Boolean|Number|Missing)\b/;
+const _PYD_PALABRAS = /\b(should|must|valid|input|required|invalid|expected|cannot|at least|at most|characters|than|permitted|unable|parse)\b/i;
+const _PYD_TABLA = [
+  [/^Field required$/i,                                        () => "Este campo es obligatorio."],
+  [/^Input should be a valid decimal/i,                        () => "Ingresá un número válido (por ejemplo 58 o 58.5)."],
+  [/^Input should be a valid (number|float)/i,                 () => "Ingresá un número válido (por ejemplo 58 o 58.5)."],
+  [/^Input should be a valid integer/i,                        () => "Ingresá un número entero válido."],
+  [/^Input should be a valid (date|datetime)/i,                () => "Ingresá una fecha válida (formato aaaa-mm-dd)."],
+  [/^Input should be a valid (string|str)\b/i,                 () => "Ingresá un texto válido."],
+  [/^Input should be a valid boolean/i,                        () => "Elegí una opción válida (sí o no)."],
+  [/^Input should be (?:a )?less than or equal to (.+)$/i,     (m) => `Tiene que ser menor o igual a ${m[1]}.`],
+  [/^Input should be (?:a )?greater than or equal to (.+)$/i,  (m) => `Tiene que ser mayor o igual a ${m[1]}.`],
+  [/^Input should be (?:a )?less than (.+)$/i,                 (m) => `Tiene que ser menor que ${m[1]}.`],
+  [/^Input should be (?:a )?greater than (.+)$/i,              (m) => `Tiene que ser mayor que ${m[1]}.`],
+  [/^String should have at most (\d+) characters?/i,           (m) => `Puede tener como máximo ${m[1]} caracteres.`],
+  [/^String should have at least (\d+) characters?/i,          (m) => `Tiene que tener al menos ${m[1]} caracteres.`],
+  [/^Decimal input should have no more than (\d+) decimal places?/i, (m) => `Admite hasta ${m[1]} decimales.`],
+  [/^Decimal input should have no more than (\d+) digits? in total/i, (m) => `Admite hasta ${m[1]} dígitos en total.`],
+  [/^Input should be '.+'/i,                                   () => "El valor ingresado no es uno de los permitidos."]
+];
+const _PYD_GENERICO = "El valor ingresado no es válido.";
+function traducirMensajeApi(msg){
+  if(typeof msg !== "string") return msg;
+  const t = msg.trim();
+  const v = /^Value error,\s*(.+)$/i.exec(t);      // validador propio de Pydantic: lo que viene después ya está redactado por nosotros
+  if(v) return v[1];
+  if(!_PYD_PREFIJO.test(t) && !(/^[\x20-\x7E]+$/.test(t) && _PYD_PALABRAS.test(t))) return msg;   // no es de Pydantic: castellano del servicio, tal cual
+  for(const [re, f] of _PYD_TABLA){ const m = re.exec(t); if(m) return f(m); }
+  return _PYD_GENERICO;
+}
+
 /* Query string: omite null/undefined/"" y serializa booleanos como true/false. */
 function _qs(query){
   const p = new URLSearchParams();
@@ -105,8 +142,15 @@ async function apiFetch(path, opts){
 
   if(!resp.ok){
     const code = (json && json.code) || "http_error";
-    const detail = (json && Array.isArray(json.detail)) ? json.detail
+    let detail = (json && Array.isArray(json.detail)) ? json.detail
       : [{ campo: null, mensaje: `La API respondió ${resp.status}` }];
+    if(resp.status === 422){        // solo validación: los mensajes de Pydantic en inglés se muestran en castellano (el `campo` no cambia)
+      detail = detail.map(d => {
+        if(!d || typeof d.mensaje !== "string") return d;
+        const m = traducirMensajeApi(d.mensaje);
+        return m === d.mensaje ? d : Object.assign({}, d, { mensaje: m, mensajeOriginal: d.mensaje });
+      });
+    }
     if(resp.status === 401 && auth){
       Sesion.limpiar();
       if(typeof alSesionInvalida === "function") alSesionInvalida("Tu sesión expiró o ya no es válida. Ingresá de nuevo.");

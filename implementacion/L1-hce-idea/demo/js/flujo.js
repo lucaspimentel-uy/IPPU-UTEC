@@ -119,7 +119,7 @@ function confirmarAddenda(id, key){
 /* Dialogo modal accesible (Fase 3-d, §5.126; lo usa el «recibí» del IC conectado y los modales del expediente de ejemplo):
    role="dialog" + aria-modal en index.html; la app de atras queda inerte, el foco entra al primer campo (o al titulo),
    Tab no sale del dialogo, Esc lo cierra (recordatorios.js) y el foco vuelve a quien lo abrio. */
-let FLUJO_MODAL_OPENER = null, FLUJO_MODAL_OPENER_ID = "", FLUJO_MODAL_ANCLA = null;
+let FLUJO_MODAL_OPENER = null, FLUJO_MODAL_OPENER_ID = "", FLUJO_MODAL_ANCLA = null, FLUJO_MODAL_SNAP = "", FLUJO_MODAL_TOCADO = false;
 function openFlujoModal(title, sub, bodyHtml, footHtml){
   const m = document.getElementById("modalFlujo");
   document.getElementById("mfTitle").textContent = title;
@@ -131,6 +131,7 @@ function openFlujoModal(title, sub, bodyHtml, footHtml){
     FLUJO_MODAL_OPENER_ID = (FLUJO_MODAL_OPENER && FLUJO_MODAL_OPENER.id) || "";
     FLUJO_MODAL_ANCLA = FLUJO_MODAL_OPENER && FLUJO_MODAL_OPENER.closest ? FLUJO_MODAL_OPENER.closest(".card,.info-card,.flujo-card,section") : null;
   }
+  FLUJO_MODAL_SNAP = fotoCampos(document.getElementById("mfBody")); FLUJO_MODAL_TOCADO = false;   // lo precargado no cuenta como tipeado
   m.classList.add("open");
   appInerte(true);
   setTimeout(() => {
@@ -144,6 +145,7 @@ function closeFlujoModal(sinFoco){
   const m = document.getElementById("modalFlujo");
   if(!m.classList.contains("open")) return;          // Esc lo llama aunque no este abierto
   m.classList.remove("open");
+  const cd = m.querySelector(".confirmar-descarte"); if(cd) cd.remove();
   appInerte(false);
   const o = FLUJO_MODAL_OPENER, oid = FLUJO_MODAL_OPENER_ID, ancla = FLUJO_MODAL_ANCLA;
   FLUJO_MODAL_OPENER = null; FLUJO_MODAL_OPENER_ID = ""; FLUJO_MODAL_ANCLA = null;
@@ -153,8 +155,21 @@ function closeFlujoModal(sinFoco){
      foco no se queda en <body>: pasa al mismo control si reaparece, o al encabezado de su tarjeta / del expediente. */
   setTimeout(() => focoEstableTrasDialogo(oid, ancla), 0);
 }
+/* Cierre pedido por la persona (×, Cancelar, Esc): con datos tipeados pide confirmación (Fase 3-e). Los cierres por programa
+   (guardado correcto, 409, «Salir», 401) llaman a closeFlujoModal() y NO preguntan. */
+function flujoModalHayCambios(){ return FLUJO_MODAL_TOCADO && fotoCampos(document.getElementById("mfBody")) !== FLUJO_MODAL_SNAP; }
+function cerrarFlujoModalUsuario(){
+  const m = document.getElementById("modalFlujo");
+  if(!m.classList.contains("open")) return;
+  if(descarteAbierto(m)){ m.querySelector("#btnCdSeguir").click(); return; }
+  if(flujoModalHayCambios()){
+    pedirDescarte(m, () => { closeFlujoModal(); vaciarCampos(document.getElementById("mfBody")); });
+    return;
+  }
+  closeFlujoModal();
+}
 function focoEstableTrasDialogo(oid, ancla){
-  if(document.getElementById("modalFlujo").classList.contains("open")) return;
+  if(document.querySelector(".modal-bg.open")) return;
   const a = document.activeElement;
   if(a && a !== document.body && a !== document.documentElement) return;
   const visible = el => el && el.offsetParent !== null;
@@ -165,15 +180,8 @@ function focoEstableTrasDialogo(oid, ancla){
   if(!dest.hasAttribute("tabindex")) dest.setAttribute("tabindex", "-1");
   dest.focus();
 }
-document.getElementById("modalFlujo").addEventListener("keydown", e => {
-  if(e.key !== "Tab") return;
-  const foco = [...document.querySelectorAll("#modalFlujo button:not([disabled]):not([hidden]), #modalFlujo input:not([disabled]), #modalFlujo select:not([disabled]), #modalFlujo textarea, #modalFlujo a[href]")]
-    .filter(el => el.offsetParent !== null);
-  if(!foco.length) return;
-  const a = foco[0], z = foco[foco.length - 1];
-  if(e.shiftKey && (document.activeElement === a || document.activeElement.id === "mfTitle")){ e.preventDefault(); z.focus(); }
-  else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
-});
+document.getElementById("modalFlujo").addEventListener("keydown", e => atraparTab(e, document.getElementById("modalFlujo"), "mfTitle"));
+["input", "change"].forEach(t => document.getElementById("modalFlujo").addEventListener(t, () => { FLUJO_MODAL_TOCADO = true; }));
 function openFirmaModal(id, key){
   const nna = NNA.find(n=>n.id===id); const m = modInfo(key);
   const body = key==="ci"
@@ -192,8 +200,8 @@ function openFirmaModal(id, key){
        <div class="review-note">⚠ La firma bloquea el módulo: después sólo se corrige por addenda.</div>`;
   const foot = `<span class="left">${m.full} · ${m.name}</span>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--ok)" onclick="confirmarFirma(${id},'${key}')">✓ Firmar y bloquear</button>
+      <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
+      <button class="btn btn-firmar" onclick="confirmarFirma(${id},'${key}')">✓ Firmar y bloquear</button>
     </div>`;
   openFlujoModal(`Firmar ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
@@ -204,7 +212,7 @@ function openAddendaModal(id, key){
     <div class="field"><label>Corrección / justificación</label><textarea id="mfTexto" placeholder="Texto de la addenda."></textarea></div>`;
   const foot = `<span class="left">${m.full} · ${nna.flujo[key].addendas.length} addenda(s) previa(s)</span>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarAddenda(${id},'${key}')">+ Agregar addenda</button>
     </div>`;
   openFlujoModal(`Addenda · ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);

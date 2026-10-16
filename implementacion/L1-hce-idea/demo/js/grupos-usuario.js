@@ -265,7 +265,7 @@ function abrirCambioResponsable(gid, num){
     <p style="font-size:.72rem;color:var(--warn);margin-top:8px">⚠ El cambio no queda registrado en HCE-LOG (la bitácora hoy es por NNA, no por grupo). Ver handoff §5.18.</p>`;
   const foot = `<span class="left">Grupo ${gid} · §21.1 Manual de Procedimientos</span>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
+      <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarCambioResponsable('${gid}', ${num})">Guardar cambio</button>
     </div>`;
   openFlujoModal(`Cambiar Técnico/a responsable ${num}`, `Grupo ${gid}`, body, foot);

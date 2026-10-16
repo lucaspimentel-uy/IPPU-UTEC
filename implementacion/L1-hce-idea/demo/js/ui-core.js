@@ -103,15 +103,14 @@ function filaNNA(p){
 /* Estados de la tabla: cargando · error (con reintento) · vacio · filas. Nunca en blanco. */
 function _tbodyMsg(html){ tb.innerHTML = `<tr><td colspan="10">${html}</td></tr>`; }
 function listaCargando(){
-  _tbodyMsg(`<div class="empty-state" role="status"><div class="big" aria-hidden="true">…</div>Cargando expedientes…</div>`);
+  _tbodyMsg(estadoCargandoHtml("Cargando expedientes…"));
   document.getElementById("listaResumen").textContent = "";
   document.getElementById("pagPrev").disabled = true;
   document.getElementById("pagNext").disabled = true;
 }
 function listaError(err){
   const msg = err instanceof ApiError ? err.message : "No se pudo cargar el listado.";
-  _tbodyMsg(`<div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(msg)}<br>
-    <button class="btn btn-ghost btn-mini" style="margin-top:10px" onclick="cargarLista()">Reintentar</button></div>`);
+  _tbodyMsg(estadoErrorHtml(msg, "cargarLista()"));
   document.getElementById("listaResumen").textContent = "";
 }
 
@@ -162,7 +161,7 @@ async function cargarLista(){
 function pintarLista(filas){
   tb.innerHTML = filas.length
     ? filas.map(filaNNA).join("")
-    : `<tr><td colspan="10"><div class="empty-state"><div class="big" aria-hidden="true">⌕</div>No se encontraron NNA con ese criterio.</div></td></tr>`;
+    : `<tr><td colspan="10">${estadoVacioHtml("⌕", "No se encontraron NNA con ese criterio.")}</td></tr>`;
   const paginas = Math.max(1, Math.ceil(LISTA.total / LISTA.limit));
   const pag = Math.floor(LISTA.offset / LISTA.limit) + 1;
   document.getElementById("listaResumen").textContent =
@@ -536,7 +535,7 @@ function limpiarUiDeSesion(){
 /* Mientras el login esta a la vista, el resto de la app queda inerte (sin foco, sin clics, fuera del
    arbol de accesibilidad): el login es un dialogo modal. */
 function appInerte(si){
-  document.querySelectorAll("header.topbar, div.layout").forEach(el => { el.inert = si; });
+  document.querySelectorAll("header.topbar, div.layout, a.skip-link").forEach(el => { el.inert = si; });
 }
 
 function mostrarLogin(mensaje){
@@ -613,3 +612,6 @@ async function arrancarSesion(){
     }
   }
 }
+
+/* El login es un diálogo modal: Tab no sale de él (la app de atrás, incluido el enlace de salto, está inerte). */
+_el("loginScreen").addEventListener("keydown", e => atraparTab(e, _el("loginScreen")));

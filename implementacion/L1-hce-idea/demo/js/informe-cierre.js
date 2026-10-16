@@ -194,10 +194,9 @@ function icRepintar(){
 }
 function icPanelHtml(){
   const cab = `<h3 id="icTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> IC · Informe de cierre anual${IC.anio ? " — " + escHtml(IC.anio) : ""}</h3>`;
-  if(IC.hceId !== EXP.id || IC.estado === "cargando") return `<div class="info-card">${cab}<div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(IC.hceId !== EXP.id || IC.estado === "cargando") return `<div class="info-card">${cab}<div class="ib">${estadoCargandoHtml("Cargando el informe de cierre…")}</div></div>`;
   if(IC.estado === "error"){
-    return `<div class="info-card">${cab}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(IC.error)}<br>
-      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="icReintentar()">Reintentar</button></div></div></div>`;
+    return `<div class="info-card">${cab}<div class="ib">${estadoErrorHtml(IC.error, "icReintentar()")}</div></div>`;
   }
   return IC.rec && IC.rec.firmado ? icLecturaHtml() : icEditorHtml();
 }
@@ -229,7 +228,7 @@ function icPintarAvisos(){
 function icCuantCardHtml(){
   let cuerpo;
   if(IC.cuantError){
-    cuerpo = `<p class="hint" role="alert">No se pudieron cargar los puntajes del año. <button type="button" class="btn btn-ghost btn-mini" onclick="icReintentar()">Reintentar</button></p>`;
+    cuerpo = estadoErrorInlineHtml("No se pudieron cargar los puntajes del año.", "icReintentar()");
   }else{
     const d = icCuantDatos({idea: IC.idea, a: IC.pa, b: IC.pb, deltas: IC.pb && IC.pb.deltas, interpretacion: IC.pb && IC.pb.interpretacion, alertas: IC.pb && IC.pb.alertas});
     cuerpo = `${icTablaHtml(d)}${icRadaresHtml(d)}`;
@@ -257,7 +256,7 @@ function icFirmantesHtml(){
   };
   return `<div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Firmantes (firman los dos, en un solo acto)</h2></div>
     <div style="padding:16px 18px">
-      ${PROF_ERROR ? `<p class="hint" role="alert">No se pudo cargar la lista de profesionales. <button type="button" class="btn btn-ghost btn-mini" onclick="icReintentar()">Reintentar</button></p>` : ""}
+      ${PROF_ERROR ? estadoErrorInlineHtml("No se pudo cargar la lista de profesionales.", "icReintentar()") : ""}
       <div class="form-grid">${sel(1)}${sel(2)}</div>
       <p class="hint">Se precargan los técnicos del grupo, pero se eligen al firmar: no quedan guardados en el borrador. Tienen que ser dos profesionales activos y distintos.</p>
     </div></div>`;
@@ -311,11 +310,11 @@ function icAccionesHtml(){
   if(IC.confirmando && !occ){
     return `<div class="ev-confirma" role="group" aria-label="Confirmar la firma" onkeydown="icTeclaConfirma(event)">
       <span id="icConfirmaTxt">¿Firmar el informe de cierre? La firma bloquea el informe: después sólo se corrige por addenda.</span>
-      <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnIcConfirmar" aria-describedby="icConfirmaTxt" onclick="icFirmar()">✓ Confirmar firma</button>
+      <button type="button" class="btn btn-firmar" id="btnIcConfirmar" aria-describedby="icConfirmaTxt" onclick="icFirmar()">✓ Confirmar firma</button>
       <button type="button" class="btn btn-ghost" id="btnIcCancelar" aria-describedby="icConfirmaTxt" onclick="icCancelarFirma()">Cancelar</button></div>`;
   }
   return `<button type="button" class="btn btn-ghost" id="btnIcGuardar" onclick="icGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : "Guardar borrador"}</button>
-    <button type="button" class="btn btn-primary" style="background:var(--ok)" id="btnIcFirmar" onclick="icPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar informe de cierre</button>`;
+    <button type="button" class="btn btn-firmar" id="btnIcFirmar" onclick="icPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar informe de cierre</button>`;
 }
 function icPintarAcciones(){ const a = _icEl("icAcciones"); if(a) a.innerHTML = icAccionesHtml(); }
 function icSucio(){ if(IC.estado === "listo") IC.sucio = true; }
@@ -538,8 +537,8 @@ function openRecibiModal(){
       <input id="mfFecha" type="date" aria-describedby="err_mfFecha"><div class="err" id="err_mfFecha"></div></div>`;
   const foot = `<span class="left">HCE-IC · Informe de Cierre Anual</span>
     <div style="display:flex;gap:10px">
-      <button type="button" class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
-      <button type="button" class="btn btn-primary" style="background:var(--teal)" id="btnRecibiOk" onclick="confirmarRecibi()">✍ Registrar recibí</button>
+      <button type="button" class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnRecibiOk" onclick="confirmarRecibi()">✍ Registrar recibí</button>
     </div>`;
   openFlujoModal("Registrar «recibí» de la familia", nombre ? `${nombre} · Informe de cierre ${IC.anio}` : `Informe de cierre ${IC.anio}`, body, foot);
 }
@@ -609,7 +608,7 @@ async function icCargarDocumento(){
   const titulo = `Informe de Cierre Anual — ${nombre}`;
   const vigente = () => mi === EXP.seq && n === ICDOC.seq;
   Object.assign(ICDOC, {estado: "cargando", data: null, hce: null, error: "", sinInforme: false});
-  cont.innerHTML = `${infBannerHtml(titulo, "Cargando el documento…", INF_VOLVER)}<div class="card"><div class="cardbody"><div class="hint" role="status">Cargando el informe…</div></div></div>`;
+  cont.innerHTML = `${infBannerHtml(titulo, "Cargando el documento…", INF_VOLVER)}<div class="card"><div class="cardbody">${estadoCargandoHtml("Cargando el informe…")}</div></div>`;
   _infEnfocar();
   if(!IC.rec){            // todavía no hay informe de este año: no hay documento que pedir
     ICDOC.estado = "sin_firmar"; ICDOC.sinInforme = true;
@@ -626,16 +625,14 @@ async function icCargarDocumento(){
       cont.innerHTML = icSinFirmarHtml(titulo);
     }else{
       ICDOC.estado = "error"; ICDOC.error = e instanceof ApiError ? e.message : "No se pudo cargar el documento.";
-      cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el documento", INF_VOLVER)}<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(ICDOC.error)}<br>
-        <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="icCargarDocumento()">Reintentar</button></div></div></div>`;
+      cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el documento", INF_VOLVER)}<div class="card"><div class="cardbody">${estadoErrorHtml(ICDOC.error, "icCargarDocumento()")}</div></div>`;
     }
     _infEnfocar();
     return;
   }
   if(rh.status === "rejected"){
     ICDOC.estado = "error"; ICDOC.error = rh.reason instanceof ApiError ? rh.reason.message : "No se pudo cargar el expediente (cédula y CIE-11).";
-    cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el documento", INF_VOLVER)}<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(ICDOC.error)}<br>
-      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="icCargarDocumento()">Reintentar</button></div></div></div>`;
+    cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el documento", INF_VOLVER)}<div class="card"><div class="cardbody">${estadoErrorHtml(ICDOC.error, "icCargarDocumento()")}</div></div>`;
     _infEnfocar();
     return;
   }
@@ -654,9 +651,8 @@ function icSinFirmarHtml(titulo){
   }).join("");
   return `${infBannerHtml(titulo, `Año ${f ? f.anio : ""} · el informe todavía no está firmado`, INF_VOLVER)}
     <div class="card"><div class="cardbody">
-      <div class="empty-state"><div class="big" aria-hidden="true">▤</div>
-        No hay un Informe de Cierre Anual <b>firmado</b> para ${EXP.hce ? escHtml(`${EXP.hce.nombre} ${EXP.hce.apellido}`.trim()) : "este NNA"}.<br>
-        El informe imprimible se genera <b>únicamente desde el HCE-IC firmado</b>: no se elaboran versiones alternativas (§5.3).</div>
+      ${estadoVacioHtml("▤", `No hay un Informe de Cierre Anual <b>firmado</b> para ${EXP.hce ? escHtml(`${EXP.hce.nombre} ${EXP.hce.apellido}`.trim()) : "este NNA"}.<br>
+        El informe imprimible se genera <b>únicamente desde el HCE-IC firmado</b>: no se elaboran versiones alternativas (§5.3).`)}
       <ol class="fl-lista" aria-label="Estado de los módulos del año ${f ? escHtml(f.anio) : ""}">${filas}</ol>
       <div style="display:flex;justify-content:center;margin-top:14px"><button type="button" class="btn btn-primary" onclick="icVolverAlExpediente()">✎ Ir al informe de cierre</button></div>
     </div></div>`;

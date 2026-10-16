@@ -89,14 +89,14 @@ function openAutImagenModal(id){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
   if(nna.autImagen && nna.autImagen.registrada){ toast("La autorización de imagen ya está registrada."); return; }
   const body = `<div class="section-label">Autorización de uso de imagen (§8.4)</div>
-    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">La familia firmó la autorización escrita. La copia queda adjunta en HCE-DOC (categoría «Autorización / consentimiento») y la constancia en HCE-LOG. Sin este registro no se cargan fotografías (art. 11, CNA — Ley N.º 17.823).</p>
+    <p class="hint" style="margin-bottom:12px">La familia firmó la autorización escrita. La copia queda adjunta en HCE-DOC (categoría «Autorización / consentimiento») y la constancia en HCE-LOG. Esta autorización regula si las fotografías se pueden <b>compartir</b> (art. 11, CNA — Ley N.º 17.823); <b>guardarlas en la HCE no la requiere</b> (§5.99).</p>
     <div class="field"><label>Firmante (familia / referente)</label><input id="mfFirmante" value="${nna.referente||""}"></div>
     <div class="field"><label>Fecha</label><input id="mfFecha" type="date" value="${HOY}"></div>
     <div class="field"><label>Adjunto (documento firmado)</label><input id="mfAdjunto" value="autorizacion_imagen_2026.pdf"><div class="hint">Demo: no se sube un archivo real.</div></div>`;
   const foot = `<span class="left">HCE-DOC · protección de imagen de NNA</span>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="closeFlujoModal()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarAutImagen(${id})">✍ Registrar autorización</button>
+      <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarAutImagen(${id})">✍ Registrar autorización</button>
     </div>`;
   openFlujoModal("Registrar autorización de imagen", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
@@ -368,17 +368,15 @@ function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){
 
 function vfPanelHtml(){
   const cab = (extra) => `<h3 id="vfTitulo" tabindex="-1"><span class="ic" aria-hidden="true">♿</span> VF · Valoración funcional (BUND / CIF) ${extra || ""}</h3>`;
-  if(VF.hceId !== EXP.id || VF.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib"><div class="hint" role="status">Cargando…</div></div></div>`;
+  if(VF.hceId !== EXP.id || VF.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando la valoración funcional…")}</div></div>`;
   if(VF.estado === "error"){
-    return `<div class="info-card">${cab()}<div class="ib"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(VF.error)}<br>
-      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="vfReintentar()">Reintentar</button></div></div></div>`;
+    return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(VF.error, "vfReintentar()")}</div></div>`;
   }
   if(VF.estado === "vacio" && !VF.nuevo){
     return `<div class="info-card">${cab()}<div class="ib">
-      <div class="empty-state" role="status"><div class="big" aria-hidden="true">♿</div>
-        Todavía no se registró una valoración funcional para este expediente.<br>
-        <span class="hint">Es un estado normal: se registra cuando el equipo cuenta con la información. Todos los campos son opcionales.</span><br>
-        <button type="button" class="btn btn-primary" id="btnVfNuevo" style="margin-top:12px" onclick="vfNuevo()">+ Registrar valoración funcional</button></div>
+      ${estadoVacioHtml("♿", `Todavía no se registró una valoración funcional para este expediente.<br>
+        <span class="hint">Es un estado normal: se registra cuando el equipo cuenta con la información. Todos los campos son opcionales.</span>`,
+        `<button type="button" class="btn btn-primary" id="btnVfNuevo" onclick="vfNuevo()">+ Registrar valoración funcional</button>`)}
     </div></div>`;
   }
   return vfEditorHtml();
@@ -586,14 +584,13 @@ async function vfAbrirReporte(){
   const nombre = EXP.hce ? `${EXP.hce.nombre} ${EXP.hce.apellido}`.trim() : "";
   const titulo = `Reporte de Valoración Funcional — ${nombre}`;
   go("informe");
-  cont.innerHTML = `${infBannerHtml(titulo, "Cargando el reporte…", INF_VOLVER_VF)}<div class="card"><div class="cardbody"><div class="hint" role="status">Cargando el reporte…</div></div></div>`;
+  cont.innerHTML = `${infBannerHtml(titulo, "Cargando el reporte…", INF_VOLVER_VF)}<div class="card"><div class="cardbody">${estadoCargandoHtml("Cargando el reporte…")}</div></div>`;
   _infEnfocar();
   const [rv, rp, rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}/valoracion-funcional`), apiFetch(`/hce/${id}/protocolo`), apiFetch(`/hce/${id}`), evCargarProfesionales()]);
   if(mi !== EXP.seq || n !== ICDOC.seq) return;
   if(rv.status === "rejected" || rh.status === "rejected"){
     const e = (rv.status === "rejected" ? rv : rh).reason;
-    cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el reporte", INF_VOLVER_VF)}<div class="card"><div class="cardbody"><div class="empty-state" role="alert"><div class="big" aria-hidden="true">!</div>${escHtml(e instanceof ApiError ? e.message : "No se pudo cargar el reporte.")}<br>
-      <button type="button" class="btn btn-primary btn-mini" style="margin-top:10px" onclick="vfAbrirReporte()">Reintentar</button></div></div></div>`;
+    cont.innerHTML = `${infBannerHtml(titulo, "No se pudo cargar el reporte", INF_VOLVER_VF)}<div class="card"><div class="cardbody">${estadoErrorHtml(e instanceof ApiError ? e.message : "No se pudo cargar el reporte.", "vfAbrirReporte()")}</div></div>`;
     _infEnfocar();
     return;
   }

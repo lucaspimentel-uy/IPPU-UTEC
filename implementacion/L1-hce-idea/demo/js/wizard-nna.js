@@ -8,7 +8,7 @@
    adivina el rol para reformularlo (§5.119 d).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 
-const WIZ = { modo:"alta", step:1, orig:null, inicial:null, grupos:[], guardando:false, opener:null, sesion:0 };
+const WIZ = { modo:"alta", step:1, orig:null, inicial:null, grupos:[], guardando:false, opener:null, openerId:"", ancla:null, sesion:0, snap:"", tocado:false };
 
 /* ---------- Tabla unica: campo de la API <-> input <-> paso <-> rotulo ----------
    La usan la validacion, el mapeo de errores del servidor, el resumen y la revision. */
@@ -117,25 +117,47 @@ function prepararCamposModal(){
 prepararCamposModal();
 
 /* ---------- Abrir / cerrar el dialogo ---------- */
+/* Lo tipeado sin guardar (Fase 3-e): la foto de los campos al abrir se compara con la de ahora, y solo cuenta si la persona
+   tocó algo (los grupos que llegan después de la API pueden preseleccionar uno y eso no es «tipear»). */
+function _wizFoto(){ return fotoCampos(document.querySelector("#modalAlta .modal-body")); }
+function wizHayCambios(){ return WIZ.tocado && _wizFoto() !== WIZ.snap; }
 function _abrirModalAlta(){
   WIZ.sesion++;
   WIZ.opener = document.activeElement;
+  WIZ.openerId = (WIZ.opener && WIZ.opener.id) || "";
+  WIZ.ancla = WIZ.opener && WIZ.opener.closest ? WIZ.opener.closest(".card,.info-card,.flujo-card,section") : null;
+  WIZ.snap = _wizFoto(); WIZ.tocado = false;
   document.getElementById("modalAlta").classList.add("open");
   appInerte(true);                       // la app de atras queda sin foco ni clics mientras el dialogo esta abierto
   const t = document.getElementById("modalTitle");
   setTimeout(() => { if(document.getElementById("modalAlta").classList.contains("open")) t.focus(); }, 0);
 }
-function closeAlta(){ if(!WIZ.guardando) cerrarModalAlta(); }
+/* Cierre pedido por la persona (×, Esc): con datos tipeados pide confirmación; «Salir» y el 401 usan cerrarModalAlta() directo y NO preguntan. */
+function closeAlta(){
+  if(WIZ.guardando) return;
+  const m = document.getElementById("modalAlta");
+  if(!m.classList.contains("open")) return;          // Esc llama a closeAlta() aunque no este abierto
+  if(descarteAbierto(m)){ m.querySelector("#btnCdSeguir").click(); return; }
+  if(wizHayCambios()){
+    pedirDescarte(m, () => { cerrarModalAlta(); _wizLimpiarFormulario(); });
+    return;
+  }
+  cerrarModalAlta();
+}
 /* sinFoco: el cierre es por cerrar la sesion (el foco va al login, no a quien abrio el dialogo). */
 function cerrarModalAlta(sinFoco){
   const m = document.getElementById("modalAlta");
   if(!m.classList.contains("open")) return;          // Esc llama a closeAlta() aunque no este abierto
   m.classList.remove("open");
+  const cd = m.querySelector(".confirmar-descarte"); if(cd) cd.remove();
   WIZ.sesion++;                                      // descarta respuestas en vuelo (grupos, guardado)
   WIZ.guardando = false; _wizBotones();
   appInerte(false);
-  const o = WIZ.opener; WIZ.opener = null;
-  if(!sinFoco && o && document.contains(o)){ try{ o.focus(); }catch(_e){ /* nada */ } }
+  const o = WIZ.opener, oid = WIZ.openerId, ancla = WIZ.ancla; WIZ.opener = null; WIZ.openerId = ""; WIZ.ancla = null;
+  if(sinFoco) return;
+  if(o && document.contains(o)){ try{ o.focus(); }catch(_e){ /* nada */ } }
+  /* Si quien lo abrió ya no existe (el expediente se repintó), el foco no se queda en <body> (§5.127 d). */
+  setTimeout(() => focoEstableTrasDialogo(oid, ancla), 0);
 }
 
 function _wizLimpiarFormulario(){
@@ -234,6 +256,7 @@ async function wizCargarGrupos(){
     ? ((EXP.flujo && EXP.flujo.anio) || (WIZ.orig && WIZ.orig.grupo && WIZ.orig.grupo.anio) || null)
     : (LISTA.anioGrupos || null);
   est.textContent = "Cargando grupos…"; btn.hidden = true; sel.disabled = true;
+  sel.innerHTML = `<option value="">Cargando grupos…</option>`;       // sin opciones viejas de otra sesión o de otro NNA a la vista
   try{
     const r = await apiFetch("/grupos", {query: anio ? {anio} : {}});
     if(mi !== WIZ.sesion) return;
@@ -247,6 +270,7 @@ async function wizCargarGrupos(){
   }
   sel.disabled = false;
   _wizRellenarGrupos();
+  if(!WIZ.tocado && mi === WIZ.sesion) WIZ.snap = _wizFoto();      // la preselección del grupo no cuenta como tipeado
 }
 
 function wizEstadoCambio(){
@@ -469,13 +493,6 @@ function cerrarDialogosConectados(){
   document.getElementById("f_grupo_estado").textContent = "";
 }
 
-document.getElementById("modalAlta").addEventListener("keydown", e => {
-  // Tab no sale del dialogo hacia el navegador: el ultimo control vuelve al primero y viceversa.
-  if(e.key !== "Tab") return;
-  const foco = [...document.querySelectorAll("#modalAlta button:not([disabled]):not([hidden]), #modalAlta input:not([disabled]), #modalAlta select:not([disabled]), #modalAlta textarea, #modalAlta [tabindex='0'], #modalAlta a[href]")]
-    .filter(el => el.offsetParent !== null);
-  if(!foco.length) return;
-  const a = foco[0], z = foco[foco.length - 1];
-  if(e.shiftKey && (document.activeElement === a || document.activeElement.id === "modalTitle")){ e.preventDefault(); z.focus(); }
-  else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
-});
+document.getElementById("modalAlta").addEventListener("keydown", e => atraparTab(e, document.getElementById("modalAlta"), "modalTitle"));
+/* Lo que la persona escribe o elige marca el diálogo como «tocado» (los cambios por programa no disparan estos eventos). */
+["input", "change"].forEach(t => document.getElementById("modalAlta").addEventListener(t, () => { WIZ.tocado = true; }));

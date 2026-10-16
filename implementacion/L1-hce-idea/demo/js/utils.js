@@ -42,3 +42,80 @@ function rellenarPanelesDemo(){
     el.innerHTML = panelModoDemo(el.getAttribute("data-modo-demo") || "");
   });
 }
+
+/* ===== Estados compartidos: cargando · error (con Reintentar) · vacío (Fase 3-e, handoff §5.128) =====
+   UN componente para todas las pantallas conectadas (antes cada una armaba el suyo, con roles y botones distintos):
+   - cargando: role="status" (se anuncia sin interrumpir);
+   - error:    role="alert", el mensaje de la API tal cual y «Reintentar» (primario) + acciones extra opcionales;
+   - vacío:    el estado normal de un recurso que todavía no existe (no es un error).
+   El glifo es decorativo (aria-hidden): lo que se lee es el texto. `reintentar` es el código JS del onclick. */
+function estadoCargandoHtml(msg){
+  return `<div class="empty-state estado-carga" role="status"><div class="big" aria-hidden="true">…</div><p class="estado-msg">${escHtml(msg || "Cargando…")}</p></div>`;
+}
+function estadoErrorHtml(msg, reintentar, extras){
+  return `<div class="empty-state estado-error" role="alert"><div class="big" aria-hidden="true">!</div><p class="estado-msg">${escHtml(msg)}</p>
+    <div class="estado-acciones">${reintentar ? `<button type="button" class="btn btn-primary btn-mini" data-reintentar onclick="${reintentar}">Reintentar</button>` : ""}${extras || ""}</div></div>`;
+}
+/* Error de una parte de la pantalla (p. ej. la lista de profesionales): mismo rol y mismo botón, en línea. */
+function estadoErrorInlineHtml(msg, reintentar){
+  return `<p class="estado-inline" role="alert"><span aria-hidden="true">!</span><span class="estado-msg-txt">${escHtml(msg)}</span>${reintentar ? `<button type="button" class="btn btn-ghost btn-mini" data-reintentar onclick="${reintentar}">Reintentar</button>` : ""}</p>`;
+}
+/* `htmlMsg` ya viene escapado por quien llama (puede llevar <b>); `acciones` es HTML de botones. */
+function estadoVacioHtml(glifo, htmlMsg, acciones){
+  return `<div class="empty-state estado-vacio" role="status"><div class="big" aria-hidden="true">${glifo || "◌"}</div><div class="estado-msg">${htmlMsg}</div>${acciones ? `<div class="estado-acciones">${acciones}</div>` : ""}</div>`;
+}
+
+/* ===== Dialogos modales: trampa de Tab, foco de vuelta y confirmacion al descartar (Fase 3-e) ===== */
+const _FOCO_SEL = "button:not([disabled]):not([hidden]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), a[href], summary, [tabindex='0']";
+/* Tab no sale del dialogo: el ultimo control vuelve al primero y viceversa. `titulo`: el encabezado con tabindex="-1"
+   donde cae el foco al abrir (Mayus+Tab desde ahi va al ultimo control). */
+function atraparTab(e, raiz, tituloId){
+  if(e.key !== "Tab" || !raiz) return;
+  const foco = [...raiz.querySelectorAll(_FOCO_SEL)].filter(el => el.offsetParent !== null);
+  if(!foco.length) return;
+  const a = foco[0], z = foco[foco.length - 1], act = document.activeElement;
+  if(e.shiftKey && (act === a || (tituloId && act && act.id === tituloId) || !raiz.contains(act))){ e.preventDefault(); z.focus(); }
+  else if(!e.shiftKey && (act === z || !raiz.contains(act))){ e.preventDefault(); a.focus(); }
+}
+/* Foto de lo tipeado: valor de cada campo del contenedor. Sirve para saber si hay algo sin guardar. */
+function fotoCampos(raiz){
+  if(!raiz) return "";
+  return JSON.stringify([...raiz.querySelectorAll("input, textarea, select")].filter(e => e.type !== "hidden")
+    .map(e => [e.id || e.name || "", (e.type === "checkbox" || e.type === "radio") ? e.checked : e.value]));
+}
+/* Deja los campos vacios (descartar y cerrar). */
+function vaciarCampos(raiz){
+  if(!raiz) return;
+  raiz.querySelectorAll("input, textarea, select").forEach(e => {
+    if(e.type === "checkbox" || e.type === "radio") e.checked = false;
+    else if(e.tagName === "SELECT") e.selectedIndex = 0;
+    else e.value = "";
+  });
+}
+/* Confirmacion de descarte DENTRO del dialogo (no es otro dialogo): banda destructiva con glifo + texto, el foco va a
+   «Seguir editando» (lo seguro) y Esc tambien sigue editando. Devuelve false si ya estaba a la vista. */
+function pedirDescarte(modal, alDescartar, alSeguir){
+  if(!modal || modal.querySelector(".confirmar-descarte")) return false;
+  const banda = document.createElement("div");
+  banda.className = "confirmar-descarte"; banda.setAttribute("role", "alert");
+  banda.innerHTML = `<span class="cd-txt" id="cdTxt"><span class="cd-glifo" aria-hidden="true">⚠</span>Hay datos sin guardar. Si cerrás, se pierden.</span>
+    <span class="cd-acciones"><button type="button" class="btn btn-ghost" id="btnCdSeguir" aria-describedby="cdTxt">Seguir editando</button>
+    <button type="button" class="btn btn-descartar" id="btnCdDescartar" aria-describedby="cdTxt">Descartar y cerrar</button></span>`;
+  const cab = modal.querySelector(".modal-head");
+  cab.insertAdjacentElement("afterend", banda);
+  const quitar = () => { banda.remove(); };
+  banda.querySelector("#btnCdSeguir").onclick = () => { quitar(); if(alSeguir) alSeguir(); };
+  banda.querySelector("#btnCdDescartar").onclick = () => { quitar(); alDescartar(); };
+  banda.addEventListener("keydown", ev => { if(ev.key === "Escape"){ ev.preventDefault(); ev.stopPropagation(); banda.querySelector("#btnCdSeguir").click(); } });
+  banda.querySelector("#btnCdSeguir").focus();
+  return true;
+}
+function descarteAbierto(modal){ return !!(modal && modal.querySelector(".confirmar-descarte")); }
+
+/* Enlace «Saltar al contenido»: lleva el foco a <main> (tabindex="-1") sin tocar la URL. */
+function saltarAlContenido(ev){
+  if(ev) ev.preventDefault();
+  const m = document.getElementById("contenido");
+  if(m){ m.focus(); m.scrollIntoView({block: "start"}); }
+  return false;
+}
