@@ -20,6 +20,13 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F0 (c): banco de evaluación v0** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). Nuevo `docs/planes/L3-banco-evaluacion-v0.md`: **30 casos en 15 pares** (cada rechazo con su gemela que se responde).
+  - Fuentes sólo el Documento Técnico y el Protocolo. Cada LIM-1 a LIM-11 tiene al menos un caso que lo dispara; LIM-3 con dos pares de frontera; están los casos de tercero, conflicto entre documentos, redactar un registro, rol declarado e inyección en la pregunta y en un fragmento recuperado.
+  - **Verificado:** las 29 citas, cada frase buscada dentro de la sección citada (0 fallas); ninguna fila comparte 7 palabras seguidas con las fuentes (control automático); cobertura por LIM y pares completos.
+  - **8 ambigüedades listadas, sin tocar §8 del plan**: entre ellas, que el DT prevé una interpretación orientativa del total del IDEA (LIM-1/3) y un borrador autogenerado de la VF (LIM-10), y que el lado «se responde» de LIM-3 no tiene fuente en DT ni Prot.
+  - **Tope de horas de F0 retirado por el equipo.** El plan todavía lo menciona en §4 y §5; se actualiza al cerrar la F0. Siguen la pausa del 2026-11-06 y el congelamiento del 19 al 26/11.
+  - Remotos según `handoff.md` §12.2: `gitlab` (UTEC) y `origin` (GitHub); la rama se pushea a los dos.
+  - F0 sigue abierta: falta (b) y la revisión del equipo. Casilla de §6 sin tildar; sin §5.
 - **2026-10-15 · L3 — F0 (a): lista de límites** (Samuel con Claude, rama `l3/f0-limites`; sólo docs). §8 nuevo en `docs/planes/L3-asistente-plan.md`, con una revisión aplicada.
   - **11 límites (LIM-1 a LIM-11)** con lo que hace el asistente en su lugar y tres mensajes fijos (A rechazo clínico, B sin respaldo, C crisis).
   - LIM-1 a 4 salen del *Documento de trabajo* (no normativo: los confirma IPPU). LIM-6 (a) y LIM-8 del Protocolo §6.7 y §6.2 (verificado: «una institución educativa» está en el texto literal).
