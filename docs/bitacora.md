@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-15 · L3 — F1-b: índice léxico y recuperación con cita** (Samuel con Claude, rama `l3/f1b-indice`). Sin modelo de lenguaje, sin dependencias nuevas; no toca L1.
+  - `asistente/indice.py`: fragmenta por `##` y `###` (sección = ruta «## > ###»; más de 400 palabras → por párrafos, y una tabla larga por líneas) y busca con BM25 en biblioteca estándar (sin tildes ni palabras vacías). `buscar(consulta, k, umbral)` devuelve documento, sección, puntaje y texto, o `[]` si nada supera el umbral.
+  - `python -m asistente.indexar` escribe `indice/indice.json` (ignorado en git) e imprime sólo conteos: DT 23 fragmentos en 23 secciones, Prot 23 en 22.
+  - Tests: 30 en verde (12 nuevos, con un corpus ficticio, y 1 de humo sobre los documentos reales que no imprime texto).
+  - Dato de base, no criterio: de los 21 casos del banco con cita, 16 recuperan una sección citada entre los 3 primeros (11 en el primero, 17 entre 5). Para calibrar el umbral en la F1-c.
+  - Sin §5: falta que Samuel confirme la decisión de índice léxico.
 - **2026-10-15 · L3 — F1-a: esqueleto de `implementacion/L3-asistente-virtual/`** (Samuel con Claude, rama `l3/f1a-esqueleto`). Primer código de L3; no toca L1.
   - README corto que enlaza al plan (§5.128 c), `requirements.txt` (sólo pytest), `.gitignore`, `pytest.ini` y venv propio en `.venv/` (ignorado).
   - El banco pasa a `eval/banco-v0.md` con `git mv` (historia conservada); se actualizan sus rutas en el plan y en `handoff.md` §6.

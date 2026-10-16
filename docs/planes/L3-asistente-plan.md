@@ -228,7 +228,7 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
   `implementacion/L3-asistente-virtual/`):
   - **F1-a · Esqueleto — HECHA (2026-10-15).** README corto que enlaza a este plan (§5.128 c); `requirements.txt` y `.gitignore`
     propios; el banco pasa a `eval/` con `git mv` y se actualizan sus rutas en este plan.
-  - **F1-b · Índice y recuperación con cita.** Índice en archivo sobre el Documento Técnico y el Protocolo
+  - **F1-b · Índice y recuperación con cita — HECHA (2026-10-15).** Índice en archivo sobre el Documento Técnico y el Protocolo
     (`docs/markdown/`), cada fragmento con documento y sección. Sin modelo de lenguaje todavía.
   - **F1-c · Límites en código.** LIM-1 a 11 y los mensajes A/B/C; corredor de evaluación sobre el banco; un
     test por cada rechazo (§6, criterio 3).
