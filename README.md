@@ -26,8 +26,7 @@ IPPU/
 │   ├── prototipo-v4/  ← Prototipo v4 de IPPU (HTML original + catálogos). NO es respaldo:
 │   │                     lo lee generar_catalogos_backend.py como insumo de build (§5.30)
 │   ├── markdown/   ← Conversiones a Markdown de las fuentes (legibles y citables)
-│   ├── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
-│   └── planes/     ← Planes de ronda (M0–M11 · M12 absorción del Prototipo v4 ← vigente)
+│   └── notas/      ← Notas de equipo · puntos-a-validar.md (qué falta definir con IPPU)
 ├── implementacion/
 │   └── L1-hce-idea/ ← Código y prototipos de la Línea 1
 │       ├── demo/           ← Demo navegable (datos simulados, sin backend)
@@ -36,8 +35,6 @@ IPPU/
 │       │   └── js/         ← 14 módulos; se cargan en orden y ese orden ES la semántica
 │       └── backend/                       ← API FastAPI + SQLAlchemy + Alembic (ver su README)
 └── herramientas/
-    ├── conversor_docling.py       ← Conversor de documentos a Markdown
-    └── extraer_prototipo_v4.js    ← Regenera los catálogos del Prototipo v4 desde su URL
 ```
 
 ## 📌 Estado de la Línea 1 (ago-2026)
@@ -86,7 +83,7 @@ IPPU/
   **Prototipo v4**, que se intercaló entre M11.2 y M11.3 porque tocaba la misma capa (modelos, migración,
   catálogos): 6 bandas del IDEA, 14 talleres reales, y cuatro módulos nuevos — **HCE-SEV** (severidad
   DSM-5-TR), **HCE-INC** (inclusión educativa), **HCE-PAI** (propuesta de atención individual de INAU) y
-  **ateneos/jornadas**. Plan: `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. ⚠️ **El Prototipo
+  **ateneos/jornadas**. ⚠️ **El Prototipo
   v4 y la demo v4.1 dejaron de ser fuente normativa** (`handoff.md` §5.92, deroga a §5.10): son insumo a
   consultar, no especificación a la que converger. Lo normativo es lo que IPPU dijo sobre sí misma — acta
   de la reunión del 2026-08-26, cuestionario del 15/06, Protocolo de acceso/resguardo, Manual
@@ -113,15 +110,6 @@ claude
 > Desde la modularización (2026-08-07, `handoff.md` §5.5) **la demo se puede trabajar en paralelo**, siempre
 > que cada uno tome **archivos distintos** de `demo/js/`; avisá cuál tomás. `demo/index.html` y
 > `demo/js/utils.js` los tocan todos → **coordinar antes** (§12.3).
-
-## 🛠️ Convertir nuevos documentos a Markdown
-```bash
-python herramientas/conversor_docling.py "docs/fuentes/<archivo>" -o "docs/markdown"
-# Regla desde el 2026-08-20 (handoff §5.29): convertido y verificado que nadie cite el
-# original, el original se borra. La historia de git es el respaldo.
-# o una carpeta entera:
-python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
-```
 
 ## 👥 Equipo
 - **UTEC-LIDIA (estudiantes):** Samuel Furtado, Lucas Pimentel, Victor Uria.

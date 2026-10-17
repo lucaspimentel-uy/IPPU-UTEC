@@ -305,12 +305,8 @@
     padding:7px var(--s3);font-size:var(--fs-xs);font-weight:600;line-height:1.4;
     transition:background .12s ease,border-color .12s ease,color .12s ease;
   }
-  /* Sin border-color propio: varios botones del JS pisan sólo el `background` por
-     estilo en línea (addenda = --teal). Si el
-     borde quedara naranja, esos botones saldrían con el filete de otro color. */
   .btn-primary{background:var(--orange);color:#fff}
   .btn-primary:hover{background:var(--orange-hover)}
-  .btn-primary:hover[style*="--teal"]{filter:brightness(.92)}
   .btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--rule)}
   .btn-ghost:hover{background:var(--paper-3);border-color:var(--ink-3)}
   /* En una tabla de 7 filas, 7 enlaces en el color de acento lo gastan y el botón

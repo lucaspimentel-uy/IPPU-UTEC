@@ -13,13 +13,10 @@ IPPU/
 ├── README.md
 ├── .gitattributes
 ├── .gitignore
-├── .graphifyignore
 ├── docs/
 ├── implementacion/
 └── herramientas/
 ```
-> `graphify-out/` existe en disco pero **no se versiona** desde el 2026-08-20 (`handoff.md` §5.29).
-
 
 ## Raíz del repo
 
@@ -30,8 +27,6 @@ IPPU/
 | `README.md` | Overview del proyecto para humanos (equipo, líneas de trabajo, cómo retomar). |
 | `.gitattributes` | **Finales de línea.** `text=auto` + `eol=lf` para código y documentación: el repo guarda **siempre LF** y cada uno recibe en el checkout lo que su plataforma espera (las tres máquinas del equipo son Windows con `core.autocrlf=true`). Nació el 2026-08-26 porque `git status` mostraba archivos «modificados» que nadie había tocado y un renombrado aparecía como 574 líneas cambiadas sin haber cambiado ninguna. `.bat`/`.ps1` van al revés (CRLF, es lo que espera el intérprete) y los binarios quedan marcados `binary` para que git no los toque. |
 | `.gitignore` | Exclusiones del repositorio (venvs, caches, temporales, etc.). |
-| `.graphifyignore` | Exclusiones propias del grafo de conocimiento (`/graphify`); se combina con `.gitignore`. |
-| `graphify-out/` | Salida generada por `/graphify` (grafo, caches, reportes). **No se versiona ni se edita a mano:** es un artefacto que se **regenera a demanda al cerrar ronda**. Se desversionó el 2026-08-20 (§5.29) porque 1,6 MB describiendo un repo de dos semanas atrás confunden más de lo que ayudan. |
 
 ## `docs/` — documentación y fuentes
 
@@ -63,7 +58,6 @@ docs/
 │   ├── Reunión Proyecto IPPU - 2026_05_20 ....md
 │   ├── Reunión Proyecto IPPU - 2026_05_27 ....md
 │   ├── escala-del-inventario-del-espectro-autista-idea.md
-│   ├── hce_idea_ippu_demo.md
 │   ├── modelo-datos.md          # propuesta Postgres+JSONB de un integrante — registrada, no adoptada
 │   └── prototipo-v4-referencia.md   # versión legible y citable del Prototipo v4 (extraída por script)
 ├── notas/
@@ -71,16 +65,8 @@ docs/
 │   │                            #  respuesta. Es un SNAPSHOT de un Google Doc del equipo: el equipo
 │   │                            #  le sacó 3 preguntas al revisarlo y la numeración cambió de §2.7 y
 │   │                            #  §3.2 en adelante (§5.34). Citarlo por SU numeración.
-│   ├── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
-│   └── borrador-color-y-significado-clinico.md  # borrador SIN FIRMAR de handoff.md §5 (severidad ≠
-│                                #  urgencia, rampa del IDEA, vocabularios de estado). No es regla del
-│                                #  equipo — se borra cuando Lucas lo firme en §5 (banner en el propio
-│                                #  archivo).
+│   └── puntos-a-validar.md      # versión interna: qué no está confirmado y qué bloquea
 ├── planes/
-│   ├── PLAN-modular-adaptacion-HCE-2026-07.md    # ronda M0–M11 (adaptación al Documento Técnico)
-│   ├── PLAN-M12-absorcion-prototipo-v4-2026-08.md # ronda M12 (absorción del Prototipo v4) — vigente
-│   └── agenda-reunion-ippu-2026-08.md            # recorrida con IPPU: supuesto y costo de un «no»
-├── prompts/                     # prompts de sesión (antes sueltos en la raíz del repo)
 └── guias/                       # notas técnicas de referencia, no de negocio ni de ronda
     └── notas-accesibilidad-ui.md   # hallazgos WCAG medidos + reglas de dominio color↔significado
                                      #  (severidad ≠ urgencia, IDEA invertido, vocabularios de estado
@@ -92,19 +78,18 @@ Notas:
 - **Regla de conversión:** una vez que un original tiene su `.md` en `docs/markdown/`, se trabaja siempre
   con el `.md`. Desde el **2026-08-20** la regla se aplica hasta el final: el original **se borra** salvo
   que haya un motivo escrito para conservarlo (§5.29). El respaldo verificable lo da la historia de git
-  —precedente §5.5— y el tag `pre-limpieza-2026-08-20`. `docs/fuentes/` sigue en `.graphifyignore`.
+  —precedente §5.5— y el tag `pre-limpieza-2026-08-20`.
 - **Excepción:** los prototipos de IPPU son apps JS y Docling solo rinde su shell vacío, así que **no se
   convierten con Docling**.
   - `HCE_IPPU_Prototipo_v1.html` no tiene conversión de ningún tipo: se cita desde su ruta original.
   - `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` **sí tiene versión legible**, producida por script
-    (`herramientas/extraer_prototipo_v4.js`) en lugar de por Docling: `docs/markdown/prototipo-v4-referencia.md`
+    (el extractor se retiró el 2026-10-16: queda en la historia de git) en lugar de por Docling: `docs/markdown/prototipo-v4-referencia.md`
     (narrativa) y `docs/prototipo-v4/prototipo-v4-catalogos.json` (los datos). Se lee y se cita desde
     `docs/markdown/`; el HTML queda como original **y** como insumo del generador de catálogos.
 - ⚠️ **`docs/prototipo-v4/` no es `docs/fuentes/`, y la diferencia es funcional** (§5.30). `fuentes/` es
   respaldo que **no se lee**; esta carpeta la **lee código en tiempo de ejecución**
   (`herramientas/generar_catalogos_backend.py`, líneas 41–42). Vivió bajo `fuentes/` hasta el 2026-08-20 y
-  eso hacía **falsa** la regla de esa carpeta. Al mudarse perdió la exclusión del grafo que heredaba, así
-  que se la repuso explícitamente en `.graphifyignore`.
+  eso hacía **falsa** la regla de esa carpeta.
   El JSON no incluye `CLINICA_HTML_B64` ni `TALLER_HTML_B64` (Clínica y Taller Terapéutico están fuera de
   alcance — `handoff.md` §5.12 / D3); si el alcance cambia, se extraen del HTML.
 - **`docs/planes/`** agrupa los planes de ronda de trabajo (documentos de alcance/roadmap para una
@@ -250,18 +235,6 @@ Notas:
 
 | Ruta | Qué es |
 |---|---|
-| `herramientas/conversor_docling.py` | Convierte `docs/fuentes/*` → `docs/markdown/*.md` (Docling). Uso en `CLAUDE.md`. |
 | `herramientas/generar_catalogos_backend.py` | `python herramientas/generar_catalogos_backend.py` → genera `backend/app/data/catalogos_iniciales.json` desde la demo v4.1 y el Prototipo v4. Con `--check` no escribe: falla si el archivo del repo quedó desfasado (sirve para CI y para detectar ediciones a mano). |
-| `herramientas/extraer_prototipo_v4.js` | `node herramientas/extraer_prototipo_v4.js` → regenera `docs/prototipo-v4/prototipo-v4-catalogos.json` desde la URL publicada del Prototipo v4. Existe para **diffear** si IPPU publica una v5, no para correrlo de rutina. |
 | `herramientas/verificar_estado.py` | `python herramientas/verificar_estado.py --check` → **mide el repo** (tablas en `app/models/`, revisión de Alembic, un solo head, tests si Docker está arriba) y lo compara contra lo que afirman `handoff.md`, `README.md`, `CLAUDE.md`, `docs/estructura-repositorio.md` y `backend/README.md`. Silencioso si coincide, **exit ≠ 0 con el diff** si no. Nació el 2026-08-20 tras la **cuarta** vez que la doc se desfasó del repo. Va en el checklist de cierre de sesión (§12.4). |
 | `herramientas/verificar_contraste_ui.js` | `node herramientas/verificar_contraste_ui.js` (opcional `--json archivo.json`) → **mide contraste WCAG por script**, no a mano: extrae los colores declarados en `demo/css/estilos.css` (variables y literales, con línea) y abre la demo con Playwright para leer los pares texto/fondo y los anillos de foco que **realmente se renderizan**. Reusa el Playwright ya instalado en `demo/verificacion/` (no duplica el install). Nació el 2026-08-21 para reemplazar los dos ratios calculados a mano en `docs/guias/notas-accesibilidad-ui.md` §2.6 por números verificados — ver ese documento (§2.6/§2.7) para la lectura de resultados. |
-
-## `graphify-out/`
-
-Salida generada de `/graphify` (grafo de conocimiento del repo): `graph.json`, `graph.html`,
-`GRAPH_REPORT.md`, `manifest.json` y caches. Se regenera con el skill y no se edita a mano.
-
-⚠️ **No se versiona** desde el 2026-08-20 (`handoff.md` §5.29): la carpeta entera está en `.gitignore`.
-Antes se versionaba y el resultado fue 1,6 MB de grafo que describía el repo del 2026-08-07 —sin M12.1 a
-M12.7 ni la ronda de la demo—, es decir un mapa desactualizado con apariencia de mapa vigente.
-**Se regenera a demanda al cerrar ronda**, que es cuando vale la pena mirarlo.

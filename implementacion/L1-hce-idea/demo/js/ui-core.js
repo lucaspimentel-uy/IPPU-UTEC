@@ -366,7 +366,7 @@ function renderAnalitica(){
   /* --- KPIs --- */
   const cobertura = nAct ? Math.round(a.conLB.length/nAct*100) : 0;
   // deltaInterpreta clasifica un delta entero; el promedio se redondea sólo para elegir
-  // la etiqueta/color, nunca para mostrar el número.
+  // la etiqueta, nunca para mostrar el número.
   const dInt = a.deltaTot==null ? null : deltaInterpreta(Math.round(a.deltaTot));
   const dTxt = a.deltaTot==null ? "—" : (a.deltaTot>0?"+":"") + fmt1(a.deltaTot);
   const kpis = [
@@ -383,7 +383,7 @@ function renderAnalitica(){
   ];
   document.getElementById("anKpi").innerHTML = kpis.map(k=>`
     <div class="kpi"><div class="lab">${k.lab}</div>
-      <div class="val ${k.cls||""}"${k.color?` style="color:${k.color}"`:""}>${k.val}</div>
+      <div class="val ${k.cls||""}">${k.val}</div>
       <div class="sub">${k.sub}</div></div>`).join("");
 
   /* --- Perfil poblacional por escala: línea base IDEA (máx. 24 por escala) --- */

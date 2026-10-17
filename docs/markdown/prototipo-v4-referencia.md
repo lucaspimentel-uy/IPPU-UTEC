@@ -6,8 +6,8 @@
 > literales. Este documento resume lo que hay adentro.
 >
 > **Rutas:** original en `docs/prototipo-v4/HCE_IPPU_Prototipo_v4.html` · datos completos en
-> `docs/prototipo-v4/prototipo-v4-catalogos.json` · regenerador en
-> `herramientas/extraer_prototipo_v4.js`.
+> `docs/prototipo-v4/prototipo-v4-catalogos.json` · el regenerador por script se retiró el
+> 2026-10-16 (queda en la historia de git).
 > ⚠️ La carpeta salió de `docs/fuentes/` el 2026-08-20 (`handoff.md` §5.30): no es respaldo, es **insumo
 > de build** — `herramientas/generar_catalogos_backend.py` la lee en tiempo de ejecución.
 >
@@ -19,8 +19,8 @@
 > descriptores, los 24 ítems, el catálogo de talleres y los campos de PAI/INC/ateneos **ya los tenemos**.
 > Lo que sigue faltando está listado al final.
 >
-> **Reproducible:** `node herramientas/extraer_prototipo_v4.js` → si IPPU publica una v5, se vuelve a
-> correr y se diffea contra el JSON anterior.
+> **Reproducible:** el extractor (retirado el 2026-10-16, recuperable del historial de git) volvía a sacar
+> el JSON del HTML publicado; si IPPU publica una v5, se vuelve a escribir y se diffea contra el JSON anterior.
 
 ---
 

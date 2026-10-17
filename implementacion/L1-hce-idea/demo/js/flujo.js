@@ -215,7 +215,7 @@ function openAddendaModal(id, key){
   const foot = `<span class="left">${m.full} · ${nna.flujo[key].addendas.length} addenda(s) previa(s)</span>
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
-      <button class="btn btn-primary" style="background:var(--teal)" onclick="confirmarAddenda(${id},'${key}')">+ Agregar addenda</button>
+      <button class="btn btn-primary" onclick="confirmarAddenda(${id},'${key}')">+ Agregar addenda</button>
     </div>`;
   openFlujoModal(`Addenda · ${m.full}`, `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }

@@ -3,8 +3,8 @@
 # POR QUE EXISTE (2026-08-26, sesion de higiene). Las tres maquinas del equipo
 # son Windows con `core.autocrlf=true`, pero varios archivos entraron al repo
 # con CRLF y otros con LF. Resultado: `git status` mostraba archivos "modificados"
-# que nadie habia tocado -- el caso que se repetia era
-# `docs/prompts/prompt-sesion-pre-reunion-2026-08-20.md` -- y un renombrado de
+# que nadie habia tocado -- el caso que se repetia era un prompt de sesion
+# (archivo que despues se retiro) -- y un renombrado de
 # archivo aparecia como 574 lineas cambiadas cuando no habia cambiado ninguna.
 # Ese ruido esconde los cambios reales, que es exactamente lo que un diff tiene
 # que dejar ver.
@@ -42,7 +42,6 @@
 # es el punto de este archivo: que no quede nada decidido por la config local.
 .gitattributes   text eol=lf
 .gitignore       text eol=lf
-.graphifyignore  text eol=lf
 .env.example     text eol=lf
 
 # .bat / .ps1 al reves: CRLF obligatorio, es lo que espera el interprete de Windows.

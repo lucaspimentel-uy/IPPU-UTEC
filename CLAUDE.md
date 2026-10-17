@@ -58,8 +58,6 @@ IPPU/
 │   │                          #  enviado el 19/08, sin respuesta. El equipo le sacó 3 preguntas al
 │   │                          #  revisarlo y renumeró de §2.7 y §3.2 en adelante (§5.34): citar por
 │   │                          #  la numeración de ese archivo, que es la que IPPU tiene delante.
-│   ├── planes/                # Planes de ronda (M0–M11 · PLAN-M12 · agenda-reunion-ippu-2026-08.md)
-│   └── prompts/               # Prompts de sesión (los que antes vivían sueltos en la raíz)
 ├── implementacion/
 │   └── L1-hce-idea/           # Línea 1 (foco)
 │       ├── demo/            # Prototipo front (datos simulados, sin backend)
@@ -70,23 +68,11 @@ IPPU/
 │           │                 #  borraron el 2026-08-20: describían la API retirada en M11.2)
 │           └── tests/        # pytest (base aislada)
 └── herramientas/
-    ├── conversor_docling.py            # Conversor de documentos → Markdown (Docling)
-    ├── extraer_prototipo_v4.js         # Regenera los catálogos del Prototipo v4 desde su URL (para diffear una v5)
     ├── generar_catalogos_backend.py    # Genera app/data/catalogos_iniciales.json (`--check` para validar)
     └── verificar_estado.py             # Mide el repo y lo compara con lo que la doc afirma (`--check`)
 ```
 
 ## Convertir documentos a Markdown
-El conversor usa [Docling]. Salida recomendada: `docs/markdown/`.
-```bash
-# Un archivo
-python herramientas/conversor_docling.py "docs/fuentes/UnDocumento.pdf" -o "docs/markdown"
-# Varios / una carpeta entera (batch). -r para recursivo, --overwrite para rehacer.
-python herramientas/conversor_docling.py "docs/fuentes" -o "docs/markdown"
-```
-Por defecto omite los `.md` ya existentes. Si no se pasa `-o`, escribe en `./markdown_convertido`.
-Si el PDF es escaneado, Docling aplica OCR (la primera corrida descarga modelos y tarda).
-
 **Regla: una vez convertido, se trabaja con el `.md`.** Desde el **2026-08-20** la regla se aplicó hasta el
 final: los originales que ya tenían conversión **se borraron** (`handoff.md` §5.29), porque el respaldo
 verificable lo da la historia de git —precedente §5.5— y conservar las dos copias sólo duplicaba el peso.
@@ -95,7 +81,7 @@ En `docs/fuentes/` quedan **dos** archivos, cada uno por un motivo escrito:
   shell vacío); se cita desde su ruta original.
 - `Cuestionario IPPU UTEC, respuestas.docx` — prueba primaria de lo que IPPU contestó por escrito (§5.31).
 
-La carpeta sigue excluida del grafo vía `.graphifyignore`. ⚠️ **`docs/prototipo-v4/` NO está bajo
+⚠️ **`docs/prototipo-v4/` NO está bajo
 `fuentes/`** y no es respaldo: es **insumo de build** y el código lo lee (§5.30).
 
 **Si borrás un original, borrá también su `.md` si nadie lo consume** — y verificá con un grep antes, que
@@ -118,7 +104,7 @@ React + Tailwind (frontend) · FastAPI o Node (API REST, JWT por terapeuta) · P
 - **Nunca crear un `git worktree` con un junction/symlink a `node_modules`**: `git worktree remove` sigue el enlace y **borra la carpeta real** (pasó dos veces). En un worktree se corre **`npm ci`**; y antes de quitar un worktree existente se borran sus junctions con **`cmd /c rmdir <junction>`** (sin `/s`).
 
 **Ronda M12 (absorción del Prototipo v4) — CERRADA el 2026-09-16**, intercalada entre M11.2 y M11.3.
-Rige `docs/planes/PLAN-M12-absorcion-prototipo-v4-2026-08.md`. Toca la misma capa que M11.2 —modelos,
+Toca la misma capa que M11.2 —modelos,
 migración inicial, catálogos— por eso fue antes de escribir servicios. Leer también
 `docs/markdown/prototipo-v4-referencia.md`. **Sigue ahora M11.3** — única excepción registrada de M12:
 **M12.8b-3b, CANCELADA** (pase de vocabulario, `handoff.md` §6). ⚠️ **Cambio de alcance, 2026-09-16
