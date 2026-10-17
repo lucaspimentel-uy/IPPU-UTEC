@@ -273,8 +273,8 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = textosTab.slice(8, 12).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2) y LOG (C1) están conectadas y las otras 4 dicen «Este módulo todavía no está conectado al servidor.»',
+  const sinFraseNueva = [8, 10, 11].every((i) => /Este módulo todavía no está conectado al servidor\./.test(textosTab[i]));   // doc · inc · pai (org, el 9, es C3)
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2), ORG (C3) y LOG (C1) están conectadas y las otras 3 dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -2295,7 +2295,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((i) => abrirExpediente(i), idMartinV);
     await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
     const paneles = {};
-    for (const k of ['doc', 'org', 'inc', 'pai', 'lb']) {
+    for (const k of ['doc', 'inc', 'pai', 'lb']) {
       await pv.evaluate((t) => selTabExp(t), k);
       await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
       await pv.waitForTimeout(80);
@@ -2307,8 +2307,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
-      ['doc', 'org', 'inc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'los módulos en modo demostración (DOC, INC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
+      ['doc', 'inc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -2320,12 +2320,12 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-    for (const k of ['doc', 'org', 'inc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
+    for (const k of ['doc', 'inc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 5 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 10 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 4 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -2392,8 +2392,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
     check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'inc,org,doc,pai'
-        && filasTabs[0].marcas === 'inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'inc,doc,pai'
+        && filasTabs[0].marcas === 'inc:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
         && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
@@ -2921,6 +2921,217 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       [200, 201].includes(vfM.status) && !!sevFin.etiqueta_cs && !!sevFin.etiqueta_crr && !!sevFin.justificacion
         && !/Grado/.test(repTxt) && !repTxt.includes(sevFin.etiqueta_cs) && !repTxt.includes(sevFin.etiqueta_crr) && !repTxt.includes(sevFin.justificacion),
       JSON.stringify({ vf: vfM.status, sev: [sevFin.etiqueta_cs, sevFin.etiqueta_crr], repTxt: repTxt.slice(0, 120) }));
+    await ctx.close();
+  }
+
+  /* ---------- C3 · HCE-ORG: la pestaña «Organismos» lee, registra y edita por la API ---------- */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const ps = await ctx.newPage();
+    ps.on('pageerror', (e) => erroresPagina.push(e.message));
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(ps, EMAIL, PASSWORD);
+    const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (t || tok), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, json: await r.json(), total: r.headers.get('X-Total-Count') }; };
+    const yo = (await api('GET', '/auth/yo')).json;
+    const idDe = async (n) => (await api('GET', '/hce?nombre=' + encodeURIComponent(n) + '&limit=5')).json.find((h) => h.persona.nombre === n).id;
+    const idM = await idDe('Martín'), idS = await idDe('Sofía'), idJ = await idDe('Joaquín');
+    const opciones = (await api('GET', '/organismos/opciones')).json;
+    const iso = (dias) => { const d = new Date(); d.setDate(d.getDate() + dias); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const escrituras = [];                                            // POST/PATCH a /organismos que salen del navegador
+    ps.on('request', (r) => { if (/\/organismos(\/|$)/.test(new URL(r.url()).pathname) && r.method() !== 'GET') escrituras.push({ m: r.method(), url: new URL(r.url()).pathname, body: JSON.parse(r.postData() || 'null') }); });
+    const esperarOrg = () => ps.waitForFunction(() => ORG.estado === 'listo' && !!document.getElementById('orgVinculoInau') && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const abrirOrg = async (id) => {
+      await ps.evaluate((i) => abrirExpediente(i), id);
+      await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+      await ps.click('#tabExp-org'); await esperarOrg(); await ps.waitForTimeout(80);
+    };
+    const fmt = (f) => ps.evaluate((x) => fmtFecha(x), f);
+    const txt = (id) => ps.evaluate((i) => { const e = document.getElementById(i); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; }, id);
+    const filasReg = (id) => ps.evaluate((i) => [...document.querySelectorAll(`#${i} tbody tr`)].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())), id);
+    const org = async (id) => (await api('GET', `/hce/${id}/organismos`)).json;
+    const regs = async (id, o) => (await api('GET', `/hce/${id}/organismos/registros?organismo=${o}`));
+
+    /* c3-lectura · Martín: INAU y BPS con lo que devuelve la API, sus envíos (el más nuevo primero) y ninguna alerta */
+    await abrirOrg(idM);
+    const oM = await org(idM), rM = await regs(idM, 'inau');
+    const lect = await ps.evaluate(() => ({ demo: document.querySelectorAll('#panelExp .demo-panel, #panelExp .solo-demo, #tabExp-org .solo-demo').length, alerta: document.querySelectorAll('#orgAlerta').length,
+      tarjetas: document.querySelectorAll('#panelExp .org-col .info-card').length, panel: document.getElementById('panelExp').innerText, tab: document.getElementById('tabExp-org').getAttribute('aria-selected') }));
+    const filasI = await filasReg('orgRegInau');
+    const fechasI = await Promise.all(rM.json.map((x) => fmt(x.fecha)));
+    check('c3-lectura', 'pestaña Organismos de Martín: INAU (convenio, referente, ingreso) y BPS (AYEX, trámite, estado, vencimiento) con lo que devuelve la API, «—» donde no hay dato, sus dos envíos a INAU del más nuevo al más viejo con su autor, sin alerta, sin panel ni marca «Solo demo»',
+      oM.inau.convenio && oM.inau.referente && await txt('orgInauConvenio') === oM.inau.convenio && await txt('orgInauReferente') === oM.inau.referente && await txt('orgInauIngreso') === await fmt(oM.inau.ingreso)
+        && await txt('orgInauSipi') === '—' && await txt('orgInauObs') === '—'
+        && await txt('orgBpsPrestacion') === oM.bps.prestacion && await txt('orgBpsEstado') === oM.bps.estado && await txt('orgBpsTramite') === oM.bps.tramite && await txt('orgBpsVencimiento') === await fmt(oM.bps.vencimiento)
+        && rM.json.length === 2 && rM.total === '2' && filasI.length === 2 && rM.json.every((x, i) => filasI[i][0] === fechasI[i] && filasI[i][1] === x.detalle && filasI[i][2] === x.autor.nombre)
+        && rM.json[0].fecha >= rM.json[1].fecha
+        && oM.bps.alerta === null && lect.alerta === 0 && lect.demo === 0 && lect.tarjetas === 4 && lect.tab === 'true',
+      JSON.stringify({ lect: { ...lect, panel: undefined }, filasI }).slice(0, 500));
+
+    /* c3-nota · la nota dice que el informe a los organismos es el IC (un solo documento) y que los respaldos van a Documentos */
+    const nota = await txt('orgNota');
+    check('c3-nota', 'una línea explica que el informe a los organismos es el Informe de cierre (IC), un único documento (§5.3), y que los documentos de respaldo se adjuntan en Documentos',
+      /Informe de cierre \(IC\)/.test(nota) && /único documento \(§5\.3\)/.test(nota) && /Documentos/.test(nota), nota);
+
+    /* c3-sin-calculo · la alerta sale SOLO de la respuesta: el navegador no cuenta días ni decide si una prestación es AYEX */
+    await ps.route('**/organismos', async (r) => { const real = await (await r.fetch()).json(); const u = r.request().url();
+      if (u.includes(`/hce/${idM}/`)) real.bps.alerta = { nivel: 'vencida', dias: -3, mensaje: 'Texto que manda el servidor (muestra).' };
+      if (u.includes(`/hce/${idS}/`)) real.bps.alerta = null;
+      await r.fulfill({ json: real }); });
+    await abrirOrg(idM);
+    const conAlerta = await ps.evaluate(() => { const a = document.getElementById('orgAlerta'); return a ? a.innerText.replace(/\s+/g, ' ') : null; });
+    await abrirOrg(idS);
+    const sinAlerta = await ps.evaluate(() => document.querySelectorAll('#orgAlerta').length);
+    const vencS = await txt('orgBpsVencimiento');
+    await ps.unroute('**/organismos');
+    check('c3-sin-calculo', 'la alerta AYEX es la de la respuesta: si el servidor manda una alerta (aunque el vencimiento esté lejos) se muestra tal cual con su texto, y si manda null no se muestra aunque el vencimiento esté a 25 días y la prestación sea AYEX',
+      /Vencida/.test(conAlerta || '') && /Texto que manda el servidor \(muestra\)\./.test(conAlerta || '') && /⚠/.test(conAlerta || '') && sinAlerta === 0 && vencS !== '—', JSON.stringify({ conAlerta, sinAlerta, vencS }));
+
+    /* c3-alerta · Sofía (AYEX en trámite a 25 días): la alerta del servidor, en palabras y con ⚠ */
+    await abrirOrg(idS);
+    const oS = await org(idS), aS = oS.bps.alerta;
+    const alertaTxt = await ps.evaluate(() => { const a = document.getElementById('orgAlerta'); return a ? { t: a.innerText.replace(/\s+/g, ' '), glifo: !!a.querySelector('[aria-hidden="true"]'), dentro: !!a.closest('#orgVinculoBps') } : null; });
+    check('c3-alerta', 'Sofía (AYEX en trámite, vencimiento a 25 días): la tarjeta de BPS muestra la alerta del servidor con ⚠ y en palabras («vence en 25 días»), junto al vencimiento',
+      !!aS && aS.nivel === '30_dias' && aS.dias === 25 && !!alertaTxt && alertaTxt.dentro && alertaTxt.glifo && alertaTxt.t.includes(aS.mensaje) && /Vence en 30 días o menos/.test(alertaTxt.t) && /vence en 25 días/.test(alertaTxt.t)
+        && await txt('orgBpsVencimiento') === await fmt(oS.bps.vencimiento), JSON.stringify({ aS, alertaTxt }));
+
+    /* c3-vacio · Sofía no tiene INAU: estado vacío compartido con «Registrar»; y su única gestión ante BPS está listada */
+    const vac = await ps.evaluate(() => ({ vacio: document.querySelectorAll('#orgVinculoInau .estado-vacio[role="status"]').length, btn: (document.getElementById('btnOrgInauNuevo') || {}).innerText || '', error: document.querySelectorAll('#panelExp [role="alert"]:not([hidden])').length }));
+    const gS = await regs(idS, 'bps'), filasB = await filasReg('orgRegBps');
+    check('c3-vacio', 'Sofía sin INAU (la API da null): estado vacío compartido con «+ Registrar vínculo con INAU», no un error; su gestión ante BPS aparece en la lista con el autor y el contador del total',
+      oS.inau === null && vac.vacio === 1 && /Registrar/.test(vac.btn) && vac.error === 0 && gS.json.length === 1 && filasB.length === 1 && filasB[0][1] === gS.json[0].detalle && filasB[0][2] === gS.json[0].autor.nombre && await txt('orgTotalBps') === '1',
+      JSON.stringify({ vac, filasB }));
+
+    /* c3-joaquin · Joaquín: INAU con su ingreso y la lista de envíos vacía; BPS sin registrar */
+    await abrirOrg(idJ);
+    const oJ = await org(idJ);
+    const joa = await ps.evaluate(() => ({ vacioReg: (document.getElementById('orgRegInauVacio') || {}).innerText || '', tabla: document.querySelectorAll('#orgRegInau').length, bpsVacio: document.querySelectorAll('#orgVinculoBps .estado-vacio').length }));
+    check('c3-joaquin', 'Joaquín: INAU con convenio e ingreso de la API y la lista de envíos vacía con su mensaje (sin tabla); BPS en estado vacío',
+      oJ.inau.ingreso && await txt('orgInauIngreso') === await fmt(oJ.inau.ingreso) && (await regs(idJ, 'inau')).json.length === 0 && /Todavía no se registró ningún envío a INAU/.test(joa.vacioReg) && joa.tabla === 0 && joa.bpsVacio === 1 && oJ.bps === null,
+      JSON.stringify(joa));
+
+    /* c3-opciones · el formulario de BPS ofrece las opciones de GET /organismos/opciones y deja elegido lo guardado */
+    await abrirOrg(idS);
+    await ps.click('#btnOrgBpsEditar'); await ps.waitForSelector('#modalFlujo.open #orgb_prestacion');
+    const opc = await ps.evaluate(() => ({ prest: [...document.querySelectorAll('#orgb_prestacion option')].map((o) => o.value), estado: [...document.querySelectorAll('#orgb_estado option')].map((o) => o.value),
+      selP: document.getElementById('orgb_prestacion').value, selE: document.getElementById('orgb_estado').value, venc: document.getElementById('orgb_vencimiento').value,
+      etiquetas: [...document.querySelectorAll('#mfBody .field')].every((f) => { const c = f.querySelector('input, select, textarea'); return c && f.querySelector(`label[for="${c.id}"]`); }) }));
+    check('c3-opciones', 'editar BPS: la lista de prestaciones y la de estados son las de GET /organismos/opciones (más «sin registrar»), lo guardado queda elegido, el vencimiento viene de la API y cada control tiene su etiqueta',
+      JSON.stringify(opc.prest.slice(1)) === JSON.stringify(opciones.bps_prestaciones) && JSON.stringify(opc.estado.slice(1)) === JSON.stringify(opciones.bps_estados) && opc.selP === oS.bps.prestacion && opc.selE === oS.bps.estado && opc.venc === oS.bps.vencimiento && opc.etiquetas,
+      JSON.stringify(opc).slice(0, 400));
+
+    /* c3-sin-cambios · guardar sin tocar nada no envía nada */
+    const n0 = escrituras.length;
+    await ps.click('#btnOrgGuardar'); await ps.waitForSelector('#orgErrores:not([hidden])', { timeout: 3000 });
+    const sc = await ps.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('orgErrores').getAttribute('role'), txt: document.getElementById('orgErrores').innerText, abierto: document.getElementById('modalFlujo').classList.contains('open') }));
+    check('c3-sin-cambios', 'guardar el vínculo sin cambios dice «No hay cambios para guardar», el resumen role="alert" recibe el foco, el diálogo sigue abierto y no sale ningún pedido',
+      escrituras.length === n0 && sc.foco === 'orgErrores' && sc.rol === 'alert' && /No hay cambios/.test(sc.txt) && sc.abierto, JSON.stringify(sc));
+
+    /* c3-descarte · con un cambio sin guardar, Esc pide confirmación; «Descartar y cerrar» no envía nada */
+    await ps.fill('#orgb_tramite', 'AYEX-descartado');
+    await ps.keyboard.press('Escape'); await ps.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+    const pide = await ps.evaluate(() => document.activeElement.id);
+    await ps.click('#btnCdDescartar'); await ps.waitForTimeout(200);
+    check('c3-descarte', 'con un cambio sin guardar, Esc pide confirmación (foco en «Seguir editando») y «Descartar y cerrar» cierra sin enviar nada; el vínculo sigue como estaba',
+      pide === 'btnCdSeguir' && !(await ps.evaluate(() => document.getElementById('modalFlujo').classList.contains('open'))) && escrituras.length === n0 && await txt('orgBpsTramite') === oS.bps.tramite, JSON.stringify({ pide }));
+
+    /* c3-vacio-422 · registrar INAU con todo vacío: lo rechaza el servidor (campo null) y se muestra en el resumen; no se crea nada */
+    await ps.click('#btnOrgInauNuevo'); await ps.waitForSelector('#modalFlujo.open #orgi_convenio');
+    await ps.click('#btnOrgGuardar'); await ps.waitForSelector('#orgErrores:not([hidden])', { timeout: 5000 });
+    const v422 = await ps.evaluate(() => ({ foco: document.activeElement.id, txt: document.getElementById('orgErrores').innerText, inv: document.querySelectorAll('#mfBody [aria-invalid="true"]').length, abierto: document.getElementById('modalFlujo').classList.contains('open') }));
+    const postVacio = escrituras.slice(n0);
+    check('c3-vacio-422', 'registrar INAU con todo vacío envía el POST, el servidor contesta 422 sin campo y el resumen role="alert" (con el foco) lo dice; no se marca ningún control y no se crea el vínculo',
+      postVacio.length === 1 && postVacio[0].m === 'POST' && JSON.stringify(postVacio[0].body) === '{}' && v422.foco === 'orgErrores' && /al menos un dato/.test(v422.txt) && v422.inv === 0 && v422.abierto && (await org(idS)).inau === null,
+      JSON.stringify({ postVacio, v422 }));
+
+    /* c3-registrar-inau · un solo dato: el POST lleva sólo ese campo; la lectura sale de la respuesta */
+    await ps.fill('#orgi_convenio', 'Convenio de c3'); await ps.fill('#orgi_ingreso', '2026-05-04');
+    const nP = escrituras.length;
+    await ps.click('#btnOrgGuardar'); await ps.waitForSelector('#orgInauLectura', { timeout: 8000 }); await ps.waitForTimeout(150);
+    const postI = escrituras.slice(nP), oS2 = await org(idS);
+    const regI = await ps.evaluate(() => ({ modal: document.getElementById('modalFlujo').classList.contains('open'), foco: document.activeElement.id, nuevo: !!document.getElementById('btnOrgInauNuevo') }));
+    check('c3-registrar-inau', 'Sofía: registrar INAU con convenio e ingreso envía UN POST sólo con esos dos campos; se cierra el diálogo, el foco va al título y la lectura muestra lo que devolvió la API',
+      postI.length === 1 && postI[0].m === 'POST' && JSON.stringify(Object.keys(postI[0].body).sort()) === '["convenio","ingreso"]' && oS2.inau.convenio === 'Convenio de c3' && oS2.inau.ingreso === '2026-05-04'
+        && await txt('orgInauConvenio') === 'Convenio de c3' && await txt('orgInauIngreso') === await fmt('2026-05-04') && !regI.modal && regI.foco === 'orgTitulo' && !regI.nuevo, JSON.stringify({ postI, regI }));
+
+    /* c3-422 · un 422 de la API marca el campo que nombra `campo` y se resume en role="alert"; lo tipeado se conserva */
+    await ps.click('#btnOrgBpsEditar'); await ps.waitForSelector('#modalFlujo.open #orgb_estado');
+    await ps.selectOption('#orgb_estado', 'Observada');
+    await ps.route('**/organismos/bps', (r) => r.request().method() === 'PATCH' ? r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'validation_error', detail: [{ campo: 'estado', mensaje: 'Estado no válido (muestra)' }] }) }) : r.continue());
+    await ps.click('#btnOrgGuardar'); await ps.waitForFunction(() => /muestra/.test(document.getElementById('orgErrores').innerText), null, { timeout: 5000 });
+    const e422 = await ps.evaluate(() => ({ inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_orgb_estado').innerText, foco: document.activeElement.id, estado: document.getElementById('orgb_estado').value }));
+    await ps.unroute('**/organismos/bps');
+    check('c3-422', 'un 422 de la API marca el control que nombra `campo` (estado) con su mensaje y lo resume en role="alert" con el foco; lo elegido se conserva',
+      JSON.stringify(e422.inv) === '["orgb_estado"]' && /muestra/.test(e422.err) && e422.foco === 'orgErrores' && e422.estado === 'Observada', JSON.stringify(e422));
+
+    /* c3-editar-bps · cambiar estado y vencimiento manda un PATCH sólo con esos dos campos; la alerta desaparece porque el servidor la quita */
+    await ps.fill('#orgb_vencimiento', iso(200));
+    const nE = escrituras.length;
+    await ps.selectOption('#orgb_estado', 'Vigente');
+    await ps.click('#btnOrgGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    await ps.waitForSelector('#orgBpsLectura'); await ps.waitForTimeout(150);
+    const edit = escrituras.slice(nE), oS3 = await org(idS);
+    check('c3-editar-bps', 'Sofía: cambiar el estado a «Vigente» y el vencimiento a +200 días envía UN PATCH sólo con esos dos campos; la lectura sale de la respuesta y la alerta ya no se muestra (la API devuelve null)',
+      edit.length === 1 && edit[0].m === 'PATCH' && JSON.stringify(Object.keys(edit[0].body).sort()) === '["estado","vencimiento"]' && oS3.bps.estado === 'Vigente' && oS3.bps.alerta === null
+        && await txt('orgBpsEstado') === 'Vigente' && await txt('orgBpsVencimiento') === await fmt(iso(200)) && (await ps.evaluate(() => document.querySelectorAll('#orgAlerta').length)) === 0, JSON.stringify({ edit, alerta: oS3.bps.alerta }));
+
+    /* c3-registro-requeridos · fecha y detalle faltantes: se marcan y no sale ningún pedido */
+    await ps.click('#btnOrgBpsAgregar'); await ps.waitForSelector('#modalFlujo.open #orgr_detalle');
+    const hoyPre = await ps.inputValue('#orgr_fecha');
+    await ps.fill('#orgr_fecha', '');
+    const nR = escrituras.length;
+    await ps.click('#btnOrgGuardar'); await ps.waitForSelector('#orgErrores:not([hidden])', { timeout: 3000 });
+    const rq = await ps.evaluate(() => ({ inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id).sort(), foco: document.activeElement.id, rol: document.getElementById('orgErrores').getAttribute('role'),
+      req: [...document.querySelectorAll('#mfBody [aria-required="true"]')].map((e) => e.id).sort(), aut: !!document.querySelector('#mfBody [id*="autor"]') }));
+    check('c3-registro-requeridos', 'agregar una gestión sin fecha ni detalle marca los dos campos (aria-invalid + mensaje), el resumen role="alert" recibe el foco y no sale ningún pedido; el formulario no pide autor y ofrece la fecha de hoy',
+      escrituras.length === nR && JSON.stringify(rq.inv) === '["orgr_detalle","orgr_fecha"]' && rq.foco === 'orgErrores' && rq.rol === 'alert' && JSON.stringify(rq.req) === '["orgr_detalle","orgr_fecha"]' && !rq.aut && hoyPre === iso(0), JSON.stringify({ rq, hoyPre }));
+
+    /* c3-nueva-gestion · una gestión nueva aparece primera, con el autor del token, y deja su constancia en Auditoría */
+    await ps.fill('#orgr_fecha', iso(0)); await ps.fill('#orgr_detalle', 'Constancia de asistencia presentada (c3).');
+    const nG = escrituras.length;
+    await ps.click('#btnOrgGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    await ps.waitForFunction(() => document.querySelectorAll('#orgRegBps tbody tr').length === 2, null, { timeout: 8000 }); await ps.waitForTimeout(150);
+    const gn = escrituras.slice(nG), gAPI = await regs(idS, 'bps'), filasG = await filasReg('orgRegBps');
+    check('c3-nueva-gestion', 'Sofía: agregar una gestión envía UN POST con organismo, fecha y detalle (sin autor); aparece primera en la lista con el autor que devuelve la API, el contador pasa a 2, el foco va al título y el orden es el de la API',
+      gn.length === 1 && gn[0].m === 'POST' && JSON.stringify(Object.keys(gn[0].body).sort()) === '["detalle","fecha","organismo"]' && gn[0].body.organismo === 'bps'
+        && gAPI.json.length === 2 && gAPI.json[0].detalle === 'Constancia de asistencia presentada (c3).' && gAPI.json[0].autor.id === yo.id && filasG[0][1] === gAPI.json[0].detalle && filasG[0][2] === yo.nombre && filasG[1][1] === gAPI.json[1].detalle
+        && await txt('orgTotalBps') === '2' && (await ps.evaluate(() => document.activeElement.id)) === 'orgTitulo', JSON.stringify({ gn, filasG }));
+
+    /* c3-registro-422 · un 422 sobre el detalle se muestra junto al campo */
+    await ps.click('#btnOrgInauAgregar'); await ps.waitForSelector('#modalFlujo.open #orgr_detalle');
+    await ps.fill('#orgr_detalle', 'Texto cualquiera');
+    await ps.route('**/organismos/registros', (r) => r.request().method() === 'POST' ? r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'validation_error', detail: [{ campo: 'detalle', mensaje: 'Detalle no válido (muestra)' }] }) }) : r.continue());
+    await ps.click('#btnOrgGuardar'); await ps.waitForFunction(() => /muestra/.test(document.getElementById('orgErrores').innerText), null, { timeout: 5000 });
+    const r422 = await ps.evaluate(() => ({ inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_orgr_detalle').innerText, foco: document.activeElement.id, detalle: document.getElementById('orgr_detalle').value }));
+    await ps.unroute('**/organismos/registros');
+    await ps.keyboard.press('Escape'); await ps.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 }); await ps.click('#btnCdDescartar'); await ps.waitForTimeout(200);
+    check('c3-registro-422', 'un 422 de la API sobre el detalle lo marca junto al campo y en el resumen role="alert" con el foco; lo tipeado se conserva',
+      JSON.stringify(r422.inv) === '["orgr_detalle"]' && /muestra/.test(r422.err) && r422.foco === 'orgErrores' && r422.detalle === 'Texto cualquiera', JSON.stringify(r422));
+
+    /* c3-log · la pestaña Auditoría (filtro HCE-ORG) lista el alta del INAU, la edición de BPS con antes → después y la gestión nueva, con su autor */
+    await ps.click('#tabExp-log'); await ps.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await ps.selectOption('#logModulo', 'HCE-ORG');
+    await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table'), null, { timeout: 8000 });
+    await ps.waitForTimeout(150);
+    const filasLog = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    const fEstado = filasLog.find((f) => f[4] === 'bps.estado'), fVenc = filasLog.find((f) => f[4] === 'bps.vencimiento');
+    check('c3-log', 'Auditoría (filtro HCE-ORG) de Sofía: la gestión nueva y el alta de INAU («Se creó un registro»), y las ediciones bps.estado («Antes: En trámite Después: Vigente») y bps.vencimiento, todas con su autor',
+      filasLog.every((f) => f[1] === yo.nombre && f[2] === 'HCE-ORG') && filasLog.filter((f) => /Se creó/.test(f[3])).length >= 4 && filasLog.some((f) => /Gestión ante BPS/.test(f[3]))
+        && !!fEstado && /Antes: En trámite Después: Vigente/.test(fEstado[5]) && !!fVenc && /Después: /.test(fVenc[5]), JSON.stringify({ n: filasLog.length, fEstado }));
+
+    /* c3-ajeno · un técnico no alcanza los organismos de un expediente fuera de sus grupos: 404 en las siete rutas y «no encontrado» en la pantalla */
+    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C3', ci: '4.765.433-9', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
+    const cargado = await Promise.all([api('POST', `/hce/${idAjeno}/organismos/inau`, { convenio: 'Cargado por el admin (c3)' }, tokAdmin), api('POST', `/hce/${idAjeno}/organismos/registros`, { organismo: 'inau', fecha: '2026-04-02', detalle: 'Registro del admin (c3).' }, tokAdmin)]);
+    const rutas = [['GET', ''], ['POST', '/inau', { convenio: 'x' }], ['PATCH', '/inau', { obs: 'x' }], ['POST', '/bps', { estado: 'Vigente' }], ['PATCH', '/bps', { obs: 'x' }], ['GET', '/registros'], ['POST', '/registros', { organismo: 'inau', fecha: '2026-04-02', detalle: 'x' }]];
+    const tec = [], adm = [];
+    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/organismos${r}`, b); tec.push([t.status, t.json.code]); }
+    for (const [m, r] of rutas.filter(([m]) => m === 'GET')) adm.push((await api(m, `/hce/${idAjeno}/organismos${r}`, undefined, tokAdmin)).status);
+    await ps.evaluate((i) => abrirExpediente(i), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
+    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
+    check('c3-ajeno', 'técnico y expediente de otro grupo (con vínculo y registro cargados por el admin): las siete rutas de /organismos dan 404 {code: not_found} (el admin, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
+      cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Registro del admin/.test(pant.txt),
+      JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
     await ctx.close();
   }
 

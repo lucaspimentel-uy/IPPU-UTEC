@@ -2,7 +2,7 @@
  * demo/verificacion/salidas/ (gitignored). Sirven para revisar a ojo la pasada visual; no comparan nada.
  *
  * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF · una vista de
- * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
+ * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
  * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC.
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
@@ -69,6 +69,11 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     // C2: la severidad de Martín (la del seed) en lectura y el formulario de edición abierto (se cierra sin guardar)
     await abrir('Martín', 'sev'); await page.waitForSelector('#sevLectura');           await snap('sev');
     await page.click('#btnSevEditar'); await page.waitForSelector('#modalFlujo.open #sev_cs');   await snap('sev-formulario');
+    await page.evaluate(() => closeFlujoModal());
+    // C3: los organismos de Martín (INAU, AYEX vigente y dos envíos) y de Sofía (la alerta AYEX a 25 días) en lectura, y el formulario de BPS abierto (se cierra sin guardar)
+    await abrir('Martín', 'org'); await page.waitForSelector('#orgInauLectura');       await snap('org');
+    await abrir('Sofía', 'org'); await page.waitForSelector('#orgAlerta');             await snap('org-alerta');
+    await page.click('#btnOrgBpsEditar'); await page.waitForSelector('#modalFlujo.open #orgb_prestacion');   await snap('org-formulario');
     await page.evaluate(() => closeFlujoModal());
     await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
     await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');

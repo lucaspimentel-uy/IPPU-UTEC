@@ -509,6 +509,7 @@ function limpiarUiDeSesion(){
   if(typeof icReiniciar === "function") icReiniciar();         // informe de cierre y su documento impreso: nada del NNA anterior detrás del login
   if(typeof vfReiniciar === "function") vfReiniciar();         // valoración funcional
   if(typeof sevOlvidarSesion === "function") sevOlvidarSesion();   // severidad y el catálogo de grados
+  if(typeof orgOlvidarSesion === "function") orgOlvidarSesion();   // organismos y las opciones de BPS
   if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
   if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
   _el("expedienteContent").innerHTML = "";

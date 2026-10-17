@@ -151,6 +151,15 @@ BPS_ESTADOS: tuple[str, ...] = (
     "Vigente", "En trámite", "Observada", "Vencida", "Denegada", "No corresponde",
 )
 
+#: Las dos prestaciones de `BPS_PRESTACIONES` que son la Ayuda Extraordinaria: sólo ellas disparan la
+#: alerta AYEX (C3, §5.144). Se derivan de la lista para que no puedan divergir de lo que ofrece el formulario.
+BPS_PRESTACIONES_AYEX: tuple[str, ...] = tuple(p for p in BPS_PRESTACIONES if "(AYEX)" in p)
+#: Alerta del vencimiento de la AYEX (recordatorio «ayex»: «avisar 60 y 30 días antes»). **Se calcula al
+#: leer, nunca se guarda**; los días no se leen de `recordatorio` (configurarlos queda fuera de C3).
+AYEX_ALERTA_DIAS: tuple[int, ...] = (60, 30)
+#: Los dos valores de `registro_organismo.organismo` (CHECK `organismo_valido`).
+ORGANISMOS: tuple[str, ...] = ("inau", "bps")
+
 #: Guía orientativa de prestaciones (§7.7). **Constante:** es material
 #: informativo que se muestra al equipo; no se referencia desde ningún registro
 #: del expediente, así que una tabla sólo agregaría FKs que nadie usa.

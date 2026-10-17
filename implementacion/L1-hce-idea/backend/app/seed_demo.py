@@ -12,7 +12,9 @@ Carga en una base de desarrollo los 8 NNA de `demo/js/datos.js` y los arquetipos
 - **106 Tomás** — sólo el expediente, dado de baja (`activo:false`, `bajaFecha` de la demo).
 
 CI/LB/PA/PB/IC y, desde C2, la **severidad DSM-5-TR** de Martín (dominios distintos) y de Valentina;
-los demás quedan sin registro (el estado vacío de la pestaña). Ni documentos, ni fotos, ni INC ni PAI.
+los demás quedan sin registro (el estado vacío de la pestaña). Desde C3, **HCE-ORG**: Martín (INAU con dos
+envíos, AYEX vigente sin alerta), Sofía (AYEX en trámite a 25 días: alerta a 30 días, y una gestión) y
+Joaquín (INAU con ingreso reciente y sin envíos); el resto, sin vínculos. Ni documentos, ni fotos, ni INC ni PAI.
 
 ## Dos partes, y por qué
 
@@ -62,6 +64,7 @@ import os
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import Any
 
 ANIO = 2026
@@ -202,6 +205,35 @@ SEVERIDAD = {
         "aumentativo. Los cambios de rutina le generan malestar marcado y requieren anticipación sistemática.")},
 }
 
+#: HCE-ORG (C3): vínculos y registros que cargaría el técnico del grupo. Las fechas que alimentan la alerta AYEX
+#: son **relativas al día de la carga** (`date.today()`, el mismo reloj que usa la API): la de Sofía queda a
+#: `SOFIA_AYEX_DIAS` días (la demo muestra la alerta de 30 días tras la recarga posterior al 13/11) y la de
+#: Martín, bien lejos de los 60 (sin alerta). Los textos describen trámites, sin datos de personas reales.
+SOFIA_AYEX_DIAS = 25
+MARTIN_AYEX_DIAS = 300
+ORGANISMOS_DEMO = {
+    102: {
+        "inau": {"convenio": "Convenio de atención diurna 2026", "referente": "Lic. M. Rodríguez (INAU)", "ingreso": "2026-03-02"},
+        "bps": {"prestacion": "Ayuda Extraordinaria (AYEX)", "tramite": "AYEX-2026-0417", "estado": "Vigente"},
+        "registros": [
+            {"organismo": "inau", "fecha": "2026-03-12", "detalle": "Constancia de ingreso y de asistencia enviada al referente territorial."},
+            {"organismo": "inau", "fecha": "2026-06-26", "detalle": "Respuesta a la consulta del referente territorial sobre el horario de atención."},
+        ],
+    },
+    101: {
+        "bps": {"prestacion": "Ayuda Extraordinaria (AYEX)", "tramite": "AYEX-2026-0233", "estado": "En trámite",
+                "obs": "Falta la constancia de asistencia del último trimestre."},
+        "registros": [
+            {"organismo": "bps", "fecha": "2026-10-08", "detalle": "Presentación de la documentación para la renovación de la ayuda."},
+        ],
+    },
+    104: {
+        "inau": {"convenio": "Convenio de atención diurna 2026", "ingreso": "2026-09-14"},
+        "registros": [],
+    },
+}
+
+
 SOFIA_LB = {
     "dim": [4, 2, 4, 2, 2, 2, 4, 4, 2, 2, 1, 2], "obs": {}, "fecha_consenso": "2026-03-20", "sesiones": 5,
     "sintesis": "Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
@@ -236,6 +268,7 @@ class Resumen:
     warnings: list[dict[str, Any]] = field(default_factory=list)  # avisos que devolvió la API
     ids: dict[str, int] = field(default_factory=dict)          # «102.lb», «102.ic»… → id del módulo
     severidad: list[str] = field(default_factory=list)         # «Martín», … (HCE-SEV registrada)
+    organismos: list[str] = field(default_factory=list)        # «Martín», … (HCE-ORG con algún vínculo)
     grupos: dict[str, int] = field(default_factory=dict)       # nombre real → grupo_id
     profesionales: dict[str, int] = field(default_factory=dict)
 
@@ -245,6 +278,7 @@ class Resumen:
             f"Cerrados — CI registrado; LB/PA/PB/IC firmados ({len(self.firmados)}): {', '.join(self.firmados)}",
             f"Borradores ({len(self.borradores)}): {', '.join(self.borradores)}",
             f"Severidad DSM-5-TR registrada ({len(self.severidad)}): {', '.join(self.severidad)}",
+            f"Organismos (INAU/BPS) registrados ({len(self.organismos)}): {', '.join(self.organismos)}",
             f"Avisos no bloqueantes de la API: {len(self.warnings)}",
         ])
 
@@ -461,6 +495,19 @@ def cargar_demo(
         api.escribir("POST", f"/hce/{resumen.expedientes[demo_id]}/severidad", sev, esperado=201)
         resumen.severidad.append(NNA[demo_id]["persona"]["nombre"])
     decir(f"Severidad DSM-5-TR: {', '.join(resumen.severidad)}; los demás sin registro")
+    # HCE-ORG (C3): también por la API, como el técnico del grupo. El vencimiento de la AYEX es relativo a hoy.
+    hoy = date.today()
+    vencimientos = {102: hoy + timedelta(days=MARTIN_AYEX_DIAS), 101: hoy + timedelta(days=SOFIA_AYEX_DIAS)}
+    for demo_id, org in ORGANISMOS_DEMO.items():
+        ruta = f"/hce/{resumen.expedientes[demo_id]}/organismos"
+        if "inau" in org:
+            api.escribir("POST", f"{ruta}/inau", org["inau"], esperado=201)
+        if "bps" in org:
+            api.escribir("POST", f"{ruta}/bps", {**org["bps"], "vencimiento": vencimientos[demo_id].isoformat()}, esperado=201)
+        for registro in org["registros"]:
+            api.escribir("POST", f"{ruta}/registros", registro, esperado=201)
+        resumen.organismos.append(NNA[demo_id]["persona"]["nombre"])
+    decir(f"Organismos INAU/BPS: {', '.join(resumen.organismos)}; los demás sin vínculos")
     return resumen
 
 

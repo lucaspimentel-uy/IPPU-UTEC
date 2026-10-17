@@ -8,6 +8,8 @@ GET**, con los números tal como los devuelve la API:
 La base de test no tiene catálogos: el fixture los siembra con `app.seed_catalogos.run` (los mismos
 que la base de desarrollo, incluidos los cinco grupos reales de 2026).
 """
+from datetime import date, timedelta
+
 import pytest
 
 from app import seed_catalogos
@@ -99,6 +101,43 @@ def test_c2_la_justificacion_sembrada_no_cita_puntajes_del_idea_ni_de_la_ippu_te
     texto = client.get(f"/hce/{demo.expedientes[demo_id]}/severidad").json()["justificacion"]
     assert not any(p in texto.lower() for p in ("idea", "ippu-tea", "protocolo", "puntaje", "/96", "/120"))
     assert not any(c.isdigit() for c in texto)
+
+
+def test_c3_martin_sofia_y_joaquin_tienen_organismos_y_los_demas_no(client, demo):
+    """C3: Martín con INAU (dos envíos) y la AYEX vigente lejos del vencimiento; Sofía con la AYEX en trámite a
+    25 días (alerta de 30) y una gestión; Joaquín con INAU y sin envíos. Los cargó el técnico del grupo."""
+    def org(demo_id):
+        return client.get(f"/hce/{demo.expedientes[demo_id]}/organismos").json()
+
+    def registros(demo_id):
+        return client.get(f"/hce/{demo.expedientes[demo_id]}/organismos/registros").json()
+
+    hoy = date.today()
+    martin = org(102)
+    assert martin["inau"]["convenio"] and martin["inau"]["referente"] and martin["inau"]["ingreso"]
+    assert martin["bps"]["prestacion"] == "Ayuda Extraordinaria (AYEX)" and martin["bps"]["estado"] == "Vigente"
+    assert date.fromisoformat(martin["bps"]["vencimiento"]).year >= 2027 and martin["bps"]["alerta"] is None
+    assert [r["organismo"] for r in registros(102)] == ["inau", "inau"]
+    assert {r["autor"]["nombre"] for r in registros(102)} == {GONZALEZ["nombre"]}
+
+    sofia = org(101)
+    assert sofia["inau"] is None and sofia["bps"]["estado"] == "En trámite"
+    assert sofia["bps"]["vencimiento"] == (hoy + timedelta(days=25)).isoformat()
+    assert (sofia["bps"]["alerta"]["nivel"], sofia["bps"]["alerta"]["dias"]) == ("30_dias", 25)
+    assert [r["organismo"] for r in registros(101)] == ["bps"]
+
+    joaquin = org(104)
+    assert joaquin["inau"]["ingreso"] and joaquin["bps"] is None and registros(104) == []
+
+    sin = [d for d in NNA if org(d) == {"inau": None, "bps": None}]
+    assert sorted(sin) == [103, 105, 106, 107, 108]
+    assert demo.organismos == ["Martín", "Sofía", "Joaquín"]
+
+
+def test_c3_el_organismo_sembrado_deja_su_rastro_en_el_log(client, demo):
+    filas = client.get(f"/hce/{demo.expedientes[102]}/auditoria", params={"modulo": "HCE-ORG", "limit": 200}).json()
+    assert len(filas) == 4 and {f["tipo"] for f in filas} == {"carga"}  # INAU, BPS y dos envíos
+    assert all(f["usuario"]["nombre"] == GONZALEZ["nombre"] for f in filas)
 
 
 def test_12a_informe_de_cierre_firmado_con_recibi_y_documento(client, demo):
@@ -310,6 +349,7 @@ def test_cli_con_grupos_crea_los_usuarios_y_carga_la_demo(cliente_sin_usuarios, 
     assert _profesionales(sesiones) == 3
     assert "Expedientes: 8" in salida.out
     assert "Severidad DSM-5-TR registrada (2): Martín, Valentina" in salida.out
+    assert "Organismos (INAU/BPS) registrados (3): Martín, Sofía, Joaquín" in salida.out
     assert PASSWORD_TEST not in salida.out + salida.err
 
 

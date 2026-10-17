@@ -64,6 +64,7 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `f1b-` | Tipografía y color (F1b): Segoe UI sin webfont, títulos en sans 600, ningún texto visible por debajo de 12 px, `--fs-base` 15 px, etiquetas en sans 12 px / 600 sin versalitas, monoespaciada sólo en códigos y puntajes, serif sólo en documentos; todo `.btn-primary` en tinta, el naranja de marca sin texto, sin superficies oscuras fuera de la barra superior y la lateral. (La tira de pestañas de F1b la mide `f1-tabs`: una fila con ≥ 40 px libres a 1280, mismo alto, «Solo demo» compacto) |
 | `c1-` | HCE-LOG de sólo lectura (C1): las firmas de LB, PA, PB e IC de Martín con el nombre del autor, una edición de HCE-00 con antes → después, filtros por módulo y tipo (las opciones son las válidas), paginado de 25, hora local del navegador, valores largos con «ver completo» y JSON legible, estado vacío, errores 404/500 de la API, sin botón «Ver auditoría» en el expediente conectado, sólo lectura (no agrega filas) y 404 para un técnico en un expediente ajeno |
 | `c2-` | HCE-SEV (C2): la severidad de Martín con la etiqueta de la API, justificación, fecha y autor, y la regla del módulo una vez; la referencia DSM-5-TR (de `GET /severidad-niveles`) plegada; la severidad no sale de su pestaña; estado vacío y registro (un POST con los cuatro campos); con un dominio o todo vacío se marcan los campos y no sale ningún pedido; 422 por campo; confirmación al descartar; editar CS de 2 a 3 (PATCH de un campo) y verlo en Auditoría con antes → después; 404 para un técnico en un expediente ajeno; el Reporte de VF no lleva la severidad (`c2-vf-reporte`: ni «Grado», ni las etiquetas, ni la justificación) |
+| `c3-` | HCE-ORG (C3): INAU y BPS de Martín con lo que devuelve la API y sus envíos del más nuevo al más viejo; la nota del IC (§5.3); la alerta AYEX es la de la respuesta (`c3-sin-calculo` fuerza respuestas distintas: el navegador no cuenta días); la alerta de 30 días de Sofía con ⚠ y en palabras; estado vacío y registrar (un POST sólo con lo completado); Joaquín con INAU y sin envíos; opciones de BPS de `GET /organismos/opciones`; sin cambios, vacío (422 sin campo) y 422 por campo en el resumen `role="alert"`; confirmación al descartar; editar BPS (PATCH sólo de lo que cambió; la alerta desaparece); agregar una gestión (aparece primera, con el autor del token); Auditoría con `bps.estado` antes → después; 404 en las siete rutas para un técnico en un expediente ajeno |
 | `z` | Cero errores de JavaScript en toda la corrida |
 
 ## `capturas.js`
@@ -73,7 +74,7 @@ $env:API = "http://localhost:8001"; $env:CONFIRMA_BASE_DESCARTABLE = "1"; $env:I
 node capturas.js
 ```
 
-Deja una imagen por pantalla (login, listado, HCE-00, CI, LB, PA, PB con Δ, editor del IC, informe impreso, VF y una vista
+Deja una imagen por pantalla (login, listado, HCE-00, CI, LB, PA, PB con Δ, editor del IC, informe impreso, VF, los organismos —lectura, la alerta AYEX y el formulario de BPS— y una vista
 de modo demostración) a **1280×800 y a 1024×768** en `salidas/` (ignorada por git), más tres de página completa (`f1-…-completa`: editor de LB, PB con su «Resultado» y editor del IC; la banda y la barra de acciones quedan donde las deja el desplazamiento). No compara nada: es para mirar.
 Escribe: sólo contra una base descartable recién cargada.
 

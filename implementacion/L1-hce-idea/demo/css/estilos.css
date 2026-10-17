@@ -1020,7 +1020,7 @@
   .pagehead .pagedesc{margin:var(--s1) 0;color:var(--ink-2);font-size:var(--fs-xs)}
 
   /* M9 · HCE-VF — valoración funcional (BUND/CIF) */
-  .vf-alerta{
+  .vf-alerta,.org-alerta{
     border:1px solid var(--warn-line);border-left:3px solid var(--warn);background:var(--warn-soft);
     padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-xs);margin:var(--s3) 0;line-height:1.55
   }
@@ -1039,6 +1039,16 @@
     color:var(--ink-2);margin:var(--s4) 0 var(--s2)
   }
   .org-col .form-grid{margin-bottom:0}
+  /* ORG (C3): lectura de cada vínculo, registros y alerta AYEX (la alerta comparte el estilo de aviso de .vf-alerta) */
+  .org-col{display:flex;flex-direction:column;gap:var(--s4);min-width:0}
+  .org-nota{margin:0 0 var(--s4)}
+  .org-lectura .data-row{grid-template-columns:minmax(130px,200px) 1fr}
+  .org-obs,.org-detalle{white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400}
+  .org-alerta{margin:var(--s3) var(--s4) 0}
+  .org-fecha{white-space:nowrap;text-align:left}
+  .org-reg td,.org-reg th{vertical-align:top}
+  .org-reg-acciones{margin-top:var(--s3)}
+  .org-total{margin-left:var(--s2);font-size:var(--fs-2xs);font-weight:600;color:var(--ink-2)}
   /* M7 · HCE-DOC — documentos adjuntos y fotos */
   .doc-uprow{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:flex-end;margin-top:var(--s3)}
   .doc-uprow .field{margin:0;flex:1;min-width:160px}
