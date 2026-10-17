@@ -2907,6 +2907,20 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('c2-ajeno', 'técnico y expediente de otro grupo (con severidad cargada por el admin): GET /hce/{id}/severidad da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos',
       regAdm.status === 201 && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Grado|Registro del admin/.test(pant.txt),
       JSON.stringify({ reg: regAdm.status, tec: aTec.status, adm: aAdm.status, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+
+    /* c2-vf-reporte · el Reporte de VF (se arma en el navegador desde GET /hce/{id}/valoracion-funcional) no lleva la severidad: ni «Grado», ni las etiquetas, ni la justificación */
+    let vfM = await api('GET', `/hce/${idM}/valoracion-funcional`);
+    if (vfM.status === 404) vfM = await api('POST', `/hce/${idM}/valoracion-funcional`, { estado: 'Valorado', fecha: '2026-05-14', organismo: 'Equipo valorador BPS', pct: '58', vigencia: '2030-05-14', rnpcd: 'RNPcD-10452' });
+    const sevFin = (await api('GET', `/hce/${idM}/severidad`)).json;
+    await ps.evaluate((i) => abrirExpediente(i), idM);
+    await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+    await ps.click('#tabExp-vf'); await ps.waitForSelector('#btnVfReporte'); await ps.click('#btnVfReporte');
+    await ps.waitForFunction(() => /Reporte de Valoración Funcional/.test(document.getElementById('informeContent').innerText) && !!document.querySelector('#informeContent .doc-datos'), null, { timeout: 8000 });
+    const repTxt = await ps.evaluate(() => document.getElementById('informeContent').innerText);
+    check('c2-vf-reporte', 'Martín (con valoración funcional y severidad): el «Reporte de Valoración Funcional» no contiene «Grado», ni etiqueta_cs ni etiqueta_crr, ni la justificación de su severidad',
+      [200, 201].includes(vfM.status) && !!sevFin.etiqueta_cs && !!sevFin.etiqueta_crr && !!sevFin.justificacion
+        && !/Grado/.test(repTxt) && !repTxt.includes(sevFin.etiqueta_cs) && !repTxt.includes(sevFin.etiqueta_crr) && !repTxt.includes(sevFin.justificacion),
+      JSON.stringify({ vf: vfM.status, sev: [sevFin.etiqueta_cs, sevFin.etiqueta_crr], repTxt: repTxt.slice(0, 120) }));
     await ctx.close();
   }
 
