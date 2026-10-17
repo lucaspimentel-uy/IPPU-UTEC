@@ -44,7 +44,8 @@ la demo v4.1 no son norma**: son insumo; no se modela ni se siembra nada sólo p
   conectado dice «Modo demostración») · `demo/verificacion/` (Playwright: `conectada.js`, `capturas.js`, `fingerprint.js` +
   `comparar.js` para las vistas en demostración). `implementacion/L3-asistente-virtual/` es de Samuel: no se toca desde L1 (§5.128).
 - `herramientas/`: `generar_catalogos_backend.py` (`--check`; el JSON de catálogos se genera, no se edita) · `verificar_estado.py` ·
-  `verificar_contraste_ui.js`. Antes de dar algo por definido: `docs/notas/puntos-a-validar.md`.
+  `verificar_contraste_ui.js` · `preparar_presentacion.ps1` + `verificar_presentacion.js` (la base de la presentación, ver «Presentación»).
+  Antes de dar algo por definido: `docs/notas/puntos-a-validar.md`.
 - **Documento nuevo de IPPU:** se convierte a Markdown cuando llega y se cita el `.md` (no hay script en el repo, §5.136).
 
 ## Cómo correr
@@ -63,6 +64,7 @@ pip install pypdf                        # conectada.js lee el PDF del IC con el
 # 2 · Base descartable + esquema + catálogos (DATABASE_URL en ESTA terminal, ANTES de alembic y del seed)
 docker exec ippu-postgres psql -U ippu -d ippu -c "DROP DATABASE IF EXISTS ippu_ver WITH (FORCE)" -c "CREATE DATABASE ippu_ver"
 $env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_ver"
+$env:IPPU_SEED_DESTINO = "ippu_ver"      # guardia (§5.139): seed_demo y crear_usuario imprimen la base y no escriben si esto no es su nombre
 alembic upgrade head
 python -m app.seed_catalogos
 
@@ -91,6 +93,19 @@ pytest -q                                # todo pasa, 0 skipped; sin Docker o co
 Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
 `implementacion/L1-hce-idea/demo/verificacion/README.md`.
 
+## Presentación (un comando, §5.139)
+La base de la presentación es **`ippu_presentacion`** (API `:8000`, demo `:5500`); se recarga **después del 2026-11-13**. Desde la
+raíz del repo, con Docker y el contenedor arriba y el entorno del paso 1 hecho:
+```powershell
+$env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"   # IPPU_EMAIL opcional
+powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1    # borra y recrea la base, carga la demo, deja API y demo arriba
+$env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
+powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
+```
+Volver a correrlo da lo mismo. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
+`crear_usuario` no escriben (el script lo fija solo).
+
 ## Reglas de L1 en vigor
 - **La secuencia sólo avisa; firmar bloquea:** `warnings[]` + fila `auditoria` `tipo='excepcion'`; tocar un registro firmado
   da **409** (§5.95, §5.116). **El CI no traba** (§5.94). Cadena por año CI → LB → PA → PB → IC (§5.96).
@@ -110,7 +125,8 @@ Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. 
   los ratios, en el comentario de CSS junto al token. Las demás cifras que cambian (tests, tablas) no se escriben acá: las lleva
   la cabecera de `handoff.md` y las mide `python herramientas/verificar_estado.py --check` (con `generar_catalogos_backend.py --check`).
 - **Base descartable:** `conectada.js`, `capturas.js` y el seed escriben. Nunca contra `:8000` ni la base de la presentación;
-  `DATABASE_URL` en la misma terminal **antes** de `alembic` o del seed; `:8001` y `:5500` libres al empezar y al terminar.
+  `DATABASE_URL` e `IPPU_SEED_DESTINO` en la misma terminal **antes** de `alembic` o del seed; `:8001` y `:5500` libres al empezar y
+  al terminar. (La única corrida que usa `:8000` y `ippu_presentacion` es la de `preparar_presentacion.ps1`.)
 - **Nunca un `git worktree` con junction/symlink a `node_modules`:** `git worktree remove` sigue el enlace y **borra la carpeta
   real** (pasó dos veces). En un worktree, `npm ci`; antes de quitar uno, `cmd /c rmdir <junction>` (sin `/s`).
 

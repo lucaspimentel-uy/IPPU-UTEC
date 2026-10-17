@@ -322,7 +322,10 @@ def test_el_cli_sale_con_1_si_el_email_existe(monkeypatch, capsys):
     def _falla(*a, **k):
         raise DatoInvalido("Ya existe un profesional con el email x@ippu.test")
 
+    from app.core.destino import VARIABLE, base_destino
+
     monkeypatch.setenv("IPPU_PASSWORD", "una-clave-larga")
+    monkeypatch.setenv(VARIABLE, base_destino())  # la guardia de destino (D0, §5.139) deja pasar
     monkeypatch.setattr("app.core.database.SessionLocal", _Sesion)
     monkeypatch.setattr(cli, "crear_usuario", _falla)
     assert cli.main(["--email", "x@ippu.test", "--nombre", "X", "--rol", "tecnico"]) == 1

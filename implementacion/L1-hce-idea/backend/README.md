@@ -24,7 +24,8 @@ copy .env.example .env                # 3. config (Linux/Mac: cp) — completar 
 
 alembic upgrade head                  # 4. crear el esquema
 python -m app.seed_catalogos          # 5. cargar catálogos
-python -m app.crear_usuario --email yo@ippu.test --nombre "Yo" --rol admin   # 6. un usuario (pide la contraseña)
+$env:IPPU_SEED_DESTINO = "ippu"       # 6. guardia (§5.139): el nombre de la base de DATABASE_URL; sin esto no escribe
+python -m app.crear_usuario --email yo@ippu.test --nombre "Yo" --rol admin   #    un usuario (pide la contraseña)
 uvicorn app.main:app --reload         # 7. API en http://127.0.0.1:8000/docs
 ```
 
@@ -56,7 +57,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **815 passed, 0 skipped**.
+Una corrida válida de hoy es **827 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -66,6 +67,7 @@ En este orden, desde `backend/` con el `.env` completo y `docker compose up -d`:
 alembic upgrade head                                                          # 1. esquema
 python -m app.seed_catalogos                                                  # 2. catálogos y los 5 grupos reales del año
 $env:IPPU_EMAIL="admin@ippu.test"; $env:IPPU_PASSWORD="<contraseña del admin>"
+$env:IPPU_SEED_DESTINO="<nombre de la base de DATABASE_URL>"                #    guardia de destino (§5.139): sin esto, ni crear_usuario ni seed_demo escriben
 python -m app.crear_usuario --email $env:IPPU_EMAIL --nombre "Coordinación" --rol admin   # 3. admin (toma IPPU_PASSWORD)
 uvicorn app.main:app                                                          #    API arriba (otra terminal)
 $env:PYTHONUTF8=1                                                             #    Windows: OBLIGATORIO para el paso 4 (consola cp1252)
@@ -81,11 +83,11 @@ Carga los 8 NNA de la demo por la API (Martín = §12-A). Los dos técnicos de l
 `IPPU_EMAIL`/`IPPU_PASSWORD`. ⚠️ **Sin `IPPU_DEMO_PASSWORD`, los dos técnicos de la demo quedan con la
 misma contraseña que el admin** — aceptable sólo en desarrollo; definirla para que sean distintas.
 
-Sale con código 1 **sin escribir nada** si la demo ya está cargada o si faltan los grupos (paso 2
+Las dos CLI **imprimen la base de destino** (la de `DATABASE_URL`, o la del `.env` si no está exportada) y salen con 1 sin escribir si `IPPU_SEED_DESTINO` no vale exactamente ese nombre (`app/core/destino.py`). Además sale con código 1 **sin escribir nada** si la demo ya está cargada o si faltan los grupos (paso 2
 salteado: el mensaje pide correr `python -m app.seed_catalogos`). Detalle y límites: docstring de
 `app/seed_demo.py` y `handoff.md` §5.120.
 
-> **Base de la presentación:** volver a correr el seed después del 2026-11-13, para que las fechas de firma (las estampa el servidor con la fecha de la corrida) no queden antes de las de evaluación.
+> **Base de la presentación (`ippu_presentacion`):** se recarga después del 2026-11-13, para que las fechas de firma (las estampa el servidor con la fecha de la corrida) no queden antes de las de evaluación. No se arma a mano: `herramientas\preparar_presentacion.ps1` hace todo esto en un comando (`CLAUDE.md`, «Presentación»).
 
 ## API (M11.3-a)
 

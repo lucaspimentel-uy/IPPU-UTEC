@@ -7,7 +7,8 @@ Uso (desde la carpeta del backend, con el venv activo):
 
 La contraseña se pide por teclado (no queda en el historial de la terminal). Para scripts
 —el seed de M11.5-a— se puede pasar en la variable de entorno `IPPU_PASSWORD`. Escribe en
-`DATABASE_URL` (la base de desarrollo).
+`DATABASE_URL` (la base de desarrollo) **y sólo si `IPPU_SEED_DESTINO` vale el nombre de esa base**
+(`app/core/destino.py`, §5.139): imprime el destino y, si no coincide, sale con 1 sin escribir.
 
 No hay alta de usuarios por la API a propósito: la administración de usuarios es parte del
 sub-módulo de administración, posterior al 26/11 (§5.90). Asignar el técnico a un grupo
@@ -24,6 +25,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import ROL_ADMIN, ROL_TECNICO
+from app.core.destino import confirmar_destino
 from app.core.seguridad import BCRYPT_MAX_BYTES, hashear_password
 from app.models.identidad import Profesional
 from app.services.auth import normalizar_email
@@ -70,6 +72,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rol", required=True, choices=(ROL_ADMIN, ROL_TECNICO))
     parser.add_argument("--especialidad", default=None, help="Va a `firmas[].rol` cuando firme.")
     args = parser.parse_args(argv)
+
+    if not confirmar_destino():  # antes de pedir la contraseña
+        return 1
 
     password = os.environ.get("IPPU_PASSWORD")
     if password is None:

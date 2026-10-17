@@ -45,7 +45,9 @@ mitad de camino**, lo que ya entró queda (carga parcial). Para rehacerla en lim
 
     python -m app.seed_demo --url http://localhost:8000
 
-Con la API corriendo (`uvicorn app.main:app`). Credenciales del admin en el entorno, misma
+Con la API corriendo (`uvicorn app.main:app`). **Guardia de destino (§5.139):** antes de todo imprime la URL de
+la API y el nombre de la base de `DATABASE_URL`, y sale con 1 sin escribir salvo que `IPPU_SEED_DESTINO` valga
+ese nombre de base (`app/core/destino.py`). Credenciales del admin en el entorno, misma
 convención que `crear_usuario`: `IPPU_EMAIL` / `IPPU_PASSWORD`. La contraseña de los dos
 profesionales de la demo es `IPPU_DEMO_PASSWORD` (por omisión, la del admin: sólo desarrollo). Sale
 con código 1 si la demo ya estaba cargada o si faltan los grupos (en los dos casos, sin escribir
@@ -445,6 +447,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.seed_demo", description=__doc__.splitlines()[0])
     parser.add_argument("--url", required=True, help="Base de la API corriendo, p. ej. http://localhost:8000")
     args = parser.parse_args(argv)
+
+    from app.core.destino import confirmar_destino
+
+    if not confirmar_destino(api=args.url):  # antes de todo: ni credenciales ni red ni base
+        return 1
 
     admin_email = os.environ.get("IPPU_EMAIL")
     admin_password = os.environ.get("IPPU_PASSWORD")

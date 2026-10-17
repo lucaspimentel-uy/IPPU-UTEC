@@ -101,7 +101,7 @@ backend/
 ├── alembic/versions/dcc838486407_esquema_v2_inicial_a2.py   # migración única del esquema v2 (51 tablas)
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
-│   ├── core/               # config (rechaza todo DATABASE_URL que no sea Postgres) · constantes · database · seguridad (JWT)
+│   ├── core/               # config (rechaza todo DATABASE_URL que no sea Postgres) · constantes · database · seguridad (JWT) · destino (guardia de las CLI que escriben, §5.139)
 │   ├── models/             # SQLAlchemy: catalogos · identidad · modulos · transversales · severidad · inclusion · pai · ateneo · divulgacion · mixins
 │   ├── schemas/            # Pydantic (contrato de cada recurso)
 │   ├── services/           # reglas de negocio: flujo, firma, IDEA, protocolos, Δ, informe de cierre, VF, grupos, auditoría…
@@ -131,3 +131,5 @@ nada de L1 (§5.128–§5.134). Tiene `asistente/` (código), `eval/` (banco de 
 | `generar_catalogos_backend.py` | Genera `backend/app/data/catalogos_iniciales.json` desde la demo y el Prototipo v4. Con `--check` no escribe: falla si el archivo del repo quedó desfasado. |
 | `verificar_estado.py` | `--check` **mide el repo** (tablas, migración, un solo head, tests si Docker está arriba) y lo compara con lo que afirman `handoff.md` (sólo su cabecera), `README.md`, `CLAUDE.md`, este archivo y `backend/README.md`. Silencioso si coincide; exit ≠ 0 con el diff si no. Va en el cierre de cada sesión. |
 | `verificar_contraste_ui.js` | Mide contraste WCAG y anillos de foco sobre lo que **realmente se renderiza** en la demo conectada. **Nunca escribe en la API, por construcción**: deja pasar sólo `GET` y `POST /auth/login`, devuelve un 422 enlatado a las dos confirmaciones de firma que pulsa y aborta —con código 1— cualquier otra escritura. Reusa el Playwright de `demo/verificacion/`. Uso: `demo/verificacion/README.md`. |
+| `preparar_presentacion.ps1` | Deja la base de la presentación (`ippu_presentacion`) lista con **un comando**: recrea la base, esquema, catálogos, admin, API en `:8000`, seed por la API y demo en `:5500`. Volver a correrlo da lo mismo; se niega a tocar `ippu_test` y `ippu` (salvo `-ConfirmarBaseDeTrabajo`); `-Detener` para lo que arrancó. Las contraseñas salen del entorno. Uso: `CLAUDE.md`, «Presentación» (§5.139). |
+| `verificar_presentacion.js` | Chequeo de **sólo lectura** de que esa demo está lista: el técnico entra, los 7 activos y las cifras de Martín (LB 58, PA 60, PB 79, Δ +19, su IC impreso) tal como las da la API. Mismo filtro que `verificar_contraste_ui.js`. Una línea `OK` o `FALLA …` (exit 1). |
