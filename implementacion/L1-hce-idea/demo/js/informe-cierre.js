@@ -171,12 +171,12 @@ async function icCargar(conservar){
   Object.assign(IC, {rec, idea, pa, pb, cuantError, huella});
   if(EXP.mods) EXP.mods.ic = rec;
   if((igual && !IC.sucio) || conservarTrabajo){      // la relectura no trajo nada nuevo, o se empezó a tipear mientras llegaba: no se pisa nada
-    pintarTabsExp(); pintarFlujo(); return;
+    pintarTabsExp(); return;
   }
   IC.sucio = false; IC.confirmando = false; IC.guardando = false; IC.campos = null;
   IC.estado = "listo";
   icRepintar();
-  pintarTabsExp(); pintarFlujo();
+  pintarTabsExp();
 }
 function icReintentar(){
   if(IC.reintento === "flujo") recargarFlujoExp(true).then(() => icCargar(false));
@@ -193,10 +193,10 @@ function icRepintar(){
   p.innerHTML = icPanelHtml();
 }
 function icPanelHtml(){
-  const cab = `<h3 id="icTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> IC · Informe de cierre anual${IC.anio ? " — " + escHtml(IC.anio) : ""}</h3>`;
-  if(IC.hceId !== EXP.id || IC.estado === "cargando") return `<div class="info-card">${cab}<div class="ib">${estadoCargandoHtml("Cargando el informe de cierre…")}</div></div>`;
+  const cab = `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual${IC.anio ? " — " + escHtml(IC.anio) : ""}</h2></div>`;
+  if(IC.hceId !== EXP.id || IC.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando el informe de cierre…")}</div></div>`;
   if(IC.estado === "error"){
-    return `<div class="info-card">${cab}<div class="ib">${estadoErrorHtml(IC.error, "icReintentar()")}</div></div>`;
+    return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(IC.error, "icReintentar()")}</div></div>`;
   }
   return IC.rec && IC.rec.firmado ? icLecturaHtml() : icEditorHtml();
 }
@@ -207,10 +207,14 @@ function icEstadoHtml(){
   const add = IC.rec && IC.rec.addendas ? addendaMarcaHtml(IC.rec.addendas.length, false) : "";
   return `<span class="st st-${est}"><span aria-hidden="true">${ESTADO_MOD_TXT[est].glifo}</span> ${txt}</span>${add}`;
 }
+/* Encabezado del módulo (F1): un renglón —título, estado, «Ver informe impreso»—, sin tarjeta; los avisos debajo, sólo si los hay. */
 function icEncabezadoHtml(){
-  return `<div class="ev-cab"><h3 id="icTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> IC · Informe de cierre anual — ${escHtml(IC.anio)}</h3>
-    <span id="icEstado" class="ev-estado">${icEstadoHtml()}</span><span class="spacer" style="flex:1"></span>
+  return `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual — ${escHtml(IC.anio)}</h2>
+    <span id="icEstado" class="ev-estado">${icEstadoHtml()}</span><span class="spacer"></span>
     <button type="button" class="btn btn-ghost btn-mini" id="btnIcImpreso" onclick="icAbrirDocumento()">🖨 Ver informe impreso</button></div>`;
+}
+function icAvisosBloqueHtml(){
+  return `<div id="icAvisos" class="review-note avisos-api" role="status"${(IC.avisos || []).length ? "" : " hidden"}>${icAvisosHtml()}</div>`;
 }
 function icAvisosHtml(){
   const a = IC.avisos || [];
@@ -225,7 +229,8 @@ function icPintarAvisos(){
 }
 
 /* Bloque cuantitativo: IDEA, PA y PB del año tal como los devuelve la API. */
-function icCuantCardHtml(){
+/* `primero`: es el primer bloque bajo el encabezado del módulo (vista firmada): sin margen de arriba. */
+function icCuantCardHtml(primero){
   let cuerpo;
   if(IC.cuantError){
     cuerpo = estadoErrorInlineHtml("No se pudieron cargar los puntajes del año.", "icReintentar()");
@@ -233,7 +238,7 @@ function icCuantCardHtml(){
     const d = icCuantDatos({idea: IC.idea, a: IC.pa, b: IC.pb, deltas: IC.pb && IC.pb.deltas, interpretacion: IC.pb && IC.pb.interpretacion, alertas: IC.pb && IC.pb.alertas});
     cuerpo = `${icTablaHtml(d)}${icRadaresHtml(d)}`;
   }
-  return `<div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Análisis cuantitativo — desde los módulos firmados de ${escHtml(IC.anio)}</h2></div>
+  return `<div class="card"${primero ? "" : ` style="margin-top:16px"`}><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Análisis cuantitativo — desde los módulos firmados de ${escHtml(IC.anio)}</h2></div>
     <div style="padding:16px 18px">${cuerpo}</div></div>`;
 }
 
@@ -272,12 +277,10 @@ function icEditorHtml(){
   }).join("");
   const campo = (id, rot, base, extra) => `<div class="field"><label for="${id}">${rot} <span class="req" aria-hidden="true">*</span><span class="sr-only">(necesario para firmar)</span></label>
       <textarea id="${id}" data-ic aria-describedby="err_${id}" oninput="icSucio()"${extra || ""}>${escHtml(_cvI(id, base || ""))}</textarea><div class="ev-err" id="err_${id}"></div></div>`;
-  return `<div class="info-card ev-card">${icEncabezadoHtml()}
-    <div class="ib">
-      <p class="hint">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. Elaboración sugerida: en los días posteriores al cierre del Protocolo B. El PDF con membrete es <b>el único informe válido</b> (§5.3): se genera desde el informe firmado.</p>
-      <div id="icAvisos" class="review-note avisos-api" role="status"${(IC.avisos || []).length ? "" : " hidden"}>${icAvisosHtml()}</div>
-      <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    </div></div>
+  return `${icEncabezadoHtml()}
+    <p class="mod-nota">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. Elaboración sugerida: en los días posteriores al cierre del Protocolo B. El PDF con membrete es <b>el único informe válido</b> (§5.3): se genera desde el informe firmado.</p>
+    ${icAvisosBloqueHtml()}
+    <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${icCuantCardHtml()}
     <div class="card" style="margin-top:16px">
       <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Síntesis cualitativa por escala</h2></div>
@@ -299,8 +302,10 @@ function icEditorHtml(){
       </div>
     </div>
     ${icFirmantesHtml()}
-    <div class="idea-summary" id="icResumen">
-      <div class="nota">Para firmar: síntesis de las 4 escalas + valoraciones de ambos técnicos + recomendaciones + orientaciones + fecha + los dos firmantes (§4.3). La firma (doble, un solo acto) bloquea el informe; después se registra el «recibí» de la familia y se imprime el PDF con membrete.</div>
+    <div class="barra-acciones" id="icResumen">
+      <details class="barra-requisitos"><summary>Qué hace falta para firmar</summary>
+        <div class="barra-requisitos-cuerpo"><ul><li>la síntesis de las cuatro escalas;</li><li>las valoraciones de ambos técnicos;</li><li>recomendaciones y orientaciones a la familia;</li><li>la fecha del informe y los dos firmantes (§4.3).</li></ul>
+        <p>La firma (doble, un solo acto) bloquea el informe; después se registra el «recibí» de la familia y se imprime el PDF con membrete. Si falta algo, se marca junto al campo al firmar.</p></div></details>
       <div class="spacer"></div>
       <div class="ev-acciones" id="icAcciones">${icAccionesHtml()}</div>
     </div>`;
@@ -333,9 +338,9 @@ function icLecturaHtml(){
   const recibi = r.recibi
     ? `${escHtml(r.recibi.firmante)} · registrado el ${r.recibi.fecha ? fmtFecha(r.recibi.fecha) : "—"}`
     : `Pendiente de registro <button type="button" class="btn btn-ghost btn-mini" id="btnIcRecibi" onclick="openRecibiModal()">✍ Registrar recibí</button>`;
-  return `<div class="info-card ev-card">${icEncabezadoHtml()}
-    <div class="ib"><div id="icAvisos" class="review-note avisos-api" role="status"${(IC.avisos || []).length ? "" : " hidden"}>${icAvisosHtml()}</div></div></div>
-    ${icCuantCardHtml()}
+  return `${icEncabezadoHtml()}
+    ${icAvisosBloqueHtml()}
+    ${icCuantCardHtml(true)}
     <div class="info-card" style="margin-top:16px"><h3><span class="ic" aria-hidden="true">❏</span> Análisis cualitativo por escala</h3><dl class="ib">${esc}</dl></div>
     <div class="info-card"><h3><span class="ic" aria-hidden="true">≡</span> Síntesis interdisciplinaria, recomendaciones y orientaciones</h3>
       <dl class="ib">
@@ -427,7 +432,7 @@ async function icGuardar(opts){
     icAplicarGuardado();
     const e = _icEl("icEstado"); if(e) e.innerHTML = icEstadoHtml();
     icPintarAcciones(); icPintarAvisos();
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     if(!paraFirmar){ toast(r.status === 201 ? "Borrador creado" : "Borrador guardado"); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
     return true;
   }catch(err){
@@ -483,7 +488,7 @@ async function icFirmar(){
     icRepintar();
     const t = _icEl("icTitulo"); if(t) t.focus();
     toast("HCE-IC firmado");
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     recargarFlujoExp(true); refrescarListaTrasEscritura();
   }catch(err){
     if(mi !== EXP.seq || IC.hceId !== id) return;
@@ -509,7 +514,7 @@ async function icAddenda(){
     icRepintar();
     toast("Addenda registrada");
     const t = _icEl("icAddTitulo"); if(t) t.focus();
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
   }catch(err){
     if(mi !== EXP.seq || IC.hceId !== id) return;
     if(btn){ btn.disabled = false; btn.textContent = "+ Agregar addenda"; }

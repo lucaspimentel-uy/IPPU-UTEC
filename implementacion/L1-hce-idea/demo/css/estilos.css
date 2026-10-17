@@ -100,6 +100,16 @@
     --shadow-modal:0 24px 60px rgba(22,35,44,.28), 0 2px 8px rgba(22,35,44,.14);
     font-size:16px;
 
+    /* ============ TOKENS ESTRUCTURALES (F1, handoff §5.140) ============
+       Alturas del cromo que queda pegado a la ventana: la barra superior, la banda del paciente (expediente) y la barra de
+       acciones de los editores. De ellas sale el scroll-padding que evita que lo enfocado quede tapado (WCAG 2.2 · 2.4.11).
+       --banda-h es el máximo de diseño; expediente.js lo reemplaza por el alto real de la banda (una alerta larga la agranda). */
+    --topbar-h:60px;
+    --banda-h:64px;
+    --barra-h:64px;
+    --shadow-banda:0 2px 6px rgba(22,35,44,.08);      /* banda del paciente: flota sobre el contenido que pasa por debajo */
+    --shadow-barra:0 -2px 8px rgba(22,35,44,.10);     /* barra de acciones: flota sobre el formulario, hacia arriba */
+
     /* ============ TOKENS DE LA PASADA DE ACCESIBILIDAD (Fase 3-e, handoff §5.135) ============
        Regla de color (notas-accesibilidad-ui.md §3): --ok / --warn / --bad NUNCA pintan una clasificación clínica
        (bandas del IDEA, insignias de puntaje, categorías y niveles de la VF): para eso está la rampa de un solo matiz.
@@ -160,9 +170,12 @@
      translúcido ni lo apaga con `outline:none`: el anillo no se pierde ni sobre un campo con borde de color.
      Sobre el cromo oscuro la variable --ring cambia a --ring-dark (se hereda a todos los controles de adentro). */
   :focus-visible{outline:var(--ring-w) solid var(--ring);outline-offset:var(--ring-off)}
-  /* WCAG 2.4.11: lo enfocado no queda tapado por la barra superior ni por la barra de totales pegada abajo. */
-  html{scroll-padding-top:76px;scroll-padding-bottom:132px}
-  .topbar,.sidebar,.exp-head,.idea-summary,.inf-banner,.modal-head,.skip-link{--ring:var(--ring-dark)}
+  /* WCAG 2.2 · 2.4.11: lo enfocado no queda tapado por la barra superior, la banda del paciente ni la barra de acciones pegada
+     abajo. El margen sale de los tokens estructurales; la banda y la barra sólo cuentan cuando están a la vista. */
+  html{scroll-padding-top:calc(var(--topbar-h) + 12px);scroll-padding-bottom:12px}
+  html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + var(--banda-h) + 12px)}
+  html:has(#view-expediente.active .barra-acciones){scroll-padding-bottom:calc(var(--barra-h) + 12px)}
+  .topbar,.sidebar,.inf-banner,.modal-head,.skip-link{--ring:var(--ring-dark)}
   main:focus,main:focus-visible{outline:none}   /* destino del enlace «Saltar al contenido»: un contenedor, no un control */
   .skip-link{
     position:fixed;top:8px;left:8px;z-index:300;padding:10px var(--s4);background:var(--ink);color:#fff;
@@ -180,7 +193,7 @@
 
   /* ============ TOPBAR ============ */
   .topbar{
-    background:var(--navy); color:#fff; height:60px;
+    background:var(--navy); color:#fff; height:var(--topbar-h);
     display:flex; align-items:center; gap:var(--s3); padding:0 var(--s5);
     position:sticky; top:0; z-index:50;
     border-bottom:1px solid #000;
@@ -192,9 +205,9 @@
     font-family:var(--f-dato);font-weight:700;font-size:var(--fs-xs);letter-spacing:.06em;
     color:#fff;flex:0 0 auto;
   }
-  .topbar .title{line-height:1.2}
-  .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600;display:block;letter-spacing:.005em}
-  .topbar .title span{font-size:var(--fs-2xs);color:var(--on-dark-3)}
+  .topbar .title{line-height:1.2;white-space:nowrap}
+  .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600;letter-spacing:.005em}
+  .topbar .title span{font-size:var(--fs-sm);color:var(--on-dark-2)}
   .topbar .spacer{flex:1}
   /* B2: el perfil pasó de <div> a <button> — es el acceso a «Mi usuario». */
   .userchip{
@@ -220,7 +233,7 @@
   .btn-exit:hover{background:var(--navy-3);color:#fff}
 
   /* ============ LAYOUT ============ */
-  .layout{display:flex;min-height:calc(100vh - 60px)}
+  .layout{display:flex;min-height:calc(100vh - var(--topbar-h))}
   .sidebar{
     width:224px;background:var(--navy-2);padding:var(--s4) 0;flex:0 0 auto;
     display:flex;flex-direction:column;
@@ -241,7 +254,7 @@
   .navitem:hover{background:rgba(255,255,255,.06);color:#fff}
   .navitem.active{background:rgba(180,89,10,.20);color:#fff;border-left-color:var(--orange);font-weight:600}
   .sidebar .foot{
-    padding:var(--s4) var(--s5);font-family:var(--f-dato);font-size:var(--fs-3xs);
+    margin-top:auto;padding:var(--s4) var(--s5);font-family:var(--f-dato);font-size:var(--fs-3xs);
     line-height:1.6;color:var(--on-dark-3);border-top:1px solid var(--on-dark-borde)
   }
 
@@ -279,15 +292,11 @@
   table.lista td{padding:11px var(--s4);border-bottom:1px solid var(--rule-2);vertical-align:middle}
   table.lista tr:last-child td{border-bottom:none}
   table.lista tr:hover td{background:var(--paper-2)}
-  /* El N.º de HCE es un correlativo: va en la cara de dato, tabular. Sólo en las
-     dos tablas cuya primera columna ES el correlativo — `.lista` la reusan también
-     Inclusión (1.ª col: nombre del NNA) y Ateneos (1.ª col: fecha) — y nunca en la
-     celda con `colspan` que aloja el estado vacío. */
-  #view-inicio table.lista td:first-child:not([colspan]),
+  /* El N.º de HCE es un correlativo: va en la cara de dato, tabular, en Pendientes (1.ª columna). En el listado de
+     «NNA y HCE» va debajo del nombre (.nna-sub, sección F1). */
   #view-pendientes table.lista td:first-child:not([colspan]){
     font-family:var(--f-dato);font-size:var(--fs-2xs);color:var(--ink-2)
   }
-  #view-inicio table.lista td:first-child b,
   #view-pendientes table.lista td:first-child b{color:var(--ink);font-weight:700;letter-spacing:.02em}
   .pill{
     display:inline-block;padding:2px 9px;border-radius:var(--r-pill);
@@ -328,7 +337,7 @@
   }
   .kpi .val .kpi-den{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);letter-spacing:0}
   .kpi .sub{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1);line-height:1.45}
-  .kpi .val.orange{color:var(--orange)} .kpi .val.purple{color:var(--purple)}   /* decorativos: ok/warn/bad no colorean cifras sueltas */
+  /* F1 (H9): las cifras van en tinta; ni el acento ni los colores de escala colorean una cifra suelta. */
 
   /* ============ FORMULARIO IDEA ============
      Es un instrumento en papel: 4 escalas × 3 dimensiones, y en cada dimensión hay
@@ -396,56 +405,7 @@
   }
   .esc-foot b{margin-left:var(--s1);font-family:var(--f-dato);font-size:var(--fs-xs);color:var(--ink)}
   .esc-foot .subtxt{font-size:var(--fs-2xs);color:var(--ink-2)}
-  /* Barra de totales pegada abajo: es lo único que flota, así que sí lleva sombra. */
-  .idea-summary{
-    position:sticky;bottom:0;background:var(--navy);color:#fff;border-radius:var(--r);
-    padding:var(--s3) var(--s5);display:flex;align-items:center;gap:var(--s6);flex-wrap:wrap;
-    box-shadow:var(--shadow-modal);margin-top:var(--s3);border-top:3px solid var(--orange)
-  }
-  .idea-summary .sum-lab{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.09em;
-    text-transform:uppercase;color:var(--on-dark-3);font-weight:700
-  }
-  .idea-summary .tot{font-family:var(--f-dato);font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-  .idea-summary .tot small{font-size:var(--fs-sm);font-weight:600;color:var(--on-dark-3);letter-spacing:0}
-  .idea-summary .nivel{
-    padding:5px var(--s3);border-radius:var(--r-sm);font-size:var(--fs-2xs);font-weight:700;
-    background:var(--navy-3);white-space:nowrap
-  }
-  .idea-summary .nota{font-size:var(--fs-3xs);color:var(--on-dark-3);max-width:44ch;line-height:1.5}
-  .idea-summary .spacer{flex:1}
-  .idea-summary .btn-ghost{background:transparent;color:var(--on-dark-2);border-color:var(--navy-3)}
-  .idea-summary .btn-ghost:hover{background:var(--navy-3);color:#fff;border-color:var(--navy-3)}
-  /* Progreso de las 12 dimensiones: cuadrícula de casillas, como el pie de un protocolo. */
-
-  /* ============ EVAL INTERMEDIA (vista legada, no expuesta desde M5.3) ============ */
-  .lik-head{
-    background:var(--paper-2);color:var(--ink);border-radius:var(--r) var(--r) 0 0;
-    border-bottom:1px solid var(--rule);border-top:3px solid var(--teal);
-    padding:var(--s3) var(--s4);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--s2)
-  }
-  .lik-head h2{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
-  .lik-head .prog{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);background:var(--paper-3);color:var(--ink-2);
-    padding:4px var(--s2);border-radius:var(--r-sm);font-weight:700
-  }
-  .lik-item{padding:var(--s4);border-bottom:1px solid var(--rule-2)}
-  .lik-item .iname{font-weight:600;font-size:var(--fs-sm);margin-bottom:2px}
-  .lik-item .iq{font-size:var(--fs-xs);color:var(--ink-2);margin-bottom:var(--s2)}
-  .lik-opts{display:flex;gap:var(--s1);flex-wrap:wrap}
-  .lik-opts button{
-    flex:1;min-width:74px;padding:8px var(--s1);border:1px solid var(--rule);background:var(--paper);
-    border-radius:var(--r-sm);font-size:var(--fs-2xs);font-weight:600;color:var(--ink-2)
-  }
-  .lik-opts button:hover{border-color:var(--ink-3);color:var(--ink)}
-  .lik-opts button.sel{background:var(--teal);border-color:var(--teal);color:#fff}
-  /* Escala IPPU-TEA · tabs A|B del editor PA/PB (M5.2) */
-  .formula{
-    margin:var(--s3) var(--s4) var(--s4);padding:var(--s3) var(--s4);
-    border:1px dashed var(--teal);border-radius:var(--r-sm);
-    background:var(--teal-soft);font-size:var(--fs-xs);display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center
-  }
-  .formula b{color:var(--teal-ink)}
+  /* La barra de acciones pegada abajo de los editores (.barra-acciones) está en la sección F1, al final. */
   .selector{
     display:flex;gap:var(--s2);align-items:center;font-size:var(--fs-xs);
     margin-bottom:var(--s4);flex-wrap:wrap;color:var(--ink-2)
@@ -499,13 +459,6 @@
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--s4)}
   .note{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);line-height:1.55}
 
-  /* La marca vive en el pie de la barra lateral (en flujo, no flotante): una marca fija abajo a la derecha
-     tapaba filas de las tablas a 1280×800 y 1280×900 (handoff §5.125). */
-  .demo-tag{
-    margin:auto var(--s4) var(--s3);background:var(--navy);color:var(--on-dark-2);border:1px solid var(--on-dark-borde);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.03em;line-height:1.5;
-    padding:5px var(--s3);border-radius:var(--r-sm);pointer-events:none
-  }
   @media(max-width:760px){
     .layout{flex-direction:column}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:0}
@@ -524,9 +477,9 @@
        salida; el subtítulo y los datos del usuario ya están en «Mi usuario». */
     .topbar{gap:var(--s2);padding:0 var(--s3)}
     .topbar .title span,.userchip-txt{display:none}
+    .topbar .title b{font-size:var(--fs-sm)}
     h1.pagetitle{font-size:var(--fs-lg)}
     .kpi .val{font-size:var(--fs-xl)}
-    .demo-tag{display:none}
   }
 
   /* ============ MODAL / WIZARD ALTA NNA ============ */
@@ -617,27 +570,26 @@
   .modal-foot .left{font-size:var(--fs-2xs);color:var(--ink-2)}
 
   /* ============ EXPEDIENTE (HCE) ============
-     Sin degradado: tinta plana con el filete de acento. El nombre del NNA es lo
-     único en serif grande de la pantalla — es la carátula del expediente. */
+     La cabecera de los expedientes de EJEMPLO y del perfil (modo demostración) es clara, como la banda del paciente del
+     expediente conectado (sección F1): dejó de ser cromo oscuro y ya no cambia el anillo de foco. */
   .exp-head{
-    background:var(--navy);color:#fff;border-radius:var(--r);border-top:3px solid var(--orange);
-    padding:var(--s5) var(--s6);display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap;margin-bottom:var(--s5)
+    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r);
+    padding:var(--s3) var(--s4);display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin-bottom:var(--s4)
   }
   .exp-avatar{
     width:60px;height:60px;border-radius:var(--r);background:var(--orange);display:flex;
     align-items:center;justify-content:center;font-family:var(--f-dato);font-size:var(--fs-lg);
     font-weight:700;letter-spacing:.03em;flex:0 0 auto
   }
-  .exp-head h1{font-family:var(--f-display);font-size:var(--fs-xl);font-weight:600;letter-spacing:-.01em}
-  .exp-head .meta{font-size:var(--fs-xs);color:var(--on-dark-2);margin-top:var(--s1)}
+  .exp-avatar{color:#fff}
+  .exp-head h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;letter-spacing:-.01em}
+  .exp-head .meta{font-size:var(--fs-xs);color:var(--ink-2);margin-top:2px}
   .exp-head .badges{display:flex;gap:var(--s1);margin-top:var(--s2);flex-wrap:wrap}
   .exp-head .bdg{
-    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);
-    padding:3px 10px;border-radius:var(--r-sm);font-size:var(--fs-3xs);letter-spacing:.02em
+    background:var(--paper-2);border:1px solid var(--rule);color:var(--ink);
+    padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-3xs);letter-spacing:.02em
   }
   .exp-head .spacer{flex:1}
-  .exp-head .btn-ghost{background:rgba(255,255,255,.08);color:var(--on-dark-2);border-color:rgba(255,255,255,.16)}
-  .exp-head .btn-ghost:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.28)}
   .exp-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--s4)}
   @media(max-width:880px){.exp-grid{grid-template-columns:1fr}}
   .info-card{
@@ -758,15 +710,15 @@
   .prot-item:last-child{border-bottom:none}
   .prot-item .pit-t{font-size:var(--fs-xs);color:var(--ink);margin-bottom:var(--s2);line-height:1.5}
   .prot-item .pit-r{font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s1)}
-  .lik-row{display:flex;gap:var(--s1);flex-wrap:wrap}
-  .lik-btn{
+  .likert-fila{display:flex;gap:var(--s1);flex-wrap:wrap}
+  .likert-btn{
     padding:6px var(--s3);border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);
     font-family:var(--f-dato);font-size:var(--fs-2xs);cursor:pointer;color:var(--ink-2);
     min-width:34px;text-align:center;font-weight:700
   }
-  .lik-btn:hover{border-color:var(--ink-3);color:var(--ink)}
-  .lik-btn.sel{background:var(--ink);border-color:var(--ink);color:#fff}
-  .lik-btn[disabled]{opacity:.45;cursor:not-allowed}
+  .likert-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+  .likert-btn.sel{background:var(--ink);border-color:var(--ink);color:#fff}
+  .likert-btn[disabled]{opacity:.45;cursor:not-allowed}
   /* Observación cualitativa: obligatoria en todo ítem 1 o 5 (§5.2). Se marca en
      ámbar mientras falta y en rojo cuando bloquea la firma. */
   .prot-obs{margin-top:var(--s2);display:none}
@@ -1107,8 +1059,8 @@
 
   /* ============ IMPRESIÓN (informe → PDF) ============ */
   @media print{
-    .topbar,.sidebar,.demo-tag,.toast,.no-print,.login-screen,.crumbs,.eval-bar,
-    .section-nav,.idea-summary{display:none!important}
+    .topbar,.sidebar,.toast,.no-print,.login-screen,.crumbs,.eval-bar,
+    .section-nav,.barra-acciones,.banda-nna,.tabs-exp{display:none!important}
     .layout{display:block}
     main{max-width:none;padding:0}
     body{background:#fff;font-size:11pt}
@@ -1169,11 +1121,7 @@
   }
   .lista-pie .spacer{flex:1}
   .lista-pie button:disabled{opacity:.55;cursor:default}
-  #tablaNNA td,#tablaNNA th{padding-left:var(--s2);padding-right:var(--s2)}
-  #tablaNNA td:first-child,#tablaNNA th:first-child{padding-left:var(--s4)}
-  #tablaNNA td{white-space:nowrap}
-  #tablaNNA th{white-space:normal;vertical-align:bottom}
-  #tablaNNA td.nna-name{white-space:normal}
+  /* El listado de «NNA y HCE» (cinco columnas) está en la sección F1. */
 
   /* --- Estado de módulo (§3.2): vacío = contorno · en curso = relleno suave + borde punteado ·
          firmado = relleno sólido. Siempre con glifo y texto, nunca solo color. --- */
@@ -1192,18 +1140,7 @@
   .st-mini.st-sin_iniciar{background:none;color:var(--st-sin-fg);border:none}
   .st-mini.st-ci-pend{background:none;color:var(--st-ci-pend-fg);border:none}
 
-  /* --- Pestañas de módulos del expediente --- */
-  .exp-tabs{display:flex;flex-wrap:wrap;gap:var(--s1);border-bottom:1px solid var(--rule);margin-bottom:var(--s4)}
-  .exp-tab{
-    padding:8px var(--s3);border:1px solid var(--rule);border-bottom:none;background:var(--paper-2);
-    color:var(--ink-2);font-size:var(--fs-2xs);font-weight:600;border-radius:var(--r-sm) var(--r-sm) 0 0
-  }
-  .exp-tab:hover{color:var(--ink);background:var(--paper)}
-  .exp-tab[aria-selected="true"]{
-    background:var(--paper);color:var(--ink);font-weight:700;
-    border-top:3px solid var(--orange);margin-bottom:-1px;padding-top:6px
-  }
-  .exp-tab:focus-visible{outline-offset:-2px}   /* hacia adentro: la pestaña toca a sus vecinas y al filete de abajo */
+  /* Las pestañas de módulos del expediente están en la sección F1. */
   dl.ib{margin:0}
 
   /* ============ FASE 3-b · ESCRITURAS (handoff §5.124) ============
@@ -1226,23 +1163,6 @@
   fieldset.ci-aut legend{font-size:var(--fs-2xs);font-weight:700;color:var(--ink);padding:0 var(--s1)}
   .acciones-form{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s3)}
 
-  /* --- Tarjeta de flujo del expediente (estados de GET /hce/{id}/flujo) --- */
-  .flujo-conn{margin-bottom:var(--s4)}
-  .flujo-conn>h3 .spacer{flex:1}
-  .fl-ci{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3);font-size:var(--fs-xs)}
-  .fl-rotulo{font-weight:700;color:var(--ink)}
-  .fl-cadena{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:var(--s2);align-items:stretch}
-  .fl-cadena li{display:flex;align-items:stretch;gap:var(--s2)}
-  .fl-cadena li+li::before{content:"→" / "";align-self:center;color:var(--ink-2)}
-  .fl-btn{
-    display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;cursor:pointer;
-    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r-sm);
-    padding:var(--s2) var(--s3);font-family:inherit;font-size:var(--fs-2xs);min-width:130px
-  }
-  .fl-btn:hover{background:var(--paper-3);border-color:var(--ink-3)}
-  .fl-nombre{font-weight:600}
-  .fl-estado{color:var(--ink-2)}
-  .fl-aviso{color:var(--ink);font-size:var(--fs-3xs);font-weight:600}
   .avisos-api{margin-bottom:var(--s4)}
   .avisos-api ul{margin:var(--s1) 0 0;padding-left:var(--s5)}
   .avisos-api .aviso-conflicto{margin:0 0 var(--s1)}
@@ -1267,8 +1187,7 @@
   .banda-5{background:var(--rampa-5);color:#fff}
   .banda-6{background:var(--rampa-6);color:#fff;border-color:#fff}
   .banda-neutra{background:var(--rampa-neutra-bg);color:var(--rampa-neutra-fg)}      /* total_min fuera del mapa o no numerico: sin paso inferido */
-  .idea-summary .banda-chip{border-width:2px;border-color:#fff}
-  .ev-nota-banda{font-size:var(--fs-2xs);color:var(--on-dark-2)}
+  .ev-nota-banda{font-size:var(--fs-2xs);color:var(--ink-2)}
   /* Insignia del puntaje de cada descripcion (0 … 8): misma rampa, con el numero siempre visible. */
   .score-badge.sb-0,.score-badge.sb-1{background:var(--rampa-1);color:var(--rampa-txt-claro)}
   .score-badge.sb-2,.score-badge.sb-3{background:var(--rampa-2);color:var(--rampa-txt-claro)}
@@ -1295,7 +1214,7 @@
   .ev-err{font-size:var(--fs-3xs);color:var(--bad);margin-top:var(--s1);font-weight:600}
   .ev-err:empty{display:none}
   .dimension.invalid,.prot-item.invalid{box-shadow:inset 3px 0 0 var(--bad)}
-  .opciones[data-invalid],.lik-row[data-invalid]{outline:2px solid var(--bad);outline-offset:2px;border-radius:var(--r-sm)}
+  .opciones[data-invalid],.likert-fila[data-invalid]{outline:2px solid var(--bad);outline-offset:2px;border-radius:var(--r-sm)}
   .field.invalid select{border-color:var(--bad);background:var(--bad-soft)}
   .field input[aria-invalid="true"],.field textarea[aria-invalid="true"],.field select[aria-invalid="true"]{border-color:var(--bad)}
   /* Encabezado del modulo, estado y marca de addenda (notas §3.2 A): glifo + texto, nunca solo color */
@@ -1304,11 +1223,11 @@
   .ev-estado{display:inline-flex;gap:var(--s2);flex-wrap:wrap;align-items:center}
   .st-addenda{background:var(--paper);color:var(--ink);border:2px double var(--st-addenda-borde)}
   .st-mini.st-addenda{background:none;border:none;color:var(--ink);font-weight:700}
-  .fl-add{font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink)}
   .ev-card .ib{padding:var(--s3) var(--s4)}
-  .ev-etq{font-size:var(--fs-3xs);color:var(--on-dark-2);letter-spacing:.02em;margin-top:2px}
+  .ev-etq{font-family:var(--f-text);font-size:var(--fs-3xs);color:var(--ink-2);letter-spacing:0;text-transform:none;font-weight:600}
   .ev-acciones{display:flex;flex-direction:row;flex-wrap:wrap;gap:var(--s2)}
-  .ev-confirma{display:flex;flex-direction:column;gap:var(--s2);max-width:34ch;font-size:var(--fs-2xs);color:var(--on-dark)}
+  .ev-confirma{display:flex;align-items:center;gap:var(--s2);font-size:var(--fs-2xs);color:var(--ink)}
+  .ev-confirma>span{max-width:36ch;line-height:1.35}
   .ev-alerta{font-weight:700;color:var(--ink)}
   .ev-alertas{margin-bottom:var(--s3)}
   .tot-lectura{font-family:var(--f-dato);font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums}
@@ -1321,8 +1240,7 @@
   .ev-add-lista li{margin-bottom:var(--s2)}
   .exp-grid>*{min-width:0}      /* una tabla ancha dentro de una columna scrollea en su contenedor, no ensancha la página */
   @media(max-width:760px){
-    .idea-summary{position:static;gap:var(--s3)}
-    .ev-confirma{max-width:none}
+    .ev-confirma{flex-wrap:wrap}
   }
 
   /* ============ FASE 3-d · IC y VF CONECTADOS + DOCUMENTO IMPRESO (handoff §5.126) ============
@@ -1402,6 +1320,178 @@
   .confirmar-descarte .cd-txt{flex:1 1 220px;font-size:var(--fs-xs);font-weight:600}
   .confirmar-descarte .cd-txt .cd-glifo{color:var(--bad);margin-right:var(--s1)}
   .confirmar-descarte .cd-acciones{display:flex;gap:var(--s2);flex-wrap:wrap}
+
+  /* ============ F1 · ESTRUCTURA DEL EXPEDIENTE Y DEL LISTADO (handoff §5.140) ============
+     Banda del paciente pegada bajo la barra superior, flujo del año dentro de las pestañas, barra de acciones clara pegada
+     abajo, listado de cinco columnas. Mismas reglas que 3-a…3-e: el foco es el :focus-visible global, ningún significado
+     depende sólo del color y ok/warn/bad nunca pintan una clasificación clínica. Objetivos medidos (conectada.js, f1-…):
+     el primer bloque clínico arranca a ≤ 260 px del borde de arriba a 1280×800 y a ≤ 300 px a 1024×768; nada enfocado queda
+     tapado (WCAG 2.2 · 2.4.11) y todo lo operable del listado, la banda, las pestañas y la barra mide ≥ 24×24 px (2.5.8). */
+
+  /* --- Layout por debajo de 1180 px (H11) --- */
+  @media(min-width:761px) and (max-width:1179px){
+    .sidebar{width:192px}
+    .sidebar .sec{padding-left:var(--s4);padding-right:var(--s4)}
+    .navitem{padding-left:var(--s4);padding-right:var(--s3)}
+    .sidebar .foot{padding-left:var(--s4);padding-right:var(--s4)}
+    main{padding:var(--s4) var(--s5) var(--s8)}
+  }
+
+  /* --- Código (HC, C.I., N.º): cara de dato --- */
+  .cod{font-family:var(--f-dato);font-size:.92em;letter-spacing:.02em;color:var(--ink)}
+  .chip-inactivo{
+    display:inline-block;padding:0 6px;border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper-3);
+    color:var(--ink);font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;line-height:1.5;vertical-align:middle;white-space:nowrap
+  }
+
+  /* --- Banda del paciente (H1, H4, H6): clara, ≤ 64 px, pegada bajo la barra superior --- */
+  .banda-nna{
+    position:sticky;top:var(--topbar-h);z-index:40;
+    display:flex;align-items:center;flex-wrap:wrap;gap:var(--s1) var(--s4);
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow-banda);
+    padding:6px var(--s4);margin-bottom:6px
+  }
+  .banda-id{flex:0 1 auto;min-width:12rem}
+  .banda-nna h1{font-family:var(--f-display);font-size:1.125rem;font-weight:600;line-height:1.2;letter-spacing:-.005em;color:var(--ink)}
+  .banda-meta{font-size:var(--fs-2xs);line-height:1.3;color:var(--ink-2)}
+  .banda-meta .chip-inactivo{margin-left:var(--s1)}
+  /* La alerta clínica: tinta sobre papel, con ⚠ y texto. No es un estado de la app: nunca ok/warn/bad. */
+  .banda-alerta{
+    flex:1 1 180px;min-width:0;max-width:64ch;margin:0;font-size:var(--fs-2xs);line-height:1.35;color:var(--ink);
+    background:var(--paper);border:1px solid var(--ink);border-radius:var(--r-sm);padding:2px var(--s2)
+  }
+  .banda-editar{margin-left:auto;flex:0 0 auto}
+  @media(min-width:761px){.banda-nna{flex-wrap:nowrap}}   /* un solo renglón: si la alerta es larga, se parte ella */
+  @media(max-width:760px){
+    .banda-nna{position:static}
+    html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + 12px)}
+  }
+
+  /* --- Pestañas (H1, H8): nombre + código, agrupadas; el estado del ciclo anual va en cada pestaña --- */
+  .tabs-exp{margin-bottom:6px}
+  .tabs-barra{display:flex;align-items:flex-end;gap:var(--s2)}
+  .btn-ayuda{
+    flex:0 0 auto;width:24px;height:24px;margin-bottom:10px;border-radius:var(--r-pill);
+    border:1px solid var(--control-borde);background:var(--paper);color:var(--ink);font-weight:700;font-size:var(--fs-2xs);line-height:1
+  }
+  .btn-ayuda:hover,.btn-ayuda[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .exp-tabs{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:var(--s2);row-gap:0}
+  .tabs-grupo{display:flex;flex-direction:column;min-width:0}
+  .tabs-grupo-rot{
+    font-family:var(--f-dato);font-size:10px;line-height:12px;min-height:12px;margin-bottom:2px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-2);font-weight:700;white-space:nowrap
+  }
+  .tabs-grupo-fila{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--rule)}
+  .exp-tab{
+    display:flex;flex-direction:column;align-items:flex-start;gap:0;text-align:left;
+    padding:1px 4px 2px;border:1px solid var(--rule);border-bottom:none;margin-left:-1px;
+    background:var(--paper-2);color:var(--ink-2);border-radius:var(--r-sm) var(--r-sm) 0 0
+  }
+  .tabs-grupo-fila .exp-tab:first-child{margin-left:0}
+  .exp-tab:hover{background:var(--paper)}
+  .exp-tab .tab-nombre{font-size:var(--fs-2xs);font-weight:600;line-height:1.15;color:var(--ink)}
+  .exp-tab .tab-nombre>span{display:block}
+  .exp-tab .tab-cod{
+    display:inline-flex;align-items:center;gap:3px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;
+    line-height:1.15;color:var(--ink-2);letter-spacing:.03em
+  }
+  .exp-tab .solo-demo{font-size:10px;line-height:1.2;padding:0 2px;letter-spacing:0}
+  .exp-tab[aria-selected="true"]{position:relative;z-index:1;background:var(--paper);box-shadow:inset 0 3px 0 var(--orange);margin-bottom:-1px;padding-bottom:3px}
+  .exp-tab[aria-selected="true"] .tab-nombre{font-weight:700}
+  .exp-tab:focus-visible{outline-offset:-2px}   /* hacia adentro: la pestaña toca a sus vecinas y al filete de abajo */
+  .st-mini.st-fuera{color:var(--ink);font-weight:700}
+  .ayuda-flujo{
+    margin:var(--s2) 0 0;padding:var(--s2) var(--s3);background:var(--paper);border:1px solid var(--rule);border-radius:var(--r-sm);
+    font-size:var(--fs-2xs);line-height:1.5;color:var(--ink);max-width:90ch
+  }
+  .ayuda-flujo p+p{margin-top:var(--s1)}
+  .tabs-exp .estado-inline{margin:var(--s2) 0 0}
+
+  /* --- Encabezado del módulo: un renglón, sin tarjeta; la nota metodológica una sola vez debajo (sólo en los editores) --- */
+  .mod-cab{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s1) var(--s3);margin:0 0 5px}
+  .mod-cab h2{font-family:var(--f-text);font-size:var(--fs-sm);font-weight:700;line-height:1.25;color:var(--ink)}
+  .mod-cab .spacer{flex:1}
+  .mod-cab .st{padding:1px 6px;line-height:1.35}
+  .mod-cab .btn-mini{padding-top:3px;padding-bottom:3px}
+  .mod-nota{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.5;max-width:110ch;margin:0 0 var(--s3)}
+  #panelExp>.avisos-api,#panelExp>.form-errores{margin:0 0 var(--s3)}
+
+  /* --- Barra de acciones (H2): una fila clara ≤ 64 px pegada abajo: total con su rótulo, avance y acciones --- */
+  .barra-acciones{
+    position:sticky;bottom:0;z-index:30;
+    display:flex;align-items:center;flex-wrap:nowrap;gap:var(--s2) var(--s4);
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow-barra);
+    padding:6px var(--s4);margin-top:var(--s3);min-height:48px
+  }
+  .barra-acciones .spacer{flex:1}
+  .barra-total{flex:0 0 auto}
+  .barra-total .sum-lab{
+    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
+    font-weight:700;line-height:1.3;white-space:nowrap
+  }
+  .barra-total .tot{font-family:var(--f-dato);font-size:var(--fs-lg);font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .barra-total .tot small{font-size:var(--fs-xs);font-weight:600;color:var(--ink-2)}
+  .barra-sec{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+  .barra-sec .banda-chip{padding:2px var(--s2)}
+  .barra-cuenta{font-size:var(--fs-3xs);line-height:1.3;color:var(--ink-2);font-weight:600}
+  .barra-nota{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.4}
+  .barra-acciones:has(.ev-confirma) .barra-sec{display:none}   /* la confirmación de la firma entra en la misma fila */
+  .barra-acciones .ev-acciones{flex-wrap:nowrap}
+  .barra-requisitos{position:relative;font-size:var(--fs-2xs)}
+  .barra-requisitos>summary{cursor:pointer;font-weight:600;color:var(--ink);line-height:24px}
+  .barra-requisitos-cuerpo{
+    position:absolute;bottom:calc(100% + 12px);left:0;width:min(440px,80vw);z-index:2;
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow-pop);
+    padding:var(--s3) var(--s4);color:var(--ink);line-height:1.5
+  }
+  .barra-requisitos-cuerpo ul{margin:0 0 var(--s2);padding-left:var(--s5)}
+  @media(max-width:760px){
+    .barra-acciones{position:static;flex-wrap:wrap}
+    .barra-acciones .ev-acciones{flex-wrap:wrap}
+    html:has(#view-expediente.active .barra-acciones){scroll-padding-bottom:12px}
+  }
+
+  /* --- PB firmado: bloque «Resultado» primero (H7). Signo y texto, sin color. --- */
+  .res-totales{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
+  .res-tot,.res-celda{border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s2) var(--s3);background:var(--paper)}
+  .res-celda{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+  .res-rot{display:block;font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
+  .res-tot b,.res-delta{font-family:var(--f-dato);font-size:var(--fs-lg);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .res-tot small{font-family:var(--f-dato);font-size:var(--fs-xs);font-weight:600;color:var(--ink-2)}
+  .res-etq{font-size:var(--fs-xs);font-weight:600;color:var(--ink)}
+  .res-accion{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.45}
+  .res-escalas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3);margin-top:var(--s3)}
+  .res-pb .ev-alertas{margin:var(--s3) 0 0}
+  .res-pb .hint{margin-top:var(--s3)}
+  @media(max-width:900px){.res-escalas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+  /* --- Listado de «NNA y HCE» (H3, H5): cinco columnas, un punto de Tab por fila, la fila entera abre con el mouse --- */
+  #tablaNNA th,#tablaNNA td{padding:var(--s2) var(--s3)}
+  #tablaNNA th:first-child,#tablaNNA td:first-child{padding-left:var(--s4)}
+  #tablaNNA th{vertical-align:bottom}
+  #tablaNNA .th-sub{display:block;font-weight:600;letter-spacing:.06em;color:var(--ink-2)}
+  #tablaNNA tbody tr[data-hce]{cursor:pointer}
+  #tablaNNA .col-ir{width:1%;padding-right:var(--s4);color:var(--ink-2);font-size:var(--fs-md);text-align:right}
+  .nna-abrir{
+    display:inline-flex;align-items:center;min-height:24px;padding:2px 0;background:none;border:0;
+    font:inherit;font-size:var(--fs-sm);font-weight:600;color:var(--ink);text-align:left;cursor:pointer
+  }
+  .nna-abrir:hover,#tablaNNA tbody tr[data-hce]:hover .nna-abrir{color:var(--orange);text-decoration:underline}
+  .nna-sub{display:block;font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.35}
+  .nna-sub .cod{color:var(--ink-2)}
+  #tablaNNA .chip-inactivo{margin-left:var(--s1)}
+  /* En las listas «firmado» es ● + texto en --ok, sin relleno; «en curso» conserva su relleno. El expediente conserva el macizo. */
+  #tablaNNA .st-firmado{background:transparent;border-color:transparent;color:var(--ok)}
+  .ci-ok{font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink-2);white-space:nowrap}
+
+  /* --- KPI (H9): cuatro columnas desde 900 px; los pendientes son botones a «Pendientes» --- */
+  @media(min-width:900px){.kpirow-4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .kpi .kpi-ir{
+    display:inline-flex;align-items:center;gap:4px;min-height:24px;padding:0;background:none;border:0;
+    font:inherit;font-size:var(--fs-2xs);font-weight:600;color:var(--ink);text-align:left;cursor:pointer;
+    text-decoration:underline;text-underline-offset:2px
+  }
+  .kpi .kpi-ir:hover{color:var(--orange)}
 
   /* ============ IMPRESIÓN A4 del documento (view-informe) ============
      Hoja A4 con márgenes propios; el encabezado con los datos del expediente se repite en cada hoja (el documento

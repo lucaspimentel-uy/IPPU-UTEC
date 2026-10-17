@@ -2,7 +2,8 @@
  * demo/verificacion/salidas/ (gitignored). Sirven para revisar a ojo la pasada visual; no comparan nada.
  *
  * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF · una vista de
- * modo demostración (Analítica).
+ * modo demostración (Analítica). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
+ * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC.
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -31,6 +32,7 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     const snap = async (nombre) => { await page.waitForTimeout(250); const f = `3e-${nombre}-${w}x${h}.png`; await page.screenshot({ path: path.join(SALIDAS, f) }); hechas.push(f); };
+    const snapCompleta = async (nombre) => { await page.waitForTimeout(250); const f = `f1-${nombre}-completa-${w}x${h}.png`; await page.screenshot({ path: path.join(SALIDAS, f), fullPage: true }); hechas.push(f); };
 
     await page.goto(DEMO + '/index.html?api=' + encodeURIComponent(API));
     await page.waitForSelector('#loginScreen', { state: 'attached' });
@@ -63,6 +65,10 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     if (w === 1280) await api('POST', `/hce/${idMartin}/valoracion-funcional`, { estado: 'Valorado', fecha: '2025-01-15', organismo: 'Equipo valorador', pct: '58', vigencia: '2026-12-31', dominios: { comunicacion: 'Apoyo permanente', autocuidado: 'Apoyo ocasional', movilidad: 'Autónomo' }, capacidades: 'Disfruta de la música.', sintesis_funcional: 'Muestra.' });
     await abrir('Martín', 'vf');                                          await snap('vf');
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
+    // F1: página completa (la banda y la barra de acciones quedan donde las deja el desplazamiento)
+    await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');
+    await abrir('Martín', 'pb');                                          await snapCompleta('pb-resultado');
+    await abrir('Valentina', 'ic');                                       await snapCompleta('ic-editor');
     await ctx.close();
   }
   await browser.close();

@@ -1,4 +1,4 @@
-/* Verificación de la demo CONECTADA a la API (Fase 3-a · handoff §5.122).
+/* Verificación de la demo CONECTADA a la API (Fase 3-a · handoff §5.122; prefijos de fase en README.md).
  *
  * A diferencia de fingerprint.js (que compara el comportamiento de la demo ESTÁTICA, sin API),
  * este script prueba contra una API real: login, listado, HCE-00 y modo demostración.
@@ -164,8 +164,8 @@ async function loguear(page) {
 
   await page.click('.chip-estado[data-estado="inactivos"]');
   await esperarResumen(page, 'Mostrando 1 de 1');
-  const inactivoNombre = await txt(page, '#tbodyNNA tr[data-hce] td.nna-name');
-  check('3a-c3', 'inactivos (filtro en el cliente): 1 fila — Tomás', (await filas(page)) === 1 && inactivoNombre === 'Tomás', `fila="${inactivoNombre}"`);
+  const inactivoNombre = await txt(page, '#tbodyNNA tr[data-hce] .nna-abrir');   // F1: el nombre completo es el botón de la fila
+  check('3a-c3', 'inactivos (filtro en el cliente): 1 fila — Tomás', (await filas(page)) === 1 && inactivoNombre.startsWith('Tomás'), `fila="${inactivoNombre}"`);
 
   // Grupos: con incluir_inactivos (Todos) → 3 / 3 / 2, como afirma el test del seed.
   await page.click('.chip-estado[data-estado="todos"]');
@@ -178,7 +178,7 @@ async function loguear(page) {
   for (const [grupo, n] of Object.entries(esperadoGrupo)) {
     await page.selectOption('#filtroGrupo', { label: grupo });
     await esperarResumen(page, `Mostrando ${n} de ${n}`);
-    const celdas = await page.$$eval('#tbodyNNA tr[data-hce] td:nth-child(6)', (tds) => tds.map((t) => t.textContent.trim()));
+    const celdas = await page.$$eval('#tbodyNNA tr[data-hce] td:nth-child(2)', (tds) => tds.map((t) => t.textContent.trim()));   // F1: Grupo es la 2.ª columna
     check('3a-c5-' + grupo, `grupo ${grupo} con inactivos: ${n} filas, todas del grupo`,
       (await filas(page)) === n && celdas.every((c) => c === grupo), `filas=${await filas(page)} grupos=${[...new Set(celdas)].join(',')}`);
   }
@@ -198,8 +198,8 @@ async function loguear(page) {
     malMapeo.length === 0, malMapeo.length ? 'mal: ' + malMapeo.join(', ') : tabla.length + ' casos');
 
   let r = await buscar(page, '6.012.345-1');
-  check('3a-d', 'búsqueda por la cédula «6.012.345-1» → GET /hce?ci=60123451 → 1 fila: Martín',
-    r.params.ci === '60123451' && !r.params.numero && !r.params.nombre && r.filas === 1 && /Martín/.test(r.html) && /6\.012\.345-1/.test(r.html),
+  check('3a-d', 'búsqueda por la cédula «6.012.345-1» → GET /hce?ci=60123451 → 1 fila: Martín (la cédula no se muestra en el listado, F1)',
+    r.params.ci === '60123451' && !r.params.numero && !r.params.nombre && r.filas === 1 && /Martín/.test(r.html) && !/6\.012\.345-1/.test(r.html),
     JSON.stringify(r.params) + ' filas=' + r.filas);
   r = await buscar(page, '60123451');
   check('3a-m1', 'cédula de 8 dígitos sin separadores → ci → 1 fila: Martín', r.params.ci === '60123451' && !r.params.numero && r.filas === 1 && /Martín/.test(r.html), JSON.stringify(r.params) + ' filas=' + r.filas);
@@ -209,7 +209,7 @@ async function loguear(page) {
   check('3a-m3', 'límite 6 dígitos sin separadores («601234») → numero (no ci) → sin resultados (no existe esa HCE)', r.params.numero === '601234' && !r.params.ci && r.filas === 0 && /No se encontraron/.test(r.html), JSON.stringify(r.params) + ' filas=' + r.filas);
   r = await buscar(page, '1002');
   check('3a-d2', 'búsqueda por N.º de HCE «1002» → GET /hce?numero=1002 → exactamente 1 fila: Martín, con N.º 1002',
-    r.params.numero === '1002' && !r.params.ci && r.filas === 1 && /Martín/.test(r.html) && /^1002\b/.test(r.html.trim()), JSON.stringify(r.params) + ' filas=' + r.filas);
+    r.params.numero === '1002' && !r.params.ci && r.filas === 1 && /Martín/.test(r.html) && /HC 1002\b/.test(r.html), JSON.stringify(r.params) + ' filas=' + r.filas);
   r = await buscar(page, 'Mart');
   check('3a-m4', 'búsqueda por nombre «Mart» → GET /hce?nombre=Mart → al menos 1 fila, con Martín', r.params.nombre === 'Mart' && !r.params.ci && !r.params.numero && r.filas >= 1 && /Martín/.test(r.html), JSON.stringify(r.params) + ' filas=' + r.filas);
   r = await buscar(page, 'zzzz');
@@ -244,11 +244,11 @@ async function loguear(page) {
     faltan.length === 0 && titulo === `${api.persona.nombre} ${api.persona.apellido}` && /6\.012\.345-1/.test(exp),
     faltan.length ? 'faltan: ' + faltan.join(' | ') : `título="${titulo}" técnicos="${api.grupo.tecnico1.nombre} (${api.grupo.tecnico1.rol}) + ${api.grupo.tecnico2.nombre} (${api.grupo.tecnico2.rol})"`);
   check('3a-f2', 'el foco queda en el título del expediente', foco === 'expTitulo', `foco=${foco}`);
-  const pasosM = await page.$$eval('#flujoWrap .fl-btn', (bs) => bs.map((b) => b.getAttribute('aria-label')));
-  const flujoM = (await txt(page, '#flujoWrap')).replace(/\s+/g, ' ');
-  check('3a-f3', 'stepper del flujo desde GET /hce/{id}/flujo (Martín: CI registrado + LB, PA, PB, IC firmados), con texto y glifo de estado',
-    JSON.stringify(pasosM) === JSON.stringify(['Línea base (IDEA): firmado', 'Protocolo A: firmado', 'Protocolo B: firmado', 'Informe de cierre: firmado']) &&
-    /Registrado/.test(flujoM) && /flujo del año \d{4}/i.test(flujoM) && /●/.test(flujoM), flujoM.slice(0, 150));
+  const pasosM = await page.$$eval('#tabsExpWrap [role="tab"][data-mod]', (bs) => bs.map((b) => b.querySelector('.tab-nombre').textContent + b.querySelector('.st-mini .sr-only').textContent));
+  const flujoM = await page.evaluate(() => document.getElementById('tabsExpWrap').textContent.replace(/\s+/g, ' '));
+  check('3a-f3', 'flujo del año desde GET /hce/{id}/flujo en las pestañas del ciclo anual (Martín: CI registrado + LB, PA, PB, IC firmados), con glifo y texto de estado',
+    JSON.stringify(pasosM) === JSON.stringify(['Línea base: firmado', 'Protocolo A: firmado', 'Protocolo B: firmado', 'Informe de cierre: firmado']) &&
+    /CI●: registrado/.test(flujoM) && /Ciclo anual \d{4}/i.test(flujoM) && /●/.test(flujoM), flujoM.slice(0, 150));
   const ocultos = ['Talleres', 'Nivel de soporte', 'Historial clínico', 'Tendencia', 'Bloquead', '🔒', 'Azul', 'Celeste', 'Naranja'].filter((t) => exp.includes(t));
   check('3a-f4', 'lo que la API no guarda (talleres, nivel de soporte, historial, tendencia) y los colores de grupo de la demo NO aparecen; tampoco candados ni «Bloqueado»',
     ocultos.length === 0, ocultos.length ? 'aparece: ' + ocultos.join(',') : '');
@@ -256,8 +256,9 @@ async function loguear(page) {
     if (h.getMonth() < n.getMonth() || (h.getMonth() === n.getMonth() && h.getDate() < n.getUTCDate())) e--; return e; })();
   check('3a-f5', 'la edad sale de persona.fecha_nac (no hay columna edad)', new RegExp(`${edadEsperada} años`).test(exp), `esperada=${edadEsperada}`);
   const hayInputs = await page.locator('#view-expediente input, #view-expediente textarea, #view-expediente select').count();
-  check('3a-f6', 'HCE-00 se lee como texto (sin campos sueltos en la vista); la edición va en un diálogo que se abre con «Editar datos»',
-    hayInputs === 0 && (await page.locator('#expHead >> text=✎ Editar datos').count()) === 1, `inputs=${hayInputs}`);
+  const editores = await page.locator('#view-expediente [onclick^="openEditar"]').count();
+  check('3a-f6', 'HCE-00 se lee como texto (sin campos sueltos en la vista); la edición va en un diálogo que se abre con «Editar datos», el ÚNICO punto de edición del expediente',
+    hayInputs === 0 && (await page.locator('#expHead >> text=✎ Editar datos').count()) === 1 && editores === 1, `inputs=${hayInputs} puntos de edición=${editores}`);
 
   /* Pestañas: un módulo no conectado muestra el panel de modo demostración y SIN datos; teclado. */
   await page.click('#tabExp-doc');
@@ -373,10 +374,11 @@ async function loguear(page) {
     await p3.click('#loginBtn');
     await p3.waitForSelector('#loginError:not([hidden])', { timeout: 8000 });
     const m = await txt(p3, '#loginError');
-    const apiMostrada = (await txt(p3, '#loginApi')).trim();
-    check('3a-k', 'API inalcanzable (?api=…): mensaje legible, sin sesión, y el login muestra a qué API se envía la contraseña',
-      /No se pudo conectar con la API/.test(m) && apiMostrada === 'http://localhost:9' && (await p3.evaluate(() => sessionStorage.length)) === 0,
-      `mensaje="${m}" api="${apiMostrada}"`);
+    const apiUsada = await p3.evaluate(() => API_BASE);
+    const muestraUrl = await p3.evaluate(() => { const c = document.getElementById('loginScreen').cloneNode(true); c.querySelector('#loginError').remove(); return /localhost:9/.test(c.textContent); });   // el mensaje de error sí la nombra
+    check('3a-k', 'API inalcanzable (?api=…): mensaje legible (nombra la API que no responde) y sin sesión; ?api= sigue mandando (la demo usa esa API) pero el login ya no muestra la URL fuera de ese mensaje (F1)',
+      /No se pudo conectar con la API/.test(m) && apiUsada === 'http://localhost:9' && !muestraUrl && (await p3.evaluate(() => sessionStorage.length)) === 0,
+      `mensaje="${m}" API_BASE="${apiUsada}" url a la vista=${muestraUrl}`);
     await c3.close();
   }
 
@@ -403,7 +405,7 @@ async function loguear(page) {
     await esperarResumen(p4, 'Mostrando 7 de 7');
     await p4.route(reFlujo, (route) => route.abort());
     await p4.locator('#tbodyNNA tr[data-hce]', { hasText: 'Martín' }).getByRole('button', { name: /Abrir expediente/ }).click();
-    await p4.waitForSelector('#flujoWrap >> text=No se pudo cargar el estado de los módulos', { timeout: 8000 });
+    await p4.waitForSelector('#tabsExpWrap >> text=No se pudo cargar el estado de los módulos', { timeout: 8000 });   // F1: debajo de las pestañas
     await p4.unroute(reFlujo);
     await p4.route(reFlujo, async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue(); });
     await p4.getByRole('button', { name: 'Reintentar' }).click();
@@ -518,10 +520,10 @@ async function loguear(page) {
     check('3b-a2', 'la revisión del paso 4 muestra N.º de HC «se asigna el siguiente» y los técnicos del grupo',
       /N\.º de HC se asigna el siguiente/.test(review) && /Dr\. González/.test(review), review.slice(0, 200));
     const cabecera = (await txt(p5, '#expHead')).replace(/\s+/g, ' ');
-    check('3b-a3', 'el expediente nuevo se abre con «N.º de HC <hc_historico>» (nunca el id interno) y el foco en el título',
-      new RegExp(`N\\.º de HC ${apiNuevo.hc_historico}\\b`).test(cabecera) && (await focoId(p5)) === 'expTitulo' && apiNuevo.hc_historico >= 1000 && String(apiNuevo.hc_historico) !== String(idNuevo),
+    check('3b-a3', 'el expediente nuevo se abre con «HC <hc_historico>» en la banda (nunca el id interno) y el foco en el título',
+      new RegExp(`HC ${apiNuevo.hc_historico}\\b`).test(cabecera) && (await focoId(p5)) === 'expTitulo' && apiNuevo.hc_historico >= 1000 && String(apiNuevo.hc_historico) !== String(idNuevo),
       `hc=${apiNuevo.hc_historico} id=${idNuevo}`);
-    await p5.click('.exp-head .btn-ghost');                       // ‹ Volver al listado
+    await p5.click('.navitem[data-view="inicio"]');               // F1: se vuelve por «NNA y HCE» (ya no hay «Volver al listado»)
     await p5.fill('#searchNNA', nombreNuevo);
     await p5.waitForFunction((n) => document.getElementById('tbodyNNA').textContent.includes(n), nombreNuevo, { timeout: 8000 });
     const filaNueva = (await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).innerText()).replace(/\s+/g, ' ');
@@ -657,21 +659,22 @@ async function loguear(page) {
     check('3b-d7', 'reingreso: PATCH {activo:true}; la API borra fecha_baja', JSON.stringify(bodyRe) === '{"activo":true}' && apiRe.activo === true && apiRe.fecha_baja === null, JSON.stringify(bodyRe));
 
     /* ---------- (e) CI: sin consentimiento nada se traba; se registra y todo lo muestra registrado ---------- */
-    const flujoTxt = (await txt(p5, '#flujoWrap')).replace(/\s+/g, ' ');
-    const trabas = await p5.evaluate(() => ({ deshabilitados: document.querySelectorAll('#flujoWrap [disabled], #flujoWrap [inert], #flujoWrap [aria-disabled="true"]').length,
-      candado: /🔒|Bloquead/i.test(document.getElementById('flujoWrap').innerText + document.getElementById('tabsExpWrap').innerText),
-      pasos: [...document.querySelectorAll('#flujoWrap .fl-btn')].map((b) => b.getAttribute('aria-label')) }));
-    check('3b-e1', 'nuevo expediente SIN consentimiento: «CI pendiente» visible, los cuatro módulos del año figuran «sin iniciar», ningún candado ni «Bloqueado» ni control deshabilitado',
-      /CI pendiente/.test(flujoTxt) && /no bloquea/.test(flujoTxt) && trabas.deshabilitados === 0 && !trabas.candado &&
-      JSON.stringify(trabas.pasos) === JSON.stringify(['Línea base (IDEA): sin iniciar', 'Protocolo A: sin iniciar', 'Protocolo B: sin iniciar', 'Informe de cierre: sin iniciar']),
+    const flujoTxt = await p5.evaluate(() => document.getElementById('tabsExpWrap').textContent.replace(/\s+/g, ' '));   // F1: el flujo vive en las pestañas (y su ayuda «?»)
+    const trabas = await p5.evaluate(() => ({ deshabilitados: document.querySelectorAll('#tabsExpWrap [disabled], #tabsExpWrap [inert], #tabsExpWrap [aria-disabled="true"]').length,
+      candado: /🔒|Bloquead/i.test(document.getElementById('tabsExpWrap').innerText),
+      ciPend: !!document.querySelector('#tabExp-ci .st-ci-pend'),
+      pasos: [...document.querySelectorAll('#tabsExpWrap [role="tab"][data-mod]')].map((b) => b.querySelector('.tab-nombre').textContent + b.querySelector('.st-mini .sr-only').textContent) }));
+    check('3b-e1', 'nuevo expediente SIN consentimiento: el consentimiento pendiente se ve (⚠ + texto) en su pestaña, los cuatro módulos del año figuran «sin iniciar», la ayuda dice que nada se bloquea, ningún candado ni «Bloqueado» ni control deshabilitado',
+      trabas.ciPend && /CI⚠: pendiente/.test(flujoTxt) && /no bloquea/.test(flujoTxt) && trabas.deshabilitados === 0 && !trabas.candado &&
+      JSON.stringify(trabas.pasos) === JSON.stringify(['Línea base: sin iniciar', 'Protocolo A: sin iniciar', 'Protocolo B: sin iniciar', 'Informe de cierre: sin iniciar']),
       JSON.stringify(trabas));
-    await p5.click('#flujoWrap .fl-btn >> nth=0');                  // un módulo anual: abre su pestaña, sin traba
+    await p5.click('#tabExp-lb');                                   // un módulo anual: abre su pestaña, sin traba (F1: desde la pestaña)
     await p5.waitForSelector('#evResumen', { timeout: 8000 });
     const lb = await p5.evaluate(() => ({ sel: document.getElementById('tabExp-lb').getAttribute('aria-selected'), panel: document.getElementById('panelExp').innerText }));
     check('3b-e2', 'un módulo anual (LB) se abre aunque falte el CI: su pestaña se selecciona y muestra el editor conectado (formulario IDEA de la API), sin candado ni panel de demostración',
       lb.sel === 'true' && !/Modo demostración — no se guarda/.test(lb.panel) && /Línea base — IDEA/.test(lb.panel) && !/🔒|Bloquead/i.test(lb.panel));
-    await p5.click('#flujoWrap >> text=Ver auditoría');
-    check('3b-e3', '«Ver auditoría» abre el panel de modo demostración compartido', /Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
+    await p5.click('#tabExp-log');                                  // F1: «Ver auditoría» se retiró; la reemplaza la pestaña «Auditoría»
+    check('3b-e3', 'la pestaña «Auditoría» (reemplaza a «Ver auditoría») abre el panel de modo demostración compartido', /Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
 
     // pestaña CI: GET 404 = pendiente (estado, no error)
     const resp404 = p5.waitForResponse((r) => /\/consentimiento$/.test(r.url()) && r.request().method() === 'GET');
@@ -695,23 +698,23 @@ async function loguear(page) {
     await p5.click('#btnCiGuardar');
     const bodyCi = cuerpoDe(await reqCi);
     await flujoRe;
-    await p5.waitForFunction(() => /Registrado/.test(document.getElementById('flujoWrap').innerText));
+    await p5.waitForFunction(() => /registrado/.test(document.getElementById('tabExp-ci').textContent));
     const apiCi = (await apiGet(p5, `/hce/${idNuevo}/consentimiento`)).json;
-    const tras = await p5.evaluate(() => ({ panel: document.getElementById('panelExp').innerText.replace(/\s+/g, ' '), flujo: document.getElementById('flujoWrap').innerText.replace(/\s+/g, ' '),
+    const tras = await p5.evaluate(() => ({ panel: document.getElementById('panelExp').innerText.replace(/\s+/g, ' '), flujo: document.getElementById('tabExp-ci').textContent.replace(/\s+/g, ' '),
       marcaTab: document.getElementById('tabExp-ci').innerText.replace(/\s+/g, ' '), foco: document.activeElement.id }));
     check('3b-e5', 'registrar el CI: POST {firmante, fecha, autorizaciones} (las tres) → la API lo guarda y la pantalla lo muestra «Registrado» (nunca «firmado»), con el foco en su título',
       Object.keys(bodyCi).sort().join() === 'autorizaciones,fecha,firmante' && Object.keys(bodyCi.autorizaciones).sort().join() === 'comunicacion,evaluacion,registro' &&
       apiCi.firmante === 'Referente de prueba 3b' && apiCi.autorizaciones.evaluacion === true && apiCi.autorizaciones.comunicacion === false &&
       /registrado/i.test(tras.panel) && /Referente de prueba 3b/.test(tras.panel) && !/firmad/i.test(tras.panel) && tras.foco === 'ciTitulo', JSON.stringify(bodyCi));
-    check('3b-e6', 'tras registrar, el flujo se vuelve a pedir a la API: la tarjeta del stepper dice «Registrado» (ya no «CI pendiente») y la pestaña CI lo marca',
-      /Registrado/.test(tras.flujo) && !/CI pendiente/.test(tras.flujo) && /registrado/.test(tras.marcaTab), tras.flujo.slice(0, 120));
+    check('3b-e6', 'tras registrar, el flujo se vuelve a pedir a la API: la pestaña CI dice «registrado» (ya no «pendiente») y lo marca con ●',
+      /registrado/.test(tras.flujo) && !/pendiente/.test(tras.flujo) && /●/.test(tras.marcaTab), tras.flujo.slice(0, 120));
     await p5.click('#tabExp-hce00');
-    await p5.click('.exp-head .btn-ghost');
+    await p5.click('.navitem[data-view="inicio"]');
     await p5.fill('#searchNNA', nombreNuevo);
     await p5.waitForFunction((n) => document.getElementById('tbodyNNA').textContent.includes(n), nombreNuevo, { timeout: 8000 });
-    await p5.waitForFunction((n) => { const t = [...document.querySelectorAll('#tbodyNNA tr[data-hce]')].find((r) => r.textContent.includes(n)); return t && /Registrado/.test(t.textContent); }, nombreNuevo, { timeout: 8000 });
+    await p5.waitForFunction((n) => { const t = [...document.querySelectorAll('#tbodyNNA tr[data-hce]')].find((r) => r.textContent.includes(n)); return t && /CI registrado/.test(t.textContent); }, nombreNuevo, { timeout: 8000 });
     const filaReg = (await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).innerText()).replace(/\s+/g, ' ');
-    check('3b-e7', 'la fila del listado muestra el CI «Registrado» (no «CI pendiente»)', /Registrado/.test(filaReg) && !/CI pendiente/.test(filaReg), filaReg);
+    check('3b-e7', 'la fila del listado muestra el CI registrado («✓ CI», F1) y no «CI pendiente»', /✓ CI registrado/.test(filaReg) && !/CI pendiente/.test(filaReg), filaReg);
     // editar el CI: PATCH, y vuelve a mostrar lo que devolvió la API
     await p5.locator('#tbodyNNA tr[data-hce]', { hasText: nombreNuevo }).getByRole('button', { name: /Abrir expediente/ }).click();
     await p5.waitForSelector('#expTitulo');
@@ -824,10 +827,10 @@ async function loguear(page) {
     const paM = protM.find((x) => x.tipo === 'A'), pbM = protM.find((x) => x.tipo === 'B');
     await pc.click('#tabExp-pa'); await pc.waitForSelector('#evTotal');
     const totPA = (await txt(pc, '#evTotal')).trim();
-    await pc.click('#tabExp-pb'); await pc.waitForSelector('#evDeltaTabla');
+    await pc.click('#tabExp-pb'); await pc.waitForSelector('#evResultado');
     const tot = await pc.evaluate(() => ({ pb: document.getElementById('evTotal').textContent.trim(),
-      filas: Object.fromEntries([...document.querySelectorAll('#evDeltaTabla tbody tr')].map((tr) => [tr.dataset.delta, tr.querySelector('td.num').innerText.trim()])),
-      txt: document.getElementById('evDeltaTabla').innerText.replace(/\s+/g, ' ') }));
+      filas: Object.fromEntries([...document.querySelectorAll('#evResultado [data-delta]')].map((tr) => [tr.dataset.delta, tr.querySelector('.res-delta').innerText.trim()])),
+      txt: document.getElementById('evResultado').innerText.replace(/\s+/g, ' ') }));
     check('3c-g', 'Martín: PA 60, PB 79 y Δ +19 (escalas +4/+6/+4/+5) tal como los devuelve la API, con su lectura (etiqueta) y sin alerta',
       totPA === '60' && String(paM.total) === '60' && tot.pb === '79' && String(pbM.total) === '79' &&
       claves.every((c) => tot.filas[c] === fmtD(pbM.deltas[c])) && tot.filas.total === '+19' && [4, 6, 4, 5].every((d, i) => tot.filas['esc_' + (i + 1)] === '+' + d) &&
@@ -845,10 +848,10 @@ async function loguear(page) {
     const ideaAdd = (await get(`/idea/${ideaM.id}`)).json;
     const pantalla = await pc.evaluate(() => ({ lista: document.querySelector('#evAddendas .ev-add-lista').innerText.replace(/\s+/g, ' '), cab: document.getElementById('evEstado').innerText.replace(/\s+/g, ' '),
       tab: document.getElementById('tabExp-lb').innerText.replace(/\s+/g, ' '), tabSr: document.querySelector('#tabExp-lb .st-addenda .sr-only') ? document.querySelector('#tabExp-lb .st-addenda .sr-only').textContent : '',
-      flujo: document.getElementById('flujoWrap').innerText.replace(/\s+/g, ' '), foco: document.activeElement.id }));
-    check('3c-d', 'addenda a un IDEA firmado: el cuerpo es solo {texto} (sin autor), la API guarda como autor al usuario de la sesión, la lista lo muestra con nombre y fecha, y el estado del módulo marca la addenda (encabezado, pestaña y stepper)',
+      foco: document.activeElement.id }));
+    check('3c-d', 'addenda a un IDEA firmado: el cuerpo es solo {texto} (sin autor), la API guarda como autor al usuario de la sesión, la lista lo muestra con nombre y fecha, y el estado del módulo marca la addenda (encabezado y pestaña del ciclo anual, con ✚ visible)',
       JSON.stringify(Object.keys(cuerpoAdd)) === '["texto"]' && ideaAdd.addendas.length === 1 && ideaAdd.addendas[0].profesional_id === yo.id && ideaAdd.addendas[0].texto === textoAdd &&
-      pantalla.lista.includes(yo.nombre) && pantalla.lista.includes(textoAdd) && /con 1 addenda/.test(pantalla.cab) && /✚/.test(pantalla.cab) && /con 1 addenda/.test(pantalla.tabSr) && /1 addenda/.test(pantalla.flujo) && pantalla.foco === 'evAddTitulo',
+      pantalla.lista.includes(yo.nombre) && pantalla.lista.includes(textoAdd) && /con 1 addenda/.test(pantalla.cab) && /✚/.test(pantalla.cab) && /con 1 addenda/.test(pantalla.tabSr) && /✚/.test(pantalla.tab) && pantalla.foco === 'evAddTitulo',
       `autor=${yo.nombre} (id ${yo.id}) · ${pantalla.cab}`);
     await pc.click('#btnEvAdd');
     await pc.waitForSelector('#evAddErrores:not([hidden])');
@@ -965,8 +968,8 @@ async function loguear(page) {
     await abrir(idSofia, 'pa');
     const paDraft = (await get(`/hce/${idSofia}/protocolo`)).json.find((x) => x.tipo === 'A');
     check('3c-b0', 'el borrador del PA de Sofía se carga desde la API (24 ítems, evaluadores del borrador precargados, sin fecha ni síntesis)',
-      (await pc.locator('#panelExp .lik-btn.sel').count()) === 24 && paDraft.firmado === false && (await pc.inputValue('#ev_t1')) === String(paDraft.evaluador_t1_id) && (await pc.inputValue('#prot_fecha')) === '', '24 ítems');
-    await pc.click('#pitem-1 .lik-btn[data-v="1"]');
+      (await pc.locator('#panelExp .likert-btn.sel').count()) === 24 && paDraft.firmado === false && (await pc.inputValue('#ev_t1')) === String(paDraft.evaluador_t1_id) && (await pc.inputValue('#prot_fecha')) === '', '24 ítems');
+    await pc.click('#pitem-1 .likert-btn[data-v="1"]');
     await pc.fill('#prot_fecha', '2026-07-08'); await pc.fill('#prot_sint1', 'Síntesis del técnico 1 (prueba 3-c).'); await pc.fill('#prot_sint2', 'Síntesis del técnico 2 (prueba 3-c).');
     const vivo = await pc.evaluate(() => ({ total: document.getElementById('evTotal').textContent, etq: document.getElementById('evTotalEtq').textContent, cuenta: document.getElementById('evCuenta').textContent, sub0: document.getElementById('protSub0').textContent }));
     check('3c-prov', 'mientras se tipea: la suma queda rotulada «provisorio» y el conteo es «n / 24 ítems puntuados»; sin banda ni Δ en vivo',
@@ -993,17 +996,17 @@ async function loguear(page) {
     /* ---------- (c) PB de Sofía: se crea y se firma; el Δ y la alerta mostrados == la respuesta de la API ---------- */
     await pc.click('#tabExp-pb'); await pc.waitForSelector('#evResumen');
     const itemsPB = [1, 1, 2, 2, 2, 2, 4, 4, 3, 3, 3, 3, 4, 3, 3, 4, 3, 3, 4, 3, 3, 4, 3, 3];   // E1 = 10 → Δ E1 = −8: alerta
-    for (let i = 0; i < 24; i++) await pc.click(`#pitem-${i + 1} .lik-btn[data-v="${itemsPB[i]}"]`);
+    for (let i = 0; i < 24; i++) await pc.click(`#pitem-${i + 1} .likert-btn[data-v="${itemsPB[i]}"]`);
     await pc.fill('#pobs-1', 'Regresión significativa en contacto visual (prueba 3-c).'); await pc.fill('#pobs-2', 'Regresión en iniciativa social (prueba 3-c).');
     await pc.fill('#prot_fecha', '2026-11-10'); await pc.fill('#prot_semanas', '17'); await pc.fill('#prot_sint1', 'Síntesis PB técnico 1.'); await pc.fill('#prot_sint2', 'Síntesis PB técnico 2.'); await pc.fill('#prot_ajustes', 'Ajustes de prueba.');
     const reqCrearPB = pc.waitForRequest((r) => r.method() === 'POST' && /\/hce\/\d+\/protocolo$/.test(r.url()));
     await pc.click('#btnEvFirmar'); await pc.click('#btnEvConfirmar');
     const cuerpoPB = cuerpoDe(await reqCrearPB);
-    await pc.waitForSelector('#evDeltaTabla', { timeout: 8000 });
+    await pc.waitForSelector('#evResultado', { timeout: 8000 });
     const pbS = (await get(`/hce/${idSofia}/protocolo`)).json.find((x) => x.tipo === 'B');
     const dPB = await pc.evaluate(() => ({ total: document.getElementById('evTotal').textContent.trim(),
-      filas: Object.fromEntries([...document.querySelectorAll('#evDeltaTabla tbody tr')].map((tr) => [tr.dataset.delta, { d: tr.querySelector('td.num').innerText.trim(), t: tr.innerText.replace(/\s+/g, ' ') }])),
-      alerta: [...document.querySelectorAll('.ev-alertas')].map((e) => e.innerText.replace(/\s+/g, ' ')), marcas: document.querySelectorAll('#evDeltaTabla .ev-alerta').length }));
+      filas: Object.fromEntries([...document.querySelectorAll('#evResultado [data-delta]')].map((tr) => [tr.dataset.delta, { d: tr.querySelector('.res-delta').innerText.trim(), t: tr.innerText.replace(/\s+/g, ' ') }])),
+      alerta: [...document.querySelectorAll('.ev-alertas')].map((e) => e.innerText.replace(/\s+/g, ' ')), marcas: document.querySelectorAll('#evResultado .ev-alerta').length }));
     check('3c-c', 'PB de Sofía creado y firmado: POST con tipo B y año del flujo; el Δ (total y por escala), la lectura y la ALERTA mostrados son exactamente los de la API (Δ E1 ≤ −7 → alerta institucional)',
       cuerpoPB.tipo === 'B' && cuerpoPB.anio === paDraft.anio && pbS.firmado === true && dPB.total === String(pbS.total) && claves.every((c) => dPB.filas[c].d === fmtD(pbS.deltas[c]) && dPB.filas[c].t.includes(pbS.interpretacion[c].etiqueta)) &&
       pbS.alertas.length >= 1 && dPB.marcas === pbS.alertas.length && dPB.alerta.length === 1 && pbS.alertas.every((a) => dPB.alerta[0].includes(fmtD(a.delta)) && dPB.alerta[0].includes(a.etiqueta)) && pbS.alertas.some((a) => a.escala === 'esc_1'),
@@ -1022,18 +1025,18 @@ async function loguear(page) {
     const rCrearLB = await reqCrearLB;
     await pc.waitForFunction(() => document.querySelector('#evEstado .st-en_curso'), null, { timeout: 8000 });
     const lbs = (await get(`/hce/${idSinCi}/idea`)).json;
-    const bloq = await pc.evaluate(() => ({ deshab: [...document.querySelectorAll('#panelExp [data-ev]')].filter((e) => e.disabled).length, flujo: document.getElementById('flujoWrap').innerText.replace(/\s+/g, ' '),
+    const bloq = await pc.evaluate(() => ({ deshab: [...document.querySelectorAll('#panelExp [data-ev]')].filter((e) => e.disabled).length, flujo: document.getElementById('tabExp-ci').textContent.replace(/\s+/g, ' '),
       avisos: document.getElementById('evAvisos').hidden ? '' : document.getElementById('evAvisos').innerText, guardar: !document.getElementById('btnEvGuardar').disabled, total: document.getElementById('evTotal').textContent.trim() }));
     check('3c-i', 'expediente SIN consentimiento: crear y guardar el IDEA anda (POST 201, queda «En curso»), sin candado ni control deshabilitado; el CI pendiente es solo un estado visible. (La API no avisa por la falta de CI ni por el IDEA: es el primer eslabón, §5.94/§5.116 e.)',
-      ci0 === 404 && rCrearLB.status() === 201 && lbs.length === 1 && lbs[0].firmado === false && bloq.deshab === 0 && /CI pendiente/.test(bloq.flujo) && bloq.guardar && bloq.total === String(lbs[0].total) && (await sinCandado()),
+      ci0 === 404 && rCrearLB.status() === 201 && lbs.length === 1 && lbs[0].firmado === false && bloq.deshab === 0 && /⚠: pendiente/.test(bloq.flujo) && bloq.guardar && bloq.total === String(lbs[0].total) && (await sinCandado()),
       `CI→${ci0} · IDEA→${rCrearLB.status()} · avisos="${bloq.avisos.trim()}"`);
     await pc.click('#tabExp-pa'); await pc.waitForSelector('#evResumen');
-    await pc.click('#pitem-1 .lik-btn[data-v="3"]');
+    await pc.click('#pitem-1 .likert-btn[data-v="3"]');
     const reqCrearPA = pc.waitForResponse((r) => r.request().method() === 'POST' && /\/hce\/\d+\/protocolo$/.test(r.url()));
     await pc.click('#btnEvGuardar');
     const rCrearPA = await reqCrearPA, jPA = await rCrearPA.json();
     await pc.waitForFunction(() => !document.getElementById('evAvisos').hidden, null, { timeout: 8000 });
-    const f1 = await pc.evaluate(() => ({ av: document.getElementById('evAvisos').innerText.replace(/\s+/g, ' '), role: document.getElementById('evAvisos').getAttribute('role'), editable: !document.getElementById('btnEvGuardar').disabled && !document.getElementById('pobs-1').disabled && !document.querySelector('#pitem-2 .lik-btn').disabled }));
+    const f1 = await pc.evaluate(() => ({ av: document.getElementById('evAvisos').innerText.replace(/\s+/g, ' '), role: document.getElementById('evAvisos').getAttribute('role'), editable: !document.getElementById('btnEvGuardar').disabled && !document.getElementById('pobs-1').disabled && !document.querySelector('#pitem-2 .likert-btn').disabled }));
     const secuencia = (jPA.warnings || []).filter((w) => w.code === 'fuera_de_secuencia');
     check('3c-f', 'PA creado con el LB sin firmar: la API acepta (201) y avisa «fuera de secuencia»; la pantalla muestra el aviso (role="status") y NO bloquea: el borrador quedó guardado y sigue editable',
       rCrearPA.status() === 201 && secuencia.length === 1 && f1.av.includes(secuencia[0].mensaje) && f1.role === 'status' && f1.editable && (await get(`/hce/${idSinCi}/protocolo`)).json.length === 1, f1.av.slice(0, 140));
@@ -1053,9 +1056,9 @@ async function loguear(page) {
     await pc.click('#btnEvFirmar'); await pc.click('#btnEvConfirmar');
     await releyo;
     await pc.waitForSelector('#evEstado .st-firmado', { timeout: 8000 });
-    await pc.click('#tabExp-pb'); await pc.waitForSelector('#evDeltaTabla', { timeout: 8000 });
+    await pc.click('#tabExp-pb'); await pc.waitForSelector('#evResultado', { timeout: 8000 });
     const pbTras = (await get(`/protocolo/${pbPrimero.id}`)).json;
-    const filasT = await pc.evaluate(() => Object.fromEntries([...document.querySelectorAll('#evDeltaTabla tbody tr')].map((tr) => [tr.dataset.delta, tr.querySelector('td.num').innerText.trim()])));
+    const filasT = await pc.evaluate(() => Object.fromEntries([...document.querySelectorAll('#evResultado [data-delta]')].map((tr) => [tr.dataset.delta, tr.querySelector('.res-delta').innerText.trim()])));
     check('3c-pa-pb', 'PB firmado ANTES que su PA: sin Δ («todavía no se calculó»); al firmar el PA la pantalla vuelve a leer el PB (GET /protocolo/{id}) y muestra el Δ que completó el servidor',
       pbFirma.status === 200 && pbPrimero.deltas === null && /todavía no se calculó/.test(nota) && pbTras.deltas !== null && claves.every((c) => filasT[c] === fmtD(pbTras.deltas[c])) && filasT.total === '+24', `Δ total ${filasT.total}`);
 
@@ -1089,7 +1092,7 @@ async function loguear(page) {
     /* ---------- a 390 px el editor, la lectura y la tabla del Δ no desbordan ---------- */
     await pc.setViewportSize({ width: 390, height: 800 });
     const anch = [];
-    for (const [id, tab, sel] of [[idSinCi, 'lb', '#evResumen'], [idSinCi, 'pa', '#evResumen'], [idSofia, 'pb', '#evDeltaTabla'], [idMartin3, 'lb', '#evBanda']]) {
+    for (const [id, tab, sel] of [[idSinCi, 'lb', '#evResumen'], [idSinCi, 'pa', '#evResumen'], [idSofia, 'pb', '#evResultado'], [idMartin3, 'lb', '#evBanda']]) {
       await abrir(id, tab);
       await pc.waitForSelector(sel, { timeout: 8000 });
       anch.push(await pc.evaluate(([t]) => [t, document.documentElement.scrollWidth, window.innerWidth], [tab]));
@@ -1253,7 +1256,7 @@ async function loguear(page) {
     check('3c-j9b', 'en el expediente de EJEMPLO sin autorización de imagen se guarda una foto individual y una grupal: sin bloqueo, sin «Carga deshabilitada» ni «bloqueada» (§5.99)',
       fotos.sin !== null && fotos.individual === 1 && fotos.grupal === 1 && fotos.hayCargaGrupal && !fotos.txtGrupo && !/bloquead|🚫/i.test(fotos.toast), JSON.stringify(fotos));
 
-    /* la marca «Demo parcialmente conectada» no tapa contenido a 1280×800 y 1280×900 */
+    /* F1: la marca «Demo parcialmente conectada» se retiró; el pie «Prototipo · …» de la barra lateral no tapa contenido a 1280×800 y 1280×900 */
     const marcas = [];
     for (const alto of [800, 900]) {
       await pj.setViewportSize({ width: 1280, height: alto });
@@ -1261,16 +1264,16 @@ async function loguear(page) {
         await pj.evaluate((v) => { if (v === 'inicio') go('inicio'); else abrirExpediente(+document.querySelector('#tbodyNNA tr[data-hce]')?.dataset.hce || 1); }, vista);
         await pj.waitForTimeout(vista === 'expediente' ? 700 : 100);
         marcas.push(await pj.evaluate(([v, a]) => {
-          const t = document.querySelector('.demo-tag').getBoundingClientRect();
-          const visibles = [...document.querySelectorAll('main table, main .info-card, main .card, main h1, main .exp-head')].filter((e) => e.offsetParent !== null);
+          const pie = document.querySelector('.sidebar .foot'), t = pie.getBoundingClientRect();
+          const visibles = [...document.querySelectorAll('main table, main .info-card, main .card, main h1, main .banda-nna')].filter((e) => e.offsetParent !== null);
           const choca = visibles.filter((e) => { const r = e.getBoundingClientRect(); return !(t.right <= r.left || t.left >= r.right || t.bottom <= r.top || t.top >= r.bottom); });
-          return { v, a, choca: choca.length, pe: getComputedStyle(document.querySelector('.demo-tag')).pointerEvents, pos: getComputedStyle(document.querySelector('.demo-tag')).position, visible: t.width > 0 };
+          return { v, a, choca: choca.length, marca: !!document.querySelector('.demo-tag'), texto: pie.textContent.trim(), pos: getComputedStyle(pie).position, visible: t.width > 0 };
         }, [vista, alto]));
       }
     }
     await pj.setViewportSize({ width: 1280, height: 720 });
-    check('3c-j10', 'la marca «Demo parcialmente conectada a la API» (pointer-events:none, en flujo dentro de la barra lateral) no toca ninguna tabla ni tarjeta del contenido a 1280×800 y 1280×900, en el listado y en un expediente',
-      marcas.every((m) => m.choca === 0 && m.pe === 'none' && m.pos !== 'fixed' && m.visible), JSON.stringify(marcas.map((m) => `${m.v}@${m.a}:${m.choca}`)));
+    check('3c-j10', 'la marca «Demo parcialmente conectada a la API» ya no existe (F1) y el pie «Prototipo · IPPU × UTEC-LIDIA · 2026» (en flujo dentro de la barra lateral) no toca ninguna tabla ni tarjeta del contenido a 1280×800 y 1280×900, en el listado y en un expediente',
+      marcas.every((m) => m.choca === 0 && !m.marca && m.texto === 'Prototipo · IPPU × UTEC-LIDIA · 2026' && m.pos !== 'fixed' && m.visible), JSON.stringify(marcas.map((m) => `${m.v}@${m.a}:${m.choca}`)));
     await cj.close();
   }
 
@@ -1667,8 +1670,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const cuerpoC = { tipo: null, anio, items: itemsC, fecha: '2026-07-01', semanas: 16, sint_tec1: 'a', sint_tec2: 'b', evaluador_t1_id: idGonzalez, evaluador_t2_id: idTorres };
     const modsC = [
       { k: 'lb', pref: '4', crear: (id) => send('POST', `/hce/${id}/idea`, { anio, dim: dimC, fecha_consenso: '2026-03-20', sesiones: 6, sintesis: 's', objetivos: 'o', evaluador_t1_id: idGonzalez, evaluador_t2_id: idTorres }), ruta: (d) => `/idea/${d.id}`, tocar: '#dim-D1 .opcion[data-v="2"]' },
-      { k: 'pa', pref: '5', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'A' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .lik-btn[data-v="2"]' },
-      { k: 'pb', pref: '6', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'B' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .lik-btn[data-v="2"]' }
+      { k: 'pa', pref: '5', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'A' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .likert-btn[data-v="2"]' },
+      { k: 'pb', pref: '6', crear: (id) => send('POST', `/hce/${id}/protocolo`, { ...cuerpoC, tipo: 'B' }), ruta: (d) => `/protocolo/${d.id}`, tocar: '#pitem-1 .likert-btn[data-v="2"]' }
     ];
     for (const m of modsC) {
       const idE = await nuevoExp('Evc' + m.k, m.pref);
@@ -2050,7 +2053,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const alta1 = await pe.evaluate(() => ({ foco: document.activeElement.id, inerte: document.querySelector('div.layout').inert || document.querySelector('header.topbar').inert }));
     // alta abierta desde un botón que desaparece (se repinta el expediente): el foco cae en un destino estable, nunca en <body>
     await abrirE(idEditor, 'hce00');
-    await pe.focus('#expHead .btn-primary'); await pe.keyboard.press('Enter');
+    await pe.focus('#expHead .banda-editar'); await pe.keyboard.press('Enter');
     await pe.waitForSelector('#modalAlta.open');
     await pe.evaluate(() => { pintarCabeceraExp(); });           // el repintado destruye el botón que abrió el diálogo
     await pe.keyboard.press('Escape');
@@ -2121,7 +2124,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && c4.foco === 'btnNuevoNNA' && !c4.inerte && c4.nombre === '' && c4.ci === '' && !c4.banda, JSON.stringify({ sinDatos, c1, c2, c3, c4 }).slice(0, 600));
     // edición: cambiar un campo y volver a dejar el original NO cuenta como datos sin guardar
     await abrirE(idEditor, 'hce00');
-    await pe.focus('#expHead .btn-primary'); await pe.keyboard.press('Enter');
+    await pe.focus('#expHead .banda-editar'); await pe.keyboard.press('Enter');
     await pe.waitForSelector('#modalAlta.open'); await pe.waitForFunction(() => !document.getElementById('f_grupo').disabled && document.querySelectorAll('#f_grupo option').length > 1, null, { timeout: 8000 });
     const orig = await pe.inputValue('#f_loc');
     await pe.fill('#f_loc', 'Otra localidad'); await pe.fill('#f_loc', orig);
@@ -2321,6 +2324,224 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto',
       nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 6 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
+  }
+
+  /* =====================================================================================================================
+     F1 · BANDA DEL PACIENTE, FLUJO EN LAS PESTAÑAS, BARRA DE ACCIONES, LISTADO Y NAVEGACIÓN (handoff §5.140)
+     ESCRIBE: crea un expediente nuevo (editores vacíos de LB, PA e IC) y le pone una alerta clínica desde la edición de HCE-00.
+     Va al final: lee a Martín tal como lo dejaron los bloques anteriores (VF creada en 3-d).
+     =================================================================================================================== */
+  {
+    const { ctx: cf1, page: pf } = await nuevaPagina();
+    await pf.setViewportSize({ width: 1280, height: 800 });
+    await loguear(pf);
+    await pf.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const tokenF = await pf.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const apiF = async (metodo, ruta, body) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + tokenF, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: r.status, json: r.status === 204 ? null : await r.json() }; };
+    const idDeF = async (n) => (await apiF('GET', '/hce?nombre=' + encodeURIComponent(n) + '&limit=20&incluir_inactivos=true')).json.find((h) => h.persona.nombre === n).id;
+    const idMartinF = await idDeF('Martín'), idBrunoF = await idDeF('Bruno');
+    const sufF1 = String(Date.now()).slice(-6);
+    const escF1 = (await apiF('GET', '/grupos')).json.find((g) => g.nombre === 'Escolares');
+    const idNuevoF = (await apiF('POST', '/hce', { persona: { nombre: 'Banda' + sufF1, apellido: 'Efe', ci: '3' + sufF1 + '4', fecha_nac: '2016-10-10' }, grupo_id: escF1.id })).json.data.id;
+    const abrirF1 = async (id, tab) => {
+      await pf.evaluate((i) => abrirExpediente(i), id);
+      await pf.waitForSelector('#expTitulo');
+      await pf.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      if (tab && tab !== 'hce00') await pf.click('#tabExp-' + tab);
+      await pf.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+      await pf.waitForTimeout(150);
+    };
+    const tamanios = [[1280, 800], [1024, 768]];
+
+    /* ---------- f1-a: el primer bloque clínico arranca a ≤ 260 px (1280×800) y a ≤ 300 px (1024×768) del borde de arriba ---------- */
+    const BLOQUE = { lb: '#panelExp .exp-grid', pa: '#panelExp .exp-grid', pb: '#evResultado', ic: '#panelExp > .card', vf: '#panelExp > .card, #panelExp > .info-card' };
+    const tops = [];
+    for (const [w, h] of tamanios) {
+      await pf.setViewportSize({ width: w, height: h });
+      for (const t of ['lb', 'pa', 'pb', 'ic', 'vf']) {
+        await abrirF1(idMartinF, t);
+        await pf.evaluate(() => window.scrollTo(0, 0));
+        tops.push({ w, t, max: w === 1280 ? 260 : 300, top: await pf.evaluate((s) => { const e = document.querySelector(s); return e ? Math.round(e.getBoundingClientRect().top) : null; }, BLOQUE[t]) });
+      }
+    }
+    check('f1-a', 'el primer bloque clínico de Martín (LB, PA, PB con su «Resultado», IC y VF) arranca a ≤ 260 px del borde de arriba a 1280×800 y a ≤ 300 px a 1024×768',
+      tops.length === 10 && tops.every((x) => x.top !== null && x.top <= x.max), tops.map((x) => `${x.t}@${x.w}:${x.top}`).join(' '));
+
+    /* ---------- f1-tabs: a 1280 las pestañas entran en una fila; a 1024, en dos como mucho; nunca un scroll horizontal escondido ---------- */
+    const filasTabs = [];
+    for (const [w, h] of tamanios) {
+      await pf.setViewportSize({ width: w, height: h });
+      await abrirF1(idMartinF, 'hce00');
+      filasTabs.push(await pf.evaluate((ww) => { const l = document.querySelector('.exp-tabs');
+        const fondos = [...document.querySelectorAll('.exp-tab')].map((t) => t.getBoundingClientRect().bottom).sort((a, b) => a - b);      // filas = grupos de fondos a más de 3 px (la pestaña elegida baja 1 px)
+        return { ww, filas: fondos.filter((b, i) => i === 0 || b - fondos[i - 1] > 3).length, sw: l.scrollWidth, cw: l.clientWidth, n: document.querySelectorAll('.exp-tab').length,
+          nombres: [...document.querySelectorAll('.exp-tab .tab-nombre')].map((e) => e.textContent).join('|'), solo: [...document.querySelectorAll('.exp-tab')].filter((t) => t.querySelector('.solo-demo')).map((t) => t.dataset.tab).join(',') }; }, w));
+    }
+    check('f1-tabs', 'pestañas con nombre completo y código: a 1280 px una sola fila, a 1024 px dos como mucho, sin scroll horizontal; las no conectadas llevan «Solo demo»; orden Datos · Ciclo anual · Seguimiento · Registro',
+      filasTabs[0].filas === 1 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13) && filasTabs[0].solo === 'sev,inc,org,doc,pai,log'
+        && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Informe de cierre|Valoración funcional|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
+
+    /* ---------- f1-b: la banda sigue a la vista al bajar hasta el final de un módulo (lectura y editor) ---------- */
+    await pf.setViewportSize({ width: 1280, height: 800 });
+    const pegada = [];
+    for (const [id, tab] of [[idMartinF, 'lb'], [idNuevoF, 'lb'], [idMartinF, 'ic']]) {
+      await abrirF1(id, tab);
+      await pf.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await pf.waitForTimeout(200);
+      pegada.push(await pf.evaluate((t) => { const b = document.getElementById('expHead'), r = b.getBoundingClientRect(), top = document.querySelector('.topbar').getBoundingClientRect().bottom;
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { t, scrollY: Math.round(scrollY), top: Math.round(r.top), barra: Math.round(top), visible: !!hit && b.contains(hit), nombre: document.getElementById('expTitulo').textContent }; }, tab));
+    }
+    check('f1-b', 'la banda del paciente queda pegada bajo la barra superior y a la vista después de bajar hasta el final del módulo (LB firmado, LB en edición, IC)',
+      pegada.every((x) => x.scrollY > 200 && x.top === x.barra && x.visible), JSON.stringify(pegada));
+
+    /* ---------- f1-c: WCAG 2.2 · 2.4.11 — con Tab por LB y PA, nada enfocado queda tapado por la banda ni por la barra de acciones ---------- */
+    const tapados = []; let recorridos = 0;
+    for (const [w, h] of tamanios) {
+      await pf.setViewportSize({ width: w, height: h });
+      for (const tab of ['lb', 'pa']) {
+        await abrirF1(idNuevoF, tab);
+        await pf.evaluate(() => window.scrollTo(0, 0));
+        await pf.focus('#tabExp-' + tab);
+        for (let i = 0; i < 160; i++) {
+          await pf.keyboard.press('Tab');
+          const r = await pf.evaluate(() => {
+            const el = document.activeElement;
+            if (!el || el === document.body || !document.getElementById('view-expediente').contains(el)) return { fin: true };
+            const b = el.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+            const hit = document.elementFromPoint(cx, cy);
+            return { id: el.id || el.className || el.tagName, ok: !!hit && (hit === el || el.contains(hit)), tapa: hit && !el.contains(hit) ? (hit.closest('.banda-nna') ? 'banda' : hit.closest('.barra-acciones') ? 'barra' : (hit.id || hit.className || hit.tagName)) : '' };
+          });
+          if (r.fin) break;
+          recorridos++;
+          if (!r.ok) tapados.push(`${tab}@${w}: ${r.id} (tapado por ${r.tapa})`);
+        }
+      }
+    }
+    check('f1-c', 'WCAG 2.2 · 2.4.11: recorriendo con Tab los editores de LB y PA (1280×800 y 1024×768), en el centro de cada control enfocado está el control mismo (ni la banda ni la barra de acciones lo tapan)',
+      recorridos > 100 && tapados.length === 0, tapados.length ? tapados.slice(0, 6).join(' · ') : `${recorridos} focos medidos`);
+
+    /* ---------- f1-d: WCAG 2.2 · 2.5.8 — lo operable del listado, la banda, las pestañas y la barra mide ≥ 24×24 (o cumple la excepción de espaciado) ---------- */
+    const objetivos = async (zona, sel) => pf.evaluate(([z, s]) => {
+      const els = [...document.querySelectorAll(s)].flatMap((c) => [...c.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, summary, [tabindex="0"]')])
+        .filter((e) => !e.disabled && e.offsetParent !== null && !e.closest('[hidden]'));
+      const rs = els.map((e) => { const r = e.getBoundingClientRect(); return { id: e.id || e.className.split(' ')[0] || e.tagName, r, chico: r.width < 24 || r.height < 24 }; });
+      const dist = (cx, cy, r) => Math.hypot(Math.max(r.left - cx, 0, cx - r.right), Math.max(r.top - cy, 0, cy - r.bottom));
+      const mal = rs.filter((a) => a.chico).filter((a) => { const cx = a.r.left + a.r.width / 2, cy = a.r.top + a.r.height / 2;
+        return rs.some((o) => o !== a && (o.chico ? Math.hypot(cx - (o.r.left + o.r.width / 2), cy - (o.r.top + o.r.height / 2)) < 24 : dist(cx, cy, o.r) < 12)); });
+      return { z, n: rs.length, chicos: rs.filter((a) => a.chico).map((a) => `${a.id} ${Math.round(a.r.width)}×${Math.round(a.r.height)}`), mal: mal.map((a) => `${a.id} ${Math.round(a.r.width)}×${Math.round(a.r.height)}`) };
+    }, [zona, sel]);
+    const tam = [];
+    for (const [w, h] of tamanios) {
+      await pf.setViewportSize({ width: w, height: h });
+      await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+      tam.push({ w, ...(await objetivos('listado', '#view-inicio .card')) });
+      for (const tab of ['lb', 'pa', 'ic']) {
+        await abrirF1(idNuevoF, tab);
+        tam.push({ w, ...(await objetivos('banda+pestañas+barra ' + tab, '#expHead, #tabsExpWrap, .barra-acciones')) });
+      }
+    }
+    check('f1-d', 'WCAG 2.2 · 2.5.8: todo lo operable del listado, la banda, las pestañas y la barra de acciones (LB, PA e IC) mide ≥ 24×24 px o cumple la excepción de espaciado, a 1280 y 1024 px',
+      tam.every((t) => t.n > 0 && t.mal.length === 0), tam.map((t) => `${t.z}@${t.w}: ${t.n}${t.mal.length ? ' MAL ' + t.mal.join(',') : ''}${t.chicos.length ? ' (chicos con espacio: ' + t.chicos.length + ')' : ''}`).join(' · ').slice(0, 700));
+
+    /* ---------- f1-e: el listado entra a 1024 y 1280 sin celdas recortadas; un punto de Tab por fila; Enter en el nombre abre ---------- */
+    const lst = [];
+    for (const [w, h] of tamanios) {
+      await pf.setViewportSize({ width: w, height: h });
+      await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+      lst.push(await pf.evaluate((ww) => { const sc = document.querySelector('#view-inicio .tabla-scroll');
+        const celdas = [...document.querySelectorAll('#tablaNNA th, #tablaNNA td')].filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim().slice(0, 20));
+        const filas = [...document.querySelectorAll('#tbodyNNA tr[data-hce]')];
+        const paradas = filas.map((f) => [...f.querySelectorAll('*')].filter((e) => e.tabIndex >= 0 && !e.disabled && e.offsetParent !== null && (e.matches('button, a[href], input, select, textarea, summary') || e.hasAttribute('tabindex'))).length + (f.tabIndex >= 0 && f.hasAttribute('tabindex') ? 1 : 0));
+        return { ww, cols: document.querySelectorAll('#tablaNNA thead th').length, scroll: [sc.scrollWidth, sc.clientWidth], pagina: [document.documentElement.scrollWidth, innerWidth], recortadas: celdas, paradas: [...new Set(paradas)], cedula: /Cédula/i.test(document.querySelector('#tablaNNA thead').textContent) }; }, w));
+    }
+    const filaM = pf.locator('#tbodyNNA tr[data-hce]', { hasText: 'Martín' });
+    await filaM.locator('.nna-abrir').focus();
+    await pf.keyboard.press('Enter');
+    await pf.waitForSelector('#expTitulo', { timeout: 8000 });
+    const conEnter = await pf.evaluate(() => ({ id: EXP.id, foco: document.activeElement.id }));
+    await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+    await filaM.locator('td').nth(1).click();                                            // con el mouse, en cualquier parte de la fila (la celda del grupo)
+    await pf.waitForSelector('#view-expediente.active #expTitulo', { timeout: 8000 });
+    const conMouse = await pf.evaluate(() => EXP.id);
+    check('f1-e', 'listado de cinco columnas (sin Cédula): a 1024 y 1280 px sin celdas recortadas ni scroll horizontal; un solo punto de Tab por fila (el nombre); Enter en el nombre abre el expediente y un clic en cualquier parte de la fila también',
+      lst.every((l) => l.cols === 5 && !l.cedula && l.scroll[0] <= l.scroll[1] && l.pagina[0] === l.pagina[1] && l.recortadas.length === 0 && JSON.stringify(l.paradas) === '[1]') && conEnter.id === idMartinF && conEnter.foco === 'expTitulo' && conMouse === idMartinF,
+      JSON.stringify({ lst, conEnter, conMouse }).slice(0, 500));
+
+    /* ---------- f1-f: CI registrado = «✓ CI» sin relleno; el pendiente conserva el chip rojo; en las listas «firmado» va sin relleno y el expediente lo conserva macizo ---------- */
+    await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+    const ciF = await pf.evaluate(([m, b]) => { const raiz = getComputedStyle(document.documentElement);
+      const fm = document.querySelector(`#tbodyNNA tr[data-hce="${m}"]`), fb = document.querySelector(`#tbodyNNA tr[data-hce="${b}"]`);
+      const ok = fm.querySelector('.ci-ok'), pend = fb.querySelector('.st-ci-pend'), firm = fm.querySelector('.st-firmado'), csOk = ok && getComputedStyle(ok), csP = pend && getComputedStyle(pend), csF = firm && getComputedStyle(firm);
+      const aLaVista = (e) => [...e.childNodes].filter((n) => !(n.classList && n.classList.contains('sr-only'))).map((n) => n.textContent).join('').trim();   // sin el texto para lectores de pantalla
+      return { okTxt: ok ? aLaVista(ok) : null, okBg: csOk && csOk.backgroundColor, okBorde: csOk && csOk.borderTopStyle, okColor: csOk && csOk.color, ink2: raiz.getPropertyValue('--ink-2').trim(),
+        pendTxt: pend ? pend.innerText.trim() : null, pendBg: csP && csP.backgroundColor, pendRef: raiz.getPropertyValue('--st-ci-pend-bg').trim(),
+        firmBg: csF && csF.backgroundColor, firmColor: csF && csF.color, okRef: raiz.getPropertyValue('--ok').trim(), firmTxt: firm ? firm.textContent : null }; }, [idMartinF, idBrunoF]);
+    await abrirF1(idMartinF, 'lb');
+    const firmExp = await pf.evaluate(() => { const e = document.querySelector('#evEstado .st-firmado'); return { bg: getComputedStyle(e).backgroundColor, ref: getComputedStyle(document.documentElement).getPropertyValue('--st-firmado-bg').trim() }; });
+    const hexF = (h) => { const n = parseInt(h.replace('#', ''), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+    check('f1-f', 'listado: CI registrado = «✓ CI» en --ink-2, sin relleno ni borde; CI pendiente = chip rojo (⚠ CI pendiente); «firmado» = ● y texto en --ok sin relleno; en el expediente «Firmado» sigue macizo',
+      ciF.okTxt === '✓ CI' && ciF.okBg === 'rgba(0, 0, 0, 0)' && ciF.okBorde === 'none' && ciF.okColor === hexF(ciF.ink2) && /CI pendiente/.test(ciF.pendTxt) && ciF.pendBg === hexF(ciF.pendRef)
+        && ciF.firmBg === 'rgba(0, 0, 0, 0)' && ciF.firmColor === hexF(ciF.okRef) && /●/.test(ciF.firmTxt) && firmExp.bg === hexF(firmExp.ref), JSON.stringify({ ciF, firmExp }).slice(0, 500));
+
+    /* ---------- f1-g: una alerta cargada desde la edición de HCE-00 aparece en la banda en TODAS las pestañas (tinta, ⚠ y texto) ---------- */
+    await pf.setViewportSize({ width: 1280, height: 800 });
+    await abrirF1(idNuevoF, 'hce00');
+    const textoAlerta = 'Alergia a la penicilina (prueba F1)';
+    const sinAntes = await pf.locator('#bandaAlerta').count();
+    await pf.click('#expHead .banda-editar');
+    await pf.waitForSelector('#modalAlta.open'); await pf.waitForFunction(() => document.querySelectorAll('#f_grupo option').length > 1, null, { timeout: 8000 });
+    await pf.click('#btnNext'); await pf.fill('#f_alerta', textoAlerta);
+    await pf.click('#btnNext'); await pf.click('#btnNext');
+    const reqAl = pf.waitForRequest((r) => r.method() === 'PATCH' && new RegExp(`/hce/${idNuevoF}$`).test(r.url()));
+    await pf.click('#btnCreate');
+    const bodyAl = cuerpoDe(await reqAl);
+    await pf.waitForFunction(() => !document.getElementById('modalAlta').classList.contains('open'));
+    const apiAl = (await apiF('GET', `/hce/${idNuevoF}`)).json.alerta;
+    const enTabs = [];
+    for (const k of await pf.$$eval('.exp-tab', (bs) => bs.map((b) => b.dataset.tab))) {
+      await pf.click('#tabExp-' + k); await pf.waitForTimeout(120);
+      enTabs.push(await pf.evaluate((k2) => { const a = document.getElementById('bandaAlerta'); const cs = a && getComputedStyle(a), raiz = getComputedStyle(document.documentElement);
+        return { k: k2, txt: a ? a.innerText.replace(/\s+/g, ' ') : '', color: cs && cs.color, borde: cs && cs.borderTopColor, ink: raiz.getPropertyValue('--ink').trim(), visible: !!a && a.getBoundingClientRect().height > 0 }; }, k));
+    }
+    check('f1-g', 'una alerta cargada desde la edición de HCE-00 (PATCH {alerta}) aparece en la banda en las 13 pestañas, con ⚠, «Alerta clínica» y el texto, en tinta (no ok/warn/bad)',
+      sinAntes === 0 && JSON.stringify(Object.keys(bodyAl)) === '["alerta"]' && apiAl === textoAlerta && enTabs.length === 13
+        && enTabs.every((t) => t.visible && t.txt.includes('⚠') && t.txt.includes('Alerta clínica') && t.txt.includes(textoAlerta) && t.color === hexF(t.ink) && t.borde === hexF(t.ink)), JSON.stringify(enTabs.slice(0, 3)).slice(0, 400));
+
+    /* ---------- f1-h: sin la vista «Intermedia» (ruta, manejador, entrada de navegación, reglas .lik-*) y sin los textos de desarrollo ---------- */
+    const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'recordatorios.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];
+    const fuentesF1 = await Promise.all(archivos.map(async (f) => [f, await (await fetch(DEMO + '/' + f)).text()]));
+    const halla = (re) => fuentesF1.filter(([, t]) => re.test(t)).map(([f]) => f);
+    const prohibidosF1 = { vista: halla(/view-intermedia|data-view="intermedia"|go\(['"]intermedia['"]\)/), manejador: halla(/lik-opts|likSel|likFormula/), reglas: fuentesF1.filter(([f, t]) => f.endsWith('.css') && /\.lik-[a-z]/.test(t)).map(([f]) => f),
+      frases: ['v4.1 — Demo L1', 'Demo parcialmente conectada a la API', 'se van conectando por etapas', 'la API lo avisa', '(calculado por el servidor)', 'Avisos de la API', 'La contraseña se envía a la API'].filter((fr) => fuentesF1.some(([, t]) => t.includes(fr))) };
+    const visibleF1 = await pf.evaluate(() => ({ nav: [...document.querySelectorAll('.sidebar .navitem')].map((b) => b.textContent.trim()), secciones: [...document.querySelectorAll('.sidebar .sec')].map((s) => s.textContent.trim()), marca: document.querySelector('.topbar .title').textContent.replace(/\s+/g, ' ').trim(), pie: document.querySelector('.sidebar .foot').textContent.trim() }));
+    check('f1-h', 'no queda la vista «Intermedia» (ruta, manejador, entrada de navegación ni reglas .lik-*) ni los textos de desarrollo; navegación «General» → «Panel institucional» y «Servicio de Atención Diurna» → NNA y HCE · Pendientes · Grupos de referencia · Inclusión · Ateneos y capacitación (sin Taller Terapéutico ni Clínica); marca y pie del prototipo',
+      Object.values(prohibidosF1).every((v) => v.length === 0) && JSON.stringify(visibleF1.secciones) === '["General","Servicio de Atención Diurna"]'
+        && JSON.stringify(visibleF1.nav) === '["Panel institucional","NNA y HCE","Pendientes","Grupos de referencia","Inclusión","Ateneos y capacitación"]' && visibleF1.marca === 'Fundación IPPU · Historia Clínica Electrónica' && visibleF1.pie === 'Prototipo · IPPU × UTEC-LIDIA · 2026',
+      JSON.stringify({ prohibidosF1, visibleF1 }).slice(0, 500));
+
+    /* ---------- f1-i: aria-current="page" en el ítem activo de la barra lateral (también dentro de un expediente) ---------- */
+    const actual = async () => pf.evaluate(() => [...document.querySelectorAll('.sidebar [aria-current]')].map((e) => e.dataset.view + '=' + e.getAttribute('aria-current')));
+    await pf.evaluate(() => go('inicio')); const enInicio = await actual();
+    await pf.click('.navitem[data-view="analitica"]'); const enPanel = await actual();
+    await abrirF1(idMartinF, 'hce00'); const enExp = await actual();
+    check('f1-i', 'aria-current="page" marca un único ítem de la barra lateral: «NNA y HCE» en el listado y dentro de un expediente, «Panel institucional» en su vista',
+      JSON.stringify(enInicio) === '["inicio=page"]' && JSON.stringify(enPanel) === '["analitica=page"]' && JSON.stringify(enExp) === '["inicio=page"]', JSON.stringify({ enInicio, enPanel, enExp }));
+
+    /* ---------- f1-kpi / f1-layout: cifras en tinta, pendientes que llevan a «Pendientes»; barra lateral de 192 px y márgenes 16/20 por debajo de 1180 px ---------- */
+    await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(100);
+    const kpi = await pf.evaluate(() => { const raiz = getComputedStyle(document.documentElement); return { colores: [...document.querySelectorAll('#kpiRow .val')].map((v) => getComputedStyle(v).color), ink: raiz.getPropertyValue('--ink').trim(), botones: [...document.querySelectorAll('#kpiRow button')].map((b) => b.textContent.trim()), cols: getComputedStyle(document.getElementById('kpiRow')).gridTemplateColumns.split(' ').length }; });
+    await pf.click('#kpiRow button >> nth=0');
+    const trasKpi = await pf.evaluate(() => ({ vista: document.querySelector('.view.active').id, foco: document.activeElement.id }));
+    await pf.setViewportSize({ width: 1024, height: 768 }); await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(100);
+    const lay = await pf.evaluate(() => ({ sidebar: Math.round(document.querySelector('.sidebar').getBoundingClientRect().width), pad: getComputedStyle(document.querySelector('main')).padding, cols: getComputedStyle(document.getElementById('kpiRow')).gridTemplateColumns.split(' ').length }));
+    check('f1-kpi', 'KPI: las cifras van en tinta (ni naranja ni violeta), cuatro columnas desde 900 px, y «Sin línea base firmada este año» / «Sin consentimiento informado» son botones que llevan a Pendientes (foco en su título)',
+      kpi.colores.length === 4 && kpi.colores.every((c) => c === hexF(kpi.ink)) && kpi.botones.length === 2 && /Sin línea base firmada este año/.test(kpi.botones[0]) && /Sin consentimiento informado/.test(kpi.botones[1]) && kpi.cols === 4 && lay.cols === 4
+        && trasKpi.vista === 'view-pendientes' && trasKpi.foco === 'tituloPendientes', JSON.stringify({ kpi, trasKpi }));
+    check('f1-layout', 'por debajo de 1180 px (1024×768): barra lateral de 192 px y márgenes del contenido de 16 px (arriba) y 20 px (a los lados)',
+      lay.sidebar === 192 && /^16px 20px/.test(lay.pad), JSON.stringify(lay));
+    await cf1.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

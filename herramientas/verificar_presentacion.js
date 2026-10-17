@@ -124,7 +124,8 @@ async function main() {
     await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent) ||
       /No se encontraron/.test(document.getElementById('tbodyNNA').textContent));
     const resumen = norm(await page.locator('#listaResumen').innerText());
-    const filas = await page.$$eval('#tbodyNNA tr[data-hce]', (trs) => trs.map((tr) => ({ id: tr.dataset.hce, nombre: tr.querySelector('td.nna-name').innerText.trim(), activo: tr.dataset.activo })));
+    // F1 (§5.140): el nombre completo es el botón de la fila («Martín G.»); se compara el nombre de pila.
+    const filas = await page.$$eval('#tbodyNNA tr[data-hce]', (trs) => trs.map((tr) => ({ id: tr.dataset.hce, nombre: tr.querySelector('.nna-abrir').innerText.trim().split(/\s+/)[0], activo: tr.dataset.activo })));
     const nombres = filas.map((f) => f.nombre);
     const faltan = ACTIVOS.filter((n) => !nombres.includes(n));
     if (!resumen.startsWith(`Mostrando ${ACTIVOS.length} de ${ACTIVOS.length}`) || faltan.length || nombres.includes(NNA_DE_BAJA) || filas.length !== ACTIVOS.length) {
@@ -162,9 +163,9 @@ async function main() {
     const totalPa = (await page.locator('#evTotal').innerText()).trim();
     if (totalPa !== String(MARTIN.pa)) fallar(`PA de Martín: la pantalla muestra «${totalPa}»; la API dice ${paApi.total}`);
     await page.click('#tabExp-pb');
-    await page.waitForSelector('#evDeltaTabla');
+    await page.waitForSelector('#evResultado');                // F1: el Δ del PB es el bloque «Resultado»
     const pb = await page.evaluate(() => ({ total: document.getElementById('evTotal').textContent.trim(),
-      filas: Object.fromEntries([...document.querySelectorAll('#evDeltaTabla tbody tr')].map((tr) => [tr.dataset.delta, tr.querySelector('td.num').innerText.trim()])) }));
+      filas: Object.fromEntries([...document.querySelectorAll('#evResultado [data-delta]')].map((c) => [c.dataset.delta, c.querySelector('.res-delta').innerText.trim()])) }));
     if (pb.total !== String(MARTIN.pb)) fallar(`PB de Martín: la pantalla muestra «${pb.total}»; la API dice ${pbApi.total}`);
     const esperadoDelta = { total: fmtD(pbApi.deltas.total), ...Object.fromEntries(Object.entries(MARTIN.deltas).map(([k, v]) => [k, fmtD(v)])) };
     const malos = Object.entries(esperadoDelta).filter(([k, v]) => pb.filas[k] !== v || fmtD(pbApi.deltas[k]) !== v);

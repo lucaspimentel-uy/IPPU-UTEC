@@ -1,17 +1,29 @@
-/* Navegacion, tabla NNA, Likert, graficos de analitica, toast, sesion.
+/* Navegacion, tabla NNA, graficos de analitica, toast, sesion.
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
    Extraido del monolito (lineas 2061-2427) sin cambios de logica.
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 /* ================= NAVEGACIÓN ================= */
+/* El expediente y su documento impreso cuelgan de «NNA y HCE»: ese ítem sigue marcado mientras se los ve (F1, H21). */
+const NAV_DE_VISTA = {expediente:"inicio", informe:"inicio"};
 function go(view){
   const target = document.getElementById("view-"+view);
   if(!target) return;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   target.classList.add("active");
-  document.querySelectorAll(".navitem").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+  const nav = NAV_DE_VISTA[view] || view;
+  document.querySelectorAll(".navitem").forEach(b=>{
+    const on = b.dataset.view === nav;
+    b.classList.toggle("active", on);
+    if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
   window.scrollTo({top:0});
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+/* Los KPI de pendientes llevan a la vista Pendientes; el foco pasa a su título. */
+function irAPendientes(){
+  go("pendientes");
+  const t = document.getElementById("tituloPendientes"); if(t) t.focus();
+}
 
 /* ================= INICIO: TABLA NNA (re-renderizable) ================= */
 const tb = document.getElementById("tbodyNNA");
@@ -56,34 +68,44 @@ function pillModulo(corto, modulo, estado){
   const e = ESTADO_MOD_TXT[clase];
   return `<span class="st st-${clase}"><span aria-hidden="true">${corto} ${e.glifo}</span><span class="sr-only">${escHtml(modulo)} ${e.txt}</span></span>`;
 }
-/* Consentimiento informado: pendiente es un bloqueo ACCIONABLE (notas §3.1), el unico rojo de la fila. */
+/* Consentimiento informado en el EXPEDIENTE (pestaña CI): «Registrado» macizo; pendiente es un aviso accionable (notas §3.1). */
 function pillCi(estado){
   return estado === "registrado"
     ? `<span class="st st-firmado"><span aria-hidden="true">●</span> Registrado</span>`
     : `<span class="st st-ci-pend"><span aria-hidden="true">⚠</span> CI pendiente</span>`;
 }
+/* En el LISTADO (F1, H5): el estado normal no grita. Registrado = «✓ CI» en tinta secundaria, sin relleno; sólo el pendiente
+   conserva su chip rojo (el único rojo de la fila). */
+function ciListaHtml(estado){
+  return estado === "registrado"
+    ? `<span class="ci-ok"><span aria-hidden="true">✓</span> CI<span class="sr-only"> registrado</span></span>`
+    : `<span class="st st-ci-pend"><span aria-hidden="true">⚠</span> CI pendiente</span>`;
+}
 
+/* Fila del listado (F1, H3/H5): cinco columnas. El nombre es el único punto de Tab de la fila (un botón); con el mouse se abre
+   el expediente desde cualquier parte de la fila (filaNNAClic). La cédula no se muestra, pero la búsqueda la sigue aceptando. */
 function filaNNA(p){
-  const estadoPill = p.activo
-    ? `<span class="pill activo">Activo</span>`
-    : `<span class="pill inactivo">Inactivo</span>`;
-  const nombreCompleto = escHtml(`${p.nombre} ${p.apellido}`.trim());
-  return `<tr data-hce="${p.id}" data-activo="${p.activo}">
-    <td><b>${escHtml(p.hc)}</b></td>
-    <td>${escHtml(p.ciTxt)}</td>
-    <td class="nna-name">${escHtml(p.nombre)}</td>
-    <td class="nna-name">${escHtml(p.apellido)}</td>
-    <td>${p.edad === null ? "—" : p.edad}</td>
+  const nombre = escHtml(`${p.nombre} ${p.apellido}`.trim());
+  const inactivo = p.activo ? "" : ` <span class="chip-inactivo">Inactivo</span>`;
+  return `<tr data-hce="${p.id}" data-activo="${p.activo}" onclick="filaNNAClic(event, ${p.id})">
+    <td class="nna">
+      <button type="button" class="nna-abrir" onclick="abrirExpediente(${p.id})" aria-label="Abrir expediente de ${nombre}">${nombre}</button>${inactivo}
+      <span class="nna-sub">HC <span class="cod">${escHtml(p.hc)}</span>${p.edad === null ? "" : ` · ${p.edad} años`}</span>
+    </td>
     <td>${p.grupo ? escHtml(p.grupo) : "—"}</td>
-    <td>${pillCi(p.ciEstado)}</td>
     <td><span class="st-grupo">${MODULOS_CADENA.map(m=>pillModulo(MOD_CORTO[m], m, p.modulos[m])).join(" ")}</span></td>
-    <td>${estadoPill}</td>
-    <td><button class="btn btn-link" onclick="abrirExpediente(${p.id})" aria-label="Abrir expediente de ${nombreCompleto}">Abrir expediente →</button></td>
+    <td>${ciListaHtml(p.ciEstado)}</td>
+    <td class="col-ir" aria-hidden="true">›</td>
   </tr>`;
+}
+/* Clic con el mouse en cualquier parte de la fila (menos en un control: el botón del nombre ya abre por su cuenta). */
+function filaNNAClic(ev, id){
+  if(ev.target.closest("button, a, input, select, textarea")) return;
+  abrirExpediente(id);
 }
 
 /* Estados de la tabla: cargando · error (con reintento) · vacio · filas. Nunca en blanco. */
-function _tbodyMsg(html){ tb.innerHTML = `<tr><td colspan="10">${html}</td></tr>`; }
+function _tbodyMsg(html){ tb.innerHTML = `<tr><td colspan="5">${html}</td></tr>`; }
 function listaCargando(){
   _tbodyMsg(estadoCargandoHtml("Cargando expedientes…"));
   document.getElementById("listaResumen").textContent = "";
@@ -143,7 +165,7 @@ async function cargarLista(){
 function pintarLista(filas){
   tb.innerHTML = filas.length
     ? filas.map(filaNNA).join("")
-    : `<tr><td colspan="10">${estadoVacioHtml("⌕", "No se encontraron NNA con ese criterio.")}</td></tr>`;
+    : `<tr><td colspan="5">${estadoVacioHtml("⌕", "No se encontraron NNA con ese criterio.")}</td></tr>`;
   const paginas = Math.max(1, Math.ceil(LISTA.total / LISTA.limit));
   const pag = Math.floor(LISTA.offset / LISTA.limit) + 1;
   document.getElementById("listaResumen").textContent =
@@ -258,9 +280,9 @@ function renderPendientes(){
   if(kpi){
     const cobertura = activos ? Math.round((activos-pend.length)/activos*100) : 0;
     kpi.innerHTML = `
-      <div class="kpi"><div class="lab">Sin línea base IDEA</div><div class="val orange">${pend.length}</div><div class="sub">NNA activos sin HCE-LB firmada</div></div>
+      <div class="kpi"><div class="lab">Sin línea base IDEA</div><div class="val">${pend.length}</div><div class="sub">NNA activos sin HCE-LB firmada</div></div>
       <div class="kpi"><div class="lab">Cobertura línea base</div><div class="val">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
-      <div class="kpi"><div class="lab">Sin iniciar</div><div class="val purple">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
+      <div class="kpi"><div class="lab">Sin iniciar</div><div class="val">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
   }
   tb2.innerHTML = pend.length ? pend.map(p=>{
     const estadoTxt = `<span style="color:var(--ink-2)">sin iniciar</span>`;
@@ -281,27 +303,6 @@ function scrollASeccion(anchorId){
 }
 
 renderNNA();
-
-/* ================= EVAL INTERMEDIA: LIKERT ================= */
-const likSel = {};
-document.querySelectorAll(".lik-opts").forEach(g=>{
-  g.addEventListener("click", ev=>{
-    const b = ev.target.closest("button"); if(!b) return;
-    g.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));
-    b.classList.add("sel");
-    likSel[g.dataset.item] = +b.dataset.v;
-    if(Object.keys(likSel).length === 3){
-      const vals = Object.values(likSel);
-      const prom = vals.reduce((a,b)=>a+b,0)/3;
-      const eq = Math.round((5 - prom) * 2 * 10) / 10;
-      const niv = eq >= 5.5 ? "alto" : eq >= 3 ? "moderado-alto" : eq >= 1.5 ? "moderado" : "leve";
-      document.getElementById("likFormula").innerHTML =
-        `<b>Conversión:</b> Promedio = (${vals.join(" + ")}) / 3 = <b>${prom.toFixed(1)}</b>
-         &nbsp;→&nbsp; Equivalente IDEA = (5 − ${prom.toFixed(1)}) × 2 = <b>${eq}</b>
-         &nbsp;→&nbsp; Nivel: <b>${niv}</b>`;
-    }
-  });
-});
 
 /* ================= ANALÍTICA INSTITUCIONAL — INDICADORES CALCULADOS =================
    Esta vista se calcula desde el modelo (array NNA + motor de flujo de M1). Antes eran
@@ -378,12 +379,12 @@ function renderAnalitica(){
     {lab:"Δ B−A · Escala IPPU-TEA", val:dTxt,
      sub: a.conAB.length ? `${dInt.t} · ${a.conAB.length} de ${nAct} con ciclo A → B cerrado`
                          : "Ningún NNA con Protocolo A y B firmados"},
-    {lab:"Ciclos completos", val:`${a.ciclos.length}<span class="kpi-den"> / ${nAct}</span>`, cls:"purple",
+    {lab:"Ciclos completos", val:`${a.ciclos.length}<span class="kpi-den"> / ${nAct}</span>`,
      sub:"CI → LB → PA → PB → IC firmados"}
   ];
   document.getElementById("anKpi").innerHTML = kpis.map(k=>`
     <div class="kpi"><div class="lab">${k.lab}</div>
-      <div class="val ${k.cls||""}">${k.val}</div>
+      <div class="val">${k.val}</div>
       <div class="sub">${k.sub}</div></div>`).join("");
 
   /* --- Perfil poblacional por escala: línea base IDEA (máx. 24 por escala) --- */
@@ -503,7 +504,7 @@ function limpiarUiDeSesion(){
   ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
   // Cargas en vuelo del expediente: la secuencia sube y se descarta todo lo que tenga datos de un NNA.
   EXP.seq++;
-  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null});
+  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null, ayuda:false});
   if(typeof evReiniciar === "function") evReiniciar(true);     // evaluaciones: ni borradores ni profesionales de la sesión anterior
   if(typeof icReiniciar === "function") icReiniciar();         // informe de cierre y su documento impreso: nada del NNA anterior detrás del login
   if(typeof vfReiniciar === "function") vfReiniciar();         // valoración funcional
@@ -580,7 +581,6 @@ function logout(){
 /* Arranque (index.html, ultima linea): paneles de modo demo + token guardado -> /auth/yo. */
 async function arrancarSesion(){
   rellenarPanelesDemo();
-  _el("loginApi").textContent = API_BASE;
   const token = Sesion.token();
   if(!token){ mostrarLogin(); return; }
   estadoLogin("Verificando sesión…");

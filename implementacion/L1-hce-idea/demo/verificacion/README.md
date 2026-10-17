@@ -60,6 +60,7 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `3c-` | IDEA, PA y PB: crear, editar, firmar sin cuerpo, addendas, 422 por dimensión y por campo, Δ y alerta de la API, NS, suma «provisorio», selector de grupos del técnico, sin candados, fotos sin trabas |
 | `3d-` | IC (crear, dos firmantes, addendas, recibí), documento impreso A4 con `page.pdf()` a tres escalas, edad a la fecha del documento, 409 como «Cambió en el servidor», VF (categoría y alerta sólo de la API) |
 | `3e-` | Con teclado real: enlace de salto, recorrido completo sin que el foco caiga en `<body>`, anillo de foco, tabindex móvil del IDEA, diálogos con Tab atrapado, confirmar al cerrar, reflow, mensajes de validación en castellano, regla de color, estados compartidos, panel de demostración |
+| `f1-` | Banda del paciente (posición del primer bloque a 1280×800 y 1024×768, pegada al bajar, alerta clínica en todas las pestañas), pestañas en una/dos filas, WCAG 2.2 2.4.11 (foco no tapado) y 2.5.8 (objetivos ≥ 24 px), listado de cinco columnas (un Tab por fila, «✓ CI»), sin la vista «Intermedia» ni textos de desarrollo, `aria-current`, KPI y layout por debajo de 1180 px |
 | `z` | Cero errores de JavaScript en toda la corrida |
 
 ## `capturas.js`
@@ -70,7 +71,7 @@ node capturas.js
 ```
 
 Deja una imagen por pantalla (login, listado, HCE-00, CI, LB, PA, PB con Δ, editor del IC, informe impreso, VF y una vista
-de modo demostración) a **1280×800 y a 1024×768** en `salidas/` (ignorada por git). No compara nada: es para mirar.
+de modo demostración) a **1280×800 y a 1024×768** en `salidas/` (ignorada por git), más tres de página completa (`f1-…-completa`: editor de LB, PB con su «Resultado» y editor del IC; la banda y la barra de acciones quedan donde las deja el desplazamiento). No compara nada: es para mirar.
 Escribe: sólo contra una base descartable recién cargada.
 
 ## Contraste — `herramientas/verificar_contraste_ui.js`

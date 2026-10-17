@@ -12,26 +12,30 @@
    de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
    El estado de cada modulo sale SIEMPRE de GET /hce/{id}/flujo: nada se bloquea en el navegador (§5.94,
    §5.95); fuera de secuencia es un aviso, y el CI pendiente es un estado visible, no un candado. */
-const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null };
+const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null, ayuda:false };
 
-/* Pestanas del expediente. `mod`: eslabon del flujo anual cuyo estado muestra la pestana. */
+/* Pestañas del expediente (F1, H1/H8): nombre completo + código como texto secundario, agrupadas. El flujo del año vive en las
+   pestañas del «Ciclo anual» (ya no hay tarjeta aparte): cada una lleva su estado de GET /hce/{id}/flujo, con glifo y texto.
+   `mod`: eslabón del flujo anual · `g`: grupo · `lineas`: el nombre en dos renglones (cabe una sola fila a 1280 px) ·
+   `d`: nombre largo (encabezado del panel) · `demo`: todavía no conectada (lleva «Solo demo»).
+   El orden de los grupos es una decisión del equipo (§5.140): SEV va en «Seguimiento», no entre CI e IDEA como en el Prototipo. */
 const TABS_EXP = [
-  {k:"hce00", r:"HCE-00", t:"Identificación y datos clínicos"},
-  {k:"ci",    r:"CI",  t:"Consentimiento informado"},
-  {k:"lb",    r:"LB",  t:"Línea base — IDEA",               mod:"HCE-LB"},
-  {k:"pa",    r:"PA",  t:"Protocolo A (IPPU-TEA)",          mod:"HCE-PA"},
-  {k:"pb",    r:"PB",  t:"Protocolo B (IPPU-TEA)",          mod:"HCE-PB"},
-  {k:"ic",    r:"IC",  t:"Informe de cierre anual",         mod:"HCE-IC"},
-  {k:"vf",    r:"VF",  t:"Valoración funcional"},
-  {k:"doc",   r:"DOC", t:"Documentos y fotos"},
-  {k:"org",   r:"ORG", t:"Áreas INAU y BPS"},
-  {k:"inc",   r:"INC", t:"Inclusión educativa y social"},
-  {k:"pai",   r:"PAI", t:"Propuesta de atención individual"},
-  {k:"sev",   r:"SEV", t:"Severidad (DSM-5-TR)"},
-  {k:"log",   r:"LOG", t:"Registro de cambios"}
+  {k:"hce00", r:"HCE-00", t:"Datos",               g:"datos", d:"Identificación y datos clínicos"},
+  {k:"ci",    r:"CI",  t:"Consentimiento",          g:"ciclo", d:"Consentimiento informado"},
+  {k:"lb",    r:"LB",  t:"Línea base",              g:"ciclo", d:"Línea base — IDEA",            mod:"HCE-LB"},
+  {k:"pa",    r:"PA",  t:"Protocolo A",             g:"ciclo", d:"Protocolo A (IPPU-TEA)",       mod:"HCE-PA"},
+  {k:"pb",    r:"PB",  t:"Protocolo B",             g:"ciclo", d:"Protocolo B (IPPU-TEA)",       mod:"HCE-PB"},
+  {k:"ic",    r:"IC",  t:"Informe de cierre",       g:"ciclo", d:"Informe de cierre anual",      mod:"HCE-IC", lineas:["Informe de", "cierre"]},
+  {k:"vf",    r:"VF",  t:"Valoración funcional",    g:"seg",   d:"Valoración funcional",         lineas:["Valoración", "funcional"]},
+  {k:"sev",   r:"SEV", t:"Severidad",               g:"seg",   d:"Severidad (DSM-5-TR)",         demo:true},
+  {k:"inc",   r:"INC", t:"Inclusión",               g:"seg",   d:"Inclusión educativa y social", demo:true},
+  {k:"org",   r:"ORG", t:"Organismos",              g:"seg",   d:"Áreas INAU y BPS",             demo:true},
+  {k:"doc",   r:"DOC", t:"Documentos",              g:"reg",   d:"Documentos y fotos",           demo:true},
+  {k:"pai",   r:"PAI", t:"PAI",                     g:"reg",   d:"Propuesta de atención individual", demo:true},
+  {k:"log",   r:"LOG", t:"Auditoría",               g:"reg",   d:"Registro de cambios",          demo:true}
 ];
+const GRUPOS_TABS = [["datos", ""], ["ciclo", "Ciclo anual"], ["seg", "Seguimiento"], ["reg", "Registro"]];
 const MOD_NOMBRE = {"HCE-LB":"Línea base (IDEA)", "HCE-PA":"Protocolo A", "HCE-PB":"Protocolo B", "HCE-IC":"Informe de cierre"};
-const MOD_TAB = {"HCE-LB":"lb", "HCE-PA":"pa", "HCE-PB":"pb", "HCE-IC":"ic"};
 
 function _estadoTab(t){
   if(!EXP.flujo) return null;
@@ -40,19 +44,51 @@ function _estadoTab(t){
   return null;
 }
 
+/* Marcas de la pestaña: estado (glifo + texto para lectores de pantalla), addenda y «fuera de secuencia». Nada se bloquea (§5.95). */
+function _marcasTab(t){
+  const est = _estadoTab(t);
+  if(est === "ci_pendiente") return `<span class="st-mini st-ci-pend"><span aria-hidden="true">⚠</span><span class="sr-only">: pendiente</span></span>`;
+  if(est === "registrado") return `<span class="st-mini st-firmado"><span aria-hidden="true">●</span><span class="sr-only">: registrado</span></span>`;
+  if(!est) return "";
+  const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar;
+  const mo = EXP.flujo.modulos[t.mod] || {};
+  const fuera = est !== "sin_iniciar" && mo.faltantes && mo.faltantes.length
+    ? `<span class="st-mini st-fuera"><span aria-hidden="true">!</span><span class="sr-only">, fuera de secuencia: falta firmar ${escHtml(mo.faltantes.map(x => MOD_CORTO[x] || x).join(", "))}</span></span>` : "";
+  return `<span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">: ${e.txt}</span></span>${addendaMarcaHtml(nAddendas(t.k), true)}${fuera}`;
+}
+function _tabHtml(t){
+  const sel = EXP.tab === t.k;
+  const nombre = t.lineas ? t.lineas.map(l => `<span>${escHtml(l)}</span>`).join(" ") : escHtml(t.t);
+  const mo = t.mod && EXP.flujo ? EXP.flujo.modulos[t.mod] : null;
+  const titulo = mo && mo.faltantes && mo.faltantes.length && mo.estado !== "sin_iniciar"
+    ? `${t.d} — fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}` : t.d;
+  return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"${t.mod ? ` data-mod="${t.mod}"` : ""}
+    aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}" title="${escHtml(titulo)}" onclick="selTabExp('${t.k}')">
+    <span class="tab-nombre">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}</span>${t.demo ? badgeSoloDemo() : ""}</button>`;
+}
+/* Las pestañas van en grupos con su rótulo (decorativo: aria-hidden; el año del ciclo va en el nombre de la lista). La ayuda «?»
+   (orden y estados) va ANTES de la lista: así Tab desde una pestaña entra directo al panel (patrón de pestañas del APG). */
 function tabsExpedienteHtml(){
-  return `<div class="exp-tabs" role="tablist" aria-label="Módulos del expediente" onkeydown="teclaTabExp(event)">` +
-    TABS_EXP.map(t=>{
-      const est = _estadoTab(t);
-      const sel = EXP.tab === t.k;
-      let marca = "";
-      if(est === "ci_pendiente") marca = ` <span class="st-mini st-ci-pend"><span aria-hidden="true">⚠</span><span class="sr-only">consentimiento pendiente</span></span>`;
-      else if(est === "registrado") marca = ` <span class="st-mini st-firmado"><span aria-hidden="true">●</span><span class="sr-only">consentimiento registrado</span></span>`;
-      else if(est){ const e = ESTADO_MOD_TXT[est] || ESTADO_MOD_TXT.sin_iniciar; marca = ` <span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">${e.txt}</span></span>${addendaMarcaHtml(nAddendas(t.k), true)}`; }
-      return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"
-        aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}"
-        title="${escHtml(t.t)}" onclick="selTabExp('${t.k}')">${t.r}${marca}</button>`;
-    }).join("") + `</div>`;
+  const anio = EXP.flujo ? EXP.flujo.anio : "";
+  const grupos = GRUPOS_TABS.map(([g, rot]) => `<div class="tabs-grupo tabs-grupo-${g}" role="presentation">
+      <span class="tabs-grupo-rot" aria-hidden="true">${rot === "Ciclo anual" && anio ? `${rot} ${escHtml(anio)}` : rot}</span>
+      <div class="tabs-grupo-fila" role="presentation">${TABS_EXP.filter(t => t.g === g).map(_tabHtml).join("")}</div></div>`).join("");
+  const estadoFlujo = EXP.flujoError ? estadoErrorInlineHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()") : "";
+  return `<div class="tabs-barra">
+      <button type="button" class="btn-ayuda" id="btnAyudaFlujo" aria-expanded="${EXP.ayuda}" aria-controls="ayudaFlujo" onclick="alternarAyudaFlujo()"
+        aria-label="Ayuda: orden y estados del ciclo anual" title="Orden y estados del ciclo anual"><span aria-hidden="true">?</span></button>
+      <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
+    </div>
+    <div class="ayuda-flujo" id="ayudaFlujo"${EXP.ayuda ? "" : " hidden"}>
+      <p><b>Ciclo anual${anio ? " " + escHtml(anio) : ""}:</b> Consentimiento → Línea base → Protocolo A → Protocolo B → Informe de cierre.</p>
+      <p><span aria-hidden="true">●</span> firmado · <span aria-hidden="true">◐</span> en curso · <span aria-hidden="true">○</span> sin iniciar · <span aria-hidden="true">✚</span> con addenda · <span aria-hidden="true">!</span> fuera de secuencia · <span aria-hidden="true">⚠</span> consentimiento pendiente.</p>
+      <p>El orden y el consentimiento no bloquean ningún módulo: se puede trabajar en cualquier orden y, si algo queda fuera de secuencia, se avisa al guardar.</p>
+    </div>${estadoFlujo}`;
+}
+function alternarAyudaFlujo(){
+  EXP.ayuda = !EXP.ayuda;
+  pintarTabsExp();
+  const b = document.getElementById("btnAyudaFlujo"); if(b) b.focus();
 }
 
 function teclaTabExp(ev){
@@ -128,9 +164,7 @@ function hce00Html(p){
   return `<div class="exp-grid">
     <div>
       <div class="info-card">
-        <h3><span class="ic" aria-hidden="true">▤</span> HCE-00 · Identificación y datos clínicos
-          <span style="flex:1"></span>
-          <button type="button" class="btn btn-ghost btn-mini" onclick="openEditar()">✎ Editar</button></h3>
+        <h3><span class="ic" aria-hidden="true">▤</span> HCE-00 · Identificación y datos clínicos</h3>
         <dl class="ib">
           ${filaDato("Diagnóstico", p.dx)}
           ${filaDato("CIE-11", p.cie11)}
@@ -162,13 +196,13 @@ function hce00Html(p){
   </div>`;
 }
 
-/* ---------- Avisos de la API (warnings[]): se muestran, nunca bloquean ---------- */
+/* ---------- Avisos (warnings[] de la API): se muestran, nunca bloquean ---------- */
 /* Un 409 (otro usuario cambió o firmó el registro) NO es un aviso: se marca {conflicto: true} y se rotula aparte
-   («Cambió en el servidor»), nunca bajo «Avisos de la API (no bloquean)», que es para los warnings[] de una escritura que salió bien. */
+   («Cambió en el servidor»), nunca bajo «Avisos (no bloquean)», que es para los warnings[] de una escritura que salió bien. */
 function avisosCuerpoHtml(lista){
   const conf = (lista || []).filter(w => w && w.conflicto), av = (lista || []).filter(w => !(w && w.conflicto));
   return (conf.length ? `<p class="aviso-conflicto"><b>Cambió en el servidor:</b> ${conf.map(w => escHtml(w.mensaje)).join(" ")}</p>` : "")
-    + (av.length ? `<b>Avisos de la API (no bloquean):</b><ul>${av.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>` : "");
+    + (av.length ? `<b>Avisos (no bloquean):</b><ul>${av.map(w => `<li>${escHtml((w && w.mensaje) || w)}</li>`).join("")}</ul>` : "");
 }
 function avisosHtml(avisos){
   if(!avisos || !avisos.length) return "";
@@ -183,53 +217,14 @@ function pintarAvisosExp(){
   if(el) el.innerHTML = avisosHtml(EXP.avisos);
 }
 
-/* ---------- Flujo del año: CI aparte + cadena LB → PA → PB → IC, tal cual la API ---------- */
-function flujoCardHtml(){
-  const cab = (extra) => `<h3 id="flujoTitulo"><span class="ic" aria-hidden="true">◐</span> Flujo del año${EXP.flujo ? " " + escHtml(EXP.flujo.anio) : ""}
-      <span class="spacer"></span>${extra || ""}
-      <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('log', true)">Ver auditoría</button></h3>`;
-  if(EXP.flujoError){
-    return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib">${estadoErrorHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()")}</div></section>`;
-  }
-  if(!EXP.flujo) return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}<div class="ib">${estadoCargandoHtml("Cargando el flujo del año…")}</div></section>`;
-  const f = EXP.flujo;
-  const ci = f.ci === "registrado"
-    ? `${pillCi("registrado")}`
-    : `${pillCi("pendiente")} <span style="color:var(--ink-2)">Es un estado visible: no bloquea ningún módulo.</span>
-       <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('ci', true)">Registrar CI →</button>`;
-  const pasos = MODULOS_CADENA.map(m=>{
-    const mo = f.modulos[m] || {estado:"sin_iniciar", faltantes:[]};
-    const est = ESTADO_MOD_TXT[mo.estado] ? mo.estado : "sin_iniciar";
-    const txt = ESTADO_MOD_TXT[est].txt;
-    // «fuera de secuencia» = el modulo ya tiene trabajo y hay anteriores sin firmar. Informa; no bloquea (§5.95).
-    const fuera = est !== "sin_iniciar" && mo.faltantes && mo.faltantes.length
-      ? `<span class="fl-aviso"><span aria-hidden="true">! </span>fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}</span>` : "";
-    const nAdd = nAddendas(MOD_TAB[m]);
-    const etiqueta = `${MOD_NOMBRE[m]}: ${txt}${nAdd ? `, con ${nAdd} addenda${nAdd > 1 ? "s" : ""}` : ""}${fuera ? ", fuera de secuencia" : ""}`;
-    return `<li><button type="button" class="fl-btn" onclick="selTabExp('${MOD_TAB[m]}', true)" aria-label="${escHtml(etiqueta)}">
-      <span aria-hidden="true">${pillModulo(MOD_CORTO[m], m, est)}</span>
-      <span class="fl-nombre" aria-hidden="true">${escHtml(MOD_NOMBRE[m])}</span>
-      <span class="fl-estado" aria-hidden="true">${txt}${nAdd ? ` <span class="fl-add">✚ ${nAdd} addenda${nAdd > 1 ? "s" : ""}</span>` : ""}</span>${fuera ? `<span aria-hidden="true">${fuera}</span>` : ""}</button></li>`;
-  }).join("");
-  return `<section class="info-card flujo-conn" aria-labelledby="flujoTitulo">${cab()}
-    <div class="ib">
-      <div class="fl-ci"><span class="fl-rotulo">Consentimiento informado (CI)</span> ${ci}</div>
-      <ol class="fl-cadena" aria-label="Cadena anual ${escHtml(f.anio)}: línea base, protocolo A, protocolo B e informe de cierre">${pasos}</ol>
-      <p class="hint" style="margin-top:var(--s3)">● firmado · ◐ en curso · ○ sin iniciar. Ningún módulo se bloquea: se puede trabajar en cualquier orden y, si queda fuera de secuencia, la API lo avisa.</p>
-    </div></section>`;
-}
-function pintarFlujo(){
-  const w = document.getElementById("flujoWrap");
-  if(w) w.innerHTML = flujoCardHtml();
-}
-
-/* Vuelve a pedir el flujo. `conservar`: no vaciar lo que ya se ve mientras llega (p. ej. tras registrar el CI). */
+/* Vuelve a pedir el flujo (el estado que muestran las pestañas del ciclo anual). `conservar`: no vaciar lo que ya se ve mientras
+   llega (p. ej. tras registrar el CI). Si falla, debajo de las pestañas aparece el error con «Reintentar». */
 async function recargarFlujoExp(conservar){
   if(EXP.id === null) return;   // no hay expediente abierto (p. ej. se cerró la sesión)
   const mi = EXP.seq;
   if(!conservar) EXP.flujo = null;
   EXP.flujoError = false;
-  pintarFlujo(); pintarTabsExp();
+  pintarTabsExp();
   try{
     const f = await apiFetch(`/hce/${EXP.id}/flujo`);
     if(mi !== EXP.seq) return;
@@ -238,7 +233,7 @@ async function recargarFlujoExp(conservar){
     if(mi !== EXP.seq) return;
     EXP.flujoError = true;
   }
-  pintarFlujo(); pintarTabsExp();
+  pintarTabsExp();
 }
 
 /* ---------- Pestaña CI: GET (404 = pendiente) · POST registra · PATCH edita. Nunca «firmado». ---------- */
@@ -397,13 +392,12 @@ function panelTabExpHtml(k){
   if(k === "vf") return vfPanelHtml();
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
-    <h3>${t.r} · ${escHtml(t.t)} ${badgeSoloDemo()}</h3>
+    <h3>${t.r} · ${escHtml(t.d)} ${badgeSoloDemo()}</h3>
     <div class="ib">${panelModoDemo("Este módulo todavía no está conectado al servidor.")}</div>
   </div>`;
 }
 
 function expedienteCargando(){
-  document.getElementById("expCrumb").textContent = "Expediente";
   document.getElementById("expedienteContent").innerHTML =
     `<div class="card"><div class="cardbody">${estadoCargandoHtml("Cargando expediente…")}</div></div>`;
   go("expediente");
@@ -415,29 +409,39 @@ function expedienteError(err, id){
       `<button type="button" class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button>`)}</div></div>`;
 }
 
-/* Cabecera del expediente (se vuelve a pintar tras editar HCE-00, con lo que devolvio la API). */
+/* Banda del paciente (F1, H1/H4/H6): clara, pegada bajo la barra superior, un solo renglón de datos. La alerta clínica (`alerta`
+   de GET /hce/{id}) va en tinta, con ⚠ y texto: nunca ok/warn/bad (no es un estado de la app). Un solo punto de edición: «Editar
+   datos». Se vuelve a pintar tras editar HCE-00, con lo que devolvió la API. */
 function cabeceraExpHtml(hce){
   const nombre = `${hce.nombre} ${hce.apellido}`.trim();
-  return `<div class="exp-head">
-      <div class="exp-avatar" aria-hidden="true">${escHtml(inicialesDe(nombre))}</div>
-      <div>
-        <h1 id="expTitulo" tabindex="-1">${escHtml(nombre)}</h1>
-        <div class="meta">${hce.edad === null ? "" : hce.edad + " años · "}${hce.sexo ? escHtml(hce.sexo) + " · " : ""}N.º de HC ${escHtml(hce.hc)} · C.I. ${escHtml(hce.ciTxt)}${!hce.activo && hce.bajaFecha ? ` · Baja: ${fmtFecha(hce.bajaFecha)}` : ""}</div>
-        <div class="badges">
-          ${hce.grupo ? `<span class="bdg">Grupo ${escHtml(hce.grupo)}</span>` : ""}
-          <span class="bdg">${hce.activo ? "Activo" : "Inactivo"}</span>
-        </div>
-      </div>
-      <div class="spacer"></div>
-      <button type="button" class="btn btn-primary" onclick="openEditar()">✎ Editar datos</button>
-      <button type="button" class="btn btn-ghost" onclick="go('inicio')">‹ Volver al listado</button>
-    </div>`;
+  const datos = [hce.edad === null ? "" : `${hce.edad} años`, hce.sexo ? escHtml(hce.sexo) : "",
+    `HC <span class="cod">${escHtml(hce.hc)}</span>`, `C.I. <span class="cod">${escHtml(hce.ciTxt)}</span>`,
+    hce.grupo ? `Grupo ${escHtml(hce.grupo)}` : ""].filter(Boolean).join(" · ");
+  const inactivo = hce.activo ? "" : ` <span class="chip-inactivo">Inactivo${hce.bajaFecha ? ` · Baja: ${fmtFecha(hce.bajaFecha)}` : ""}</span>`;
+  return `<div class="banda-id">
+      <h1 id="expTitulo" tabindex="-1">${escHtml(nombre)}</h1>
+      <p class="banda-meta">${datos}${inactivo}</p>
+    </div>
+    ${hce.alerta ? `<p class="banda-alerta" id="bandaAlerta"><span aria-hidden="true">⚠</span> <b>Alerta clínica:</b> ${escHtml(hce.alerta)}</p>` : ""}
+    <button type="button" class="btn btn-ghost btn-mini banda-editar" onclick="openEditar()">✎ Editar datos</button>`;
 }
 function pintarCabeceraExp(){
   const c = document.getElementById("expHead");
   if(!c || !EXP.hce) return;
   c.innerHTML = cabeceraExpHtml(EXP.hce);
-  document.getElementById("expCrumb").textContent = `Expediente · ${EXP.hce.nombre} ${EXP.hce.apellido}`.trim();
+}
+/* El alto real de la banda es un token (--banda-h): de él sale el scroll-padding-top que evita que lo enfocado quede debajo
+   (WCAG 2.2 · 2.4.11). Una alerta larga la hace crecer y el token la sigue. */
+let _OBS_BANDA = null;
+function vigilarBanda(){
+  if(_OBS_BANDA) _OBS_BANDA.disconnect();
+  const b = document.getElementById("expHead");
+  if(!b || typeof ResizeObserver !== "function") return;
+  _OBS_BANDA = new ResizeObserver(() => {
+    const h = Math.ceil(b.getBoundingClientRect().height);
+    if(h > 0) document.documentElement.style.setProperty("--banda-h", h + "px");
+  });
+  _OBS_BANDA.observe(b);
 }
 
 /* `opts.avisos`: warnings[] de la escritura que lo abre (alta). */
@@ -461,14 +465,12 @@ async function abrirExpediente(id, opts){
     return;
   }
   EXP.hce = hce; EXP.raw = raw;
-  document.getElementById("expCrumb").textContent = `Expediente · ${`${hce.nombre} ${hce.apellido}`.trim()}`;
   document.getElementById("expedienteContent").innerHTML = `
-    <div id="expHead">${cabeceraExpHtml(hce)}</div>
+    <div id="expHead" class="banda-nna">${cabeceraExpHtml(hce)}</div>
     <div id="expAvisos"></div>
-    <div id="flujoWrap"></div>
-    <div id="tabsExpWrap">${tabsExpedienteHtml()}</div>
+    <div id="tabsExpWrap" class="tabs-exp">${tabsExpedienteHtml()}</div>
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
-  pintarAvisosExp(); pintarFlujo(); vigilarPanelExp();
+  pintarAvisosExp(); vigilarPanelExp(); vigilarBanda();
   cargarModsExp(); cargarIdeaVigente();         // addendas por modulo (marcas) y «qué IDEA rige» (§5.97), de la API
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
@@ -480,8 +482,6 @@ async function abrirExpediente(id, opts){
 function abrirExpedienteDemo(id){
   const p = NNA.find(n=>n.id===id);
   if(!p) return;
-  document.getElementById("expCrumb").textContent = `Expediente · ${p.nombre} ${p.apellido}`;
-  const iniciales = (p.nombre[0]||"")+(p.apellido[0]||"");
   const ideaEvs = ideaEvals(p);
   const likEvs = p.historial.filter(h=>h.tipo==="lik").sort((x,y)=> x.fecha < y.fecha ? -1 : 1);
 
@@ -525,7 +525,6 @@ function abrirExpedienteDemo(id){
   document.getElementById("expedienteContent").innerHTML = `
     ${panelModoDemo("Expediente de ejemplo con datos ficticios: no es un expediente de la API y nada de lo que se haga acá se guarda.")}
     <div class="exp-head">
-      <div class="exp-avatar">${iniciales}</div>
       <div>
         <h1>${p.nombre} ${p.apellido}</h1>
         <div class="meta">${p.edad} años · ${p.sexo} · Expediente #${p.id} · C.I. ${p.ci}${!p.activo&&p.bajaFecha?` · Baja: ${fmtFecha(p.bajaFecha)}`:""}</div>
@@ -533,23 +532,15 @@ function abrirExpedienteDemo(id){
           <span class="bdg">Grupo ${p.grupo}</span>
           <span class="bdg">${p.apoyo.split("—")[0].trim()}</span>
           <span class="bdg">${p.tecnico.split("—")[0].trim()}</span>
-          <span class="bdg" style="background:${p.activo?'rgba(27,138,76,.35)':'rgba(197,48,48,.35)'}">${p.activo?'Activo':'Inactivo'}</span>
+          <span class="bdg">${p.activo?'Activo':'Inactivo'}</span>
         </div>
       </div>
       <div class="spacer"></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-ghost" onclick="toggleActivo(${p.id})" style="background:rgba(255,255,255,.14);color:#fff">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
-        <button class="btn btn-ghost" onclick="go('inicio')" style="background:rgba(255,255,255,.14);color:#fff">‹ Volver al listado</button>
-      </div>
+      <button class="btn btn-ghost btn-mini" onclick="toggleActivo(${p.id})">${p.activo?'⨯ Dar de baja':'↻ Reactivar'}</button>
     </div>
 
     <div class="eval-bar">
       <span class="hint">LB, PA, PB, IC y VF se editan y firman en los expedientes conectados (pestañas del expediente), no en el de ejemplo.</span>
-      <!-- M5.3: "Eval. intermedia" (Likert 3 ítems/dim) reemplazada por la Escala IPPU-TEA (PA/PB);
-           el código de la vista se conserva sin exponer, como áreas/general. -->
-      <!-- M0 (2026-07-15): "Eval. por áreas" y "Eval. general" descartadas como módulos activos
-           (decisión §0.2 del plan / §10 Documento Técnico IPPU). Código y vistas conservados,
-           solo se dejan de exponer; se resuelven como archivo histórico de solo lectura en M7 (HCE-DOC). -->
     </div>
 
     <div class="section-nav no-print">

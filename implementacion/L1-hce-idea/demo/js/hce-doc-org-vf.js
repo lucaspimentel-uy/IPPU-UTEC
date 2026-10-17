@@ -367,13 +367,13 @@ function vfAvisosHtml(){
 function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){ el.innerHTML = ""; el.hidden = true; } }
 
 function vfPanelHtml(){
-  const cab = (extra) => `<h3 id="vfTitulo" tabindex="-1"><span class="ic" aria-hidden="true">♿</span> VF · Valoración funcional (BUND / CIF) ${extra || ""}</h3>`;
-  if(VF.hceId !== EXP.id || VF.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando la valoración funcional…")}</div></div>`;
+  const cab = `<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2></div>`;
+  if(VF.hceId !== EXP.id || VF.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando la valoración funcional…")}</div></div>`;
   if(VF.estado === "error"){
-    return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(VF.error, "vfReintentar()")}</div></div>`;
+    return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(VF.error, "vfReintentar()")}</div></div>`;
   }
   if(VF.estado === "vacio" && !VF.nuevo){
-    return `<div class="info-card">${cab()}<div class="ib">
+    return `${cab}<div class="info-card"><div class="ib">
       ${estadoVacioHtml("♿", `Todavía no se registró una valoración funcional para este expediente.<br>
         <span class="hint">Es un estado normal: se registra cuando el equipo cuenta con la información. Todos los campos son opcionales.</span>`,
         `<button type="button" class="btn btn-primary" id="btnVfNuevo" onclick="vfNuevo()">+ Registrar valoración funcional</button>`)}
@@ -408,20 +408,19 @@ function vfEditorHtml(){
       <td id="vf_chip_${k}">${vfNivelChipHtml(actual)}</td></tr>`;
   }).join("");
   const resultado = rec
-    ? `<div class="vf-resultado" id="vfResultado" tabindex="-1" aria-label="Resultado calculado por el servidor">
-        <div><span class="vf-rot">Categoría según el baremo (la calcula el servidor desde el %)</span> ${vfCategoriaHtml(rec)}</div>
+    ? `<div class="vf-resultado" id="vfResultado" tabindex="-1" aria-label="Resultado de la valoración">
+        <div><span class="vf-rot">Categoría según el baremo (sale sólo del %)</span> ${vfCategoriaHtml(rec)}</div>
         ${vfAlertaHtml(rec)}</div>`
-    : `<p class="hint">La categoría según el baremo y la alerta de vigencia las calcula el servidor cuando se guarda la valoración.</p>`;
-  return `<div class="info-card ev-card"><div class="ev-cab"><h3 id="vfTitulo" tabindex="-1"><span class="ic" aria-hidden="true">♿</span> VF · Valoración funcional (BUND / CIF)</h3>
+    : `<p class="hint">La categoría según el baremo y la alerta de vigencia aparecen cuando se guarda la valoración.</p>`;
+  // F1: el encabezado es un renglón; la nota «IPPU registra, no certifica» abre el primer bloque (el registro oficial).
+  return `<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2>
       <span class="ev-estado"><span class="st ${rec ? "st-registrada" : "st-sin_iniciar"}"><span aria-hidden="true">${rec ? "●" : "○"}</span> ${rec ? "Registrada" : "Por registrar"}</span></span></div>
-    <div class="ib">
-      <p class="hint"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</p>
-      <div id="vfAvisos" class="review-note avisos-api" role="status"${(VF.avisos || []).length ? "" : " hidden"}>${vfAvisosHtml()}</div>
-      <div id="vfErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    </div></div>
+    <div id="vfAvisos" class="review-note avisos-api" role="status"${(VF.avisos || []).length ? "" : " hidden"}>${vfAvisosHtml()}</div>
+    <div id="vfErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
 
-    <div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoración oficial (BUND) — registro</h2></div>
+    <div class="card"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoración oficial (BUND) — registro</h2></div>
       <div style="padding:16px 18px">
+        <p class="hint" style="margin-bottom:var(--s3)"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</p>
         <div class="form-grid">
           <div class="field"><label for="vf_estado">Estado</label>
             <select id="vf_estado" data-vf aria-describedby="err_vf_estado" onchange="vfSucio()"><option value="">— sin registrar —</option>${estadosOpc}</select><div class="ev-err" id="err_vf_estado"></div></div>
@@ -432,7 +431,7 @@ function vfEditorHtml(){
           ${input("vf_rnpcd", "N.º RNPcD (si está inscripto)", r.rnpcd)}
         </div>
         ${resultado}
-        <div class="vf-salva"><b>Salvaguarda dura (§7.5):</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al % del baremo — miden constructos distintos. La categoría la deriva el servidor únicamente del % oficial; el navegador no la calcula.</div>
+        <div class="vf-salva"><b>Salvaguarda dura (§7.5):</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al % del baremo — miden constructos distintos. La categoría sale únicamente del % oficial.</div>
       </div></div>
 
     <div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Perfil funcional en clave CIF (§7.3) — autonomía, capacidades, barreras y apoyos</h2></div>
@@ -450,8 +449,8 @@ function vfEditorHtml(){
         </div>
       </div></div>
 
-    <div class="idea-summary" id="vfResumen">
-      <div class="nota">${crear ? "Se crea con lo que completes: todos los campos son opcionales." : "Se guarda sólo lo que cambiaste."} Después de guardar, la categoría y la alerta se muestran como las devolvió el servidor.</div>
+    <div class="barra-acciones" id="vfResumen">
+      <div class="barra-nota">${crear ? "Se crea con lo que completes: todos los campos son opcionales." : "Se guarda sólo lo que cambiaste."}</div>
       <div class="spacer"></div>
       <div class="ev-acciones" id="vfAcciones">${vfAccionesHtml()}</div>
     </div>

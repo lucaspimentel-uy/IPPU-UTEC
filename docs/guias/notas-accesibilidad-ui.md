@@ -148,8 +148,16 @@ pestaña SEV de la demo es un panel de modo demostración. Cuando se construya s
 | firmado | `●` · «firmado» | relleno **macizo** |
 | con addenda | `✚` · «con N addenda(s)» | **doble borde**, junto al estado de firmado (encabezado, pestaña y flujo) |
 | CI pendiente | `⚠` · «CI pendiente» | un aviso accionable: ícono de alerta |
-| CI registrado | `●` · «Registrado» | relleno macizo (el CI no se firma) |
+| CI registrado | `●` · «Registrado» | relleno macizo (el CI no se firma); en las listas, «✓ CI» (ver abajo) |
 | «Cambió en el servidor» | rótulo propio | un 409 **no** es un aviso de la API; se rotula aparte y la pantalla muestra lo que hay en el servidor |
+| fuera de secuencia | `!` · «fuera de secuencia: falta firmar …» | glifo propio en la pestaña del módulo; informa, no bloquea |
+
+**Listas contra expediente (F1, `handoff.md` §5.140).** En una lista el estado normal no tiene que gritar: **«firmado» es `●` +
+texto en `--ok`, sin relleno**, y «en curso» conserva su relleno suave con borde punteado; **el CI registrado es «✓ CI» en
+`--ink-2`, sin relleno ni borde**, y sólo «⚠ CI pendiente» conserva su chip rojo. En el **expediente** (encabezado del módulo,
+pestaña CI) «Firmado» y «Registrado» siguen macizos. En las pestañas del ciclo anual el estado va como glifo, con su texto sólo
+para lectores de pantalla. La **alerta clínica** de la banda del paciente va en tinta, con `⚠` y «Alerta clínica»: no es un estado
+de la app y nunca usa ok/warn/bad.
 
 **Avisos y errores.** Los **avisos no bloqueantes** de la API (`warnings[]`) se muestran con `role="status"` (se anuncian sin
 interrumpir y nunca bloquean). Los **errores** se muestran junto al campo (`aria-describedby`) y en un resumen con
@@ -167,15 +175,20 @@ un número y de «sin puntuar». En el editor es un botón aparte de los puntaje
 **Decisión (Fase 3-e).** Un solo anillo, **sólido**, en todo lo operable y en todo lo que recibe el foco por programa (títulos con
 `tabindex="-1"`, resúmenes de error):
 
-- **Token:** `--ring` (sobre superficies claras) y `--ring-dark` (sobre el cromo oscuro: barra lateral, cabecera, barra de totales,
-  cabeceras de diálogo, enlace de salto). `--ring` cambia a `--ring-dark` **por herencia** dentro de esos contenedores.
+- **Token:** `--ring` (sobre superficies claras) y `--ring-dark` (sobre el cromo oscuro: barra superior y lateral, banner del
+  documento impreso, cabeceras de diálogo, enlace de salto). Desde F1 la banda del paciente y la barra de acciones son claras. `--ring` cambia a `--ring-dark` **por herencia** dentro de esos contenedores.
   Ancho `--ring-w` y separación `--ring-off` (2 px y 2 px).
 - **Un único selector `:focus-visible`.** Ningún selector reemplaza el contorno por un `box-shadow` translúcido ni lo apaga con
   `outline:none`; la única excepción es `<main>`, que sólo recibe el foco como destino del enlace de salto.
 - **Hacia adentro en las pestañas** (`outline-offset` negativo): la pestaña toca a sus vecinas y al filete.
-- **Norma:** WCAG 2.4.7 (foco visible) y 1.4.11 (contraste de componentes: el anillo ≥ 3:1 contra lo que queda detrás). Además,
-  2.4.11 (lo enfocado no queda tapado): el documento lleva `scroll-padding` por la barra superior y por la barra de totales
-  pegada abajo.
+- **Norma:** WCAG 2.4.7 (foco visible) y 1.4.11 (contraste de componentes: el anillo ≥ 3:1 contra lo que queda detrás).
+- **WCAG 2.2 adoptados en F1 (§5.140 f):**
+  - **2.4.11 Foco no tapado (mínimo).** La barra superior, la banda del paciente y la barra de acciones quedan pegadas; el
+    documento lleva `scroll-padding-top` = `--topbar-h` + `--banda-h` + margen (sólo con la banda a la vista; `--banda-h` lo
+    actualiza el alto real de la banda) y `scroll-padding-bottom` = `--barra-h` + margen (sólo con una barra de acciones). Se
+    verifica con Tab real por los editores de LB y PA: en el centro de cada control enfocado está el control (`f1-c`).
+  - **2.5.8 Tamaño del objetivo (mínimo).** Todo lo operable del listado, la banda, las pestañas y la barra de acciones mide
+    ≥ 24×24 px o cumple la excepción de espaciado (un círculo de 24 px centrado no toca otro objetivo) (`f1-d`).
 
 **Cómo se mide.** Con teclado real: se pulsa una tecla (el navegador pasa a la modalidad de teclado, y `:focus-visible` aplica a
 cualquier `.focus()` posterior), se enfoca el control y se lee el contorno computado (estilo, ancho, color, separación). El fondo
@@ -199,6 +212,8 @@ pestaña, ítem de la barra lateral, resumen desplegable, controles sobre cromo 
   texto es alcanzable con teclado.
 - **Tabindex móvil** en el editor del IDEA: un punto de Tab por dimensión (las flechas, Inicio y Fin mueven el foco dentro de ella;
   Enter o Espacio eligen).
+- **Listado (F1):** un solo punto de Tab por fila (el nombre, un botón; Enter abre el expediente); con el mouse abre la fila entera.
+- **Pestañas del expediente (F1):** la ayuda «?» va antes de la lista de pestañas, así Tab desde una pestaña entra directo al panel.
 - **Orden de Tab:** el del DOM (barra superior → barra lateral → contenido). Se verificó recorriendo con el teclado login → listado
   → expediente → las siete pestañas del flujo → informe impreso → volver, sin que el foco caiga en `<body>`.
 
@@ -228,9 +243,11 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
   dentro del JS, no como tokens. El dato no depende sólo del color (trazo continuo o punteado, marca redonda o cuadrada).
 - **Likert de los protocolos** (PA/PB): sus cinco botones por ítem siguen siendo un punto de Tab cada uno. El tabindex móvil se
   hizo sólo en el editor del IDEA.
-- **Vista legada «Evaluación intermedia»** (`view-intermedia`, no expuesta desde M5.3): fuera de la herramienta.
-- **Expediente de ejemplo en modo demostración:** conserva colores y estilos en línea propios de la demo original (p. ej. el rótulo
-  «Activo/Inactivo» de su cabecera). No se mezcla con la API y lleva el panel de modo demostración.
+- **Expediente de ejemplo en modo demostración:** su cabecera pasó a clara en F1 (sin el rótulo «Activo/Inactivo» coloreado), pero
+  el cuerpo conserva colores y estilos en línea propios de la demo original. No se mezcla con la API y lleva el panel de modo
+  demostración.
+- **2.5.8 fuera del listado, la banda, las pestañas y la barra:** los formularios y los editores no se midieron (los botones de
+  puntaje y los campos ya superan los 24 px, pero no hay chequeo).
 - **Colores de grupo:** cerrado en las pantallas conectadas (§5.122 e: el nombre es el de la API y no se pinta); las vistas de modo
   demostración los conservan bajo el panel.
 - **HCE-SEV:** sin pantalla (§3.1). Cuando exista, los niveles de apoyo usan la rampa.

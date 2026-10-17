@@ -426,19 +426,19 @@ function buscarContornosApagados() {
   anillos.push(await medirAnilloTeclado(page, '#panelExp .inter-btn', 'botón de puntaje intermedio (LB)'));
   anillos.push(await medirAnilloTeclado(page, '#lb_sintesis', 'área de texto (LB)'));
   anillos.push(await medirAnilloTeclado(page, '#panelExp .dobs summary', 'resumen desplegable (LB)'));
-  anillos.push(await medirAnilloTeclado(page, '#evResumen .btn-ghost', 'botón sobre cromo oscuro (barra de totales)'));
+  anillos.push(await medirAnilloTeclado(page, '#evResumen .btn-ghost', 'botón de la barra de acciones (pegada abajo)'));
   await ev(() => evPedirFirma()); await esperar(100);
   await cap('LB · confirmación de firma');
   await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await esperar(150);
   await cap('LB · 422 por dimensión y por campo');
   await abrirPorNombre('Martín', 'lb');
   await cap('LB · firmado con banda y addendas');
-  await page.click('#tabExp-pb'); await page.waitForSelector('#evDeltaTabla', { timeout: 8000 }); await esperar(150);
+  await page.click('#tabExp-pb'); await page.waitForSelector('#evResultado', { timeout: 8000 }); await esperar(150);
   await cap('PB · firmado con Δ');
   await abrirPorNombre('Sofía', 'pa');
   await ev(() => document.querySelectorAll('.prot-obs').forEach((w) => w.classList.add('show')));
   await cap('PA · borrador con observaciones');
-  anillos.push(await medirAnilloTeclado(page, '#panelExp .lik-btn', 'botón de puntaje (PA)'));
+  anillos.push(await medirAnilloTeclado(page, '#panelExp .likert-btn', 'botón de puntaje (PA)'));
   anillos.push(await medirAnilloTeclado(page, '.prot-obs.show textarea', 'área de texto sobre fondo ámbar (PA)'));
   await ev(() => evPedirFirma()); await page.click('#btnEvConfirmar'); await page.waitForSelector('#evErrores:not([hidden])', { timeout: 8000 }); await esperar(150);
   await cap('PA · errores de firma');
@@ -505,11 +505,11 @@ function buscarContornosApagados() {
   anillos.push(await medirAnilloTeclado(page, '#filtroGrupo', 'lista desplegable (filtro de grupo)'));
   anillos.push(await medirAnilloTeclado(page, '.chip-estado', 'botón de filtro (chip)'));
   anillos.push(await medirAnilloTeclado(page, '#btnNuevoNNA', 'botón primario'));
-  anillos.push(await medirAnilloTeclado(page, '#tbodyNNA .btn-link', 'botón de enlace (tabla)'));
+  anillos.push(await medirAnilloTeclado(page, '#tbodyNNA .nna-abrir', 'botón del nombre (listado)'));
   await abrirPorNombre('Martín', 'lb');
   anillos.push(await medirAnilloTeclado(page, '.exp-tab[aria-selected="true"]', 'pestaña'));
-  anillos.push(await medirAnilloTeclado(page, '.exp-head .btn-ghost', 'botón sobre la cabecera oscura'));
-  anillos.push(await medirAnilloTeclado(page, '.fl-btn', 'botón del flujo'));
+  anillos.push(await medirAnilloTeclado(page, '#expHead .banda-editar', 'botón de la banda del paciente'));
+  anillos.push(await medirAnilloTeclado(page, '#btnAyudaFlujo', 'botón de ayuda del ciclo anual («?»)'));
   anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
 
   await browser.close();

@@ -185,17 +185,18 @@ async function evCargar(k, conservar){
     return;
   }
   const rec = _recDeLista(k, rl.value.data, anio);
+  if(k === "pb") ev.recA = _recDeLista("pa", rl.value.data, anio);      // el total del A del año, para el bloque «Resultado» del PB
   const conservarTrabajo = conservar && ev.estado === "listo" && ev.sucio && !(rec && rec.firmado);
   const igual = conservar && ev.estado === "listo" && JSON.stringify(ev.rec) === JSON.stringify(rec);
   ev.rec = rec;
   if(igual && !ev.sucio){            // la relectura en segundo plano no trajo nada nuevo: no se toca la pantalla
     if(EXP.mods) EXP.mods[k] = rec;
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     return;
   }
   if(conservarTrabajo){            // se empezó a tipear mientras llegaba la respuesta: no se pisa nada
     if(EXP.mods) EXP.mods[k] = rec;
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     return;
   }
   evIniciarTrabajo(ev);
@@ -210,7 +211,7 @@ async function evCargar(k, conservar){
   if(EXP.mods) EXP.mods[k] = rec;
   ev.estado = "listo";
   evRepintar(k);
-  pintarTabsExp(); pintarFlujo();
+  pintarTabsExp();
 }
 
 function evReintentar(){
@@ -232,7 +233,7 @@ async function cargarModsExp(){
     pb: rp.status === "fulfilled" ? _recDeLista("pb", rp.value.data, anio) : null,
     ic: rc.status === "fulfilled" ? (rc.value.data || []).find(x => x.anio === anio) || null : null
   };
-  pintarTabsExp(); pintarFlujo();
+  pintarTabsExp();
 }
 
 /* IDEA que rige en la HCE (§5.97): lo decide la API (GET /hce/{id}/idea/vigente), no el navegador. */
@@ -282,10 +283,10 @@ function ideaVigenteCardHtml(){
 function evPanelHtml(k){
   const ev = EVS[k];
   const inf = EV_INFO[k];
-  const cab = (extra) => `<h3 id="evTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> ${inf.corto} · ${escHtml(inf.nombre)}${ev && ev.anio ? " — " + escHtml(ev.anio) : ""} ${extra || ""}</h3>`;
-  if(!ev || ev.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando " + inf.corto + "…")}</div></div>`;
+  const cab = `<div class="mod-cab"><h2 id="evTitulo" tabindex="-1">${inf.corto} · ${escHtml(inf.nombre)}${ev && ev.anio ? " — " + escHtml(ev.anio) : ""}</h2></div>`;
+  if(!ev || ev.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando " + inf.corto + "…")}</div></div>`;
   if(ev.estado === "error"){
-    return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(ev.error, "evReintentar()")}</div></div>`;
+    return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(ev.error, "evReintentar()")}</div></div>`;
   }
   return k === "lb" ? ideaHtml(ev) : protHtml(ev);
 }
@@ -307,10 +308,15 @@ function evEstadoHtml(ev){
   const add = ev.rec && ev.rec.addendas ? addendaMarcaHtml(ev.rec.addendas.length, false) : "";
   return `<span class="st st-${est}"><span aria-hidden="true">${glifo}</span> ${txt}</span>${add}`;
 }
+/* Encabezado del módulo (F1): un renglón —título, estado y addenda—, sin tarjeta. La nota metodológica, una sola vez, va debajo
+   (sólo en el editor); los avisos y los errores, debajo de ella y sólo cuando los hay (nada de bloques vacíos, H17). */
 function evEncabezadoHtml(ev){
   const inf = EV_INFO[ev.k];
-  return `<div class="ev-cab"><h3 id="evTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✎</span> ${inf.corto} · ${escHtml(inf.nombre)} — ${escHtml(ev.anio)}</h3>
+  return `<div class="mod-cab"><h2 id="evTitulo" tabindex="-1">${inf.corto} · ${escHtml(inf.nombre)} — ${escHtml(ev.anio)}</h2>
     <span id="evEstado" class="ev-estado">${evEstadoHtml(ev)}</span></div>`;
+}
+function evAvisosBloqueHtml(ev){
+  return `<div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div>`;
 }
 
 function evAvisosHtml(ev){
@@ -399,12 +405,10 @@ function ideaHtml(ev){
     ${escala.dims.map((_, di) => ideaDimHtml(ev, ei, di)).join("")}
     <div class="esc-foot"><span class="subtxt">Puntaje 0 = sin trastorno · 8 = afectación severa</span>
       <span>Subtotal escala: <b id="sub${ei}"></b></span></div></div>`).join("");
-  return `<div class="info-card ev-card">${evEncabezadoHtml(ev)}
-    <div class="ib">
-      <p class="hint">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). Los totales y la banda los calcula el servidor al guardar.</p>
-      <div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div>
-      <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    </div></div>
+  return `${evEncabezadoHtml(ev)}
+    <p class="mod-nota">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). El total y la banda se calculan al guardar: la banda es una orientación para el equipo y el juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda).</p>
+    ${evAvisosBloqueHtml(ev)}
+    <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}
     <div id="ideaForm" style="margin-top:16px">${escalas}</div>
     <div class="card" style="margin-top:16px">
@@ -456,7 +460,7 @@ function evBandaHtml(ev, num){
   if(ev.k !== "lb") return "";
   if(num.guardado && num.banda) return bandaChipHtml(num.banda);
   if(ev.sucio) return `<span class="ev-nota-banda">La banda se calcula al guardar.</span>`;
-  return `<span class="ev-nota-banda">Sin banda: todavía no hay un total guardado.</span>`;
+  return `<span class="ev-nota-banda">Sin banda todavía.</span>`;
 }
 function evCuentaTxt(ev, num){
   return ev.k === "lb" ? `${num.n} / 12 dimensiones puntuadas` : `${num.n} / 24 ítems puntuados`;
@@ -471,27 +475,27 @@ function evAccionesHtml(ev){
   const occ = ev.guardando;
   if(ev.confirmando && !occ){
     return `<div class="ev-confirma" role="group" aria-label="Confirmar la firma" onkeydown="evTeclaConfirma(event)">
-      <span id="evConfirmaTxt">¿Firmar ${ev.k === "lb" ? "la línea base" : "el protocolo"}? La firma bloquea el registro: después sólo se corrige por addenda.</span>
+      <span id="evConfirmaTxt">¿Firmar ${ev.k === "lb" ? "la línea base" : "el protocolo"}? Bloquea el registro: después sólo se corrige por addenda.</span>
       <button type="button" class="btn btn-firmar" id="btnEvConfirmar" aria-describedby="evConfirmaTxt" onclick="evFirmar()">✓ Confirmar firma</button>
       <button type="button" class="btn btn-ghost" id="btnEvCancelar" aria-describedby="evConfirmaTxt" onclick="evCancelarFirma()">Cancelar</button></div>`;
   }
   return `<button type="button" class="btn btn-ghost" id="btnEvGuardar" onclick="evGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : "Guardar borrador"}</button>
     <button type="button" class="btn btn-firmar" id="btnEvFirmar" onclick="evPedirFirma()"${occ ? " disabled" : ""}>✓ Firmar ${ev.k === "lb" ? "línea base" : "protocolo"}</button>`;
 }
+/* Barra de acciones pegada abajo (F1, H2): UNA fila clara de ≤ 64 px —total con su rótulo («guardado» o «provisorio»), banda,
+   avance y acciones—. La nota metodológica ya no va acá: está una sola vez en el encabezado del módulo. Mientras se confirma la
+   firma, la banda y el avance se ocultan (CSS) para que la confirmación entre en la misma fila. */
 function evResumenHtml(ev){
   const num = evNumeros(ev);
   const max = ev.k === "lb" ? 96 : 120;
-  const nota = ev.k === "lb"
-    ? "Banda orientativa para el equipo: la calcula el servidor al guardar. El juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda)."
-    : "Escala de progreso (mayor = más progreso), no comparable con el IDEA. El total y las escalas los calcula el servidor cuando están los ítems. La firma bloquea el protocolo (corrección por addenda).";
-  return `<div class="idea-summary" id="evResumen">
-    <div><div class="sum-lab">Puntaje total ${ev.k === "lb" ? "IDEA" : "IPPU-TEA"}</div>
-      <div class="tot"><span id="evTotal">${num.total === null || num.total === undefined ? "—" : escHtml(num.total)}</span><small> / ${max}</small></div>
-      <div class="ev-etq" id="evTotalEtq">${escHtml(evTotalEtiqueta(ev, num))}</div></div>
-    <div id="evBanda">${evBandaHtml(ev, num)}</div>
-    <div class="nivel" id="evCuenta" aria-live="polite">${escHtml(evCuentaTxt(ev, num))}</div>
+  return `<div class="barra-acciones" id="evResumen">
+    <div class="barra-total"><div class="sum-lab">Total ${ev.k === "lb" ? "IDEA" : "IPPU-TEA"} <span class="ev-etq" id="evTotalEtq">${escHtml(evTotalEtiqueta(ev, num))}</span></div>
+      <div class="tot"><span id="evTotal">${num.total === null || num.total === undefined ? "—" : escHtml(num.total)}</span><small> / ${max}</small></div></div>
+    <div class="barra-sec">
+      <div id="evBanda">${evBandaHtml(ev, num)}</div>
+      <div class="barra-cuenta" id="evCuenta" aria-live="polite">${escHtml(evCuentaTxt(ev, num))}</div>
+    </div>
     <div class="spacer"></div>
-    <div class="nota">${nota}</div>
     <div class="ev-acciones" id="evAcciones">${evAccionesHtml(ev)}</div>
   </div>`;
 }
@@ -602,15 +606,15 @@ function ideaLecturaHtml(ev){
       <div class="data-row"><dt>Total</dt><dd>${fmtDelta(ev.delta.delta.total)}</dd></div>
       ${["esc_a", "esc_b", "esc_c", "esc_d"].map((c, i) => `<div class="data-row"><dt>${escHtml(escNom[i])}</dt><dd>${fmtDelta(ev.delta.delta[c])}</dd></div>`).join("")}
     </dl><div class="ib" style="padding-top:0"><p class="hint">En el IDEA menor es mejor: un Δ negativo es una mejora. Sin interpretación: la calcula el servidor al leer y solo dentro del mismo instrumento.</p></div></div>` : "";
-  return `<div class="info-card ev-card">${evEncabezadoHtml(ev)}
-    <div class="ib"><div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div></div></div>
+  return `${evEncabezadoHtml(ev)}
+    ${evAvisosBloqueHtml(ev)}
     <div class="exp-grid">
       <div>
         <div class="info-card"><h3><span class="ic" aria-hidden="true">▤</span> Puntaje</h3>
           <div class="ib ev-puntaje">
             <div class="tot-lectura"><span id="evTotal">${_num(r.total)}</span><small> / 96</small></div>
             <div id="evBanda">${r.banda ? bandaChipHtml(r.banda) : ""}</div>
-            <div class="hint">Total y banda calculados por el servidor; la banda es una orientación para el equipo, no el nivel de apoyo del NNA.</div>
+            <div class="hint">La banda es una orientación para el equipo, no el nivel de apoyo del NNA.</div>
           </div>
           <dl class="ib">${escNom.map((n, i) => `<div class="data-row"><dt>${escHtml(n)}</dt><dd>${_num(escVal[i])} / 24</dd></div>`).join("")}</dl>
         </div>
@@ -643,11 +647,11 @@ function ideaLecturaHtml(ev){
 function protItemHtml(ev, ix){
   const n = String(ix + 1), it = IPPU_ITEMS[ix], st = ev.items[n];
   const likert = [1, 2, 3, 4, 5].map(v =>
-    `<button type="button" class="lik-btn${st.valor === v ? " sel" : ""}" data-ev data-i="${n}" data-v="${v}" aria-pressed="${st.valor === v}" title="${escHtml(LIKERT_LBL[v])}" onclick="evItem(${n},${v})">${v}${(v === 1 || v === 5) ? " — " + escHtml(LIKERT_LBL[v]) : ""}</button>`).join("");
+    `<button type="button" class="likert-btn${st.valor === v ? " sel" : ""}" data-ev data-i="${n}" data-v="${v}" aria-pressed="${st.valor === v}" title="${escHtml(LIKERT_LBL[v])}" onclick="evItem(${n},${v})">${v}${(v === 1 || v === 5) ? " — " + escHtml(LIKERT_LBL[v]) : ""}</button>`).join("");
   const mostrarObs = st.valor === 1 || st.valor === 5 || !!st.obs;
   return `<div class="prot-item" id="pitem-${n}">
     <div class="pit-t" id="pit-t-${n}"><b>Ítem ${n}.</b> ${escHtml(it.t)}</div>
-    <div class="lik-row" id="pitemgrp-${n}" role="group" aria-labelledby="pit-t-${n}" aria-describedby="err_pitem-${n}" tabindex="-1">${likert}</div>
+    <div class="likert-fila" id="pitemgrp-${n}" role="group" aria-labelledby="pit-t-${n}" aria-describedby="err_pitem-${n}" tabindex="-1">${likert}</div>
     <div class="ev-err" id="err_pitem-${n}"></div>
     <div class="prot-obs${mostrarObs ? " show" : ""}" id="pobsw-${n}">
       <div class="field"><label for="pobs-${n}" id="pobsl-${n}">${escHtml(protObsRotulo(st.valor))}</label>
@@ -666,12 +670,10 @@ function protHtml(ev){
   const esc = IPPU_ESCALAS.map((nom, e) => `<div class="prot-esc"><header><span>E${e + 1} · ${escHtml(nom)}</span><span class="sub" id="protSubW${e}">Ítems ${e * 6 + 1}–${e * 6 + 6} — <span id="protSub${e}"></span></span></header>
     ${IPPU_ITEMS.map((it, ix) => ix).filter(ix => IPPU_ITEMS[ix].e === e).map(ix => protItemHtml(ev, ix)).join("")}</div>`).join("");
   const esB = ev.k === "pb";
-  return `<div class="info-card ev-card">${evEncabezadoHtml(ev)}
-    <div class="ib">
-      <p class="hint">Instrumento propio de IPPU para medir <b>progreso</b>: 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5</b> (la verifica el servidor). No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos.</p>
-      <div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div>
-      <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    </div></div>
+  return `${evEncabezadoHtml(ev)}
+    <p class="mod-nota">Instrumento propio de IPPU para medir <b>progreso</b> (mayor = más progreso): 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos. El total y las escalas se calculan al guardar, con los ítems completos. La firma bloquea el protocolo (corrección por addenda).</p>
+    ${evAvisosBloqueHtml(ev)}
+    <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}
     <div id="protForm" style="margin-top:16px">${esc}</div>
     <div class="card" style="margin-top:16px">
@@ -703,7 +705,7 @@ function evItem(n, v){
   const st = ev.items[String(n)];
   st.valor = st.valor === v ? null : v;
   ev.sucio = true;
-  document.querySelectorAll(`#pitem-${n} .lik-btn`).forEach(b => {
+  document.querySelectorAll(`#pitem-${n} .likert-btn`).forEach(b => {
     const on = st.valor === +b.dataset.v;
     b.classList.toggle("sel", on); b.setAttribute("aria-pressed", on ? "true" : "false");
   });
@@ -725,28 +727,36 @@ function evObsItem(n, desdeClick){
    PROTOCOLOS · solo lectura (firmado)
    ====================================================================== */
 const ESC_CLAVE_PROT = ["esc_1", "esc_2", "esc_3", "esc_4"];
-function deltaBloqueHtml(r){
-  if(r.tipo !== "B") return "";
+/* Bloque «Resultado» del PB firmado (F1, H7): lo primero que se lee. Total B, total A, Δ total con la lectura del servidor, Δ por
+   escala en cuatro celdas y las alertas con ⚠. Signo y texto, sin color: todos los números son de la API (deltas, interpretacion,
+   alertas del PB y el total del A del año); acá no se resta nada. */
+function resultadoPbHtml(ev){
+  const r = ev.rec, a = ev.recA;
+  const totales = `<div class="res-totales">
+      <div class="res-tot"><span class="res-rot">Protocolo B</span><b>${_num(r.total)}</b><small> / 120</small></div>
+      <div class="res-tot"><span class="res-rot">Protocolo A</span><b>${a ? _num(a.total) : "—"}</b><small> / 120</small></div>`;
   if(!r.deltas){
-    return `<div class="info-card"><h3><span class="ic" aria-hidden="true">△</span> Δ B − A</h3><div class="ib">
-      <p class="hint" id="evDeltaNota">El Δ todavía no se calculó: el Protocolo A de ${escHtml(r.anio)} no estaba firmado cuando se firmó este B. El servidor lo completa en cuanto se firme el A.</p></div></div>`;
+    return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit"><span class="ic" aria-hidden="true">△</span> Resultado</h3><div class="ib">
+      ${totales}</div>
+      <p class="hint" id="evDeltaNota">El Δ todavía no se calculó: el Protocolo A de ${escHtml(r.anio)} no estaba firmado cuando se firmó este B. Se completa en cuanto se firme el A.</p></div></section>`;
   }
   const interp = r.interpretacion || {};
   const alertas = r.alertas || [];
-  const fila = (clave, nombre) => {
+  const celda = (clave, nombre) => {
     const it = interp[clave];
-    const al = alertas.some(a => a.escala === clave);
-    return `<tr data-delta="${clave}"><th scope="row">${escHtml(nombre)}</th><td class="num"><b>${_vacio(r.deltas[clave]) ? "—" : fmtDelta(r.deltas[clave])}</b></td>
-      <td>${it ? escHtml(it.etiqueta) : "—"}${al ? ` <span class="ev-alerta"><span aria-hidden="true">⚠</span> alerta institucional</span>` : ""}</td><td>${it ? escHtml(it.accion) : "—"}</td></tr>`;
+    const al = alertas.some(x => x.escala === clave);
+    return `<div class="res-celda" data-delta="${clave}"><span class="res-rot">${escHtml(nombre)}</span>
+      <b class="res-delta">${_vacio(r.deltas[clave]) ? "—" : fmtDelta(r.deltas[clave])}</b>
+      <span class="res-etq">${it ? escHtml(it.etiqueta) : "—"}</span>${al ? `<span class="ev-alerta"><span aria-hidden="true">⚠</span> alerta institucional</span>` : ""}
+      ${it && it.accion ? `<span class="res-accion">${escHtml(it.accion)}</span>` : ""}</div>`;
   };
   const alertaTxt = alertas.length
-    ? `<div class="review-note ev-alertas" role="status"><span aria-hidden="true">⚠</span><div><b>Alerta institucional:</b> ${alertas.map(a => `${escHtml(IPPU_ESCALAS[ESC_CLAVE_PROT.indexOf(a.escala)] || a.escala)} (Δ ${fmtDelta(a.delta)}, ${escHtml(a.etiqueta)})`).join(" · ")}. La registra el servidor al firmar el B.</div></div>` : "";
-  return `<div class="info-card"><h3><span class="ic" aria-hidden="true">△</span> Δ B − A (calculado por el servidor)</h3><div class="ib">
+    ? `<div class="review-note ev-alertas" role="status"><span aria-hidden="true">⚠</span><div><b>Alerta institucional:</b> ${alertas.map(x => `${escHtml(IPPU_ESCALAS[ESC_CLAVE_PROT.indexOf(x.escala)] || x.escala)} (Δ ${fmtDelta(x.delta)}, ${escHtml(x.etiqueta)})`).join(" · ")}. Se registró al firmar el B.</div></div>` : "";
+  return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit"><span class="ic" aria-hidden="true">△</span> Resultado — Δ B − A</h3><div class="ib">
+    ${totales}${celda("total", "Δ total")}</div>
+    <div class="res-escalas">${IPPU_ESCALAS.map((n, i) => celda(ESC_CLAVE_PROT[i], `E${i + 1} · ${n}`)).join("")}</div>
     ${alertaTxt}
-    <div class="tabla-scroll"><table class="lista ev-tabla" id="evDeltaTabla"><caption class="sr-only">Diferencia entre el Protocolo B y el A por escala y total</caption>
-      <thead><tr><th scope="col">Escala</th><th scope="col">Δ</th><th scope="col">Lectura</th><th scope="col">Acción sugerida</th></tr></thead>
-      <tbody>${IPPU_ESCALAS.map((n, i) => fila(ESC_CLAVE_PROT[i], `E${i + 1} · ${n}`)).join("")}${fila("total", "Total")}</tbody></table></div>
-    <p class="hint">Solo entre protocolos IPPU-TEA (nunca contra el IDEA). La alerta se evalúa por escala; el total se interpreta pero no alerta.</p></div></div>`;
+    <p class="hint">Solo entre protocolos IPPU-TEA (nunca contra el IDEA). La alerta se evalúa por escala; el total se interpreta pero no alerta.</p></div></section>`;
 }
 function protLecturaHtml(ev){
   const r = ev.rec;
@@ -757,15 +767,15 @@ function protLecturaHtml(ev){
         <div><span class="score-badge sb-lik">${_vacio(x.valor) ? "—" : escHtml(x.valor)}</span> ${_vacio(x.valor) ? "sin puntuar" : escHtml(LIKERT_LBL[x.valor] || "")}</div>
         ${x.obs ? `<p class="ev-largo"><b>Observación:</b> ${escHtml(x.obs)}</p>` : ""}</div>`;
     }).join("")}</div>`).join("");
-  return `<div class="info-card ev-card">${evEncabezadoHtml(ev)}
-    <div class="ib"><div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div></div></div>
+  return `${evEncabezadoHtml(ev)}
+    ${evAvisosBloqueHtml(ev)}
+    ${r.tipo === "B" ? resultadoPbHtml(ev) : ""}
     <div class="exp-grid">
       <div>
         <div class="info-card"><h3><span class="ic" aria-hidden="true">▤</span> Puntaje</h3>
           <div class="ib ev-puntaje"><div class="tot-lectura"><span id="evTotal">${_num(r.total)}</span><small> / 120</small></div>
-            <div class="hint">Escala de progreso (mayor = más progreso). Calculada por el servidor.</div></div>
+            <div class="hint">Escala de progreso (mayor = más progreso).</div></div>
           <dl class="ib">${IPPU_ESCALAS.map((n, i) => `<div class="data-row"><dt>E${i + 1} · ${escHtml(n)}</dt><dd>${_num(r[ESC_CLAVE_PROT[i]])} / 30</dd></div>`).join("")}</dl></div>
-        ${deltaBloqueHtml(r)}
       </div>
       <div>
         <div class="info-card"><h3><span class="ic" aria-hidden="true">◐</span> Datos y firma</h3>
@@ -916,7 +926,7 @@ async function evGuardar(opts){
     ev.guardando = false;
     if(EXP.mods) EXP.mods[ev.k] = ev.rec;
     evActualizar(); evPintarAvisos();
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     if(!paraFirmar){ toast(r.status === 201 ? "Borrador creado" : "Borrador guardado"); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
     return true;
   }catch(err){
@@ -983,7 +993,7 @@ async function evFirmar(){
     evRepintar(ev.k);
     const t = _evEl("evTitulo"); if(t) t.focus();
     toast(`${EV_INFO[ev.k].modulo} firmado`);
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
     recargarFlujoExp(true); refrescarListaTrasEscritura();
     if(ev.k === "lb") cargarIdeaVigente();
     if(ev.k === "pa") evRelecturaPB();
@@ -1006,8 +1016,8 @@ async function evRelecturaPB(){
     if(mi !== EXP.seq) return;
     if(EXP.mods) EXP.mods.pb = r.data;
     const e = EVS.pb;
-    if(e && e.hceId === EXP.id && !e.sucio){ e.rec = r.data; if(EXP.tab === "pb") evRepintar("pb"); }
-    pintarTabsExp(); pintarFlujo();
+    if(e && e.hceId === EXP.id && !e.sucio){ e.rec = r.data; if(EXP.mods && EXP.mods.pa) e.recA = EXP.mods.pa; if(EXP.tab === "pb") evRepintar("pb"); }
+    pintarTabsExp();
   }catch(_e){ /* el PB se vuelve a leer al abrir su pestaña */ }
 }
 
@@ -1029,7 +1039,7 @@ async function evAddenda(){
     evRepintar(ev.k);
     toast("Addenda registrada");
     const t = _evEl("evAddTitulo"); if(t) t.focus();
-    pintarTabsExp(); pintarFlujo();
+    pintarTabsExp();
   }catch(err){
     if(mi !== EXP.seq || EVS[ev.k] !== ev) return;
     if(btn){ btn.disabled = false; btn.textContent = "+ Agregar addenda"; }
