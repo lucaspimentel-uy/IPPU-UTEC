@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constantes import AUDITORIA_TIPOS_LEIBLES, MODULOS_HCE
 from app.routers.dependencias import hce_visible, sesion_lectura
-from app.routers.hce import CABECERA_TOTAL, _ejemplo
+from app.routers.hce import CABECERA_TOTAL
 from app.schemas.auditoria import EJEMPLO_AUDITORIA, AuditoriaFila, AutorAuditoria
 from app.schemas.comunes import RespuestaError
 from app.services import auditoria_lectura as servicio
