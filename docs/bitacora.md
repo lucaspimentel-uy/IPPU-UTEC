@@ -20,6 +20,7 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-16 · H2-fix — cuatro textos desfasados antes del merge** (Lucas con Claude, rama `docs/h2-documentos-de-entrada`; §5.138). Sólo documentación: `CLAUDE.md` («Después del 26/11»), `handoff.md` (§5.138 nueva, §5.137 f, §12.2 y §12.4: ramas sólo a `origin`, `main` a `origin` y `gitlab`) y `backend/README.md` (bloque «Estado» → tres líneas). Verificado con `verificar_estado.py --check` y `generar_catalogos_backend.py --check`.
 - **2026-10-16 · Higiene H2 — documentos de entrada verdaderos y cortos** (Lucas con Claude, rama `docs/h2-documentos-de-entrada`; §5.137). Sin backend, sin DDL, sin código; nada de L3.
   - **Reescritos:** `CLAUDE.md` (204 → 122 líneas, 23,3 mil → 9,8 mil caracteres: sólo reglas vigentes, un bloque «Cómo correr» y las reglas de L1 con su §), `README.md` (121 → 46, para personas), `docs/estructura-repositorio.md` (240 → 133, sobre el árbol de hoy) y `demo/verificacion/README.md` (415 → 116: sin la historia del harness de agosto ni las opciones de baseline).
   - **`handoff.md`:** cabecera de 15 líneas con el enlace al plan L1; §0 y §4 cortos; §6 de 493 a 89 líneas, en tres grupos (L1 hasta el 26/11 · L1 después · L3); §7 de 48 a 17. 34 bloques de §6, 8 de §7 y el cuerpo de §4 pasaron **verbatim** a `docs/pendientes-resueltos.md` (`P-01…P-34`, `Q-01…Q-08`, `S-01`), cada uno con el § que lo cierra; siete quedaron partidos o reescritos. §5.137 es la política: qué lleva cada documento, regla de cifras, ramas sólo a `origin`.

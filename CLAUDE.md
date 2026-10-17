@@ -119,4 +119,4 @@ Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. 
 intermedia Likert en junio (`equiv. IDEA = (5 − promedio)×2`). Detalle: `handoff.md` §3.
 
 ## Después del 2026-11-26
-Resto de M11.3-d (SEV, INC, documento histórico, foto) tras `GET /hce/{id}/auditoria` · roles y matriz · Docker completo · React + Tailwind (§5.106).
+PAI (salvo que sobre tiempo) · guards de divulgación y de compartir · registro de accesos con motivo · reserva del adolescente · administración de usuarios, grupos y catálogos · roles y matriz · Docker completo · React + Tailwind (§5.106).

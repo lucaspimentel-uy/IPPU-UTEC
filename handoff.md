@@ -3215,7 +3215,18 @@ Sin cambio de backend, de DDL ni de código (head `dcc838486407`). Rama `docs/h2
 - **(c) Ramas y remotos** (precisa §12.2, que decía «pushear siempre a ambos»): las **ramas se suben sólo a `origin`**; `main` avanza por fast-forward (`git merge --ff-only`) y se sube a `origin` **y** a `gitlab`, sin `--force`.
 - **(d) §6 y §7 sólo con lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó **verbatim** a `docs/pendientes-resueltos.md` (sección «Movido el 2026-10-16»), cada bloque con la decisión o el motivo que lo cierra (`P-NN`, `Q-NN`, `S-01`); `handoff.md` conserva los encabezados «6.» y «7.» (técnica del stub de §5.84). §6 quedó en tres grupos: L1 hasta el 2026-11-26 · L1 después · L3. Siete ítems quedaron **partidos o reescritos** (`P-05`, `P-07`, `P-15`, `P-17`, `P-22`, `P-27` y `P-32`): el original está intacto en el archivo y en §6 queda lo que seguía abierto. Los ítems de L3 de §6 no se tocaron. Un ítem abierto («Aclararle a IPPU») recibió la edición mínima de reemplazar el nombre de la agenda de la reunión, que borró H1 (§5.136). La lista «DECIDIDO, SIN IMPLEMENTAR» se revisó contra lo que construyó M11.3: su única entrada viva es la de §5.103 (B12).
 - **(e) Sin baseline del *fingerprint*.** `fingerprint.js` y `comparar.js` no tienen ni tendrán una captura de referencia versionada; se comparan dos árboles con `git worktree` (la opción que el README de agosto recomendaba sin adoptar). Las opciones de baseline y la historia del harness salen de `demo/verificacion/README.md`.
-- **(f) Plan de L1.** La secuencia D0, F1–F3 y C1–C7 hasta el 06/11 es la del plan del equipo del 2026-10-16 (enlace en la cabecera); no es una decisión de esta entrada. Trae al desarrollo previo al 26/11 lo que el bullet de §6 dejaba «sólo si sobra tiempo después del ensayo» (el «resto de M11.3-d» de §5.118 (e): SEV, INC, documentos, foto, ORG y auditoría) y lo que no entre queda en el segundo grupo de §6. §5.106 sigue rigiendo: M11.3-d es parte de la entrega del 26/11.
+- **(f) Plan de L1.** La secuencia D0, F1–F3 y C1–C7 hasta el 06/11 es la del plan del equipo del 2026-10-16 (enlace en la cabecera); las decisiones que la sostienen están en §5.138. Trae al desarrollo previo al 26/11 lo que el bullet de §6 dejaba «sólo si sobra tiempo después del ensayo» (el «resto de M11.3-d» de §5.118 (e): SEV, INC, documentos, foto, ORG y auditoría) y lo que no entre queda en el segundo grupo de §6. §5.106 sigue rigiendo: M11.3-d es parte de la entrega del 26/11.
+
+### 5.138 Decisiones del equipo para el desarrollo de la demo (2026-10-16, Lucas)
+Sin cambio de backend, de DDL ni de código. Son las decisiones que sostienen el plan de L1 (enlace en la cabecera; §5.137 f); cada sesión del plan las cita desde acá. Nada de L3.
+- **(a) Alcance y fecha.** El resto de M11.3-d (lectura de HCE-LOG, SEV, ORG, INC y DOC con fotos) y las vistas institucionales entran **antes del 2026-11-26**, en las sesiones del plan de L1. **El alcance nuevo cierra el 2026-11-06.** Lo que no entre se corta en el orden de §6. Sigue rigiendo §5.106.
+- **(b) Archivos de HCE-DOC.** Se guardan en una **carpeta local del backend, fuera de git**; `archivo_ref` guarda la **ruta relativa**; la descarga es **autenticada**; hasta **10 MB**; sólo **PDF, JPG y PNG**. Enmienda a §5.66 sólo en lo que difería a Fase 6 el almacenamiento de estos archivos; los adjuntos de ateneos no se deciden acá (siguen en §6).
+- **(c) PAI.** Entra **sólo si sobra tiempo**; si no, queda después del 26/11 (§5.104 B3).
+- **(d) HCE-SEV.** Se guarda **entero —los dos dominios— o no se guarda**; se resuelve en la interfaz y **el esquema no se toca**. El guardado parcial se revisa sólo si sobra tiempo.
+- **(e) Vista legada «Intermedia».** Se quita (ya está en §6).
+- **(f) Navegación.** Sigue la estructura de servicios de IPPU: **«General»** y **«Servicio de Atención Diurna»** (§5.11). Taller Terapéutico y Clínica siguen fuera de alcance (§5.12) y **no se muestran**.
+- **(g) Revisiones.** Una review por bloque de 2–3 sesiones, con Sonnet en esfuerzo alto.
+- **(h) Dirección del frontend.** Una **historia clínica electrónica moderna y profesional**.
 
 ## 6. Pendientes / próximos pasos (sugeridos)
 
@@ -3383,10 +3394,13 @@ M0–M11 sólo se veían completos en GitHub hasta que se sincronizaron a mano):
 | `origin` (GitHub) | https://github.com/lucaspimentel-uy/IPPU-UTEC |
 
 **Decidido (2026-08-07, §5.4):** **`gitlab` = remoto principal** — es el institucional y los tres
-tienen cuenta UTEC; **`origin` (GitHub) = espejo**, que Lucas sincroniza. Mientras haya dos, la regla es
-**pushear siempre a ambos** en el mismo momento:
+tienen cuenta UTEC; **`origin` (GitHub) = espejo**, que Lucas sincroniza. **Precisado por §5.137 (c) (2026-10-16):** las
+**ramas se suben sólo a `origin`**; `main` avanza por fast-forward (`git merge --ff-only`) y se sube a
+`origin` **y** a `gitlab`, sin `--force`:
 ```bash
-git push gitlab main && git push origin main
+git merge --ff-only <rama>
+git push origin main
+git push gitlab main
 ```
 
 ### 12.3 Reparto: quién toca qué
@@ -3404,11 +3418,11 @@ git push gitlab main && git push origin main
 
 ### 12.4 Ciclo de una sesión de trabajo (checklist)
 **Al empezar:**
-1. `git pull` (de los dos remotos si hiciste push a ambos).
+1. `git pull` (`main` vive en `origin` y en `gitlab`; las ramas, sólo en `origin`).
 2. Leer `handoff.md` — cabecera, §5 (decisiones) y §6 (pendientes). Mirar en §6 si alguien ya está en eso
    (§5.6: no hay dueños, pero sí conviene no duplicar).
 3. Avisar en el grupo qué tomás.
-4. Rama corta con nombre del módulo: `git checkout -b feat/M11.1-infra-postgres`.
+4. Rama corta con nombre del módulo: `git checkout -b feat/M11.1-infra-postgres` (se sube sólo a `origin`).
 
 **Al terminar:**
 5. Verificar antes de dar por hecho (pytest / Playwright según corresponda) y decir el resultado real.
@@ -3419,10 +3433,10 @@ git push gitlab main && git push origin main
 6. **Actualizar `handoff.md`**: §5 si tomaste una decisión de arquitectura · §6 pendientes · **cabecera**
    (§5.82). La entrada de bitácora (qué se hizo, cómo se verificó, qué sigue) va en **`docs/bitacora.md`**
    (§5.84).
-7. Commit + merge a `main` + **push a los dos remotos**.
+7. Commit y push de la rama **sólo a `origin`**; `main` avanza con `git merge --ff-only` y se sube a `origin` **y** `gitlab`, nunca con `--force`.
 
 **Vida máxima de una rama: ~1 semana.** La rama `feature/base-datos-hce` vivió 19 días sin integrarse y por
-eso divergió tanto. Si un módulo lleva más, mergeás lo que tengas hecho o al menos pusheás la rama y lo
+eso divergió tanto. Si un módulo lleva más, mergeás lo que tengas hecho o al menos pusheás la rama a `origin` y lo
 anotás en §6 para que los demás lo vean.
 
 ### 12.5 Qué hicimos con `feature/base-datos-hce` (Victor) — **ARCHIVADA** (2026-09-03, §5.68 / L15)

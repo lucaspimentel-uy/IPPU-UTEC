@@ -2,28 +2,11 @@
 
 API REST del Servicio de Atención Diurna. **Python + FastAPI + SQLAlchemy + Alembic + PostgreSQL.**
 
-> **Estado: M12.8a** (ronda M12, absorción del Prototipo v4). Esquema v2 con las correcciones de M12.1, la
-> puntuación independiente de M12.2, el catálogo dinámico de talleres de M12.3, **HCE-SEV** (M12.4), los
-> **ateneos y jornadas** de M12.7, **HCE-INC** (M12.5), **HCE-PAI** (M12.6) y **HCE-DIV** (`divulgacion`,
-> M12.8a): **51 tablas** y catálogos cargados. Los routers de dominio se construyen en M11.4 — hoy la API sólo
-> expone `/health`. El esquema está documentado en
-> [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
+> **Estado.** La API sirve el login, los expedientes (`/hce`), los grupos y profesionales, el flujo clínico, el CI, el IDEA, PA/PB, el IC con su documento y la VF: la lista exacta, en Swagger (`/docs`) y en la cabecera de `handoff.md`. Esquema vigente: [`docs/esquema-datos-v2.md`](docs/esquema-datos-v2.md).
 >
-> ⚠️ **El conteo se movió varias veces y ninguna fue una regresión.** M12.3 lo bajó de 35 a **34**: no crea
-> tablas (`taller` ya existía) y retira `hce_taller`, resto del esquema v1 (`handoff.md` §5.20). M12.4 lo
-> sube a **36** con `severidad_dsm` + `severidad_nivel`, y retira **una columna, no una tabla**
-> (`hce_diurna.nivel_soporte`, §5.24: era una tercera fuente de verdad sobre el nivel DSM). M12.7 lo lleva
-> a **38** con `ateneo` + `ateneo_acuerdo` (§5.25, §5.26). **M12.5** lo lleva a **42** con `inclusion`,
-> `inclusion_bitacora` y sus dos catálogos, `estado_inclusion` y `catalogo_centro_educativo` — este
-> último **sembrado con cero filas a propósito** (§5.50). **M12.6** lo lleva a **50** con `pai` y sus siete
-> hijas (sólo esquema). **M12.8a** lo lleva a **51** con `divulgacion` (registro de divulgación de datos,
-> append-only, sin seed — §5.80).
+> **Cómo correr:** `CLAUDE.md`, «Cómo correr» (Postgres, entorno, base descartable, API, seed, demo y tests); «Arranque», acá abajo, es la versión mínima.
 >
-> **Migraciones** (regla enmendada el 2026-08-14, `handoff.md` §5.19): la migración inicial **única** se
-> regenera **al cerrar cada sub-módulo de M12**, con `test_la_migracion_coincide_con_los_modelos` **en
-> verde** — ya no se saltea, y `alembic upgrade head` crea las **51 tablas** actuales. Se congela sólo si
-> hay trabajo en paralelo real sobre `app/models/`; ahí la descongela y regenera una sola persona al
-> terminar. **Se regenera el mismo archivo de migración, no se apilan revisiones.**
+> **Migraciones:** una sola migración inicial (un solo head); un cambio de modelos se regenera en ese mismo archivo, no se apilan revisiones (`handoff.md` §5.19).
 
 ## Arranque
 
