@@ -368,8 +368,24 @@ function buscarContornosApagados() {
   await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').textContent), null, { timeout: 8000 });
   for (const k of await page.$$eval('.exp-tab', (bs) => bs.map((b) => b.dataset.tab))) {
     await page.click('#tabExp-' + k); await esperar(200);
+    await page.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').textContent), null, { timeout: 8000 });
     await cap(`Expediente · pestaña ${k.toUpperCase()}`);
   }
+  // C1 · LOG: la tabla del seed y, con una fila de muestra, un valor largo con «ver completo» abierto (el valor de muestra no se escribe en la API)
+  await page.click('#tabExp-log'); await page.waitForSelector('#panelExp .log-table', { timeout: 8000 }); await esperar(150);
+  anillos.push(await medirAnilloTeclado(page, '#logModulo', 'lista desplegable (LOG)'));
+  await ev(() => { LOG.filas = [{ id: 1, ts: new Date().toISOString(), usuario: { id: 1, nombre: 'Muestra', rol: 'tecnico' }, modulo: 'HCE-00', tipo: 'edicion', campo: 'medicacion', valor_ant: null, valor_nuevo: 'valor largo de muestra '.repeat(12) }, { id: 2, ts: new Date().toISOString(), usuario: null, modulo: 'HCE-LB', tipo: 'firma', campo: null, valor_ant: null, valor_nuevo: null, detalle: 'Firmó la línea base 2026' }]; LOG.total = 2; logRepintar(); });
+  await esperar(100);
+  anillos.push(await medirAnilloTeclado(page, '.log-ver summary', 'resumen «ver completo» (LOG)'));
+  await ev(() => { document.querySelector('.log-ver').open = true; }); await esperar(100);
+  await cap('Expediente · pestaña LOG con «ver completo» abierto');
+  await ev(() => { LOG.filas = []; LOG.total = 0; LOG.modulo = 'HCE-PAI'; logRepintar(); });
+  await esperar(100);
+  await cap('Expediente · pestaña LOG sin coincidencias');
+  await ev(() => { LOG.modulo = ''; LOG.estado = 'error'; LOG.error = 'No se pudo cargar el registro de cambios (muestra).'; logRepintar(); });
+  await esperar(100);
+  await cap('Expediente · pestaña LOG con error');
+  await ev(() => { LOG.estado = 'listo'; logMostrar(); });
   // Estados compartidos (cargando · error · vacío · error en línea) con los componentes reales
   await page.click('#tabExp-hce00'); await esperar(150);
   await ev(() => { document.getElementById('panelExp').innerHTML = estadoCargandoHtml('Cargando (muestra)…') + estadoErrorHtml('No se pudo cargar (muestra).', 'void(0)', '<button type="button" class="btn btn-ghost btn-mini">Acción extra</button>') + estadoVacioHtml('◌', 'Todavía no hay nada (muestra).', '<button type="button" class="btn btn-primary">Crear</button>') + estadoErrorInlineHtml('Error en una parte de la pantalla (muestra).', 'void(0)'); });

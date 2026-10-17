@@ -64,6 +64,10 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     // VF con datos: se crea una valoración (la base es descartable) para mostrar la pantalla con categoría y alerta de la API
     if (w === 1280) await api('POST', `/hce/${idMartin}/valoracion-funcional`, { estado: 'Valorado', fecha: '2025-01-15', organismo: 'Equipo valorador', pct: '58', vigencia: '2026-12-31', dominios: { comunicacion: 'Apoyo permanente', autocuidado: 'Apoyo ocasional', movilidad: 'Autónomo' }, capacidades: 'Disfruta de la música.', sintesis_funcional: 'Muestra.' });
     await abrir('Martín', 'vf');                                          await snap('vf');
+    // C1: el registro de cambios de Martín (las firmas del seed + una edición de HCE-00 con un valor largo, para ver el «ver completo»)
+    if (w === 1280) await api('PATCH', `/hce/${idMartin}`, { medicacion: 'Muestra de un valor largo para el registro de cambios. '.repeat(5) });
+    await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
+    await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
     // F1: página completa (la banda y la barra de acciones quedan donde las deja el desplazamiento)
     await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');

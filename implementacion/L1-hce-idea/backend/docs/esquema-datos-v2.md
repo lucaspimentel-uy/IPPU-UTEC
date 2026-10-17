@@ -819,7 +819,7 @@ cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE
 7. **M11.3-d — Resto del núcleo para el 26/11:** VF/baremo (sólo desde `pct`), SEV, INC, documento
    histórico inmutable, **foto sin trabas** (§5.99) · **login con 2 roles** (§5.101: `admin` ve todo,
    `tecnico` ve sus grupos) · **los routers restantes que necesiten las pantallas conectadas** (DOC, ORG,
-   auditoría GET, …) · **M11.6 reducido**.
+   auditoría GET, …) · **M11.6 reducido**. ✅ **Auditoría GET hecha en C1 (§5.142):** `GET /hce/{id}/auditoria?modulo=&tipo=&limit=&offset=` (`routers/auditoria.py`, `services/auditoria_lectura.py`), sólo lectura.
    **Fuera del 26/11** (`handoff.md` §6): guards de divulgación y de compartir, registro de accesos con
    motivo, reserva del adolescente, área de informes configurable y estado «revisado por dirección»,
    matriz de roles completa, administración de grupos/catálogos/usuarios (§5.90), `pai_taller` salvo que se

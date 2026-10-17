@@ -700,6 +700,23 @@
   .lt-edicion{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
   .lt-alerta{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
 
+  /* HCE-LOG conectado (C1): filtros, valores largos con «ver completo», paginado. Tinta y neutros: el tipo se lee en el texto. */
+  .log-nota{margin:0 0 var(--s3)}
+  .log-filtros{display:flex;flex-wrap:wrap;gap:var(--s3);margin-bottom:var(--s3)}
+  .log-filtros .field{min-width:210px}
+  .log-scroll{overflow-x:auto}
+  .log-ts{white-space:nowrap}
+  .log-detalle{margin-top:var(--s1);color:var(--ink-2)}
+  .log-vacio{color:var(--ink-2);font-style:italic}
+  .log-rot{color:var(--ink-2);font-weight:600}
+  .log-cambio{min-width:220px;overflow-wrap:anywhere}
+  .log-ver{margin-top:var(--s1)}
+  .log-ver summary{cursor:pointer;color:var(--ink);text-decoration:underline;font-weight:600;width:max-content}
+  .log-pre{margin:var(--s1) 0 0;padding:var(--s2);background:var(--paper-3);border:1px solid var(--rule);border-radius:var(--r-sm);
+    font-family:var(--f-dato);font-size:var(--fs-3xs);white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;color:var(--ink)}
+  .log-paginado{display:flex;align-items:center;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}
+  .log-rango{margin-right:auto;font-size:var(--fs-2xs);color:var(--ink-2)}
+
   /* M5 · Escala IPPU-TEA (PA/PB) */
   .prot-esc{
     background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);

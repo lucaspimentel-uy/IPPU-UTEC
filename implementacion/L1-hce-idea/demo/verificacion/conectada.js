@@ -273,8 +273,8 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = textosTab.slice(7).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC y VF están conectadas (3-d) y las otras 6 dicen «Este módulo todavía no está conectado al servidor.»',
+  const sinFraseNueva = textosTab.slice(7, 12).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF y LOG (C1) están conectadas y las otras 5 dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -673,8 +673,9 @@ async function loguear(page) {
     const lb = await p5.evaluate(() => ({ sel: document.getElementById('tabExp-lb').getAttribute('aria-selected'), panel: document.getElementById('panelExp').innerText }));
     check('3b-e2', 'un módulo anual (LB) se abre aunque falte el CI: su pestaña se selecciona y muestra el editor conectado (formulario IDEA de la API), sin candado ni panel de demostración',
       lb.sel === 'true' && !/Modo demostración — no se guarda/.test(lb.panel) && /Línea base — IDEA/.test(lb.panel) && !/🔒|Bloquead/i.test(lb.panel));
-    await p5.click('#tabExp-log');                                  // F1: «Ver auditoría» se retiró; la reemplaza la pestaña «Auditoría»
-    check('3b-e3', 'la pestaña «Auditoría» (reemplaza a «Ver auditoría») abre el panel de modo demostración compartido', /Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
+    await p5.click('#tabExp-log');                                  // F1: «Ver auditoría» se retiró; la reemplaza la pestaña «Auditoría» (conectada en C1)
+    await p5.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    check('3b-e3', 'la pestaña «Auditoría» (reemplaza a «Ver auditoría») abre el registro de cambios conectado (C1), no el panel de modo demostración', !/Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && /Registra cambios, no accesos/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
 
     // pestaña CI: GET 404 = pendiente (estado, no error)
     const resp404 = p5.waitForResponse((r) => /\/consentimiento$/.test(r.url()) && r.request().method() === 'GET');
@@ -2294,7 +2295,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((i) => abrirExpediente(i), idMartinV);
     await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
     const paneles = {};
-    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'log', 'lb']) {
+    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'lb']) {
       await pv.evaluate((t) => selTabExp(t), k);
       await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
       await pv.waitForTimeout(80);
@@ -2306,8 +2307,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV, LOG) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
-      ['doc', 'org', 'inc', 'pai', 'sev', 'log'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
+      ['doc', 'org', 'inc', 'pai', 'sev'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -2319,7 +2320,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'log']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
+    for (const k of ['doc', 'org', 'inc', 'pai', 'sev']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
@@ -2391,8 +2392,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
     check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'sev,inc,org,doc,pai,log'
-        && filasTabs[0].marcas === 'sev:glifo+texto-sr,inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr,log:glifo+texto-sr'
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'sev,inc,org,doc,pai'
+        && filasTabs[0].marcas === 'sev:glifo+texto-sr,inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
         && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
@@ -2608,6 +2609,165 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       !malAccion.length && accionesPor.listado.prim.length >= 1 && accionesPor.alta.prim.length >= 1 && bannerClaro.bg === 'rgb(255, 255, 255)' && /solid/.test(bannerClaro.regla) && /Charter|Georgia|Iowan|Constantia|Cambria|serif/.test(bannerClaro.h2) && ringAlta === '#B4590A',
       JSON.stringify({ malAccion, bannerClaro, ringAlta, n: Object.fromEntries(Object.entries(accionesPor).map(([k, v]) => [k, v.prim.length])) }));
     await cf1.close();
+  }
+
+  /* ---------- C1 · HCE-LOG de sólo lectura: la pestaña «Auditoría» lista el rastro de la API ---------- */
+  {
+    const TZ = 'Asia/Tokyo';                                         // una zona que no es la de esta máquina: prueba que la hora es la del NAVEGADOR
+    const ctx = await browser.newContext({ timezoneId: TZ });
+    const pc = await ctx.newPage();
+    pc.on('pageerror', (e) => erroresPagina.push(e.message));
+    pc.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(pc, EMAIL, PASSWORD);
+    const tok = await pc.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (t || tok), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, total: r.headers.get('X-Total-Count'), json: await r.json() }; };
+    const yo = (await api('GET', '/auth/yo')).json;
+    const idM = (await api('GET', '/hce?nombre=Mart%C3%ADn&limit=5')).json.find((h) => h.persona.nombre === 'Martín').id;
+
+    /* Escrituras de la suite (por la API, como el técnico): 26 ediciones para pasar de una página, y las que se leen abajo. */
+    for (let i = 0; i < 26; i++) await api('PATCH', `/hce/${idM}`, { medicacion: 'c1-m' + i });
+    await api('PATCH', `/hce/${idM}`, { derivacion: 'c1-antes' });
+    await api('PATCH', `/hce/${idM}`, { derivacion: 'c1-despues' });
+    const LARGO = 'valor largo de c1 '.repeat(20).trim();           // 359 caracteres
+    await api('PATCH', `/hce/${idM}`, { medicacion: LARGO });
+    const ANAM = { motivo: 'Consulta por c1 ' + 'x'.repeat(60), perinatal: 'Sin particularidades ' + 'y'.repeat(60), desarrollo: 'Hitos ' + 'z'.repeat(60) };
+    await api('PATCH', `/hce/${idM}`, { anamnesis: ANAM });
+    const totalAntes = Number((await api('GET', `/hce/${idM}/auditoria?limit=1`, undefined, tokAdmin)).total);
+
+    await pc.evaluate((i) => abrirExpediente(i), idM);
+    await pc.waitForSelector('#expTitulo'); await pc.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+    await pc.click('#tabExp-log');
+    await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    const filasUI = () => pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    const esperarFilas = () => pc.waitForFunction(() => !!document.querySelector('#panelExp .log-table, #panelExp .estado-vacio, #panelExp .estado-error') && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const filtrar = async (modulo, tipo) => { await pc.selectOption('#logModulo', modulo || ''); await esperarFilas(); await pc.selectOption('#logTipo', tipo || ''); await esperarFilas(); await pc.waitForTimeout(120); };
+    const rango = () => pc.evaluate(() => document.querySelector('#panelExp .log-rango')?.innerText || '');
+
+    /* c1-firmas · el LOG de Martín lista las firmas de LB, PA, PB e IC con el nombre de quien firmó */
+    await filtrar('', 'firma');
+    const apiFirmas = (await api('GET', `/hce/${idM}/auditoria?tipo=firma&limit=200`)).json;
+    const uiFirmas = await filasUI();
+    const modsFirmados = new Set(uiFirmas.map((f) => f[2]));
+    check('c1-firmas', 'LOG de Martín (filtro «Se firmó»): lista las firmas de HCE-LB, HCE-PA, HCE-PB y HCE-IC, y en cada fila «Quién» es el nombre del autor que devuelve la API',
+      ['HCE-LB', 'HCE-PA', 'HCE-PB', 'HCE-IC'].every((m) => modsFirmados.has(m)) && uiFirmas.length === apiFirmas.length && apiFirmas.length >= 4
+        && uiFirmas.every((f, i) => f[1] === apiFirmas[i].usuario.nombre && f[1] !== '' && f[3].startsWith('Se firmó')),
+      JSON.stringify(uiFirmas.map((f) => f[2] + ' · ' + f[1])));
+
+    /* c1-edicion · la edición de HCE-00 hecha por la suite, con antes y después y su autor */
+    await filtrar('HCE-00', 'edicion');
+    const ed = (await filasUI()).filter((f) => f[4] === 'derivacion');
+    check('c1-edicion', 'una edición de HCE-00 hecha por la suite (derivación «c1-antes» → «c1-despues») aparece con módulo, campo, antes → después y el nombre de su autor; la más nueva primero',
+      ed.length === 2 && /Antes: c1-antes Después: c1-despues/.test(ed[0][5]) && /Después: c1-antes/.test(ed[1][5]) && ed.every((f) => f[1] === yo.nombre && f[2] === 'HCE-00' && f[3].startsWith('Se editó')),
+      JSON.stringify(ed));
+
+    /* c1-filtro · el filtro por módulo reduce las filas; las opciones son exactamente las válidas; foco; total = X-Total-Count */
+    await filtrar('', '');
+    const totalSinFiltro = Number(((await rango()).match(/de (\d+)/) || [])[1]);
+    await pc.focus('#logModulo'); await pc.selectOption('#logModulo', 'HCE-LB'); await esperarFilas(); await pc.waitForTimeout(120);
+    const focoSel = await pc.evaluate(() => document.activeElement.id);
+    const filasLB = await filasUI(); const totalLB = Number(((await rango()).match(/de (\d+)/) || [])[1]);
+    const apiLB = Number((await api('GET', `/hce/${idM}/auditoria?modulo=HCE-LB&limit=1`)).total);
+    const opciones = await pc.evaluate(() => ({ mod: [...document.querySelectorAll('#logModulo option')].map((o) => o.value), tipo: [...document.querySelectorAll('#logTipo option')].map((o) => o.value) }));
+    const respOpc = [];
+    for (const m of opciones.mod.filter(Boolean)) respOpc.push((await api('GET', `/hce/${idM}/auditoria?modulo=${m}&limit=1`)).status);
+    for (const t of opciones.tipo.filter(Boolean)) respOpc.push((await api('GET', `/hce/${idM}/auditoria?tipo=${t}&limit=1`)).status);
+    const rechazos = [(await api('GET', `/hce/${idM}/auditoria?tipo=acceso`)).status, (await api('GET', `/hce/${idM}/auditoria?modulo=GRUPO`)).status];
+    check('c1-filtro', 'el filtro por módulo reduce las filas (sólo HCE-LB, total = X-Total-Count) y deja el foco en el selector; los filtros ofrecen exactamente los 12 módulos y los 6 tipos válidos (la API los acepta a todos y rechaza «acceso» y «GRUPO»)',
+      filasLB.length > 0 && filasLB.every((f) => f[2] === 'HCE-LB') && totalLB === apiLB && totalLB < totalSinFiltro && focoSel === 'logModulo'
+        && opciones.mod.length === 13 && opciones.tipo.length === 7 && respOpc.every((s) => s === 200) && rechazos.every((s) => s === 422),
+      JSON.stringify({ totalSinFiltro, totalLB, apiLB, focoSel, opMod: opciones.mod.length, opTipo: opciones.tipo.length, rechazos }));
+
+    /* c1-paginado · más de una página: rango, Anteriores/Siguientes, orden */
+    await filtrar('', '');
+    const apiP1 = (await api('GET', `/hce/${idM}/auditoria?limit=25&offset=0`)); const apiP2 = (await api('GET', `/hce/${idM}/auditoria?limit=25&offset=25`));
+    const r1 = await rango(), p1 = await filasUI(); const antDesh = await pc.isDisabled('#btnLogAnt');
+    await pc.click('#btnLogSig'); await pc.waitForFunction(() => /Mostrando 26/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
+    const r2 = await rango(), p2 = await filasUI(); const antHab = !(await pc.isDisabled('#btnLogAnt'));
+    await pc.click('#btnLogAnt'); await pc.waitForFunction(() => /Mostrando 1–/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
+    const nTotal = Number(apiP1.total);
+    check('c1-paginado', 'paginado de 25: «Mostrando 1–25 de N» con N = X-Total-Count, «Anteriores» deshabilitado en la primera página; «Siguientes» trae las filas 26 en adelante (las mismas, en el mismo orden, que la API) y «Anteriores» vuelve',
+      nTotal > 26 && r1 === `Mostrando 1–25 de ${nTotal}` && antDesh && p1.length === 25 && r2 === `Mostrando 26–${Math.min(50, nTotal)} de ${nTotal}` && antHab && p2.length === apiP2.json.length
+        && p2.every((f, i) => f[4] === (apiP2.json[i].campo || '—') && f[1] === (apiP2.json[i].usuario ? apiP2.json[i].usuario.nombre : '(sin autor)')),
+      JSON.stringify({ r1, r2, nTotal }));
+
+    /* c1-hora · ts con zona horaria → hora local del navegador (es-UY), aquí Asia/Tokyo */
+    const esperada = new Date(apiP1.json[0].ts).toLocaleString('es-UY', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    check('c1-hora', 'la fecha y hora de cada fila es la hora local del navegador (es-UY): con el navegador en Asia/Tokyo, la primera fila muestra el ts de la API en esa zona',
+      /[+-]\d\d:\d\d$|Z$/.test(apiP1.json[0].ts) && p1[0][0] === esperada, JSON.stringify({ api: apiP1.json[0].ts, ui: p1[0][0], esperada }));
+
+    /* c1-largo · valores largos: acortados CON «ver completo» (nunca cortados en silencio); JSON legible */
+    await filtrar('HCE-00', 'edicion');
+    const pagLargo = async () => { const filas = await pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => ({ campo: tr.children[4].innerText.trim(), cambio: tr.children[5].innerHTML }))); return filas; };
+    const filasHCE00 = await pagLargo();
+    const idxLargo = filasHCE00.findIndex((f) => f.campo === 'medicacion' && /log-ver/.test(f.cambio));
+    const idxAnam = filasHCE00.findIndex((f) => f.campo === 'anamnesis');
+    const celdaLargo = pc.locator('#panelExp .log-table tbody tr').nth(idxLargo).locator('td').nth(5);
+    const visibleLargo = await celdaLargo.locator('.log-despues .log-valor').innerText();
+    const cerrado = await celdaLargo.locator('.log-despues details').evaluate((d) => !d.open);
+    await celdaLargo.locator('.log-despues summary').click();
+    const completoLargo = await celdaLargo.locator('.log-despues pre').innerText();
+    const celdaAnam = pc.locator('#panelExp .log-table tbody tr').nth(idxAnam).locator('td').nth(5);
+    await celdaAnam.locator('.log-despues summary').click();
+    const preAnam = await celdaAnam.locator('.log-despues pre').innerText();
+    const cortesSinAviso = await pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-valor')].filter((v) => /…$/.test(v.innerText) && !v.nextElementSibling?.matches('details.log-ver')).length);
+    check('c1-largo', 'un valor largo se acorta con «…» y trae «ver completo» (cerrado al principio; al abrirlo muestra el valor entero, idéntico al de la API); un JSON (anamnesis) se muestra legible, con sangría; ningún valor cortado sin su «ver completo»',
+      idxLargo >= 0 && idxAnam >= 0 && visibleLargo.endsWith('…') && visibleLargo.length < LARGO.length && cerrado && completoLargo === LARGO
+        && /\n {2}"/.test(preAnam) && JSON.stringify(Object.entries(JSON.parse(preAnam)).sort()) === JSON.stringify(Object.entries(ANAM).sort()) && cortesSinAviso === 0,
+      JSON.stringify({ idxLargo, idxAnam, visibleLargo: visibleLargo.length, completo: completoLargo.length, cortesSinAviso }));
+
+    /* c1-vacio · sin coincidencias no es un error: estado vacío con texto */
+    let modVacio = null;
+    for (const m of opciones.mod.filter(Boolean)) if (Number((await api('GET', `/hce/${idM}/auditoria?modulo=${m}&limit=1`)).total) === 0) { modVacio = m; break; }
+    await filtrar(modVacio, '');
+    const vacio = await pc.evaluate(() => ({ estado: !!document.querySelector('#panelExp .estado-vacio'), txt: document.getElementById('panelExp').innerText, alertas: document.querySelectorAll('#panelExp [role="alert"]').length, tabla: !!document.querySelector('#panelExp .log-table'), filtros: !!document.getElementById('logModulo') }));
+    check('c1-vacio', 'un filtro sin coincidencias muestra el estado vacío compartido («No hay cambios que coincidan con los filtros.»), sin alerta de error, y los filtros siguen a la vista para cambiarlos',
+      modVacio !== null && vacio.estado && /No hay cambios que coincidan con los filtros\./.test(vacio.txt) && vacio.alertas === 0 && !vacio.tabla && vacio.filtros, JSON.stringify({ modVacio, ...vacio, txt: undefined }));
+    await filtrar('', '');
+
+    /* c1-estados · 404 y 500 de la API: error compartido (404 sin Reintentar; 500 con Reintentar, que recupera) */
+    await pc.route('**/auditoria*', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: 'not_found', detail: [{ campo: null, mensaje: 'No existe el expediente' }] }) }));
+    await pc.evaluate(() => logCargar(false)); await esperarFilas();
+    const e404 = await pc.evaluate(() => ({ alert: document.querySelectorAll('#panelExp .estado-error[role="alert"]').length, reint: document.querySelectorAll('#panelExp [data-reintentar]').length, txt: document.getElementById('panelExp').innerText }));
+    await pc.unroute('**/auditoria*');
+    await pc.route('**/auditoria*', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ code: 'internal_error', detail: [{ campo: null, mensaje: 'Error interno' }] }) }));
+    await pc.evaluate(() => logCargar(false)); await esperarFilas();
+    const e500 = await pc.evaluate(() => ({ alert: document.querySelectorAll('#panelExp .estado-error[role="alert"]').length, reint: document.querySelectorAll('#panelExp [data-reintentar]').length }));
+    await pc.unroute('**/auditoria*');
+    await pc.click('#panelExp [data-reintentar]'); await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    check('c1-estados', 'error de la API en la pestaña: 404 → «No se encontró el expediente.» en role="alert" SIN «Reintentar»; 500 → error en role="alert" CON «Reintentar», que al apretarlo vuelve a mostrar la tabla',
+      e404.alert === 1 && e404.reint === 0 && /No se encontró el expediente\./.test(e404.txt) && e500.alert === 1 && e500.reint === 1, JSON.stringify({ e404: { ...e404, txt: undefined }, e500 }));
+
+    /* c1-sin-boton · sin «Ver auditoría» en el expediente conectado; el del expediente de ejemplo sigue intacto */
+    const conectado = await pc.evaluate(() => document.getElementById('view-expediente').innerText);
+    await pc.evaluate(() => abrirExpedienteDemo(102)); await pc.waitForTimeout(150);
+    const demo = await pc.evaluate(() => ({ btn: document.querySelectorAll('#view-expediente [onclick^="verHceLog"]').length, txt: document.getElementById('view-expediente').innerText }));
+    await pc.evaluate(() => verHceLog(102)); await pc.waitForSelector('.log-table', { timeout: 4000 }); await pc.waitForTimeout(100);
+    const modalDemo = await pc.evaluate(() => document.querySelector('#modalFlujo.open #mfTitle')?.innerText || '');
+    await pc.keyboard.press('Escape'); await pc.waitForTimeout(150);
+    check('c1-sin-boton', 'el expediente conectado no tiene botón «Ver auditoría» (la pestaña es la única entrada); el del expediente de ejemplo sigue con su botón y su modal «HCE-LOG» en modo demostración',
+      !/Ver auditoría/.test(conectado) && demo.btn >= 1 && /Ver auditoría/.test(demo.txt) && /HCE-LOG/.test(modalDemo), JSON.stringify({ conectado: /Ver auditoría/.test(conectado), btnDemo: demo.btn }));
+
+    /* c1-solo-lectura · el panel no tiene nada para escribir y mirarlo no deja filas */
+    await pc.evaluate((i) => abrirExpediente(i), idM);
+    await pc.waitForSelector('#expTitulo'); await pc.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+    await pc.click('#tabExp-log'); await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await filtrar('HCE-00', 'edicion'); await filtrar('', '');
+    const controles = await pc.evaluate(() => [...document.querySelectorAll('#panelExp input, #panelExp textarea, #panelExp form, #panelExp [contenteditable]')].length);
+    const totalDespues = Number((await api('GET', `/hce/${idM}/auditoria?limit=1`, undefined, tokAdmin)).total);
+    check('c1-solo-lectura', 'la pestaña es de sólo lectura: sin campos de texto ni formularios (sólo dos selectores y el paginado), y abrirla, filtrarla y paginarla no agrega filas al LOG',
+      controles === 0 && totalDespues === totalAntes, JSON.stringify({ controles, totalAntes, totalDespues }));
+
+    /* c1-ajeno · un técnico no alcanza el LOG de un expediente fuera de sus grupos: 404 (en la API y en la pantalla) */
+    /* los técnicos del seed están en los tres grupos: el expediente ajeno es uno que el admin da de alta sin grupo (un técnico no lo alcanza) */
+    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C1', ci: '4.321.098-7', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
+    const aTec = idAjeno === undefined ? null : await api('GET', `/hce/${idAjeno}/auditoria`);
+    const aAdm = idAjeno === undefined ? null : await api('GET', `/hce/${idAjeno}/auditoria`, undefined, tokAdmin);
+    await pc.evaluate((i) => abrirExpediente(i), idAjeno); await pc.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
+    const pantalla = await pc.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
+    check('c1-ajeno', 'técnico y expediente de otro grupo: GET /hce/{id}/auditoria da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos del NNA',
+      idAjeno !== undefined && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pantalla.alert === 1 && pantalla.reint === 0 && /No existe/.test(pantalla.txt), JSON.stringify({ idAjeno, tec: aTec && aTec.status, adm: aAdm && aAdm.status, pantalla: { ...pantalla, txt: pantalla.txt.slice(0, 80) } }));
+    await ctx.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

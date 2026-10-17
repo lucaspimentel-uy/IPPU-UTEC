@@ -33,7 +33,7 @@ const TABS_EXP = [
   {k:"org",   r:"ORG", t:"Organismos",              g:"seg",   d:"Áreas INAU y BPS",             demo:true},
   {k:"doc",   r:"DOC", t:"Documentos",              g:"reg",   d:"Documentos y fotos",           demo:true},
   {k:"pai",   r:"PAI", t:"PAI",                     g:"reg",   d:"Propuesta de atención individual", demo:true},
-  {k:"log",   r:"LOG", t:"Auditoría",               g:"reg",   d:"Registro de cambios",          demo:true}
+  {k:"log",   r:"LOG", t:"Auditoría",               g:"reg",   d:"Registro de cambios"}
 ];
 const GRUPOS_TABS = [["datos", ""], ["ciclo", "Ciclo anual"], ["seg", "Seguimiento"], ["reg", "Registro"]];
 const MOD_NOMBRE = {"HCE-LB":"Línea base (IDEA)", "HCE-PA":"Protocolo A", "HCE-PB":"Protocolo B", "HCE-IC":"Informe de cierre"};
@@ -144,6 +144,7 @@ function selTabExp(k, enfocar){
   if(esTabEval(k)) evMostrar(k);                      // LB, PA y PB: se leen de la API (evaluaciones.js)
   if(k === "ic") icMostrar();                         // IC: informe de cierre, firmantes y recibí (informe-cierre.js)
   if(k === "vf") vfMostrar();                         // VF: valoración funcional (hce-doc-org-vf.js)
+  if(k === "log") logMostrar();                       // LOG: registro de cambios, de solo lectura (auditoria.js)
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
 }
 
@@ -391,6 +392,7 @@ function panelTabExpHtml(k){
   if(esTabEval(k)) return evPanelHtml(k);
   if(k === "ic") return icPanelHtml();
   if(k === "vf") return vfPanelHtml();
+  if(k === "log") return logPanelHtml();
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
     <h3>${t.r} · ${escHtml(t.d)} ${badgeSoloDemo()}</h3>
@@ -449,7 +451,7 @@ function vigilarBanda(){
 async function abrirExpediente(id, opts){
   const mi = ++EXP.seq;
   Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || [], mods:null, idea:{estado:"cargando"}});
-  evReiniciar(); icReiniciar(); vfReiniciar();
+  evReiniciar(); icReiniciar(); vfReiniciar(); logReiniciar();
   expedienteCargando();
   let hce, raw;
   try{

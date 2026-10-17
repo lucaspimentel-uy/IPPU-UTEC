@@ -631,6 +631,16 @@ AUDITORIA_TIPO_EXCEPCION = "excepcion"
 #: Alerta institucional del Δ (§5.117 d): **una** fila al firmar el PB cuyo Δ de alguna escala
 #: cae en un tramo `alerta=True` de `delta_interpretacion`.
 AUDITORIA_TIPO_ALERTA = "alerta"
+#: Valores que `GET /hce/{id}/auditoria` acepta en `modulo` y `tipo` (C1). Quedan fuera `GRUPO`
+#: (sus filas tienen `hce_id` NULL) y `acceso` (nada lo escribe: puntos-a-validar §2.17).
+MODULOS_HCE: tuple[str, ...] = (
+    MODULO_HCE_00, MODULO_HCE_CI, MODULO_HCE_LB, MODULO_HCE_PA, MODULO_HCE_PB, MODULO_HCE_IC,
+    MODULO_HCE_DOC, MODULO_HCE_ORG, MODULO_HCE_VF, MODULO_HCE_SEV, MODULO_HCE_INC, MODULO_HCE_PAI,
+)
+AUDITORIA_TIPOS_LEIBLES: tuple[str, ...] = (
+    AUDITORIA_TIPO_CARGA, AUDITORIA_TIPO_EDICION, AUDITORIA_TIPO_FIRMA, AUDITORIA_TIPO_ADDENDA,
+    AUDITORIA_TIPO_EXCEPCION, AUDITORIA_TIPO_ALERTA,
+)
 
 # --------------------------------------------------------------------------
 # Flujo clínico (M11.3-b · §5.96)

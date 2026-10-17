@@ -25,7 +25,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auth, flujo, hce, idea, informe_cierre, protocolo, referencias, valoracion_funcional
+from app.routers import auditoria, auth, flujo, hce, idea, informe_cierre, protocolo, referencias, valoracion_funcional
 from app.routers.dependencias import usuario_actual
 from app.routers.errores import registrar_manejadores
 from app.schemas.comunes import RESPUESTA_500
@@ -64,6 +64,7 @@ _PROTEGIDO = [Depends(usuario_actual)]
 for _router in (
     hce.router,
     flujo.router,
+    auditoria.router,
     idea.router_hce, idea.router,
     protocolo.router_hce, protocolo.router,
     informe_cierre.router_hce, informe_cierre.router,

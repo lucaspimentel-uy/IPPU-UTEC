@@ -508,6 +508,7 @@ function limpiarUiDeSesion(){
   if(typeof evReiniciar === "function") evReiniciar(true);     // evaluaciones: ni borradores ni profesionales de la sesión anterior
   if(typeof icReiniciar === "function") icReiniciar();         // informe de cierre y su documento impreso: nada del NNA anterior detrás del login
   if(typeof vfReiniciar === "function") vfReiniciar();         // valoración funcional
+  if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
   if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";

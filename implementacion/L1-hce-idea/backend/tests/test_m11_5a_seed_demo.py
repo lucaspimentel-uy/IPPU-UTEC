@@ -72,6 +72,13 @@ def test_12a_protocolos_y_delta_de_martin(client, demo):
     assert not [w for w in demo.warnings if w["code"] == "alerta"]
 
 
+def test_c1_martin_tiene_la_firma_de_lb_pa_pb_e_ic_en_su_rastro(client, demo):
+    """C1: el HCE-LOG de Martín sale de las escrituras que el seed ya hace por la API (no se insertó nada)."""
+    r = client.get(f"/hce/{demo.expedientes[102]}/auditoria", params={"tipo": "firma", "limit": 200})
+    assert {f["modulo"] for f in r.json()} >= {"HCE-LB", "HCE-PA", "HCE-PB", "HCE-IC"}
+    assert all(f["usuario"] for f in r.json())
+
+
 def test_12a_informe_de_cierre_firmado_con_recibi_y_documento(client, demo):
     ic = client.get(f"/informe-cierre/{demo.ids['102.ic']}").json()
     assert ic["firmado"] is True

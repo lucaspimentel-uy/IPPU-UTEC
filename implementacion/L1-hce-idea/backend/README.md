@@ -57,7 +57,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **827 passed, 0 skipped**.
+Una corrida válida de hoy es **847 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -89,10 +89,9 @@ salteado: el mensaje pide correr `python -m app.seed_catalogos`). Detalle y lím
 
 > **Base de la presentación (`ippu_presentacion`):** se recarga después del 2026-11-13, para que las fechas de firma (las estampa el servidor con la fecha de la corrida) no queden antes de las de evaluación. No se arma a mano: `herramientas\preparar_presentacion.ps1` hace todo esto en un comando (`CLAUDE.md`, «Presentación»).
 
-## API (M11.3-a)
+## API
 
-Swagger en `/docs`. Por ahora: `POST /hce` · `GET /hce` (búsqueda por `ci`, `numero` = N.º de HC, `grupo` + `anio`, `nombre`) · `GET /grupos?anio=` · `GET /profesionales?activo=` ·
-`GET /hce/{id}` · `PATCH /hce/{id}`. **Contrato** (`handoff.md` §5.108): `GET` devuelve el recurso directo;
+Swagger en `/docs` (la referencia de cada endpoint: parámetros, errores y ejemplos). Hay un router por dominio en `app/routers/`: `auth` (login) · `hce` (alta, búsqueda, detalle, PATCH con baja y reingreso) · `referencias` (grupos y profesionales) · `flujo` (estado del año y consentimiento) · `idea` (LB) · `protocolo` (PA y PB) · `informe_cierre` (IC y su documento) · `valoracion_funcional` · `auditoria` (HCE-LOG, `GET /hce/{id}/auditoria`, sólo lectura). Todo pide token salvo `/health` y el login. **Contrato** (`handoff.md` §5.108): `GET` devuelve el recurso directo;
 `POST`/`PATCH` devuelven `{"data": …, "warnings": []}`; todos los errores devuelven
 `{"code": …, "detail": [{"campo": …, "mensaje": …}]}`. **Una transacción por request**: los servicios
 (`app/services/`) sólo hacen `flush`, el commit está en `app/routers/dependencias.py`. Los tests de la API usan
@@ -144,8 +143,11 @@ backend/
 │   ├── models/              # catalogos · identidad · modulos · transversales · mixins
 │   ├── data/                # catalogos_iniciales.json (generado, no editar a mano)
 │   ├── seed_catalogos.py    # carga idempotente de catálogos
-│   └── main.py              # /health (routers: M11.4)
-├── tests/                   # tests estructurales del esquema
+│   ├── routers/             # un módulo por dominio (HTTP: contrato, alcance por grupo, cabecera X-Total-Count)
+│   ├── schemas/             # entradas y salidas de la API (Pydantic)
+│   ├── services/            # las reglas; sólo flush, el commit está en routers/dependencias.py
+│   └── main.py              # /health y la inclusión de los routers (todos con token)
+├── tests/                   # esquema, servicios y API (un archivo por rebanada)
 └── docs/
     ├── esquema-datos-v2.md  # ESQUEMA VIGENTE
     └── (los dos docs del backend v1 —esquema-datos.md y ejemplos-endpoints.md— se
