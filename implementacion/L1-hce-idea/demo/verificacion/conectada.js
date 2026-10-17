@@ -247,7 +247,7 @@ async function loguear(page) {
   const pasosM = await page.$$eval('#tabsExpWrap [role="tab"][data-mod]', (bs) => bs.map((b) => b.querySelector('.tab-nombre').textContent + b.querySelector('.st-mini .sr-only').textContent));
   const flujoM = await page.evaluate(() => document.getElementById('tabsExpWrap').textContent.replace(/\s+/g, ' '));
   check('3a-f3', 'flujo del año desde GET /hce/{id}/flujo en las pestañas del ciclo anual (Martín: CI registrado + LB, PA, PB, IC firmados), con glifo y texto de estado',
-    JSON.stringify(pasosM) === JSON.stringify(['Línea base: firmado', 'Protocolo A: firmado', 'Protocolo B: firmado', 'Informe de cierre: firmado']) &&
+    JSON.stringify(pasosM) === JSON.stringify(['Línea base: firmado', 'Protocolo A: firmado', 'Protocolo B: firmado', 'Cierre: firmado']) &&
     /CI●: registrado/.test(flujoM) && /Ciclo anual \d{4}/i.test(flujoM) && /●/.test(flujoM), flujoM.slice(0, 150));
   const ocultos = ['Talleres', 'Nivel de soporte', 'Historial clínico', 'Tendencia', 'Bloquead', '🔒', 'Azul', 'Celeste', 'Naranja'].filter((t) => exp.includes(t));
   check('3a-f4', 'lo que la API no guarda (talleres, nivel de soporte, historial, tendencia) y los colores de grupo de la demo NO aparecen; tampoco candados ni «Bloqueado»',
@@ -666,7 +666,7 @@ async function loguear(page) {
       pasos: [...document.querySelectorAll('#tabsExpWrap [role="tab"][data-mod]')].map((b) => b.querySelector('.tab-nombre').textContent + b.querySelector('.st-mini .sr-only').textContent) }));
     check('3b-e1', 'nuevo expediente SIN consentimiento: el consentimiento pendiente se ve (⚠ + texto) en su pestaña, los cuatro módulos del año figuran «sin iniciar», la ayuda dice que nada se bloquea, ningún candado ni «Bloqueado» ni control deshabilitado',
       trabas.ciPend && /CI⚠: pendiente/.test(flujoTxt) && /no bloquea/.test(flujoTxt) && trabas.deshabilitados === 0 && !trabas.candado &&
-      JSON.stringify(trabas.pasos) === JSON.stringify(['Línea base: sin iniciar', 'Protocolo A: sin iniciar', 'Protocolo B: sin iniciar', 'Informe de cierre: sin iniciar']),
+      JSON.stringify(trabas.pasos) === JSON.stringify(['Línea base: sin iniciar', 'Protocolo A: sin iniciar', 'Protocolo B: sin iniciar', 'Cierre: sin iniciar']),
       JSON.stringify(trabas));
     await p5.click('#tabExp-lb');                                   // un módulo anual: abre su pestaña, sin traba (F1: desde la pestaña)
     await p5.waitForSelector('#evResumen', { timeout: 8000 });
@@ -2303,15 +2303,17 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => selTabExp('doc'));
     await pv.waitForTimeout(80);
     await pv.focus('#tabExp-doc'); await pv.keyboard.press('Tab');
+    const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
+    await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV, LOG) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al panel; en LB (con controles adentro) no lleva tabindex',
-      ['doc', 'org', 'inc', 'pai', 'sev', 'log'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV, LOG) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
+      ['doc', 'org', 'inc', 'pai', 'sev', 'log'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
     const leer = async (nombre) => { const r = await pv.evaluate(() => ({
       paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
-      marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
+      marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null && !e.closest('.exp-tab')).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
       r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
     for (const v of ['pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos']) { await pv.evaluate((x) => go(x), v); await pv.waitForTimeout(60); await leer(v); }
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
@@ -2321,7 +2323,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
-    check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto',
+    check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
       nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 6 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
@@ -2368,19 +2370,31 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('f1-a', 'el primer bloque clínico de Martín (LB, PA, PB con su «Resultado», IC y VF) arranca a ≤ 260 px del borde de arriba a 1280×800 y a ≤ 300 px a 1024×768',
       tops.length === 10 && tops.every((x) => x.top !== null && x.top <= x.max), tops.map((x) => `${x.t}@${x.w}:${x.top}`).join(' '));
 
-    /* ---------- f1-tabs: a 1280 las pestañas entran en una fila; a 1024, en dos como mucho; nunca un scroll horizontal escondido ---------- */
+    /* ---------- f1-tabs (F1b): a 1280 las pestañas entran en UNA fila con ≥ 40 px de holgura (una fuente más ancha no la parte); todas miden lo mismo (±1 px) con el nombre en una línea; a 1024, dos filas como mucho; nunca un scroll horizontal escondido ---------- */
     const filasTabs = [];
     for (const [w, h] of tamanios) {
       await pf.setViewportSize({ width: w, height: h });
       await abrirF1(idMartinF, 'hce00');
       filasTabs.push(await pf.evaluate((ww) => { const l = document.querySelector('.exp-tabs');
-        const fondos = [...document.querySelectorAll('.exp-tab')].map((t) => t.getBoundingClientRect().bottom).sort((a, b) => a - b);      // filas = grupos de fondos a más de 3 px (la pestaña elegida baja 1 px)
-        return { ww, filas: fondos.filter((b, i) => i === 0 || b - fondos[i - 1] > 3).length, sw: l.scrollWidth, cw: l.clientWidth, n: document.querySelectorAll('.exp-tab').length,
-          nombres: [...document.querySelectorAll('.exp-tab .tab-nombre')].map((e) => e.textContent).join('|'), solo: [...document.querySelectorAll('.exp-tab')].filter((t) => t.querySelector('.solo-demo')).map((t) => t.dataset.tab).join(',') }; }, w));
+        const tabs = [...document.querySelectorAll('.exp-tab')];
+        const fondos = tabs.map((t) => t.getBoundingClientRect().bottom).sort((a, b) => a - b);      // filas = grupos de fondos a más de 3 px (la pestaña elegida baja 1 px)
+        const altos = tabs.map((t) => t.getBoundingClientRect().height);
+        const ultima = tabs[tabs.length - 1].getBoundingClientRect();
+        const unaLinea = tabs.every((t) => { const n = t.querySelector('.tab-nombre'); return n.getBoundingClientRect().height <= parseFloat(getComputedStyle(n).lineHeight) + 1; });
+        const marcas = tabs.filter((t) => t.querySelector('.solo-demo')).map((t) => { const m = t.querySelector('.solo-demo'); const cs = getComputedStyle(m);
+          return t.dataset.tab + ':' + (m.querySelector('[aria-hidden="true"]') ? 'glifo' : 'SIN-glifo') + '+' + (/Solo demo/.test(m.querySelector('.sr-only') ? m.querySelector('.sr-only').textContent : '') ? 'texto-sr' : 'SIN-texto') + (cs.borderTopStyle === 'dashed' ? '+DASHED' : ''); });
+        return { ww, filas: fondos.filter((b, i) => i === 0 || b - fondos[i - 1] > 3).length, sw: l.scrollWidth, cw: l.clientWidth, n: tabs.length,
+          libre: Math.floor(l.getBoundingClientRect().right - ultima.right), dAlto: Math.round((Math.max(...altos) - Math.min(...altos)) * 10) / 10, unaLinea,
+          nombres: [...document.querySelectorAll('.exp-tab .tab-nombre')].map((e) => e.textContent).join('|'), marcas: marcas.join(','),
+          solo: tabs.filter((t) => t.querySelector('.solo-demo')).map((t) => t.dataset.tab).join(','),
+          ayudaAlFinal: (() => { const a = document.getElementById('btnAyudaFlujo').getBoundingClientRect(); return a.left >= ultima.right && Math.abs((a.bottom + 4) - ultima.bottom) < 8; })(),
+          titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
-    check('f1-tabs', 'pestañas con nombre completo y código: a 1280 px una sola fila, a 1024 px dos como mucho, sin scroll horizontal; las no conectadas llevan «Solo demo»; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13) && filasTabs[0].solo === 'sev,inc,org,doc,pai,log'
-        && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Informe de cierre|Valoración funcional|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
+    check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'sev,inc,org,doc,pai,log'
+        && filasTabs[0].marcas === 'sev:glifo+texto-sr,inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr,log:glifo+texto-sr'
+        && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
+        && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
     /* ---------- f1-b: la banda sigue a la vista al bajar hasta el final de un módulo (lectura y editor) ---------- */
     await pf.setViewportSize({ width: 1280, height: 800 });
@@ -2541,6 +2555,58 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && trasKpi.vista === 'view-pendientes' && trasKpi.foco === 'tituloPendientes', JSON.stringify({ kpi, trasKpi }));
     check('f1-layout', 'por debajo de 1180 px (1024×768): barra lateral de 192 px y márgenes del contenido de 16 px (arriba) y 20 px (a los lados)',
       lay.sidebar === 192 && /^16px 20px/.test(lay.pad), JSON.stringify(lay));
+
+    /* ---------- f1b-tipo / f1b-accion (F1b, §5.141): tipografía, escala, etiquetas, acción principal en tinta, sin superficies oscuras fuera del cromo ---------- */
+    await pf.setViewportSize({ width: 1280, height: 800 });
+    const CODIGOS = '.cod,.tab-cod,.score-badge,.inter-btn,.likert-btn,.heat-cell,.fr-code,.log-table td b,.tscore,.ns-marca,td.num,.grupo-integrantes .hint,.fstep .fname,#view-pendientes table.lista td:first-child';
+    const medirTipo = (codigos) => {
+      const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+      const conTexto = [...document.querySelectorAll('body *')].filter((e) => vis(e) && !e.closest('svg,script,style,.sr-only') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+      const chicos = conTexto.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 11.99).map((e) => e.tagName + '.' + e.className + '=' + getComputedStyle(e).fontSize);
+      const mono = conTexto.filter((e) => /monospace/.test(getComputedStyle(e).fontFamily) && !e.matches(codigos) && !e.closest(codigos)).map((e) => e.tagName + '.' + e.className + ' «' + e.textContent.trim().slice(0, 20) + '»');
+      const serif = conTexto.filter((e) => /Charter|Georgia|serif/.test(getComputedStyle(e).fontFamily) && !/sans-serif$/.test(getComputedStyle(e).fontFamily) && !e.closest('.membrete,.inf-banner,#informeContent')).map((e) => e.tagName + '.' + e.className);
+      const etq = [...document.querySelectorAll('th:not([scope="row"]),.kpi .lab,.info-card>h3,.section-label,.st,.tabs-grupo-rot')].filter(vis).filter((e) => {
+        const cs = getComputedStyle(e); return !(parseFloat(cs.fontSize) === 12 && cs.fontWeight === '600' && (cs.letterSpacing === 'normal' || parseFloat(cs.letterSpacing) === 0) && cs.textTransform === 'none' && !/monospace/.test(cs.fontFamily)); }).map((e) => e.tagName + '.' + e.className);
+      return { chicos, mono, serif, etq, familia: getComputedStyle(document.body).fontFamily.split(',')[0] };
+    };
+    const tipo = {};
+    await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
+    tipo.listado = await pf.evaluate(medirTipo, CODIGOS);
+    for (const t of ['hce00', 'lb', 'pa', 'pb', 'ic', 'vf']) { await abrirF1(idMartinF, t); tipo[t] = await pf.evaluate(medirTipo, CODIGOS); }
+    const titulos = await pf.evaluate(() => { const h = document.querySelector('.banda-nna h1'); const cs = getComputedStyle(h); return { fam: cs.fontFamily.split(',')[0], peso: cs.fontWeight }; });
+    const dato = await pf.evaluate(() => { const c = document.querySelector('.banda-meta .cod'); return c ? getComputedStyle(c).fontFamily : ''; });
+    const base = await pf.evaluate(() => { const fs = (v) => { const d = document.createElement('i'); d.style.cssText = 'position:absolute;visibility:hidden;font-size:var(' + v + ')'; document.body.appendChild(d); const px = parseFloat(getComputedStyle(d).fontSize); d.remove(); return px; };
+      return { base: fs('--fs-base'), xl: fs('--fs-xl'), x2: fs('--fs-2xl'), tres: fs('--fs-3xs') }; });
+    await abrirF1(idMartinF, 'hce00');
+    const lectura = await pf.evaluate(() => ({ dd: getComputedStyle(document.querySelector('.data-row dd')).fontSize }));
+    await abrirF1(idMartinF, 'lb');
+    lectura.desc = await pf.evaluate(() => { const d = document.querySelector('.opcion .desc'); return d ? getComputedStyle(d).fontSize : 'sin-descriptor'; });
+    const hayProblemas = Object.entries(tipo).filter(([, v]) => v.chicos.length || v.mono.length || v.serif.length || v.etq.length);
+    check('f1b-tipo', 'tipografía: Segoe UI sin webfont; títulos de pantalla en sans 600; ningún texto visible por debajo de 12 px; --fs-base = 15 px (valores de ficha), --fs-xl = 22 px, --fs-2xl = 28 px; etiquetas (th, .kpi .lab, .info-card>h3, .section-label, .st, rótulos de grupo) en sans 12 px, 600, sin versalitas ni espaciado; monoespaciada sólo en códigos y puntajes; serif sólo en documentos (listado, HCE-00, LB, PA, PB, IC, VF)',
+      /Segoe UI/.test(tipo.listado.familia) && /Segoe UI/.test(titulos.fam) && titulos.peso === '600' && /monospace/.test(dato) && base.base === 15 && base.xl === 22 && base.x2 === 28 && base.tres === 12 && lectura.dd === '15px' && !hayProblemas.length,
+      JSON.stringify({ familia: tipo.listado.familia, titulos, base, lectura, problemas: hayProblemas.map(([k, v]) => ({ k, chicos: v.chicos.slice(0, 4), mono: v.mono.slice(0, 4), serif: v.serif.slice(0, 4), etq: v.etq.slice(0, 4) })) }));
+    const medirAccion = () => {
+      const claro = (rgb) => { const m = rgb.match(/[\d.]+/g).map(Number); const c = m.slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+      const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+      const prim = [...document.querySelectorAll('.btn-primary')].filter(vis).map((b) => getComputedStyle(b).backgroundColor);
+      const naranjaTexto = [...document.querySelectorAll('body *')].filter((e) => vis(e) && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && getComputedStyle(e).color === 'rgb(180, 89, 10)').map((e) => e.tagName + '.' + e.className);
+      const oscuras = [...document.querySelectorAll('body *')].filter((e) => { if (!vis(e) || e.closest('.topbar,.sidebar,.toast,.skip-link,button,.opcion,.score-badge,.banda-chip,.st,svg') || e.classList.contains('modal-bg')) return false; const r = e.getBoundingClientRect(); const bg = getComputedStyle(e).backgroundColor; return r.width > 150 && r.height > 28 && /^rgb/.test(bg) && !/rgba\(.*, 0\)/.test(bg) && claro(bg) < 0.1; }).map((e) => e.tagName + '.' + e.className);
+      return { prim, naranjaTexto, oscuras };
+    };
+    const accionesPor = {};
+    await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(100); accionesPor.listado = await pf.evaluate(medirAccion);
+    await abrirF1(idMartinF, 'ic'); accionesPor.ic = await pf.evaluate(medirAccion);
+    await pf.click('#btnIcImpreso'); await pf.waitForFunction(() => document.getElementById('view-informe').classList.contains('active') && !/Cargando el/.test(document.getElementById('informeContent').innerText), null, { timeout: 8000 });
+    accionesPor.informe = await pf.evaluate(medirAccion);
+    const bannerClaro = await pf.evaluate(() => { const b = document.querySelector('#informeContent .inf-banner'); const cs = getComputedStyle(b); const h = getComputedStyle(b.querySelector('h2')); return { bg: cs.backgroundColor, regla: cs.borderTopStyle + ' ' + cs.borderTopWidth, h2: h.fontFamily.split(',')[0] }; });
+    await pf.evaluate(() => go('inicio')); await pf.evaluate(() => openAlta()); await pf.waitForTimeout(200);
+    accionesPor.alta = await pf.evaluate(medirAccion);
+    const ringAlta = await pf.evaluate(() => getComputedStyle(document.querySelector('.modal-head')).getPropertyValue('--ring').trim());
+    await pf.keyboard.press('Escape'); await pf.waitForTimeout(150);
+    const malAccion = Object.entries(accionesPor).filter(([, v]) => v.naranjaTexto.length || v.oscuras.length || v.prim.some((c) => c !== 'rgb(22, 35, 44)'));
+    check('f1b-accion', 'acción principal en tinta: todo .btn-primary es #16232C (listado, IC, diálogo de alta, encabezado del informe); el naranja de marca no pinta ningún texto; no hay superficies oscuras fuera de la barra superior y la lateral (el encabezado del informe y el del diálogo son claros, con filete, y su anillo de foco es el de las superficies claras)',
+      !malAccion.length && accionesPor.listado.prim.length >= 1 && accionesPor.alta.prim.length >= 1 && bannerClaro.bg === 'rgb(255, 255, 255)' && /solid/.test(bannerClaro.regla) && /Charter|Georgia|Iowan|Constantia|Cambria|serif/.test(bannerClaro.h2) && ringAlta === '#B4590A',
+      JSON.stringify({ malAccion, bannerClaro, ringAlta, n: Object.fromEntries(Object.entries(accionesPor).map(([k, v]) => [k, v.prim.length])) }));
     await cf1.close();
   }
 

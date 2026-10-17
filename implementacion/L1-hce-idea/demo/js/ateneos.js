@@ -473,7 +473,7 @@ function ateneosPanelHtml(p){
   return `<div class="flujo-card" id="anchor-ateneos">
     <h3><span class="ic">◈</span> Ateneos clínicos referidos a este NNA
       <span class="spacer"></span>
-      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${ats.length} registro(s)</span>
+      <span style="font-size:var(--fs-2xs);color:var(--ink-2);font-weight:400">${ats.length} registro(s)</span>
     </h3>
     <div class="flujo-body">${cuerpo}</div>
   </div>`;

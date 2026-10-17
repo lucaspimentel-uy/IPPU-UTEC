@@ -25,7 +25,7 @@ function escHtml(v){
    Lo que NO viene de la API se distingue SIEMPRE de lo que si, con las mismas dos piezas:
    - panelModoDemo(): bloque para vistas y pestanas enteras no conectadas. Es texto + icono +
      borde punteado (no depende del color) y role="note".
-   - badgeSoloDemo(): marca chica de texto para un campo suelto sin respaldo en la API. */
+   - badgeSoloDemo(): marca chica de texto para un campo suelto sin respaldo en la API (badgeSoloDemoTab: la compacta de las pestañas). */
 function panelModoDemo(detalle){
   return `<div class="demo-panel" role="note">
     <span class="demo-panel-ico" aria-hidden="true">◇</span>
@@ -35,6 +35,11 @@ function panelModoDemo(detalle){
 }
 function badgeSoloDemo(){
   return `<span class="solo-demo">Solo demo</span>`;
+}
+/* Versión compacta para las pestañas del expediente (F1b, §5.141): el glifo ◇ de los paneles de demostración y el texto sólo para
+   lectores de pantalla; el panel de adentro de la pestaña lo dice completo. */
+function badgeSoloDemoTab(){
+  return `<span class="solo-demo"><span aria-hidden="true">◇</span><span class="sr-only"> Solo demo</span></span>`;
 }
 /* Cada <div data-modo-demo> del index.html se completa con el panel (una sola definicion). */
 function rellenarPanelesDemo(){

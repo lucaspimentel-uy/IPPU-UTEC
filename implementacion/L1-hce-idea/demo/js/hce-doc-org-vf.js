@@ -51,7 +51,7 @@ function docPanelHtml(p){
   return `<div class="flujo-card" id="anchor-doc">
     <h3><span class="ic">🗂</span> HCE-DOC · Documentos y fotos
       <span class="spacer"></span>
-      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${p.docs.length} documento(s) · ${p.fotos.length} foto(s)</span>
+      <span style="font-size:var(--fs-2xs);color:var(--ink-2);font-weight:400">${p.docs.length} documento(s) · ${p.fotos.length} foto(s)</span>
     </h3>
     <div class="flujo-body" id="docPanelBody">${docBodyHtml(p)}</div>
   </div>`;
@@ -190,13 +190,13 @@ function orgBodyHtml(p){
         </div>
       </div>
     </div>
-    <div style="font-size:.72rem;color:var(--ink-2);margin-top:12px">Alertas para el sistema definitivo (M10/recordatorios): vencimiento de AYEX a 60 y 30 días · informes semestrales a INAU pendientes tras la firma de cada protocolo.</div>`;
+    <div style="font-size:var(--fs-2xs);color:var(--ink-2);margin-top:12px">Alertas para el sistema definitivo (M10/recordatorios): vencimiento de AYEX a 60 y 30 días · informes semestrales a INAU pendientes tras la firma de cada protocolo.</div>`;
 }
 function orgPanelHtml(p){
   return `<div class="flujo-card" id="anchor-org">
     <h3><span class="ic">🏛</span> HCE-ORG · Áreas INAU y BPS
       <span class="spacer"></span>
-      <span style="font-size:.72rem;color:var(--ink-2);font-weight:400">${p.inau.envios.length} envío(s) INAU · ${p.bps.gestiones.length} gestión(es) BPS</span>
+      <span style="font-size:var(--fs-2xs);color:var(--ink-2);font-weight:400">${p.inau.envios.length} envío(s) INAU · ${p.bps.gestiones.length} gestión(es) BPS</span>
     </h3>
     <div class="flujo-body" id="orgPanelBody">${orgBodyHtml(p)}</div>
   </div>`;

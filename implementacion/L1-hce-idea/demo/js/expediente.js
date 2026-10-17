@@ -16,8 +16,9 @@ const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, 
 
 /* Pestañas del expediente (F1, H1/H8): nombre completo + código como texto secundario, agrupadas. El flujo del año vive en las
    pestañas del «Ciclo anual» (ya no hay tarjeta aparte): cada una lleva su estado de GET /hce/{id}/flujo, con glifo y texto.
-   `mod`: eslabón del flujo anual · `g`: grupo · `lineas`: el nombre en dos renglones (cabe una sola fila a 1280 px) ·
-   `d`: nombre largo (encabezado del panel) · `demo`: todavía no conectada (lleva «Solo demo»).
+   `mod`: eslabón del flujo anual · `g`: grupo · `c`: nombre corto de la pestaña, si el nombre completo no entra en una fila a
+   1280 px (F1b, §5.141; el completo queda en `t`, en el tooltip y en el encabezado del panel) · `d`: nombre largo (encabezado del
+   panel) · `demo`: todavía no conectada (lleva la marca compacta «Solo demo»).
    El orden de los grupos es una decisión del equipo (§5.140): SEV va en «Seguimiento», no entre CI e IDEA como en el Prototipo. */
 const TABS_EXP = [
   {k:"hce00", r:"HCE-00", t:"Datos",               g:"datos", d:"Identificación y datos clínicos"},
@@ -25,8 +26,8 @@ const TABS_EXP = [
   {k:"lb",    r:"LB",  t:"Línea base",              g:"ciclo", d:"Línea base — IDEA",            mod:"HCE-LB"},
   {k:"pa",    r:"PA",  t:"Protocolo A",             g:"ciclo", d:"Protocolo A (IPPU-TEA)",       mod:"HCE-PA"},
   {k:"pb",    r:"PB",  t:"Protocolo B",             g:"ciclo", d:"Protocolo B (IPPU-TEA)",       mod:"HCE-PB"},
-  {k:"ic",    r:"IC",  t:"Informe de cierre",       g:"ciclo", d:"Informe de cierre anual",      mod:"HCE-IC", lineas:["Informe de", "cierre"]},
-  {k:"vf",    r:"VF",  t:"Valoración funcional",    g:"seg",   d:"Valoración funcional",         lineas:["Valoración", "funcional"]},
+  {k:"ic",    r:"IC",  t:"Informe de cierre",       g:"ciclo", d:"Informe de cierre anual",      mod:"HCE-IC", c:"Cierre"},
+  {k:"vf",    r:"VF",  t:"Valoración funcional",    g:"seg",   d:"Valoración funcional",         c:"Valoración"},
   {k:"sev",   r:"SEV", t:"Severidad",               g:"seg",   d:"Severidad (DSM-5-TR)",         demo:true},
   {k:"inc",   r:"INC", t:"Inclusión",               g:"seg",   d:"Inclusión educativa y social", demo:true},
   {k:"org",   r:"ORG", t:"Organismos",              g:"seg",   d:"Áreas INAU y BPS",             demo:true},
@@ -58,16 +59,16 @@ function _marcasTab(t){
 }
 function _tabHtml(t){
   const sel = EXP.tab === t.k;
-  const nombre = t.lineas ? t.lineas.map(l => `<span>${escHtml(l)}</span>`).join(" ") : escHtml(t.t);
+  const nombre = escHtml(t.c || t.t);
   const mo = t.mod && EXP.flujo ? EXP.flujo.modulos[t.mod] : null;
   const titulo = mo && mo.faltantes && mo.faltantes.length && mo.estado !== "sin_iniciar"
     ? `${t.d} — fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}` : t.d;
   return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"${t.mod ? ` data-mod="${t.mod}"` : ""}
     aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}" title="${escHtml(titulo)}" onclick="selTabExp('${t.k}')">
-    <span class="tab-nombre">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}</span>${t.demo ? badgeSoloDemo() : ""}</button>`;
+    <span class="tab-nombre">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}${t.demo ? badgeSoloDemoTab() : ""}</span></button>`;
 }
 /* Las pestañas van en grupos con su rótulo (decorativo: aria-hidden; el año del ciclo va en el nombre de la lista). La ayuda «?»
-   (orden y estados) va ANTES de la lista: así Tab desde una pestaña entra directo al panel (patrón de pestañas del APG). */
+   (orden y estados) va al FINAL de la tira, en el DOM y a la vista (F1b, §5.141): el orden de Tab sigue al visual. */
 function tabsExpedienteHtml(){
   const anio = EXP.flujo ? EXP.flujo.anio : "";
   const grupos = GRUPOS_TABS.map(([g, rot]) => `<div class="tabs-grupo tabs-grupo-${g}" role="presentation">
@@ -75,9 +76,9 @@ function tabsExpedienteHtml(){
       <div class="tabs-grupo-fila" role="presentation">${TABS_EXP.filter(t => t.g === g).map(_tabHtml).join("")}</div></div>`).join("");
   const estadoFlujo = EXP.flujoError ? estadoErrorInlineHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()") : "";
   return `<div class="tabs-barra">
+      <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
       <button type="button" class="btn-ayuda" id="btnAyudaFlujo" aria-expanded="${EXP.ayuda}" aria-controls="ayudaFlujo" onclick="alternarAyudaFlujo()"
         aria-label="Ayuda: orden y estados del ciclo anual" title="Orden y estados del ciclo anual"><span aria-hidden="true">?</span></button>
-      <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
     </div>
     <div class="ayuda-flujo" id="ayudaFlujo"${EXP.ayuda ? "" : " hidden"}>
       <p><b>Ciclo anual${anio ? " " + escHtml(anio) : ""}:</b> Consentimiento → Línea base → Protocolo A → Protocolo B → Informe de cierre.</p>
@@ -520,7 +521,7 @@ function abrirExpedienteDemo(id){
        <div class="data-row"><dt>Ant. familiares</dt><dd style="text-align:left">${a.familiares||"—"}</dd></div>
        <div class="data-row"><dt>Observaciones</dt><dd style="text-align:left">${p.antec||"—"}</dd></div>`
     : `<div class="data-row"><dt>Observaciones</dt><dd style="text-align:left">${p.antec||"—"}</dd></div>
-       <div style="font-size:.74rem;color:var(--ink-2);margin-top:8px">Sin anamnesis estructurada cargada en el expediente (demo).</div>`;
+       <div style="font-size:var(--fs-2xs);color:var(--ink-2);margin-top:8px">Sin anamnesis estructurada cargada en el expediente (demo).</div>`;
 
   document.getElementById("expedienteContent").innerHTML = `
     ${panelModoDemo("Expediente de ejemplo con datos ficticios: no es un expediente de la API y nada de lo que se haga acá se guarda.")}

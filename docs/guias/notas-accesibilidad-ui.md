@@ -62,7 +62,7 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
   IC (sin crear, confirmación y errores de firma, avisos y «Cambió en el servidor», firmado); documento impreso del IC; VF
   (vacía, formulario, las cinco categorías del baremo, los niveles y la alerta de vigencia) y su reporte; diálogo de alta/edición
   en sus cuatro pasos y su confirmación de descarte; diálogo del recibí y su confirmación; estados compartidos (cargando, error,
-  vacío, error en línea); enlace de salto enfocado; y el **cromo** (barra lateral, cabecera, barra de totales) en todas ellas.
+  vacío, error en línea); enlace de salto enfocado; y el **cromo** (barra superior y lateral) en todas ellas.
 - **Modo demostración**, informadas aparte: Pendientes, Analítica, Grupos, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
   El panel «Modo demostración» y la marca «Solo demo» se miden además dentro de las pantallas conectadas (pestañas sin API).
 
@@ -94,6 +94,30 @@ interfaz).
   el límite de un control.
 - **Cifra sobre el color de una serie:** no se pinta. En Analítica las cifras de las barras van **fuera** del relleno y cada
   celda del mapa de calor elige su texto contra su propio fondo.
+
+### 2.5 Tipografía, escala, acción principal y neutros (F1b, `handoff.md` §5.141; tokens en `estilos.css`)
+
+Los ratios de cada token están **en el comentario de CSS junto al token** (no se repiten acá, `CLAUDE.md` «Verificación — reglas de
+higiene»); la herramienta los mide sobre lo que se renderiza.
+
+- **Fuentes de sistema, sin webfont** (la presentación puede correr sin conexión): `--f-text` (sans, «Segoe UI» primero) es toda la
+  interfaz; `--f-display` es un alias suyo (títulos de pantalla en sans 600); `--f-doc` (serif) **sólo** para documentos impresos
+  (membrete, encabezado del informe, títulos del IC); `--f-dato` (monoespaciada) **sólo** para códigos —HC, C.I., N.º, códigos de
+  módulo— y puntajes dentro de tablas y botones de puntaje. Una cifra suelta (un total, un KPI) va en sans, tabular.
+- **Nada por debajo de 12 px:** `--fs-2xs` es el piso y `--fs-3xs` quedó como alias suyo. `--fs-base` (15 px) es el texto de lectura
+  clínica: valores de ficha, descriptores del IDEA, ítems de PA/PB, síntesis y observaciones.
+- **Etiquetas** (cabeceras de tabla, `.kpi .lab`, `.info-card>h3`, `.section-label`, `.st`, rótulos de grupo): sans 12 px, 600, en
+  minúscula normal, sin espaciado entre letras.
+- **Acción principal en tinta:** `--accion` / `--accion-hover` rellenan `.btn-primary`. **El naranja es marca** (logo, ítem activo de la
+  barra lateral, regla de la pestaña activa y anillo de foco): nunca texto sobre `--bg` ni relleno de un botón. «Firmar» conserva
+  `--accion-firma`; «Guardar» es secundario salvo que sea la única acción que confirma la pantalla.
+- **`--ink-2` más oscuro; `--ink-3` sólo bordes y decoración**, nunca texto.
+- **Superficies oscuras: sólo la barra superior y la lateral.** El encabezado del informe, el de los diálogos y el login son
+  `--paper` con un filete; por eso el anillo oscuro ya no cubre esos contenedores. El aviso flotante (toast) y el enlace de salto
+  son la excepción: no son superficies de la pantalla.
+- **Operable se ve operable:** `.btn-ghost`, el botón de impresión y los chips de filtro del listado usan `--control-borde` (el
+  filete `--rule` no delimita un control).
+- **Radios:** `--r-sm` para todo chip y todo control, `--r` para tarjetas, `--r-lg` para diálogos.
 
 ---
 
@@ -175,8 +199,9 @@ un número y de «sin puntuar». En el editor es un botón aparte de los puntaje
 **Decisión (Fase 3-e).** Un solo anillo, **sólido**, en todo lo operable y en todo lo que recibe el foco por programa (títulos con
 `tabindex="-1"`, resúmenes de error):
 
-- **Token:** `--ring` (sobre superficies claras) y `--ring-dark` (sobre el cromo oscuro: barra superior y lateral, banner del
-  documento impreso, cabeceras de diálogo, enlace de salto). Desde F1 la banda del paciente y la barra de acciones son claras. `--ring` cambia a `--ring-dark` **por herencia** dentro de esos contenedores.
+- **Token:** `--ring` (sobre superficies claras) y `--ring-dark` (sobre el cromo oscuro: barra superior, barra lateral y enlace de
+  salto). Desde F1 la banda del paciente y la barra de acciones son claras, y desde F1b también el encabezado del informe y el de los
+  diálogos (§2.5). `--ring` cambia a `--ring-dark` **por herencia** dentro de esos contenedores.
   Ancho `--ring-w` y separación `--ring-off` (2 px y 2 px).
 - **Un único selector `:focus-visible`.** Ningún selector reemplaza el contorno por un `box-shadow` translúcido ni lo apaga con
   `outline:none`; la única excepción es `<main>`, que sólo recibe el foco como destino del enlace de salto.

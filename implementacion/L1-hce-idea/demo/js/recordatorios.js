@@ -31,7 +31,7 @@ function renderRecordatorios(){
         <td>${pendHtml}</td></tr>`;
     }).join("")}
   </tbody></table>
-  <div style="font-size:.72rem;color:var(--ink-2);margin-top:8px">Recordatorios configurables por coordinación (demo: en memoria). <b>Nunca son fechas límite bloqueantes</b> (§4): informan al equipo, no impiden registrar ni firmar módulos. Las alertas de organismos (AYEX 60/30) y de valoración funcional (90/30, §7.8) viven en HCE-ORG y HCE-VF.</div>`;
+  <div style="font-size:var(--fs-2xs);color:var(--ink-2);margin-top:8px">Recordatorios configurables por coordinación (demo: en memoria). <b>Nunca son fechas límite bloqueantes</b> (§4): informan al equipo, no impiden registrar ni firmar módulos. Las alertas de organismos (AYEX 60/30) y de valoración funcional (90/30, §7.8) viven en HCE-ORG y HCE-VF.</div>`;
 }
 function recToggle(i,v){ RECORDATORIOS[i].activo = v; renderRecordatorios(); }
 function recPeriodo(i,v){ RECORDATORIOS[i].periodo = v; }

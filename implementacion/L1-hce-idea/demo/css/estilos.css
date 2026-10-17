@@ -1,98 +1,102 @@
 /* Estilos de la demo L1 HCE+IDEA (IPPU x UTEC-LIDIA).
    ============================================================================
-   SISTEMA DE DISEÑO — «el expediente sellado» (restyle visual, 2026-08-19)
+   SISTEMA DE DISEÑO — «el expediente sellado» (restyle visual 2026-08-19; tipografía, escala, acción principal y neutros: F1b, §5.141)
    ----------------------------------------------------------------------------
    Criterio: esta app no es un dashboard, es una historia clínica cuyo producto
-   final es un documento firmado (el HCE-IC con membrete, §5.3). La pantalla se
-   parece al documento que emite. De ahí las tres decisiones de base:
+   final es un documento firmado (el HCE-IC con membrete, §5.3). La pantalla es
+   una herramienta de trabajo; el documento que emite es lo que se parece a un
+   documento. De ahí las tres decisiones de base:
 
-   1. TIPOGRAFÍA en tres roles, todos con fuentes de sistema — no se puede
-      cargar una webfont: la demo abre por file:// sin servidor ni build step
-      (handoff §5.5.1), así que un @font-face remoto quedaría sin resolver.
-        · display (serif) → títulos, nombre del NNA, membrete: registro documental
-        · texto (sans)    → cuerpo, formularios
-        · dato (mono)     → correlativos (HC-2026-101, AT-2026-001), códigos de
-                            módulo (CI·LB·PA·PB·IC), puntajes, fechas de tabla,
-                            etiquetas. El vocabulario del expediente son códigos.
-   2. COLOR: el naranja institucional queda como ÚNICO acento (acción principal
-      y estado activo). Antes también hacía de color de estado y chocaba con
-      --warn, que es casi el mismo tono: los estados pasan a una familia propia
-      (ok / pend / stop) y el acento deja de significar «atención».
-   3. PROFUNDIDAD: las superficies se separan por filete, no por sombra. La
-      sombra queda reservada a lo que realmente flota (modal, toast, barra
-      pegajosa). Antes toda tarjeta tenía sombra y la jerarquía se aplanaba.
+   1. TIPOGRAFÍA con fuentes de sistema, sin webfont — la presentación puede correr sin conexión, así que un @font-face
+      remoto quedaría sin resolver. Tres caras, cada una con su trabajo:
+        · texto (sans, «Segoe UI» primero) → TODA la interfaz: cuerpo, formularios, títulos de pantalla (600) y las
+                            etiquetas (tablas, KPI, rótulos de sección: 12 px, 600, sin versalitas ni espaciado).
+                            --f-display es un alias de --f-text: los títulos de pantalla no llevan serif.
+        · doc (serif)     → SÓLO los documentos impresos: el membrete, el encabezado del informe y el IC en papel.
+        · dato (mono)     → SÓLO códigos: HC, C.I., N.º, códigos de módulo (CI·LB·PA·PB·IC) y puntajes dentro de tablas
+                            y botones de puntaje. Una cifra suelta (un total, un KPI) va en la cara de texto, tabular.
+      Ningún texto baja de 12 px (--fs-3xs es un alias de --fs-2xs); el texto de lectura clínica va a 15 px (--fs-base).
+   2. COLOR: la acción principal va en TINTA (--accion), no en naranja. El naranja institucional es MARCA: el logo, el
+      ítem activo de la barra lateral, la regla de la pestaña activa y el anillo de foco; nunca texto sobre --bg ni el
+      relleno de un botón. Los estados tienen su propia familia (ok / warn / bad) y no pintan clasificaciones clínicas.
+   3. PROFUNDIDAD: las superficies se separan por filete, no por sombra. La sombra queda reservada a lo que realmente
+      flota (modal, toast, banda del paciente y barra de acciones pegadas). Las superficies OSCURAS son sólo dos: la barra
+      superior y la barra lateral; todo lo demás (encabezado del informe, de un diálogo, login) es --paper con un filete.
 
    ⚠️ CONTRATOS QUE NO SE TOCAN
-   - Los nombres de variable que consume el JS por `var(--x)` — --ink, --ink-2,
-     --ok, --warn, --bad, --teal, --purple, --magenta, --escB, --line, --orange —
-     siguen existiendo con el mismo significado; sólo cambian de valor.
-   - La paleta de las 4 escalas del IDEA (teal · escB · purple · magenta) NO se
-     retoca: son colores con significado clínico, citados en la documentación y
-     replicados en hexadecimal dentro de los radares SVG (informe-cierre.js), el
-     heatmap (ui-core.js) y su leyenda. Cambiarlos los desincronizaría.
+   - Los nombres de variable que consume el JS por `var(--x)` — --ink, --ink-2, --ok, --warn, --bad, --teal, --purple,
+     --magenta, --escB, --line, --orange — siguen existiendo con el mismo significado; sólo cambian de valor.
+   - La paleta de las 4 escalas del IDEA (teal · escB · purple · magenta) y la rampa clínica NO se retocan: son colores con
+     significado clínico, citados en la documentación y replicados en hexadecimal dentro de los radares SVG
+     (informe-cierre.js), el heatmap (ui-core.js) y su leyenda. Cambiarlos los desincronizaría.
+   - Los ratios de contraste viven ACÁ, junto a cada token (CLAUDE.md, «Verificación — reglas de higiene»); la
+     documentación no los repite. Los mide herramientas/verificar_contraste_ui.js sobre lo que realmente se renderiza.
    ============================================================================ */
   :root{
-    /* --- tipografía --- */
-    --f-display:Charter,"Bitstream Charter","Iowan Old Style",Constantia,Cambria,Georgia,serif;
-    --f-text:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    --f-dato:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,"DejaVu Sans Mono","Liberation Mono",monospace;
-    --fs-3xs:.6875rem;  /* 11px — etiquetas mono, eyebrows */
-    --fs-2xs:.75rem;    /* 12px — hints, notas al pie */
+    /* --- tipografía (sin webfont) --- */
+    --f-text:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --f-display:var(--f-text);   /* títulos de pantalla: sans 600 (alias, para no tocar los selectores) */
+    --f-doc:Charter,"Bitstream Charter","Iowan Old Style",Constantia,Cambria,Georgia,serif;   /* sólo documentos impresos */
+    --f-dato:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,"DejaVu Sans Mono","Liberation Mono",monospace;   /* sólo códigos */
+    --fs-2xs:.75rem;    /* 12px — etiquetas, hints, notas al pie: el mínimo del sistema */
+    --fs-3xs:var(--fs-2xs);   /* alias de --fs-2xs: nada baja de 12px */
     --fs-xs:.8125rem;   /* 13px — celdas de tabla, texto secundario */
     --fs-sm:.875rem;    /* 14px — cuerpo, formularios */
+    --fs-base:.9375rem; /* 15px — texto de lectura clínica: valores de ficha, descriptores del IDEA, ítems de PA/PB, síntesis */
     --fs-md:1rem;       /* 16px — títulos de tarjeta */
     --fs-lg:1.25rem;    /* 20px */
-    --fs-xl:1.625rem;   /* 26px — título de página */
-    --fs-2xl:2.25rem;   /* 36px — cifras KPI */
+    --fs-xl:1.375rem;   /* 22px — título de pantalla */
+    --fs-2xl:1.75rem;   /* 28px — cifras KPI */
 
     /* --- escala de espaciado (base 4) --- */
     --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s7:32px; --s8:40px;
 
-    /* --- neutros: una sola rampa (antes había 11 casi-blancos sueltos) --- */
-    --ink:#16232C;           /* texto principal y cromo oscuro */
-    --ink-2:#55666F;         /* texto secundario */
-    --ink-3:#7E8D95;         /* terciario, captions */
+    /* --- neutros: una sola rampa. Cada token lleva su contraste contra las superficies del sistema
+           (paper · paper-2 · paper-3 · bg). --- */
+    --ink:#16232C;           /* texto principal: 16,0 · 15,2 · 14,1 · 14,2 :1 */
+    --ink-2:#4F5F68;         /* texto secundario: 6,6 · 6,3 · 5,8 · 5,9 :1 */
+    --ink-3:#7E8D95;         /* SÓLO bordes y decoración, nunca texto: 3,4 · 3,2 · 3,0 · 3,0 :1 */
     --paper:#FFFFFF;         /* superficie de tarjeta */
-    --paper-2:#F7F9FA;       /* relleno sutil: cabeceras de tabla, filas alternas */
-    --paper-3:#EDF1F3;       /* hover, tracks */
-    --bg:#EFF2F4;            /* fondo de la app */
-    --rule:#DCE3E7;          /* filete */
-    --rule-2:#EBEFF2;        /* filete interno, más suave */
+    --paper-2:#F7F9FA;       /* relleno sutil: cabeceras de tabla, filas alternas (--ink 15,2 · --ink-2 6,3 :1) */
+    --paper-3:#EDF1F3;       /* hover, tracks (--ink 14,1 · --ink-2 5,8 :1) */
+    --bg:#EFF2F4;            /* fondo de la app (--ink 14,2 · --ink-2 5,9 :1) */
+    --rule:#DCE3E7;          /* filete decorativo: 1,3 sobre --paper; NO delimita un control (para eso, --control-borde) */
+    --rule-2:#EBEFF2;        /* filete interno, más suave: 1,2 sobre --paper */
 
-    /* --- cromo oscuro (topbar, sidebar, cabecera de expediente) --- */
-    --navy:#16232C;
-    --navy-2:#1E2F3A;
-    --navy-3:#2C4250;
+    /* --- cromo oscuro: SÓLO la barra superior y la barra lateral --- */
+    --navy:#16232C;          /* --on-dark 16,0 · --on-dark-2 10,3 · --on-dark-3 7,2 :1 */
+    --navy-2:#1E2F3A;        /* --on-dark 13,8 · --on-dark-2 8,9 · --on-dark-3 6,2 :1 */
+    --navy-3:#2C4250;        /* --on-dark 10,5 · --on-dark-2 6,8 · --on-dark-3 4,7 :1 */
 
-    /* --- acento institucional IPPU ---
-       #DD7B0C daba 2,6:1 sobre blanco: no llegaba a AA como texto, y se usa como
-       texto en .btn-link y en las etiquetas de sección. Se oscurece a 4,6:1. */
-    --orange:#B4590A;
-    --orange-hover:#964906;
-    --orange-soft:#FBEEDC;
-    --orange-line:#E8C79B;
+    /* --- MARCA institucional IPPU: el logo, el ítem activo de la barra lateral, la regla de la pestaña activa y el
+           anillo de foco. Nunca texto sobre --bg ni relleno de un botón (la acción principal es --accion). ---
+       #DD7B0C daba 2,6:1 sobre blanco; el naranja de marca es el oscurecido. */
+    --orange:#B4590A;        /* 4,8 sobre --paper · 4,3 sobre --bg · 3,3 sobre --navy :1 */
+    --orange-hover:#964906;  /* 6,5 sobre --paper · 5,7 sobre --bg :1 */
+    --orange-soft:#FBEEDC;   /* tinte: --ink 14,0 · --ink-2 5,8 :1 */
+    --orange-line:#E8C79B;   /* filete del tinte: 1,6 sobre --paper */
 
-    /* --- estados: familia propia, deliberadamente distinta del acento --- */
-    --ok:#0E7A46;      --ok-soft:#E4F2EA;   --ok-line:#A9CFBA;
-    --warn:#8A6D1F;    --warn-soft:#F7F0DC; --warn-line:#DBC792;   /* borrador / pendiente */
-    --bad:#B3261E;     --bad-soft:#FBE7E5;  --bad-line:#E5AFAA;
+    /* --- estados: familia propia, deliberadamente distinta de la marca --- */
+    --ok:#0E7A46;      --ok-soft:#E4F2EA;   --ok-line:#A9CFBA;     /* ok 5,4 sobre --paper · 4,7 sobre --ok-soft · 4,7 sobre --paper-3 :1 · soft: --ink 13,9 · line 1,7 sobre --paper */
+    --warn:#8A6D1F;    --warn-soft:#F7F0DC; --warn-line:#DBC792;   /* warn 4,9 sobre --paper · 4,3 sobre --warn-soft (por eso el texto usa --warn-ink) :1 · soft: --ink 14,1 · line 1,7 */
+    --bad:#B3261E;     --bad-soft:#FBE7E5;  --bad-line:#E5AFAA;    /* bad 6,5 sobre --paper · 5,5 sobre --bad-soft · 5,8 sobre --paper-3 :1 · soft: --ink 13,5 · line 1,9 */
 
     /* --- paleta de datos: las 4 escalas del IDEA (sin cambios, ver cabecera) --- */
-    --teal:#0E8F7E;          /* Escala A — Relación Social */
-    --teal-soft:#E3F4F1;
-    --escB:#DD7B0C;          /* Escala B — Comunicación y Lenguaje */
-    --escB-soft:#FBEEDC;
-    --purple:#6D3FBF;        /* Escala C — Anticipación / Flexibilidad */
-    --purple-soft:#EFE8FA;
-    --magenta:#C2185B;       /* Escala D — Simbolización */
-    --magenta-soft:#FAE4ED;
+    --teal:#0E8F7E;          /* Escala A — Relación Social: 4,0 sobre --paper :1 (el texto usa --teal-ink) */
+    --teal-soft:#E3F4F1;     /* --ink 14,1 :1 */
+    --escB:#DD7B0C;          /* Escala B — Comunicación y Lenguaje: 3,0 sobre --paper :1, sólo trazo y relleno, nunca texto */
+    --escB-soft:#FBEEDC;     /* --ink 14,0 :1 */
+    --purple:#6D3FBF;        /* Escala C — Anticipación / Flexibilidad: 6,7 sobre --paper · 5,7 sobre --purple-soft :1 */
+    --purple-soft:#EFE8FA;   /* --ink 13,4 :1 */
+    --magenta:#C2185B;       /* Escala D — Simbolización: 5,9 sobre --paper · 4,9 sobre --magenta-soft :1 */
+    --magenta-soft:#FAE4ED;  /* --ink 13,3 :1 */
 
     /* --- alias de compatibilidad (los consume el CSS existente) --- */
     --card:var(--paper);
     --line:var(--rule);
     --line-2:var(--rule-2);   /* estaba referenciada con fallback y nunca definida */
 
-    /* --- radios y sombras --- */
+    /* --- radios y sombras: --r-sm = todo chip y todo control · --r = tarjetas · --r-lg = diálogos --- */
     --r-sm:4px; --r:8px; --r-lg:12px; --r-pill:999px;
     --radius:var(--r);
     --shadow:none;                                          /* las tarjetas usan filete */
@@ -118,42 +122,46 @@
        con glifo y texto. Una acción irreversible que no es un error (firmar) usa --accion-firma, no --ok. */
 
     /* --- foco (WCAG 2.4.7 y 1.4.11): UN anillo, sólido, en todo lo operable --- */
-    --ring:#B4590A;            /* sobre superficies claras: ≥ 4,0:1 contra cualquiera de las del sistema */
-    --ring-dark:#FFB27A;       /* sobre el cromo oscuro (barra lateral, cabeceras, barra de totales): ≥ 5,9:1 */
+    --ring:#B4590A;            /* sobre superficies claras: 4,8 sobre --paper · 4,5 sobre --paper-2 · 4,3 sobre --bg · 4,2 sobre --paper-3 :1 */
+    --ring-dark:#FFB27A;       /* sobre el cromo oscuro (barra superior y lateral): 9,1 sobre --navy · 7,8 sobre --navy-2 :1 */
     --ring-w:2px; --ring-off:2px;
 
-    /* --- texto sobre el cromo oscuro --- */
-    --on-dark:#FFFFFF; --on-dark-2:#C2D2DB; --on-dark-3:#9DB1BD;
-    --on-dark-borde:#2A3E4A;
+    /* --- texto sobre el cromo oscuro (contra --navy · --navy-2 · --navy-3) --- */
+    --on-dark:#FFFFFF;         /* 16,0 · 13,8 · 10,5 :1 */
+    --on-dark-2:#C2D2DB;       /* 10,3 · 8,9 · 6,8 :1 */
+    --on-dark-3:#9DB1BD;       /* 7,2 · 6,2 · 4,7 :1 */
+    --on-dark-borde:#2A3E4A;   /* filete sobre --navy-2: 1,2 (decorativo) */
 
-    /* --- rampa SECUENCIAL de un solo matiz: bandas del IDEA, niveles/categorías de la VF, insignias de puntaje --- */
+    /* --- rampa SECUENCIAL de un solo matiz: bandas del IDEA, niveles/categorías de la VF, insignias de puntaje (sin cambios) --- */
     --rampa-1:#E1ECF8; --rampa-2:#BBD3EE; --rampa-3:#8FB6E0; --rampa-4:#5C92CC; --rampa-5:#2E69AD; --rampa-6:#173F73;
-    --rampa-txt-claro:#0B2036;  /* texto sobre los pasos 1–4 (≥ 5:1) · sobre 5–6 va blanco (≥ 5,6:1) */
-    --rampa-borde:#173F73;
-    --rampa-neutra-bg:var(--paper-3); --rampa-neutra-fg:var(--ink);    /* sin paso inferible: el nombre va escrito igual */
+    --rampa-txt-claro:#0B2036;  /* texto sobre los pasos 1–4: 13,8 · 10,7 · 7,8 · 5,1 :1 · sobre 5–6 va blanco: 5,6 · 10,5 :1 */
+    --rampa-borde:#173F73;      /* 10,5 sobre --paper :1 */
+    --rampa-neutra-bg:var(--paper-3); --rampa-neutra-fg:var(--ink);    /* sin paso inferible: el nombre va escrito igual (14,1 :1) */
 
     /* --- marcadores de estado de módulo (notas §3.2 A): vacío = contorno · en curso = relleno suave + borde punteado ·
            firmado = relleno sólido · CI pendiente = acción pendiente · addenda = doble borde · registrada = borde macizo.
            Todos con glifo + texto. --- */
-    --st-firmado-bg:#0E7A46;     --st-firmado-fg:#FFFFFF;
-    --st-en-curso-bg:#F7F0DC;    --st-en-curso-fg:#5C4713;   --st-en-curso-borde:#8A6D1F;
-    --st-sin-fg:#55666F;         --st-sin-borde:#7E8D95;
-    --st-ci-pend-bg:#FBE7E5;     --st-ci-pend-fg:#B3261E;    --st-ci-pend-borde:#B3261E;
-    --st-addenda-borde:#16232C;
-    --st-registrada-borde:#16232C;
+    --st-firmado-bg:#0E7A46;     --st-firmado-fg:#FFFFFF;      /* 5,4 :1 */
+    --st-en-curso-bg:#F7F0DC;    --st-en-curso-fg:#5C4713;   --st-en-curso-borde:#8A6D1F;   /* fg 7,8 sobre bg · borde 4,9 sobre --paper :1 */
+    --st-sin-fg:#4F5F68;         --st-sin-borde:#7E8D95;       /* fg 6,6 · borde 3,4 sobre --paper :1 */
+    --st-ci-pend-bg:#FBE7E5;     --st-ci-pend-fg:#B3261E;    --st-ci-pend-borde:#B3261E;    /* fg 5,5 sobre bg · borde 6,5 sobre --paper :1 */
+    --st-addenda-borde:#16232C;                                /* 16,0 :1 */
+    --st-registrada-borde:#16232C;                             /* 16,0 :1 */
 
     /* --- NS (observación insuficiente): valor válido, distinto de un número y de «sin puntuar» --- */
-    --ns-borde:#55666F; --ns-fg:#16232C;
+    --ns-borde:#4F5F68; --ns-fg:#16232C;                       /* borde 6,6 · fg 16,0 sobre --paper :1 */
 
     /* --- aviso no bloqueante de la API y «Cambió en el servidor» (warn) --- */
-    --aviso-bg:#F7F0DC; --aviso-borde:#8A6D1F; --aviso-fg:#16232C;
+    --aviso-bg:#F7F0DC; --aviso-borde:#8A6D1F; --aviso-fg:#16232C;   /* fg 14,1 sobre bg · borde 4,3 sobre bg :1 */
 
     /* --- acciones --- */
-    --accion-firma:#0E7A46;      /* «Firmar»: irreversible, pero no es un error ni un estado */
-    --accion-destructiva:#B3261E;
-    --control-borde:#7E8D95;     /* borde de input / select / textarea: 3,4:1 sobre blanco (1.4.11); --rule es un filete, no el límite de un control */
-    --warn-ink:#5C4713;          /* texto de --warn sobre --warn-soft (el --warn puro daba 4,3:1) */
-    --teal-ink:#0A6B5E;          /* texto de --teal sobre --teal-soft (el --teal puro daba 3,5:1) */
+    --accion:#16232C;            /* ACCIÓN PRINCIPAL (.btn-primary): relleno en tinta, texto blanco 16,0 :1 */
+    --accion-hover:#2C4250;      /* hover de la acción principal: texto blanco 10,5 :1 */
+    --accion-firma:#0E7A46;      /* «Firmar»: irreversible, pero no es un error ni un estado; texto blanco 5,4 :1 */
+    --accion-destructiva:#B3261E;   /* texto blanco 6,5 :1 */
+    --control-borde:#7E8D95;     /* borde de input / select / textarea / botón secundario / chip de filtro: 3,4 sobre --paper · 3,2 sobre --paper-2 · 3,0 sobre --paper-3 :1 (1.4.11); --rule es un filete, no el límite de un control */
+    --warn-ink:#5C4713;          /* texto de --warn sobre --warn-soft: 7,8 :1 (el --warn puro daba 4,3) */
+    --teal-ink:#0A6B5E;          /* texto de --teal sobre --teal-soft: 5,6 :1 (el --teal puro daba 3,5) */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -175,7 +183,7 @@
   html{scroll-padding-top:calc(var(--topbar-h) + 12px);scroll-padding-bottom:12px}
   html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + var(--banda-h) + 12px)}
   html:has(#view-expediente.active .barra-acciones){scroll-padding-bottom:calc(var(--barra-h) + 12px)}
-  .topbar,.sidebar,.inf-banner,.modal-head,.skip-link{--ring:var(--ring-dark)}
+  .topbar,.sidebar,.skip-link{--ring:var(--ring-dark)}   /* el cromo oscuro es sólo la barra superior y la lateral */
   main:focus,main:focus-visible{outline:none}   /* destino del enlace «Saltar al contenido»: un contenedor, no un control */
   .skip-link{
     position:fixed;top:8px;left:8px;z-index:300;padding:10px var(--s4);background:var(--ink);color:#fff;
@@ -202,11 +210,11 @@
   .logo{
     width:34px;height:34px;border-radius:var(--r-sm);background:var(--orange);
     display:flex;align-items:center;justify-content:center;
-    font-family:var(--f-dato);font-weight:700;font-size:var(--fs-xs);letter-spacing:.06em;
+    font-family:var(--f-text);font-weight:700;font-size:var(--fs-xs);letter-spacing:.02em;
     color:#fff;flex:0 0 auto;
   }
   .topbar .title{line-height:1.2;white-space:nowrap}
-  .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600;letter-spacing:.005em}
+  .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
   .topbar .title span{font-size:var(--fs-sm);color:var(--on-dark-2)}
   .topbar .spacer{flex:1}
   /* B2: el perfil pasó de <div> a <button> — es el acceso a «Mi usuario». */
@@ -217,11 +225,10 @@
     transition:background .12s ease,border-color .12s ease
   }
   .userchip:hover{background:var(--navy-2);border-color:var(--navy-3);color:#fff}
-  .userchip:hover .avatar{background:var(--orange)}
   .userchip .avatar{
     width:30px;height:30px;border-radius:var(--r-pill);background:var(--navy-3);flex:0 0 auto;
     display:flex;align-items:center;justify-content:center;
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.04em;
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.02em;
     transition:background .12s ease
   }
   .userchip .rol{font-size:var(--fs-3xs);color:var(--on-dark-3)}
@@ -239,7 +246,7 @@
     display:flex;flex-direction:column;
   }
   .sidebar .sec{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.14em;text-transform:uppercase;
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
     color:var(--on-dark-3);padding:var(--s4) var(--s5) var(--s2)
   }
   .sidebar .sec:first-child{padding-top:var(--s2)}
@@ -254,7 +261,7 @@
   .navitem:hover{background:rgba(255,255,255,.06);color:#fff}
   .navitem.active{background:rgba(180,89,10,.20);color:#fff;border-left-color:var(--orange);font-weight:600}
   .sidebar .foot{
-    margin-top:auto;padding:var(--s4) var(--s5);font-family:var(--f-dato);font-size:var(--fs-3xs);
+    margin-top:auto;padding:var(--s4) var(--s5);font-family:var(--f-text);font-size:var(--fs-3xs);
     line-height:1.6;color:var(--on-dark-3);border-top:1px solid var(--on-dark-borde)
   }
 
@@ -268,7 +275,7 @@
 
   h1.pagetitle{
     font-family:var(--f-display);font-size:var(--fs-xl);font-weight:600;
-    letter-spacing:-.01em;line-height:1.2;margin-bottom:var(--s2)
+    letter-spacing:-.005em;line-height:1.2;margin-bottom:var(--s2)
   }
   p.pagedesc{font-size:var(--fs-xs);color:var(--ink-2);margin-bottom:var(--s5);max-width:74ch;line-height:1.6}
 
@@ -278,15 +285,15 @@
     display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;background:var(--paper-2);
     border-radius:var(--r) var(--r) 0 0
   }
-  .card .cardhead h2{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600;letter-spacing:.005em}
+  .card .cardhead h2{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
   .cardhead-sp{flex:1}
   .card .cardbody{padding:var(--s4)}
 
   /* ============ INICIO / NNA ============ */
   table.lista{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
   table.lista th{
-    text-align:left;font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.09em;
-    text-transform:uppercase;color:var(--ink-2);font-weight:700;
+    text-align:left;font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);
     padding:var(--s2) var(--s4);border-bottom:1px solid var(--rule);background:var(--paper-2)
   }
   table.lista td{padding:11px var(--s4);border-bottom:1px solid var(--rule-2);vertical-align:middle}
@@ -299,8 +306,8 @@
   }
   #view-pendientes table.lista td:first-child b{color:var(--ink);font-weight:700;letter-spacing:.02em}
   .pill{
-    display:inline-block;padding:2px 9px;border-radius:var(--r-pill);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.02em;
+    display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;
     border:1px solid transparent;white-space:nowrap
   }
   .pill.pend{background:var(--warn-soft);color:var(--warn-ink);border-color:var(--warn-line)}
@@ -314,25 +321,26 @@
     padding:7px var(--s3);font-size:var(--fs-xs);font-weight:600;line-height:1.4;
     transition:background .12s ease,border-color .12s ease,color .12s ease;
   }
-  .btn-primary{background:var(--orange);color:#fff}
-  .btn-primary:hover{background:var(--orange-hover)}
-  .btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--rule)}
-  .btn-ghost:hover{background:var(--paper-3);border-color:var(--ink-3)}
-  /* En una tabla de 7 filas, 7 enlaces en el color de acento lo gastan y el botón
-     principal deja de destacar. El enlace queda en tinta y toma el acento al hover:
-     el acento vuelve a significar «acción principal de la pantalla». */
+  /* Acción principal en TINTA (F1b, §5.141): el naranja es marca, no el relleno de un botón. «Guardar» es secundario
+     (.btn-ghost) salvo que sea la única acción que confirma la pantalla. */
+  .btn-primary{background:var(--accion);color:#fff}
+  .btn-primary:hover{background:var(--accion-hover)}
+  .btn-ghost{background:var(--paper);color:var(--ink);border-color:var(--control-borde)}
+  .btn-ghost:hover{background:var(--paper-3);border-color:var(--ink-2)}
+  /* En una tabla de 7 filas, 7 enlaces con relleno o color propio compiten con el botón
+     principal. El enlace queda en tinta, subrayado al hover: la tinta rellena sólo la acción principal. */
   .btn-link{background:none;border:none;color:var(--ink);padding:2px 0;font-weight:600;text-align:left}
-  .btn-link:hover{color:var(--orange);text-decoration:underline}
+  .btn-link:hover{color:var(--accion-hover);text-decoration:underline}
 
   /* --- KPI: la cifra es el dato, va en la cara mono y tabular --- */
   .kpirow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s3);margin-bottom:var(--s5)}
   .kpi{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);padding:var(--s3) var(--s4)}
   .kpi .lab{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.09em;text-transform:uppercase;
-    color:var(--ink-2);font-weight:700
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2)
   }
   .kpi .val{
-    font-family:var(--f-dato);font-size:var(--fs-2xl);font-weight:700;line-height:1.1;
+    font-family:var(--f-text);font-size:var(--fs-2xl);font-weight:700;line-height:1.1;
     margin-top:var(--s2);font-variant-numeric:tabular-nums;letter-spacing:-.02em
   }
   .kpi .val .kpi-den{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);letter-spacing:0}
@@ -355,8 +363,8 @@
     border-top:3px solid var(--rule)
   }
   .escala>header .dims{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;
-    color:var(--ink-2);font-weight:700;text-transform:uppercase
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2)
   }
   .escala.eA>header{border-top-color:var(--teal)}
   .escala.eB>header{border-top-color:var(--escB)}
@@ -384,7 +392,7 @@
     color:var(--ink-2);flex:0 0 auto
   }
   .opcion.sel .score-badge{background:var(--ink);color:#fff}
-  .opcion .desc{font-size:var(--fs-xs);line-height:1.5;color:var(--ink);padding-top:5px}
+  .opcion .desc{font-size:var(--fs-base);line-height:1.5;color:var(--ink);padding-top:3px}
   /* Botones de puntaje intermedio (1,3,5,7) + NS */
   .inter-row{
     display:flex;gap:var(--s1);margin-top:var(--s2);padding:var(--s2) var(--s3);
@@ -403,7 +411,7 @@
     display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap;
     font-size:var(--fs-2xs)
   }
-  .esc-foot b{margin-left:var(--s1);font-family:var(--f-dato);font-size:var(--fs-xs);color:var(--ink)}
+  .esc-foot b{margin-left:var(--s1);font-size:var(--fs-xs);color:var(--ink);font-variant-numeric:tabular-nums}
   .esc-foot .subtxt{font-size:var(--fs-2xs);color:var(--ink-2)}
   /* La barra de acciones pegada abajo de los editores (.barra-acciones) está en la sección F1, al final. */
   .selector{
@@ -420,17 +428,17 @@
      Sin degradado: el informe es un documento, y su encabezado se comporta como el
      resto del cromo oscuro de la app. */
   .inf-banner{
-    background:var(--navy);color:#fff;border-radius:var(--r);border-top:3px solid var(--orange);
+    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-top:3px solid var(--ink);border-radius:var(--r);
     padding:var(--s4) var(--s5);display:flex;justify-content:space-between;align-items:center;
     gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s4)
   }
-  .inf-banner h2{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600}
-  .inf-banner p{font-size:var(--fs-2xs);color:var(--on-dark-3);margin-top:var(--s1);line-height:1.5}
+  .inf-banner h2{font-family:var(--f-doc);font-size:var(--fs-lg);font-weight:600}
+  .inf-banner p{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1);line-height:1.5}
   .btn-print{
-    background:var(--paper);color:var(--ink);border:1px solid transparent;border-radius:var(--r-sm);
+    background:var(--paper);color:var(--ink);border:1px solid var(--control-borde);border-radius:var(--r-sm);
     padding:8px var(--s3);font-weight:600;font-size:var(--fs-xs)
   }
-  .btn-print:hover{background:var(--paper-3)}
+  .btn-print:hover{background:var(--paper-3);border-color:var(--ink-2)}
 
   /* ============ ANALÍTICA ============ */
   .heat{border-collapse:collapse;font-size:var(--fs-2xs);width:100%;table-layout:fixed}
@@ -453,9 +461,9 @@
   .hbarrow .track{flex:1;background:var(--paper-3);border-radius:var(--r-sm);height:16px;overflow:hidden}
   .hbarrow .fill{
     height:100%;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:flex-end;
-    padding-right:6px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700
+    padding-right:6px;font-size:var(--fs-3xs);font-weight:700;font-variant-numeric:tabular-nums
   }
-  .hbarrow .hbar-num{flex:0 0 auto;min-width:56px;font-family:var(--f-dato);font-size:var(--fs-2xs);font-weight:700;color:var(--ink)}
+  .hbarrow .hbar-num{flex:0 0 auto;min-width:56px;font-size:var(--fs-2xs);font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--s4)}
   .note{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);line-height:1.55}
 
@@ -494,17 +502,17 @@
   }
   @keyframes popin{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:none}}
   .modal-head{
-    background:var(--navy);color:#fff;padding:var(--s4) var(--s6);
-    border-radius:var(--r-lg) var(--r-lg) 0 0;border-top:3px solid var(--orange);
+    background:var(--paper);color:var(--ink);padding:var(--s4) var(--s6);
+    border-radius:var(--r-lg) var(--r-lg) 0 0;border-bottom:1px solid var(--rule);
     display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)
   }
   .modal-head h2{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600}
-  .modal-head p{font-size:var(--fs-2xs);color:var(--on-dark-3);margin-top:var(--s1);line-height:1.5}
+  .modal-head p{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1);line-height:1.5}
   .modal-head .x{
-    background:none;border:none;color:var(--on-dark-3);font-size:var(--fs-lg);line-height:1;cursor:pointer;
+    background:none;border:none;color:var(--ink-2);font-size:var(--fs-lg);line-height:1;cursor:pointer;
     padding:2px 6px;border-radius:var(--r-sm);flex:0 0 auto
   }
-  .modal-head .x:hover{color:#fff;background:var(--navy-3)}
+  .modal-head .x:hover{color:var(--ink);background:var(--paper-3)}
   /* stepper: los 4 pasos del alta SÍ son una secuencia, así que van numerados. */
   .stepper{display:flex;padding:var(--s4) var(--s6) 0;gap:0}
   .step{
@@ -514,10 +522,10 @@
   .step .dot{
     width:26px;height:26px;border-radius:var(--r-pill);background:var(--paper);color:var(--ink-2);
     display:flex;align-items:center;justify-content:center;margin:0 auto var(--s1);
-    font-family:var(--f-dato);font-weight:700;font-size:var(--fs-2xs);
+    font-family:var(--f-text);font-weight:700;font-size:var(--fs-2xs);
     border:1px solid var(--rule);transition:.2s
   }
-  .step.active .dot{background:var(--orange);border-color:var(--orange);color:#fff}
+  .step.active .dot{background:var(--accion);border-color:var(--accion);color:#fff}
   .step.done .dot{background:var(--ink);border-color:var(--ink);color:#fff}
   .step.active{color:var(--ink);font-weight:600}
   .step.done{color:var(--ink-2)}
@@ -539,21 +547,21 @@
   .field input:disabled,.field select:disabled,.field textarea:disabled{
     background:var(--paper-2);color:var(--ink-2);cursor:not-allowed
   }
-  .field textarea{resize:vertical;min-height:64px;line-height:1.5}
+  .field textarea{resize:vertical;min-height:64px;line-height:1.5;font-size:var(--fs-base)}   /* narrativa clínica (síntesis, observaciones) */
   .field .hint{font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s1)}
   .field.invalid input, .field.invalid select{border-color:var(--bad);background:var(--bad-soft)}
   .field .err{display:none;font-size:var(--fs-3xs);color:var(--bad);margin-top:var(--s1);font-weight:600}
   .field.invalid .err{display:block}
   .section-label{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.1em;text-transform:uppercase;
-    color:var(--ink-2);font-weight:700;margin:var(--s5) 0 var(--s3);
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);margin:var(--s5) 0 var(--s3);
     padding-bottom:var(--s1);border-bottom:1px solid var(--rule)
   }
   .section-label:first-child{margin-top:var(--s2)}
   .review-box{background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--r);padding:var(--s4)}
   .review-box dl{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);font-size:var(--fs-xs)}
   .review-box dt{color:var(--ink-2);font-weight:600}
-  .review-box dd{color:var(--ink);text-align:right;font-weight:600}
+  .review-box dd{color:var(--ink);text-align:right;font-weight:600;font-size:var(--fs-base)}
   /* Nota de contexto / advertencia dentro de modales y editores. */
   .review-note{
     font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);line-height:1.55;
@@ -577,17 +585,17 @@
     padding:var(--s3) var(--s4);display:flex;gap:var(--s4);align-items:center;flex-wrap:wrap;margin-bottom:var(--s4)
   }
   .exp-avatar{
-    width:60px;height:60px;border-radius:var(--r);background:var(--orange);display:flex;
-    align-items:center;justify-content:center;font-family:var(--f-dato);font-size:var(--fs-lg);
+    width:60px;height:60px;border-radius:var(--r);background:var(--accion);display:flex;
+    align-items:center;justify-content:center;font-family:var(--f-text);font-size:var(--fs-lg);
     font-weight:700;letter-spacing:.03em;flex:0 0 auto
   }
   .exp-avatar{color:#fff}
-  .exp-head h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;letter-spacing:-.01em}
+  .exp-head h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600}
   .exp-head .meta{font-size:var(--fs-xs);color:var(--ink-2);margin-top:2px}
   .exp-head .badges{display:flex;gap:var(--s1);margin-top:var(--s2);flex-wrap:wrap}
   .exp-head .bdg{
     background:var(--paper-2);border:1px solid var(--rule);color:var(--ink);
-    padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-3xs);letter-spacing:.02em
+    padding:2px 8px;border-radius:var(--r-sm);font-size:var(--fs-3xs)
   }
   .exp-head .spacer{flex:1}
   .exp-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--s4)}
@@ -596,8 +604,8 @@
     background:var(--paper);border:1px solid var(--rule);border-radius:var(--r);margin-bottom:var(--s4)
   }
   .info-card>h3{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.1em;text-transform:uppercase;
-    color:var(--ink-2);font-weight:700;
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);
     padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule);background:var(--paper-2);
     border-radius:var(--r) var(--r) 0 0;
     display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap
@@ -610,7 +618,7 @@
   }
   .data-row:last-child{border-bottom:none}
   .data-row dt{color:var(--ink-2)}
-  .data-row dd{color:var(--ink);font-weight:500}
+  .data-row dd{color:var(--ink);font-weight:500;font-size:var(--fs-base)}
 
   /* ============ M1 · MOTOR DE FLUJO (estado · firma · secuencia CI→LB→PA→PB→IC) ============
      ELEMENTO DE FIRMA DEL SISTEMA. La secuencia de 5 módulos es la columna vertebral
@@ -624,8 +632,8 @@
     margin-bottom:var(--s5);overflow:hidden
   }
   .flujo-card>h3{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.1em;text-transform:uppercase;
-    color:var(--ink-2);font-weight:700;
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);
     padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule);background:var(--paper-2);
     display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap
   }
@@ -634,7 +642,7 @@
   .flujo-body{padding:var(--s4)}
   .flujo-stepper{display:flex;gap:0;margin-bottom:var(--s5)}
   .fstep{
-    flex:1;text-align:center;position:relative;font-family:var(--f-dato);font-size:var(--fs-3xs);
+    flex:1;text-align:center;position:relative;font-family:var(--f-text);font-size:var(--fs-3xs);
     color:var(--ink-2);padding-top:var(--s7)
   }
   .fstep .fdot{
@@ -645,7 +653,7 @@
   }
   .fstep::after{content:"";position:absolute;top:13px;left:50%;width:100%;height:1px;background:var(--rule);z-index:1}
   .fstep:last-child::after{display:none}
-  .fstep .fname{display:block;font-weight:700;letter-spacing:.06em}
+  .fstep .fname{display:block;font-family:var(--f-dato);font-weight:700;letter-spacing:.06em}   /* CI · LB · PA · PB · IC: códigos */
   .fstep.s-firmado .fdot{background:var(--ok);border-color:var(--ok);color:#fff}
   .fstep.s-firmado::after{background:var(--ok-line)}
   .fstep.s-firmado .fname{color:var(--ok)}
@@ -665,7 +673,7 @@
   .flujo-row .fr-actions{display:flex;gap:var(--s1);flex-wrap:wrap;justify-content:flex-end}
   .mbadge{
     display:inline-block;padding:2px 8px;border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.03em;
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;
     white-space:nowrap;vertical-align:middle;border:1px solid transparent
   }
   .mb-firmado{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
@@ -675,17 +683,17 @@
   .btn-mini[disabled]{opacity:.45;cursor:not-allowed}
   .log-table{width:100%;border-collapse:collapse;font-size:var(--fs-2xs)}
   .log-table th{
-    text-align:left;font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;
-    letter-spacing:.07em;color:var(--ink-2);font-weight:700;padding:var(--s2);
+    text-align:left;font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);padding:var(--s2);
     border-bottom:1px solid var(--rule)
   }
   .log-table td{padding:var(--s2);border-bottom:1px solid var(--rule-2);color:var(--ink);vertical-align:top;line-height:1.5}
-  .log-table td:first-child{font-family:var(--f-dato);color:var(--ink-2)}
+  .log-table td:first-child{color:var(--ink-2)}
   /* El código de módulo (HCE-PB, HCE-LB…) es un código: no parte a mitad. */
   .log-table td b{font-family:var(--f-dato);font-size:var(--fs-3xs);white-space:nowrap;letter-spacing:.03em}
   .log-tipo{
     display:inline-block;padding:2px 8px;border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;border:1px solid transparent
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;border:1px solid transparent
   }
   .lt-firma{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
   .lt-addenda{background:var(--teal-soft);color:var(--teal-ink);border-color:#9ED4CB}
@@ -703,12 +711,12 @@
     font-family:var(--f-display);font-weight:600;font-size:var(--fs-md);color:var(--ink)
   }
   .prot-esc>header .sub{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);color:var(--ink-2);font-weight:700;
-    white-space:nowrap;letter-spacing:.04em
+    font-size:var(--fs-3xs);color:var(--ink-2);font-weight:600;
+    white-space:nowrap
   }
   .prot-item{padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule-2)}
   .prot-item:last-child{border-bottom:none}
-  .prot-item .pit-t{font-size:var(--fs-xs);color:var(--ink);margin-bottom:var(--s2);line-height:1.5}
+  .prot-item .pit-t{font-size:var(--fs-base);color:var(--ink);margin-bottom:var(--s2);line-height:1.5}
   .prot-item .pit-r{font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s1)}
   .likert-fila{display:flex;gap:var(--s1);flex-wrap:wrap}
   .likert-btn{
@@ -725,7 +733,7 @@
   .prot-obs.show{display:block}
   .prot-obs .lbl{font-size:var(--fs-3xs);color:var(--warn);font-weight:700;margin-bottom:var(--s1)}
   .prot-obs textarea{
-    width:100%;font-family:inherit;font-size:var(--fs-xs);padding:8px 10px;
+    width:100%;font-family:inherit;font-size:var(--fs-base);padding:8px 10px;
     border:1px solid var(--warn);border-radius:var(--r-sm);background:var(--warn-soft);min-height:44px
   }
   .prot-obs textarea:focus{border-color:var(--warn)}
@@ -740,12 +748,11 @@
     background:var(--paper);border:2px solid var(--rule-2);box-shadow:0 0 0 2px var(--ink-3)
   }
   .tevent.idea .tdot{background:var(--teal);box-shadow:0 0 0 2px var(--teal)}
-  .tevent.lik .tdot{background:var(--orange);box-shadow:0 0 0 2px var(--orange)}
+  .tevent.lik .tdot{background:var(--rampa-4);box-shadow:0 0 0 2px var(--rampa-4)}
   .tevent.note .tdot{background:var(--purple);box-shadow:0 0 0 2px var(--purple)}
   .tevent.alta .tdot{background:var(--ink);box-shadow:0 0 0 2px var(--ink)}
   .tevent .tdate{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);color:var(--ink-2);
-    text-transform:uppercase;letter-spacing:.06em;font-weight:700
+    font-size:var(--fs-3xs);color:var(--ink-2);font-weight:600
   }
   .tevent .ttitle{font-size:var(--fs-xs);font-weight:600;margin:2px 0}
   .tevent .tdesc{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.55}
@@ -785,21 +792,20 @@
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
   /* ============ LOGIN ============ */
-  /* Sin degradado: fondo plano de tinta con el filete de acento arriba de la
-     tarjeta, el mismo recurso que marca el módulo activo en toda la app. */
+  /* Fondo plano --bg y la tarjeta con un filete de tinta arriba: sin superficie oscura (sólo barra superior y lateral). */
   .login-screen{
-    position:fixed;inset:0;z-index:200;background:var(--navy);
+    position:fixed;inset:0;z-index:200;background:var(--bg);
     display:flex;align-items:center;justify-content:center;padding:var(--s6)
   }
   .login-screen.hidden{display:none}
   .login-card{
     background:var(--paper);border-radius:var(--r-lg);width:100%;max-width:392px;
-    padding:var(--s7) var(--s6) var(--s5);border-top:3px solid var(--orange);
-    box-shadow:var(--shadow-modal);text-align:center;animation:popin .25s ease
+    padding:var(--s7) var(--s6) var(--s5);border:1px solid var(--rule);border-top:3px solid var(--ink);
+    box-shadow:var(--shadow-pop);text-align:center;animation:popin .25s ease
   }
   .login-logo{
     width:48px;height:48px;border-radius:var(--r);background:var(--orange);color:#fff;
-    font-family:var(--f-dato);font-weight:700;letter-spacing:.06em;
+    font-family:var(--f-text);font-weight:700;letter-spacing:.02em;
     font-size:var(--fs-md);display:flex;align-items:center;justify-content:center;margin:0 auto var(--s3)
   }
   .login-card h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;color:var(--ink)}
@@ -819,7 +825,7 @@
   }
   .login-hint b{color:var(--ink)}
   .login-foot{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s5);
+    font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s5);
     border-top:1px solid var(--rule);padding-top:var(--s3)
   }
 
@@ -838,10 +844,10 @@
   .search-wrap input:focus{border-color:var(--orange)}
   .estado-chips{display:flex;gap:var(--s1);flex-wrap:wrap}
   .chip-estado{
-    padding:6px var(--s3);border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper);
+    padding:6px var(--s3);border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);
     font-size:var(--fs-2xs);font-weight:600;color:var(--ink-2)
   }
-  .chip-estado:hover{border-color:var(--ink-3);color:var(--ink)}
+  .chip-estado:hover{border-color:var(--ink-2);color:var(--ink)}
   .chip-estado.active{background:var(--ink);border-color:var(--ink);color:#fff}
   .pill.activo{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
   .pill.inactivo,.pill.neutro{background:var(--paper-3);color:var(--ink-2);border-color:var(--rule)}
@@ -851,7 +857,6 @@
     display:flex;align-items:center;gap:var(--s1);flex-wrap:wrap;background:var(--paper);
     border:1px solid var(--rule);border-radius:var(--r);padding:var(--s3) var(--s4);margin-bottom:var(--s2)
   }
-  .eval-bar .btn-ghost{border:1px solid var(--rule)}
 
   /* Barra secundaria de navegación (atajos a secciones intra-vista).
      Más chata que .eval-bar para que no compita visualmente. */
@@ -860,16 +865,15 @@
     border:1px dashed var(--rule);border-radius:var(--r);padding:var(--s2) var(--s3);margin-bottom:var(--s5)
   }
   .section-nav-lbl{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink-2);
-    margin-right:var(--s1);text-transform:uppercase;letter-spacing:.09em
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
+    margin-right:var(--s1)
   }
-  .section-nav .btn-ghost{border:1px solid var(--rule);background:var(--paper)}
+  .section-nav .btn-ghost{background:var(--paper)}
 
   /* Nómina §21.1 en la vista Grupos (F1-nav 2026-08-16). */
   .tec-aut-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs);margin-top:var(--s1)}
   .tec-aut-table th{
-    text-align:left;padding:var(--s2);font-family:var(--f-dato);font-size:var(--fs-3xs);
-    text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--ink-2);
+    text-align:left;padding:var(--s2);font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
     border-bottom:1px solid var(--rule)
   }
   .tec-aut-table td{padding:var(--s2);border-bottom:1px solid var(--rule-2)}
@@ -888,7 +892,7 @@
      de la paleta demo (--ok / --warn / --bad) para no meter tonos del Prototipo v4. */
   .inc-chip{
     display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;line-height:1.5;
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;line-height:1.5;
     border:1px solid transparent;white-space:nowrap
   }
   .inc-chip.inc-ok    {background:var(--ok-soft);   color:var(--ok);    border-color:var(--ok-line)}
@@ -910,7 +914,7 @@
      cada AT_TIPOS; no se toman los tonos del Prototipo v4. */
   .at-chip{
     display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;line-height:1.5;
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;line-height:1.5;
     border:1px solid transparent;white-space:nowrap
   }
   .at-chip.at-clinico{background:var(--teal-soft);   color:var(--teal-ink);border-color:#9ED4CB}
@@ -931,14 +935,14 @@
   .at-detalle-head{display:flex;align-items:flex-start;gap:var(--s3);flex-wrap:wrap}
   .at-detalle-head .pagedesc{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
   .at-subtitulo{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.09em;
-    color:var(--ink-2);font-weight:700;margin:var(--s5) 0 var(--s2)
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);margin:var(--s5) 0 var(--s2)
   }
   /* Tabla editable de acuerdos: acuerdo · responsable (rol) · plazo · quitar. */
   .at-acuerdos{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
   .at-acuerdos th{
-    text-align:left;padding:var(--s2);font-family:var(--f-dato);font-weight:700;color:var(--ink-2);
-    border-bottom:1px solid var(--rule);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em
+    text-align:left;padding:var(--s2);font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
+    border-bottom:1px solid var(--rule)
   }
   .at-acuerdos td{padding:var(--s2);border-bottom:1px solid var(--rule-2);vertical-align:top}
   .at-acuerdos td:last-child{text-align:right;white-space:nowrap}
@@ -958,16 +962,16 @@
     font-family:var(--f-display);font-size:var(--fs-md);font-weight:600;color:var(--ink);
     padding:0;background:none
   }
-  .btn-link.h2-link:hover{color:var(--orange);text-decoration:underline}
+  .btn-link.h2-link:hover{color:var(--accion-hover);text-decoration:underline}
   .grupo-mini{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
   .grupo-mini td{padding:var(--s1) 0;border-bottom:1px solid var(--rule-2)}
   .grupo-mini tr:last-child td{border-bottom:none}
   .grupo-mini td:first-child{padding-left:0}
-  .grupo-mini td:last-child{font-family:var(--f-dato);font-size:var(--fs-2xs)}
+  .grupo-mini td:last-child{font-size:var(--fs-2xs);font-variant-numeric:tabular-nums}
   .grupo-integrantes{width:100%;border-collapse:collapse;font-size:var(--fs-xs);margin-top:var(--s1)}
   .grupo-integrantes th{
-    text-align:left;padding:var(--s2);font-family:var(--f-dato);font-weight:700;color:var(--ink-2);
-    border-bottom:1px solid var(--rule);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em
+    text-align:left;padding:var(--s2);font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
+    border-bottom:1px solid var(--rule)
   }
   .grupo-integrantes td{padding:var(--s3) var(--s2);border-bottom:1px solid var(--rule-2);vertical-align:top}
   .grupo-integrantes td .btn-link{padding:0;font-size:var(--fs-xs)}
@@ -980,7 +984,7 @@
   .notice b{color:var(--ink)}
   .notice.ok{border-left-color:var(--ok);border-color:var(--ok-line);background:var(--ok-soft)}
   .notice.warn{border-left-color:var(--warn);border-color:var(--warn-line);background:var(--warn-soft)}
-  .notice.info{border-left-color:var(--orange);border-color:var(--orange-line);background:var(--orange-soft)}
+  .notice.info{border-left-color:var(--ink-2);border-color:var(--orange-line);background:var(--orange-soft)}
   /* Fila de carga (fotos, alta): pattern del prototipo v4. */
   .uprow{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:flex-end;margin-top:var(--s3)}
   .uprow input[type="file"],.uprow input[type="text"]{
@@ -995,7 +999,7 @@
   .thumb .cap{padding:var(--s2);font-size:var(--fs-3xs);color:var(--ink-2);line-height:1.45}
   /* Cabecera de página tipo Prototipo v4. */
   .pagehead{margin-bottom:var(--s4)}
-  .pagehead h1{font-family:var(--f-display);font-size:var(--fs-xl);font-weight:600;letter-spacing:-.01em;margin:0 0 var(--s1)}
+  .pagehead h1{font-family:var(--f-display);font-size:var(--fs-xl);font-weight:600;letter-spacing:-.005em;margin:0 0 var(--s1)}
   .pagehead .pagedesc{margin:var(--s1) 0;color:var(--ink-2);font-size:var(--fs-xs)}
 
   /* M9 · HCE-VF — valoración funcional (BUND/CIF) */
@@ -1014,8 +1018,8 @@
   .org-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5)}
   @media (max-width:1100px){.org-grid{grid-template-columns:1fr}}
   .org-col h4{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.09em;
-    color:var(--ink-2);font-weight:700;margin:var(--s4) 0 var(--s2)
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);margin:var(--s4) 0 var(--s2)
   }
   .org-col .form-grid{margin-bottom:0}
   /* M7 · HCE-DOC — documentos adjuntos y fotos */
@@ -1025,35 +1029,37 @@
   .foto-thumb{width:150px;border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden;background:var(--paper)}
   .foto-thumb .ph{height:88px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);background:var(--paper-3);color:var(--ink-2)}
   .foto-thumb .cap{padding:var(--s2);font-size:var(--fs-3xs);color:var(--ink-2);line-height:1.45}
-  .doc-hist{font-family:var(--f-dato);color:var(--ink-2);font-size:var(--fs-3xs)}
+  .doc-hist{color:var(--ink-2);font-size:var(--fs-3xs)}
   /* M6 · HCE-IC — Informe de Cierre Anual: tabla comparativa, radares y membrete */
   .comp-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
   .comp-table th{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em;
-    color:var(--ink-2);font-weight:700;text-align:left;padding:var(--s2);border-bottom:1px solid var(--rule)
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);text-align:left;padding:var(--s2);border-bottom:1px solid var(--rule)
   }
   .comp-table td{padding:var(--s2);border-bottom:1px solid var(--rule-2)}
-  .comp-table th.num,.comp-table td.num{text-align:right;font-family:var(--f-dato);font-variant-numeric:tabular-nums}
+  .comp-table th.num,.comp-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .comp-table td.num{font-family:var(--f-dato)}   /* los puntajes de la tabla: la cara de dato */
   .comp-table tr:last-child td{border-bottom:none}
   .ic-radars{display:flex;gap:var(--s6);flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:var(--s3) 0 var(--s1)}
   .ic-radars .rwrap{text-align:center}
   .ic-radars .rcap{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;text-transform:uppercase;
-    letter-spacing:.07em;color:var(--ink-2);margin-bottom:var(--s1)
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2);margin-bottom:var(--s1)
   }
   .ic-legend{display:flex;gap:var(--s3);justify-content:center;font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1)}
   .ic-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-  /* Membrete: la parte más «documento» de la app, toda en serif. */
+  /* Membrete: la parte más «documento» de la app, toda en serif (--f-doc, el único uso del serif junto con el encabezado del informe). */
   .membrete{border-bottom:2px solid var(--ink);padding:2px 0 var(--s3);margin-bottom:var(--s3)}
-  .membrete h2{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600}
+  .membrete h2{font-family:var(--f-doc);font-size:var(--fs-lg);font-weight:600}
   .membrete .sub{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:2px}
-  .membrete h3{font-family:var(--f-display);margin-top:var(--s2);font-size:var(--fs-md);font-weight:600}
+  .membrete h3{font-family:var(--f-doc);margin-top:var(--s2);font-size:var(--fs-md);font-weight:600}
+  #informeContent .cardhead h2,#informeContent .cardhead h3{font-family:var(--f-doc)}   /* el IC es un documento: títulos en serif, en pantalla y en papel */
   .firmas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s5)}
   @media(max-width:700px){.firmas-grid{grid-template-columns:1fr}}
   .firmas-grid .flin{border-bottom:1px solid var(--ink);height:38px}
   .firmas-grid label{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);text-transform:uppercase;letter-spacing:.07em;
-    color:var(--ink-2);font-weight:700
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
+    color:var(--ink-2)
   }
   .firmas-grid .fnom{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s1);line-height:1.45}
 
@@ -1094,7 +1100,7 @@
   .solo-demo{
     display:inline-block;padding:0 6px;border:1px dashed var(--ink-2);border-radius:var(--r-sm);
     background:var(--paper);color:var(--ink-2);
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.03em;
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;
     text-transform:none;vertical-align:middle
   }
 
@@ -1127,14 +1133,14 @@
          firmado = relleno sólido. Siempre con glifo y texto, nunca solo color. --- */
   .st{
     display:inline-block;padding:2px 8px;border-radius:var(--r-sm);border:1px solid transparent;
-    font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.03em;white-space:nowrap
+    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;white-space:nowrap
   }
   .st-grupo{display:inline-flex;gap:var(--s1);flex-wrap:nowrap}
   .st-firmado{background:var(--st-firmado-bg);color:var(--st-firmado-fg);border-color:var(--st-firmado-bg)}
   .st-en_curso{background:var(--st-en-curso-bg);color:var(--st-en-curso-fg);border:1px dashed var(--st-en-curso-borde)}
   .st-sin_iniciar{background:transparent;color:var(--st-sin-fg);border:1px solid var(--st-sin-borde)}
   .st-ci-pend{background:var(--st-ci-pend-bg);color:var(--st-ci-pend-fg);border:1px solid var(--st-ci-pend-borde)}
-  .st-mini{font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700}
+  .st-mini{font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600}
   .st-mini.st-firmado{background:none;color:var(--st-firmado-bg);border:none}
   .st-mini.st-en_curso{background:none;color:var(--st-en-curso-fg);border:none}
   .st-mini.st-sin_iniciar{background:none;color:var(--st-sin-fg);border:none}
@@ -1178,8 +1184,8 @@
     display:inline-block;padding:5px var(--s3);border-radius:var(--r-sm);font-size:var(--fs-2xs);font-weight:700;
     line-height:1.4;border:1px solid var(--rampa-borde);max-width:100%
   }
-  .banda-chip .banda-rot{font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;font-weight:700;opacity:.9}
-  .banda-chip .banda-rango{font-family:var(--f-dato);font-weight:600}
+  .banda-chip .banda-rot{font-size:var(--fs-3xs);font-weight:600;opacity:.9}
+  .banda-chip .banda-rango{font-weight:600;font-variant-numeric:tabular-nums}
   .banda-1{background:var(--rampa-1);color:var(--rampa-txt-claro)}
   .banda-2{background:var(--rampa-2);color:var(--rampa-txt-claro)}
   .banda-3{background:var(--rampa-3);color:var(--rampa-txt-claro)}
@@ -1230,7 +1236,7 @@
   .ev-confirma>span{max-width:36ch;line-height:1.35}
   .ev-alerta{font-weight:700;color:var(--ink)}
   .ev-alertas{margin-bottom:var(--s3)}
-  .tot-lectura{font-family:var(--f-dato);font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums}
+  .tot-lectura{font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums}
   .tot-lectura small{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
   .ev-puntaje{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
   .ev-largo{white-space:pre-wrap;text-align:left}
@@ -1259,10 +1265,11 @@
   .ic-legend span{display:inline-flex;align-items:center;gap:var(--s1)}
   .fl-lista{list-style:none;margin:var(--s4) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--s2);align-items:center;font-size:var(--fs-xs)}
   .inf-botones{display:flex;gap:var(--s2);flex-wrap:wrap}
-  .btn-print-acento{background:var(--orange-soft);color:var(--ink)}
+  .btn-print-acento,.btn-print-acento:hover{background:var(--accion);border-color:var(--accion);color:#fff}   /* «Registrar recibí»: la acción principal del encabezado */
+  .btn-print-acento:hover{background:var(--accion-hover);border-color:var(--accion-hover)}
   .st-registrada{background:var(--paper);color:var(--ink);border:2px solid var(--st-registrada-borde)}
   /* Documento impreso (IC firmado y reporte de VF) */
-  .doc-p{font-size:var(--fs-xs);margin:0 0 var(--s2);line-height:1.55;white-space:pre-wrap}
+  .doc-p{font-size:var(--fs-base);margin:0 0 var(--s2);line-height:1.55;white-space:pre-wrap}
   .doc-nota{font-size:var(--fs-3xs);color:var(--ink-2);margin:var(--s2) 0 0;line-height:1.5}
   .doc-aviso{
     font-size:var(--fs-2xs);color:var(--ink-2);border-left:4px solid var(--teal);background:var(--paper-2);
@@ -1338,10 +1345,10 @@
   }
 
   /* --- Código (HC, C.I., N.º): cara de dato --- */
-  .cod{font-family:var(--f-dato);font-size:.92em;letter-spacing:.02em;color:var(--ink)}
+  .cod{font-family:var(--f-dato);font-size:1em;letter-spacing:.02em;color:var(--ink)}   /* HC, C.I., N.º: códigos */
   .chip-inactivo{
     display:inline-block;padding:0 6px;border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper-3);
-    color:var(--ink);font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;line-height:1.5;vertical-align:middle;white-space:nowrap
+    color:var(--ink);font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;line-height:1.5;vertical-align:middle;white-space:nowrap
   }
 
   /* --- Banda del paciente (H1, H4, H6): clara, ≤ 64 px, pegada bajo la barra superior --- */
@@ -1352,7 +1359,7 @@
     padding:6px var(--s4);margin-bottom:6px
   }
   .banda-id{flex:0 1 auto;min-width:12rem}
-  .banda-nna h1{font-family:var(--f-display);font-size:1.125rem;font-weight:600;line-height:1.2;letter-spacing:-.005em;color:var(--ink)}
+  .banda-nna h1{font-family:var(--f-display);font-size:1.125rem;font-weight:600;line-height:1.2;color:var(--ink)}
   .banda-meta{font-size:var(--fs-2xs);line-height:1.3;color:var(--ink-2)}
   .banda-meta .chip-inactivo{margin-left:var(--s1)}
   /* La alerta clínica: tinta sobre papel, con ⚠ y texto. No es un estado de la app: nunca ok/warn/bad. */
@@ -1367,37 +1374,38 @@
     html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + 12px)}
   }
 
-  /* --- Pestañas (H1, H8): nombre + código, agrupadas; el estado del ciclo anual va en cada pestaña --- */
+  /* --- Pestañas (H1, H8; F1b, §5.141): nombre en UNA línea + código más liviano debajo, agrupadas; el estado del ciclo anual va
+         en cada pestaña. Todas miden lo mismo (dos renglones fijos), el rótulo de grupo reserva su renglón también en «Datos», y a
+         1280 px la tira entra en una fila con holgura (conectada.js, f1-tabs); a 1024 px, en dos como mucho. --- */
   .tabs-exp{margin-bottom:6px}
   .tabs-barra{display:flex;align-items:flex-end;gap:var(--s2)}
   .btn-ayuda{
-    flex:0 0 auto;width:24px;height:24px;margin-bottom:10px;border-radius:var(--r-pill);
+    flex:0 0 auto;width:24px;height:24px;margin-bottom:4px;border-radius:var(--r-sm);
     border:1px solid var(--control-borde);background:var(--paper);color:var(--ink);font-weight:700;font-size:var(--fs-2xs);line-height:1
   }
   .btn-ayuda:hover,.btn-ayuda[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-  .exp-tabs{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:var(--s2);row-gap:0}
+  .exp-tabs{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:var(--s3);row-gap:var(--s1)}
   .tabs-grupo{display:flex;flex-direction:column;min-width:0}
   .tabs-grupo-rot{
-    font-family:var(--f-dato);font-size:10px;line-height:12px;min-height:12px;margin-bottom:2px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--ink-2);font-weight:700;white-space:nowrap
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;line-height:16px;min-height:16px;margin-bottom:2px;
+    color:var(--ink-2);white-space:nowrap
   }
-  .tabs-grupo-fila{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--rule)}
+  .tabs-grupo-fila{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--rule)}   /* en pantallas angostas la fila de un grupo parte, nunca desborda la página */
   .exp-tab{
     display:flex;flex-direction:column;align-items:flex-start;gap:0;text-align:left;
-    padding:1px 4px 2px;border:1px solid var(--rule);border-bottom:none;margin-left:-1px;
+    padding:2px 5px 3px;border:1px solid var(--rule);border-bottom:none;margin-left:-1px;
     background:var(--paper-2);color:var(--ink-2);border-radius:var(--r-sm) var(--r-sm) 0 0
   }
   .tabs-grupo-fila .exp-tab:first-child{margin-left:0}
   .exp-tab:hover{background:var(--paper)}
-  .exp-tab .tab-nombre{font-size:var(--fs-2xs);font-weight:600;line-height:1.15;color:var(--ink)}
-  .exp-tab .tab-nombre>span{display:block}
+  .exp-tab .tab-nombre{font-size:var(--fs-2xs);font-weight:600;line-height:1.25;color:var(--ink);white-space:nowrap}
   .exp-tab .tab-cod{
-    display:inline-flex;align-items:center;gap:3px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;
-    line-height:1.15;color:var(--ink-2);letter-spacing:.03em
+    display:inline-flex;align-items:center;gap:4px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:400;
+    line-height:1.25;color:var(--ink-2);white-space:nowrap
   }
-  .exp-tab .solo-demo{font-size:10px;line-height:1.2;padding:0 2px;letter-spacing:0}
-  .exp-tab[aria-selected="true"]{position:relative;z-index:1;background:var(--paper);box-shadow:inset 0 3px 0 var(--orange);margin-bottom:-1px;padding-bottom:3px}
-  .exp-tab[aria-selected="true"] .tab-nombre{font-weight:700}
+  /* «Solo demo» en la pestaña: marca compacta (glifo ◇ + texto sólo para lectores de pantalla); el panel de adentro lo dice completo. */
+  .exp-tab .solo-demo{border:0;background:none;padding:0;color:var(--ink-2);font-size:var(--fs-3xs);font-weight:600;line-height:1.25}
+  .exp-tab[aria-selected="true"]{position:relative;z-index:1;background:var(--paper);box-shadow:inset 0 3px 0 var(--orange);margin-bottom:-1px;padding-bottom:4px}
   .exp-tab:focus-visible{outline-offset:-2px}   /* hacia adentro: la pestaña toca a sus vecinas y al filete de abajo */
   .st-mini.st-fuera{color:var(--ink);font-weight:700}
   .ayuda-flujo{
@@ -1426,10 +1434,10 @@
   .barra-acciones .spacer{flex:1}
   .barra-total{flex:0 0 auto}
   .barra-total .sum-lab{
-    font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
-    font-weight:700;line-height:1.3;white-space:nowrap
+    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
+    line-height:1.3;white-space:nowrap
   }
-  .barra-total .tot{font-family:var(--f-dato);font-size:var(--fs-lg);font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .barra-total .tot{font-size:var(--fs-lg);font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
   .barra-total .tot small{font-size:var(--fs-xs);font-weight:600;color:var(--ink-2)}
   .barra-sec{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
   .barra-sec .banda-chip{padding:2px var(--s2)}
@@ -1455,9 +1463,9 @@
   .res-totales{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s3)}
   .res-tot,.res-celda{border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s2) var(--s3);background:var(--paper)}
   .res-celda{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
-  .res-rot{display:block;font-family:var(--f-dato);font-size:var(--fs-3xs);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:700}
-  .res-tot b,.res-delta{font-family:var(--f-dato);font-size:var(--fs-lg);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
-  .res-tot small{font-family:var(--f-dato);font-size:var(--fs-xs);font-weight:600;color:var(--ink-2)}
+  .res-rot{display:block;font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2)}
+  .res-tot b,.res-delta{font-size:var(--fs-lg);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .res-tot small{font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
   .res-etq{font-size:var(--fs-xs);font-weight:600;color:var(--ink)}
   .res-accion{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.45}
   .res-escalas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3);margin-top:var(--s3)}
@@ -1469,20 +1477,22 @@
   #tablaNNA th,#tablaNNA td{padding:var(--s2) var(--s3)}
   #tablaNNA th:first-child,#tablaNNA td:first-child{padding-left:var(--s4)}
   #tablaNNA th{vertical-align:bottom}
-  #tablaNNA .th-sub{display:block;font-weight:600;letter-spacing:.06em;color:var(--ink-2)}
+  #tablaNNA .th-sub{display:block;font-weight:600;color:var(--ink-2)}
   #tablaNNA tbody tr[data-hce]{cursor:pointer}
   #tablaNNA .col-ir{width:1%;padding-right:var(--s4);color:var(--ink-2);font-size:var(--fs-md);text-align:right}
+  #tablaNNA th.col-ir{font-size:var(--fs-2xs)}
   .nna-abrir{
     display:inline-flex;align-items:center;min-height:24px;padding:2px 0;background:none;border:0;
     font:inherit;font-size:var(--fs-sm);font-weight:600;color:var(--ink);text-align:left;cursor:pointer
   }
-  .nna-abrir:hover,#tablaNNA tbody tr[data-hce]:hover .nna-abrir{color:var(--orange);text-decoration:underline}
+  .nna-abrir:hover,#tablaNNA tbody tr[data-hce]:hover .nna-abrir{color:var(--accion-hover);text-decoration:underline}
   .nna-sub{display:block;font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.35}
   .nna-sub .cod{color:var(--ink-2)}
   #tablaNNA .chip-inactivo{margin-left:var(--s1)}
   /* En las listas «firmado» es ● + texto en --ok, sin relleno; «en curso» conserva su relleno. El expediente conserva el macizo. */
-  #tablaNNA .st-firmado{background:transparent;border-color:transparent;color:var(--ok)}
-  .ci-ok{font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:700;color:var(--ink-2);white-space:nowrap}
+  #tablaNNA .st-firmado{background:transparent;border:1px solid transparent;color:var(--ok)}   /* sin relleno, con la MISMA caja que los de contorno: LB · PA · PB · IC alinean entre filas */
+  .st-grupo .st{min-width:3.75rem;text-align:center}
+  .ci-ok{font-size:var(--fs-3xs);font-weight:600;color:var(--ink-2);white-space:nowrap}
 
   /* --- KPI (H9): cuatro columnas desde 900 px; los pendientes son botones a «Pendientes» --- */
   @media(min-width:900px){.kpirow-4{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -1491,7 +1501,7 @@
     font:inherit;font-size:var(--fs-2xs);font-weight:600;color:var(--ink);text-align:left;cursor:pointer;
     text-decoration:underline;text-underline-offset:2px
   }
-  .kpi .kpi-ir:hover{color:var(--orange)}
+  .kpi .kpi-ir:hover{color:var(--accion-hover)}
 
   /* ============ IMPRESIÓN A4 del documento (view-informe) ============
      Hoja A4 con márgenes propios; el encabezado con los datos del expediente se repite en cada hoja (el documento
@@ -1536,5 +1546,7 @@
     .ic-radars{display:block;text-align:center;gap:0}
     .ic-radars .rwrap{display:inline-block;vertical-align:top;margin:0 4mm;break-inside:avoid;page-break-inside:avoid}
     .doc-p{orphans:3;widows:3}
+    /* El IC en papel conserva el cuerpo de antes (13 px): el 15 px de lectura (--fs-base) es de pantalla, y la hoja no cambia de paginación. */
+    #informeContent .doc-p,#informeContent .data-row dd{font-size:var(--fs-xs)}
     svg{max-width:100%}
   }

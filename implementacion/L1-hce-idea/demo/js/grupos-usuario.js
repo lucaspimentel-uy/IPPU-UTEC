@@ -262,7 +262,7 @@ function abrirCambioResponsable(gid, num){
     <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">Alcance fijo: <b>HCE completa del grupo · firma</b>. El cambio se aplica desde ya para todos los integrantes activos del grupo.</p>
     <div class="field"><label>Nombre</label><input id="cr_nombre" value="${actual?actual.nombre:""}"></div>
     <div class="field"><label>Disciplina</label><input id="cr_rol" value="${actual?actual.rol:""}" placeholder="Ej. Psicología, Fonoaudiología, Psicopedagogía"></div>
-    <p style="font-size:.72rem;color:var(--warn);margin-top:8px">⚠ El cambio no queda registrado en HCE-LOG (la bitácora hoy es por NNA, no por grupo). Ver handoff §5.18.</p>`;
+    <p style="font-size:var(--fs-2xs);color:var(--warn);margin-top:8px">⚠ El cambio no queda registrado en HCE-LOG (la bitácora hoy es por NNA, no por grupo). Ver handoff §5.18.</p>`;
   const foot = `<span class="left">Grupo ${gid} · §21.1 Manual de Procedimientos</span>
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>

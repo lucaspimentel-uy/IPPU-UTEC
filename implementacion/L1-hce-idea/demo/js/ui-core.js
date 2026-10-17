@@ -401,7 +401,7 @@ function renderAnalitica(){
     ? a.paEsc.map((v,i)=>`
         <div class="hbarrow"><div class="lab">${IPPU_ESCALAS[i]}</div>
           <div class="track"><div class="fill" style="width:${ancho(v,MAX_PROT_ESC)}%;background:#B9C6D6"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
-        <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:.68rem">→ Protocolo B</div>
+        <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:var(--fs-2xs)">→ Protocolo B</div>
           <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(a.pbEsc[i])}</span></div>
       `).join("") +
       `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`

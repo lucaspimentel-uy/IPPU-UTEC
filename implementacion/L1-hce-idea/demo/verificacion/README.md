@@ -61,6 +61,7 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `3d-` | IC (crear, dos firmantes, addendas, recibí), documento impreso A4 con `page.pdf()` a tres escalas, edad a la fecha del documento, 409 como «Cambió en el servidor», VF (categoría y alerta sólo de la API) |
 | `3e-` | Con teclado real: enlace de salto, recorrido completo sin que el foco caiga en `<body>`, anillo de foco, tabindex móvil del IDEA, diálogos con Tab atrapado, confirmar al cerrar, reflow, mensajes de validación en castellano, regla de color, estados compartidos, panel de demostración |
 | `f1-` | Banda del paciente (posición del primer bloque a 1280×800 y 1024×768, pegada al bajar, alerta clínica en todas las pestañas), pestañas en una/dos filas, WCAG 2.2 2.4.11 (foco no tapado) y 2.5.8 (objetivos ≥ 24 px), listado de cinco columnas (un Tab por fila, «✓ CI»), sin la vista «Intermedia» ni textos de desarrollo, `aria-current`, KPI y layout por debajo de 1180 px |
+| `f1b-` | Tipografía y color (F1b): Segoe UI sin webfont, títulos en sans 600, ningún texto visible por debajo de 12 px, `--fs-base` 15 px, etiquetas en sans 12 px / 600 sin versalitas, monoespaciada sólo en códigos y puntajes, serif sólo en documentos; todo `.btn-primary` en tinta, el naranja de marca sin texto, sin superficies oscuras fuera de la barra superior y la lateral. (La tira de pestañas de F1b la mide `f1-tabs`: una fila con ≥ 40 px libres a 1280, mismo alto, «Solo demo» compacto) |
 | `z` | Cero errores de JavaScript en toda la corrida |
 
 ## `capturas.js`
