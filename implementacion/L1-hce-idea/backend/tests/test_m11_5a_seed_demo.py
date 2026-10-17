@@ -79,6 +79,28 @@ def test_c1_martin_tiene_la_firma_de_lb_pa_pb_e_ic_en_su_rastro(client, demo):
     assert all(f["usuario"] for f in r.json())
 
 
+def test_c2_martin_y_valentina_tienen_severidad_y_los_demas_no(client, demo):
+    """C2: Martín con los dos dominios distintos, otro expediente con registro, el resto en el estado vacío.
+    La registró el técnico del grupo (autor = usuario del token), con etiquetas del catálogo."""
+    martin = client.get(f"/hce/{demo.expedientes[102]}/severidad")
+    assert martin.status_code == 200, martin.text
+    m = martin.json()
+    assert m["nivel_cs"] != m["nivel_crr"] and m["etiqueta_cs"] and m["etiqueta_crr"]
+    assert m["profesional"]["nombre"] == GONZALEZ["nombre"]
+    assert client.get(f"/hce/{demo.expedientes[103]}/severidad").status_code == 200
+    sin = [d for d in NNA if client.get(f"/hce/{demo.expedientes[d]}/severidad").status_code == 404]
+    assert sorted(sin) == [101, 104, 105, 106, 107, 108]
+    assert demo.severidad == ["Martín", "Valentina"]
+
+
+@pytest.mark.parametrize("demo_id", [102, 103])
+def test_c2_la_justificacion_sembrada_no_cita_puntajes_del_idea_ni_de_la_ippu_tea(client, demo, demo_id):
+    """El nivel no se deriva del IDEA ni de la Escala IPPU-TEA: la justificación tampoco los nombra ni da cifras."""
+    texto = client.get(f"/hce/{demo.expedientes[demo_id]}/severidad").json()["justificacion"]
+    assert not any(p in texto.lower() for p in ("idea", "ippu-tea", "protocolo", "puntaje", "/96", "/120"))
+    assert not any(c.isdigit() for c in texto)
+
+
 def test_12a_informe_de_cierre_firmado_con_recibi_y_documento(client, demo):
     ic = client.get(f"/informe-cierre/{demo.ids['102.ic']}").json()
     assert ic["firmado"] is True
@@ -287,6 +309,7 @@ def test_cli_con_grupos_crea_los_usuarios_y_carga_la_demo(cliente_sin_usuarios, 
     assert codigo == 0, salida.err
     assert _profesionales(sesiones) == 3
     assert "Expedientes: 8" in salida.out
+    assert "Severidad DSM-5-TR registrada (2): Martín, Valentina" in salida.out
     assert PASSWORD_TEST not in salida.out + salida.err
 
 

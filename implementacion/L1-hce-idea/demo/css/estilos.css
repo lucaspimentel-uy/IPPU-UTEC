@@ -1308,6 +1308,16 @@
   .vf-ref{color:var(--ink-2);font-size:var(--fs-3xs)}
   .vf-guia{margin-top:var(--s4)}
   .vf-guia>summary{cursor:pointer;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
+  /* SEV (C2): sólo texto, sin color por grado */
+  .sev-nota{margin:0;padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule)}
+  .sev-lectura .data-row{grid-template-columns:minmax(150px,260px) 1fr}
+  .sev-lectura .sev-just{white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400}
+  .sev-desc{margin:var(--s1) 0 0;font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.5}
+  .sev-ref{margin-top:var(--s4)}
+  .sev-ref>summary{cursor:pointer;font-size:var(--fs-xs);font-weight:700;color:var(--ink-2)}
+  .sev-tabla{margin-top:10px}
+  .sev-tabla th[scope="row"]{white-space:normal;font-weight:600}
+  .sev-tabla td{white-space:normal;vertical-align:top}
   .banda-chip,.st-registrada{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
   /* ============ FASE 3-e · PASADA DE ACCESIBILIDAD Y VISUAL (handoff §5.135) ============

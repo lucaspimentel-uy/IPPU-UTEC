@@ -482,6 +482,31 @@ function buscarContornosApagados() {
   await ev(() => { IC.rec.recibi = window.__recibi; });
   await page.click('#btnIcImpreso'); await page.waitForSelector('.print-wrap', { timeout: 8000 }); await esperar(300);
   await cap('IC · documento impreso (vista en pantalla)');
+  // C2 · SEV: lectura de Martín (seed), referencia abierta, formulario con su descriptor, errores sin enviar, descarte y estado vacío.
+  await abrirPorNombre('Martín', 'sev');
+  await page.waitForSelector('#sevLectura', { timeout: 8000 });
+  await cap('SEV · lectura (Martín)');
+  anillos.push(await medirAnilloTeclado(page, '#sevRef summary', 'resumen «Referencia DSM-5-TR» (SEV)'));
+  await ev(() => { document.getElementById('sevRef').open = true; }); await esperar(100);
+  await cap('SEV · lectura con la referencia DSM-5-TR abierta');
+  await page.click('#btnSevEditar'); await page.waitForSelector('#modalFlujo.open #sev_cs'); await esperar(250);
+  await cap('SEV · formulario abierto (editar)');
+  anillos.push(await medirAnilloTeclado(page, '#sev_cs', 'lista desplegable (SEV)'));
+  anillos.push(await medirAnilloTeclado(page, '#sev_just', 'área de texto (SEV)'));
+  await page.selectOption('#sev_crr', ''); await page.fill('#sev_just', '');          // faltan: se marcan y no se envía nada
+  await page.click('#btnSevGuardar'); await page.waitForSelector('#sevErrores:not([hidden])', { timeout: 3000 }); await esperar(150);
+  await cap('SEV · formulario con campos faltantes');
+  await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await cap('SEV · formulario · confirmar descarte');
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await ev(() => { window.__sev = SEV.rec; SEV.rec = null; SEV.estado = 'vacio'; sevRepintar(); }); await esperar(100);
+  await cap('SEV · estado vacío');
+  await page.click('#btnSevNuevo'); await page.waitForSelector('#modalFlujo.open #sev_cs'); await esperar(250);
+  await page.selectOption('#sev_cs', '3'); await esperar(100);
+  await cap('SEV · formulario de alta con el descriptor del grado elegido');
+  await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await ev(() => { SEV.rec = window.__sev; SEV.estado = 'listo'; sevRepintar(); });
   await abrirPorNombre('Martín', 'vf');
   await cap('VF · estado vacío');
   await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await esperar(100);

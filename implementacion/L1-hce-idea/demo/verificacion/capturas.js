@@ -2,7 +2,7 @@
  * demo/verificacion/salidas/ (gitignored). Sirven para revisar a ojo la pasada visual; no comparan nada.
  *
  * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF · una vista de
- * modo demostración (Analítica). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
+ * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
  * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC.
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
@@ -66,6 +66,10 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await abrir('Martín', 'vf');                                          await snap('vf');
     // C1: el registro de cambios de Martín (las firmas del seed + una edición de HCE-00 con un valor largo, para ver el «ver completo»)
     if (w === 1280) await api('PATCH', `/hce/${idMartin}`, { medicacion: 'Muestra de un valor largo para el registro de cambios. '.repeat(5) });
+    // C2: la severidad de Martín (la del seed) en lectura y el formulario de edición abierto (se cierra sin guardar)
+    await abrir('Martín', 'sev'); await page.waitForSelector('#sevLectura');           await snap('sev');
+    await page.click('#btnSevEditar'); await page.waitForSelector('#modalFlujo.open #sev_cs');   await snap('sev-formulario');
+    await page.evaluate(() => closeFlujoModal());
     await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
     await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');

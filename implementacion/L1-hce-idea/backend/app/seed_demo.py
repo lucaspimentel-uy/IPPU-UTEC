@@ -11,7 +11,8 @@ Carga en una base de desarrollo los 8 NNA de `demo/js/datos.js` y los arquetipos
 - **103 Valentina · 105 Lucía · 108 Camila** — CI + LB firmados (`LB_OTROS`).
 - **106 Tomás** — sólo el expediente, dado de baja (`activo:false`, `bajaFecha` de la demo).
 
-Sólo CI/LB/PA/PB/IC: ni documentos, ni fotos, ni INC, PAI ni SEV.
+CI/LB/PA/PB/IC y, desde C2, la **severidad DSM-5-TR** de Martín (dominios distintos) y de Valentina;
+los demás quedan sin registro (el estado vacío de la pestaña). Ni documentos, ni fotos, ni INC ni PAI.
 
 ## Dos partes, y por qué
 
@@ -187,6 +188,20 @@ MARTIN_IC = {
 }
 MARTIN_RECIBI_FECHA = "2026-11-13"
 
+#: HCE-SEV (C2): juicio clínico por dominio, con justificación propia. **La justificación no cita ningún
+#: puntaje del IDEA ni de la Escala IPPU-TEA**: el nivel no se deriva de ellos (regla del módulo). Datos
+#: simulados: Martín con los dos dominios distintos; Valentina, otro expediente con registro.
+SEVERIDAD = {
+    102: {"nivel_cs": 2, "nivel_crr": 1, "fecha": "2026-03-20", "justificacion": (
+        "Juicio clínico del equipo a partir de la observación en sala y en el recreo y de la entrevista con la familia. "
+        "En comunicación social inicia pocas interacciones con pares y necesita mediación adulta planificada. En "
+        "comportamientos restringidos y repetitivos, los cambios de rutina le cuestan pero los tolera con anticipación visual.")},
+    103: {"nivel_cs": 3, "nivel_crr": 2, "fecha": "2026-03-24", "justificacion": (
+        "Juicio clínico del equipo a partir de la observación en distintos espacios del centro y del intercambio con la "
+        "familia y la escuela. La comunicación se orienta sobre todo a pedir lo que necesita, con apoyo de un sistema "
+        "aumentativo. Los cambios de rutina le generan malestar marcado y requieren anticipación sistemática.")},
+}
+
 SOFIA_LB = {
     "dim": [4, 2, 4, 2, 2, 2, 4, 4, 2, 2, 1, 2], "obs": {}, "fecha_consenso": "2026-03-20", "sesiones": 5,
     "sintesis": "Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
@@ -220,6 +235,7 @@ class Resumen:
     borradores: list[str] = field(default_factory=list)
     warnings: list[dict[str, Any]] = field(default_factory=list)  # avisos que devolvió la API
     ids: dict[str, int] = field(default_factory=dict)          # «102.lb», «102.ic»… → id del módulo
+    severidad: list[str] = field(default_factory=list)         # «Martín», … (HCE-SEV registrada)
     grupos: dict[str, int] = field(default_factory=dict)       # nombre real → grupo_id
     profesionales: dict[str, int] = field(default_factory=dict)
 
@@ -228,6 +244,7 @@ class Resumen:
             f"Expedientes: {len(self.expedientes)} · grupos: {', '.join(sorted(self.grupos))}",
             f"Cerrados — CI registrado; LB/PA/PB/IC firmados ({len(self.firmados)}): {', '.join(self.firmados)}",
             f"Borradores ({len(self.borradores)}): {', '.join(self.borradores)}",
+            f"Severidad DSM-5-TR registrada ({len(self.severidad)}): {', '.join(self.severidad)}",
             f"Avisos no bloqueantes de la API: {len(self.warnings)}",
         ])
 
@@ -439,6 +456,11 @@ def cargar_demo(
         ci(demo_id)
         lb(demo_id, {"dim": dim, "obs": {}, **LB_OTROS_CAMPOS}, firmar=True)
     decir("Sofía, Joaquín, Valentina, Lucía y Camila cargados; Bruno sin CI; Tomás dado de baja")
+    # HCE-SEV (C2): la registra el técnico del grupo, como en la pantalla; el autor es el usuario del token.
+    for demo_id, sev in SEVERIDAD.items():
+        api.escribir("POST", f"/hce/{resumen.expedientes[demo_id]}/severidad", sev, esperado=201)
+        resumen.severidad.append(NNA[demo_id]["persona"]["nombre"])
+    decir(f"Severidad DSM-5-TR: {', '.join(resumen.severidad)}; los demás sin registro")
     return resumen
 
 

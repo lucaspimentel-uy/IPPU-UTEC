@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-17 · C2 — HCE-SEV: severidad DSM-5-TR** (Lucas con Claude, rama `c2-hce-sev`; §5.143). Sin DDL (head `dcc838486407`).
+  - **Backend:** `GET /severidad-niveles` y `GET|POST|PATCH /hce/{id}/severidad` (`routers/severidad.py`, `services/severidad.py`, `schemas/severidad.py`): entero o nada, autor = usuario del token, etiquetas resueltas al leer, una fila de auditoría por campo que cambió. 41 tests nuevos (`test_c2_severidad.py`, con los guards estructurales de §4) y 3 en el seed de la demo (Martín y Valentina con severidad; los demás sin registro).
+  - **Demo:** `js/severidad.js` conecta la pestaña «Severidad» (lectura, estado vacío, formulario en el diálogo compartido con el descriptor del grado elegido, referencia DSM-5-TR plegada); sale la marca «Solo demo» de la pestaña.
+  - **Verificación (base descartable `ippu_ver`, :8001):** `pytest -q` 891 passed, 0 skipped · contraste 0 pares y anillos 34/34 (con la pestaña SEV en lectura y con el formulario abierto) · `conectada.js` 217/217 (11 chequeos `c2-`; 4 chequeos viejos ajustados porque SEV dejó de ser demostración) · `capturas.js` agrega `sev` y `sev-formulario` · `verificar_estado.py --check` y `generar_catalogos_backend.py --check` OK.
+  - **Docs:** `esquema-datos-v2.md` §4 (cuatro filas de HCE-SEV hechas; la salida (3) sigue pendiente) y §5 ítem 7, `backend/README.md`, `demo/verificacion/README.md` (prefijo `c2-`), conteo de `js/` en `CLAUDE.md` y `estructura-repositorio.md` (18 módulos), §6.
+  - **Al terminar:** `:8001` y `:5500` libres. **Próximo:** C3 (HCE-ORG).
 - **2026-10-17 · C1 — HCE-LOG de sólo lectura** (Lucas con Claude, rama `c1-hce-log`; §5.142). Sin DDL (head `dcc838486407`).
   - **Backend:** `GET /hce/{id}/auditoria?modulo=&tipo=&limit=&offset=` (`routers/auditoria.py`, `services/auditoria_lectura.py`, `schemas/auditoria.py`); orden `ts DESC, id DESC`, `X-Total-Count`, alcance como el expediente, 422 por campo para `acceso`, `GRUPO` o cualquier valor fuera de las constantes. 20 tests nuevos (`test_c1_hce_log.py`) y uno en el seed de la demo (Martín: firmas de LB, PA, PB e IC).
   - **Demo:** `js/auditoria.js` conecta la pestaña «Auditoría» (tabla, filtros, paginado de 25, hora local, «ver completo», JSON legible, estados compartidos); no hay botón «Ver auditoría» en el expediente conectado.

@@ -268,13 +268,13 @@ async function loguear(page) {
     /Modo demostración — no se guarda/.test(panelLb) && (await page.locator('#panelExp [role="note"]').count()) === 1 &&
     (await page.locator('#panelExp .solo-demo').count()) >= 1 && tabSel === 'true', panelLb.slice(0, 140));
   const textosTab = [];
-  for (const k of ['hce00', 'ci', 'lb', 'pa', 'pb', 'ic', 'vf', 'doc', 'org', 'inc', 'pai', 'sev', 'log']) {
+  for (const k of ['hce00', 'ci', 'lb', 'pa', 'pb', 'ic', 'vf', 'sev', 'doc', 'org', 'inc', 'pai', 'log']) {
     await page.click('#tabExp-' + k);
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = textosTab.slice(7, 12).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF y LOG (C1) están conectadas y las otras 5 dicen «Este módulo todavía no está conectado al servidor.»',
+  const sinFraseNueva = textosTab.slice(8, 12).every((t) => /Este módulo todavía no está conectado al servidor\./.test(t));
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2) y LOG (C1) están conectadas y las otras 4 dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -2295,7 +2295,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((i) => abrirExpediente(i), idMartinV);
     await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
     const paneles = {};
-    for (const k of ['doc', 'org', 'inc', 'pai', 'sev', 'lb']) {
+    for (const k of ['doc', 'org', 'inc', 'pai', 'lb']) {
       await pv.evaluate((t) => selTabExp(t), k);
       await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
       await pv.waitForTimeout(80);
@@ -2307,8 +2307,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI, SEV) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
-      ['doc', 'org', 'inc', 'pai', 'sev'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'los módulos en modo demostración (DOC, ORG, INC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
+      ['doc', 'org', 'inc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -2320,12 +2320,12 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-    for (const k of ['doc', 'org', 'inc', 'pai', 'sev']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
+    for (const k of ['doc', 'org', 'inc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 6 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 11 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 5 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -2392,8 +2392,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
     check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'sev,inc,org,doc,pai'
-        && filasTabs[0].marcas === 'sev:glifo+texto-sr,inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'inc,org,doc,pai'
+        && filasTabs[0].marcas === 'inc:glifo+texto-sr,org:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
         && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
@@ -2767,6 +2767,146 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const pantalla = await pc.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
     check('c1-ajeno', 'técnico y expediente de otro grupo: GET /hce/{id}/auditoria da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos del NNA',
       idAjeno !== undefined && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pantalla.alert === 1 && pantalla.reint === 0 && /No existe/.test(pantalla.txt), JSON.stringify({ idAjeno, tec: aTec && aTec.status, adm: aAdm && aAdm.status, pantalla: { ...pantalla, txt: pantalla.txt.slice(0, 80) } }));
+    await ctx.close();
+  }
+
+  /* ---------- C2 · HCE-SEV: la pestaña «Severidad» lee, registra y edita por la API ---------- */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const ps = await ctx.newPage();
+    ps.on('pageerror', (e) => erroresPagina.push(e.message));
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(ps, EMAIL, PASSWORD);
+    const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (t || tok), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }); return { status: r.status, json: await r.json() }; };
+    const yo = (await api('GET', '/auth/yo')).json;
+    const idDe = async (n) => (await api('GET', '/hce?nombre=' + encodeURIComponent(n) + '&limit=5')).json.find((h) => h.persona.nombre === n).id;
+    const idM = await idDe('Martín'), idS = await idDe('Sofía');
+    const niveles = (await api('GET', '/severidad-niveles')).json;
+    const escrituras = [];                                            // POST/PATCH a /severidad que salen del navegador
+    ps.on('request', (r) => { if (/\/severidad$/.test(r.url()) && r.method() !== 'GET') escrituras.push({ m: r.method(), body: JSON.parse(r.postData() || 'null') }); });
+    const abrirSev = async (id) => {
+      await ps.evaluate((i) => abrirExpediente(i), id);
+      await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+      await ps.click('#tabExp-sev');
+      await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    };
+    const fmt = (f) => ps.evaluate((x) => fmtFecha(x), f);
+
+    /* c2-lectura · Martín: los dos dominios con la etiqueta del servidor, justificación, fecha y autor; la regla del módulo, una vez */
+    await abrirSev(idM);
+    const sevM = (await api('GET', `/hce/${idM}/severidad`)).json;
+    const lect = await ps.evaluate(() => ({ cs: document.getElementById('sevCs')?.innerText, crr: document.getElementById('sevCrr')?.innerText, just: document.getElementById('sevJust')?.innerText,
+      fecha: document.getElementById('sevFecha')?.innerText, autor: document.getElementById('sevAutor')?.innerText, panel: document.getElementById('panelExp').innerText,
+      demo: document.querySelectorAll('#panelExp .demo-panel, #panelExp .solo-demo, #tabExp-sev .solo-demo').length, color: document.querySelectorAll('#panelExp .banda-chip, #panelExp [data-banda-paso]').length,
+      notas: (document.getElementById('panelExp').innerText.match(/No se deriva del puntaje IDEA ni de la Escala IPPU-TEA/g) || []).length }));
+    const REGLA = 'El nivel de severidad DSM-5-TR se registra por juicio clínico del profesional habilitado y se especifica por separado para cada dominio diagnóstico. No se deriva del puntaje IDEA ni de la Escala IPPU-TEA (instrumentos no homologables). La severidad puede variar según el contexto y fluctuar en el tiempo: este registro describe la necesidad de apoyo actual y no sustituye la determinación de elegibilidad para servicios o prestaciones.';
+    check('c2-lectura', 'pestaña Severidad de Martín: los dos dominios (distintos) con la etiqueta que devuelve la API, la justificación, la fecha y el autor; la regla del módulo verbatim, una sola vez; sin panel ni marca «Solo demo» y sin color por grado',
+      sevM.nivel_cs !== sevM.nivel_crr && lect.cs === sevM.etiqueta_cs && lect.crr === sevM.etiqueta_crr && lect.just === sevM.justificacion && lect.fecha === await fmt(sevM.fecha)
+        && lect.autor === sevM.profesional.nombre && lect.notas === 1 && lect.panel.includes(REGLA) && lect.demo === 0 && lect.color === 0,
+      JSON.stringify({ ...lect, panel: undefined, just: (lect.just || '').slice(0, 40) }));
+
+    /* c2-referencia · la tabla de los tres grados viene de GET /severidad-niveles, plegada, en texto */
+    const ref = await ps.evaluate(() => { const d = document.getElementById('sevRef'); return { abierta: d.open, filas: [...d.querySelectorAll('tbody tr')].map((tr) => [...tr.children].map((c) => c.textContent.trim())) }; });   // cerrado: textContent (innerText no rinde)
+    check('c2-referencia', 'la referencia DSM-5-TR es colapsable (cerrada al entrar) y sus 3 filas son las de GET /severidad-niveles (etiqueta, descriptor CS, descriptor CRR, apoyos), en orden',
+      ref.abierta === false && ref.filas.length === 3 && ref.filas.every((f, i) => f[0] === niveles[i].etiqueta && f[1] === niveles[i].descriptor_cs && f[2] === niveles[i].descriptor_crr && f[3] === niveles[i].apoyos),
+      JSON.stringify({ abierta: ref.abierta, n: ref.filas.length, primeraDistinta: ref.filas.map((f, i) => [f, [niveles[i]?.etiqueta, niveles[i]?.descriptor_cs, niveles[i]?.descriptor_crr, niveles[i]?.apoyos]]).find(([a, b]) => JSON.stringify(a) !== JSON.stringify(b)) }).slice(0, 600));
+
+    /* c2-solo-pestana · la severidad no sale de su pestaña: ni la banda del paciente ni el listado */
+    const fuera = await ps.evaluate(([a, b]) => { const banda = document.getElementById('expHead')?.innerText || ''; return /Grado [123]|Necesita ayuda/.test(banda) || banda.includes(a) || banda.includes(b); }, [sevM.etiqueta_cs, sevM.etiqueta_crr]);
+    await ps.evaluate(() => go('inicio')); await ps.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const enLista = await ps.evaluate(() => /Grado [123]|Necesita ayuda|DSM/.test(document.getElementById('tbodyNNA').innerText));
+    check('c2-solo-pestana', 'la severidad no aparece en la banda del paciente ni en el listado', !fuera && !enLista, JSON.stringify({ fuera, enLista }));
+
+    /* c2-vacio · Sofía no tiene registro: estado vacío compartido y la acción de registrar */
+    await abrirSev(idS);
+    const vac = await ps.evaluate(() => ({ vacio: document.querySelectorAll('#panelExp .estado-vacio[role="status"]').length, btn: !!document.getElementById('btnSevNuevo'), error: document.querySelectorAll('#panelExp [role="alert"]:not([hidden])').length, txt: document.getElementById('panelExp').innerText }));
+    check('c2-vacio', 'un expediente sin severidad (Sofía; la API da 404) muestra el estado vacío compartido con «+ Registrar severidad», no un error',
+      (await api('GET', `/hce/${idS}/severidad`)).status === 404 && vac.vacio === 1 && vac.btn && vac.error === 0 && /Todavía no se registró la severidad/.test(vac.txt), JSON.stringify({ ...vac, txt: undefined }));
+
+    /* c2-entero · con un dominio sin elegir: se marca el campo y NO sale ningún pedido (se guarda entero o no se guarda) */
+    await ps.click('#btnSevNuevo'); await ps.waitForSelector('#modalFlujo.open #sev_cs');
+    const opciones = await ps.$$eval('#sev_cs option', (os) => os.map((o) => [o.value, o.textContent]));
+    await ps.selectOption('#sev_cs', '2');
+    const desc = await ps.evaluate(() => ({ t: document.getElementById('desc_sev_cs').innerText, oculto: document.getElementById('desc_sev_cs').hidden, por: document.getElementById('sev_cs').getAttribute('aria-describedby') }));
+    await ps.fill('#sev_just', 'Observación en sala de c2.'); await ps.fill('#sev_fecha', '2026-04-02');
+    const n0 = escrituras.length;
+    await ps.click('#btnSevGuardar'); await ps.waitForSelector('#sevErrores:not([hidden])', { timeout: 3000 }); await ps.waitForTimeout(150);
+    const ent = await ps.evaluate(() => ({ inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_sev_crr').innerText, foco: document.activeElement.id,
+      resumen: document.getElementById('sevErrores').getAttribute('role'), abierto: document.getElementById('modalFlujo').classList.contains('open') }));
+    check('c2-entero', 'registrar con un dominio sin elegir marca ese campo (aria-invalid + mensaje al lado), el resumen role="alert" recibe el foco y no sale ningún POST/PATCH; las opciones son las 3 etiquetas de la API y el descriptor del grado elegido se muestra junto al selector',
+      escrituras.length === n0 && JSON.stringify(ent.inv) === '["sev_crr"]' && ent.err.length > 0 && ent.foco === 'sevErrores' && ent.resumen === 'alert' && ent.abierto
+        && JSON.stringify(opciones.slice(1)) === JSON.stringify(niveles.map((n) => [String(n.grado), n.etiqueta])) && desc.t === niveles[1].descriptor_cs && !desc.oculto && /desc_sev_cs/.test(desc.por),
+      JSON.stringify({ ent, nEscrituras: escrituras.length - n0, desc: { ...desc, t: desc.t.slice(0, 30) } }));
+
+    /* c2-todos · el formulario vacío marca los cuatro campos a la vez */
+    await ps.selectOption('#sev_cs', ''); await ps.fill('#sev_just', ''); await ps.fill('#sev_fecha', '');
+    await ps.click('#btnSevGuardar'); await ps.waitForTimeout(150);
+    const todos = await ps.evaluate(() => [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id).sort());
+    check('c2-todos', 'con todo vacío se marcan los cuatro campos (los dos dominios, la justificación y la fecha) y no se envía nada', JSON.stringify(todos) === '["sev_crr","sev_cs","sev_fecha","sev_just"]' && escrituras.length === n0, JSON.stringify(todos));
+
+    /* c2-422 · un 422 de la API: mensaje junto al campo que dice `campo` y resumen role="alert" (el formulario no se pierde) */
+    await ps.selectOption('#sev_cs', '3'); await ps.selectOption('#sev_crr', '1'); await ps.fill('#sev_just', 'Observación en sala de c2.'); await ps.fill('#sev_fecha', '2026-04-02');
+    await ps.route('**/severidad', (r) => r.request().method() === 'POST' ? r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'validation_error', detail: [{ campo: 'justificacion', mensaje: 'Es obligatoria (muestra)' }] }) }) : r.continue());
+    await ps.click('#btnSevGuardar'); await ps.waitForFunction(() => /muestra/.test(document.getElementById('sevErrores').innerText), null, { timeout: 5000 });
+    const e422 = await ps.evaluate(() => ({ inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_sev_just').innerText, foco: document.activeElement.id, cs: document.getElementById('sev_cs').value }));
+    await ps.unroute('**/severidad');
+    check('c2-422', 'un 422 de la API marca el campo que nombra `campo` (justificación) con su mensaje y lo resume en role="alert" con el foco; lo elegido se conserva',
+      JSON.stringify(e422.inv) === '["sev_just"]' && /muestra/.test(e422.err) && e422.foco === 'sevErrores' && e422.cs === '3', JSON.stringify(e422));
+
+    /* c2-registrar · completo: un POST con los cuatro campos; la lectura sale de la respuesta (etiquetas y autor del servidor) */
+    const nPost = escrituras.length;
+    await ps.click('#btnSevGuardar'); await ps.waitForSelector('#sevLectura', { timeout: 8000 }); await ps.waitForTimeout(150);
+    const sevS = (await api('GET', `/hce/${idS}/severidad`)).json;
+    const reg = await ps.evaluate(() => ({ cs: document.getElementById('sevCs').innerText, crr: document.getElementById('sevCrr').innerText, autor: document.getElementById('sevAutor').innerText, modal: document.getElementById('modalFlujo').classList.contains('open'), foco: document.activeElement.id }));
+    const post = escrituras.slice(nPost);
+    check('c2-registrar', 'Sofía: con los dos dominios, justificación y fecha sale UN POST con los cuatro campos (sin profesional_id); se cierra el diálogo y la lectura muestra la etiqueta de la API y como autor al técnico',
+      post.length === 1 && post[0].m === 'POST' && JSON.stringify(Object.keys(post[0].body).sort()) === '["fecha","justificacion","nivel_crr","nivel_cs"]' && sevS.nivel_cs === 3 && sevS.nivel_crr === 1
+        && reg.cs === sevS.etiqueta_cs && reg.crr === sevS.etiqueta_crr && reg.autor === yo.nombre && sevS.profesional.id === yo.id && !reg.modal && reg.foco === 'sevTitulo', JSON.stringify({ post, reg }));
+
+    /* c2-descarte · «Editar» reabre el formulario; con un cambio sin guardar, Esc pide confirmación; descartar no envía nada */
+    await ps.click('#btnSevEditar'); await ps.waitForSelector('#modalFlujo.open #sev_cs');
+    const pre = await ps.evaluate(() => [document.getElementById('sev_cs').value, document.getElementById('sev_crr').value, document.getElementById('sev_fecha').value]);
+    await ps.selectOption('#sev_crr', '2');
+    const nDesc = escrituras.length;
+    await ps.keyboard.press('Escape'); await ps.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+    const pide = await ps.evaluate(() => document.activeElement.id);
+    await ps.click('#btnCdDescartar'); await ps.waitForTimeout(200);
+    const cerrado = await ps.evaluate(() => !document.getElementById('modalFlujo').classList.contains('open'));
+    check('c2-descarte', '«Editar» reabre el formulario con lo guardado; con un cambio sin guardar, Esc pide confirmación (foco en «Seguir editando») y «Descartar y cerrar» cierra sin enviar nada',
+      JSON.stringify(pre) === JSON.stringify(['3', '1', sevS.fecha]) && pide === 'btnCdSeguir' && cerrado && escrituras.length === nDesc, JSON.stringify({ pre, pide, cerrado }));
+
+    /* c2-editar-log · Martín: editar CS de 2 a 3 manda sólo ese campo; el LOG lo muestra con antes → después */
+    await abrirSev(idM);
+    const antesCs = sevM.nivel_cs;
+    await ps.click('#btnSevEditar'); await ps.waitForSelector('#modalFlujo.open #sev_cs');
+    await ps.selectOption('#sev_cs', '3');
+    const nEd = escrituras.length;
+    await ps.click('#btnSevGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    await ps.waitForSelector('#sevLectura'); await ps.waitForTimeout(150);
+    const ed = escrituras.slice(nEd);
+    const csTras = await ps.evaluate(() => document.getElementById('sevCs').innerText);
+    await ps.click('#tabExp-log'); await ps.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await ps.selectOption('#logModulo', 'HCE-SEV');
+    await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table'), null, { timeout: 8000 });
+    await ps.waitForTimeout(150);
+    const filasLog = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    const filaCs = filasLog.find((f) => f[4] === 'nivel_cs');
+    check('c2-editar-log', 'Martín: editar comunicación social de 2 a 3 manda un PATCH sólo con nivel_cs; la lectura muestra la etiqueta nueva de la API y la pestaña Auditoría (filtro HCE-SEV) lista la edición con su autor y «Antes: 2 Después: 3»',
+      antesCs === 2 && ed.length === 1 && ed[0].m === 'PATCH' && JSON.stringify(ed[0].body) === '{"nivel_cs":3}' && csTras === niveles[2].etiqueta
+        && !!filaCs && filaCs[1] === yo.nombre && filaCs[2] === 'HCE-SEV' && /Antes: 2 Después: 3/.test(filaCs[5]) && filasLog.some((f) => /Se creó/.test(f[3])),
+      JSON.stringify({ ed, csTras, filaCs }));
+
+    /* c2-ajeno · un técnico no alcanza la severidad de un expediente fuera de sus grupos: 404 en la API y «no encontrado» en la pantalla */
+    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C2', ci: '4.765.432-1', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
+    const regAdm = await api('POST', `/hce/${idAjeno}/severidad`, { nivel_cs: 1, nivel_crr: 1, justificacion: 'Registro del admin (c2).', fecha: '2026-04-02' }, tokAdmin);
+    const aTec = await api('GET', `/hce/${idAjeno}/severidad`), aAdm = await api('GET', `/hce/${idAjeno}/severidad`, undefined, tokAdmin);
+    await ps.evaluate((i) => abrirExpediente(i), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
+    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
+    check('c2-ajeno', 'técnico y expediente de otro grupo (con severidad cargada por el admin): GET /hce/{id}/severidad da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos',
+      regAdm.status === 201 && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Grado|Registro del admin/.test(pant.txt),
+      JSON.stringify({ reg: regAdm.status, tec: aTec.status, adm: aAdm.status, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
     await ctx.close();
   }
 

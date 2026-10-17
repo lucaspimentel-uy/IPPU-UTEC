@@ -15,6 +15,7 @@ recibí y los datos del documento imprimible (`/hce/{id}/informe-cierre`,
 `/informe-cierre/{id}`). Desde **M11.3-d1**, el login mínimo (`/auth/login`: todo lo
 demás pide token; el `tecnico` ve sólo los expedientes de sus grupos, §5.101), la
 valoración funcional (`/hce/{id}/valoracion-funcional`) y la paginación de `GET /hce`.
+Desde **C2**, la severidad DSM-5-TR (`/hce/{id}/severidad`, `/severidad-niveles`).
 Los routers se
 entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
 se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
@@ -25,7 +26,9 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auditoria, auth, flujo, hce, idea, informe_cierre, protocolo, referencias, valoracion_funcional
+from app.routers import (
+    auditoria, auth, flujo, hce, idea, informe_cierre, protocolo, referencias, severidad, valoracion_funcional,
+)
 from app.routers.dependencias import usuario_actual
 from app.routers.errores import registrar_manejadores
 from app.schemas.comunes import RESPUESTA_500
@@ -69,6 +72,7 @@ for _router in (
     protocolo.router_hce, protocolo.router,
     informe_cierre.router_hce, informe_cierre.router,
     valoracion_funcional.router,
+    severidad.router_hce, severidad.router_niveles,
     referencias.router_grupos, referencias.router_profesionales,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)

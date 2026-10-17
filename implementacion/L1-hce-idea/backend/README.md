@@ -57,7 +57,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **847 passed, 0 skipped**.
+Una corrida válida de hoy es **891 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -91,7 +91,7 @@ salteado: el mensaje pide correr `python -m app.seed_catalogos`). Detalle y lím
 
 ## API
 
-Swagger en `/docs` (la referencia de cada endpoint: parámetros, errores y ejemplos). Hay un router por dominio en `app/routers/`: `auth` (login) · `hce` (alta, búsqueda, detalle, PATCH con baja y reingreso) · `referencias` (grupos y profesionales) · `flujo` (estado del año y consentimiento) · `idea` (LB) · `protocolo` (PA y PB) · `informe_cierre` (IC y su documento) · `valoracion_funcional` · `auditoria` (HCE-LOG, `GET /hce/{id}/auditoria`, sólo lectura). Todo pide token salvo `/health` y el login. **Contrato** (`handoff.md` §5.108): `GET` devuelve el recurso directo;
+Swagger en `/docs` (la referencia de cada endpoint: parámetros, errores y ejemplos). Hay un router por dominio en `app/routers/`: `auth` (login) · `hce` (alta, búsqueda, detalle, PATCH con baja y reingreso) · `referencias` (grupos y profesionales) · `flujo` (estado del año y consentimiento) · `idea` (LB) · `protocolo` (PA y PB) · `informe_cierre` (IC y su documento) · `valoracion_funcional` · `auditoria` (HCE-LOG, `GET /hce/{id}/auditoria`, sólo lectura) · `severidad` (HCE-SEV, `/hce/{id}/severidad` y `/severidad-niveles`). Todo pide token salvo `/health` y el login. **Contrato** (`handoff.md` §5.108): `GET` devuelve el recurso directo;
 `POST`/`PATCH` devuelven `{"data": …, "warnings": []}`; todos los errores devuelven
 `{"code": …, "detail": [{"campo": …, "mensaje": …}]}`. **Una transacción por request**: los servicios
 (`app/services/`) sólo hacen `flush`, el commit está en `app/routers/dependencias.py`. Los tests de la API usan

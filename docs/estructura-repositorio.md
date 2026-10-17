@@ -68,7 +68,7 @@ Se sirve en `http://localhost:5500` (no abre desde un archivo local: el login ne
 demo/
 ├── index.html              # markup y ORDEN DE CARGA de los scripts: ese orden es la semántica
 ├── css/estilos.css         # tokens (foco, rampa de severidad, estados) y estilos
-├── js/                     # 16 módulos, en el orden en que carga index.html:
+├── js/                     # 18 módulos, en el orden en que carga index.html:
 │   ├── utils.js            #   helpers compartidos y componentes comunes (cargando/error/vacío, diálogos) — lo tocan todos
 │   ├── api.js              #   cliente de la API y sesión
 │   ├── adaptadores.js      #   funciones puras: respuesta de la API → forma que pinta la demo
@@ -81,6 +81,8 @@ demo/
 │   ├── evaluaciones.js     #   LB (IDEA), PA y PB (conectado)
 │   ├── informe-cierre.js   #   IC, documento impreso A4 y recibí (conectado)
 │   ├── hce-doc-org-vf.js   #   VF (conectado) · HCE-DOC y HCE-ORG (demostración)
+│   ├── severidad.js        #   SEV: severidad DSM-5-TR (conectado)
+│   ├── auditoria.js        #   LOG: registro de cambios, sólo lectura (conectado)
 │   ├── recordatorios.js · grupos-usuario.js · inclusion.js · ateneos.js   # vistas en demostración
 └── verificacion/           # Playwright: README.md · conectada.js · capturas.js · fingerprint.js · comparar.js
                             #  · package.json y package-lock.json (versión fijada) · salidas/ y node_modules/ ignorados
