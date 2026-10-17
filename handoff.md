@@ -2806,7 +2806,7 @@ foto quedan **fuera del alcance del 26/11** (siguen vigentes como regla: §5.39/
 La demo todavía **bloquea el guardado** (`demo/js/hce-doc-org-vf.js:117-124`, `recordatorios.js:39-55`) — se
 anota en §6, no se toca acá. **[Actualizado el 2026-10-14: la demo ya no bloquea el guardado de fotos, §5.125 (i).]**
 
-[2026-10-16, Lucas] La demo ya no bloquea el guardado: subirFoto y subirFotoGrupo guardan sin autorización (§5.135 h).
+[2026-10-16, Lucas] La demo ya no bloquea el guardado: subirFoto y subirFotoGrupo guardan sin autorización (§5.136 e; 3c-j9b).
 
 ### 5.100 `tecnico_grupo` se CANCELA; `btree_gist` queda cerrado (2026-10-05, Lucas)
 
