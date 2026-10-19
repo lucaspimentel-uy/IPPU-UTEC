@@ -259,6 +259,12 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     `qwen2.5:7b-instruct-q4_K_M` (§5.149); se midió con `--capa2 ollama --precalentar` sobre el banco v0 y los
     retenidos v0–v3, con las instrucciones sin cambios. Resultados en la bitácora. Sigue la decisión sobre el modelo y
     unas instrucciones v4 (otra sesión).
+  - **F1-d2 · Bloqueo de la nube e instrucciones ajustadas — HECHA (2026-10-19).** `ClasificadorOllama` rechaza un
+    modelo «cloud» y la máquina corre con `OLLAMA_NO_CLOUD=1`; las instrucciones suman a la crisis las conductas de
+    tipo sexual y los riesgos contados por terceros, y `pedido_clinico` exige un pedido para una persona o un caso
+    (§5.150). Medición informativa, con v0–v3 contaminados; `capa2.py` queda congelado.
+  - **F1-d2b · Medición con el retenido v4 — pendiente.** Con `capa2.py` congelado, la medición válida de la capa
+    (§5.150 d; prompt aparte).
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
@@ -899,4 +905,81 @@ REPORTE FINAL
 Agregado de Samuel al retomar (2026-10-19, después de instalar Ollama):
 ```text
 AGREGADO: si en el paso 4 «ollama ps» no muestra el modelo 100 % en GPU, o si no se puede confirmar que es la RX 7600 y no la integrada, PARAR antes del paso 5 y reportar. No cambiar variables de entorno ni drivers sin el OK de Samuel.
+```
+
+### 9.7 F1-d2 · bloqueo de la nube e instrucciones de la capa 2 ajustadas (2026-10-19; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-d2. (1) Bloquear modelos «cloud» en el código y en la máquina. (2) Ajustar el texto de las instrucciones del clasificador (crisis y pedido_clinico) como se indica abajo. (3) Medir de forma INFORMATIVA sobre el banco y v0–v3. Al terminar, capa2.py queda congelado para la medición con el v4 (F1-d2b, prompt aparte).
+- No: tocar limites.py, mensajes.py, indice.py, flujo.py ni eval/. No agregar ejemplos a las instrucciones. No descargar modelos. No API hospedada ni paquetes nuevos.
+- No: usar en las instrucciones palabras o frases de los casos W04 o X05 (no los leas). El test de 4-gramas contra eval/ tiene que seguir en verde.
+- No: L1, CLAUDE.md, cabecera de handoff.md. Sin texto de docs/markdown/.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar 9d7b6a4. Si no, PARAR.
+- git checkout -b l3/f1d2-capa2-ajuste
+
+LEER PRIMERO
+- handoff.md §5.148 y §5.149.
+- asistente/capa2.py (INSTRUCCIONES, ClasificadorOllama).
+- docs.ollama.com: qué hace OLLAMA_NO_CLOUD y cómo se nombran los modelos cloud (reportar la fuente).
+
+TAREA
+0. Registrar este prompt en el plan §9 (§5.136 d).
+1. Bloqueo de la nube en el código: ClasificadorOllama se niega a construirse (ValueError) si el nombre del modelo contiene «cloud», sin distinguir mayúsculas. Tests: al menos 3 nombres que se rechazan y 2 que se aceptan.
+2. Bloqueo de la nube en la máquina (con el OK de Samuel, dado al pegar este prompt): [Environment]::SetEnvironmentVariable('OLLAMA_NO_CLOUD','1','User'). Reiniciar Ollama y verificar que la variable quedó (reportar el comando y la salida). Si la documentación dice que el valor o el nombre son otros, PARAR y reportar antes de cambiar nada.
+3. Instrucciones del clasificador, cambios EXACTOS de contenido (la redacción final es tuya, en el mismo estilo):
+   - crisis: agregar explícitamente las conductas de tipo sexual de un adulto u otra persona hacia un NNA (contacto físico de tipo sexual, exponerlo a material sexual, pedirle que guarde secretos), aunque no se nombren como abuso; y aclarar que también es crisis cuando el riesgo lo cuenta un tercero (otra persona, otro niño, un vecino), aunque no sea seguro.
+   - pedido_clinico: aclarar que es true sólo si la consulta le pide AL ASISTENTE que diagnostique, indique, interprete, decida, redacte o resuelva si se comparte algo, para una persona o un caso. Una pregunta sobre lo que dicen los documentos acerca de un tema clínico (medicación, terapias, diagnóstico, evaluación), sin pedir eso para alguien, es false.
+   - El resto del texto no cambia. Sin ejemplos.
+4. Tests que tienen que seguir en verde: monotonía, marcadores = LIM-6, 4-gramas contra eval/, parseo y hosts locales.
+5. Medición INFORMATIVA, rotulada «CONTAMINADOS para reglas y capa», con --capa2 ollama --modelo qwen2.5:7b-instruct-q4_K_M --precalentar, de a una: banco-v0 y retenido v0, v1, v2 y v3. Reportar sólo métricas y cambios de la capa. Mirar que no se pierda ninguna de las 8 crisis que ya recuperaba (W01, W03, W05, W07, X01–X04).
+6. COMMIT y cierre. Desde acá capa2.py queda congelado hasta la F1-d2b.
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde con Ollama apagado; total y nuevos.
+- $env:L3_OLLAMA="1"; python -m pytest -q tests/test_capa2_ollama.py → verde; después Remove-Item Env:L3_OLLAMA.
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/eval implementacion/L3-asistente-virtual/asistente/limites.py implementacion/L3-asistente-virtual/asistente/mensajes.py implementacion/L3-asistente-virtual/asistente/indice.py implementacion/L3-asistente-virtual/asistente/flujo.py → VACÍO.
+- git diff main -- implementacion/L3-asistente-virtual/asistente/capa2.py → pegarlo completo (es nuestro).
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- git grep -n -E "https?://" -- "implementacion/L3-asistente-virtual/asistente/*.py" → sólo 127.0.0.1 o localhost.
+- [Environment]::GetEnvironmentVariable('OLLAMA_NO_CLOUD','User') → 1.
+- Tabla informativa: por set, crisis_correcta, inseguros, indebido y cambios de la capa, comparada con la F1-d1.
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas.
+- handoff.md §6, línea de L3: «F1-d2 hecha (bloqueo de nube, instrucciones ajustadas, capa2 congelada); sigue la F1-d2b (medición con v4)».
+- handoff.md §5.150, con la fecha del día y «Samuel»:
+  (a) qwen2.5:7b-instruct-q4_K_M (Apache 2.0) es el modelo de la capa 2 del prototipo; la comparación con otra familia se posterga;
+  (b) los modelos cloud de Ollama quedan bloqueados en el código (nombre con «cloud» → error) y en la máquina (OLLAMA_NO_CLOUD=1);
+  (c) instrucciones ajustadas: crisis incluye conductas de tipo sexual y riesgos contados por terceros; pedido_clinico exige un pedido al asistente para una persona o un caso;
+  (d) con este ajuste, v0–v3 quedan contaminados también para la capa; la medición válida es la del v4;
+  (e) pendiente para la F2: precalentar al arrancar y el tiempo que el modelo queda cargado.
+- Plan §4: «F1-d2 — HECHA»; agregar F1-d2b pendiente.
+
+GIT (§5.137 c)
+- Commit: "L3 F1-d2: bloqueo de modelos cloud e instrucciones de la capa 2 ajustadas".
+- git push origin l3/f1d2-capa2-ajuste   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1d2-capa2-ajuste
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Al final, cerrar Ollama si lo abrió la sesión.
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL
+- Escribirlo en C:\Users\User\Desktop\L3-reporte-f1d2.md (fuera del repo); Samuel lo sube.
+- Máximo 35 líneas sin contar las salidas pegadas, con el bloque «PARA EL REVISOR»:
+  - hash de main en los dos remotos;
+  - fuente de la documentación sobre OLLAMA_NO_CLOUD y la verificación de la variable;
+  - diff completo de capa2.py;
+  - tabla informativa comparada con la F1-d1;
+  - qué está [verificado] (con comando) y qué es [supuesto];
+  - desvíos del prompt;
+  - preguntas abiertas completas.
 ```

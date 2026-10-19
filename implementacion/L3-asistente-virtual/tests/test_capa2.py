@@ -199,6 +199,19 @@ def test_ollama_necesita_un_modelo():
         ClasificadorOllama("")
 
 
+# F1-d2: un modelo «cloud» de Ollama corre fuera de la máquina. Nombres con la forma de los tags, no descargados.
+@pytest.mark.parametrize("modelo", ["gemma4:cloud", "glm-5.3:cloud", "modelo-ficticio:120b-cloud",
+                                    "Modelo-Ficticio:480B-CLOUD", "ficticio:Cloud", "nubecloud-ficticio:7b"])
+def test_ollama_se_niega_a_usar_un_modelo_cloud(modelo):
+    with pytest.raises(ValueError, match="cloud"):
+        ClasificadorOllama(modelo)
+
+
+@pytest.mark.parametrize("modelo", ["qwen2.5:7b-instruct-q4_K_M", "granite4.2:8b", "ministral-3:8b"])
+def test_ollama_acepta_un_modelo_local(modelo):
+    assert ClasificadorOllama(modelo).modelo == modelo
+
+
 # === ClasificadorOllama: la solicitud y el parseo, con un servidor en memoria ============================
 SECRETO = "zorzal-ficticio"  # va en la consulta y en la respuesta: nunca puede aparecer en `detalle`
 
@@ -347,6 +360,15 @@ def test_las_instrucciones_tratan_la_consulta_como_dato_y_cubren_las_definicione
         assert termino in INSTRUCCIONES, termino
 
 
+def test_las_instrucciones_ajustadas_en_la_f1d2():
+    crisis, pedido = (p for p in INSTRUCCIONES.split("\n\n") if p.startswith(("crisis es", "pedido_clinico es")))
+    for termino in ("conductas de tipo sexual", "material sexual", "guarde secretos", "aunque no se las nombre como abuso",
+                    "lo cuenta un tercero", "aunque no sea seguro"):
+        assert termino in crisis, termino
+    assert pedido.startswith("pedido_clinico es true sólo si la consulta le pide al asistente, para una persona o un caso")
+    assert pedido.endswith("sin pedir eso para alguien, es false.")
+
+
 def _cuatrigramas(texto: str) -> set[tuple[str, ...]]:
     palabras = re.findall(r"\w+", normalizar(texto))
     return {tuple(palabras[i:i + 4]) for i in range(len(palabras) - 3)}
@@ -445,6 +467,13 @@ def test_corredor_precalienta_sin_contar_esa_llamada(ruta_banco, indice, servido
     assert re.fullmatch(r"Precalentamiento \(no se mide\): ok · \d+ ms", ollama[0])
     assert ollama[1:-2] == sin
     assert "2 llamadas · cambió 0 salidas · caída 0" in ollama[-2] and len(servidor.recibidos) == 3
+
+
+def test_corredor_se_niega_a_un_modelo_cloud_sin_llamar_a_nadie(ruta_banco, indice, servidor):
+    with pytest.raises(ValueError, match="cloud"):
+        main([str(ruta_banco), "--capa2", "ollama", "--modelo", "gemma4:cloud", "--precalentar"], indice=indice,
+             imprimir=lambda *_: None)
+    assert servidor.recibidos == []
 
 
 @pytest.mark.parametrize("args", [["--capa2", "ollama"], ["--capa2", "falso", "--barrido"],

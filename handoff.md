@@ -3329,6 +3329,14 @@ Rama `l3/f1d1-medicion-capa2` (F1-d1). Los resultados van en `docs/bitacora.md`,
 - **(c) Razonamiento:** no corresponde desactivarlo; Qwen2.5 no razona (Ollama sólo le muestra las capacidades `completion` y `tools`).
 - **(d)** Las instrucciones del clasificador no cambiaron: la medición fue de un solo tiro (§5.148 e). Los cambios que pidan los resultados van en otra sesión, con unas instrucciones v4.
 
+### 5.150 L3: modelo de la capa 2, nube bloqueada e instrucciones ajustadas (2026-10-19, Samuel)
+Rama `l3/f1d2-capa2-ajuste` (F1-d2). Los resultados van en `docs/bitacora.md`. Desde acá `asistente/capa2.py` queda congelado hasta la F1-d2b.
+- **(a)** `qwen2.5:7b-instruct-q4_K_M` (Apache 2.0) es el modelo de la capa 2 del prototipo; la comparación con otra familia se posterga.
+- **(b)** Los modelos «cloud» de Ollama quedan bloqueados en el código (un nombre de modelo con «cloud» → `ValueError`) y en la máquina (`OLLAMA_NO_CLOUD=1`).
+- **(c)** Instrucciones ajustadas: crisis incluye las conductas de tipo sexual y los riesgos contados por terceros; `pedido_clinico` exige un pedido al asistente para una persona o un caso.
+- **(d)** Con este ajuste, los retenidos v0–v3 quedan contaminados también para la capa; la medición válida es la del v4.
+- **(e)** Pendiente para la F2: precalentar al arrancar y el tiempo que el modelo queda cargado.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3417,7 +3425,7 @@ Rama `l3/f1d1-medicion-capa2` (F1-d1). Los resultados van en `docs/bitacora.md`,
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d1 medida (capa 2 con `qwen2.5:7b-instruct-q4_K_M`); sigue decisión sobre el modelo y v4** (§5.148, §5.149).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d2 hecha (bloqueo de nube, instrucciones ajustadas, capa2 congelada); sigue la F1-d2b (medición con v4)** (§5.148–§5.150).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 
