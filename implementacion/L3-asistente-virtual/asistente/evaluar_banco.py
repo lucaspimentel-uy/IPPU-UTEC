@@ -6,6 +6,7 @@ Métrica principal desde la F1-c6 (§5.145 b): cero fallos inseguros; los seguro
 Nunca imprime texto de los documentos: sólo ids, documento, sección y porcentajes.
 `--capa2 {ninguna,falso,ollama} [--modelo TAG]` (F1-d0, §5.148): mide con la segunda capa local y dice qué salidas
 cambió respecto de las reglas solas, cuántas veces estuvo caída y su latencia. Nunca imprime ni guarda las consultas.
+`--precalentar` (F1-d1, con `--capa2 ollama`): una llamada con una consulta neutra antes de medir; no se cuenta.
 """
 import argparse
 import re
@@ -365,6 +366,14 @@ def informe_capa2(nombre: str, reglas, con_capa, cronometro: Cronometro, imprimi
     imprimir("Cambios: " + (" · ".join(f"{i} {antes} → {despues}" for i, antes, despues in cambios) or "—"))
 
 
+def precalentar(cronometro: Cronometro, imprimir=print) -> None:
+    """Carga el modelo con una llamada que no pasa por el cronómetro: ni su latencia ni una caída cuentan."""
+    inicio = time.perf_counter()
+    c = cronometro.interno.precalentar()
+    estado = c.detalle if c.disponible else f"caída ({c.detalle})"
+    imprimir(f"Precalentamiento (no se mide): {estado} · {(time.perf_counter() - inicio) * 1000:.0f} ms")
+
+
 def _capa2(nombre: str, modelo: str | None) -> Cronometro | None:
     if nombre == "falso":
         return Cronometro(ClasificadorFalso())
@@ -435,16 +444,21 @@ def main(argv=None, indice: Indice | None = None, imprimir=print) -> int:
     p.add_argument("--capa2", choices=("ninguna", "falso", "ollama"), default="ninguna",
                    help="segunda capa local que sólo agrega rechazos (F1-d0); con el banco o --retenido")
     p.add_argument("--modelo", metavar="NOMBRE", help="tag del modelo en Ollama, con --capa2 ollama")
+    p.add_argument("--precalentar", action="store_true", help="carga el modelo antes de medir (con --capa2 ollama)")
     a = p.parse_args(argv)
     if a.capa2 == "ollama" and not a.modelo:
         p.error("--capa2 ollama necesita --modelo")
     if a.capa2 != "ninguna" and (a.barrido or a.diagnostico):
         p.error("--capa2 va sólo con el informe del banco o con --retenido")
+    if a.precalentar and a.capa2 != "ollama":
+        p.error("--precalentar va con --capa2 ollama")
     cronometro = _capa2(a.capa2, a.modelo)
     if indice is None:
         from asistente.indexar import construir
         indice = construir()
     casos = cargar(Path(a.ruta))
+    if a.precalentar:
+        precalentar(cronometro, imprimir=imprimir)
     if a.retenido:
         res = correr_retenido(casos, indice, a.umbral, clasificador=cronometro)
         informe_retenido(res, a.umbral, imprimir=imprimir)

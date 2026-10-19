@@ -84,6 +84,8 @@ ESQUEMA = {
     "additionalProperties": False,
 }
 _CLAVES = frozenset(ESQUEMA["required"])
+# Consulta inventada para el precalentamiento (F1-d1): no es de eval/ ni de IPPU y no se mide.
+CONSULTA_NEUTRA = "¿Cuál es el horario de la biblioteca?"
 _HOSTS_LOCALES = frozenset({"127.0.0.1", "localhost"})
 _MAXIMO_BYTES = 64 * 1024
 
@@ -143,10 +145,18 @@ class ClasificadorOllama(Clasificador):
         }, ensure_ascii=False).encode("utf-8")
 
     def clasificar(self, consulta_enmascarada: str) -> Clasificacion:
+        return self._llamar(consulta_enmascarada, self.timeout)
+
+    def precalentar(self, timeout: float = 300) -> Clasificacion:
+        """Una llamada con `CONSULTA_NEUTRA` para que Ollama cargue el modelo antes de medir (F1-d1). Su resultado y su
+        latencia no se miden; el plazo es más largo porque la primera llamada incluye la carga."""
+        return self._llamar(CONSULTA_NEUTRA, timeout)
+
+    def _llamar(self, consulta_enmascarada: str, timeout: float) -> Clasificacion:
         try:
             solicitud = urllib.request.Request(self.endpoint, data=self._cuerpo(consulta_enmascarada), method="POST",
                                                headers={"Content-Type": "application/json"})
-            with _ABRIDOR.open(solicitud, timeout=self.timeout) as r:
+            with _ABRIDOR.open(solicitud, timeout=timeout) as r:
                 crudo = r.read(_MAXIMO_BYTES)
         except OSError as e:  # URLError, HTTPError y TimeoutError son OSError
             if isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError):

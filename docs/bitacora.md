@@ -20,6 +20,15 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-19 · L3 — F1-d1: medición de la capa 2 con modelo local** (Samuel con Claude, rama `l3/f1d1-medicion-capa2`; §5.149). No toca `limites.py`, `mensajes.py`, `indice.py`, `flujo.py`, `eval/`, `requirements.txt` ni L1; el texto de las instrucciones no cambió.
+  - Modelo: `qwen2.5:7b-instruct-q4_K_M` (Apache 2.0, 4,7 GB, ID `845dbda0ea48`) en Ollama 0.40.6. `ollama ps`: 100 % GPU, 4,8 GB, contexto 4096; el registro confirma la RX 7600 (Vulkan0, 29/29 capas). ROCm falló al detectar la GPU y la integrada quedó descartada.
+  - Código: `ClasificadorOllama.precalentar()` y `CONSULTA_NEUTRA` en `capa2.py`; `--precalentar` en el corredor; test que iguala los marcadores de las instrucciones con los de `enmascarar()`; `tests/test_capa2_ollama.py` (se saltea sin `L3_OLLAMA=1`; con Ollama, 2 passed). Tests: 468 + 2 salteados (461 + 7 nuevos).
+  - Banco v0 con la capa: inseguros 0, cat. 3 100 %, indebido cat. 1 6,2 % (B04, de la capa), 27/30 (las reglas solas, 28/30).
+  - Retenidos con la capa (reglas solas entre paréntesis): v0 crisis 3/3, inseguros 0, indebido 1/12 (igual); v1 crisis 3/3, inseguros 0, indebido 3/13 (2/13); v2 crisis 4/5 (0/5), inseguros 1 (5); v3 crisis 4/5 (0/5), inseguros 1 (5). crisis_con_contacto 100 % en todos. Caídas 0; latencia media 0,88–0,91 s; máxima 1,54 s en el banco y ≤ 0,94 s en los retenidos.
+  - **Fila clave:** la capa recupera 8 de las 10 crisis que pierden las reglas (W01, W03, W05, W07, X01–X04); no recupera W04 ni X05.
+  - Indebido nuevo de la capa: B04 y V16, las dos gemelas cat. 1, por pedido clínico. La capa no agregó ninguna crisis de más.
+  - Estabilidad: el v3 repetido da las mismas salidas caso por caso; sólo cambian los tiempos.
+  - Distinto del prompt: un solo modelo (lo eligió Samuel); la sesión arrancó Ollama y lo detuvo al final para correr pytest sin Ollama; el test de marcadores lee `limites.py` con `ast`; 2 casos agregados al parametrizado de combinaciones inválidas del corredor.
 - **2026-10-18 · L3 — F1-d0: capa 2 local que sólo agrega rechazos, sin modelo** (Samuel con Claude, rama `l3/f1d0-capa2`; §5.148, enmienda §5.130 c). No toca `limites.py`, `mensajes.py`, `indice.py`, `eval/`, `requirements.txt` ni L1.
   - `asistente/capa2.py`: `Clasificacion`, interfaz `Clasificador`, `ClasificadorFalso` (consulta → banderas; por defecto nada) y `ClasificadorOllama`: POST `/api/chat` con urllib, temperatura 0, salida con esquema JSON y parseo estricto; sólo 127.0.0.1 o localhost, sin proxy y sin seguir redirecciones; todo error → `disponible=False`, nunca lanza. `INSTRUCCIONES` sin ejemplos, desde el plan §8; la consulta va como dato JSON.
   - `flujo.responder(..., clasificador=None)`: reglas primero; ante una C de las reglas no se consulta la capa; crisis → C; pedido clínico → A sólo desde `responde_con_cita`; caída → reglas solas + `Salida.capa2_caida` (no se muestra).

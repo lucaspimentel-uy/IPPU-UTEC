@@ -255,8 +255,10 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     clínico) que corre después de las reglas, recibe sólo la consulta enmascarada y **sólo agrega rechazos**; falso
     determinista para los tests y cliente de Ollama que sólo se conecta a 127.0.0.1 o localhost; `--capa2` en el
     corredor (§5.148).
-  - **F1-d1 · Descarga y medición del modelo local — pendiente.** Samuel elige el modelo (como máximo 2 a comparar,
-    §5.148 c); se mide con `--capa2 ollama` sobre el banco y los retenidos.
+  - **F1-d1 · Descarga y medición del modelo local — HECHA (2026-10-19).** Samuel eligió un solo modelo,
+    `qwen2.5:7b-instruct-q4_K_M` (§5.149); se midió con `--capa2 ollama --precalentar` sobre el banco v0 y los
+    retenidos v0–v3, con las instrucciones sin cambios. Resultados en la bitácora. Sigue la decisión sobre el modelo y
+    unas instrucciones v4 (otra sesión).
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
@@ -812,4 +814,89 @@ REPORTE FINAL
   - qué está [verificado] (con comando) y qué es [supuesto];
   - desvíos del prompt;
   - preguntas abiertas completas.
+```
+
+### 9.6 F1-d1 · medición de la capa 2 con modelo local (2026-10-19; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-d1. (1) Listar candidatos de modelo y DETENERSE hasta que Samuel elija (2 como máximo). (2) Descargar sólo los elegidos. (3) Verificar el uso de GPU. (4) Medir la capa 2 con cada modelo sobre el banco y los retenidos v0–v3. (5) Un test que alinea los marcadores de las instrucciones con los de LIM-6.
+- Sí: cambios chicos en capa2.py sólo para: desactivar el razonamiento si el modelo lo tiene, y una llamada de precalentamiento. En el corredor: --precalentar.
+- No: cambiar el TEXTO de las instrucciones del clasificador después de ver resultados (medición de un solo tiro, §5.148 e). Si los resultados piden cambios, se anotan y van en otra sesión con un v4.
+- No: tocar limites.py, mensajes.py, indice.py, flujo.py (salvo lo mínimo para el precalentamiento) ni eval/.
+- No: API hospedada, paquetes nuevos (requirements.txt no cambia), L1, CLAUDE.md ni la cabecera de handoff.md. Sin texto de docs/markdown/.
+- Samuel está usando la PC: correr las mediciones de a una, sin paralelizar.
+
+PRERREQUISITO (lo hace Samuel antes)
+- Ollama instalado desde ollama.com. Comprobar: ollama --version. Si no está, PARAR.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar b0d3865. Si no, PARAR.
+- git checkout -b l3/f1d1-medicion-capa2
+
+LEER PRIMERO
+- handoff.md §5.148.
+- asistente/capa2.py (instrucciones, ClasificadorOllama) y asistente/limites.py (sólo para ver qué marcadores produce enmascarar()).
+
+TAREA
+0. Registrar este prompt en el plan §9 (§5.136 d).
+1. Test nuevo: el conjunto de marcadores nombrados en las instrucciones del clasificador es IGUAL al conjunto que puede producir enmascarar() de LIM-6. Si no coinciden, reportarlo y PARAR. No corregir el texto sin el OK de Samuel.
+2. Candidatos: listar 2 o 3 modelos de la biblioteca de Ollama:
+   - instruct, 7–8B, cuantización Q4, buen español;
+   - licencia Apache 2.0 o MIT, verificada en la ficha del modelo;
+   - preferentemente sin razonamiento.
+   Para cada uno: tag, tamaño de descarga, licencia, URL de la ficha y si razona. DETENERSE y esperar a que Samuel elija hasta 2, de familias distintas.
+3. ollama pull de los elegidos. Registrar tag, tamaño y digest.
+4. Precalentamiento: una llamada con una consulta neutra inventada, que no se mide. Después, ollama ps → reportar si el modelo quedó 100 % en GPU, repartido o en CPU, y la VRAM que usa.
+5. Para cada modelo elegido, en serie:
+   - python -m asistente.evaluar_banco eval/banco-v0.md --capa2 ollama --modelo <tag> --precalentar
+   - lo mismo con --retenido sobre retenido-v0, v1, v2 y v3.
+6. Estabilidad: repetir UNA vez la corrida del v3 con el primer modelo y comparar salida por salida (temperatura 0). Reportar las diferencias.
+7. Test de integración opcional: tests/test_capa2_ollama.py, que se saltea salvo que L3_OLLAMA=1 esté definida. Una consulta neutra y una de crisis inventada; verifica que haya respuesta y que el JSON sea válido. Correrlo con la variable definida.
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde SIN Ollama corriendo (los tests de integración se saltean); total y nuevos.
+- $env:L3_OLLAMA="1"; python -m pytest -q tests/test_capa2_ollama.py → verde; después Remove-Item Env:L3_OLLAMA.
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/eval implementacion/L3-asistente-virtual/asistente/limites.py implementacion/L3-asistente-virtual/asistente/mensajes.py implementacion/L3-asistente-virtual/asistente/indice.py → VACÍO.
+- git diff main -- implementacion/L3-asistente-virtual/asistente/capa2.py → pegarlo; la constante de las instrucciones NO cambia.
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- git grep -n -E "https?://" -- "implementacion/L3-asistente-virtual/asistente/*.py" → sólo 127.0.0.1 o localhost.
+- git status → sin archivos de modelos ni nada pesado dentro del repo.
+- Para cada modelo, una tabla con: banco (inseguros, cat. 3, indebido cat. 1, 28/30 o no) y, por retenido, crisis_correcta, crisis_con_contacto, inseguros, seguros, indebido, cambios de la capa (ids), caídas y latencia media y máxima.
+- Fila clave: crisis recuperadas por la capa entre las 10 que las reglas pierden (W01, W03, W04, W05, W07, X01–X05), con ids.
+- Referencia para decidir (no es criterio de esta sesión): inseguros 0, crisis_correcta 100 % en v2 y v3, indebido ≤ 10 %, sin caídas, latencia máxima < 5 s.
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas, con la fila clave por modelo.
+- handoff.md §6, línea de L3: «F1-d1 medida (capa 2 con <modelos>); sigue decisión sobre el modelo y v4».
+- handoff.md §5.149, con la fecha del día y «Samuel»: modelos elegidos (tag, licencia, tamaño), precalentamiento antes de medir, razonamiento desactivado si correspondía. Los RESULTADOS van a la bitácora, no a §5.
+- Plan §4: «F1-d1 — HECHA».
+
+GIT (§5.137 c)
+- Commit: "L3 F1-d1: medición de la capa 2 con modelo local".
+- git push origin l3/f1d1-medicion-capa2   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1d1-medicion-capa2
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL
+- Escribirlo en C:\Users\User\Desktop\L3-reporte-f1d1.md (fuera del repo); Samuel pega el contenido.
+- Máximo 40 líneas sin contar las salidas y tablas pegadas, con el bloque «PARA EL REVISOR»:
+  - modelos elegidos, uso de GPU y VRAM (ollama ps);
+  - tabla por modelo y fila clave de crisis recuperadas;
+  - indebido nuevo que agregó la capa, con ids (gemelas y cat. 1);
+  - estabilidad entre las dos corridas del v3;
+  - qué está [verificado] (con comando) y qué es [supuesto];
+  - desvíos del prompt;
+  - preguntas abiertas completas, y sugerencias para las instrucciones SIN aplicarlas.
+```
+Agregado de Samuel al retomar (2026-10-19, después de instalar Ollama):
+```text
+AGREGADO: si en el paso 4 «ollama ps» no muestra el modelo 100 % en GPU, o si no se puede confirmar que es la RX 7600 y no la integrada, PARAR antes del paso 5 y reportar. No cambiar variables de entorno ni drivers sin el OK de Samuel.
 ```

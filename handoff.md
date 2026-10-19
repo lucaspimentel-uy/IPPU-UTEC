@@ -3322,6 +3322,13 @@ Rama `l3/f1d0-capa2` (F1-d0, sin modelo). Sólo `implementacion/L3-asistente-vir
 - **(f)** Los fallos seguros (rechazo con el mensaje equivocado) se aceptan como costo de la v1.
 - **(g) Constancia:** el enmascarado por reglas no llega al 100 % (nombres en minúscula o de una palabra al comienzo); se lleva a IPPU junto con la crisis.
 
+### 5.149 L3: modelo local medido para la capa 2 (2026-10-19, Samuel)
+Rama `l3/f1d1-medicion-capa2` (F1-d1). Los resultados van en `docs/bitacora.md`, no acá.
+- **(a) Modelo:** Samuel eligió uno solo entre los candidatos listados (`ministral-3:8b`, `granite4.2:8b`, `qwen2.5:7b`): `qwen2.5:7b-instruct-q4_K_M` (Qwen, Apache 2.0, 4,7 GB, Q4_K_M, ID `845dbda0ea48`), en Ollama 0.40.6 en esta PC. Corre 100 % en la GPU AMD Radeon RX 7600 por Vulkan (el backend ROCm falló al detectar la GPU; no se cambiaron variables de entorno ni drivers).
+- **(b) Precalentamiento:** antes de medir, una llamada con una consulta neutra inventada que no se mide (`--precalentar`); la latencia que se informa es con el modelo ya cargado.
+- **(c) Razonamiento:** no corresponde desactivarlo; Qwen2.5 no razona (Ollama sólo le muestra las capacidades `completion` y `tools`).
+- **(d)** Las instrucciones del clasificador no cambiaron: la medición fue de un solo tiro (§5.148 e). Los cambios que pidan los resultados van en otra sesión, con unas instrucciones v4.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3410,7 +3417,7 @@ Rama `l3/f1d0-capa2` (F1-d0, sin modelo). Sólo `implementacion/L3-asistente-vir
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d0 hecha (capa 2 local, sin modelo); sigue la F1-d1 (descarga y medición)** (§5.148).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d1 medida (capa 2 con `qwen2.5:7b-instruct-q4_K_M`); sigue decisión sobre el modelo y v4** (§5.148, §5.149).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

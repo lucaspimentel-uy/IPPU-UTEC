@@ -4,6 +4,7 @@ con ClasificadorFalso y el cliente, con el transporte HTTP de urllib reemplazado
 Consultas escritas para esta rebanada sobre un corpus ficticio; no salen de los sets retenidos (§5.132 a, §5.133 d).
 Datos ficticios a la vista.
 """
+import ast
 import io
 import itertools
 import json
@@ -17,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from asistente import capa2, mensajes
+from asistente import capa2, limites, mensajes
 from asistente.capa2 import INSTRUCCIONES, Clasificacion, Clasificador, ClasificadorFalso, ClasificadorOllama, caida
 from asistente.evaluar_banco import Cronometro, correr, informe_capa2, main
 from asistente.flujo import (CAPA2, CRISIS, DERIVACION, RECHAZO, RESPONDE_CON_CITA, SIN_RESPALDO, responder,
@@ -317,6 +318,20 @@ def test_el_cliente_no_usa_el_proxy_del_entorno(servidor, monkeypatch):
     assert [r.host for r in servidor.recibidos] == ["127.0.0.1:11434"]
 
 
+def test_precalentar_manda_la_consulta_neutra_con_un_plazo_mas_largo(servidor):
+    servidor.responder_contenido('{"crisis": false, "pedido_clinico": false}')
+    ollama = ClasificadorOllama("modelo-de-prueba")
+    assert ollama.precalentar() == Clasificacion(False, False, True, "ok")
+    (req,) = servidor.recibidos
+    assert (req.timeout, ollama.timeout) == (300, 20)  # el plazo largo es sólo para esta llamada
+    assert json.loads(json.loads(req.data)["messages"][1]["content"]) == {"consulta": capa2.CONSULTA_NEUTRA}
+
+
+def test_precalentar_sin_ollama_es_una_caida_y_no_lanza(servidor):
+    servidor.error = urllib.error.URLError(ConnectionRefusedError())
+    assert ClasificadorOllama("modelo-de-prueba").precalentar() == caida("conexión (URLError)")
+
+
 def test_sin_ollama_el_flujo_queda_con_las_reglas_y_la_marca(servidor, indice):
     servidor.error = urllib.error.URLError(ConnectionRefusedError())
     ollama = ClasificadorOllama("modelo-de-prueba")
@@ -345,6 +360,35 @@ def test_las_instrucciones_no_comparten_cuatro_palabras_seguidas_con_eval():
     for archivo in archivos:
         comunes = propias & _cuatrigramas(archivo.read_text(encoding="utf-8"))
         assert not comunes, (archivo.name, sorted(" ".join(g) for g in comunes))
+
+
+def test_la_consulta_neutra_no_comparte_cuatro_palabras_seguidas_con_eval():
+    propias = _cuatrigramas(capa2.CONSULTA_NEUTRA)
+    assert propias
+    for archivo in sorted((RAIZ_L3 / "eval").glob("*.md")):
+        assert not propias & _cuatrigramas(archivo.read_text(encoding="utf-8")), archivo.name
+
+
+_MARCADOR = re.compile(r"\[[A-ZÁÉÍÓÚÑ]+\]")
+# Un dato inventado por marcador; cada uno sale de una regla distinta de enmascarar().
+CON_MARCADOR = {
+    "[CORREO]": "¿Le escribo a ficticio.dos@ejemplo.test por los turnos?",
+    "[CI]": "¿Dónde va la cédula 1.234.567-8 en la ficha?",
+    "[TELÉFONO]": "¿Atienden en el 099 000 111 los sábados?",
+    "[ID]": "¿Dónde se archiva el expediente FIC-0042?",
+    "[NOMBRE]": "¿Dónde se anotan los turnos de Ficticio Pérez?",
+}
+
+
+def test_las_instrucciones_nombran_exactamente_los_marcadores_de_lim6():
+    # F1-d1: los marcadores que escribe LIM-6 se leen del código de limites.py, no se copian a mano.
+    arbol = ast.parse(Path(limites.__file__).read_text(encoding="utf-8"))
+    en_codigo = {n.value for n in ast.walk(arbol)
+                 if isinstance(n, ast.Constant) and isinstance(n.value, str) and _MARCADOR.fullmatch(n.value)}
+    assert set(_MARCADOR.findall(INSTRUCCIONES)) == en_codigo == set(CON_MARCADOR)
+    for marcador, consulta in CON_MARCADOR.items():  # y enmascarar() los produce de verdad, sin otros
+        enmascarada, _ = limites.enmascarar(consulta)
+        assert marcador in enmascarada and set(_MARCADOR.findall(enmascarada)) <= en_codigo, enmascarada
 
 
 # === Corredor ===========================================================================================
@@ -392,8 +436,20 @@ def test_corredor_con_ollama_caido_cuenta_las_caidas_y_mantiene_los_numeros(ruta
     assert "2 llamadas · cambió 0 salidas · caída 2" in ollama[-2]
 
 
+def test_corredor_precalienta_sin_contar_esa_llamada(ruta_banco, indice, servidor):
+    servidor.responder_contenido('{"crisis": false, "pedido_clinico": false}')
+    sin, ollama = [], []
+    main([str(ruta_banco)], indice=indice, imprimir=sin.append)
+    main([str(ruta_banco), "--capa2", "ollama", "--modelo", "modelo-de-prueba", "--precalentar"], indice=indice,
+         imprimir=ollama.append)
+    assert re.fullmatch(r"Precalentamiento \(no se mide\): ok · \d+ ms", ollama[0])
+    assert ollama[1:-2] == sin
+    assert "2 llamadas · cambió 0 salidas · caída 0" in ollama[-2] and len(servidor.recibidos) == 3
+
+
 @pytest.mark.parametrize("args", [["--capa2", "ollama"], ["--capa2", "falso", "--barrido"],
-                                  ["--capa2", "falso", "--diagnostico"], ["--capa2", "remoto"]])
+                                  ["--capa2", "falso", "--diagnostico"], ["--capa2", "remoto"],
+                                  ["--precalentar"], ["--capa2", "falso", "--precalentar"]])
 def test_corredor_rechaza_combinaciones_invalidas(ruta_banco, indice, args):
     with pytest.raises(SystemExit):
         main([str(ruta_banco), *args], indice=indice, imprimir=lambda *_: None)
