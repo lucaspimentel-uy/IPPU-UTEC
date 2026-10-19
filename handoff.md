@@ -3306,6 +3306,12 @@ Rama `l3/f1c6c-red-seguridad`. Sólo `implementacion/L3-asistente-virtual/` y el
 - **(e)** «Manual» se agrega a las excepciones de LIM-6 como nombre de documento. Además, dos o más palabras seguidas todo en mayúscula se enmascaran salvo que todas sean siglas conocidas (precisa la excepción de «siglas» de §5.134; una sola palabra en mayúscula se sigue leyendo como sigla).
 - **(f)** Constancia: tres mediciones muestran que un detector léxico no alcanza el 100 % en crisis; se lleva a IPPU y se evalúa una segunda capa.
 
+### 5.147 L3: NNA + término clínico en todas las formas, una sola salida a la persona y reglas léxicas congeladas (2026-10-18, Samuel)
+Rama `l3/f1c6d-congelar`, dos commits: `adfe638` (reglas) y el de la medición con el retenido v3. Sólo `implementacion/L3-asistente-virtual/` y el plan de L3.
+- **(a)** La regla NNA + término clínico → A vale para todas las formas de pregunta (amplía §5.146 c).
+- **(b)** `texto_para_mostrar()` es la única vía de salida a la persona. (LIM-11, `respuesta.formatear_contradiccion`, todavía no está conectado al flujo: se resuelve al conectarlo.)
+- **(c)** Las reglas léxicas quedan congeladas: sólo se tocan si aparece un fallo inseguro fuera de la crisis; la crisis se cubre con el pie, IPPU y, si se aprueba, una segunda capa.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3394,7 +3400,7 @@ Rama `l3/f1c6c-red-seguridad`. Sólo `implementacion/L3-asistente-virtual/` y el
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6c hecha (red de seguridad, §5.146); sigue decisión sobre la segunda capa con modelo.**
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6d hecha; reglas léxicas congeladas; sigue decisión sobre la segunda capa y la F1-c7** (§5.147).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

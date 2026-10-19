@@ -246,6 +246,9 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
   - **F1-c6c · Red de seguridad — HECHA (2026-10-18).** Pie de crisis en todo rechazo, derivación y B; formas impersonales
     sólo con sujeto institucional y sin NNA + término clínico; frases técnicas de la crisis; «Manual» y mayúsculas
     sostenidas en LIM-6; `crisis_con_contacto` en el corredor (§5.146).
+  - **F1-c6d · Congelar y medir — HECHA (2026-10-18).** NNA + término clínico → A con cualquier forma de pregunta,
+    `texto_para_mostrar()` como única salida a la persona, reglas léxicas congeladas y `eval/retenido-v3.md` medido
+    con ellas (§5.147).
   - **F1-c7 · Recuperación y categoría 2 — pendiente** (era la F1-c6, §5.145 e). Secciones «imán», vocabulario y
     casos «sin respaldo» escritos por Samuel; recién ahí se fija el umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
