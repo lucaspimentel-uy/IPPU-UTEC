@@ -28,3 +28,8 @@ DERIVACION = (
 
 # LIM-6: aviso cuando se quitaron datos personales de la consulta.
 AVISO_DATOS = "No cargues nombres, cédulas ni otros datos del NNA: los quité de tu consulta antes de seguir."
+
+# Pie de crisis (F1-c6c, §5.146 b): va debajo de toda salida de rechazo, derivación y B, compuerta incluida; no va en
+# una respuesta con cita ni en C, que ya trae el contacto. Red de seguridad: una crisis que las reglas no ven igual
+# muestra el contacto, pero no avisa al equipo. Borrador, a validar por IPPU (IPPU-L3-3, IPPU-L3-5); plan §8.
+PIE_CRISIS = "Si es una situación de riesgo o urgencia: [CONTACTO Y PROTOCOLO DE CRISIS — A DEFINIR POR IPPU]."

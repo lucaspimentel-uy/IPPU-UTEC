@@ -101,8 +101,10 @@ def test_crisis_por_raices(consulta):
     "¿Qué dice el documento sobre la pérdida de habilidades?",
 ], ids=["fp-corte", "fp-perdida"])
 def test_crisis_falsos_positivos_aceptados(consulta):
-    # Costo aceptado de las raíces (§5.145 c): ante la duda, C. Si IPPU lo valida distinto, este test cambia.
-    assert evaluar(consulta).lim == "LIM-7"
+    # F1-c6 (§5.145 c) los fijaba como C, costo aceptado de las raíces. Desde la F1-c6c (§5.146 d) son frases técnicas
+    # de la lista cerrada en una pregunta documental: ya no dan C. El resto de las raíces sigue igual.
+    d = evaluar(consulta)
+    assert d.lim != "LIM-7" and d.accion == RECUPERAR
 
 
 # === LIM-6 · toda palabra con mayúscula fuera del comienzo ============================================

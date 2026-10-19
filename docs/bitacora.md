@@ -20,6 +20,17 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-18 · L3 — F1-c6c: pie de crisis, compuerta más estricta y excepciones acotadas** (Samuel con Claude, rama `l3/f1c6c-red-seguridad`; §5.146). No toca el índice, el umbral, `eval/`, `CRISIS` ni L1.
+  - `mensajes.PIE_CRISIS` + `Salida.pie`: `flujo.py` lo pone en todo rechazo, derivación y B (compuerta y LIM-5 incluidos); no en una respuesta con cita ni en C. Borrador en el plan §8.
+  - Compuerta: las formas impersonales pasan sólo si nombran algo institucional y la consulta no junta un NNA («un nene», «un usuario»… o un caso particular) con un término clínico; si lo junta, A.
+  - Crisis: `FRASES_TECNICAS` (lista cerrada: punto(s) de corte, pérdida de habilidades, corte(s) de luz/energía/servicio) se quita sólo en una pregunta documental; si queda otra raíz, C. `es_crisis()` nueva.
+  - LIM-6: «Manual» a las excepciones; dos o más palabras seguidas todo en mayúscula se enmascaran salvo que sean siglas conocidas.
+  - Corredor: `crisis_con_contacto` (C o el pie) aparte de `crisis_correcta`, en `--retenido`.
+  - Tests: 253 en verde (217 + 36 nuevos en `test_red_seguridad.py` y uno en `test_crisis_fijada.py`). Uno modificado a propósito: `test_crisis_falsos_positivos_aceptados` (antes C, ahora no C por §5.146 d).
+  - Banco v0: inseguros 0, cat. 3 100 %, enmascarado_datos 100 %, indebido cat. 1 0 % (B23 y B24 vuelven a pasar), cita 83,3 %, 28/30.
+  - Retenidos (CONTAMINADOS): v2 crisis_correcta 0/5, crisis_con_contacto 5/5, inseguros 5 (las 5 crisis), indebido 0/11, enmascarado_datos 3/4 (W25); v0 y v1 sin cambios en inseguros (0) ni crisis (3/3).
+  - Hueco verificado y no tocado (fuera del alcance): con forma interrogativa («¿Qué terapia…?», «¿Cuál es la dosis…?»), un NNA genérico + término clínico sigue pasando la compuerta.
+
 - **2026-10-18 · L3 — F1-c6b: retenido v2 y medidor de enmascarado separado** (Samuel con Claude, rama `l3/f1c6b-retenido-v2`). Sólo mide: no cambian `limites.py`, `flujo.py`, `indice.py`, el umbral ni los otros sets.
   - `eval/retenido-v2.md`: 30 casos del revisor, copiados tal cual; adversariales (conoce la compuerta y las raíces, no vio el código). `banco.py` acepta ids `W..`.
   - Medidor: `enmascarado_datos` (casos con datos ficticios sin ningún dato a la vista, con cualquier salida) y `comportamiento_cat4` (informa), en el banco y en `--retenido`. Etiqueta «Enmascara». `datos_ficticios()` ve también nombres todo en mayúscula (sin eso, W26 pasaba con el nombre a la vista).

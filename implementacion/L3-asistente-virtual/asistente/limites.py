@@ -45,6 +45,9 @@ CRISIS = _r(
     r"\b(tir|arroj|lanz)(ar|arse|arme|o|a|aba|ando|andose)\s+(de|del|desde|por)\b",
     r"\b(hac|hag|hiz|hic)\w* dano\b", r"\bdan(arse|arme|arlo|arla|andose)\b", r"\blastim(o|aron|ado|ada|andose)\b",
 )
+# Excepciones técnicas (F1-c6c, §5.146 d): lista cerrada y sólo en una pregunta documental. Se quita sólo el tramo y
+# se vuelve a buscar la crisis en el resto: si queda cualquier raíz, sale C. Las valida IPPU. CRISIS no cambia.
+FRASES_TECNICAS = _r(r"\bpuntos? de corte\b", r"\bperdida de habilidades\b", r"\bcortes? de (luz|energia|servicio)\b")
 
 # --- LIM-9 · instrucciones que cambian las reglas y roles declarados --------------------------------
 INYECCION = _r(
@@ -85,7 +88,13 @@ _CODIGO = re.compile(r"\b[A-ZÁÉÍÓÚÑ]{3,}-\d{2,}\b")
 # la lista corta de §5.134; ante la duda, se enmascara. Límites conocidos: un nombre en minúscula, un nombre solo al
 # comienzo de la oración y un nombre escrito todo en mayúscula (se lee como sigla).
 _PALABRA_MAYUSCULA = re.compile(r"(?<![\w\[])[A-ZÁÉÍÓÚÑ][\wáéíóúüñ]*")
-_NO_SON_NOMBRES = frozenset("IDEA IPPU UTEC LIDIA HCE Protocolo MIDES BPS ASSE INAU ANEP".split())
+_NO_SON_NOMBRES = frozenset("IDEA IPPU UTEC LIDIA HCE Protocolo Manual MIDES BPS ASSE INAU ANEP".split())  # Manual: §5.146 e
+# Dos o más palabras seguidas todo en mayúscula son un nombre, salvo que todas sean siglas conocidas (F1-c6c, §5.146 e):
+# las de §5.134 y las del dominio. Una sola palabra en mayúscula se sigue leyendo como sigla.
+_PALABRA_TODO_MAYUSCULA = re.compile(r"(?<![\w\[])[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÜÑ\d]*(?!\w)")
+_SIGLAS_CONOCIDAS = frozenset(
+    "IDEA IPPU UTEC LIDIA HCE MIDES BPS ASSE INAU ANEP HC NNA DT IC VF PA PB LB PAI TEA CI CIE DSM NS MSP AYEX".split()
+)
 _DOCUMENTO_TECNICO = re.compile(r"Documento Técnico")
 _COMIENZO_DE_ORACION = re.compile(r"(^|[.?!:;¿¡\n])[\s¿¡«\"(\-–•*]*$")
 _GRAMATICALES = frozenset(
@@ -244,18 +253,32 @@ _INTERROGATIVO = re.compile(
     r"|porque)\b"
 )
 _INTERROGATIVO_CON_TILDE = re.compile(r"(?:qué|cuál|cuáles|quién|quiénes|cómo|cuándo|dónde|adónde|cuánt[oa]s?)\b")
-_SUJETO_INSTITUCIONAL = (
-    r"(?:sistema|hce|hc|historias? clinicas?|protocolos?|manual|documentos?|dt|idea|escalas?|dimension(?:es)?|items?"
+_INSTITUCIONAL = (
+    r"sistema|hce|hc|historias? clinicas?|protocolos?|manual|documentos?|dt|idea|escalas?|dimension(?:es)?|items?"
     r"|tecnic[oa]s?|profesional(?:es)?|equipos?|direccion|coordinacion|ippu|institucion(?:es)?|informes?|fichas?"
     r"|modulos?|plazos?|pai|ic|vf|pa|pb|lb|servicios?|grupos?|talleres?|consentimientos?|registros?|firmas?"
-    r"|valoracion(?:es)?|evaluacion(?:es)?|total(?:es)?|puntajes?|nivel(?:es)?|familias?|titular(?:es)?|nna)"
+    r"|valoracion(?:es)?|evaluacion(?:es)?|total(?:es)?|puntajes?|nivel(?:es)?|familias?|titular(?:es)?"
 )
+_SUJETO_INSTITUCIONAL = rf"(?:{_INSTITUCIONAL}|nna)"
 _SI_NO = re.compile(
     rf"(?:(?:el|la|los|las|un|una|unos|unas) )?{_SUJETO_INSTITUCIONAL}\b"   # «¿el protocolo…?», «¿los técnicos…?»
-    r"|se (?!(?:lo|la|le|los|las|les|me|te|nos)\b)\w+"                        # impersonal: «¿se puede…?», «¿se firma…?»
+    rf"|(?:puede|pueden|debe|deben|tiene que|tienen que) (?:(?:el|la|los|las|un|una) )?{_SUJETO_INSTITUCIONAL}\b"
+)
+# Formas impersonales (F1-c6c, §5.146 c): pasan sólo si la pregunta nombra algo institucional o documental y la consulta
+# no junta un NNA (concreto o genérico) con un término clínico; si lo junta, la compuerta da A.
+_IMPERSONAL = re.compile(
+    r"se (?!(?:lo|la|le|los|las|les|me|te|nos)\b)\w+"                        # «¿se puede…?», «¿se firma…?»
     r"|(?:hay|existen?|alcanza con|basta con|hace falta)\b"
     r"|(?:es|son) (?:obligatori|necesari|posible|requisito)\w*"
-    rf"|(?:puede|pueden|debe|deben|tiene que|tienen que) (?:(?:el|la|los|las|un|una) )?{_SUJETO_INSTITUCIONAL}\b"
+)
+_TERMINO_DOCUMENTAL = re.compile(rf"\b(?:{_INSTITUCIONAL})\b")
+_NNA_GENERICO = re.compile(
+    r"\b(?:un|una|unos|unas) (?:nene|nena|nino|nina|chico|chica|usuario|usuaria|paciente|guri|gurisa|chiquilin"
+    r"|chiquilina|alumno|alumna|adolescente|menor|bebe|hijo|hija|nna)s?\b"
+)
+_TERMINO_CLINICO = re.compile(
+    r"\b(?:dosis|medicac|medicament|remedio|pastilla|farmac|psicofarmac|terapi|tratamient|tratar|deriv|diagnostic"
+    r"|interconsult|psiquiatr|neurolog|psicolog|conduct|agresiv|sintoma|trastorno|intern|sedac|sedant|contencion)\w*"
 )
 _CONECTOR = re.compile(r"(?:y|e|o|pero|entonces|ademas|tambien)\b[\s,]*")
 _CORTESIA = re.compile(
@@ -366,6 +389,12 @@ def _preguntas(consulta: str) -> list[str] | None:
     return preguntas or None
 
 
+def _nna_y_termino_clinico(consulta: str) -> bool:
+    """La consulta junta un NNA, concreto (caso particular) o genérico («un nene»), con un término clínico."""
+    normal = normalizar(consulta)
+    return bool((_NNA_GENERICO.search(normal) or caso_particular(consulta)) and _TERMINO_CLINICO.search(normal))
+
+
 def es_pregunta_documental(consulta: str) -> bool:
     """True sólo para una pregunta general sobre los documentos (lista de permitidos; ante la duda, False)."""
     consulta = _sin_cortesia(consulta)
@@ -375,16 +404,35 @@ def es_pregunta_documental(consulta: str) -> bool:
     for pregunta in preguntas:
         if m := _CONECTOR.match(pregunta):
             pregunta = pregunta[m.end():]
-        if not (_INTERROGATIVO.match(pregunta) or _SI_NO.match(pregunta)) or _CLITICO_INICIAL.match(pregunta):
+        if _CLITICO_INICIAL.match(pregunta):
+            return False
+        if _INTERROGATIVO.match(pregunta) or _SI_NO.match(pregunta):
+            continue
+        if not (_IMPERSONAL.match(pregunta) and _TERMINO_DOCUMENTAL.search(pregunta)
+                and not _nna_y_termino_clinico(consulta)):
             return False
     return not (caso_particular(consulta) or _primera_o_segunda_persona(consulta) or _es_orden(consulta))
 
 
 def _senal_de_caso_o_pedido(consulta: str) -> bool:
-    """Elige el mensaje de la compuerta: A si hay caso, pedido clínico, persona, orden o clítico de caso; si no, B."""
+    """Elige el mensaje de la compuerta: A si hay caso, pedido clínico, persona, orden, clítico de caso o un NNA con
+    un término clínico; si no, B."""
     consulta = _sin_cortesia(consulta)
     return bool(caso_particular(consulta) or pedido_clinico(consulta) or _primera_o_segunda_persona(consulta)
-                or _es_orden(consulta) or _CLITICO_INICIAL_EN_EL_TEXTO.search(normalizar(consulta)))
+                or _es_orden(consulta) or _CLITICO_INICIAL_EN_EL_TEXTO.search(normalizar(consulta))
+                or _nna_y_termino_clinico(consulta))
+
+
+def es_crisis(consulta: str) -> bool:
+    """LIM-7 sobre la consulta original. Una frase técnica de la lista cerrada sólo deja de contar si la consulta es
+    documental y, sin ese tramo, no queda ninguna raíz de crisis (§5.146 d)."""
+    normal = normalizar(consulta)
+    if not CRISIS.search(normal):
+        return False
+    resto = FRASES_TECNICAS.sub(" ", normal)
+    if resto == normal or CRISIS.search(resto):
+        return True
+    return not es_pregunta_documental(enmascarar(limpiar_instrucciones(consulta)[0])[0])
 
 
 @dataclass(frozen=True)
@@ -425,8 +473,25 @@ def enmascarar(texto: str) -> tuple[str, bool]:
     texto = _CODIGO.sub("[ID]", texto)
     texto = _NOMBRE_ENTRE_COMILLAS.sub("[NOMBRE]", texto)
     texto = _NOMBRE_TRAS_MARCADOR.sub(lambda m: m.group(0).replace(m.group(1), "[NOMBRE]"), texto)
+    texto = _enmascarar_mayusculas_sostenidas(texto)
     texto = _enmascarar_mayusculas(texto)
     return texto, texto != original
+
+
+def _enmascarar_mayusculas_sostenidas(texto: str) -> str:
+    grupos: list[list[re.Match]] = []
+    for m in _PALABRA_TODO_MAYUSCULA.finditer(texto):              # palabras separadas sólo por espacios → un grupo
+        if grupos and not texto[grupos[-1][-1].end():m.start()].strip(" \t"):
+            grupos[-1].append(m)
+        else:
+            grupos.append([m])
+    partes, desde = [], 0
+    for grupo in grupos:
+        if len(grupo) < 2 or all(m.group() in _SIGLAS_CONOCIDAS for m in grupo):
+            continue
+        partes.append(texto[desde:grupo[0].start()] + "[NOMBRE]")
+        desde = grupo[-1].end()
+    return "".join(partes) + texto[desde:]
 
 
 def _es_nombre(palabra: str) -> bool:
@@ -463,7 +528,7 @@ def evaluar(consulta: str) -> Decision:
     disparados: list[str] = []
     avisos: list[str] = []
 
-    if CRISIS.search(normalizar(consulta)):
+    if es_crisis(consulta):
         texto, _ = enmascarar(limpiar_instrucciones(consulta)[0])
         return Decision("LIM-7", ESCALAR_HUMANO, mensajes.C, texto, True, ("LIM-7",))
 

@@ -27,3 +27,12 @@ PATRONES_F1C6 = (
 
 def test_los_patrones_de_crisis_no_cambiaron():
     assert CRISIS.pattern == "|".join(f"(?:{p})" for p in PATRONES_F1C1 + PATRONES_F1C6)
+
+
+# F1-c6c (§5.146 d): la lista cerrada de frases técnicas también queda fijada. CRISIS no cambia.
+FRASES_TECNICAS_FIJADAS = (r"\bpuntos? de corte\b", r"\bperdida de habilidades\b", r"\bcortes? de (luz|energia|servicio)\b")
+
+
+def test_la_lista_de_frases_tecnicas_no_cambio():
+    from asistente.limites import FRASES_TECNICAS
+    assert FRASES_TECNICAS.pattern == "|".join(f"(?:{p})" for p in FRASES_TECNICAS_FIJADAS)

@@ -3297,6 +3297,15 @@ Rama `l3/f1c6-limites-v2`. Sólo `implementacion/L3-asistente-virtual/` y el pla
 - **(f)** La segunda capa con modelo se posterga hasta medir los límites v2; si se adopta, requiere enmendar §5.130 (c).
 - **(g) Precisa §5.130 (d):** LIM-6 sigue enmascarando y avisando, pero un nombre enmascarado es caso particular (§5.133), así que una consulta con el nombre de un NNA no pasa la compuerta y se rechaza con A. LIM-6 «sigue» sólo si la consulta, ya enmascarada, es una pregunta documental.
 
+### 5.146 L3: red de seguridad de los límites — pie de crisis, compuerta más estricta y excepciones acotadas (2026-10-18, Samuel)
+Rama `l3/f1c6c-red-seguridad`. Sólo `implementacion/L3-asistente-virtual/` y el plan de L3; no toca L1, el índice, el umbral ni `eval/`.
+- **(a)** Se ratifica §5.145 (g).
+- **(b)** Pie de crisis en todo rechazo, derivación y B (borrador, valida IPPU).
+- **(c)** Las formas impersonales pasan la compuerta sólo con sujeto institucional y sin NNA + término clínico.
+- **(d)** Excepciones cerradas de frases técnicas en la crisis, sólo en preguntas documentales (valida IPPU).
+- **(e)** «Manual» se agrega a las excepciones de LIM-6 como nombre de documento. Además, dos o más palabras seguidas todo en mayúscula se enmascaran salvo que todas sean siglas conocidas (precisa la excepción de «siglas» de §5.134; una sola palabra en mayúscula se sigue leyendo como sigla).
+- **(f)** Constancia: tres mediciones muestran que un detector léxico no alcanza el 100 % en crisis; se lleva a IPPU y se evalúa una segunda capa.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3385,7 +3394,7 @@ Rama `l3/f1c6-limites-v2`. Sólo `implementacion/L3-asistente-virtual/` y el pla
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6 hecha (límites v2: compuerta documental, §5.145). F1-c6b medida (retenido v2); sigue según resultados.**
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6c hecha (red de seguridad, §5.146); sigue decisión sobre la segunda capa con modelo.**
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 
