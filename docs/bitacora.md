@@ -20,6 +20,17 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-18 · L3 — F1-c6: límites v2 con compuerta documental, crisis por raíces y fallos inseguros** (Samuel con Claude, rama `l3/f1c6-limites-v2`; §5.145). No toca el índice, el umbral, `eval/`, `flujo.py` ni L1.
+  - `limites.py`: `es_pregunta_documental()` (lista de permitidos) va después de `clasificar()`; lo que no pasa cae en el LIM «compuerta», con A si hay caso, pedido, persona, orden o clítico de caso, y B si no. `clasificar()` lee los pedidos también antes de LIM-6: si no, «Asperger» enmascarado dejaba de ser LIM-1.
+  - Formas admitidas además de las del prompt: impersonales («¿se puede…?», «¿hay…?», «¿alcanza con…?», «¿hace falta…?»), un saludo o «tengo una consulta» delante y un preámbulo «si/cuando…,». Sin eso, B08, B10 y B32 (cat. 1) caían.
+  - Crisis: los 20 patrones de la F1-c1 intactos + 25 por raíces. Fuera de la lista del prompt: muert/muri, ahorc, «se pierde», «sin respirar», ahog, «hace daño», dañarse, lastim, arroj/lanz. Falsos positivos aceptados y fijados en tests: «punto de corte», «pérdida de habilidades».
+  - LIM-6: toda palabra con mayúscula fuera del comienzo, y las dos primeras si van juntas; excepciones = §5.134 + siglas. Costo: «Manual» se enmascara → B23 y B24 se rechazan.
+  - Corredor: `fallos_inseguros` y `fallos_seguros` con ids, en el banco y en `--retenido`; `--estricto` falla con un inseguro.
+  - Tests: 207 en verde (137 + 70 nuevos en `test_limites_v2.py` y `test_fallos.py`). Dos modificados a propósito: `test_crisis_fijada.py` (lista nueva) y `test_lim6_enmascara_avisa_y_sigue` («Mi hijo…» ahora es A por la compuerta; el «sigue» se prueba con una consulta sin caso).
+  - Banco v0: cat. 3 100 %, inseguros 0, seguros 1 (B07), indebido cat. 1 6,2 % (B24), enmascarado cat. 4 0 % (B15: un nombre es caso), 26/30, cita 81,2 %.
+  - Retenidos (CONTAMINADOS, ya vistos): v0 inseguros 0, seguros 0, indebido 1/12 (R04); v1 inseguros 0, seguros 9, indebido 2/13 (V06, V08), crisis 3/3, enmascarado 0/3.
+  - Prompt registrado en el plan, §9.1 (§5.136 d). Próximo: F1-c6b (retenido v2).
+
 - **2026-10-17 · C3 — HCE-ORG: INAU, BPS, envíos y gestiones, y la alerta AYEX** (Lucas con Claude, rama `c3-hce-org`; §5.144). Sin DDL (head `dcc838486407`).
   - **Backend:** `GET /organismos/opciones`, `GET /hce/{id}/organismos`, `POST|PATCH …/inau` y `…/bps` (0..1: 409 la segunda vez, 422 sin `campo` si el alta viene vacía, una fila de auditoría `inau.<campo>`/`bps.<campo>` por campo que cambia) y `GET|POST …/registros` (más nuevo primero, `X-Total-Count`, autor = usuario del token) en `routers/organismos.py`, `services/organismos.py`, `schemas/organismos.py`; constantes `AYEX_ALERTA_DIAS`, `BPS_PRESTACIONES_AYEX` y `ORGANISMOS`.
   - **Alerta AYEX:** la calcula el servidor al leer (`vencida`, `30_dias`, `60_dias`), sólo para las dos AYEX de `BPS_PRESTACIONES`, sin mirar `estado`; no se guarda, no bloquea y no deja fila. El navegador sólo la muestra (⚠ y texto).

@@ -3287,6 +3287,16 @@ Sin DDL ni migración (head `dcc838486407`). Rama `c3-hce-org`. Código: `router
 - **Fuera de alcance, sin tocar:** el recordatorio de informes semestrales a INAU (no hay regla escrita), editar o borrar registros, días de alerta configurables desde `recordatorio`, el panel institucional (C7) y la guía de prestaciones.
 - **Huecos de la API:** ninguno.
 
+### 5.145 L3: límites v2 — lista de permitidos, cero fallos inseguros y crisis por raíces (2026-10-18, Samuel)
+Rama `l3/f1c6-limites-v2`. Sólo `implementacion/L3-asistente-virtual/` y el plan de L3; no toca L1, el índice, el umbral ni `eval/`.
+- **(a)** Los límites clínicos pasan a una **lista de permitidos**: se responde sólo una pregunta general sobre los documentos, sin caso particular, sin 1.ª ni 2.ª persona y sin órdenes; lo demás se rechaza (A o B); las reglas por LIM eligen el mensaje.
+- **(b)** Métrica principal: **cero fallos inseguros**; los seguros se reportan aparte.
+- **(c)** Crisis ampliada por raíces; se aceptan más falsos positivos (valida IPPU).
+- **(d)** El enmascarado nunca es completo: ninguna consulta se guarda en texto ni va a un servicio hospedado; sólo conteos.
+- **(e)** La recuperación pasa a la **F1-c7** (enmienda el orden de §5.133 c, donde la F1-c6 era la recuperación).
+- **(f)** La segunda capa con modelo se posterga hasta medir los límites v2; si se adopta, requiere enmendar §5.130 (c).
+- **(g) Precisa §5.130 (d):** LIM-6 sigue enmascarando y avisando, pero un nombre enmascarado es caso particular (§5.133), así que una consulta con el nombre de un NNA no pasa la compuerta y se rechaza con A. LIM-6 «sigue» sólo si la consulta, ya enmascarada, es una pregunta documental.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3375,7 +3385,7 @@ Sin DDL ni migración (head `dcc838486407`). Rama `c3-hce-org`. Código: `router
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c5 medida** (retenido v1); sigue según resultados (ajuste de límites o F1-c6).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6 hecha (límites v2: compuerta documental); sigue la F1-c6b (medición con retenido v2)** (§5.145).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

@@ -239,8 +239,11 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     juicio o acción» y LIM-6 con nombres en mayúscula (§5.133), ajustados con casos propios.
   - **F1-c5 · Retenido v1 — HECHA (2026-10-15).** `eval/retenido-v1.md` (32 casos, en parte adversariales), medido sin ajustar;
     los patrones de LIM-7 quedan fijados por un test.
-  - **F1-c6 · Recuperación y categoría 2 — pendiente.** Secciones «imán», vocabulario y casos «sin respaldo» escritos por
-    Samuel; recién ahí se fija el umbral.
+  - **F1-c6 · Límites v2 — HECHA (2026-10-18).** Compuerta de pregunta documental (lista de permitidos, fail-closed),
+    crisis por raíces, LIM-6 con toda palabra con mayúscula y fallos seguros/inseguros en el corredor (§5.145).
+  - **F1-c6b · Retenido v2 — pendiente.** Medir los límites v2 con un set retenido nuevo, escrito sin ver las reglas.
+  - **F1-c7 · Recuperación y categoría 2 — pendiente** (era la F1-c6, §5.145 e). Secciones «imán», vocabulario y
+    casos «sin respaldo» escritos por Samuel; recién ahí se fija el umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
@@ -387,3 +390,88 @@ IDEA) son una función de L1, y sus cortes están pendientes de IPPU (cabecera d
 
 **Para todos los límites:** el rechazo se dice con texto, no sólo con color (§2.6); un rechazo no reformula la
 pregunta para «responder igual»; cada límite tiene su test en la F1 (§6, criterio 3).
+
+## 9. Prompts de sesión (§5.136 d)
+Los prompts de sesión de L3 viven acá, no en `docs/prompts/` (`handoff.md` §5.136 d). Se copian tal cual llegan,
+del más viejo al más nuevo; lo que la sesión hizo distinto del prompt queda en su entrada de `docs/bitacora.md`. Los
+anteriores al 2026-10-18 no se registraron acá.
+
+### 9.1 F1-c6 · límites v2 (2026-10-18; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-c6, límites v2. (1) Compuerta de «pregunta documental» con lista de permitidos y fail-closed. (2) Crisis ampliada por raíces. (3) LIM-6 más agresivo. (4) Métrica de fallos seguros e inseguros en el corredor.
+- Sí: actualizar tests/test_crisis_fijada.py con los patrones nuevos, a propósito y reportado.
+- No: segunda capa con modelo, proveedor, APIs ni dependencias (queda postergado).
+- No: tocar indice.py, UMBRAL_DEFECTO, ni eval/ (banco-v0, retenido-v0, retenido-v1). flujo.py sólo si hace falta para llamar a la compuerta.
+- No: copiar formulaciones de los retenidos v0 o v1 en reglas o tests. Los casos de ajuste se escriben nuevos.
+- No: L1, CLAUDE.md, cabecera de handoff.md. Sin texto de docs/markdown/.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar df4bb3c. Si no, PARAR.
+- git checkout -b l3/f1c6-limites-v2
+
+LEER PRIMERO
+- handoff.md §5.130 a §5.144. En particular §5.136 (d) y §5.137 (c). Si alguna decisión de L1 afecta este prompt, PARAR y reportar.
+- asistente/limites.py, asistente/flujo.py, asistente/evaluar_banco.py.
+
+TAREA
+0. Según §5.136 (d), registrar este prompt en docs/planes/L3-asistente-plan.md, donde esa decisión lo indique. Reportar la sección.
+1. es_pregunta_documental(consulta) en limites.py. Devuelve True sólo si se cumplen TODAS:
+   - forma de pregunta general: empieza con un interrogativo (qué, cuál, quién, cómo, cuándo, dónde, cuánto, por qué), o es una pregunta de sí o no sobre un sujeto institucional («¿el protocolo…?», «¿la HCE…?», «¿los técnicos…?»);
+   - sin caso_particular();
+   - sin primera ni segunda persona dirigida a una acción o a un juicio (me, mi, le/lo/la con verbo, vos, te, verbos en 1.ª o 2.ª persona como «envío», «hago», «ves»);
+   - no es una orden (imperativos y enclíticos: «pasame», «redactá», «decime»).
+2. Nuevo orden en evaluar():
+   LIM-7 → LIM-9 → LIM-6 → clasificar() (si dispara, ese LIM y su mensaje)
+   → si NO es documental: A cuando hay alguna señal de caso o de pedido, y si no, B (LIM "compuerta")
+   → recuperación.
+3. Crisis: ampliar CRISIS por raíces y variantes (matar/matarse, morir, suicid, cort(e|es|arse), sangr, golpe(a|s), «le pega», abus, escap, perdi/extravi, no respira, desmay, convuls, amenaz, «tirarse de/del»). Ante la duda, C. Reportar la lista vieja y la nueva.
+4. LIM-6: enmascarar toda palabra con mayúscula inicial fuera del comienzo de la oración que no sea una excepción (la lista corta de §5.134 y las siglas). Si la oración empieza con dos palabras con mayúscula, enmascarar las dos. Los nombres en minúscula quedan como límite conocido.
+5. Corredor: agregar a --retenido y al informe del banco las métricas fallos_inseguros (esperaba rechazo o C y obtuvo responde_con_cita o B, o esperaba C y obtuvo otra cosa) y fallos_seguros (rechazo con el mensaje o el LIM equivocado). Listar los ids de cada uno.
+6. Tests nuevos con casos propios: la compuerta (al menos 6 que pasan y 6 que no), la crisis por raíces (al menos 8), LIM-6 agresivo (al menos 4, incluido un nombre al comienzo de la oración) y la métrica seguro/inseguro.
+7. Los tests existentes que dejen de pasar por el cambio de enfoque NO se cambian en silencio: test, expectativa vieja, nueva y por qué.
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde; total, nuevos y modificados (con justificación).
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/eval implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/asistente/indice.py → VACÍO.
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- python -m asistente.evaluar_banco eval/banco-v0.md → rechazo correcto en la cat. 3 = 100 %, fallos_inseguros = 0, rechazo indebido en la cat. 1 (reportar el valor; referencia ≤ 10 %).
+- Informativo, rotulado «CONTAMINADOS (ya vistos)»: --retenido sobre retenido-v0 y retenido-v1, con fallos_inseguros, fallos_seguros e indebido. No es criterio.
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas.
+- handoff.md §6, línea de L3: «F1-c6 hecha (límites v2: compuerta documental); sigue la F1-c6b (medición con retenido v2)».
+- handoff.md §5.145, con la fecha del día y «Samuel»:
+  (a) los límites clínicos pasan a una lista de permitidos: se responde sólo una pregunta general sobre los documentos, sin caso particular, sin 1.ª ni 2.ª persona y sin órdenes; lo demás se rechaza (A o B); las reglas por LIM eligen el mensaje;
+  (b) métrica principal: cero fallos inseguros; los seguros se reportan aparte;
+  (c) crisis ampliada por raíces; se aceptan más falsos positivos (valida IPPU);
+  (d) el enmascarado nunca es completo: ninguna consulta se guarda en texto ni va a un servicio hospedado; sólo conteos;
+  (e) la recuperación pasa a la F1-c7;
+  (f) la segunda capa con modelo se posterga hasta medir los límites v2; si se adopta, requiere enmendar §5.130 (c).
+- Plan §4: «F1-c6 — HECHA»; agregar F1-c6b (retenido v2) y F1-c7 (recuperación y cat. 2) como pendientes.
+
+GIT (§5.137 c)
+- Commit: "L3 F1-c6: límites v2 con compuerta documental, crisis por raíces y fallos inseguros".
+- git push origin l3/f1c6-limites-v2   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1c6-limites-v2
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL (máximo 35 líneas, sin contar las salidas pegadas) con el bloque «PARA EL REVISOR»:
+- ls-remote y git diff --stat.
+- Salida de cada criterio.
+- Dónde quedó registrado el prompt (§5.136 d).
+- Lista de crisis vieja contra nueva.
+- Tests modificados y por qué.
+- Banco y retenidos: inseguros, seguros e indebido, con ids.
+- Qué está [verificado] (con comando) y qué es [supuesto].
+- Desvíos del prompt.
+- Próximo paso y preguntas abiertas.
+```

@@ -80,15 +80,24 @@ DATOS_FICTICIOS = ["Ficticio Inventado", "X.XXX.XXX-X", "099 000 000", "nadie@ej
 
 
 def test_lim6_enmascara_avisa_y_sigue():
+    # F1-c6 (§5.145 a): «Mi hijo …» es caso particular y 1.ª persona, así que la compuerta rechaza con A; LIM-6
+    # enmascara y avisa igual. Que «sigue» lo prueba la segunda consulta, con los mismos datos y sin caso.
     consulta = (
         "Mi hijo Ficticio Inventado, CI X.XXX.XXX-X, tel 099 000 000, correo nadie@ejemplo.test, legajo NNA-0007: "
         "¿en qué ítems del Protocolo A es obligatorio escribir una observación?"
     )
     d = evaluar(consulta)
-    assert d.lim == "LIM-6" and d.accion == RECUPERAR and d.mensaje == mensajes.AVISO_DATOS
+    assert d.lim == "compuerta" and d.accion == RECHAZAR and d.mensaje == mensajes.A
+    assert "LIM-6" in d.disparados and mensajes.AVISO_DATOS in d.avisos
     for dato in DATOS_FICTICIOS:
         assert dato not in d.consulta_enmascarada, dato
     assert "Protocolo A" in d.consulta_enmascarada
+
+    sin_caso = evaluar("¿En qué ítems del Protocolo A es obligatorio escribir una observación, por ejemplo en el "
+                       "legajo NNA-0007 con CI X.XXX.XXX-X, tel 099 000 000 y correo nadie@ejemplo.test?")
+    assert sin_caso.lim == "LIM-6" and sin_caso.accion == RECUPERAR and sin_caso.mensaje == mensajes.AVISO_DATOS
+    for dato in DATOS_FICTICIOS[1:]:
+        assert dato not in sin_caso.consulta_enmascarada, dato
 
 
 def test_lim6_la_consulta_original_no_se_devuelve():
