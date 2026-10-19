@@ -2,7 +2,8 @@
 
 Sin generación: la salida es un mensaje fijo o la lista de citas (documento, sección). Nunca completa con
 conocimiento general. LIM-5: si ningún fragmento supera el umbral, mensaje B.
-Lo que ve la persona es `mensaje` y, debajo, `pie`: el pie de crisis va en todo rechazo, derivación y B (§5.146 b).
+Lo que ve la persona lo arma sólo `texto_para_mostrar()` (§5.147 b); el pie de crisis va en todo rechazo, derivación
+y B (§5.146 b).
 """
 from dataclasses import dataclass, field
 
@@ -53,3 +54,20 @@ def responder(consulta: str, indice: Indice, umbral: float = UMBRAL_DEFECTO, k: 
     if not citas:
         return Salida(SIN_RESPALDO, mensajes.B, (), **dict(con_pie, lims=d.disparados + ("LIM-5",)))
     return Salida(RESPONDE_CON_CITA, d.mensaje, citas, **base)
+
+
+def texto_para_mostrar(salida: Salida) -> str:
+    """La ÚNICA función que arma lo que ve la persona (§5.147 b); nada más del asistente arma texto para mostrar.
+
+    Orden: avisos (LIM-6 y LIM-9) → mensaje → citas (documento y sección, nunca el texto del fragmento) → pie de crisis,
+    si la salida lo trae. LIM-11 (`respuesta.formatear_contradiccion`) todavía no está conectado al flujo.
+    """
+    lineas = [aviso for aviso in salida.avisos if aviso != salida.mensaje]
+    if salida.mensaje:
+        lineas.append(salida.mensaje)
+    if salida.citas:
+        lineas.append("Fuentes:")
+        lineas.extend(f"- {documento}, «{seccion}»" for documento, seccion in salida.citas)
+    if salida.pie:
+        lineas.append(salida.pie)
+    return "\n".join(lineas)

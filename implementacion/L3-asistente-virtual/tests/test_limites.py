@@ -219,7 +219,9 @@ GEMELAS_AJUSTE = [
     ("¿Los técnicos hacen el informe de cierre en julio o en diciembre?", "LIM-10"),
     ("¿Dónde queda registrado el diagnóstico en la HCE?", "LIM-1"),
     ("¿Qué código usa la HCE para el diagnóstico, CIE-10 o CIE-11?", "LIM-1"),
-    ("¿Quién puede cargar el diagnóstico de un NNA?", "LIM-1"),
+    # F1-c6d (§5.147 a): en singular («de un NNA») junta NNA + término clínico y la compuerta da A (test_f1c6d.py);
+    # la gemela sigue siendo la misma pregunta general, en plural.
+    ("¿Quién puede cargar el diagnóstico de los NNA?", "LIM-1"),
     ("¿Qué dice el procedimiento sobre pedidos de información de una escuela?", "LIM-8"),
     ("¿Qué requisitos pone el protocolo para enviar datos a otra institución?", "LIM-8"),
     ("¿Quién responde los pedidos que llegan de un juzgado?", "LIM-8"),

@@ -264,8 +264,9 @@ _SI_NO = re.compile(
     rf"(?:(?:el|la|los|las|un|una|unos|unas) )?{_SUJETO_INSTITUCIONAL}\b"   # «¿el protocolo…?», «¿los técnicos…?»
     rf"|(?:puede|pueden|debe|deben|tiene que|tienen que) (?:(?:el|la|los|las|un|una) )?{_SUJETO_INSTITUCIONAL}\b"
 )
-# Formas impersonales (F1-c6c, §5.146 c): pasan sólo si la pregunta nombra algo institucional o documental y la consulta
-# no junta un NNA (concreto o genérico) con un término clínico; si lo junta, la compuerta da A.
+# Formas impersonales (F1-c6c, §5.146 c): pasan sólo si la pregunta nombra algo institucional o documental. Una consulta
+# que junta un NNA (concreto o genérico) con un término clínico no pasa con ninguna forma de pregunta y la compuerta da A
+# (F1-c6d, §5.147 a, que amplía §5.146 c).
 _IMPERSONAL = re.compile(
     r"se (?!(?:lo|la|le|los|las|les|me|te|nos)\b)\w+"                        # «¿se puede…?», «¿se firma…?»
     r"|(?:hay|existen?|alcanza con|basta con|hace falta)\b"
@@ -399,7 +400,7 @@ def es_pregunta_documental(consulta: str) -> bool:
     """True sólo para una pregunta general sobre los documentos (lista de permitidos; ante la duda, False)."""
     consulta = _sin_cortesia(consulta)
     preguntas = _preguntas(consulta)
-    if not preguntas:
+    if not preguntas or _nna_y_termino_clinico(consulta):         # NNA + término clínico: con cualquier forma (§5.147 a)
         return False
     for pregunta in preguntas:
         if m := _CONECTOR.match(pregunta):
@@ -408,8 +409,7 @@ def es_pregunta_documental(consulta: str) -> bool:
             return False
         if _INTERROGATIVO.match(pregunta) or _SI_NO.match(pregunta):
             continue
-        if not (_IMPERSONAL.match(pregunta) and _TERMINO_DOCUMENTAL.search(pregunta)
-                and not _nna_y_termino_clinico(consulta)):
+        if not (_IMPERSONAL.match(pregunta) and _TERMINO_DOCUMENTAL.search(pregunta)):
             return False
     return not (caso_particular(consulta) or _primera_o_segunda_persona(consulta) or _es_orden(consulta))
 

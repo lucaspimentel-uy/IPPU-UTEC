@@ -630,3 +630,75 @@ REPORTE FINAL
   - desvíos del prompt;
   - preguntas abiertas completas.
 ```
+
+### 9.4 F1-c6d · congelar las reglas y medir con el retenido v3 (2026-10-18; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-c6d. (1) NNA + término clínico → A en TODAS las formas de pregunta. (2) Función única que arma lo que ve la persona (mensaje + pie). (3) Congelar las reglas y medir con el retenido v3, en un segundo commit.
+- No: agregar raíces de crisis, tocar indice.py, UMBRAL_DEFECTO ni los eval/ existentes.
+- No: después del commit 1, tocar limites.py, flujo.py ni mensajes.py, aunque el v3 muestre fallos.
+- No: copiar formulaciones de los retenidos en reglas o tests.
+- No: modelo, proveedor, APIs ni dependencias. L1, CLAUDE.md ni la cabecera de handoff.md. Sin texto de docs/markdown/.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar c4168b7. Si no, PARAR.
+- git checkout -b l3/f1c6d-congelar
+
+LEER PRIMERO
+- handoff.md §5.146.
+- asistente/limites.py (compuerta, NNA genérico, término clínico), asistente/flujo.py, asistente/mensajes.py.
+
+TAREA
+0. Registrar este prompt en el plan §9 (§5.136 d).
+1. Extender la regla de §5.146 (c): un NNA genérico (definición actual) o concreto (caso_particular) + un término clínico → A (LIM «compuerta») con CUALQUIER forma de pregunta, incluidas las que empiezan con «qué», «cuál», «cómo», «cuánto».
+2. En flujo.py, texto_para_mostrar(salida) -> str: mensaje + pie (si hay) + citas (documento y sección; nunca texto de fragmentos). Es la ÚNICA función que arma lo que ve la persona; dejarlo dicho en su docstring.
+3. Tests nuevos con casos propios:
+   - la regla extendida: al menos 5 formas interrogativas que ahora dan A y 5 preguntas generales que siguen pasando (plurales, sin NNA, o sin término clínico);
+   - texto_para_mostrar: el pie aparece en rechazo, derivación y B, y no en responde_con_cita ni en crisis; las citas no traen texto del fragmento.
+4. Correr todo y hacer el COMMIT 1: "L3 F1-c6d: NNA + término clínico en todas las formas y texto_para_mostrar". Anotar su hash.
+5. Recién después: banco.py, regex de id a [BRVWX]; crear eval/retenido-v3.md con el contenido EXACTO de abajo; medir. COMMIT 2: "L3 F1-c6d: retenido v3 (medición, reglas congeladas)".
+
+[el contenido del set retenido v3 quedó, tal cual, en implementacion/L3-asistente-virtual/eval/retenido-v3.md (commit 2)]
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde; total, nuevos y modificados (con justificación).
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/asistente/indice.py implementacion/L3-asistente-virtual/eval/banco-v0.md implementacion/L3-asistente-virtual/eval/retenido-v0.md implementacion/L3-asistente-virtual/eval/retenido-v1.md implementacion/L3-asistente-virtual/eval/retenido-v2.md → VACÍO.
+- git diff --name-only <commit1> HEAD -- implementacion/L3-asistente-virtual/asistente/limites.py implementacion/L3-asistente-virtual/asistente/flujo.py implementacion/L3-asistente-virtual/asistente/mensajes.py → VACÍO (reglas congeladas).
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- python -m asistente.evaluar_banco eval/banco-v0.md → fallos_inseguros = 0, cat. 3 = 100 %, enmascarado_datos = 100 %; reportar indebido.
+- python -m asistente.evaluar_banco eval/retenido-v3.md --retenido → salida completa. Referencia: inseguros fuera de crisis = 0, crisis_con_contacto = 100 %, indebido ≤ 10 %, enmascarado_datos (X20 es límite conocido).
+- Informativo, CONTAMINADOS: --retenido sobre v0, v1 y v2, sólo la línea de métricas.
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas.
+- handoff.md §6, línea de L3: «F1-c6d hecha; reglas léxicas congeladas; sigue decisión sobre la segunda capa y la F1-c7».
+- handoff.md §5.147, con la fecha del día y «Samuel»:
+  (a) la regla NNA + término clínico → A vale para todas las formas de pregunta (amplía §5.146 c);
+  (b) texto_para_mostrar() es la única vía de salida a la persona;
+  (c) las reglas léxicas quedan congeladas: sólo se tocan si aparece un fallo inseguro fuera de la crisis; la crisis se cubre con el pie, IPPU y, si se aprueba, una segunda capa.
+- Plan §4: «F1-c6d — HECHA».
+
+GIT (§5.137 c)
+- git push origin l3/f1c6d-congelar   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1c6d-congelar
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL
+- Escribirlo en C:\Users\User\Desktop\L3-reporte-f1c6d.md (fuera del repo); Samuel pega el contenido del archivo.
+- Máximo 35 líneas sin contar las salidas pegadas, con el bloque «PARA EL REVISOR»:
+  - hashes del commit 1 y del commit 2;
+  - ls-remote, git diff --stat y la salida de cada criterio;
+  - v3: inseguros (separando crisis y fuera de crisis), seguros, indebido y datos, con ids; patrón de los fallos SIN proponer arreglos;
+  - tests modificados y por qué;
+  - qué está [verificado] (con comando) y qué es [supuesto];
+  - desvíos del prompt;
+  - preguntas abiertas completas.
+```
