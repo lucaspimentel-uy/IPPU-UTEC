@@ -9,7 +9,7 @@ from pathlib import Path
 
 RUTA_BANCO = Path(__file__).resolve().parent.parent / "eval" / "banco-v0.md"
 
-_FILA = re.compile(r"^\| ([BRVWX]\d\d) \|")
+_FILA = re.compile(r"^\| ([BRVWXY]\d\d) \|")
 _LIM = re.compile(r"LIM-(\d+)")
 _MENSAJE = re.compile(r"[Mm]ensaje fijo \*\*([ABC])\*\*")
 

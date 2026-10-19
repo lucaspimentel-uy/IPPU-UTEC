@@ -3425,7 +3425,7 @@ Rama `l3/f1d2-capa2-ajuste` (F1-d2). Los resultados van en `docs/bitacora.md`. D
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d2 hecha (bloqueo de nube, instrucciones ajustadas, capa2 congelada); sigue la F1-d2b (medición con v4)** (§5.148–§5.150).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d2b medida (v4: reglas + capa); sigue según resultados** (§5.148–§5.150).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 
