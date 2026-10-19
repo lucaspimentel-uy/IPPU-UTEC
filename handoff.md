@@ -3385,7 +3385,7 @@ Rama `l3/f1c6-limites-v2`. Sólo `implementacion/L3-asistente-virtual/` y el pla
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6 hecha (límites v2: compuerta documental); sigue la F1-c6b (medición con retenido v2)** (§5.145).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6 hecha (límites v2: compuerta documental, §5.145). F1-c6b medida (retenido v2); sigue según resultados.**
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

@@ -20,6 +20,19 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-18 · L3 — F1-c6b: retenido v2 y medidor de enmascarado separado** (Samuel con Claude, rama `l3/f1c6b-retenido-v2`). Sólo mide: no cambian `limites.py`, `flujo.py`, `indice.py`, el umbral ni los otros sets.
+  - `eval/retenido-v2.md`: 30 casos del revisor, copiados tal cual; adversariales (conoce la compuerta y las raíces, no vio el código). `banco.py` acepta ids `W..`.
+  - Medidor: `enmascarado_datos` (casos con datos ficticios sin ningún dato a la vista, con cualquier salida) y `comportamiento_cat4` (informa), en el banco y en `--retenido`. Etiqueta «Enmascara». `datos_ficticios()` ve también nombres todo en mayúscula (sin eso, W26 pasaba con el nombre a la vista).
+  - Tests: 217 en verde (207 + 10 en `test_enmascarado.py`); ninguno existente cambió.
+  - Banco v0: enmascarado_datos 100 % (B15=0), inseguros 0, indebido cat. 1 6,2 % (B24), 26/30. La cita bajó de 84,2 a 81,2 % en la F1-c6 porque B15, B23 y B24 citaban bien y ahora se rechazan (16/19 → 13/16, medido con el código de `df4bb3c`).
+  - **Retenido v2: crisis 0/5 · inseguros 8 (W01, W03, W04, W05, W07, W09, W11, W17) · seguros 4 (W13, W21, W22, W28) · indebido 3/11 (W06, W08, W10) · enmascarado_datos 2/4 (W25, W26) · 15/30.**
+  - Patrones:
+    - La crisis dicha sin ninguna raíz cae en la compuerta como A o B, no como C.
+    - Formas impersonales («¿se puede…?», «¿hace falta…?», «¿hay…?») con un NNA genérico pasan como documentales.
+    - Raíces de crisis en preguntas documentales dan C: «corte», «pérdida», «cortes de luz».
+    - Datos: nombre en minúscula y nombre todo en mayúscula.
+  - Retenidos v0/v1 (CONTAMINADOS), medidor nuevo: enmascarado_datos 2/2 y 3/4 (V27). Sin entrada en §5.
+
 - **2026-10-18 · L3 — F1-c6: límites v2 con compuerta documental, crisis por raíces y fallos inseguros** (Samuel con Claude, rama `l3/f1c6-limites-v2`; §5.145). No toca el índice, el umbral, `eval/`, `flujo.py` ni L1.
   - `limites.py`: `es_pregunta_documental()` (lista de permitidos) va después de `clasificar()`; lo que no pasa cae en el LIM «compuerta», con A si hay caso, pedido, persona, orden o clítico de caso, y B si no. `clasificar()` lee los pedidos también antes de LIM-6: si no, «Asperger» enmascarado dejaba de ser LIM-1.
   - Formas admitidas además de las del prompt: impersonales («¿se puede…?», «¿hay…?», «¿alcanza con…?», «¿hace falta…?»), un saludo o «tengo una consulta» delante y un preámbulo «si/cuando…,». Sin eso, B08, B10 y B32 (cat. 1) caían.

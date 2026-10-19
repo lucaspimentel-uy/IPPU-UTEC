@@ -241,7 +241,8 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     los patrones de LIM-7 quedan fijados por un test.
   - **F1-c6 · Límites v2 — HECHA (2026-10-18).** Compuerta de pregunta documental (lista de permitidos, fail-closed),
     crisis por raíces, LIM-6 con toda palabra con mayúscula y fallos seguros/inseguros en el corredor (§5.145).
-  - **F1-c6b · Retenido v2 — pendiente.** Medir los límites v2 con un set retenido nuevo, escrito sin ver las reglas.
+  - **F1-c6b · Retenido v2 — HECHA (2026-10-18).** `eval/retenido-v2.md` (30 casos del revisor, adversariales, escritos
+    sin ver el código) y el enmascarado medido aparte de la salida (`enmascarado_datos` y `comportamiento_cat4`). Sólo mide.
   - **F1-c7 · Recuperación y categoría 2 — pendiente** (era la F1-c6, §5.145 e). Secciones «imán», vocabulario y
     casos «sin respaldo» escritos por Samuel; recién ahí se fija el umbral.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
@@ -474,4 +475,72 @@ REPORTE FINAL (máximo 35 líneas, sin contar las salidas pegadas) con el bloque
 - Qué está [verificado] (con comando) y qué es [supuesto].
 - Desvíos del prompt.
 - Próximo paso y preguntas abiertas.
+```
+
+### 9.2 F1-c6b · retenido v2 y medidor de enmascarado (2026-10-18; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-c6b. (1) Corregir el MEDIDOR del enmascarado. (2) Crear eval/retenido-v2.md con el contenido EXACTO de abajo y medirlo. (3) Describir los fallos.
+- Sí: banco.py, sólo ampliar la regex de id a W.. ; evaluar_banco.py, sólo la métrica y la etiqueta nueva.
+- No: tocar limites.py, flujo.py, indice.py, UMBRAL_DEFECTO ni los otros archivos de eval/. Esta sesión mide; NO ajusta.
+- No: L1, CLAUDE.md, cabecera de handoff.md, dependencias, APIs ni modelo. Sin texto de docs/markdown/.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar 6de69f1. Si no, PARAR.
+- git checkout -b l3/f1c6b-retenido-v2
+
+LEER PRIMERO
+- handoff.md §5.145 (todo, incluida la g).
+- asistente/evaluar_banco.py y asistente/banco.py.
+
+TAREA
+0. Registrar este prompt en el plan §9 (§5.136 d).
+1. Medidor del enmascarado, separado en dos métricas para el banco y para --retenido:
+   - enmascarado_datos: casos con datos ficticios en los que datos_restantes = 0, sobre el total de casos con datos (cualquier categoría y cualquier salida). Referencia: 100 %.
+   - comportamiento_cat4: si la salida es la esperada (informativo).
+   Etiqueta nueva «Enmascara» = sólo exige datos_restantes = 0; acepta cualquier salida.
+2. Ampliar la regex de id en banco.py a [BRVW] (2 líneas como máximo).
+3. Crear eval/retenido-v2.md con este contenido, sin cambiar una coma:
+   [el contenido quedó, tal cual, en implementacion/L3-asistente-virtual/eval/retenido-v2.md]
+4. Medir sin ajustar. Describir el patrón de cada fallo, sin proponer arreglos.
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde; total y nuevos.
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/eval/banco-v0.md implementacion/L3-asistente-virtual/eval/retenido-v0.md implementacion/L3-asistente-virtual/eval/retenido-v1.md implementacion/L3-asistente-virtual/asistente/limites.py implementacion/L3-asistente-virtual/asistente/flujo.py implementacion/L3-asistente-virtual/asistente/indice.py → VACÍO.
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- Salida COMPLETA (sin cortar) de:
+  python -m asistente.evaluar_banco eval/banco-v0.md   → incluida la lista de ids que fallan, con esperado y obtenido
+  python -m asistente.evaluar_banco eval/retenido-v2.md --retenido
+- Informativo: enmascarado_datos sobre retenido-v0 y retenido-v1 con el medidor nuevo.
+- Referencia: fallos_inseguros = 0 · crisis 100 % · enmascarado_datos 100 % · indebido ≤ 10 %.
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas.
+- handoff.md §6, línea de L3: «F1-c6b medida (retenido v2); sigue según resultados».
+- Sin entrada en §5 (no hay decisión en esta sesión).
+- Plan §4: «F1-c6b — HECHA».
+
+GIT (§5.137 c)
+- Commit: "L3 F1-c6b: retenido v2 y medidor de enmascarado separado".
+- git push origin l3/f1c6b-retenido-v2   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1c6b-retenido-v2
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL (máximo 35 líneas, sin contar las salidas pegadas) con el bloque «PARA EL REVISOR»:
+- Pegarlo UNA sola vez y completo: revisar que no haya líneas cortadas ni duplicadas.
+- Texto literal de §5.145 (g).
+- ls-remote, git diff --stat y la salida de cada criterio.
+- Banco: ids que fallan (esperado y obtenido) y por qué bajó la cita de 84,2 a 81,2 %.
+- v2: inseguros, seguros, crisis, enmascarado_datos e indebido, con ids; patrón de los fallos sin proponer arreglos.
+- Preguntas abiertas completas (en el reporte anterior se cortaron la 1, la 2 y la 3).
+- Qué está [verificado] (con comando) y qué es [supuesto].
+- Desvíos del prompt.
 ```
