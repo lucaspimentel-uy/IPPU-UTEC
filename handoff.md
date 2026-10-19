@@ -3312,6 +3312,16 @@ Rama `l3/f1c6d-congelar`, dos commits: `adfe638` (reglas) y el de la medición c
 - **(b)** `texto_para_mostrar()` es la única vía de salida a la persona. (LIM-11, `respuesta.formatear_contradiccion`, todavía no está conectado al flujo: se resuelve al conectarlo.)
 - **(c)** Las reglas léxicas quedan congeladas: sólo se tocan si aparece un fallo inseguro fuera de la crisis; la crisis se cubre con el pie, IPPU y, si se aprueba, una segunda capa.
 
+### 5.148 L3: segunda capa con modelo local que sólo agrega rechazos (2026-10-18, Samuel)
+Rama `l3/f1d0-capa2` (F1-d0, sin modelo). Sólo `implementacion/L3-asistente-virtual/` y el plan de L3; no toca las reglas (`limites.py`, `mensajes.py`), el índice ni `eval/`.
+- **(a) Enmienda §5.130 (c):** una segunda capa con modelo **local** puede sólo **agregar rechazos** (subir a C ante una crisis, o a A ante un pedido clínico cuando las reglas iban a responder con cita) y nunca habilitar una respuesta; las reglas siguen siendo el piso.
+- **(b)** La capa recibe sólo la consulta enmascarada, nunca documentos de IPPU; el cliente se niega a conectarse a hosts que no sean 127.0.0.1 o localhost.
+- **(c) Modelo:** 7–8B, licencia permisiva (Apache 2.0 o MIT), como máximo 2 a comparar; lo elige Samuel.
+- **(d)** Si la capa no responde, quedan las reglas solas (experimento); el comportamiento en producción se decide más adelante.
+- **(e)** Las instrucciones del clasificador no usan ejemplos de `eval/`.
+- **(f)** Los fallos seguros (rechazo con el mensaje equivocado) se aceptan como costo de la v1.
+- **(g) Constancia:** el enmascarado por reglas no llega al 100 % (nombres en minúscula o de una palabra al comienzo); se lleva a IPPU junto con la crisis.
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3400,7 +3410,7 @@ Rama `l3/f1c6d-congelar`, dos commits: `adfe638` (reglas) y el de la medición c
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-c6d hecha; reglas léxicas congeladas; sigue decisión sobre la segunda capa y la F1-c7** (§5.147).
+- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d0 hecha (capa 2 local, sin modelo); sigue la F1-d1 (descarga y medición)** (§5.148).
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

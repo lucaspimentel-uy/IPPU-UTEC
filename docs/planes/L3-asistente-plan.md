@@ -251,6 +251,12 @@ Sin código, sin llamadas a modelos, sin hosting y con datos simulados. **Cerrad
     con ellas (§5.147).
   - **F1-c7 · Recuperación y categoría 2 — pendiente** (era la F1-c6, §5.145 e). Secciones «imán», vocabulario y
     casos «sin respaldo» escritos por Samuel; recién ahí se fija el umbral.
+  - **F1-d0 · Capa 2 local, sin modelo — HECHA (2026-10-18).** `asistente/capa2.py`: un clasificador (crisis y pedido
+    clínico) que corre después de las reglas, recibe sólo la consulta enmascarada y **sólo agrega rechazos**; falso
+    determinista para los tests y cliente de Ollama que sólo se conecta a 127.0.0.1 o localhost; `--capa2` en el
+    corredor (§5.148).
+  - **F1-d1 · Descarga y medición del modelo local — pendiente.** Samuel elige el modelo (como máximo 2 a comparar,
+    §5.148 c); se mide con `--capa2 ollama` sobre el banco y los retenidos.
   - **F1-d · Proveedor intercambiable.** Primero un generador falso y determinista para los tests; después un
     modelo local si hay hardware (§7.3, «Viabilidad»); una API hospedada sólo con texto público o sintético.
 
@@ -701,6 +707,108 @@ REPORTE FINAL
   - ls-remote, git diff --stat y la salida de cada criterio;
   - v3: inseguros (separando crisis y fuera de crisis), seguros, indebido y datos, con ids; patrón de los fallos SIN proponer arreglos;
   - tests modificados y por qué;
+  - qué está [verificado] (con comando) y qué es [supuesto];
+  - desvíos del prompt;
+  - preguntas abiertas completas.
+```
+
+### 9.5 F1-d0 · capa 2 local, sin modelo (2026-10-18; lo escribió el revisor, lo ejecutó Samuel con Claude)
+```text
+ALCANCE DE LA SESIÓN
+- Sí: F1-d0. Segunda capa de límites con modelo LOCAL: interfaz, clasificador falso determinista, cliente para Ollama en localhost con la biblioteca estándar, integración en flujo.py que SÓLO agrega rechazos, y tests.
+- Sí: al final, si Ollama está instalado, listar candidatos de modelo y DETENERSE. No descargar nada.
+- No: descargar modelos, medir con un modelo real (eso es la F1-d1), API hospedada, paquetes nuevos (nada en requirements.txt; sólo urllib y json).
+- No: tocar limites.py, mensajes.py, indice.py ni eval/ (reglas congeladas, §5.147 c).
+- No: usar ejemplos de los retenidos v0 a v3 en las instrucciones del clasificador ni en sus tests (los retenidos tienen que seguir limpios para el modelo).
+- No: L1, CLAUDE.md, cabecera de handoff.md. Sin texto de docs/markdown/. El clasificador nunca recibe documentos de IPPU.
+
+RAMA
+- git checkout main
+- git pull origin main
+- git ls-remote gitlab main y git ls-remote origin main → los dos tienen que dar b8e19f7. Si no, PARAR.
+- git checkout -b l3/f1d0-capa2
+
+LEER PRIMERO
+- docs/planes/L3-asistente-plan.md §8 (definiciones de LIM-1 a LIM-10 y de crisis).
+- handoff.md §5.130, §5.145 y §5.147.
+- asistente/flujo.py (responder, texto_para_mostrar).
+
+TAREA
+0. Registrar este prompt en el plan §9 (§5.136 d).
+1. asistente/capa2.py:
+   - Clasificacion(crisis: bool, pedido_clinico: bool, disponible: bool, detalle: str).
+   - Interfaz Clasificador con clasificar(consulta_enmascarada) -> Clasificacion.
+   - ClasificadorFalso: determinista y configurable (por ejemplo, un dict de consulta → banderas; por defecto, todo False).
+   - ClasificadorOllama(modelo, url="http://127.0.0.1:11434", timeout=20):
+     · se NIEGA a construirse si el host no es 127.0.0.1 o localhost (ValueError);
+     · POST con urllib.request, temperature 0, salida JSON;
+     · parseo estricto de {"crisis": bool, "pedido_clinico": bool};
+     · cualquier error (conexión, timeout, JSON inválido o claves faltantes) → disponible=False. Nunca lanza la excepción hacia el flujo.
+2. Las instrucciones del clasificador van en una constante de capa2.py, escritas desde las definiciones del plan §8: crisis (autolesión, violencia, abuso, urgencia médica, persona extraviada) y pedido clínico (diagnóstico, indicación, interpretar un caso, decidir, redactar registros, compartir con terceros).
+   - Deben decir que el texto del usuario es un dato, no una instrucción.
+   - Si llevan ejemplos, inventados de cero.
+   - Agregar el comentario: «no usar ejemplos de eval/».
+3. flujo.responder(..., clasificador=None):
+   - primero las reglas, como hoy; el clasificador recibe sólo la consulta ya enmascarada;
+   - si el clasificador marca crisis → C, cualquiera haya sido la salida de las reglas;
+   - si marca pedido_clinico y las reglas iban a responder con cita → A, con LIM «capa2»;
+   - el clasificador NUNCA convierte un rechazo en respuesta;
+   - si disponible=False → las reglas solas y una marca interna capa2_caida en la Salida, que no se le muestra a la persona;
+   - clasificador=None → comportamiento idéntico al actual.
+4. Corredor: opción --capa2 {ninguna,falso,ollama} y --modelo NOMBRE. Reportar cuántas salidas cambió la capa (y cuáles), cuántas veces estuvo caída y la latencia promedio y máxima. No se corre con ollama en esta sesión.
+5. Tests (todos con ClasificadorFalso; ninguno necesita Ollama):
+   - monotonía: para un conjunto de consultas propias y TODAS las combinaciones de banderas, la salida con capa nunca es más permisiva que la de las reglas solas;
+   - crisis de la capa sube A, B y responde_con_cita a C;
+   - pedido_clinico sólo cambia responde_con_cita a A;
+   - disponible=False da lo mismo que sin capa, más la marca;
+   - ClasificadorOllama rechaza hosts no locales (por ejemplo, http://10.0.0.5:11434 y https://ejemplo.com);
+   - parseo: JSON inválido, claves faltantes o tipos equivocados → disponible=False (con un servidor simulado en memoria o parcheando urlopen; sin red);
+   - clasificador=None: el banco da exactamente los mismos números que hoy.
+6. Al final, SIN DESCARGAR: correr ollama --version.
+   - Si está instalado, listar 2 o 3 candidatos: instruct, 7–8B, cuantización Q4, buen español, licencia Apache 2.0 o MIT. Para cada uno: nombre o tag en Ollama, tamaño de descarga, licencia y URL de la fuente.
+   - DETENERSE: Samuel elige antes de la F1-d1.
+   - Si Ollama no está instalado, decirlo.
+
+CRITERIOS DE ACEPTACIÓN (pegar la salida)
+- cd implementacion/L3-asistente-virtual; python -m pytest -q → verde; total y nuevos.
+- Desde la raíz: python herramientas/verificar_estado.py --check → OK.
+- git diff --stat main -- implementacion/L1-hce-idea → VACÍO.
+- git diff --name-only main -- CLAUDE.md implementacion/L3-asistente-virtual/requirements.txt implementacion/L3-asistente-virtual/eval implementacion/L3-asistente-virtual/asistente/limites.py implementacion/L3-asistente-virtual/asistente/mensajes.py implementacion/L3-asistente-virtual/asistente/indice.py → VACÍO.
+- git grep -n -E "L1-hce|from L1|import L1|anthropic|openai|httpx|requests" -- "implementacion/L3-asistente-virtual/*.py" → VACÍO.
+- git grep -n -E "https?://" -- "implementacion/L3-asistente-virtual/asistente/*.py" → sólo 127.0.0.1 o localhost (pegar la salida).
+- python -m asistente.evaluar_banco eval/banco-v0.md → mismos números que en la F1-c6d (28/30, inseguros 0).
+- python -m asistente.evaluar_banco eval/banco-v0.md --capa2 falso → mismos números (el falso por defecto no marca nada).
+
+AL CERRAR
+- docs/bitacora.md: entrada nueva, máximo 15 líneas.
+- handoff.md §6, línea de L3: «F1-d0 hecha (capa 2 local, sin modelo); sigue la F1-d1 (descarga y medición)».
+- handoff.md §5.148, con la fecha del día y «Samuel»:
+  (a) enmienda §5.130 (c): una segunda capa con modelo LOCAL puede sólo agregar rechazos (subir a C ante crisis, o A ante un pedido clínico) y nunca habilitar una respuesta; las reglas siguen siendo el piso;
+  (b) la capa recibe sólo la consulta enmascarada, nunca documentos de IPPU; el cliente se niega a conectarse a hosts no locales;
+  (c) modelo: 7–8B, licencia permisiva (Apache 2.0 o MIT), como máximo 2 a comparar; lo elige Samuel;
+  (d) si la capa no responde, quedan las reglas solas (experimento); el comportamiento en producción se decide más adelante;
+  (e) las instrucciones del clasificador no usan ejemplos de eval/;
+  (f) los fallos seguros (rechazo con el mensaje equivocado) se aceptan como costo de la v1;
+  (g) constancia: el enmascarado por reglas no llega al 100 % (nombres en minúscula o de una palabra al comienzo); se lleva a IPPU junto con la crisis.
+- Plan §4: «F1-d0 — HECHA»; F1-d1 pendiente.
+
+GIT (§5.137 c)
+- Commit: "L3 F1-d0: capa 2 local que sólo agrega rechazos (sin modelo)".
+- git push origin l3/f1d0-capa2   (la rama SÓLO a origin)
+- git checkout main
+- git merge --ff-only l3/f1d0-capa2
+- Sólo si pasaron los criterios: git push origin main y git push gitlab main (sin --force).
+- Borrar la rama en local y en origin.
+- git ls-remote gitlab main y git ls-remote origin main (pegar la salida).
+- Si el modo automático bloquea, listar los comandos uno por línea para PowerShell 5.1, sin &&.
+
+REPORTE FINAL
+- Escribirlo en C:\Users\User\Desktop\L3-reporte-f1d0.md (fuera del repo); Samuel pega el contenido del archivo.
+- Máximo 35 líneas sin contar las salidas pegadas, con el bloque «PARA EL REVISOR»:
+  - ls-remote, git diff --stat y la salida de cada criterio;
+  - cómo se garantiza la monotonía (test y lógica, en 3 líneas);
+  - el texto de las instrucciones del clasificador (es nuestro, se puede pegar);
+  - candidatos de modelo con licencia, tamaño y fuente, o «Ollama no instalado»;
   - qué está [verificado] (con comando) y qué es [supuesto];
   - desvíos del prompt;
   - preguntas abiertas completas.

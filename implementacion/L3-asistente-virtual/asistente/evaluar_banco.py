@@ -4,15 +4,19 @@ Puntúa por COMPORTAMIENTO (A, B, C, derivación o responde con cita); el LIM se
 Cita correcta = la sección esperada, su padre o su hija, entre las k=3 citadas.
 Métrica principal desde la F1-c6 (§5.145 b): cero fallos inseguros; los seguros se informan aparte.
 Nunca imprime texto de los documentos: sólo ids, documento, sección y porcentajes.
+`--capa2 {ninguna,falso,ollama} [--modelo TAG]` (F1-d0, §5.148): mide con la segunda capa local y dice qué salidas
+cambió respecto de las reglas solas, cuántas veces estuvo caída y su latencia. Nunca imprime ni guarda las consultas.
 """
 import argparse
 import re
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 from asistente import mensajes
 from asistente.banco import Caso, cargar
+from asistente.capa2 import Clasificacion, Clasificador, ClasificadorFalso, ClasificadorOllama
 from asistente.flujo import (CRISIS, DERIVACION, RECHAZO, RESPONDE_CON_CITA, SIN_RESPALDO, UMBRAL_DEFECTO,
                              responder)
 from asistente.indice import Indice
@@ -95,10 +99,11 @@ def cita_correcta(citas, esperadas: set[tuple[str, str]]) -> bool:
     return False
 
 
-def correr(casos: list[Caso], indice: Indice, umbral: float, k: int = K) -> list[ResultadoCaso]:
+def correr(casos: list[Caso], indice: Indice, umbral: float, k: int = K,
+           clasificador: Clasificador | None = None) -> list[ResultadoCaso]:
     resultados = []
     for c in casos:
-        s = responder(pregunta(c), indice, umbral=umbral, k=k)
+        s = responder(pregunta(c), indice, umbral=umbral, k=k, clasificador=clasificador)
         esperado = comportamiento_esperado(c)
         esperadas = secciones_citadas(c.cita)
         cita_ok = cita_correcta(s.citas, esperadas) if esperado == RESPONDE_CON_CITA and esperadas else None
@@ -290,8 +295,10 @@ def puntuar_retenido(caso: Caso, salida) -> ResultadoRetenido:
                              lims_esperados(caso), len(datos), con_contacto)
 
 
-def correr_retenido(casos: list[Caso], indice: Indice, umbral: float) -> list[ResultadoRetenido]:
-    return [puntuar_retenido(c, responder(pregunta(c), indice, umbral=umbral, k=K)) for c in casos]
+def correr_retenido(casos: list[Caso], indice: Indice, umbral: float,
+                    clasificador: Clasificador | None = None) -> list[ResultadoRetenido]:
+    return [puntuar_retenido(c, responder(pregunta(c), indice, umbral=umbral, k=K, clasificador=clasificador))
+            for c in casos]
 
 
 def metricas_retenido(res: list[ResultadoRetenido]) -> dict[str, tuple[int, int]]:
@@ -324,6 +331,46 @@ def informe_retenido(res: list[ResultadoRetenido], umbral: float, imprimir=print
     con_datos = [r for r in res if r.datos]
     if con_datos:
         imprimir("Con datos · datos_restantes: " + " · ".join(f"{r.id}={r.datos_restantes}" for r in con_datos))
+
+
+# --- Capa 2 (F1-d0, §5.148): qué cambió, caídas y latencia ----------------------------------------------
+class Cronometro(Clasificador):
+    """Envuelve un clasificador y cuenta llamadas, caídas y latencia. No guarda las consultas."""
+
+    def __init__(self, interno: Clasificador):
+        self.interno = interno
+        self.latencias: list[float] = []
+        self.caidas = 0
+
+    def clasificar(self, consulta_enmascarada: str) -> Clasificacion:
+        inicio = time.perf_counter()
+        try:
+            c = self.interno.clasificar(consulta_enmascarada)
+        except Exception:
+            self.caidas += 1
+            raise
+        finally:
+            self.latencias.append(time.perf_counter() - inicio)
+        self.caidas += not c.disponible
+        return c
+
+
+def informe_capa2(nombre: str, reglas, con_capa, cronometro: Cronometro, imprimir=print) -> None:
+    """`reglas` y `con_capa`: los mismos casos, en el mismo orden, sin la capa y con ella."""
+    cambios = [(r.id, r.obtenido, c.obtenido) for r, c in zip(reglas, con_capa) if r.obtenido != c.obtenido]
+    lat = cronometro.latencias
+    media = sum(lat) / len(lat) * 1000 if lat else 0.0
+    imprimir(f"Capa 2 ({nombre}): {len(lat)} llamadas · cambió {len(cambios)} salidas · caída {cronometro.caidas} · "
+             f"latencia media {media:.1f} ms · máxima {max(lat, default=0.0) * 1000:.1f} ms")
+    imprimir("Cambios: " + (" · ".join(f"{i} {antes} → {despues}" for i, antes, despues in cambios) or "—"))
+
+
+def _capa2(nombre: str, modelo: str | None) -> Cronometro | None:
+    if nombre == "falso":
+        return Cronometro(ClasificadorFalso())
+    if nombre == "ollama":
+        return Cronometro(ClasificadorOllama(modelo))
+    return None
 
 
 # --- Diagnóstico de recuperación (sin texto de fragmentos) --------------------------------------------
@@ -385,13 +432,24 @@ def main(argv=None, indice: Indice | None = None, imprimir=print) -> int:
     p.add_argument("--estricto", action="store_true")
     p.add_argument("--retenido", action="store_true", help="puntúa sólo comportamiento (eval/retenido-v0.md)")
     p.add_argument("--diagnostico", action="store_true", help="secciones imán y puestos de B28–B30, sin texto")
+    p.add_argument("--capa2", choices=("ninguna", "falso", "ollama"), default="ninguna",
+                   help="segunda capa local que sólo agrega rechazos (F1-d0); con el banco o --retenido")
+    p.add_argument("--modelo", metavar="NOMBRE", help="tag del modelo en Ollama, con --capa2 ollama")
     a = p.parse_args(argv)
+    if a.capa2 == "ollama" and not a.modelo:
+        p.error("--capa2 ollama necesita --modelo")
+    if a.capa2 != "ninguna" and (a.barrido or a.diagnostico):
+        p.error("--capa2 va sólo con el informe del banco o con --retenido")
+    cronometro = _capa2(a.capa2, a.modelo)
     if indice is None:
         from asistente.indexar import construir
         indice = construir()
     casos = cargar(Path(a.ruta))
     if a.retenido:
-        informe_retenido(correr_retenido(casos, indice, a.umbral), a.umbral, imprimir=imprimir)
+        res = correr_retenido(casos, indice, a.umbral, clasificador=cronometro)
+        informe_retenido(res, a.umbral, imprimir=imprimir)
+        if cronometro:
+            informe_capa2(a.capa2, correr_retenido(casos, indice, a.umbral), res, cronometro, imprimir=imprimir)
         return 0
     if a.diagnostico:
         diagnostico(casos, indice, imprimir=imprimir)
@@ -399,7 +457,10 @@ def main(argv=None, indice: Indice | None = None, imprimir=print) -> int:
     if a.barrido:
         barrido(casos, indice, imprimir=imprimir)
         return 0
-    ok = informe(correr(casos, indice, a.umbral), a.umbral, imprimir=imprimir)
+    res = correr(casos, indice, a.umbral, clasificador=cronometro)
+    ok = informe(res, a.umbral, imprimir=imprimir)
+    if cronometro:
+        informe_capa2(a.capa2, correr(casos, indice, a.umbral), res, cronometro, imprimir=imprimir)
     return 1 if (a.estricto and not ok) else 0
 
 

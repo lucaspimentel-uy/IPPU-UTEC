@@ -20,6 +20,14 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-10-18 · L3 — F1-d0: capa 2 local que sólo agrega rechazos, sin modelo** (Samuel con Claude, rama `l3/f1d0-capa2`; §5.148, enmienda §5.130 c). No toca `limites.py`, `mensajes.py`, `indice.py`, `eval/`, `requirements.txt` ni L1.
+  - `asistente/capa2.py`: `Clasificacion`, interfaz `Clasificador`, `ClasificadorFalso` (consulta → banderas; por defecto nada) y `ClasificadorOllama`: POST `/api/chat` con urllib, temperatura 0, salida con esquema JSON y parseo estricto; sólo 127.0.0.1 o localhost, sin proxy y sin seguir redirecciones; todo error → `disponible=False`, nunca lanza. `INSTRUCCIONES` sin ejemplos, desde el plan §8; la consulta va como dato JSON.
+  - `flujo.responder(..., clasificador=None)`: reglas primero; ante una C de las reglas no se consulta la capa; crisis → C; pedido clínico → A sólo desde `responde_con_cita`; caída → reglas solas + `Salida.capa2_caida` (no se muestra).
+  - Corredor: `--capa2 {ninguna,falso,ollama}` y `--modelo`; informa llamadas, salidas que cambió (ids), caídas y latencia media y máxima.
+  - Tests: 461 en verde (272 + 189 en `test_capa2.py`; ninguno modificado). Monotonía con 12 consultas propias × las 8 combinaciones de banderas; hosts no locales; parseo y errores con el HTTP de urllib reemplazado en memoria; proxy del entorno ignorado; las instrucciones no comparten 4 palabras seguidas con `eval/`. Cuatro mutaciones (proxy, redirecciones, caída que habilita, pedido sobre cualquier salida) hacen fallar los tests.
+  - Banco v0 sin capa y con `--capa2 falso`: los mismos números de la F1-c6d (28/30, inseguros 0); el falso: 29 llamadas, 0 cambios, 0 caídas.
+  - Ollama **no está instalado**: no se listaron candidatos ni se descargó nada. Hardware, sólo informativo: AMD Radeon RX 7600, 31,4 GB de RAM.
+  - Distinto del prompt: la C de la capa suma `LIM-7` además de `capa2` (si no, el corredor la contaría como fallo seguro); la capa no se consulta cuando las reglas ya dieron C; claves de más también son caída; `format` es un esquema JSON (Ollama ≥ 0.5, [supuesto]); los tests del cliente usan un transporte en memoria, no el falso; el flujo también ataja la excepción de cualquier clasificador; un test lee `eval/` sólo para comparar, sin copiar; otro fija 28/30 (se actualiza en la F1-c7).
 - **2026-10-18 · L3 — F1-c6d: NNA + término clínico en todas las formas, `texto_para_mostrar` y retenido v3** (Samuel con Claude, rama `l3/f1c6d-congelar`; §5.147). Dos commits: `adfe638` (reglas y tests) y el de la medición; después del primero no cambian `limites.py`, `flujo.py` ni `mensajes.py`.
   - `limites.py`: `es_pregunta_documental()` rechaza con cualquier forma una consulta que junta un NNA (genérico o caso particular) con un término clínico; la compuerta da A.
   - `flujo.texto_para_mostrar()`: avisos → mensaje → citas (documento y sección, nunca el fragmento) → pie. Es la única salida a la persona; LIM-11 no está conectado.
