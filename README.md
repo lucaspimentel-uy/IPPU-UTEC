@@ -10,7 +10,7 @@ a la atención de **niños, niñas y adolescentes (NNA) con TEA**.
 |---|---|
 | **L1** ⭐ | Historia Clínica Electrónica (HCE) + inventario **IDEA** + analítica institucional |
 | L2 | Pictogramas personalizados con IA (CAA/AAC) |
-| L3 | Asistente virtual (chatbot RAG) para técnicos, familias y docentes |
+| L3 | Asistente de orientación y derivación para familias y docentes (catálogo de puertas); se reinicia (§5.151) |
 | L4 | Patrones de visualización / dashboards (incl. eye-tracking) |
 
 ## Estado de la Línea 1 (octubre de 2026)

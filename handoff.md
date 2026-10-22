@@ -7,7 +7,7 @@
 > trabajaba a ciegas — ver §12). Es el **contexto compartido de los tres**: leerlo al empezar, actualizarlo
 > al terminar, pushearlo siempre. **Cómo trabajamos en paralelo sin pisarnos: §12.**
 >
-> **Estado al 2026-10-17 · sesión C3 (HCE-ORG: INAU, BPS y alerta AYEX)** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
+> **Estado al 2026-10-22 · L3 (Samuel): la v1 para técnicos se retiró y se reinicia sobre los requerimientos v1.3 de IPPU, orientación y derivación para familias con el Catálogo de puertas (§5.151); L1 sin cambios desde C3 (HCE-ORG: INAU, BPS y alerta AYEX)** — una pantalla (§5.114); el detalle está en §5 (decisiones), §6 (pendientes) y `docs/bitacora.md`.
 >
 > - **Backend:** FastAPI + Postgres · **51 tablas** · head `dcc838486407` · 989 tests, 0 salteados · contrato `{data, warnings}` / `{code, detail[]}` (§5.108, §5.115).
 > - **Acceso:** `POST /auth/login` → JWT (`SECRET_KEY` obligatoria); roles `admin` | `tecnico`; el técnico ve sólo los expedientes de sus grupos (fuera de alcance = 404) — §5.101, §5.118–§5.120.
@@ -3337,6 +3337,13 @@ Rama `l3/f1d2-capa2-ajuste` (F1-d2). Los resultados van en `docs/bitacora.md`. D
 - **(d)** Con este ajuste, los retenidos v0–v3 quedan contaminados también para la capa; la medición válida es la del v4.
 - **(e)** Pendiente para la F2: precalentar al arrancar y el tiempo que el modelo queda cargado.
 
+### 5.151 L3: se retira la v1 para técnicos y se reinicia sobre los requerimientos de IPPU (2026-10-22, Samuel)
+Rama `l3/retiro-v1-tecnicos`. Fuente: `IPPU-UTEC_Requerimientos_tecnicos_Asistente_TEA_v1.3` y el Catálogo de puertas v1.5 (Drive del proyecto, carpeta «Asitente Virtual»; todavía sin convertir a Markdown).
+- **(a)** IPPU pide un asistente de **orientación y derivación** para público anónimo (familias, docentes, adultos autistas), con el **Catálogo de puertas** como fuente única, clasificación sobre las puertas, tarjeta armada por plantilla sin generación libre y un sitio público de fichas. **Deroga §5.129 b** (v1 sólo para técnicos; catálogo excluido) y deja sin efecto lo implementado en §5.130–§5.150.
+- **(b)** Se borran `implementacion/L3-asistente-virtual/` y `docs/planes/L3-asistente-plan.md`. Quedan recuperables en la etiqueta `l3-v1-tecnicos-2026-10-22` (commit `4ac8933`). §5.128–§5.150 y la bitácora quedan como historia.
+- **(c)** Siguen rigiendo §5.128 a (monorepo), §5.129 a (Samuel decide L3), sólo datos simulados (§5.104) y ningún documento de IPPU en una API hospedada sin autorización escrita.
+- **(d)** Reparo vigente: el catálogo lo generó con IA su autor (`preguntas-ippu.md` C9) y **ninguna ficha está verificada** (Anexo C de los propios requerimientos); la verificación telefónica es de IPPU. Nada se sirve a una persona sin estado «verificado».
+
 ## 6. Pendientes / próximos pasos (sugeridos)
 
 > **Sólo lo abierto.** Lo cerrado y lo superado por decisiones posteriores se mudó el 2026-10-16, verbatim y con la decisión que lo cierra,
@@ -3425,7 +3432,8 @@ Rama `l3/f1d2-capa2-ajuste` (F1-d2). Los resultados van en `docs/bitacora.md`. D
 
 ### L3 (Samuel; texto textual)
 - [x] **L3 · asistente virtual — plan de arranque y F0** → `docs/planes/L3-asistente-plan.md` (límites §8, preguntas §7.3) y el banco (desde la F1-a, `implementacion/L3-asistente-virtual/eval/banco-v0.md`). **F0 cerrada el 2026-10-15** (Samuel). Decisiones en §5.128 y §5.129.
-- [ ] **L3 · F1 — prototipo RAG para técnicos** → plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129). **F1-d2b medida (v4: reglas + capa); sigue según resultados** (§5.148–§5.150).
+- [x] **L3 · F1 — prototipo RAG para técnicos** → **RETIRADA el 2026-10-22** (§5.151): código y plan borrados, recuperables en la etiqueta `l3-v1-tecnicos-2026-10-22`. Texto anterior: plan §4, rebanadas F1-a a F1-d, en `implementacion/L3-asistente-virtual/` (Samuel, desde el 2026-10-15, §5.129); F1-d2b medida (§5.148–§5.150).
+- [ ] **L3 · reinicio sobre los requerimientos v1.3 de IPPU** (§5.151): convertir a Markdown los requerimientos v1.3 y el Catálogo de puertas v1.5; pedir a IPPU los 4 materiales que el documento lista y no están en el Drive (prototipo del asistente, Documento base v1.0, Arquitectura y ejecución v2.0, Banco de FAQ v1.0); contestar las 9 preguntas de su §13; plan nuevo.
 
 ## 7. Preguntas abiertas / a aclarar con el equipo o IPPU
 

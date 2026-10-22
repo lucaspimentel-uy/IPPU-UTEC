@@ -10,8 +10,7 @@ IPPU/
 ├── .gitattributes · .gitignore
 ├── docs/
 ├── implementacion/
-│   ├── L1-hce-idea/        # Línea 1 (foco): backend + demo
-│   └── L3-asistente-virtual/   # Línea 3 (Samuel)
+│   └── L1-hce-idea/        # Línea 1 (foco): backend + demo
 └── herramientas/
 ```
 
@@ -36,8 +35,6 @@ docs/
 │   └── notas-accesibilidad-ui.md   # contraste, foco y reglas de dominio color↔significado
 ├── markdown/               # conversiones .md de las fuentes: se lee y se cita desde acá
 ├── notas/                  # interlocución con IPPU y con el equipo
-├── planes/
-│   └── L3-asistente-plan.md        # plan de L3
 ├── fuentes/                # respaldo: 2 archivos, no se leen (§5.29)
 └── prototipo-v4/           # insumo de build, SÍ se lee (§5.30)
 ```
@@ -121,11 +118,10 @@ backend/
 - **Migraciones:** la migración inicial es **única** (§5.19); un cambio de modelos regenera ese mismo archivo, sin apilar
   revisiones, con `test_la_migracion_coincide_con_los_modelos` en verde.
 
-## `implementacion/L3-asistente-virtual/`
+## L3 (asistente)
 
-Línea 3 (Samuel): asistente para técnicos que responde sólo con documentos autorizados. Monorepo, entorno propio, no importa
-nada de L1 (§5.128–§5.134). Tiene `asistente/` (código), `eval/` (banco de evaluación y set retenido), `tests/`, `pytest.ini` y
-`requirements.txt`. Su README y el plan `docs/planes/L3-asistente-plan.md` dicen cómo se trabaja ahí. **No se toca desde L1.**
+Retirada el 2026-10-22 (§5.151): la v1 para técnicos se borró (código y plan, recuperables en la etiqueta
+`l3-v1-tecnicos-2026-10-22`). L3 se reinicia sobre los requerimientos de IPPU; la carpeta vuelve con la nueva F1.
 
 ## `herramientas/`
 
