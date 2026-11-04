@@ -36,13 +36,7 @@ function renderRecordatorios(){
 function recToggle(i,v){ RECORDATORIOS[i].activo = v; renderRecordatorios(); }
 function recPeriodo(i,v){ RECORDATORIOS[i].periodo = v; }
 
-/* Fotos grupales: guardar no requiere autorización ni produce aviso (§5.99). */
-const GRUPOS_FOTOS = {};   // grupo -> [{desc, fecha}] (en memoria, demo)
-function subirFotoGrupo(gid){
-  (GRUPOS_FOTOS[gid] = GRUPOS_FOTOS[gid]||[]).push({desc:"Registro grupal", fecha:HOY});
-  renderGrupos();
-  toast("Fotografía grupal cargada (demo).");
-}
+/* Las fotos grupales salieron de la vista Grupos (F2): la API no las tiene todavía; vuelven con el registro fotográfico (C5). */
 
 // El dialogo de alta/edicion ya NO se cierra al hacer clic en el fondo (Fase 3-b): es un formulario largo y un
 // clic de mas perderia lo tipeado. Se cierra con «×», con Cancelar o con Escape.

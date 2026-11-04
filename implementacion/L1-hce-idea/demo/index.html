@@ -88,8 +88,8 @@
       <div class="kpirow kpirow-4" id="kpiRow" aria-live="polite">
         <div class="kpi"><div class="lab">NNA activos</div><div class="val" id="kpiTotal">…</div></div>
         <div class="kpi"><div class="lab">Con línea base IDEA</div><div class="val" id="kpiAlDia">…</div><div class="sub">Línea base (HCE-LB) firmada, año en curso</div></div>
-        <div class="kpi"><div class="lab">Pendientes de IDEA</div><div class="val" id="kpiPend">…</div><button type="button" class="sub kpi-ir" onclick="irAPendientes()">Sin línea base firmada este año <span aria-hidden="true">›</span></button></div>
-        <div class="kpi"><div class="lab">Consentimiento (CI) pendiente</div><div class="val" id="kpiCi">…</div><button type="button" class="sub kpi-ir" onclick="irAPendientes()">Sin consentimiento informado <span aria-hidden="true">›</span></button></div>
+        <div class="kpi"><div class="lab">Pendientes de IDEA</div><div class="val" id="kpiPend">…</div><button type="button" class="sub kpi-ir" onclick="irAPendientes('lb')">Sin línea base firmada este año <span aria-hidden="true">›</span></button></div>
+        <div class="kpi"><div class="lab">Consentimiento (CI) pendiente</div><div class="val" id="kpiCi">…</div><button type="button" class="sub kpi-ir" onclick="irAPendientes('ci')">Sin consentimiento informado <span aria-hidden="true">›</span></button></div>
       </div>
 
       <div class="card">
@@ -153,22 +153,13 @@
       <div id="informeContent"></div>
     </section>
 
-    <!-- ============ VISTA: PENDIENTES ============ -->
+    <!-- ============ VISTA: PENDIENTES (conectada · F2) ============
+         GET /hce (el `ci` y el `flujo` del año de cada fila) + GET /recordatorios. Lo arma js/pendientes.js. -->
     <section class="view" id="view-pendientes">
-      <div data-modo-demo></div>
       <div class="crumbs">Servicio de Atención Diurna › <b>Pendientes</b></div>
-      <h1 class="pagetitle" id="tituloPendientes" tabindex="-1">Pendientes de evaluación</h1>
-      <p class="pagedesc">NNA activos que aún no tienen <b>firmada su línea base IDEA (HCE-LB)</b>. La IDEA se aplica una sola vez, al ingreso; este listado ayuda a planificar las líneas base pendientes.</p>
-      <div class="kpirow" id="pendKpi"></div>
-      <div class="card">
-        <div class="cardhead"><h2>NNA sin IDEA del año en curso</h2></div>
-        <table class="lista">
-          <thead>
-            <tr><th>N.º HCE</th><th>C.I.</th><th>Nombres</th><th>Apellido</th><th>Grupo</th><th>Última IDEA</th><th></th></tr>
-          </thead>
-          <tbody id="tbodyPend"></tbody>
-        </table>
-      </div>
+      <h1 class="pagetitle" id="tituloPendientes" tabindex="-1">Pendientes del año</h1>
+      <p class="pagedesc" id="pendDesc"></p>
+      <div id="pendContenido"></div>
     </section>
 
     <!-- ============ VISTA: ANALÍTICA INSTITUCIONAL ============ -->
@@ -242,15 +233,10 @@
          entran ahora a HCE-DOC como archivo histórico de solo lectura, con categoría específica
          "Registro histórico — HCE anterior (…)" y fecha original (§10 Documento Técnico). -->
 
-    <!-- ============ VISTA: GRUPOS ============
-         Crumbs/título/descripción los renderiza grupos-usuario.js (renderGrupos /
-         renderGrupoDetalle) dentro de #gruposList: listado y detalle necesitan cabeceras
-         distintas y F1-nav2 (27cd90b) ya arma la del detalle ahí. Duplicaban con un bloque
-         estático acá — se retira el estático, no F1's markup (handoff §13, sesión pre-reunión
-         2026-08-21). -->
+    <!-- ============ VISTA: GRUPOS (conectada · F2) ============
+         GET /grupos + GET /hce (cuántos NNA y quiénes) y, sólo para admin, PATCH /grupos/{id}. Crumbs, títulos y
+         contenido los arma js/grupos-usuario.js (listado y detalle) dentro de #gruposList. -->
     <section class="view" id="view-grupos">
-      <div data-modo-demo></div>
-      <div class="kpirow" id="gruposKpi"></div>
       <div id="gruposList"></div>
     </section>
 
@@ -471,6 +457,7 @@
 <script src="js/organismos.js"></script>
 <script src="js/auditoria.js"></script>
 <script src="js/recordatorios.js"></script>
+<script src="js/pendientes.js"></script>
 <script src="js/grupos-usuario.js"></script>
 <script src="js/inclusion.js"></script>
 <script src="js/ateneos.js"></script>

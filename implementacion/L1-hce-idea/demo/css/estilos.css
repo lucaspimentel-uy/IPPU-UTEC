@@ -299,12 +299,6 @@
   table.lista td{padding:11px var(--s4);border-bottom:1px solid var(--rule-2);vertical-align:middle}
   table.lista tr:last-child td{border-bottom:none}
   table.lista tr:hover td{background:var(--paper-2)}
-  /* El N.º de HCE es un correlativo: va en la cara de dato, tabular, en Pendientes (1.ª columna). En el listado de
-     «NNA y HCE» va debajo del nombre (.nna-sub, sección F1). */
-  #view-pendientes table.lista td:first-child:not([colspan]){
-    font-family:var(--f-dato);font-size:var(--fs-2xs);color:var(--ink-2)
-  }
-  #view-pendientes table.lista td:first-child b{color:var(--ink);font-weight:700;letter-spacing:.02em}
   .pill{
     display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
     font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;
@@ -1511,25 +1505,42 @@
   @media(max-width:900px){.res-escalas{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
   /* --- Listado de «NNA y HCE» (H3, H5): cinco columnas, un punto de Tab por fila, la fila entera abre con el mouse --- */
-  #tablaNNA th,#tablaNNA td{padding:var(--s2) var(--s3)}
-  #tablaNNA th:first-child,#tablaNNA td:first-child{padding-left:var(--s4)}
-  #tablaNNA th{vertical-align:bottom}
+  #tablaNNA th,#tablaNNA td,#tablaPend th,#tablaPend td,#tablaGrupo th,#tablaGrupo td{padding:var(--s2) var(--s3)}
+  #tablaNNA th:first-child,#tablaNNA td:first-child,#tablaPend th:first-child,#tablaPend td:first-child,#tablaGrupo th:first-child,#tablaGrupo td:first-child{padding-left:var(--s4)}
+  #tablaNNA th,#tablaPend th,#tablaGrupo th{vertical-align:bottom}
   #tablaNNA .th-sub{display:block;font-weight:600;color:var(--ink-2)}
-  #tablaNNA tbody tr[data-hce]{cursor:pointer}
-  #tablaNNA .col-ir{width:1%;padding-right:var(--s4);color:var(--ink-2);font-size:var(--fs-md);text-align:right}
-  #tablaNNA th.col-ir{font-size:var(--fs-2xs)}
+  #tablaNNA tbody tr[data-hce],#tablaPend tbody tr[data-hce],#tablaGrupo tbody tr[data-hce]{cursor:pointer}
+  #tablaNNA .col-ir,#tablaPend .col-ir,#tablaGrupo .col-ir{width:1%;padding-right:var(--s4);color:var(--ink-2);font-size:var(--fs-md);text-align:right}
+  #tablaNNA th.col-ir,#tablaPend th.col-ir,#tablaGrupo th.col-ir{font-size:var(--fs-2xs)}
   .nna-abrir{
     display:inline-flex;align-items:center;min-height:24px;padding:2px 0;background:none;border:0;
     font:inherit;font-size:var(--fs-sm);font-weight:600;color:var(--ink);text-align:left;cursor:pointer
   }
-  .nna-abrir:hover,#tablaNNA tbody tr[data-hce]:hover .nna-abrir{color:var(--accion-hover);text-decoration:underline}
+  .nna-abrir:hover,#tablaNNA tbody tr[data-hce]:hover .nna-abrir,#tablaPend tbody tr[data-hce]:hover .nna-abrir,#tablaGrupo tbody tr[data-hce]:hover .nna-abrir{color:var(--accion-hover);text-decoration:underline}
   .nna-sub{display:block;font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.35}
   .nna-sub .cod{color:var(--ink-2)}
   #tablaNNA .chip-inactivo{margin-left:var(--s1)}
   /* En las listas «firmado» es ● + texto en --ok, sin relleno; «en curso» conserva su relleno. El expediente conserva el macizo. */
-  #tablaNNA .st-firmado{background:transparent;border:1px solid transparent;color:var(--ok)}   /* sin relleno, con la MISMA caja que los de contorno: LB · PA · PB · IC alinean entre filas */
+  #tablaNNA .st-firmado,#tablaGrupo .st-firmado{background:transparent;border:1px solid transparent;color:var(--ok)}   /* sin relleno, con la MISMA caja que los de contorno: LB · PA · PB · IC alinean entre filas */
   .st-grupo .st{min-width:3.75rem;text-align:center}
   .ci-ok{font-size:var(--fs-3xs);font-weight:600;color:var(--ink-2);white-space:nowrap}
+
+  /* --- Pendientes y Grupos conectados (F2) --- */
+  .st-pend{flex-wrap:wrap}
+  .chip-n{font-variant-numeric:tabular-nums;font-weight:700}
+  .chip-estado.active .chip-n{color:inherit}
+  .pend-orient{margin:0 0 var(--s4);padding:var(--s3) var(--s4);border:1px solid var(--rule);border-radius:var(--r-sm);background:var(--paper-2);font-size:var(--fs-xs);color:var(--ink-2)}
+  .pend-orient summary{cursor:pointer;font-weight:600;color:var(--ink);min-height:24px}
+  .pend-orient-lista{margin:var(--s2) 0 var(--s1);padding-left:var(--s5);line-height:1.6}
+  .pend-periodo{color:var(--ink-2);font-weight:600}
+  .grupo-tecnicos{margin:0 0 var(--s3);font-size:var(--fs-xs)}
+  .grupo-tecnicos>div{display:flex;gap:var(--s2);padding:var(--s1) 0;border-bottom:1px solid var(--rule-2)}
+  .grupo-tecnicos>div:last-child{border-bottom:none}
+  .grupo-tecnicos dt{flex:0 0 5.5rem;color:var(--ink-2);font-weight:600}
+  .grupo-tecnicos dd{margin:0;color:var(--ink)}
+  .grupo-rol,.grupo-sin,.grupo-anio{color:var(--ink-2)}
+  .grupo-tecnicos-fila{max-width:36rem}
+  .grupo-acciones{margin:0 0 var(--s3)}
 
   /* --- KPI (H9): cuatro columnas desde 900 px; los pendientes son botones a «Pendientes» --- */
   @media(min-width:900px){.kpirow-4{grid-template-columns:repeat(4,minmax(0,1fr))}}

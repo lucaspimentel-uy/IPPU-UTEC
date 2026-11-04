@@ -17,10 +17,14 @@ function go(view){
     if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   window.scrollTo({top:0});
+  /* Las vistas conectadas piden sus datos cada vez que se abren (pendientes.js, grupos-usuario.js). */
+  if(view === "pendientes" && typeof pendAlAbrir === "function") pendAlAbrir();
+  if(view === "grupos" && typeof gruposAlAbrir === "function") gruposAlAbrir();
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
-/* Los KPI de pendientes llevan a la vista Pendientes; el foco pasa a su título. */
-function irAPendientes(){
+/* Los KPI de pendientes llevan a la vista Pendientes ya filtrada («lb» o «ci»); el foco pasa a su título. */
+function irAPendientes(filtro){
+  if(typeof pendPedirFiltro === "function") pendPedirFiltro(filtro);
   go("pendientes");
   const t = document.getElementById("tituloPendientes"); if(t) t.focus();
 }
@@ -209,14 +213,19 @@ function setEstadoFiltro(estado){
 /* Filtro de grupo: GET /grupos, solo los del anio en curso (la API resuelve `grupo` + `anio`).
    Los colores de grupo de datos.js NO se usan: el nombre es el de la API. Si falla, el filtro
    queda en «Todos» y el listado sigue funcionando. */
+/* El anio de los grupos que se muestran: el en curso si la API trae grupos de ese anio, si no el mas reciente.
+   Una sola regla para el filtro del listado, el alta y la vista Grupos. */
+function anioDeGrupos(lista){
+  const hoy = new Date().getFullYear();
+  return lista.some(g => g.anio === hoy) ? hoy : lista.reduce((m,g) => Math.max(m,g.anio), 0);
+}
 async function cargarGrupos(){
   const sel = document.getElementById("filtroGrupo");
   const mi = ++LISTA.gruposSeq;   // misma guardia que las cargas del expediente: una respuesta tardia tras «Salir» se descarta
   try{
     const r = await apiFetch("/grupos");
     if(mi !== LISTA.gruposSeq) return;
-    const anioMax = r.data.reduce((m,g)=>Math.max(m,g.anio), 0);
-    const anio = r.data.some(g => g.anio === new Date().getFullYear()) ? new Date().getFullYear() : anioMax;
+    const anio = anioDeGrupos(r.data);
     GRUPOS_API = r.data.filter(g => g.anio === anio);
     LISTA.anioGrupos = GRUPOS_API.length ? anio : null;   // el alta pide los grupos de ESTE anio (el que trajo la API)
     sel.innerHTML = `<option value="">Todos</option>` +
@@ -265,35 +274,11 @@ function toggleActivo(id){
 function renderNNA(){
   // Fase 3-a: el listado y los KPIs de Inicio ya no salen de este array (ver «INICIO CONECTADO»).
   // Esta funcion sigue para las vistas que quedan en modo demostracion.
-  renderPendientes();
   renderAnalitica();   // la analítica institucional se deriva del mismo modelo: se recalcula con cada cambio
 }
 function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 
-/* --- Vista Pendientes (NNA activos sin IDEA del año en curso) --- */
-function renderPendientes(){
-  const kpi = document.getElementById("pendKpi");
-  const tb2 = document.getElementById("tbodyPend");
-  if(!tb2) return;
-  const pend = NNA.filter(pendienteIdea);
-  const activos = NNA.filter(p=>p.activo).length;
-  if(kpi){
-    const cobertura = activos ? Math.round((activos-pend.length)/activos*100) : 0;
-    kpi.innerHTML = `
-      <div class="kpi"><div class="lab">Sin línea base IDEA</div><div class="val">${pend.length}</div><div class="sub">NNA activos sin HCE-LB firmada</div></div>
-      <div class="kpi"><div class="lab">Cobertura línea base</div><div class="val">${cobertura} %</div><div class="sub">${activos-pend.length} de ${activos} activos</div></div>
-      <div class="kpi"><div class="lab">Sin iniciar</div><div class="val">${pend.filter(p=>!(p.flujo&&p.flujo.lb.dim.some(v=>v!=null))).length}</div><div class="sub">Sin ninguna dimensión cargada</div></div>`;
-  }
-  tb2.innerHTML = pend.length ? pend.map(p=>{
-    const estadoTxt = `<span style="color:var(--ink-2)">sin iniciar</span>`;
-    return `<tr>
-      <td><b>#${p.id}</b></td><td>${p.ci}</td>
-      <td class="nna-name">${p.nombre}</td><td class="nna-name">${p.apellido}</td>
-      <td>Grupo ${p.grupo}</td><td>${estadoTxt}</td>
-      <td><button class="btn btn-link" onclick="go('inicio')">Ir al listado →</button></td>
-    </tr>`;
-  }).join("") : `<tr><td colspan="7"><div class="empty-state"><div class="big" aria-hidden="true">✓</div>Todas las líneas base IDEA están firmadas.</div></td></tr>`;
-}
+/* La vista Pendientes ya no es de demostración: vive en pendientes.js (conectada a GET /hce y GET /recordatorios). */
 
 /* Navegación intra-vista: scroll suave hacia una sección del expediente o de un grupo.
    El contexto (NNA abierto, o vista Grupos) no cambia — es puro atajo visual. */
@@ -511,6 +496,8 @@ function limpiarUiDeSesion(){
   if(typeof sevOlvidarSesion === "function") sevOlvidarSesion();   // severidad y el catálogo de grados
   if(typeof orgOlvidarSesion === "function") orgOlvidarSesion();   // organismos y las opciones de BPS
   if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
+  if(typeof pendOlvidarSesion === "function") pendOlvidarSesion();       // Pendientes: nada del listado anterior detrás del login
+  if(typeof gruposOlvidarSesion === "function") gruposOlvidarSesion();   // Grupos y el diálogo de asignación
   if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";

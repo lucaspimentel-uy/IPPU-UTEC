@@ -1,6 +1,5 @@
-/* Grupos de referencia y Mi usuario (v3.1) + render inicial.
+/* Grupos de referencia (conectada a la API, F2) y Mi usuario (ejemplo, v3.1).
    Demo L1 HCE+IDEA - IPPU x UTEC-LIDIA.
-   Extraido del monolito (lineas 3825-3946) sin cambios de logica.
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 /* =====================================================================
    MÓDULOS AÑADIDOS (v3.1): Grupos, Usuario.
@@ -10,22 +9,9 @@
    histórico de solo lectura ("Registro histórico — HCE anterior", §10).
    ===================================================================== */
 
-/* ---------- GRUPOS DE REFERENCIA ----------
-   §5.18 / D9: los grupos reales de IPPU son por color (Azul · Celeste · Naranja · Verde).
-   La letra A..E era invención de la demo original; el prototipo v4 confirma los 4 colores.
-   El grupo E ("Multiedad — taller abierto") se retira: no existe en el dominio real. */
-/* F1-nav (2026-08-16): GRUPOS pasa a tener nómina §21.1 (Manual de Procedimientos):
-   responsable1/2 con alcance "HCE completa del grupo · firma" y tecnicosAutorizados[]
-   con alcance "Texto libre donde participa". Antes había un array plano `encargados`
-   que no distinguía roles ni permitía altas/bajas — se retira.
-   Limitación conocida: los cambios de responsable NO quedan en HCE-LOG (que hoy es
-   por NNA, no por grupo). Ver handoff §5.18 y §7. */
-/* F1-nav2 (2026-08-17): la vista Grupos se parte en LISTADO + DETALLE, alineando
-   con vGrupos/vGrupoDetalle del Prototipo v4 (`HCE_IPPU_Prototipo_v4.html:2295-2349`).
-   El bloque "Técnicos autorizados del grupo" pasa a ser CONDICIONAL: sólo se muestra
-   si el usuario tiene rol de Coordinación / Dirección técnica (Manual §21.1). En la
-   demo se simula con USUARIO.puedeAdministrarTecnicos; en el sistema real sale del
-   backend según la matriz de roles. */
+/* ---------- GRUPOS DE REFERENCIA DE EJEMPLO ----------
+   La vista Grupos ya es la de la API (más abajo). Este arreglo de grupos «por color» (§5.18 / D9) queda sólo porque los
+   ateneos de ejemplo (ateneos.js) leen sus ids para sus selectores; nada de la vista Grupos lo usa. */
 const GRUPOS = [
   {id:"Azul", franja:"6 – 9 años",  dias:"Lun · Mié · Vie", horario:"9:00 – 12:00",
    responsable1:{nombre:"Dr. González", rol:"Psicología"},
@@ -53,242 +39,244 @@ const GRUPOS = [
    obs:"Preparación para la vida adulta e inserción."}
 ];
 
-/* Nómina completa del grupo (responsables + otros habilitados) para la tabla §21.1. */
-function todosTecnicosDelGrupo(g){
-  const filas = [];
-  if(g.responsable1) filas.push({nombre:g.responsable1.nombre, rol:"Técnico/a responsable 1", disciplina:g.responsable1.rol, alcance:"HCE completa del grupo · firma", esResponsable:1});
-  if(g.responsable2) filas.push({nombre:g.responsable2.nombre, rol:"Técnico/a responsable 2", disciplina:g.responsable2.rol, alcance:"HCE completa del grupo · firma", esResponsable:2});
-  (g.tecnicosAutorizados||[]).forEach((t,ix) => filas.push({nombre:t.nombre, rol:t.rol, disciplina:t.rol, alcance:t.alcance||"Aportes en campos de texto libre de PA, PB e IC", esResponsable:0, ixAutorizado:ix}));
-  return filas;
-}
-
-/* Estado local: cuál grupo se está viendo en detalle. null = listado. */
-let _grupoAbierto = null;
-
 /* Nº de HCE derivado del id numérico. En la demo no hay `hc` como campo; el prototipo
    v4 lo muestra como "HC-2025-014" — replicamos el formato para consistencia visual.
-   El año viene del año de alta si existe (p.altaFecha), si no, del año en curso. */
+   El año viene del año de alta si existe (p.altaFecha), si no, del año en curso. Lo usan Inclusión y Ateneos (demo). */
 function nroHC(n){
   const anio = (n.altaFecha ? String(n.altaFecha).slice(0,4) : new Date().getFullYear().toString());
   return `HC-${anio}-${String(n.id).padStart(3,"0")}`;
 }
 
-/* Permiso para ver/administrar la nómina §21.1 (Técnicos autorizados del grupo).
-   Demo: se controla con un toggle en /usuarios. Sistema real: sale del rol asignado
-   (Coordinación / Dirección técnica); un Técnico común no debería verla. */
-function puedeAdministrarTecnicos(){ return !!(typeof USUARIO !== "undefined" && USUARIO.puedeAdministrarTecnicos); }
+/* ============ VISTA GRUPOS · conectada (F2) ============
+   GET /grupos (los del año, con sus dos técnicos y el rol de cada uno EN el grupo) + GET /hce (los NNA activos que la persona
+   puede ver, agrupados por grupo.id). El admin ve todos los grupos del año; un técnico, aquellos donde es técnico 1 o 2
+   (presentación, igual que el alta, §5.125: la autoridad es la API). Sólo el admin asigna técnicos (PATCH /grupos/{id}, §5.120 a);
+   crear, renombrar o archivar grupos sigue fuera (§5.90). Lo que la API no tiene (franja de edad, días y horarios, talleres,
+   nómina «técnicos autorizados», fotos grupales, CIE-11/apoyo y uso de imagen por NNA) no se muestra: no se inventa. */
+const GRP = { seq:0, sesion:0, estado:"vacio", error:"", grupos:[], filas:[], anio:null, abierto:null, guardando:false, abriendo:false };
 
-/* ============ VISTA GRUPOS · LISTADO ============ */
-function renderGrupos(){
-  _grupoAbierto = null;
-  const kpi = document.getElementById("gruposKpi");
+function gruposEsAdmin(){ const u = Sesion.usuario(); return !!u && u.rol === "admin"; }
+/* Los grupos que ESTA persona ve del año elegido (admin: todos; técnico: los suyos). */
+function gruposVisibles(){ return _wizGruposOfrecidos(GRP.grupos); }
+function gruposDeId(id){ return GRP.grupos.find(g => g.id === id) || null; }
+function gruposTecnicoHtml(t){
+  return t ? `${escHtml(t.nombre)}${t.rol ? ` <span class="grupo-rol">· ${escHtml(t.rol)}</span>` : ""}` : `<span class="grupo-sin">Sin asignar</span>`;
+}
+function gruposCuenta(g){ return GRP.filas.filter(f => f.grupoId === g.id); }
+
+function gruposAlAbrir(){
+  GRP.abierto = null;
+  gruposCargar();
+}
+async function gruposCargar(){
+  const mi = ++GRP.seq;
+  GRP.estado = "cargando";
+  gruposPintar();
+  try{
+    const [gr, filas] = await Promise.all([apiFetch("/grupos"), traerTodo({incluir_inactivos:false})]);
+    if(mi !== GRP.seq) return;     // respuesta vieja o de una sesión que ya salió: se descarta
+    const anio = anioDeGrupos(gr.data);
+    GRP.anio = gr.data.length ? anio : null;
+    GRP.grupos = gr.data.filter(g => g.anio === anio);
+    GRP.filas = filas.filter(f => f.activo);
+    GRP.estado = "listo";
+  }catch(err){
+    if(mi !== GRP.seq) return;
+    GRP.estado = "error";
+    GRP.error = err instanceof ApiError ? err.message : "No se pudieron cargar los grupos.";
+  }
+  gruposPintar();
+}
+/* Sólo GET /grupos (tras asignar técnicos): los NNA no cambiaron. */
+async function gruposRecargarGrupos(){
+  const mi = ++GRP.seq;
+  try{
+    const gr = await apiFetch("/grupos");
+    if(mi !== GRP.seq) return false;
+    const anio = anioDeGrupos(gr.data);
+    GRP.anio = gr.data.length ? anio : null;
+    GRP.grupos = gr.data.filter(g => g.anio === anio);
+    GRP.estado = "listo";
+  }catch(err){
+    if(mi !== GRP.seq) return false;
+    GRP.estado = "error";
+    GRP.error = err instanceof ApiError ? err.message : "No se pudieron cargar los grupos.";
+  }
+  return true;
+}
+/* «Salir» / 401: la vista queda vacía, el diálogo de asignación se cierra y una respuesta en vuelo ya no se pinta. */
+function gruposOlvidarSesion(){
+  GRP.seq++; GRP.sesion++;
+  Object.assign(GRP, {estado:"vacio", error:"", grupos:[], filas:[], anio:null, abierto:null, guardando:false, abriendo:false});
+  const c = document.getElementById("gruposList"); if(c) c.innerHTML = "";
+}
+
+function gruposAsignarBtn(g, ancla){
+  return gruposEsAdmin()
+    ? `<button type="button" class="btn btn-ghost" id="btnAsignar${ancla}_${g.id}" onclick="asignarAbrir(${g.id})">Asignar técnicos<span class="sr-only"> del grupo ${escHtml(g.nombre)}</span></button>`
+    : "";
+}
+function gruposPintar(){
+  const cont = document.getElementById("gruposList"); if(!cont) return;
+  if(GRP.estado === "vacio"){ cont.innerHTML = ""; return; }
+  const crumbs = `<div class="crumbs">Servicio de Atención Diurna › <b>Grupos de referencia</b></div>`;
+  if(GRP.estado === "cargando"){ cont.innerHTML = `${crumbs}<h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>${estadoCargandoHtml("Cargando los grupos…")}`; return; }
+  if(GRP.estado === "error"){ cont.innerHTML = `${crumbs}<h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>${estadoErrorHtml(GRP.error, "gruposCargar()")}`; return; }
+  const g = GRP.abierto !== null ? gruposVisibles().find(x => x.id === GRP.abierto) : null;
+  if(g) gruposPintarDetalle(g); else { GRP.abierto = null; gruposPintarLista(); }
+}
+function gruposPintarLista(){
   const cont = document.getElementById("gruposList");
-  if(!kpi || !cont) return;
-  kpi.style.display = "";
-  const tecnicosUnicos = new Set(GRUPOS.flatMap(g=>todosTecnicosDelGrupo(g).map(t=>t.nombre)));
-  kpi.innerHTML = `
-    <div class="kpi"><div class="lab">Grupos de referencia</div><div class="val">${GRUPOS.length}</div><div class="sub">Por edad y modalidad</div></div>
-    <div class="kpi"><div class="lab">NNA en seguimiento</div><div class="val">${NNA.length}</div><div class="sub">Distribuidos en grupos</div></div>
-    <div class="kpi"><div class="lab">Técnicos asignados</div><div class="val purple">${tecnicosUnicos.size}</div><div class="sub">Responsables + habilitados (§21.1)</div></div>
-    <div class="kpi"><div class="lab">Talleres cubiertos</div><div class="val orange">${new Set(GRUPOS.flatMap(g=>g.talleres)).size}</div><div class="sub">de 14 institucionales</div></div>`;
-  cont.innerHTML = `
-    <div class="crumbs">Servicio de Atención Diurna › <b>Grupos de referencia</b></div>
-    <h1 class="pagetitle">Grupos de referencia</h1>
-    <p class="pagedesc">La atención del Servicio de Atención Diurna se organiza en grupos de referencia por edad y modalidad de funcionamiento. El grupo es la unidad de intervención y de planificación (Manual, §2). Tocá un grupo para ver el detalle.</p>
-    <div class="grupos-grid">
-    ${GRUPOS.map(g=>{
-      const integrantes = NNA.filter(n=>n.grupo===g.id);
-      const nf = (GRUPOS_FOTOS[g.id]||[]).length;
-      const r1 = g.responsable1 ? g.responsable1.nombre : "—";
-      const r2 = g.responsable2 ? g.responsable2.nombre : "—";
-      const miniRows = integrantes.length
-        ? integrantes.map(n => {
-            const firmados = ["ci","lb","pa","pb","ic"].filter(k=>estadoModulo(n,k)==="firmado").length;
-            return `<tr><td><button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})">${n.nombre} ${n.apellido}</button></td><td style="text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums">${firmados}/5</td></tr>`;
-          }).join("")
-        : `<tr><td colspan="2" style="color:var(--ink-2);font-size:.78rem">Sin NNA asignados.</td></tr>`;
-      return `<div class="card grupo-card">
+  const lista = gruposVisibles();
+  const admin = gruposEsAdmin();
+  cont.innerHTML = `<div class="crumbs">Servicio de Atención Diurna › <b>Grupos de referencia</b></div>
+    <h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>
+    <p class="pagedesc">Los grupos de ${GRP.anio === null ? "este año" : GRP.anio} ${admin ? "con sus dos técnicos" : "donde sos técnico o técnica"} y los NNA activos de cada uno. Tocá un grupo para ver sus integrantes.</p>
+    ${lista.length ? `<div class="grupos-grid">${lista.map(g => {
+      const n = gruposCuenta(g).length;
+      return `<article class="card grupo-card" id="grupoCard_${g.id}">
         <div class="cardhead">
-          <h2><button class="btn-link h2-link" onclick="abrirGrupo('${g.id}')">Grupo ${g.id}</button>
-            <span style="font-weight:400;color:var(--ink-2);font-size:.8rem">· ${g.franja}</span></h2>
-          <div style="flex:1"></div>
-          <span class="pill neutro">${integrantes.length} NNA</span>
+          <h2 id="grupoTit_${g.id}" tabindex="-1"><button type="button" class="btn-link h2-link" id="btnGrupo_${g.id}" onclick="abrirGrupo(${g.id})">${escHtml(g.nombre)}</button></h2>
+          <div class="cardhead-sp"></div>
+          <span class="pill neutro">${n} NNA<span class="sr-only"> activos</span></span>
         </div>
         <div class="cardbody">
-          <div class="hint" style="margin-bottom:8px">Técnicos responsables: ${r1} · ${r2}</div>
-          <table class="grupo-mini"><tbody>${miniRows}</tbody></table>
-          <div class="hint" style="margin-top:8px">${integrantes.length} integrante(s) · ${nf} foto(s) grupal(es)</div>
-          <button class="btn btn-ghost" style="margin-top:10px" onclick="abrirGrupo('${g.id}')">→ Abrir grupo</button>
+          <dl class="grupo-tecnicos">
+            <div><dt>Técnico 1</dt><dd>${gruposTecnicoHtml(g.tecnico1)}</dd></div>
+            <div><dt>Técnico 2</dt><dd>${gruposTecnicoHtml(g.tecnico2)}</dd></div>
+          </dl>
+          ${admin ? `<div class="grupo-acciones">${gruposAsignarBtn(g, "")}</div>` : ""}
         </div>
-      </div>`;
-    }).join("")}
-    </div>`;
+      </article>`;
+    }).join("")}</div>`
+      : estadoVacioHtml("◌", admin ? `No hay grupos cargados para ${GRP.anio === null ? "este año" : GRP.anio}.` : "No tenés grupos asignados este año.")}`;
 }
 
-/* ============ VISTA GRUPOS · DETALLE ============
-   Se dispara al clickear un grupo del listado. Replaza el contenido de #gruposList
-   con la vista detalle; #gruposKpi se oculta. Volver al listado = renderGrupos(). */
-function abrirGrupo(gid){
-  _grupoAbierto = gid;
-  renderGrupoDetalle(gid);
-  // El scroll al top de la sección ayuda cuando venís de un grupo bajo el fold.
-  const view = document.getElementById("view-grupos");
-  if(view) view.scrollIntoView({behavior:"smooth", block:"start"});
+/* Integrantes de un grupo: la MISMA fila y los mismos estados que el listado de «NNA y HCE» (filaNNA). */
+function abrirGrupo(id){
+  GRP.abierto = id;
+  gruposPintar();
+  const t = document.getElementById("grupoTitulo"); if(t) t.focus();
 }
-function renderGrupoDetalle(gid){
-  const g = GRUPOS.find(x=>x.id===gid); if(!g) return renderGrupos();
-  const kpi = document.getElementById("gruposKpi");
+function cerrarGrupo(){
+  const id = GRP.abierto;
+  GRP.abierto = null;
+  gruposPintar();
+  const b = document.getElementById("btnGrupo_" + id); if(b) b.focus();     // el foco vuelve a quien abrió el grupo
+}
+function gruposPintarDetalle(g){
   const cont = document.getElementById("gruposList");
-  if(!kpi || !cont) return;
-  kpi.style.display = "none";
-  const integrantes = NNA.filter(n=>n.grupo===g.id);
-  const r1 = g.responsable1 ? g.responsable1.nombre : "—";
-  const r2 = g.responsable2 ? g.responsable2.nombre : "—";
-  // Tabla de integrantes: NNA | CIE-11 · Soporte | CI · LB · PA · PB · IC | Uso de imagen
-  const filas = integrantes.map(n => {
-    const cie11 = (n.cie11||"—").split("—")[0].trim();
-    const badges = ["ci","lb","pa","pb","ic"].map(k => {
-      const st = estadoModulo(n, k);
-      return `<span class="mbadge mb-${st}" title="${k.toUpperCase()}: ${st}">${k.toUpperCase()}</span>`;
-    }).join(" ");
-    const imgOk = !!(n.autImagen && n.autImagen.registrada);
-    const imgBadge = imgOk
-      ? `<span class="mbadge mb-firmado">Imagen: sí</span>`
-      : `<span class="mbadge mb-sin">Imagen: no</span>`;
-    return `<tr>
-      <td>
-        <button class="btn btn-link" onclick="abrirExpedienteDemo(${n.id})"><b>${n.nombre} ${n.apellido}</b> (${n.sexo?.[0]||"?"}, ${n.edad} años)</button>
-        <div class="hint">${nroHC(n)} · CI ${n.ci||"—"}</div>
-      </td>
-      <td>${cie11}<div class="hint">${n.apoyo||"Sin soporte registrado"}</div></td>
-      <td>${badges}</td>
-      <td>${imgBadge}</td>
-    </tr>`;
-  }).join("");
-  // §5.14 / D5 — los talleres que dicta el grupo. F1 dejó sólo el KPI agregado ("Talleres
-  // cubiertos: N de 14") y perdió el detalle por grupo, que es el dato que D5 pide que se vea.
-  // Se restaura en el markup y el estilo de F1: .talleres-list/.taller-tag siguen definidas en
-  // estilos.css (restiladas por F1) y habían quedado sin uso.
-  const talleresCard = `
-    <div class="card"><div class="cardbody"><h3>Talleres del grupo</h3>
-      ${(g.talleres && g.talleres.length)
-        ? `<div class="talleres-list">${g.talleres.map(t=>`<span class="taller-tag">${t}</span>`).join("")}</div>
-           <div class="hint" style="margin-top:8px">${g.talleres.length} de los 14 talleres institucionales (§5.14 · D5).</div>`
-        : `<div class="hint">Sin talleres asignados a este grupo (demo).</div>`}
-    </div></div>`;
-  const integrantesCard = `
-    <div class="card"><div class="cardbody"><h3>Integrantes y estado del ciclo</h3>
-      ${integrantes.length
-        ? `<table class="grupo-integrantes"><thead><tr><th>NNA</th><th>CIE-11 · Soporte</th><th>CI · LB · PA · PB · IC</th><th>Uso de imagen</th></tr></thead><tbody>${filas}</tbody></table>`
-        : `<div class="hint">Sin NNA asignados a este grupo (demo).</div>`}
-    </div></div>`;
-  // Bloque §21.1 — CONDICIONAL al permiso del usuario
-  const puede = puedeAdministrarTecnicos();
-  const filasTec = todosTecnicosDelGrupo(g);
-  const tecnicosCard = puede ? `
-    <div class="card"><div class="cardbody"><h3>Técnicos autorizados del grupo</h3>
-      <div class="hint" style="margin-bottom:8px">Los técnicos responsables acceden a la HCE completa de los integrantes del grupo. Los demás técnicos habilitados acceden únicamente a los campos de texto libre donde participan (Manual, §21.1). Esta nómina la administra coordinación.</div>
-      <table class="tec-aut-table"><thead><tr><th>Profesional</th><th>Rol / disciplina</th><th>Alcance</th><th></th></tr></thead><tbody>
-        ${filasTec.map(t => `<tr>
-          <td>${t.nombre}</td>
-          <td>${t.esResponsable ? `${t.rol}${t.disciplina?` <span class="hint">· ${t.disciplina}</span>`:""}` : t.disciplina}</td>
-          <td>${t.alcance}</td>
-          <td>${t.esResponsable
-            ? `<button class="btn btn-ghost btn-mini" onclick="abrirCambioResponsable('${g.id}', ${t.esResponsable})">✎ Cambiar</button>`
-            : `<button class="btn btn-ghost btn-mini" onclick="quitarTecnicoAutorizado('${g.id}', ${t.ixAutorizado})">Quitar</button>`}</td>
-        </tr>`).join("")}
-      </tbody></table>
-      <div class="tec-aut-alta">
-        <input placeholder="Nombre del profesional" id="ta_${g.id}_nombre">
-        <input placeholder="Disciplina — Fonoaudiología, T.O., Psicomotricidad…" id="ta_${g.id}_rol">
-        <button class="btn btn-ghost btn-mini" onclick="agregarTecnicoAutorizado('${g.id}')">Autorizar</button>
-      </div>
-    </div></div>` : "";
-  // Bloque fotografía grupal
-  const fotos = GRUPOS_FOTOS[g.id]||[];
-  const fotosCard = `
-    <div class="card"><div class="cardbody"><h3>Registro fotográfico grupal</h3>
-      <div class="uprow no-print">
-        <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Fotografía grupal</label><input type="file" id="gf_file_${g.id}" accept="image/*"></div>
-        <div style="flex:1"><label style="font-size:.75rem;color:var(--ink-2)">Descripción / actividad</label><input type="text" id="gf_desc_${g.id}" placeholder="Ej.: salida didáctica, taller de música…"></div>
-        <div style="flex:0;align-self:end"><button class="btn btn-primary" onclick="subirFotoGrupo('${g.id}')">Cargar</button></div>
-      </div>
-      ${fotos.length
-        ? `<div class="thumbs" style="margin-top:12px">${fotos.map(f=>`<div class="thumb"><div class="thumb-img">📷</div><div class="cap">${f.desc||"Sin descripción"}<br><span class="hint">${f.fecha}</span></div></div>`).join("")}</div>`
-        : `<div class="hint" style="margin-top:10px">Sin fotografías grupales registradas.</div>`}
-    </div></div>`;
-  cont.innerHTML = `
-    <div class="crumbs"><button class="btn-link" onclick="renderGrupos()">Grupos de referencia</button> › <b>Grupo ${g.id}</b></div>
+  const filas = gruposCuenta(g);
+  cont.innerHTML = `<div class="crumbs"><button type="button" class="btn-link" id="grupoVolver" onclick="cerrarGrupo()">Grupos de referencia</button> › <b>${escHtml(g.nombre)}</b></div>
     <div class="pagehead">
-      <h1>Grupo ${g.id} <span style="font-weight:400;color:var(--ink-2);font-size:.9rem">· ${g.franja}</span></h1>
-      <p class="pagedesc">Técnicos responsables: <b>${r1}</b> · <b>${r2}</b> · ${integrantes.length} integrante(s) · ${g.dias} · ${g.horario}</p>
-      ${g.obs ? `<p class="pagedesc" style="font-style:italic">${g.obs}</p>` : ""}
+      <h1 id="grupoTitulo" tabindex="-1">${escHtml(g.nombre)} <span class="grupo-anio">· ${escHtml(g.anio)}</span></h1>
+      <dl class="grupo-tecnicos grupo-tecnicos-fila">
+        <div><dt>Técnico 1</dt><dd>${gruposTecnicoHtml(g.tecnico1)}</dd></div>
+        <div><dt>Técnico 2</dt><dd>${gruposTecnicoHtml(g.tecnico2)}</dd></div>
+      </dl>
+      ${gruposEsAdmin() ? `<div class="grupo-acciones">${gruposAsignarBtn(g, "Det")}</div>` : ""}
     </div>
-    ${talleresCard}
-    ${integrantesCard}
-    ${tecnicosCard}
-    ${!puede ? `<div class="notice info" style="margin:14px 0"><b>Nómina §21.1 no visible:</b> tu rol actual (${(typeof USUARIO !== "undefined" && USUARIO.cargo) || "técnico"}) no incluye la administración de técnicos autorizados del grupo. Coordinación / Dirección técnica pueden verla y modificarla.</div>` : ""}
-    ${fotosCard}`;
-}
-
-/* ---------- F1-nav: alta/baja de técnicos autorizados y cambio de responsables ----------
-   HCE-LOG a nivel grupo no existe hoy (la bitácora es por NNA). Los cambios NO quedan
-   registrados; sólo se muestran los datos actualizados. Ver handoff §7 y §5.18. */
-function _refrescarVistaGrupos(){
-  if(_grupoAbierto) renderGrupoDetalle(_grupoAbierto);
-  else renderGrupos();
-}
-function agregarTecnicoAutorizado(gid){
-  const g = GRUPOS.find(x=>x.id===gid); if(!g) return;
-  const nombre = (document.getElementById(`ta_${gid}_nombre`).value||"").trim();
-  const rol = (document.getElementById(`ta_${gid}_rol`).value||"").trim();
-  if(!nombre || !rol){ toast("Ingresá nombre y disciplina."); return; }
-  g.tecnicosAutorizados = g.tecnicosAutorizados||[];
-  g.tecnicosAutorizados.push({nombre, rol, alcance:"Aportes en campos de texto libre de PA, PB e IC"});
-  _refrescarVistaGrupos();
-  toast(`Técnico/a autorizado/a agregado/a al Grupo ${gid}.`);
-}
-function quitarTecnicoAutorizado(gid, ix){
-  const g = GRUPOS.find(x=>x.id===gid); if(!g || !g.tecnicosAutorizados) return;
-  const t = g.tecnicosAutorizados[ix]; if(!t) return;
-  g.tecnicosAutorizados.splice(ix,1);
-  _refrescarVistaGrupos();
-  toast(`«${t.nombre}» quitado/a del Grupo ${gid}.`);
-}
-function abrirCambioResponsable(gid, num){
-  const g = GRUPOS.find(x=>x.id===gid); if(!g) return;
-  const actual = num===1 ? g.responsable1 : g.responsable2;
-  const body = `<div class="section-label">Técnico/a responsable ${num} · Grupo ${gid}</div>
-    <p style="font-size:.8rem;color:var(--ink-2);margin-bottom:12px">Alcance fijo: <b>HCE completa del grupo · firma</b>. El cambio se aplica desde ya para todos los integrantes activos del grupo.</p>
-    <div class="field"><label>Nombre</label><input id="cr_nombre" value="${actual?actual.nombre:""}"></div>
-    <div class="field"><label>Disciplina</label><input id="cr_rol" value="${actual?actual.rol:""}" placeholder="Ej. Psicología, Fonoaudiología, Psicopedagogía"></div>
-    <p style="font-size:var(--fs-2xs);color:var(--warn);margin-top:8px">⚠ El cambio no queda registrado en HCE-LOG (la bitácora hoy es por NNA, no por grupo). Ver handoff §5.18.</p>`;
-  const foot = `<span class="left">Grupo ${gid} · §21.1 Manual de Procedimientos</span>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarCambioResponsable('${gid}', ${num})">Guardar cambio</button>
+    <div class="card">
+      <div class="cardhead"><h2>Integrantes activos</h2><div class="cardhead-sp"></div><span class="pill neutro">${filas.length} NNA</span></div>
+      <div class="tabla-scroll">
+        <table class="lista" id="tablaGrupo">
+          <caption class="sr-only">NNA activos del grupo ${escHtml(g.nombre)}</caption>
+          <thead><tr><th scope="col">NNA</th><th scope="col">Grupo</th><th scope="col">Ciclo del año <span class="th-sub">LB · PA · PB · IC</span></th><th scope="col">Consentimiento</th><th scope="col" class="col-ir"><span class="sr-only">Abrir</span></th></tr></thead>
+          <tbody>${filas.length ? filas.map(filaNNA).join("") : `<tr><td colspan="5">${estadoVacioHtml("◌", "Este grupo no tiene NNA activos.")}</td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="lista-pie"><span class="hint">Ciclo del año: ● firmado · ◐ en curso · ○ sin iniciar</span></div>
     </div>`;
-  openFlujoModal(`Cambiar Técnico/a responsable ${num}`, `Grupo ${gid}`, body, foot);
-}
-function confirmarCambioResponsable(gid, num){
-  const g = GRUPOS.find(x=>x.id===gid); if(!g) return;
-  const nombre = (document.getElementById("cr_nombre").value||"").trim();
-  const rol = (document.getElementById("cr_rol").value||"").trim();
-  if(!nombre || !rol){ toast("Nombre y disciplina son obligatorios."); return; }
-  if(num===1) g.responsable1 = {nombre, rol};
-  else g.responsable2 = {nombre, rol};
-  closeFlujoModal();
-  _refrescarVistaGrupos();
-  toast(`Técnico/a responsable ${num} del Grupo ${gid} actualizado/a.`);
 }
 
-/* ---------- USUARIO / PERFIL ----------
-   F1-nav2 (2026-08-17): USUARIO.puedeAdministrarTecnicos controla si se ve la nómina
-   §21.1. En el sistema real esto sale del rol asignado; acá es un toggle demo. */
+/* ---------- Asignar técnicos (sólo admin) ---------- */
+const ASG_CAMPOS = {
+  tecnico1_id:  ["asg_t1", "Técnico 1"],          tecnico1_rol: ["asg_r1", "Rol del técnico 1"],
+  tecnico2_id:  ["asg_t2", "Técnico 2"],          tecnico2_rol: ["asg_r2", "Rol del técnico 2"]
+};
+function _asgSelect(id, rot, profs, actual){
+  const opts = profs.map(p => ({id:p.id, txt:`${p.nombre}${p.especialidad ? " · " + p.especialidad : ""}`}));
+  if(actual && !opts.some(o => o.id === actual.id)) opts.push({id:actual.id, txt:`${actual.nombre} (ya no está activo)`});   // abrir el diálogo no puede borrar la asignación en silencio
+  return `<div class="field"><label for="${id}">${rot}</label>
+    <select id="${id}" aria-describedby="err_${id}"><option value="">Sin asignar</option>${opts.map(o => `<option value="${o.id}"${actual && actual.id === o.id ? " selected" : ""}>${escHtml(o.txt)}</option>`).join("")}</select>
+    <div class="err" id="err_${id}"></div></div>`;
+}
+function _asgRol(id, rot, valor){
+  return `<div class="field"><label for="${id}">${rot}</label>
+    <input id="${id}" type="text" maxlength="60" value="${escHtml(valor || "")}" autocomplete="off" aria-describedby="hint_${id} err_${id}">
+    <div class="hint" id="hint_${id}">Texto libre (por ejemplo, Psicólogo/a). Es el rol en este grupo.</div><div class="err" id="err_${id}"></div></div>`;
+}
+async function asignarAbrir(id){
+  const g = gruposDeId(id);
+  if(!g || !gruposEsAdmin() || GRP.abriendo) return;
+  const ses = GRP.sesion;
+  GRP.abriendo = true;
+  let profs;
+  try{
+    profs = (await apiFetch("/profesionales", {query:{activo:true}})).data;
+  }catch(err){
+    GRP.abriendo = false;
+    if(ses === GRP.sesion) toast(err instanceof ApiError ? err.message : "No se pudo cargar la lista de profesionales.");
+    return;
+  }
+  GRP.abriendo = false;
+  if(ses !== GRP.sesion) return;
+  const body = `<div id="asgErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
+    <p class="hint" style="margin-bottom:12px">El cambio se aplica al guardar: el técnico asignado ve desde ese momento los expedientes del grupo, y queda registrado en la auditoría.</p>
+    ${_asgSelect("asg_t1", "Técnico 1", profs, g.tecnico1)}${_asgRol("asg_r1", "Rol del técnico 1", g.tecnico1 ? g.tecnico1.rol : "")}
+    ${_asgSelect("asg_t2", "Técnico 2", profs, g.tecnico2)}${_asgRol("asg_r2", "Rol del técnico 2", g.tecnico2 ? g.tecnico2.rol : "")}`;
+  const foot = `<span class="left">Grupo ${escHtml(g.nombre)} · ${escHtml(g.anio)}</span>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="btn btn-ghost" id="btnAsgCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnAsgGuardar" onclick="asignarGuardar(${g.id})">✓ Guardar asignación</button>
+    </div>`;
+  openFlujoModal("Asignar técnicos", `Grupo ${g.nombre} · ${g.anio}`, body, foot);
+}
+/* Lo que hay hoy en el servidor, con la forma del PATCH (el rol de un puesto vacío no se ve: null). */
+function _asgActual(g){
+  return {tecnico1_id: g.tecnico1 ? g.tecnico1.id : null, tecnico1_rol: g.tecnico1 ? (g.tecnico1.rol || null) : null,
+          tecnico2_id: g.tecnico2 ? g.tecnico2.id : null, tecnico2_rol: g.tecnico2 ? (g.tecnico2.rol || null) : null};
+}
+async function asignarGuardar(id){
+  if(GRP.guardando) return;
+  const g = gruposDeId(id); if(!g) return;
+  const ses = GRP.sesion;
+  const modal = document.getElementById("modalFlujo");
+  formLimpiar(modal, "asgErrores");
+  const val = k => document.getElementById(ASG_CAMPOS[k][0]).value;
+  const nuevo = {
+    tecnico1_id: val("tecnico1_id") === "" ? null : +val("tecnico1_id"), tecnico1_rol: val("tecnico1_rol").trim() || null,
+    tecnico2_id: val("tecnico2_id") === "" ? null : +val("tecnico2_id"), tecnico2_rol: val("tecnico2_rol").trim() || null
+  };
+  const actual = _asgActual(g), body = {};
+  Object.keys(nuevo).forEach(k => { if(nuevo[k] !== actual[k]) body[k] = nuevo[k]; });     // PATCH: sólo lo que cambió
+  if(!Object.keys(body).length){ formResumen("asgErrores", [{mensaje: "No hay cambios para guardar."}], "Nada que guardar:").focus(); return; }
+  const btn = document.getElementById("btnAsgGuardar");
+  GRP.guardando = true; if(btn){ btn.disabled = true; btn.textContent = "Guardando…"; }
+  try{
+    const r = await apiFetch(`/grupos/${id}`, {method:"PATCH", body});
+    if(ses !== GRP.sesion) return;
+    GRP.guardando = false;
+    closeFlujoModal();
+    const ok = await gruposRecargarGrupos();
+    if(!ok || ses !== GRP.sesion) return;
+    gruposPintar();
+    const t = document.getElementById(GRP.abierto === id ? "grupoTitulo" : "grupoTit_" + id); if(t) t.focus();
+    const avisos = (r.warnings || []).map(w => w && w.mensaje).filter(Boolean);
+    toast(`Técnicos del grupo ${g.nombre} guardados${avisos.length ? ". Aviso: " + avisos.join(" ") : ""}`);
+  }catch(err){
+    if(ses !== GRP.sesion) return;
+    GRP.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Guardar asignación"; }
+    // El formulario no se vuelve a pintar: lo elegido se conserva y cada error queda junto a su campo (403: sólo en el resumen).
+    const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo:null, mensaje: err.message || "No se pudo guardar."}];
+    const items = detalle.map(d => { const m = d.campo && ASG_CAMPOS[d.campo]; return {id: m ? m[0] : null, rot: m ? m[1] : "", mensaje: d.mensaje}; });
+    formResumen("asgErrores", items, "No se pudo guardar la asignación:").focus();
+  }
+}
+/* ---------- USUARIO / PERFIL (ejemplo, en modo demostración) ---------- */
 const USUARIO = {
   nombre:"Dr. González", rol:"Técnico · Psicología", email:"gonzalez@fundacionippu.uy",
-  cargo:"Técnico de referencia", grupos:["Azul"],
-  puedeAdministrarTecnicos:false
+  cargo:"Técnico de referencia", grupos:["Azul"]
 };
 const EQUIPO = [
   {n:"Dr. González",  e:"Psicología",      g:"Azul"},
@@ -296,12 +284,6 @@ const EQUIPO = [
   {n:"Lic. Pereira",  e:"Fonoaudiología",  g:"Azul · Naranja"},
   {n:"Dra. Silva",    e:"Neuropediatría",  g:"Naranja"}
 ];
-function toggleCoordinacionDemo(v){
-  USUARIO.puedeAdministrarTecnicos = !!v;
-  toast(v ? "Rol simulado: acceso a nómina §21.1 habilitado." : "Rol simulado: acceso a nómina §21.1 deshabilitado.");
-  // Si el detalle de un grupo está abierto, re-renderizamos para reflejar el cambio.
-  if(_grupoAbierto) renderGrupoDetalle(_grupoAbierto);
-}
 function renderUsuario(){
   const cont = document.getElementById("usuarioContent");
   if(!cont) return;
@@ -338,18 +320,6 @@ function renderUsuario(){
           ${EQUIPO.map(t=>`<div class="data-row"><dt>${t.n}</dt><dd>${t.e} · Grupos ${t.g}</dd></div>`).join("")}
         </div>
       </div>
-      <div class="info-card" style="grid-column:1/-1">
-        <h3><span class="ic">🔐</span> Permisos (simulación demo)</h3>
-        <div class="ib">
-          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
-            <input type="checkbox" ${u.puedeAdministrarTecnicos?"checked":""} onchange="toggleCoordinacionDemo(this.checked)" style="margin-top:3px">
-            <span>
-              <b>Simular rol con acceso a la nómina §21.1</b> (Coordinación / Dirección técnica).
-              <div class="hint" style="margin-top:4px">Habilita ver y administrar el bloque «Técnicos autorizados del grupo» en el detalle de cada grupo. En el sistema definitivo esto lo determina el rol asignado (Manual, §21.1) y no puede modificarse desde el perfil.</div>
-            </span>
-          </label>
-        </div>
-      </div>
     </div>
     <div class="note" style="margin-top:6px">Demo: el control de acceso real (autenticación JWT por terapeuta, roles y visibilidad por grupo) se implementa en el backend. Cada técnico solo ve los NNA de los grupos que coordina.</div>`;
 }
@@ -360,9 +330,7 @@ function renderUsuario(){
    El listener sobre `.navitem[data-view="usuarios"]` se retira porque ya no hay
    ningún elemento que lo matchee: no fallaba, pero quedaba como cableado muerto
    apuntando a un nodo inexistente. */
-document.querySelectorAll('.navitem[data-view="grupos"]').forEach(b=>b.addEventListener("click", renderGrupos));
 document.querySelectorAll('.navitem[data-view="analitica"]').forEach(b=>b.addEventListener("click", renderRecordatorios));
 
-renderGrupos();
 renderUsuario();
 renderRecordatorios();

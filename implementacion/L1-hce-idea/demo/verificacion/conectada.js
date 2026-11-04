@@ -287,28 +287,33 @@ async function loguear(page) {
   const vistas = [['pendientes', '.navitem[data-view="pendientes"]'], ['analitica', '.navitem[data-view="analitica"]'],
     ['grupos', '.navitem[data-view="grupos"]'], ['inclusion', '.navitem[data-view="inclusion"]'],
     ['ateneos', '.navitem[data-view="ateneos"]'], ['usuarios', '#userChip']];
-  const sinPanel = [];
+  const sinPanel = [], conPanel = [];
   const textoVistas = {};
   for (const [v, sel] of vistas) {
     await page.click(sel);
-    const t = (await txt(page, `#view-${v} .demo-panel`)).replace(/\s+/g, ' ');
-    const roleNote = await page.locator(`#view-${v} .demo-panel[role="note"]`).isVisible();
-    if (!(/Modo demostración — no se guarda/.test(t) && roleNote)) sinPanel.push(v);
+    if (v === 'pendientes' || v === 'grupos') {         // F2: ya no son de demostración (conectadas a la API): no llevan el panel
+      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : GRP.estado) === 'listo', v, { timeout: 8000 });
+      if ((await page.locator(`#view-${v} .demo-panel`).count()) !== 0) conPanel.push(v);
+    } else {
+      const t = (await txt(page, `#view-${v} .demo-panel`)).replace(/\s+/g, ' ');
+      const roleNote = await page.locator(`#view-${v} .demo-panel[role="note"]`).isVisible();
+      if (!(/Modo demostración — no se guarda/.test(t) && roleNote)) sinPanel.push(v);
+    }
     textoVistas[v] = await page.evaluate(() => document.body.innerText);
   }
-  check('3a-g3', 'Pendientes, Analítica, Grupos, Inclusión, Ateneos y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note")',
-    sinPanel.length === 0, sinPanel.length ? 'sin panel: ' + sinPanel.join(',') : '6/6');
+  check('3a-g3', 'Analítica, Inclusión, Ateneos y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2) ya no lo llevan',
+    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '4/4 con panel, 2/2 sin panel');
   check('3a-u', '«Mi usuario» (vista de ejemplo) no afirma ser la cuenta con sesión iniciada',
     !/sesión iniciada|datos de la cuenta|mi perfil/i.test(await txt(page, '#view-usuarios')) && /Perfil de ejemplo/.test(await txt(page, '#view-usuarios')),
     (await txt(page, '#view-usuarios .pagedesc')).trim());
   const conFase = Object.entries(textoVistas).filter(([, t]) => /Fase\s*3|Fase\s*\d-[a-e]/.test(t)).map(([v]) => v);
   check('3a-f0', 'ninguna vista visible menciona «Fase 3…» (las etapas son interna del equipo)', conFase.length === 0, conFase.join(',') || '6 vistas');
-  await page.click('.navitem[data-view="grupos"]');
-  const gruposTxt = await txt(page, '#view-grupos');
-  await page.click('#gruposList button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
+  await page.click('.navitem[data-view="inclusion"]');       // F2: Grupos ya es de la API; Inclusión sigue en demostración
+  const gruposTxt = await txt(page, '#view-inclusion');
+  await page.click('#view-inclusion button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
   await page.waitForSelector('#expedienteContent .demo-panel', { timeout: 5000 });
   check('3a-g4', 'un NNA abierto desde una vista de demostración abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
-    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Grupos');
+    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Inclusión');
 
   const humo = await page.evaluate(() => {
     try {
@@ -1248,14 +1253,10 @@ async function loguear(page) {
       document.getElementById('foto_desc').value = 'foto de prueba 3c';
       subirFoto(sin.id);
       const tost = document.querySelector('.toast, #toast');
-      const g = sin.grupo; const gAntes = (GRUPOS_FOTOS[g] || []).length; go('grupos'); renderGrupoDetalle(g);
-      const hayCargaGrupal = !!document.getElementById('gf_desc_' + g), txtGrupo = document.getElementById('view-grupos').innerText;
-      subirFotoGrupo(g);
-      return { sin: sin.id, individual: sin.fotos.length - antes, grupal: (GRUPOS_FOTOS[g] || []).length - gAntes, hayCargaGrupal,
-        toast: tost ? tost.textContent : '', txtGrupo: /deshabilitada|bloquead/i.test(txtGrupo) };
+      return { sin: sin.id, individual: sin.fotos.length - antes, toast: tost ? tost.textContent : '' };
     });
-    check('3c-j9b', 'en el expediente de EJEMPLO sin autorización de imagen se guarda una foto individual y una grupal: sin bloqueo, sin «Carga deshabilitada» ni «bloqueada» (§5.99)',
-      fotos.sin !== null && fotos.individual === 1 && fotos.grupal === 1 && fotos.hayCargaGrupal && !fotos.txtGrupo && !/bloquead|🚫/i.test(fotos.toast), JSON.stringify(fotos));
+    check('3c-j9b', 'en el expediente de EJEMPLO sin autorización de imagen se guarda una foto individual: sin bloqueo ni «bloqueada» (§5.99). La carga de fotos GRUPALES salió de la vista Grupos en F2 (la API no las tiene; vuelven con el registro fotográfico, C5)',
+      fotos.sin !== null && fotos.individual === 1 && !/bloquead|🚫/i.test(fotos.toast), JSON.stringify(fotos));
 
     /* F1: la marca «Demo parcialmente conectada» se retiró; el pie «Prototipo · …» de la barra lateral no tapa contenido a 1280×800 y 1280×900 */
     const marcas = [];
@@ -2316,7 +2317,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
       marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null && !e.closest('.exp-tab')).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
       r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
-    for (const v of ['pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos']) { await pv.evaluate((x) => go(x), v); await pv.waitForTimeout(60); await leer(v); }
+    for (const v of ['analitica', 'inclusion', 'ateneos']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica)
+      await pv.waitForTimeout(60); await leer(v); }
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
@@ -2325,7 +2327,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 10 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 4 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 8 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 4 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -2525,7 +2527,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && enTabs.every((t) => t.visible && t.txt.includes('⚠') && t.txt.includes('Alerta clínica') && t.txt.includes(textoAlerta) && t.color === hexF(t.ink) && t.borde === hexF(t.ink)), JSON.stringify(enTabs.slice(0, 3)).slice(0, 400));
 
     /* ---------- f1-h: sin la vista «Intermedia» (ruta, manejador, entrada de navegación, reglas .lik-*) y sin los textos de desarrollo ---------- */
-    const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'recordatorios.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];
+    const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'recordatorios.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];
     const fuentesF1 = await Promise.all(archivos.map(async (f) => [f, await (await fetch(DEMO + '/' + f)).text()]));
     const halla = (re) => fuentesF1.filter(([, t]) => re.test(t)).map(([f]) => f);
     const prohibidosF1 = { vista: halla(/view-intermedia|data-view="intermedia"|go\(['"]intermedia['"]\)/), manejador: halla(/lik-opts|likSel|likFormula/), reglas: fuentesF1.filter(([f, t]) => f.endsWith('.css') && /\.lik-[a-z]/.test(t)).map(([f]) => f),
@@ -2548,12 +2550,13 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(100);
     const kpi = await pf.evaluate(() => { const raiz = getComputedStyle(document.documentElement); return { colores: [...document.querySelectorAll('#kpiRow .val')].map((v) => getComputedStyle(v).color), ink: raiz.getPropertyValue('--ink').trim(), botones: [...document.querySelectorAll('#kpiRow button')].map((b) => b.textContent.trim()), cols: getComputedStyle(document.getElementById('kpiRow')).gridTemplateColumns.split(' ').length }; });
     await pf.click('#kpiRow button >> nth=0');
-    const trasKpi = await pf.evaluate(() => ({ vista: document.querySelector('.view.active').id, foco: document.activeElement.id }));
+    await pf.waitForSelector('#pendContenido .chip-estado.active', { timeout: 8000 });     // F2: Pendientes se carga al abrirla y llega filtrada
+    const trasKpi = await pf.evaluate(() => ({ vista: document.querySelector('.view.active').id, foco: document.activeElement.id, filtro: (document.querySelector('#pendContenido .chip-estado.active') || {}).dataset.filtro }));
     await pf.setViewportSize({ width: 1024, height: 768 }); await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(100);
     const lay = await pf.evaluate(() => ({ sidebar: Math.round(document.querySelector('.sidebar').getBoundingClientRect().width), pad: getComputedStyle(document.querySelector('main')).padding, cols: getComputedStyle(document.getElementById('kpiRow')).gridTemplateColumns.split(' ').length }));
     check('f1-kpi', 'KPI: las cifras van en tinta (ni naranja ni violeta), cuatro columnas desde 900 px, y «Sin línea base firmada este año» / «Sin consentimiento informado» son botones que llevan a Pendientes (foco en su título)',
       kpi.colores.length === 4 && kpi.colores.every((c) => c === hexF(kpi.ink)) && kpi.botones.length === 2 && /Sin línea base firmada este año/.test(kpi.botones[0]) && /Sin consentimiento informado/.test(kpi.botones[1]) && kpi.cols === 4 && lay.cols === 4
-        && trasKpi.vista === 'view-pendientes' && trasKpi.foco === 'tituloPendientes', JSON.stringify({ kpi, trasKpi }));
+        && trasKpi.vista === 'view-pendientes' && trasKpi.foco === 'tituloPendientes' && trasKpi.filtro === 'lb', JSON.stringify({ kpi, trasKpi }));
     check('f1-layout', 'por debajo de 1180 px (1024×768): barra lateral de 192 px y márgenes del contenido de 16 px (arriba) y 20 px (a los lados)',
       lay.sidebar === 192 && /^16px 20px/.test(lay.pad), JSON.stringify(lay));
 
@@ -3151,6 +3154,332 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Registro del admin/.test(pant.txt),
       JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
     await ctx.close();
+  }
+
+  /* =====================================================================================================================
+     F2 · PENDIENTES Y GRUPOS CONECTADOS (handoff §5 «F2»; GET /recordatorios, GET /hce, GET /grupos, PATCH /grupos/{id})
+     Las lecturas (f2-rec … f2-a11y) no escriben. f2-asignar ESCRIBE (asigna técnicos al grupo Inicial): va al FINAL de la corrida,
+     así ningún chequeo posterior ve un grupo cambiado. Todo se compara con lo que dice la API, no con literales.
+     =================================================================================================================== */
+  {
+    const entrarComo = async (email, pass, ancho) => {
+      const { ctx: c, page: pg } = await nuevaPagina();
+      await pg.setViewportSize({ width: ancho || 1280, height: 800 });
+      await pg.goto(urlDemo());
+      await pg.fill('#loginUser', email); await pg.fill('#loginPass', pass); await pg.click('#loginBtn');
+      await pg.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      await pg.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+      const token = await pg.evaluate(() => sessionStorage.getItem('ippu.token'));
+      const apiX = async (metodo, ruta, body, tok) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (tok || token), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+        let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json }; };
+      return { c, pg, token, apiX, yo: await pg.evaluate(() => Sesion.usuario()) };
+    };
+    const abrirPend = async (pg, filtroKpi) => {
+      if (filtroKpi) await pg.evaluate(() => go('inicio')); else await pg.click('.navitem[data-view="pendientes"]');
+      if (filtroKpi) await pg.click(filtroKpi);
+      await pg.waitForFunction(() => PEND.estado === 'listo' && !!document.getElementById('tbodyPend'), null, { timeout: 8000 });
+    };
+    const abrirGrupos = async (pg) => {
+      await pg.click('.navitem[data-view="grupos"]');
+      await pg.waitForFunction(() => GRP.estado === 'listo' && !!document.querySelector('#gruposList .grupos-grid, #gruposList .estado-vacio'), null, { timeout: 8000 });
+    };
+    /* lo que la API dice que le falta a cada fila: la regla de la vista, escrita aparte */
+    const faltantes = (h) => { const f = Object.fromEntries((h.flujo || []).map((e) => [e.modulo, e.estado])); const r = [];
+      if (h.ci !== 'registrado') r.push('ci'); for (const [k, m] of [['lb', 'HCE-LB'], ['pa', 'HCE-PA'], ['pb', 'HCE-PB'], ['ic', 'HCE-IC']]) if ((f[m] || 'sin_iniciar') !== 'firmado') r.push(k); return r; };
+    const codigoGruposOk = (lee) => lee.length === 2 && lee.every((x) => x === false);
+    const activosApi = async (apiX) => (await apiX('GET', '/hce?limit=200&incluir_inactivos=false')).json;
+
+    const T = await entrarComo(EMAIL, PASSWORD);
+    const pt = T.pg;
+
+    /* ---------- f2-rec: GET /recordatorios ---------- */
+    {
+      const r = await T.apiX('GET', '/recordatorios');
+      check('f2-rec', 'GET /recordatorios con el token de la página: 8 filas, «lb» primero, con las banderas de activo',
+        r.status === 200 && Array.isArray(r.json) && r.json.length === 8 && r.json[0].clave === 'lb' && r.json.every((x) => typeof x.activo === 'boolean' && Object.keys(x).sort().join() === 'activo,clave,periodo,texto'),
+        JSON.stringify({ status: r.status, claves: (r.json || []).map((x) => x.clave + ':' + x.activo) }));
+    }
+
+    /* ---------- f2-pend: las filas de Pendientes son exactamente los NNA con algo sin registrar/firmar según GET /hce ---------- */
+    let idsPend = [];
+    {
+      const hs = await activosApi(T.apiX);
+      const esperados = hs.filter((h) => faltantes(h).length).map((h) => h.id).sort((a, b) => a - b);
+      const completos = hs.filter((h) => !faltantes(h).length);
+      const martin = hs.find((h) => h.persona.nombre === 'Martín'), bruno = hs.find((h) => h.persona.nombre === 'Bruno');
+      await abrirPend(pt);
+      idsPend = await pt.evaluate(() => [...document.querySelectorAll('#tbodyPend tr[data-hce]')].map((tr) => +tr.dataset.hce).sort((a, b) => a - b));
+      const brunoTxt = await pt.evaluate((id) => { const tr = document.querySelector(`#tbodyPend tr[data-hce="${id}"]`); return tr ? tr.innerText.replace(/\s+/g, ' ') : null; }, bruno.id);
+      const tabsPorFila = await pt.evaluate(() => [...document.querySelectorAll('#tbodyPend tr[data-hce]')].map((tr) => tr.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])').length));
+      check('f2-pend-a', 'Pendientes (técnico): las filas son exactamente los NNA activos con algo sin registrar/firmar según el `ci` y el `flujo` de GET /hce; Martín (ciclo completo y CI) no está; Bruno muestra «CI pendiente»; el nombre es el único Tab de cada fila',
+        JSON.stringify(idsPend) === JSON.stringify(esperados) && esperados.length > 0 && !!martin && completos.some((h) => h.id === martin.id) && !idsPend.includes(martin.id)
+          && /CI pendiente/.test(brunoTxt || '') && tabsPorFila.length > 0 && tabsPorFila.every((n) => n === 1),
+        JSON.stringify({ idsPend, esperados, martinCompleto: completos.some((h) => h.id === (martin || {}).id), bruno: (brunoTxt || '').slice(0, 80), tabsPorFila }));
+      /* cada fila lista lo que falta con el estado del servidor: glifo + texto */
+      const pillsOk = await pt.evaluate(() => Object.fromEntries([...document.querySelectorAll('#tbodyPend tr[data-hce]')].map((tr) => [tr.dataset.hce, [...tr.querySelectorAll('.st')].map((s) => s.innerText.replace(/\s+/g, ' ').trim())])));
+      const okPills = hs.filter((h) => faltantes(h).length).every((h) => {
+        const f = Object.fromEntries((h.flujo || []).map((e) => [e.modulo, e.estado])); const fila = pillsOk[h.id] || [];
+        const esp = faltantes(h).map((k) => k === 'ci' ? 'CI pendiente' : `${k.toUpperCase()} ${({ en_curso: 'en curso', sin_iniciar: 'sin iniciar' })[f['HCE-' + k.toUpperCase()] || 'sin_iniciar']}`);
+        return fila.length === esp.length && fila.every((t, i) => t.replace(/^\S+\s/, '') === esp[i]); });
+      check('f2-pend-b', 'cada ítem de «Falta este año» es glifo + texto con el estado de la API («CI pendiente», «LB en curso», «PA sin iniciar»…), en el orden de la cadena y sin ninguno firmado',
+        okPills, JSON.stringify(pillsOk).slice(0, 300));
+      /* clic en la fila (mouse, en la celda del grupo) -> el expediente REAL de ese id */
+      const alvo = bruno.id;
+      await pt.click(`#tbodyPend tr[data-hce="${alvo}"] td:nth-child(2)`);
+      await pt.waitForSelector('#expTitulo', { timeout: 8000 });
+      const exp = await pt.evaluate(() => ({ id: EXP.id, titulo: document.getElementById('expTitulo').textContent, demo: !!document.querySelector('#view-expediente .demo-panel'), vista: document.querySelector('.view.active').id }));
+      check('f2-pend-c', 'un clic en la fila de Bruno (fuera del nombre) abre SU expediente real (id de la API, sin panel de ejemplo)',
+        exp.id === alvo && /Bruno/.test(exp.titulo) && !exp.demo && exp.vista === 'view-expediente', JSON.stringify(exp));
+    }
+
+    /* ---------- f2-filtro: los chips cuentan lo que filtran; los dos KPI de Inicio aterrizan en su filtro ---------- */
+    {
+      const hs = await activosApi(T.apiX);
+      await abrirPend(pt);
+      const esp = { todo: hs.filter((h) => faltantes(h).length).length };
+      for (const k of ['ci', 'lb', 'pa', 'pb', 'ic']) esp[k] = hs.filter((h) => faltantes(h).includes(k)).length;
+      const res = {};
+      for (const k of ['todo', 'ci', 'lb', 'pa', 'pb', 'ic']) {
+        await pt.click(`#pendContenido .chip-estado[data-filtro="${k}"]`);
+        res[k] = await pt.evaluate((kk) => ({ n: +document.querySelector(`#pendContenido .chip-estado[data-filtro="${kk}"] .chip-n`).textContent, filas: document.querySelectorAll('#tbodyPend tr[data-hce]').length,
+          pressed: [...document.querySelectorAll('#pendContenido .chip-estado')].map((c) => c.getAttribute('aria-pressed')).join(), foco: document.activeElement.dataset.filtro }), k);
+      }
+      check('f2-filtro-a', 'cada chip (Todo · Consentimiento · Línea base · Protocolo A · Protocolo B · Informe de cierre) muestra un conteo igual a sus filas y al de GET /hce; aria-pressed marca sólo el activo y el foco se queda en el chip tocado',
+        Object.entries(res).every(([k, v]) => v.n === v.filas && v.n === esp[k] && (v.pressed.match(/true/g) || []).length === 1 && v.foco === k), JSON.stringify({ esp, res }).slice(0, 420));
+      /* vacío por filtro: la API no lo da vacío en el seed; se fuerza con una respuesta de GET /hce sin pendientes */
+      await pt.route(/\/hce\?/, (r) => r.request().method() === 'GET' && /limit=200/.test(r.request().url()) ? r.fulfill({ status: 200, contentType: 'application/json', body: '[]', headers: { 'X-Total-Count': '0', 'Access-Control-Expose-Headers': 'X-Total-Count', 'Access-Control-Allow-Origin': DEMO } }) : r.continue());
+      await pt.evaluate(() => go('inicio')); await abrirPend(pt);
+      const vacioTodo = await pt.evaluate(() => document.getElementById('tbodyPend').innerText.trim());
+      await pt.click('#pendContenido .chip-estado[data-filtro="lb"]');
+      const vacioLb = await pt.evaluate(() => document.getElementById('tbodyPend').innerText.trim());
+      await pt.unroute(/\/hce\?/);
+      check('f2-filtro-b', 'sin NNA pendientes, cada filtro tiene su estado vacío («Nada pendiente este año.» en Todo; «Nada pendiente de línea base este año.» en Línea base)',
+        /Nada pendiente este año/.test(vacioTodo) && /Nada pendiente de línea base este año/.test(vacioLb), JSON.stringify({ vacioTodo, vacioLb }));
+      /* KPI de Inicio -> Pendientes ya filtrada, foco en el título */
+      await pt.evaluate(() => go('inicio'));
+      const kpis = await pt.evaluate(() => ({ lb: +document.getElementById('kpiPend').textContent, ci: +document.getElementById('kpiCi').textContent }));
+      const aterrizaje = {};
+      for (const [k, sel] of [['lb', '#kpiRow button >> nth=0'], ['ci', '#kpiRow button >> nth=1']]) {
+        await pt.evaluate(() => go('inicio'));
+        await pt.click(sel);
+        await pt.waitForFunction(() => PEND.estado === 'listo', null, { timeout: 8000 });
+        aterrizaje[k] = await pt.evaluate(() => ({ vista: document.querySelector('.view.active').id, foco: document.activeElement.id, activo: (document.querySelector('#pendContenido .chip-estado.active') || {}).dataset.filtro,
+          filas: document.querySelectorAll('#tbodyPend tr[data-hce]').length }));
+      }
+      check('f2-filtro-c', 'los dos botones de Inicio aterrizan en Pendientes ya filtrada («Sin línea base firmada este año» → Línea base, «Sin consentimiento informado» → Consentimiento), con el foco en el título y tantas filas como dice la cifra del KPI',
+        aterrizaje.lb.vista === 'view-pendientes' && aterrizaje.lb.foco === 'tituloPendientes' && aterrizaje.lb.activo === 'lb' && aterrizaje.lb.filas === kpis.lb
+          && aterrizaje.ci.vista === 'view-pendientes' && aterrizaje.ci.foco === 'tituloPendientes' && aterrizaje.ci.activo === 'ci' && aterrizaje.ci.filas === kpis.ci,
+        JSON.stringify({ kpis, aterrizaje }));
+      /* abrir por la barra lateral vuelve a «Todo» */
+      await pt.click('.navitem[data-view="inicio"]'); await abrirPend(pt);
+      check('f2-filtro-d', 'abrir Pendientes por la barra lateral (no por un KPI) deja el filtro en «Todo»', (await pt.evaluate(() => PEND.filtro)) === 'todo');
+    }
+
+    /* ---------- f2-texto: nada de demostración en Pendientes ni en Grupos ---------- */
+    {
+      await abrirPend(pt); await abrirGrupos(pt);
+      await pt.click('#gruposList .grupo-card .h2-link >> nth=0'); await pt.waitForSelector('#tablaGrupo');
+      const t = await pt.evaluate(() => Object.fromEntries(['view-pendientes', 'view-grupos'].map((v) => { const e = document.getElementById(v);
+        return [v, { texto: e.innerText, demo: e.querySelectorAll('[data-modo-demo], .demo-panel, .solo-demo').length, abrirDemo: /abrirExpedienteDemo/.test(e.innerHTML) }]; })));
+      /* el código de las dos vistas no lee los arreglos de ejemplo (NNA, GRUPOS) ni abre expedientes de ejemplo */
+      const srcPend = await (await fetch(DEMO + '/js/pendientes.js')).text();
+      const srcGrp = await (await fetch(DEMO + '/js/grupos-usuario.js')).text();
+      const codigoGrupos = srcGrp.slice(srcGrp.indexOf('VISTA GRUPOS · conectada'), srcGrp.indexOf('USUARIO / PERFIL'));
+      const lee = [srcPend, codigoGrupos].map((s) => /\bNNA\.|\bGRUPOS\.|\bGRUPOS\[|abrirExpedienteDemo|una sola vez/.test(s));
+      await abrirPend(pt);
+      const t2 = await pt.evaluate(() => ({ texto: document.getElementById('view-pendientes').innerText, abrirDemo: /abrirExpedienteDemo/.test(document.getElementById('view-pendientes').innerHTML) }));
+      check('f2-texto', 'en Pendientes y en Grupos (listado y un grupo abierto): sin «una sola vez», sin data-modo-demo / panel / «Solo demo», sin abrirExpedienteDemo, y el código de las dos vistas no lee NNA. ni GRUPOS.',
+        Object.values(t).every((v) => !/una sola vez/i.test(v.texto) && v.demo === 0 && !v.abrirDemo) && !/una sola vez/i.test(t2.texto) && !t2.abrirDemo && codigoGruposOk(lee), JSON.stringify({ lee, demo: [t['view-pendientes'].demo, t['view-grupos'].demo], abrir: [t['view-pendientes'].abrirDemo, t['view-grupos'].abrirDemo, t2.abrirDemo] }));
+    }
+
+    /* ---------- f2-grupos-tec: González ve sólo sus grupos, con técnicos y conteos de la API, sin «Asignar técnicos» ---------- */
+    {
+      const gs = (await T.apiX('GET', '/grupos')).json, hs = await activosApi(T.apiX);
+      const suyos = gs.filter((g) => (g.tecnico1 && g.tecnico1.id === T.yo.id) || (g.tecnico2 && g.tecnico2.id === T.yo.id));
+      await abrirGrupos(pt);
+      const vista = await pt.evaluate(() => [...document.querySelectorAll('#gruposList .grupo-card')].map((c) => ({ nombre: c.querySelector('h2').innerText.trim(),
+        t: [...c.querySelectorAll('.grupo-tecnicos dd')].map((d) => d.innerText.replace(/\s+/g, ' ').trim()), n: +c.querySelector('.pill').innerText.match(/\d+/)[0] })));
+      const aTxt = (t) => t ? `${t.nombre}${t.rol ? ' · ' + t.rol : ''}` : 'Sin asignar';
+      const esp = suyos.map((g) => ({ nombre: g.nombre, t: [aTxt(g.tecnico1), aTxt(g.tecnico2)], n: hs.filter((h) => h.grupo && h.grupo.id === g.id).length }));
+      const botones = await pt.locator('#gruposList button', { hasText: 'Asignar técnicos' }).count();
+      check('f2-grupos-tec', 'González ve sólo los grupos donde es técnico 1 o 2 (los de GET /grupos con su id), con técnicos («nombre · rol») y cantidad de NNA activos iguales a los de la API, y ningún «Asignar técnicos»',
+        esp.length > 0 && esp.length < gs.length && JSON.stringify(vista.map((v) => v.nombre)) === JSON.stringify(esp.map((e) => e.nombre)) && JSON.stringify(vista) === JSON.stringify(esp) && botones === 0,
+        JSON.stringify({ vista, esp, botones }).slice(0, 500));
+      /* ---------- f2-integrantes: Escolares (la misma fila y los mismos estados que el listado principal) ---------- */
+      const esc = gs.find((g) => g.nombre === 'Escolares');
+      const apiEsc = (await T.apiX('GET', `/hce?grupo=Escolares&anio=${esc.anio}&incluir_inactivos=false&limit=200`)).json.map((h) => h.id).sort((a, b) => a - b);
+      await pt.evaluate(() => go('inicio'));
+      await pt.selectOption('#filtroGrupo', { label: 'Escolares' });
+      await esperarResumen(pt, `Mostrando ${apiEsc.length} de ${apiEsc.length}`);
+      const lista = await pt.evaluate(() => Object.fromEntries([...document.querySelectorAll('#tbodyNNA tr[data-hce]')].map((tr) => [tr.dataset.hce, tr.innerHTML.replace(/\s+/g, ' ')])));
+      await abrirGrupos(pt);
+      await pt.click(`#btnGrupo_${esc.id}`); await pt.waitForSelector('#tablaGrupo');
+      const grupo = await pt.evaluate(() => Object.fromEntries([...document.querySelectorAll('#tablaGrupo tbody tr[data-hce]')].map((tr) => [tr.dataset.hce, tr.innerHTML.replace(/\s+/g, ' ')])));
+      const foco1 = await pt.evaluate(() => document.activeElement.id);
+      await pt.click('#grupoVolver');
+      const foco2 = await pt.evaluate(() => document.activeElement.id);
+      check('f2-integrantes', 'los integrantes de Escolares son los de GET /hce?grupo=Escolares&anio=… y cada fila es idéntica a la del listado de «NNA y HCE» (mismo renderer y mismos estados); el foco va al título del grupo y «‹ Grupos de referencia» lo devuelve al botón que lo abrió',
+        apiEsc.length > 0 && JSON.stringify(Object.keys(grupo).map(Number).sort((a, b) => a - b)) === JSON.stringify(apiEsc) && JSON.stringify(grupo) === JSON.stringify(lista) && foco1 === 'grupoTitulo' && foco2 === 'btnGrupo_' + esc.id,
+        JSON.stringify({ apiEsc, filas: Object.keys(grupo), iguales: JSON.stringify(grupo) === JSON.stringify(lista), foco1, foco2 }));
+    }
+
+    /* ---------- f2-grupos-admin: el admin ve los cinco grupos de 2026 ---------- */
+    const A = await entrarComo(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const pa = A.pg;
+    const gsAdmin = (await A.apiX('GET', '/grupos?anio=2026')).json;
+    {
+      await abrirGrupos(pa);
+      const vista = await pa.evaluate(() => [...document.querySelectorAll('#gruposList .grupo-card')].map((c) => ({ nombre: c.querySelector('h2').innerText.trim(), t: [...c.querySelectorAll('.grupo-tecnicos dd')].map((d) => d.innerText.replace(/\s+/g, ' ').trim()),
+        asignar: !!c.querySelector('button[id^="btnAsignar_"]') })));
+      const sin = (n) => (vista.find((v) => v.nombre === n) || { t: [] }).t.join() === 'Sin asignar,Sin asignar';
+      check('f2-grupos-admin', 'el admin ve los cinco grupos de 2026 (los de GET /grupos), cada uno con «Asignar técnicos»; Inicial y Taller de Adolescentes muestran «Sin asignar» en los dos puestos',
+        gsAdmin.length === 5 && JSON.stringify(vista.map((v) => v.nombre)) === JSON.stringify(gsAdmin.map((g) => g.nombre)) && vista.every((v) => v.asignar) && sin('Inicial') && sin('Taller de Adolescentes'), JSON.stringify(vista).slice(0, 500));
+    }
+
+    /* ---------- f2-salir: «Salir» con GET /recordatorios o GET /grupos en vuelo deja las vistas vacías ---------- */
+    {
+      const salida = {};
+      for (const [vista, ruta, nav, leer] of [['pendientes', /\/recordatorios$/, 'pendientes', () => ({ contenido: document.getElementById('pendContenido').innerHTML.trim(), desc: document.getElementById('pendDesc').textContent, estado: PEND.estado, filas: PEND.filas.length })],
+        ['grupos', /\/grupos(\?.*)?$/, 'grupos', () => ({ contenido: document.getElementById('gruposList').innerHTML.trim(), estado: GRP.estado, grupos: GRP.grupos.length, filas: GRP.filas.length })]]) {
+        const S = await entrarComo(EMAIL, PASSWORD);
+        await S.pg.route(ruta, async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue().catch(() => {}); });
+        await S.pg.click(`.navitem[data-view="${nav}"]`);
+        await S.pg.click('.btn-exit');
+        await S.pg.waitForTimeout(2200);
+        salida[vista] = Object.assign(await S.pg.evaluate(leer), await S.pg.evaluate(() => ({ login: !document.getElementById('loginScreen').classList.contains('hidden') })));
+        await S.c.close();
+      }
+      check('f2-salir', '«Salir» con GET /recordatorios (Pendientes) o GET /grupos (Grupos) todavía sin respuesta: al llegar, las dos vistas siguen vacías (sin datos de la sesión anterior detrás del login)',
+        salida.pendientes.contenido === '' && salida.pendientes.desc === '' && salida.pendientes.estado === 'vacio' && salida.pendientes.filas === 0 && salida.pendientes.login
+          && salida.grupos.contenido === '' && salida.grupos.estado === 'vacio' && salida.grupos.grupos === 0 && salida.grupos.filas === 0 && salida.grupos.login, JSON.stringify(salida));
+    }
+
+    /* ---------- f2-a11y: tamaño de los controles (WCAG 2.5.8), foco no tapado (2.4.11) y ninguna celda recortada a 1024 y 1280 ---------- */
+    {
+      const medir = (selRaiz) => {
+        const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && !e.closest('[hidden], [inert]'); };
+        const raiz = document.querySelector(selRaiz);
+        const ts = [...raiz.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, summary, [tabindex="0"]')].filter((e) => vis(e) && !e.closest('.sr-only'));
+        const rects = ts.map((e) => e.getBoundingClientRect());
+        const chicos = ts.map((e, i) => ({ e, r: rects[i] })).filter(({ r }) => r.width < 24 - 0.5 || r.height < 24 - 0.5).filter(({ e, r }) => {
+          // excepción de espaciado: un círculo de 24 px centrado en el objetivo no toca a otro objetivo
+          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          return ts.some((o, j) => o !== e && !o.contains(e) && !e.contains(o) && (() => { const q = rects[j]; const dx = Math.max(q.left - cx, 0, cx - q.right), dy = Math.max(q.top - cy, 0, cy - q.bottom); return Math.hypot(dx, dy) < 12; })()); })
+          .map(({ e, r }) => `${e.tagName}#${e.id || e.className} ${Math.round(r.width)}x${Math.round(r.height)}`);
+        const celdas = [...raiz.querySelectorAll('td, th')].filter(vis).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => `${c.tagName}:${(c.innerText || '').trim().slice(0, 20)} ${c.scrollWidth}>${c.clientWidth}`);
+        const scrolls = [...raiz.querySelectorAll('.tabla-scroll')].filter((s) => s.scrollWidth > s.clientWidth + 1).length;
+        return { objetivos: ts.length, chicos, celdas, scrolls, pagina: document.documentElement.scrollWidth - window.innerWidth };
+      };
+      const tabular = async (pg, raiz, maximo) => {       // 2.4.11: tras cada Tab el elemento enfocado no queda tapado por otra cosa (barra superior, etc.)
+        await pg.evaluate((s) => { document.querySelector(s).scrollIntoView(); }, raiz);
+        await pg.focus(`${raiz} button, ${raiz} summary, ${raiz} a[href], ${raiz} select`).catch(() => {});
+        const tapados = [];
+        for (let i = 0; i < maximo; i++) {
+          await pg.keyboard.press('Tab'); await pg.waitForTimeout(20);
+          const r = await pg.evaluate((s) => { const a = document.activeElement; if (!a || !a.closest(s)) return { fuera: true };
+            const b = a.getBoundingClientRect(); const x = Math.min(Math.max(b.left + b.width / 2, 0), innerWidth - 1), y = Math.min(Math.max(b.top + b.height / 2, 0), innerHeight - 1);
+            const arriba = document.elementFromPoint(x, y); return { tapado: !(arriba && (a === arriba || a.contains(arriba) || arriba.contains(a))), id: a.id || a.tagName }; }, raiz);
+          if (r.fuera) break; if (r.tapado) tapados.push(r.id);
+        }
+        return tapados;
+      };
+      const informe = [];
+      for (const [w, h] of [[1280, 800], [1024, 768]]) {
+        await pt.setViewportSize({ width: w, height: h }); await pa.setViewportSize({ width: w, height: h });
+        await abrirPend(pt);
+        informe.push({ w, v: 'pendientes', ...(await pt.evaluate(medir, '#view-pendientes')), tapados: await tabular(pt, '#view-pendientes', 25) });
+        await abrirGrupos(pa);
+        informe.push({ w, v: 'grupos', ...(await pa.evaluate(medir, '#view-grupos')), tapados: await tabular(pa, '#view-grupos', 20) });
+        await pa.click('#gruposList .grupo-card .h2-link >> nth=0'); await pa.waitForSelector('#tablaGrupo');
+        informe.push({ w, v: 'grupo', ...(await pa.evaluate(medir, '#view-grupos')), tapados: await tabular(pa, '#view-grupos', 12) });
+        await pa.click('#btnAsignarDet_' + (await pa.evaluate(() => GRP.abierto))); await pa.waitForSelector('#modalFlujo.open #asg_t1');
+        informe.push({ w, v: 'dialogo', ...(await pa.evaluate(medir, '#modalFlujo')) });
+        await escDescartando(pa); await pa.waitForSelector('#modalFlujo.open', { state: 'detached', timeout: 3000 }).catch(() => {});
+      }
+      await pt.setViewportSize({ width: 1280, height: 800 }); await pa.setViewportSize({ width: 1280, height: 800 });
+      check('f2-a11y', 'Pendientes, Grupos (listado, un grupo abierto) y el diálogo de asignación, a 1280 y 1024 px: todo objetivo mide ≥ 24×24 px o cumple la excepción de espaciado (2.5.8), el foco con Tab nunca queda tapado (2.4.11), ninguna celda recortada ni scroll horizontal',
+        informe.length === 8 && informe.every((x) => x.objetivos > 0 && x.chicos.length === 0 && x.celdas.length === 0 && x.scrolls === 0 && x.pagina <= 0 && (x.tapados || []).length === 0), JSON.stringify(informe).slice(0, 700));
+    }
+
+    /* ---------- f2-asignar (ESCRIBE; al FINAL): el admin asigna técnicos desde el diálogo ---------- */
+    {
+      await pa.evaluate(() => go('inicio')); await abrirGrupos(pa);
+      const gs = (await A.apiX('GET', '/grupos?anio=2026')).json, inicial = gs.find((g) => g.nombre === 'Inicial');
+      const profs = (await A.apiX('GET', '/profesionales?activo=true')).json, torres = profs.find((p) => p.nombre === 'Mtra. Torres');
+      const patches = []; pa.on('request', (r) => { if (r.method() === 'PATCH' && /\/grupos\/\d+$/.test(r.url())) patches.push(JSON.parse(r.postData() || '{}')); });
+      const abrir = async () => { await pa.click(`#btnAsignar_${inicial.id}`); await pa.waitForSelector('#modalFlujo.open #asg_t1'); await pa.waitForFunction(() => document.activeElement.id === 'asg_t1'); };
+
+      /* a) el diálogo precarga lo vigente, ofrece «Sin asignar» + los profesionales activos como «nombre · especialidad» y sin cambios no envía nada */
+      await abrir();
+      const dlg = await pa.evaluate(() => ({ titulo: document.getElementById('mfTitle').textContent, t1: document.getElementById('asg_t1').value, opciones: [...document.getElementById('asg_t1').options].map((o) => o.textContent),
+        max: [document.getElementById('asg_r1').maxLength, document.getElementById('asg_r2').maxLength], etiquetas: ['asg_t1', 'asg_r1', 'asg_t2', 'asg_r2'].map((i) => (document.querySelector(`label[for="${i}"]`) || {}).textContent) }));
+      const n0 = patches.length;
+      await pa.click('#btnAsgGuardar'); await pa.waitForSelector('#asgErrores:not([hidden])');
+      const sinCambios = await pa.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('asgErrores').getAttribute('role'), txt: document.getElementById('asgErrores').innerText }));
+      const espOpc = ['Sin asignar', ...profs.map((p) => `${p.nombre}${p.especialidad ? ' · ' + p.especialidad : ''}`)];
+      check('f2-asignar-a', 'el diálogo abre con el foco en «Técnico 1», precarga lo vigente (Inicial: sin asignar), ofrece «Sin asignar» + los profesionales ACTIVOS de GET /profesionales como «nombre · especialidad» (sin filtro por rol), roles de hasta 60 caracteres con su etiqueta; guardar sin cambios dice «No hay cambios para guardar.» en role="alert" con el foco y no sale ningún pedido',
+        dlg.titulo === 'Asignar técnicos' && dlg.t1 === '' && JSON.stringify(dlg.opciones) === JSON.stringify(espOpc) && dlg.max.join() === '60,60' && dlg.etiquetas.every(Boolean)
+          && sinCambios.foco === 'asgErrores' && sinCambios.rol === 'alert' && /No hay cambios para guardar\./.test(sinCambios.txt) && patches.length === n0, JSON.stringify({ dlg: { ...dlg, opciones: dlg.opciones.length }, sinCambios, enviados: patches.length - n0 }));
+
+      /* b) Esc con algo tipeado pide confirmación; «Seguir editando» conserva; «Descartar y cerrar» cierra sin enviar */
+      await pa.selectOption('#asg_t1', String(torres.id));
+      await pa.keyboard.press('Escape'); await pa.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+      const pide = await pa.evaluate(() => document.activeElement.id);
+      await pa.click('#btnCdSeguir');
+      const sigue = await pa.evaluate(() => ({ abierto: document.getElementById('modalFlujo').classList.contains('open'), valor: document.getElementById('asg_t1').value }));
+      await pa.keyboard.press('Escape'); await pa.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+      await pa.click('#btnCdDescartar'); await pa.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+      const trasDescarte = await pa.evaluate((id) => ({ foco: document.activeElement.id, t1: document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText.trim() }), inicial.id);
+      check('f2-asignar-b', 'con un cambio sin guardar, Esc pide confirmar (foco en «Seguir editando»); seguir conserva lo elegido; «Descartar y cerrar» cierra sin enviar nada, devuelve el foco al botón y el grupo sigue «Sin asignar»',
+        pide === 'btnCdSeguir' && sigue.abierto && sigue.valor === String(torres.id) && patches.length === n0 && trasDescarte.foco === 'btnAsignar_' + inicial.id && trasDescarte.t1 === 'Sin asignar', JSON.stringify({ pide, sigue, trasDescarte, enviados: patches.length - n0 }));
+
+      /* c) 403 (respuesta simulada): su mensaje va al resumen con el foco, sin campo marcado y lo elegido se conserva */
+      await abrir();
+      await pa.selectOption('#asg_t1', String(torres.id));
+      await pa.route(/\/grupos\/\d+$/, (r) => r.request().method() === 'PATCH' ? r.fulfill({ status: 403, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': DEMO }, body: JSON.stringify({ code: 'forbidden', detail: [{ campo: null, mensaje: 'Sólo un admin asigna técnicos a un grupo' }] }) }) : r.continue());
+      await pa.click('#btnAsgGuardar'); await pa.waitForFunction(() => /Sólo un admin/.test(document.getElementById('asgErrores').innerText));
+      const r403 = await pa.evaluate(() => ({ foco: document.activeElement.id, invalidos: document.querySelectorAll('#mfBody [aria-invalid="true"]').length, valor: document.getElementById('asg_t1').value, abierto: document.getElementById('modalFlujo').classList.contains('open') }));
+      await pa.unroute(/\/grupos\/\d+$/);
+      check('f2-asignar-c', 'un 403 muestra su mensaje en el resumen role="alert" con el foco, sin marcar ningún campo; el diálogo sigue abierto con lo elegido',
+        r403.foco === 'asgErrores' && r403.invalidos === 0 && r403.valor === String(torres.id) && r403.abierto, JSON.stringify(r403));
+
+      /* d) éxito: Mtra. Torres como técnico 1 de Inicial -> PATCH 200 con SÓLO lo que cambió */
+      const resp = pa.waitForResponse((r) => r.request().method() === 'PATCH' && /\/grupos\/\d+$/.test(r.url()));
+      await pa.click('#btnAsgGuardar');
+      const rp = await resp;
+      await pa.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+      await pa.waitForFunction((id) => !/Sin asignar/.test(document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText), inicial.id);
+      const exito = await pa.evaluate((id) => ({ foco: document.activeElement.id, toast: document.getElementById('toastMsg').textContent, t1: document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText.replace(/\s+/g, ' ').trim() }), inicial.id);
+      const trasApi = (await A.apiX('GET', '/grupos?anio=2026')).json.find((g) => g.id === inicial.id);
+      check('f2-asignar-d', 'Mtra. Torres como técnico 1 de Inicial desde el diálogo: PATCH 200 que envía sólo `tecnico1_id`; se cierra, la tarjeta lo muestra, GET /grupos coincide, el foco va al título del grupo y hay un aviso',
+        rp.status() === 200 && JSON.stringify(Object.keys(patches[patches.length - 1])) === '["tecnico1_id"]' && trasApi.tecnico1 && trasApi.tecnico1.id === torres.id && exito.t1.startsWith('Mtra. Torres')
+          && exito.foco === 'grupoTit_' + inicial.id && /Inicial/.test(exito.toast), JSON.stringify({ status: rp.status(), cuerpo: patches[patches.length - 1], exito, api: trasApi.tecnico1 }));
+
+      /* e) la misma persona en los dos puestos -> 422 junto al técnico 2 y en el resumen con el foco; «Sin asignar» + otro cambio pasa */
+      await abrir();
+      await pa.selectOption('#asg_t2', String(torres.id));
+      await pa.click('#btnAsgGuardar'); await pa.waitForFunction(() => document.getElementById('err_asg_t2').textContent.trim() !== '');
+      const r422 = await pa.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('asgErrores').getAttribute('role'), err: document.getElementById('err_asg_t2').textContent.trim(),
+        invalidos: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id).join(), resumen: document.getElementById('asgErrores').innerText, errT1: document.getElementById('err_asg_t1').textContent.trim() }));
+      await pa.selectOption('#asg_t2', '');
+      await pa.fill('#asg_r1', 'Maestra de apoyo');
+      const n1 = patches.length;
+      const resp2 = pa.waitForResponse((r) => r.request().method() === 'PATCH' && /\/grupos\/\d+$/.test(r.url()));
+      await pa.click('#btnAsgGuardar');
+      const rp2 = await resp2;
+      await pa.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+      await pa.waitForFunction((id) => /Maestra de apoyo/.test(document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText), inicial.id);
+      const final = (await A.apiX('GET', '/grupos?anio=2026')).json.find((g) => g.id === inicial.id);
+      check('f2-asignar-e', 'la misma persona en los dos puestos: 422 junto a «Técnico 2» (aria-invalid, mensaje del servidor) y en el resumen role="alert" con el foco, sin tocar «Técnico 1»; con «Sin asignar» en el puesto 2 y otro cambio (el rol) se guarda: PATCH 200 con sólo `tecnico1_rol`, y GET /grupos coincide',
+        r422.foco === 'asgErrores' && r422.rol === 'alert' && r422.err !== '' && r422.invalidos === 'asg_t2' && r422.errT1 === '' && /Técnico 2/.test(r422.resumen)
+          && rp2.status() === 200 && JSON.stringify(patches.slice(n1).map((p) => Object.keys(p))) === '[["tecnico1_rol"]]' && final.tecnico1.id === torres.id && final.tecnico1.rol === 'Maestra de apoyo' && final.tecnico2 === null,
+        JSON.stringify({ r422, enviado: patches.slice(n1), final: { t1: final.tecnico1, t2: final.tecnico2 } }));
+
+      /* f) la acción queda en la auditoría institucional (una fila por campo que cambió) */
+      check('f2-asignar-f', 'la API rechaza la asignación de un técnico (PATCH /grupos con el token de González → 403) aunque la pantalla ya no le ofrezca el botón',
+        (await T.apiX('PATCH', `/grupos/${inicial.id}`, { tecnico2_id: torres.id })).status === 403, '');
+    }
+    await A.c.close(); await T.c.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

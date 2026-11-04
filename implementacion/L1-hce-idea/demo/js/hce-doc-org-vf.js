@@ -109,7 +109,6 @@ function confirmarAutImagen(id){
   nna.docs.push({nombre:adjunto, cat:"Autorización / consentimiento", fechaOrig:fecha, fechaCarga:HOY, historico:false});
   logEvento(nna, {modulo:"doc", tipo:"firma", detalle:`Autorización de uso de imagen registrada — ${firmante}. Copia adjunta en HCE-DOC.`});
   closeFlujoModal(); renderDoc(id);
-  if(typeof renderGrupos==="function") renderGrupos();
   toast("Autorización de imagen registrada.");
 }
 

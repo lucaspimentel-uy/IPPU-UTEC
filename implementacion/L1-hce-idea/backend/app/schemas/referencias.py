@@ -17,6 +17,9 @@ EJEMPLO_GRUPOS = [{
     "tecnico1": {"id": 2, "nombre": "Dr. González", "rol": "Psicólogo/a"},
     "tecnico2": {"id": 3, "nombre": "Mtra. Torres", "rol": "Maestro/a"},
 }]
+EJEMPLO_RECORDATORIOS = [
+    {"clave": "lb", "texto": "Línea base del año", "periodo": "Primeras semanas del año", "activo": True},
+]
 EJEMPLO_PROFESIONALES = [{"id": 1, "nombre": "Ana Pérez", "especialidad": "Psicología", "rol": "tecnico", "activo": True}]
 
 
@@ -27,6 +30,17 @@ class ProfesionalResumen(BaseModel):
     nombre: str
     especialidad: str | None
     rol: str
+    activo: bool
+
+
+class RecordatorioResumen(BaseModel):
+    """Un período sugerido del Manual (§4): orienta, nunca es un plazo ni bloquea."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    clave: str
+    texto: str
+    periodo: str
     activo: bool
 
 
@@ -68,5 +82,5 @@ EJEMPLO_RESULTADO_GRUPO = {"data": {
 
 __all__ = [
     "GrupoResumen", "GrupoConTecnicos", "GrupoDetalle", "GrupoTecnicosActualizar", "ProfesionalResumen",
-    "EJEMPLO_GRUPOS", "EJEMPLO_PROFESIONALES", "EJEMPLO_RESULTADO_GRUPO",
+    "RecordatorioResumen", "EJEMPLO_GRUPOS", "EJEMPLO_PROFESIONALES", "EJEMPLO_RECORDATORIOS", "EJEMPLO_RESULTADO_GRUPO",
 ]

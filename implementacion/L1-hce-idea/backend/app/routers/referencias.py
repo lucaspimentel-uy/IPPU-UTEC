@@ -1,4 +1,4 @@
-"""Listas de referencia: `GET /grupos`, `GET /profesionales` — M11.3-a2; `PATCH /grupos/{id}` — M11.5-a.
+"""Listas de referencia: `GET /grupos`, `GET /profesionales` — M11.3-a2; `GET /recordatorios` — F2; `PATCH /grupos/{id}` — M11.5-a.
 
 GET plano, sin sobre (contrato de `app/routers/__init__.py`). La única escritura es la
 **asignación de técnicos a un grupo**, sólo `admin` (`handoff.md` §5.120); crear, renombrar o
@@ -14,8 +14,8 @@ from app.routers.dependencias import sesion_lectura, sesion_transaccional, usuar
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.referencias import (
-    EJEMPLO_GRUPOS, EJEMPLO_PROFESIONALES, EJEMPLO_RESULTADO_GRUPO, GrupoConTecnicos, GrupoDetalle,
-    GrupoTecnicosActualizar, ProfesionalResumen,
+    EJEMPLO_GRUPOS, EJEMPLO_PROFESIONALES, EJEMPLO_RECORDATORIOS, EJEMPLO_RESULTADO_GRUPO, GrupoConTecnicos,
+    GrupoDetalle, GrupoTecnicosActualizar, ProfesionalResumen, RecordatorioResumen,
 )
 from app.services import auth
 from app.services import grupos as servicio_grupos
@@ -24,6 +24,7 @@ from app.services.errores import ForbiddenAction
 
 router_grupos = APIRouter(prefix="/grupos", tags=["referencias"])
 router_profesionales = APIRouter(prefix="/profesionales", tags=["referencias"])
+router_recordatorios = APIRouter(prefix="/recordatorios", tags=["referencias"])
 
 _ERROR_422 = {422: {"model": RespuestaError, "description": "Parámetro inválido."}}
 
@@ -52,6 +53,17 @@ def listar_profesionales(
 ):
     """Profesionales ordenados por nombre, con los campos mínimos para elegir uno. Lista vacía si no hay."""
     return [ProfesionalResumen.model_validate(p) for p in servicio.listar_profesionales(db, activo)]
+
+
+@router_recordatorios.get(
+    "", response_model=list[RecordatorioResumen], summary="Recordatorios del Manual",
+    responses=_ejemplo(200, EJEMPLO_RECORDATORIOS),
+)
+def listar_recordatorios(db: Annotated[Session, Depends(sesion_lectura)]):
+    """Los períodos sugeridos del Manual §4, **todos** (con `activo`), por `orden` y `id`. Lista fija de
+    referencia: sin `X-Total-Count`. Orientan; **nunca son un plazo ni bloquean** una firma. Sólo lectura:
+    editarlos es administración (post-26/11)."""
+    return [RecordatorioResumen.model_validate(r) for r in servicio.listar_recordatorios(db)]
 
 
 def _solo_admin(usuario: Annotated[Profesional, Depends(usuario_actual)]) -> Profesional:

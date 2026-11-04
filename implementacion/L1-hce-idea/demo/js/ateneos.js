@@ -32,7 +32,7 @@
    pendiente del sistema definitivo.
 
    Los scripts se cargan en orden en index.html: este va ÚLTIMO porque reutiliza
-   nroHC() (grupos-usuario.js), abrirGrupo() (grupos-usuario.js),
+   nroHC() (grupos-usuario.js),
    abrirExpedienteDemo() (expediente.js), fmtFecha() (utils.js) y go() (ui-core.js). */
 
 /* ============ CATÁLOGO DE TIPOS (Prototipo v4 línea 1822) ============
@@ -150,9 +150,9 @@ function atRefHtml(a){
   return "—";
 }
 
-/* Ir al detalle de un grupo desde acá. `abrirGrupo()` sólo renderiza dentro de
-   #view-grupos: hay que activar la vista antes o el detalle queda invisible. */
-function atIrAGrupo(gid){ go("grupos"); abrirGrupo(gid); }
+/* Ir a Grupos desde acá. Desde F2 la vista Grupos es la de la API (Inicial, Escolares…): los grupos de color de los
+   ateneos de ejemplo no existen ahí, así que se llega al listado y no a un detalle (`gid` queda por compatibilidad). */
+function atIrAGrupo(_gid){ go("grupos"); }
 
 /* Grupos disponibles para los selects: los ids reales de GRUPOS (Azul · Celeste ·
    Naranja · Verde), no los que aparezcan escritos en los registros. */

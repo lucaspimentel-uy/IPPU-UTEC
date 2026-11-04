@@ -65,7 +65,7 @@ Se sirve en `http://localhost:5500` (no abre desde un archivo local: el login ne
 demo/
 ├── index.html              # markup y ORDEN DE CARGA de los scripts: ese orden es la semántica
 ├── css/estilos.css         # tokens (foco, rampa de severidad, estados) y estilos
-├── js/                     # 19 módulos, en el orden en que carga index.html:
+├── js/                     # 20 módulos, en el orden en que carga index.html:
 │   ├── utils.js            #   helpers compartidos y componentes comunes (cargando/error/vacío, diálogos) — lo tocan todos
 │   ├── api.js              #   cliente de la API y sesión
 │   ├── adaptadores.js      #   funciones puras: respuesta de la API → forma que pinta la demo
@@ -81,7 +81,9 @@ demo/
 │   ├── severidad.js        #   SEV: severidad DSM-5-TR (conectado)
 │   ├── organismos.js       #   ORG: INAU, BPS, sus registros y la alerta AYEX (conectado)
 │   ├── auditoria.js        #   LOG: registro de cambios, sólo lectura (conectado)
-│   ├── recordatorios.js · grupos-usuario.js · inclusion.js · ateneos.js   # vistas en demostración
+│   ├── recordatorios.js · inclusion.js · ateneos.js   # vistas en demostración
+│   ├── pendientes.js       #   Pendientes: lo que falta este año por NNA (conectado, F2)
+│   ├── grupos-usuario.js   #   Grupos y asignación de técnicos (conectado, F2) · Mi usuario (ejemplo)
 └── verificacion/           # Playwright: README.md · conectada.js · capturas.js · fingerprint.js · comparar.js
                             #  · package.json y package-lock.json (versión fijada) · salidas/ y node_modules/ ignorados
 ```

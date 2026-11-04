@@ -57,6 +57,8 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
 **Cobertura** (la lista exacta se imprime al final de cada corrida, en «Cobertura»):
 
 - **Conectadas** — login y su error; listado con sus estados (cargando, error, vacío, filas, filtro «Todos»); aviso (*toast*);
+  Pendientes (con el bloque de períodos abierto, un filtro activo, cargando, error y vacío) y Grupos (listado, un grupo abierto y, como
+  admin, «Asignar técnicos» con su diálogo abierto —con errores de muestra y la confirmación de descarte— sin guardar);
   expediente de la API con sus 13 pestañas; Auditoría (LOG: carga, filtros, paginado, error y vacío); Severidad (SEV: vacía,
   lectura, diálogo de registro y de edición) y Organismos (ORG: vacía, lectura con la alerta AYEX, diálogos del vínculo y del
   registro); CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
@@ -65,7 +67,7 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
   (vacía, formulario, las cinco categorías del baremo, los niveles y la alerta de vigencia) y su reporte; diálogo de alta/edición
   en sus cuatro pasos y su confirmación de descarte; diálogo del recibí y su confirmación; estados compartidos (cargando, error,
   vacío, error en línea); enlace de salto enfocado; y el **cromo** (barra superior y lateral) en todas ellas.
-- **Modo demostración**, informadas aparte: Pendientes, Analítica, Grupos, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
+- **Modo demostración**, informadas aparte: Analítica, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
   El panel «Modo demostración» y la marca «Solo demo» se miden además dentro de las pantallas conectadas (pestañas sin API).
 
 **Lo que la herramienta no ve** (queda en §6): estados `:hover` y `:active`, contenido dentro de SVG (los radares), la vista

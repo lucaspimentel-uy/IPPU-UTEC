@@ -11,13 +11,16 @@
  *       Un selector que apague el contorno (`outline:none`) en el CSS se informa aparte.
  *
  * Pantallas y diálogos que recorre (la lista exacta se imprime al final como «Cobertura»):
- *   CONECTADAS: login (y su error), listado (cargando · error · vacío · filas · filtros), expediente de la API con sus 13
+ *   CONECTADAS: login (y su error), listado (cargando · error · vacío · filas · filtros), Pendientes (cargando · error · filtro
+ *   activo) y Grupos (listado y un grupo abierto) con el técnico, expediente de la API con sus 13
  *   pestañas, CI (pendiente con errores · registrado · edición), IDEA (borrador con NS · firmado con banda · firma y 422 ·
  *   addendas), PA y PB (borrador · Δ), IC (sin crear · firmado · avisos y «Cambió en el servidor» · errores), documento
  *   impreso del IC, VF (vacía · formulario · categorías y niveles), reporte de la VF, diálogo de alta/edición en sus cuatro
  *   pasos y su confirmación de descarte, diálogo del recibí y su confirmación, estados compartidos, toast, enlace de salto,
- *   y el cromo de la app (barra lateral, cabecera) en todas ellas.
- *   MODO DEMOSTRACIÓN (se informan aparte): Pendientes, Analítica, Grupos, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
+ *   y el cromo de la app (barra lateral, cabecera) en todas ellas. Con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD, al final «Salir» y
+ *   entra el admin: Grupos con «Asignar técnicos», y el diálogo de asignación abierto (con su confirmación de descarte y sus errores
+ *   de muestra) SIN guardar: el filtro de escritura sigue sin dejar pasar más que GET y POST /auth/login.
+ *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
  *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
@@ -39,6 +42,7 @@
  * Autoprueba del filtro: `VERIFICAR_AUTOPRUEBA=1` emite un POST sin ruta desde la página y debe terminar en código 1.
  *
  * Variables: API (por omisión http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL ·
+ * IPPU_ADMIN_EMAIL · IPPU_ADMIN_PASSWORD (opcionales: sin ellas no se mide el diálogo de asignación de técnicos) ·
  * VERIFICAR_AUTOPRUEBA (=1: sólo la autoprueba del filtro).
  */
 const fs = require('fs');
@@ -50,6 +54,7 @@ const API = process.env.API || 'http://localhost:8000';
 const DEMO = process.env.DEMO || 'http://localhost:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
+const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL, ADMIN_PASSWORD = process.env.IPPU_ADMIN_PASSWORD;
 const URL_DEMO = DEMO + '/index.html?api=' + encodeURIComponent(API);
 
 /* 422 reales de POST /idea/{id}/firmar y POST /protocolo/{id}/firmar sobre el seed recién cargado (Joaquín · IDEA en borrador con
@@ -353,8 +358,35 @@ function buscarContornosApagados() {
   await cap('Inicio · listado con inactivos (filtro «Todos»)');
   await page.click('.chip-estado[data-estado="activos"]'); await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
 
+  // ---------------------------------------------------------------- PENDIENTES (conectada · F2)
+  await page.click('.navitem[data-view="pendientes"]');
+  await page.waitForFunction(() => PEND.estado === 'listo' && !!document.getElementById('tbodyPend'), null, { timeout: 8000 }); await esperar(120);
+  await cap('Pendientes · Todo (con el bloque de períodos)');
+  await ev(() => { document.getElementById('pendOrient').open = true; }); await esperar(80);
+  await cap('Pendientes · períodos del Manual abiertos');
+  await page.click('#pendContenido .chip-estado[data-filtro="lb"]'); await esperar(120);
+  await cap('Pendientes · filtro «Línea base» activo');
+  anillos.push(await medirAnilloTeclado(page, '#pendContenido .chip-estado[data-filtro="pa"]', 'chip de filtro (Pendientes)'));
+  anillos.push(await medirAnilloTeclado(page, '#tbodyPend .nna-abrir', 'nombre de la fila (Pendientes)'));
+  await ev(() => { PEND.estado = 'cargando'; pendPintar(); }); await cap('Pendientes · cargando');
+  await ev(() => { PEND.estado = 'error'; PEND.error = 'No se pudieron cargar los pendientes (muestra).'; pendPintar(); }); await cap('Pendientes · con error');
+  await ev(() => { PEND.estado = 'listo'; PEND.filtro = 'ci'; PEND.filas = []; pendPintar(); }); await cap('Pendientes · filtro sin filas (estado vacío)');
+  await ev(() => pendCargar()); await page.waitForFunction(() => PEND.estado === 'listo' && PEND.filas.length > 0, null, { timeout: 8000 });
+
+  // ---------------------------------------------------------------- GRUPOS (conectada · F2): el técnico ve los suyos, sin «Asignar técnicos»
+  await page.click('.navitem[data-view="grupos"]');
+  await page.waitForFunction(() => GRP.estado === 'listo' && !!document.querySelector('#gruposList .grupo-card'), null, { timeout: 8000 }); await esperar(120);
+  await cap('Grupos · listado (técnico)');
+  anillos.push(await medirAnilloTeclado(page, '#gruposList .h2-link', 'nombre del grupo (Grupos)'));
+  await ev(() => { GRP.estado = 'cargando'; gruposPintar(); }); await cap('Grupos · cargando');
+  await ev(() => { GRP.estado = 'error'; GRP.error = 'No se pudieron cargar los grupos (muestra).'; gruposPintar(); }); await cap('Grupos · con error');
+  await ev(() => gruposCargar()); await page.waitForFunction(() => GRP.estado === 'listo' && !!document.querySelector('#gruposList .grupo-card'), null, { timeout: 8000 });
+  await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo'); await esperar(120);
+  await cap('Grupos · un grupo abierto (integrantes)');
+  anillos.push(await medirAnilloTeclado(page, '#grupoVolver', 'enlace «Grupos de referencia» (migas)'));
+
   // ---------------------------------------------------------------- VISTAS EN MODO DEMOSTRACIÓN
-  for (const v of ['pendientes', 'analitica', 'grupos', 'inclusion', 'ateneos']) {
+  for (const v of ['analitica', 'inclusion', 'ateneos']) {
     await page.click(`.navitem[data-view="${v}"]`); await esperar(120);
     await cap(`Vista ${v} (modo demostración)`, 'demo');
   }
@@ -583,6 +615,35 @@ function buscarContornosApagados() {
   anillos.push(await medirAnilloTeclado(page, '#expHead .banda-editar', 'botón de la banda del paciente'));
   anillos.push(await medirAnilloTeclado(page, '#btnAyudaFlujo', 'botón de ayuda del ciclo anual («?»)'));
   anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
+
+  // ---------------------------------------------------------------- GRUPOS COMO ADMIN: «Asignar técnicos» y su diálogo, SIN guardar
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    await page.click('.btn-exit'); await page.waitForSelector('#loginScreen:not(.hidden)', { timeout: 8000 });
+    await page.fill('#loginUser', ADMIN_EMAIL); await page.fill('#loginPass', ADMIN_PASSWORD); await page.click('#loginBtn');
+    await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    await page.click('.navitem[data-view="grupos"]');
+    await page.waitForFunction(() => GRP.estado === 'listo' && !!document.querySelector('#gruposList .grupo-card'), null, { timeout: 8000 }); await esperar(120);
+    await cap('Grupos · listado (admin, con «Asignar técnicos»)');
+    anillos.push(await medirAnilloTeclado(page, 'button[id^="btnAsignar_"]', 'botón «Asignar técnicos» (Grupos)'));
+    await page.click('button[id^="btnAsignar_"] >> nth=0'); await page.waitForSelector('#modalFlujo.open #asg_t1'); await esperar(150);
+    await cap('Diálogo · asignar técnicos de un grupo');
+    anillos.push(await medirAnilloTeclado(page, '#asg_t1', 'lista desplegable (asignar técnicos)'));
+    anillos.push(await medirAnilloTeclado(page, '#asg_r1', 'campo de texto (asignar técnicos)'));
+    // Errores de muestra (el servidor no se consulta): el resumen role="alert" y el mensaje junto al campo, con los componentes reales.
+    await ev(() => { formResumen('asgErrores', [{ id: 'asg_t2', rot: 'Técnico 2', mensaje: 'El técnico 1 y el técnico 2 tienen que ser personas distintas (muestra)' }, { mensaje: 'Sólo un admin asigna técnicos a un grupo (muestra)' }], 'No se pudo guardar la asignación:'); });
+    await esperar(100); await cap('Diálogo · asignar técnicos con errores de muestra');
+    await ev(() => { formLimpiar(document.getElementById('modalFlujo'), 'asgErrores'); });
+    // Un cambio tipeado + Esc: la confirmación de descarte. NO se guarda: se descarta.
+    await page.selectOption('#asg_t1', { index: 1 });
+    await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 }); await esperar(100);
+    await cap('Diálogo · asignar técnicos con la confirmación de descarte');
+    await page.click('#btnCdDescartar'); await esperar(150);
+    await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo'); await esperar(120);
+    await cap('Grupos · un grupo abierto (admin, con «Asignar técnicos»)');
+  } else {
+    console.log('\n(Sin IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD: no se midió el diálogo de asignación de técnicos del admin.)');
+  }
 
   await browser.close();
   imprimirIntercepcion();

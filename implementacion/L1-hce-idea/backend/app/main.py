@@ -76,7 +76,7 @@ for _router in (
     valoracion_funcional.router,
     severidad.router_hce, severidad.router_niveles,
     organismos.router_hce, organismos.router_opciones,
-    referencias.router_grupos, referencias.router_profesionales,
+    referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)
 

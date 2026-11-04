@@ -1,4 +1,4 @@
-"""Listas de referencia de sólo lectura para la demo: grupos y profesionales (M11.3-a2).
+"""Listas de referencia de sólo lectura para la demo: grupos y profesionales (M11.3-a2) y recordatorios (F2).
 
 Sin escritura: crear o renombrar grupos es el sub-módulo de administración
 (`handoff.md` §5.90); la asignación de técnicos (M11.5-a, §5.120) vive en `services/grupos.py`.
@@ -6,6 +6,7 @@ Sin escritura: crear o renombrar grupos es el sub-módulo de administración
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.catalogos import Recordatorio
 from app.models.identidad import Grupo, Profesional
 from app.services.fechas import anio_actual
 
@@ -25,3 +26,8 @@ def listar_profesionales(db: Session, activo: bool | None = None) -> list[Profes
     if activo is not None:
         consulta = consulta.where(Profesional.activo == activo)
     return list(db.scalars(consulta))
+
+
+def listar_recordatorios(db: Session) -> list[Recordatorio]:
+    """Todos los recordatorios del Manual §4 (activos o no), en el orden de coordinación. Sólo lectura."""
+    return list(db.scalars(select(Recordatorio).order_by(Recordatorio.orden, Recordatorio.id)))

@@ -3,7 +3,8 @@
  *
  * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF · una vista de
  * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
- * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC.
+ * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC. F2 agrega Pendientes (con el filtro «Línea base»), el
+ * listado de Grupos, un grupo abierto y —con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD— el diálogo «Asignar técnicos» del admin (se cierra sin guardar).
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -18,6 +19,7 @@ const API = process.env.API || 'http://localhost:8000';
 const DEMO = process.env.DEMO || 'http://localhost:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
+const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL, ADMIN_PASSWORD = process.env.IPPU_ADMIN_PASSWORD;
 if (process.env.CONFIRMA_BASE_DESCARTABLE !== '1') { console.error('Esta herramienta ESCRIBE en la base de la API (' + API + '): correla sólo contra una base descartable y confirmalo con CONFIRMA_BASE_DESCARTABLE=1.'); process.exit(1); }
 if (!PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD.'); process.exit(1); }
 
@@ -82,7 +84,25 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');
     await abrir('Martín', 'pb');                                          await snapCompleta('pb-resultado');
     await abrir('Valentina', 'ic');                                       await snapCompleta('ic-editor');
+    // F2: Pendientes (filtro «Línea base»), el listado de Grupos y un grupo abierto (técnico); el diálogo de asignación es del admin
+    await page.click('.navitem[data-view="pendientes"]'); await page.waitForFunction(() => PEND.estado === 'listo', null, { timeout: 8000 });
+    await page.click('#pendContenido .chip-estado[data-filtro="lb"]');   await snap('pendientes-filtro-lb');
+    await page.click('.navitem[data-view="grupos"]'); await page.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });   await snap('grupos-listado');
+    await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo');   await snap('grupos-un-grupo');
     await ctx.close();
+    if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+      const ctxA = await browser.newContext({ viewport: { width: w, height: h } });
+      const pa = await ctxA.newPage();
+      await pa.goto(DEMO + '/index.html?api=' + encodeURIComponent(API));
+      await pa.fill('#loginUser', ADMIN_EMAIL); await pa.fill('#loginPass', ADMIN_PASSWORD); await pa.click('#loginBtn');
+      await pa.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      await pa.waitForTimeout(3500);
+      await pa.click('.navitem[data-view="grupos"]'); await pa.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });
+      await pa.click('button[id^="btnAsignar_"] >> nth=0'); await pa.waitForSelector('#modalFlujo.open #asg_t1'); await pa.waitForTimeout(250);
+      const f = `f2-grupos-asignar-${w}x${h}.png`; await pa.screenshot({ path: path.join(SALIDAS, f) }); hechas.push(f);
+      await pa.keyboard.press('Escape');                                // sin cambios: cierra sin preguntar y sin guardar
+      await ctxA.close();
+    }
   }
   await browser.close();
   console.log(hechas.length + ' capturas en ' + SALIDAS + ':\n  ' + hechas.join('\n  '));

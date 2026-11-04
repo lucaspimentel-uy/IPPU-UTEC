@@ -65,6 +65,7 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `c1-` | HCE-LOG de sólo lectura (C1): las firmas de LB, PA, PB e IC de Martín con el nombre del autor, una edición de HCE-00 con antes → después, filtros por módulo y tipo (las opciones son las válidas), paginado de 25, hora local del navegador, valores largos con «ver completo» y JSON legible, estado vacío, errores 404/500 de la API, sin botón «Ver auditoría» en el expediente conectado, sólo lectura (no agrega filas) y 404 para un técnico en un expediente ajeno |
 | `c2-` | HCE-SEV (C2): la severidad de Martín con la etiqueta de la API, justificación, fecha y autor, y la regla del módulo una vez; la referencia DSM-5-TR (de `GET /severidad-niveles`) plegada; la severidad no sale de su pestaña; estado vacío y registro (un POST con los cuatro campos); con un dominio o todo vacío se marcan los campos y no sale ningún pedido; 422 por campo; confirmación al descartar; editar CS de 2 a 3 (PATCH de un campo) y verlo en Auditoría con antes → después; 404 para un técnico en un expediente ajeno; el Reporte de VF no lleva la severidad (`c2-vf-reporte`: ni «Grado», ni las etiquetas, ni la justificación) |
 | `c3-` | HCE-ORG (C3): INAU y BPS de Martín con lo que devuelve la API y sus envíos del más nuevo al más viejo; la nota del IC (§5.3); la alerta AYEX es la de la respuesta (`c3-sin-calculo` fuerza respuestas distintas: el navegador no cuenta días); la alerta de 30 días de Sofía con ⚠ y en palabras; estado vacío y registrar (un POST sólo con lo completado); Joaquín con INAU y sin envíos; opciones de BPS de `GET /organismos/opciones`; sin cambios, vacío (422 sin campo) y 422 por campo en el resumen `role="alert"`; confirmación al descartar; editar BPS (PATCH sólo de lo que cambió; la alerta desaparece); agregar una gestión (aparece primera, con el autor del token); Auditoría con `bps.estado` antes → después; 404 en las siete rutas para un técnico en un expediente ajeno |
+| `f2-` | Pendientes y Grupos conectados (F2): `GET /recordatorios`; las filas de Pendientes contra el `ci`/`flujo` de `GET /hce`, filtros con su conteo y los dos botones de Inicio; Grupos del técnico y del admin contra `GET /grupos`, integrantes idénticos a los del listado, «Salir» con una respuesta en vuelo, WCAG 2.5.8 / 2.4.11 y celdas sin recortar a 1024 y 1280; **`f2-asignar` ESCRIBE** (asigna técnicos a Inicial desde el diálogo: 200, 422 junto al campo, descarte) y va al final |
 | `z` | Cero errores de JavaScript en toda la corrida |
 
 ## `capturas.js`
@@ -75,7 +76,7 @@ node capturas.js
 ```
 
 Deja una imagen por pantalla (login, listado, HCE-00, CI, LB, PA, PB con Δ, editor del IC, informe impreso, VF, los organismos —lectura, la alerta AYEX y el formulario de BPS— y una vista
-de modo demostración) a **1280×800 y a 1024×768** en `salidas/` (ignorada por git), más tres de página completa (`f1-…-completa`: editor de LB, PB con su «Resultado» y editor del IC; la banda y la barra de acciones quedan donde las deja el desplazamiento). No compara nada: es para mirar.
+de modo demostración; F2: Pendientes con su filtro, el listado de Grupos, un grupo abierto y, con `IPPU_ADMIN_EMAIL` / `IPPU_ADMIN_PASSWORD`, el diálogo «Asignar técnicos») a **1280×800 y a 1024×768** en `salidas/` (ignorada por git), más tres de página completa (`f1-…-completa`: editor de LB, PB con su «Resultado» y editor del IC; la banda y la barra de acciones quedan donde las deja el desplazamiento). No compara nada: es para mirar.
 Escribe: sólo contra una base descartable recién cargada.
 
 ## Contraste — `herramientas/verificar_contraste_ui.js`
@@ -85,7 +86,7 @@ $env:API = "http://localhost:8001"; $env:IPPU_DEMO_PASSWORD = "…"
 node ..\..\..\..\herramientas\verificar_contraste_ui.js [--tabla] [--json salida.json]
 ```
 
-Abre la demo en `:5500` con `?api=<API>`, entra como el técnico del seed y mide, sobre lo que **realmente se renderiza**:
+Abre la demo en `:5500` con `?api=<API>`, entra como el técnico del seed (y, si están `IPPU_ADMIN_EMAIL` / `IPPU_ADMIN_PASSWORD`, al final como el admin para medir «Asignar técnicos» y su diálogo, sin guardar) y mide, sobre lo que **realmente se renderiza**:
 los pares texto/fondo, el texto que se escribe en un campo, el borde de los campos (3:1) y el anillo de foco con
 teclado real. Recorre todas las pantallas conectadas y los diálogos, y separa lo que falla en ellas de lo que falla sólo
 en las vistas de modo demostración. Al final imprime su cobertura. `--tabla` lista los pares que fallan; `--json` guarda

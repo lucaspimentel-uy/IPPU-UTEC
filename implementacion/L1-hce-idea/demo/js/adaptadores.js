@@ -71,6 +71,7 @@ function adaptarFilaLista(it, hoy){
     nac: per.fecha_nac || null,
     edad: edadAnios(per.fecha_nac, hoy),
     grupo: it.grupo ? it.grupo.nombre : null,
+    grupoId: it.grupo ? it.grupo.id : null,   // para agrupar (vista Grupos); el nombre es lo que se muestra
     activo: !!it.activo,
     ciEstado: it.ci,                 // "pendiente" | "registrado" (consentimiento, §5.121 e)
     modulos: _mapaModulos(it.flujo)  // estado de LB/PA/PB/IC del anio en curso
