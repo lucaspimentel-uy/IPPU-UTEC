@@ -2691,6 +2691,23 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && p2.every((f, i) => f[4] === (apiP2.json[i].campo || '—') && f[1] === (apiP2.json[i].usuario ? apiP2.json[i].usuario.nombre : '(sin autor)')),
       JSON.stringify({ r1, r2, nTotal }));
 
+    /* c1-paginado-foco · el botón que tenía el foco queda deshabilitado (primera o última página): el foco no cae al <body>, pasa al otro botón.
+       Ahora estamos en la primera página, recién llegados con «Anteriores». */
+    const idFoco = () => pc.evaluate(() => document.activeElement && document.activeElement.id);
+    const focoPrimera = await idFoco(), antDeshPrimera = await pc.isDisabled('#btnLogAnt');
+    let guardia = 0;
+    while (!(await pc.isDisabled('#btnLogSig')) && guardia++ < 20) {
+      const antes = await rango();
+      await pc.click('#btnLogSig'); await pc.waitForFunction((v) => (document.querySelector('#panelExp .log-rango')?.innerText || '') !== v, antes, { timeout: 8000 });
+      await pc.waitForTimeout(80);
+    }
+    const focoUltima = await idFoco(), sigDeshUltima = await pc.isDisabled('#btnLogSig'), rangoUltima = await rango();
+    check('c1-paginado-foco', 'al llegar a la primera página con «Anteriores» y a la última con «Siguientes», el botón queda deshabilitado y el foco pasa al otro botón del paginado (nunca al <body>)',
+      antDeshPrimera && focoPrimera === 'btnLogSig' && sigDeshUltima && focoUltima === 'btnLogAnt' && new RegExp(`de ${nTotal}$`).test(rangoUltima),
+      JSON.stringify({ focoPrimera, focoUltima, rangoUltima }));
+    await pc.click('#btnLogAnt'); await pc.waitForTimeout(200);  // se vuelve a una página intermedia o a la primera para lo que sigue
+    await filtrar('', '');
+
     /* c1-hora · ts con zona horaria → hora local del navegador (es-UY), aquí Asia/Tokyo */
     const esperada = new Date(apiP1.json[0].ts).toLocaleString('es-UY', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     check('c1-hora', 'la fecha y hora de cada fila es la hora local del navegador (es-UY): con el navegador en Asia/Tokyo, la primera fila muestra el ts de la API en esa zona',
@@ -2969,10 +2986,11 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && oM.bps.alerta === null && lect.alerta === 0 && lect.demo === 0 && lect.tarjetas === 4 && lect.tab === 'true',
       JSON.stringify({ lect: { ...lect, panel: undefined }, filasI }).slice(0, 500));
 
-    /* c3-nota · la nota dice que el informe a los organismos es el IC (un solo documento) y que los respaldos van a Documentos */
+    /* c3-nota · la nota del IPPU del acta (§5.40): IC anual; los informes a pedido para organismos todavía no están; los respaldos van a Documentos */
     const nota = await txt('orgNota');
-    check('c3-nota', 'una línea explica que el informe a los organismos es el Informe de cierre (IC), un único documento (§5.3), y que los documentos de respaldo se adjuntan en Documentos',
-      /Informe de cierre \(IC\)/.test(nota) && /único documento \(§5\.3\)/.test(nota) && /Documentos/.test(nota), nota);
+    check('c3-nota', 'la nota dice que el informe de cierre anual es el IC, que los informes a pedido para organismos (por ejemplo, de INAU sobre un solo chico) todavía no están en esta versión, y que los respaldos se adjuntan en Documentos; ya no afirma que el IC sea «siempre» el único (acta del 2026-08-26, §5.40)',
+      nota === 'El informe de cierre anual es el IC. Los informes a pedido para organismos (por ejemplo, de INAU sobre un solo chico) todavía no están en esta versión. Los documentos de respaldo se adjuntan en Documentos.'
+        && !/siempre|único documento/.test(nota), nota);
 
     /* c3-sin-calculo · la alerta sale SOLO de la respuesta: el navegador no cuenta días ni decide si una prestación es AYEX */
     await ps.route('**/organismos', async (r) => { const real = await (await r.fetch()).json(); const u = r.request().url();

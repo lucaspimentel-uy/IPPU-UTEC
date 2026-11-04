@@ -177,7 +177,7 @@ def crear_vf(
     db.flush()
     auditoria.registrar_carga(
         db, modulo=MODULO_HCE_VF, hce_id=hce_id, usuario_id=usuario_id,
-        detalle=f"Alta de {MODULO_HCE_VF} del expediente {hce_id}",
+        detalle=f"Alta de {MODULO_HCE_VF}",
     )
     db.refresh(vf)
     return vf

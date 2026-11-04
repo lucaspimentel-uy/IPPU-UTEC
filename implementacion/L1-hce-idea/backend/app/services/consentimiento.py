@@ -91,7 +91,7 @@ def registrar_consentimiento(
         ) from exc
     registrar_carga(
         db, modulo=MODULO_HCE_CI, hce_id=hce_id, usuario_id=usuario_id,
-        detalle=f"Registro del consentimiento informado del expediente {hce_id}",
+        detalle="Registro del consentimiento informado",
     )
     return ci
 

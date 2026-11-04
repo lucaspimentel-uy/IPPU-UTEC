@@ -90,7 +90,7 @@ node capturas.js                         # ESCRIBE: base nueva; PNG en salidas\ 
 cd ..\..\backend
 pytest -q                                # todo pasa, 0 skipped; sin Docker o con la base fuera del head ABORTA (exit 1)
 ```
-Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
+(La presentación tiene su propio comando y sus logs en `%TEMP%`: ver «Presentación».) Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
 `implementacion/L1-hce-idea/demo/verificacion/README.md`.
 
 ## Presentación (un comando, §5.139)
@@ -102,7 +102,7 @@ powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 
 $env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```
-Volver a correrlo da lo mismo. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
 `crear_usuario` no escriben (el script lo fija solo).
 

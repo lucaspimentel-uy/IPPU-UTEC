@@ -377,7 +377,7 @@ def crear_hce(
     _flush_traduciendo(db)
     registrar_carga(
         db, modulo=MODULO_HCE_00, hce_id=expediente.id, usuario_id=usuario_id,
-        detalle=f"Alta del expediente {expediente.id} (N.º de HC {expediente.hc_historico})",
+        detalle=f"Alta del expediente (N.º de HC {expediente.hc_historico})",
     )
     db.refresh(expediente)
     return expediente

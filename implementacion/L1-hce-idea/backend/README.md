@@ -57,7 +57,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **989 passed, 0 skipped**.
+Una corrida válida de hoy es **1004 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -140,7 +140,7 @@ backend/
 ├── alembic/                 # migración inicial única del esquema v2
 ├── app/
 │   ├── core/                # config (valida que sea Postgres) · database · constantes
-│   ├── models/              # catalogos · identidad · modulos · transversales · mixins
+│   ├── models/              # ateneo · catalogos · divulgacion · identidad · inclusion · modulos · pai · severidad · transversales · mixins
 │   ├── data/                # catalogos_iniciales.json (generado, no editar a mano)
 │   ├── seed_catalogos.py    # carga idempotente de catálogos
 │   ├── routers/             # un módulo por dominio (HTTP: contrato, alcance por grupo, cabecera X-Total-Count)

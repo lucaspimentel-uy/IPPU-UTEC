@@ -8,6 +8,7 @@ Los datos los crean las fábricas de `conftest.py` (la base de test no tiene
 catálogos) y la verificación lee la base con consultas de columna sobre `db_api`.
 """
 import itertools
+import re
 
 import pytest
 from sqlalchemy import func, select
@@ -312,7 +313,8 @@ def test_el_alta_escribe_exactamente_una_fila_de_carga_y_un_patch_solo_ediciones
     assert len(cargas) == 1
     c = cargas[0]
     assert (c.modulo, c.tipo, c.campo, c.valor_ant, c.valor_nuevo) == ("HCE-00", "carga", None, None, None)
-    assert str(hid) in c.detalle and "1001" in c.detalle
+    # el N.º de HC identifica al expediente; el id interno no se muestra (los dígitos de uno pueden estar en el otro)
+    assert "N.º de HC 1001" in c.detalle and not re.search(r"expediente \d+", c.detalle)
     assert client.patch(f"/hce/{hid}", json={"diagnostico": "otro", "alerta": "x"}).status_code == 200
     assert len(_filas(db_api, hid, "carga")) == 1, "editar no vuelve a escribir una carga"
     assert len(_filas(db_api, hid, "edicion")) == 2

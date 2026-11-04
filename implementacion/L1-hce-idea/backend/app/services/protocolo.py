@@ -256,7 +256,7 @@ def crear_protocolo(
     modulo = modulo_de(tipo)
     auditoria.registrar_carga(
         db, modulo=modulo, hce_id=hce_id, usuario_id=usuario_id,
-        detalle=f"Alta de {modulo} (Protocolo {tipo} {anio}) del expediente {hce_id}",
+        detalle=f"Alta de {modulo} (Protocolo {tipo} {anio})",
     )
     avisos = flujo.avisos_de_secuencia(
         db, hce_id=hce_id, anio=anio, modulo=modulo, accion="creación", usuario_id=usuario_id,

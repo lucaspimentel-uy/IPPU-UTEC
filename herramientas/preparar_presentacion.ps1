@@ -16,6 +16,8 @@
   Conexion a Postgres: sale del DATABASE_URL del .env del backend, cambiando solo el nombre de la base. Nunca toca
   la base del .env: se niega a escribir en `ippu_test` (siempre) y en `ippu` (salvo -ConfirmarBaseDeTrabajo).
 
+  Los servidores escriben su salida en %TEMP%\ippu-presentacion-api.log y %TEMP%\ippu-presentacion-demo.log (stdout y stderr juntos).
+
 .PARAMETER Base
   Nombre de la base a recrear. Por omision `ippu_presentacion`.
 .PARAMETER PuertoApi
@@ -47,8 +49,8 @@ $Backend = Join-Path $Repo 'implementacion\L1-hce-idea\backend'
 $Demo = Join-Path $Repo 'implementacion\L1-hce-idea\demo'
 $Python = Join-Path $Backend '.venv\Scripts\python.exe'
 $Estado = Join-Path $env:TEMP 'ippu-presentacion.json'      # PID e inicio de lo que arranco este script
-$LogApi = Join-Path $env:TEMP 'ippu-presentacion-api.log'
-$LogDemo = Join-Path $env:TEMP 'ippu-presentacion-demo.log'
+$LogApi = Join-Path $env:TEMP 'ippu-presentacion-api.log'    # stdout y stderr de uvicorn
+$LogDemo = Join-Path $env:TEMP 'ippu-presentacion-demo.log'  # stdout y stderr de http.server
 
 function Parar([string]$Mensaje) { Write-Host "ERROR: $Mensaje" -ForegroundColor Red; exit 1 }
 function Paso([string]$Texto) { Write-Host "`n== $Texto" -ForegroundColor Cyan }
@@ -57,6 +59,17 @@ function Paso([string]$Texto) { Write-Host "`n== $Texto" -ForegroundColor Cyan }
 function Nativo([scriptblock]$Bloque) {
   $previo = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
   try { & $Bloque } finally { $ErrorActionPreference = $previo }
+}
+
+# Arranca un servidor con stdout y stderr a un archivo, SIN heredar los handles de quien llama. Con
+# `Start-Process -RedirectStandardOutput` el hijo hereda igual los handles heredables del padre: si la salida de este
+# script esta capturada (pipe o redireccion de una herramienta automatica), la captura no termina hasta que el servidor
+# muere. Sin -Redirect*, Start-Process usa ShellExecute, que no hereda handles; la redireccion la hace cmd.exe. El entorno
+# (DATABASE_URL, CORS_ORIGINS...) se hereda del proceso, como antes. El PID devuelto es el de cmd.exe: `taskkill /T` baja el arbol.
+function Iniciar-Servidor([string[]]$Argumentos, [string]$Carpeta, [string]$Log) {
+  $linea = (@("`"$Python`"") + $Argumentos) -join ' '
+  return Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList '/d', '/c', "`"$linea > `"$Log`" 2>&1`"" `
+    -WorkingDirectory $Carpeta -WindowStyle Hidden -PassThru
 }
 
 function Dueno-Del-Puerto([int]$Puerto) {
@@ -198,15 +211,14 @@ try {
     # 4 · API
     # -----------------------------------------------------------------------------------------------------------
     Paso "API en :$PuertoApi"
-    $api = Start-Process -FilePath $Python -ArgumentList '-m', 'uvicorn', 'app.main:app', '--port', $PuertoApi `
-      -WorkingDirectory $Backend -WindowStyle Hidden -PassThru -RedirectStandardOutput $LogApi -RedirectStandardError "$LogApi.err"
+    $api = Iniciar-Servidor @('-m', 'uvicorn', 'app.main:app', '--port', $PuertoApi) $Backend $LogApi
     @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o') }; demo = $null; base = $Base } | ConvertTo-Json | Set-Content $Estado -Encoding UTF8
     $listo = $false
     for ($i = 0; $i -lt 80 -and -not $api.HasExited; $i++) {
       try { if ((Invoke-WebRequest -Uri "http://127.0.0.1:$PuertoApi/health" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200) { $listo = $true; break } } catch { }
       Start-Sleep -Milliseconds 500
     }
-    if (-not $listo) { throw "La API no respondio /health en el puerto $PuertoApi. Mirar $LogApi.err" }
+    if (-not $listo) { throw "La API no respondio /health en el puerto $PuertoApi. Mirar $LogApi" }
     Write-Host "  /health: ok (PID $($api.Id))"
 
     # -----------------------------------------------------------------------------------------------------------
@@ -221,8 +233,7 @@ try {
   # 6 · La demo HTML
   # -------------------------------------------------------------------------------------------------------------
   Paso "Demo HTML en :$PuertoDemo"
-  $web = Start-Process -FilePath $Python -ArgumentList '-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1' `
-    -WorkingDirectory $Demo -WindowStyle Hidden -PassThru -RedirectStandardOutput $LogDemo -RedirectStandardError "$LogDemo.err"
+  $web = Iniciar-Servidor @('-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1') $Demo $LogDemo
   @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o') }; demo = @{ pid = $web.Id; inicio = $web.StartTime.ToString('o') }; base = $Base } |
     ConvertTo-Json | Set-Content $Estado -Encoding UTF8
   $listo = $false
@@ -230,7 +241,7 @@ try {
     try { if ((Invoke-WebRequest -Uri "http://127.0.0.1:$PuertoDemo/index.html" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200) { $listo = $true; break } } catch { }
     Start-Sleep -Milliseconds 500
   }
-  if (-not $listo) { throw "La demo no respondio en el puerto $PuertoDemo. Mirar $LogDemo.err" }
+  if (-not $listo) { throw "La demo no respondio en el puerto $PuertoDemo. Mirar $LogDemo" }
   Write-Host "  index.html: ok (PID $($web.Id))"
 }
 catch {

@@ -91,7 +91,7 @@ def _preparar(datos: Mapping[str, Any], errores: list[tuple[str | None, str]], *
             errores.append((campo, "Es obligatoria" if campo in ("justificacion", "fecha") else "Es obligatorio: 1, 2 o 3"))
     for campo in NIVELES:
         valor = d.get(campo)
-        if valor is not None and (isinstance(valor, bool) or valor not in GRADOS):
+        if valor is not None and valor not in GRADOS:
             errores.append((campo, "Tiene que ser 1, 2 o 3"))
     return d
 
@@ -129,7 +129,7 @@ def registrar_severidad(
         raise conflicto from exc
     registrar_carga(
         db, modulo=MODULO_HCE_SEV, hce_id=hce_id, usuario_id=profesional_id,
-        detalle=f"Registro de la severidad DSM-5-TR del expediente {hce_id}",
+        detalle="Registro de la severidad DSM-5-TR",
     )
     return sev
 

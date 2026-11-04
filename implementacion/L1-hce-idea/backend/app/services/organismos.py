@@ -130,7 +130,7 @@ def crear_vinculo(db: Session, organismo: str, hce_id: int, datos: Mapping[str, 
         raise conflicto from exc
     registrar_carga(
         db, modulo=MODULO_HCE_ORG, hce_id=hce_id, usuario_id=profesional_id,
-        detalle=f"Alta del vínculo con {_ROTULO[organismo]} del expediente {hce_id}",
+        detalle=f"Alta del vínculo con {_ROTULO[organismo]}",
     )
     return fila
 
@@ -201,6 +201,6 @@ def crear_registro(
     db.flush()
     registrar_carga(
         db, modulo=MODULO_HCE_ORG, hce_id=hce_id, usuario_id=profesional_id,
-        detalle=f"{'Envío a INAU' if registro.organismo == 'inau' else 'Gestión ante BPS'} registrado en el expediente {hce_id}",
+        detalle="Envío a INAU registrado" if registro.organismo == "inau" else "Gestión ante BPS registrada",
     )
     return registro, db.get(Profesional, profesional_id)

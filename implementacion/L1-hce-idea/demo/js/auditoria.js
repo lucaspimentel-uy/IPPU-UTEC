@@ -73,7 +73,14 @@ function logRepintar(){
   const p = document.getElementById("panelExp"); if(!p) return;
   const foco = document.activeElement && p.contains(document.activeElement) ? document.activeElement.id : null;
   p.innerHTML = logPanelHtml();
-  if(foco){ const b = document.getElementById(foco); if(b && !b.disabled) b.focus(); }
+  if(!foco) return;
+  const b = document.getElementById(foco);
+  if(b && !b.disabled){ b.focus(); return; }
+  /* El botón que tenía el foco quedó deshabilitado (última o primera página): el foco no cae al <body>; pasa al otro botón del
+     paginado y, si los dos están deshabilitados, al título de la pestaña. */
+  const otro = foco === "btnLogSig" ? "btnLogAnt" : foco === "btnLogAnt" ? "btnLogSig" : null;
+  const o = otro && document.getElementById(otro), t = document.getElementById("logTitulo");
+  if(o && !o.disabled) o.focus(); else if(t) t.focus();
 }
 
 /* ts llega con zona horaria: se muestra en la hora local del navegador (es-UY). */

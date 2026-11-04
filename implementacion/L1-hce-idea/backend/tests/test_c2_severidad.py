@@ -115,6 +115,19 @@ def test_nivel_fuera_de_1_a_3_es_422_y_el_borde_pasa(client, campo, malo, bueno)
     assert client.patch(f"/hce/{hid}/severidad", json={campo: 2}).status_code == 200
 
 
+@pytest.mark.parametrize("campo", ["nivel_cs", "nivel_crr"])
+@pytest.mark.parametrize("malo", [True, "2", 2.0])
+def test_el_nivel_es_un_entero_estricto_true_texto_y_decimal_son_422_y_2_pasa(client, campo, malo):
+    """`true` se guardaba como grado 1 y `"2"` se aceptaba: el grado es un juicio, no se coacciona."""
+    hid = _hce(client)
+    r = client.post(f"/hce/{hid}/severidad", json={**CUERPO, campo: malo})
+    assert r.status_code == 422 and [d["campo"] for d in r.json()["detail"]] == [campo]
+    assert _sev(client, hid, **{campo: 2})["data"][campo] == 2
+    r = client.patch(f"/hce/{hid}/severidad", json={campo: malo})
+    assert r.status_code == 422 and [d["campo"] for d in r.json()["detail"]] == [campo]
+    assert client.patch(f"/hce/{hid}/severidad", json={campo: 3}).status_code == 200
+
+
 @pytest.mark.parametrize("blanco", ["", "   ", "\t\t", "\n \r\n", " "])
 def test_justificacion_en_blanco_es_422_y_con_texto_pasa(client, blanco):
     hid = _hce(client)

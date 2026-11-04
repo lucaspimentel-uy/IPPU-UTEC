@@ -9,7 +9,7 @@ servidor contra `severidad_nivel`.
 """
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
 from app.schemas.comunes import FechaOpcional
 
@@ -39,8 +39,8 @@ class SeveridadCrear(BaseModel):
         "fecha": "2026-03-16",
     }]})
 
-    nivel_cs: int = Field(ge=1, le=3, description=f"Comunicación social. {_DESCRIPCION_NIVEL}")
-    nivel_crr: int = Field(ge=1, le=3, description=f"Comportamientos restringidos y repetitivos. {_DESCRIPCION_NIVEL}")
+    nivel_cs: StrictInt = Field(ge=1, le=3, description=f"Comunicación social. {_DESCRIPCION_NIVEL}")
+    nivel_crr: StrictInt = Field(ge=1, le=3, description=f"Comportamientos restringidos y repetitivos. {_DESCRIPCION_NIVEL}")
     justificacion: str = Field(description=_DESCRIPCION_JUSTIFICACION)
     fecha: date = Field(description="Cuándo se emitió el juicio.")
 
@@ -52,8 +52,8 @@ class SeveridadActualizar(BaseModel):
         "nivel_crr": 2, "justificacion": "Revisión del equipo tras el primer semestre…",
     }]})
 
-    nivel_cs: int | None = Field(None, ge=1, le=3, description=_DESCRIPCION_NIVEL)
-    nivel_crr: int | None = Field(None, ge=1, le=3, description=_DESCRIPCION_NIVEL)
+    nivel_cs: StrictInt | None = Field(None, ge=1, le=3, description=_DESCRIPCION_NIVEL)
+    nivel_crr: StrictInt | None = Field(None, ge=1, le=3, description=_DESCRIPCION_NIVEL)
     justificacion: str | None = Field(None, description=_DESCRIPCION_JUSTIFICACION)
     fecha: FechaOpcional = None
 

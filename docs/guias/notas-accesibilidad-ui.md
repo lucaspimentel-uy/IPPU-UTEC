@@ -57,7 +57,9 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
 **Cobertura** (la lista exacta se imprime al final de cada corrida, en «Cobertura»):
 
 - **Conectadas** — login y su error; listado con sus estados (cargando, error, vacío, filas, filtro «Todos»); aviso (*toast*);
-  expediente de la API con sus 13 pestañas; CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
+  expediente de la API con sus 13 pestañas; Auditoría (LOG: carga, filtros, paginado, error y vacío); Severidad (SEV: vacía,
+  lectura, diálogo de registro y de edición) y Organismos (ORG: vacía, lectura con la alerta AYEX, diálogos del vínculo y del
+  registro); CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
   confirmación de firma, 422 por dimensión y por campo, firmado con banda y addendas); PA y PB (borrador, errores de firma, Δ);
   IC (sin crear, confirmación y errores de firma, avisos y «Cambió en el servidor», firmado); documento impreso del IC; VF
   (vacía, formulario, las cinco categorías del baremo, los niveles y la alerta de vigencia) y su reporte; diálogo de alta/edición
@@ -155,9 +157,9 @@ paso: el chip sale con el estilo neutro y el nombre y el rango siguen escritos.
   van en tinta, sin color de estado.
 - Las cifras sueltas ya no se tiñen con `--ok` (los KPI «Con línea base IDEA», «Cobertura» y «NNA en seguimiento» van en tinta).
 
-**Mismo criterio, todavía sin pantalla: HCE-SEV** (`severidad_dsm` / `severidad_nivel`, M12.4) sólo existe en el backend; la
-pestaña SEV de la demo es un panel de modo demostración. Cuando se construya su UI, los niveles 1–3 de apoyo por dominio
-(comunicación social · conductas repetitivas) usan la rampa, nunca `--ok/--warn/--bad`.
+**Mismo criterio: HCE-SEV** (`severidad_dsm` / `severidad_nivel`, M12.4) ya tiene pantalla (C2, §5.143 d) y **no lleva color por
+grado**: los niveles 1–3 de apoyo por dominio (comunicación social · conductas repetitivas) van en tinta, con la etiqueta del
+servidor, nunca con `--ok/--warn/--bad` ni con una rampa por grado.
 
 ### 3.2 Estados: el vocabulario implementado
 
@@ -238,7 +240,8 @@ pestaña, ítem de la barra lateral, resumen desplegable, controles sobre cromo 
 - **Tabindex móvil** en el editor del IDEA: un punto de Tab por dimensión (las flechas, Inicio y Fin mueven el foco dentro de ella;
   Enter o Espacio eligen).
 - **Listado (F1):** un solo punto de Tab por fila (el nombre, un botón; Enter abre el expediente); con el mouse abre la fila entera.
-- **Pestañas del expediente (F1):** la ayuda «?» va antes de la lista de pestañas, así Tab desde una pestaña entra directo al panel.
+- **Pestañas del expediente (F1b, §5.141 i):** la ayuda «?» va al final de la tira de pestañas, en el DOM y a la vista: Tab desde una
+  pestaña llega al «?» y después al panel.
 - **Orden de Tab:** el del DOM (barra superior → barra lateral → contenido). Se verificó recorriendo con el teclado login → listado
   → expediente → las siete pestañas del flujo → informe impreso → volver, sin que el foco caiga en `<body>`.
 
@@ -275,5 +278,5 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
   puntaje y los campos ya superan los 24 px, pero no hay chequeo).
 - **Colores de grupo:** cerrado en las pantallas conectadas (§5.122 e: el nombre es el de la API y no se pinta); las vistas de modo
   demostración los conservan bajo el panel.
-- **HCE-SEV:** sin pantalla (§3.1). Cuando exista, los niveles de apoyo usan la rampa.
+- **HCE-SEV:** con pantalla desde C2 y sin color por grado (§3.1, §5.143 d).
 - **Modo oscuro, `prefers-contrast` y colores forzados (`forced-colors`):** no se tratan.

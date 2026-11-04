@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-04 · L1 — corrección del bloque A (F1, F1b, C1, C2, C3)** (Lucas con Claude, rama `fix/bloque-a-correccion`; §5.152). Aplica sólo lo que el equipo aceptó de la review del bloque A (aprobado con observaciones, `main` 239c358).
+  - Backend: el `detalle` de la auditoría ya no lleva el id interno del expediente (se conserva el N.º de HC; ORG concuerda «Gestión ante BPS registrada»); SEV con `nivel_cs`/`nivel_crr` `StrictInt` (`true`, `"2"` y `2.0` dan 422). Sin DDL, head `dcc838486407`.
+  - Demo: nota de ORG corregida según el acta (§5.40; supera la última frase de §5.144 d), el diálogo de edición del vínculo ya no pide «al menos uno», y el foco del paginado de Auditoría no cae al `<body>`.
+  - `preparar_presentacion.ps1`: los servidores ya no heredan los handles del que llama (reproducido: con la salida capturada el script no volvía hasta que murieran). Logs en `%TEMP%`.
+  - Docs: cabecera y §6 de `handoff.md` (F2 sigue; dos inestabilidades del arnés y la deuda posterior al 26/11), recuento de módulos de la demo (19), guía de accesibilidad, `esquema-datos-v2.md`, `README.md` del backend, `CLAUDE.md`.
+  - Verificación (base descartable `ippu_ver`, API `:8001`): `pytest -q` 1004 passed, 0 skipped; contraste sin fallas (39/39 anillos); `conectada.js` 237/237; en una base recién sembrada ningún `detalle` de auditoría casa con `expediente \d+`; `preparar_presentacion.ps1` con la salida redirigida vuelve a los 44 s, `verificar_presentacion.js` OK y `-Detener` libera `:8000` y `:5500`.
 - **2026-10-22 · L3 — retiro de la v1 para técnicos** (Samuel con Claude, rama `l3/retiro-v1-tecnicos`; §5.151).
   - Motivo: los requerimientos v1.3 de IPPU (Drive, «Asitente Virtual») piden un asistente de orientación y derivación para público anónimo, con el Catálogo de puertas como fuente, clasificación sobre las puertas, tarjeta por plantilla y sitio público de fichas; §5.129 b iba al revés.
   - Borrado: `implementacion/L3-asistente-virtual/` (34 archivos versionados, más `.venv`, `indice/` y `.pytest_cache` locales) y `docs/planes/L3-asistente-plan.md`. Recuperable: etiqueta `l3-v1-tecnicos-2026-10-22` sobre `4ac8933`.

@@ -155,7 +155,7 @@ def crear_informe(
     _flush_traduciendo(db)
     auditoria.registrar_carga(
         db, modulo=MODULO_HCE_IC, hce_id=hce_id, usuario_id=usuario_id,
-        detalle=f"Alta de {MODULO_HCE_IC} (informe de cierre {anio}) del expediente {hce_id}",
+        detalle=f"Alta de {MODULO_HCE_IC} (informe de cierre {anio})",
     )
     avisos = flujo.avisos_de_secuencia(
         db, hce_id=hce_id, anio=anio, modulo=MODULO_HCE_IC, accion="creación", usuario_id=usuario_id,

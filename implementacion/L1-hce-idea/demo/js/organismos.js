@@ -11,7 +11,7 @@
      guarda, no bloquea y se muestra con ⚠ y texto (un vencimiento no es una clasificación clínica, por eso admite el estilo de aviso);
    - el autor de cada registro es el usuario del token: el formulario no lo pide;
    - el orden de los registros lo da la API: tras agregar uno se vuelve a pedir la lista, no se inserta a mano;
-   - el informe a los organismos es el IC, un único documento (§5.3); los respaldos van a Documentos.
+   - el informe de cierre anual es el IC; los informes a pedido para organismos todavía no están (acta §5.40, §5.152); los respaldos van a Documentos.
    Los formularios van en el diálogo compartido (#modalFlujo): Esc/×/Cancelar con algo tipeado piden confirmación (Fase 3-e).
    Los scripts se cargan en orden en index.html: el orden ES la semantica. */
 const ORG = {hceId: null, estado: "cargando", vinculos: {inau: null, bps: null}, registros: {inau: {filas: [], total: 0}, bps: {filas: [], total: 0}},
@@ -138,7 +138,7 @@ function orgTabHtml(){
   if(ORG.estado === "error") return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(ORG.noEncontrado ? "No se encontró el expediente." : ORG.error, ORG.noEncontrado ? "" : "orgReintentar()")}</div></div>`;
   return `${cab}
     <div id="orgAvisos" class="review-note avisos-api" role="status"${(ORG.avisos || []).length ? "" : " hidden"}>${orgAvisosHtml()}</div>
-    <p class="hint org-nota" id="orgNota">El informe que se comparte con los organismos es siempre el Informe de cierre (IC), un único documento (§5.3). Los documentos de respaldo se adjuntan en Documentos.</p>
+    <p class="hint org-nota" id="orgNota">El informe de cierre anual es el IC. Los informes a pedido para organismos (por ejemplo, de INAU sobre un solo chico) todavía no están en esta versión. Los documentos de respaldo se adjuntan en Documentos.</p>
     <div class="org-grid">
       <div class="org-col">${orgVinculoHtml("inau")}${orgRegistrosHtml("inau")}</div>
       <div class="org-col">${orgVinculoHtml("bps")}${orgRegistrosHtml("bps")}</div>
@@ -170,7 +170,7 @@ function orgAbrirVinculo(k){
        ${_orgInput(C.tramite[0], C.tramite[1], r.tramite)}${_orgSelect(C.estado[0], (ORG.opciones || {}).bps_estados, r.estado, C.estado[1])}
        ${_orgInput(C.vencimiento[0], C.vencimiento[1], r.vencimiento, "date")}${_orgTexto(C.obs[0], "Observaciones (documentación, constancias, recordatorios)", r.obs)}`;
   const body = `<div id="orgErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">Todos los datos son opcionales, pero hace falta al menos uno. ${crear ? "" : "Dejar un dato vacío lo borra."}</p>${campos}`;
+    <p class="hint" style="margin-bottom:12px">Todos los datos son opcionales${crear ? ", pero hace falta al menos uno." : ". Dejar un dato vacío lo borra."}</p>${campos}`;
   const foot = `<span class="left">HCE-ORG · Vínculo con ${N}</span>
     <div style="display:flex;gap:10px">
       <button type="button" class="btn btn-ghost" id="btnOrgCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>

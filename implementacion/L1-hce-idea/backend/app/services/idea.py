@@ -303,7 +303,7 @@ def crear_idea(
     _flush_traduciendo(db)
     registrar_carga(
         db, modulo=MODULO_HCE_LB, hce_id=hce_id, usuario_id=usuario_id,
-        detalle=f"Alta de {MODULO_HCE_LB} (IDEA {anio}) del expediente {hce_id}",
+        detalle=f"Alta de {MODULO_HCE_LB} (IDEA {anio})",
     )
     avisos = flujo.avisos_de_secuencia(
         db, hce_id=hce_id, anio=anio, modulo=MODULO_HCE_LB, accion="creación", usuario_id=usuario_id,
