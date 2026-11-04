@@ -240,17 +240,14 @@
       <div id="gruposList"></div>
     </section>
 
-    <!-- ============ VISTA: INCLUSIÓN EDUCATIVA Y SOCIAL (F1-nav3) ============
-         Tablero institucional del área de Inclusión (Prototipo v4, línea 225 / vInclusion
-         línea 2205), portado con la fuente, colores y formato de la demo. Reemplaza la
-         planilla general del área: cada fila se alimenta del módulo HCE-INC por NNA.
-         En esta ronda sólo entra el TABLERO; el módulo HCE-INC individual (ficha +
-         bitácora) se engancha cuando M12 abra HCE-INC como módulo de la HCE. -->
+    <!-- ============ VISTA: INCLUSIÓN EDUCATIVA Y SOCIAL (C4, §5.154) ============
+         Conectada: GET /inclusion (inclusion.js). Las fichas de HCE-INC de los expedientes activos que la persona ve, con la
+         última gestión y la cantidad que calcula el servidor; cada fila abre el expediente en su pestaña «Inclusión». El tablero
+         del área (contadores por estado, alerta de 60 días) está fuera de esta versión. -->
     <section class="view" id="view-inclusion">
-      <div data-modo-demo></div>
       <div class="crumbs">Servicio de Atención Diurna › <b>Inclusión educativa y social</b></div>
-      <h1 class="pagetitle">Tablero del área de Inclusión educativa y social</h1>
-      <p class="pagedesc">Situación de inclusión de todos los NNA del servicio. Reemplaza la planilla general del área: cada fila se alimenta automáticamente del módulo HCE-INC de la HCE individual (dato único, sin doble carga).</p>
+      <h1 class="pagetitle" id="tituloInclusion" tabindex="-1">Inclusión educativa y social</h1>
+      <p class="pagedesc" id="incVistaDesc"></p>
       <div id="inclusionContent"></div>
     </section>
 

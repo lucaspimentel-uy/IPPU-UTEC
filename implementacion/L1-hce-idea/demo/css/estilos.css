@@ -899,26 +899,37 @@
   }
   .tec-aut-alta input:focus{border-color:var(--orange)}
 
-  /* Vista Inclusión (F1-nav3 2026-08-18) — chips de estado del área. Colores tomados
-     de la paleta demo (--ok / --warn / --bad) para no meter tonos del Prototipo v4. */
-  .inc-chip{
-    display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
-    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;line-height:1.5;
-    border:1px solid transparent;white-space:nowrap
-  }
-  .inc-chip.inc-ok    {background:var(--ok-soft);   color:var(--ok);    border-color:var(--ok-line)}
-  .inc-chip.inc-warn  {background:var(--warn-soft); color:var(--warn-ink);border-color:var(--warn-line)}
-  .inc-chip.inc-danger{background:var(--bad-soft);  color:var(--bad);   border-color:var(--bad-line)}
-  .inc-chip.inc-off   {background:var(--paper-3);   color:var(--ink-2); border-color:var(--rule)}
-  .inc-kpirow{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
-  .kpi.kpi-inc{text-align:center;padding:var(--s3) var(--s2);overflow:hidden}
-  .kpi.kpi-inc .val{font-size:var(--fs-lg);color:var(--ink);margin:0 0 var(--s2)}
-  /* Dentro de los KPI, las etiquetas largas (ej. "Inclusión parcial (horario
-     reducido)") deben poder cortar de línea; en la tabla se mantiene nowrap. */
-  .kpi.kpi-inc .inc-chip{white-space:normal;max-width:100%;padding:3px var(--s2);line-height:1.35;display:inline-block}
-  .inc-table th,.inc-table td{font-size:var(--fs-xs);vertical-align:top}
-  .inc-table td .btn-link{padding:0;font-size:var(--fs-xs)}
-  .inc-table .hint{margin-top:2px}
+  /* HCE-INC (C4, §5.154): la pestaña «Inclusión» y la vista del menú. El estado va EN TINTA (nombre + descripción): sin
+     ok/warn/bad ni escala de color — los 7 estados no son una clasificación clínica confirmada (y la API no da semáforo).
+     «Sensible» es una marca de texto con borde, en tinta: la clasificación la da el servidor, el color no dice nada. */
+  .inc-ficha{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s5)}
+  @media (max-width:1100px){.inc-ficha{grid-template-columns:1fr}}
+  .inc-bloque{min-width:0}
+  .inc-bloque h4{margin:var(--s3) var(--s4) 0;font-family:var(--f-text);font-size:var(--fs-xs);font-weight:700;color:var(--ink)}
+  .inc-lectura .data-row{grid-template-columns:minmax(130px,200px) 1fr}
+  .inc-estado b{font-weight:700;color:var(--ink)}
+  .inc-desde{color:var(--ink-2);font-weight:400}
+  .inc-desc{font-weight:400;color:var(--ink)}
+  .inc-texto{white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400}
+  .inc-obs{margin:0;font-size:var(--fs-sm);color:var(--ink)}
+  .inc-gestiones{list-style:none;margin:0;padding:0}
+  .inc-gestion{padding:var(--s3) 0;border-bottom:1px solid var(--rule)}
+  .inc-gestion:first-child{padding-top:0}
+  .inc-ges-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--s1) var(--s2);font-size:var(--fs-xs);color:var(--ink)}
+  .inc-ges-fecha{font-weight:700;font-variant-numeric:tabular-nums}
+  .inc-ges-quien{font-weight:600}
+  .inc-ges-meta{margin-top:2px;font-size:var(--fs-2xs);color:var(--ink-2)}
+  .inc-ges-contenido{margin:var(--s2) 0 0;font-size:var(--fs-xs);color:var(--ink);line-height:1.5}
+  .inc-ges-acuerdos{margin:var(--s1) 0 0;font-size:var(--fs-xs);color:var(--ink);line-height:1.5}
+  .inc-rot{font-weight:600}
+  .inc-ges-autor{margin-top:var(--s1)}
+  .inc-sensible{display:inline-block;padding:0 6px;border:1px solid var(--ink-2);border-radius:var(--r-sm);
+    font-size:var(--fs-2xs);font-weight:700;line-height:1.5;color:var(--ink);background:transparent}
+  .inc-sensible-hint{margin:0 0 var(--s2)}
+  .inc-fs{border:0;margin:0 0 var(--s3);padding:0;min-width:0}
+  .inc-fs>legend{padding:0;margin-bottom:var(--s2);font-size:var(--fs-xs);font-weight:700;color:var(--ink)}
+  .inc-lista td{vertical-align:top}
+  .inc-lista .num{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
 
   /* Vista Ateneos y capacitación (F1-nav4 2026-08-19) — listado + detalle.
      Chips de tipo con la paleta demo (--teal / --purple / --orange / --ink-2), uno por
@@ -1095,7 +1106,7 @@
     .card,.info-card,.flujo-card,.inf-banner,.kpi{box-shadow:none;break-inside:avoid}
     .card,.info-card,.flujo-card{border-color:#BBB}
     .inf-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .mbadge,.pill,.at-chip,.inc-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mbadge,.pill,.at-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 
   /* ============ FASE 3-a · DEMO CONECTADA (handoff §5.122) ============

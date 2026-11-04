@@ -272,7 +272,7 @@ INCLUSION_DEMO = {
             {"fecha": "2026-05-20", "interlocutor": "Directora", "rol": "Centro educativo", "medio": "Reunión presencial",
              "tema": "Coordinación interinstitucional", "contenido": "Reunión de coordinación: el centro pide material sobre apoyos visuales.",
              "acuerdos": "Enviar el material antes de fin de mes."},
-            {"fecha": "2026-08-18", "interlocutor": "Equipo de salud", "rol": "Equipo de salud", "medio": "Videollamada",
+            {"fecha": "2026-08-18", "interlocutor": "Equipo de salud del prestador", "rol": "Equipo de salud", "medio": "Videollamada",
              "tema": "Clínica — sensible", "contenido": "Intercambio de coordinación con el equipo de salud. El detalle queda en la historia clínica."},
         ],
     },

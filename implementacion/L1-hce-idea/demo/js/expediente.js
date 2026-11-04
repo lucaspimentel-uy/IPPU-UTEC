@@ -29,7 +29,7 @@ const TABS_EXP = [
   {k:"ic",    r:"IC",  t:"Informe de cierre",       g:"ciclo", d:"Informe de cierre anual",      mod:"HCE-IC", c:"Cierre"},
   {k:"vf",    r:"VF",  t:"Valoración funcional",    g:"seg",   d:"Valoración funcional",         c:"Valoración"},
   {k:"sev",   r:"SEV", t:"Severidad",               g:"seg",   d:"Severidad (DSM-5-TR)"},
-  {k:"inc",   r:"INC", t:"Inclusión",               g:"seg",   d:"Inclusión educativa y social", demo:true},
+  {k:"inc",   r:"INC", t:"Inclusión",               g:"seg",   d:"Inclusión educativa y social"},
   {k:"org",   r:"ORG", t:"Organismos",              g:"seg",   d:"Áreas INAU y BPS"},
   {k:"doc",   r:"DOC", t:"Documentos",              g:"reg",   d:"Documentos y fotos",           demo:true},
   {k:"pai",   r:"PAI", t:"PAI",                     g:"reg",   d:"Propuesta de atención individual", demo:true},
@@ -146,6 +146,7 @@ function selTabExp(k, enfocar){
   if(k === "vf") vfMostrar();                         // VF: valoración funcional (hce-doc-org-vf.js)
   if(k === "sev") sevMostrar();                       // SEV: severidad DSM-5-TR (severidad.js)
   if(k === "org") orgMostrar();                       // ORG: vínculos con INAU y BPS y sus registros (organismos.js)
+  if(k === "inc") incMostrar();                       // INC: ficha de inclusión y gestiones (inclusion.js)
   if(k === "log") logMostrar();                       // LOG: registro de cambios, de solo lectura (auditoria.js)
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
 }
@@ -396,6 +397,7 @@ function panelTabExpHtml(k){
   if(k === "vf") return vfPanelHtml();
   if(k === "sev") return sevPanelHtml();
   if(k === "org") return orgTabHtml();
+  if(k === "inc") return incPanelHtml();
   if(k === "log") return logPanelHtml();
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
@@ -455,7 +457,7 @@ function vigilarBanda(){
 async function abrirExpediente(id, opts){
   const mi = ++EXP.seq;
   Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || [], mods:null, idea:{estado:"cargando"}});
-  evReiniciar(); icReiniciar(); vfReiniciar(); sevReiniciar(); orgReiniciar(); logReiniciar();
+  evReiniciar(); icReiniciar(); vfReiniciar(); sevReiniciar(); orgReiniciar(); incReiniciar(); logReiniciar();
   expedienteCargando();
   let hce, raw;
   try{
@@ -479,13 +481,14 @@ async function abrirExpediente(id, opts){
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
   pintarAvisosExp(); vigilarPanelExp(); vigilarBanda();
   cargarModsExp(); cargarIdeaVigente();         // addendas por modulo (marcas) y «qué IDEA rige» (§5.97), de la API
+  if(opts && opts.tab && TABS_EXP.some(t => t.k === opts.tab)) selTabExp(opts.tab);   // p. ej. desde la vista Inclusión
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
 }
 
 /* ===================== EXPEDIENTE DE EJEMPLO (modo demostración) =====================
    Lee el array NNA de datos.js (ids 101–108, NO los de la API). Lo usan solo las vistas de
-   demostración (Grupos, Inclusión, Ateneos, Pendientes…) y lleva el panel de modo demo. */
+   demostración (Ateneos…) y lleva el panel de modo demo. */
 function abrirExpedienteDemo(id){
   const p = NNA.find(n=>n.id===id);
   if(!p) return;
