@@ -12,7 +12,8 @@
  *
  * Pantallas y diálogos que recorre (la lista exacta se imprime al final como «Cobertura»):
  *   CONECTADAS: login (y su error), listado (cargando · error · vacío · filas · filtros), Pendientes (cargando · error · filtro
- *   activo) y Grupos (listado y un grupo abierto) con el técnico, expediente de la API con sus 13
+ *   activo), Grupos (listado y un grupo abierto) e Inclusión (lista, filtro, cargando · error · vacío) con el técnico, expediente
+ *   de la API con sus 13
  *   pestañas, CI (pendiente con errores · registrado · edición), IDEA (borrador con NS · firmado con banda · firma y 422 ·
  *   addendas), PA y PB (borrador · Δ), IC (sin crear · firmado · avisos y «Cambió en el servidor» · errores), documento
  *   impreso del IC, VF (vacía · formulario · categorías y niveles), reporte de la VF, diálogo de alta/edición en sus cuatro
@@ -20,7 +21,9 @@
  *   y el cromo de la app (barra lateral, cabecera) en todas ellas. Con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD, al final «Salir» y
  *   entra el admin: Grupos con «Asignar técnicos», y el diálogo de asignación abierto (con su confirmación de descarte y sus errores
  *   de muestra) SIN guardar: el filtro de escritura sigue sin dejar pasar más que GET y POST /auth/login.
- *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
+ *   La pestaña INC (C4): lectura con una gestión sensible, la referencia de los 7 estados, el diálogo de la ficha y el de una
+ *   gestión abiertos (sin guardar: los errores de la gestión son de muestra, pintados con formResumen), sin ficha y con error.
+ *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Ateneos, Perfil y el expediente de ejemplo.
  *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
@@ -385,8 +388,19 @@ function buscarContornosApagados() {
   await cap('Grupos · un grupo abierto (integrantes)');
   anillos.push(await medirAnilloTeclado(page, '#grupoVolver', 'enlace «Grupos de referencia» (migas)'));
 
+  // ---------------------------------------------------------------- INCLUSIÓN (C4): la lista del área, con el técnico
+  await page.click('.navitem[data-view="inclusion"]');
+  await page.waitForFunction(() => INCV.estado === 'listo' && !!document.querySelector('#tbodyInclusion tr[data-hce]'), null, { timeout: 8000 }); await esperar(150);
+  await cap('Inclusión · lista de fichas (vista del área)');
+  anillos.push(await medirAnilloTeclado(page, '#incFiltroEstado', 'filtro por estado (Inclusión)'));
+  anillos.push(await medirAnilloTeclado(page, '#tbodyInclusion .nna-abrir', 'nombre del NNA (Inclusión)'));
+  await ev(() => { INCV.estado = 'cargando'; incVistaPintar(); }); await cap('Inclusión · cargando');
+  await ev(() => { INCV.estado = 'error'; INCV.error = 'No se pudo cargar la lista de inclusión (muestra).'; incVistaPintar(); }); await cap('Inclusión · con error');
+  await ev(() => { INCV.estado = 'listo'; INCV.filtro = 'Desvinculado/a'; INCV.filas = []; INCV.total = 0; incVistaPintar(); }); await cap('Inclusión · filtro sin filas (estado vacío)');
+  await ev(() => { INCV.filtro = ''; return incVistaCargar(); }); await page.waitForFunction(() => INCV.estado === 'listo' && INCV.filas.length > 0, null, { timeout: 8000 });
+
   // ---------------------------------------------------------------- VISTAS EN MODO DEMOSTRACIÓN
-  for (const v of ['analitica', 'inclusion', 'ateneos']) {
+  for (const v of ['analitica', 'ateneos']) {
     await page.click(`.navitem[data-view="${v}"]`); await esperar(120);
     await cap(`Vista ${v} (modo demostración)`, 'demo');
   }
@@ -570,6 +584,41 @@ function buscarContornosApagados() {
   await ev(() => { ORG.estado = 'error'; ORG.error = 'No se pudieron cargar los organismos (muestra).'; orgRepintar(); }); await esperar(100);
   await cap('ORG · error con «Reintentar»');
   await ev(() => orgCargar(false)); await page.waitForSelector('#orgInauLectura', { timeout: 8000 });
+  // C4 · INC: lectura de Sofía (ficha y gestiones, una sensible), la referencia, los dos diálogos (sin guardar nada), Joaquín sin ficha y el error.
+  await abrirPorNombre('Sofía', 'inc');
+  await page.waitForSelector('#incLectura', { timeout: 8000 });
+  await page.waitForSelector('#incGestiones li[data-sensible]', { timeout: 8000 });
+  await cap('INC · lectura (Sofía: ficha y gestiones, una «Sensible»)');
+  anillos.push(await medirAnilloTeclado(page, '#btnIncEditar', 'botón «Editar» (INC)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnIncAgregar', 'botón «Agregar gestión» (INC)'));
+  anillos.push(await medirAnilloTeclado(page, '#incRef summary', 'resumen «Referencia — los 7 estados» (INC)'));
+  await ev(() => { document.getElementById('incRef').open = true; }); await esperar(100);
+  await cap('INC · referencia de los 7 estados abierta');
+  await page.click('#btnIncEditar'); await page.waitForSelector('#modalFlujo.open #incf_estado'); await esperar(250);
+  await cap('INC · ficha · formulario abierto');
+  anillos.push(await medirAnilloTeclado(page, '#incf_estado', 'lista desplegable (INC)'));
+  anillos.push(await medirAnilloTeclado(page, '#incf_centro', 'campo de texto (INC)'));
+  anillos.push(await medirAnilloTeclado(page, '#incf_obs', 'área de texto (INC)'));
+  await page.click('#btnIncGuardar'); await page.waitForSelector('#incErrores:not([hidden])', { timeout: 3000 }); await esperar(150);
+  await cap('INC · ficha · sin cambios para guardar');
+  await page.fill('#incf_grado', 'Dato tipeado'); await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await cap('INC · ficha · confirmar descarte');
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await page.click('#btnIncAgregar'); await page.waitForSelector('#modalFlujo.open #incg_contenido'); await esperar(250);
+  await cap('INC · gestión · formulario abierto');
+  anillos.push(await medirAnilloTeclado(page, '#incg_tema', 'lista desplegable (gestión INC)'));
+  anillos.push(await medirAnilloTeclado(page, '#incg_contenido', 'área de texto (gestión INC)'));
+  // El 422 de la API no se pide (la herramienta no escribe): se pinta con el componente real, con un mensaje de muestra.
+  await ev(() => { formResumen('incErrores', [{ id: 'incg_contenido', rot: 'Qué se trató', mensaje: 'Es obligatorio (muestra)' }], 'No se pudo registrar la gestión:'); }); await esperar(100);
+  await cap('INC · gestión · error junto al campo (muestra)');
+  await page.fill('#incg_interlocutor', 'Dato tipeado'); await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await abrirPorNombre('Joaquín', 'inc');
+  await page.waitForSelector('#incFicha .estado-vacio', { timeout: 8000 });
+  await cap('INC · sin registrar (Joaquín)');
+  await ev(() => { INC.estado = 'error'; INC.error = 'No se pudo cargar la inclusión (muestra).'; incRepintar(); }); await esperar(100);
+  await cap('INC · error con «Reintentar»');
+  await ev(() => incCargar(false)); await page.waitForSelector('#incFicha .estado-vacio', { timeout: 8000 });
   await abrirPorNombre('Martín', 'vf');
   await cap('VF · estado vacío');
   await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await esperar(100);

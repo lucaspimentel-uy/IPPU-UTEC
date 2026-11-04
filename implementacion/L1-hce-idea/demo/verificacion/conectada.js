@@ -273,8 +273,9 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  const sinFraseNueva = [8, 10, 11].every((i) => /Este módulo todavía no está conectado al servidor\./.test(textosTab[i]));   // doc · inc · pai (org, el 9, es C3)
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2), ORG (C3) y LOG (C1) están conectadas y las otras 3 dicen «Este módulo todavía no está conectado al servidor.»',
+  // doc · pai dicen la frase; inc (el 10) ya no: está conectada desde C4 (org, el 9, es C3)
+  const sinFraseNueva = [8, 11].every((i) => /Este módulo todavía no está conectado al servidor\./.test(textosTab[i])) && !/Este módulo todavía no está conectado al servidor\./.test(textosTab[10]);
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2), INC (C4), ORG (C3) y LOG (C1) están conectadas y las otras 2 (DOC, PAI) dicen «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -291,8 +292,8 @@ async function loguear(page) {
   const textoVistas = {};
   for (const [v, sel] of vistas) {
     await page.click(sel);
-    if (v === 'pendientes' || v === 'grupos') {         // F2: ya no son de demostración (conectadas a la API): no llevan el panel
-      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : GRP.estado) === 'listo', v, { timeout: 8000 });
+    if (v === 'pendientes' || v === 'grupos' || v === 'inclusion') {   // F2 y C4: ya no son de demostración (conectadas a la API): no llevan el panel
+      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : INCV.estado) === 'listo', v, { timeout: 8000 });
       if ((await page.locator(`#view-${v} .demo-panel`).count()) !== 0) conPanel.push(v);
     } else {
       const t = (await txt(page, `#view-${v} .demo-panel`)).replace(/\s+/g, ' ');
@@ -301,19 +302,19 @@ async function loguear(page) {
     }
     textoVistas[v] = await page.evaluate(() => document.body.innerText);
   }
-  check('3a-g3', 'Analítica, Inclusión, Ateneos y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2) ya no lo llevan',
-    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '4/4 con panel, 2/2 sin panel');
+  check('3a-g3', 'Analítica, Ateneos y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2) e Inclusión (conectada, C4) ya no lo llevan',
+    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '3/3 con panel, 3/3 sin panel');
   check('3a-u', '«Mi usuario» (vista de ejemplo) no afirma ser la cuenta con sesión iniciada',
     !/sesión iniciada|datos de la cuenta|mi perfil/i.test(await txt(page, '#view-usuarios')) && /Perfil de ejemplo/.test(await txt(page, '#view-usuarios')),
     (await txt(page, '#view-usuarios .pagedesc')).trim());
   const conFase = Object.entries(textoVistas).filter(([, t]) => /Fase\s*3|Fase\s*\d-[a-e]/.test(t)).map(([v]) => v);
   check('3a-f0', 'ninguna vista visible menciona «Fase 3…» (las etapas son interna del equipo)', conFase.length === 0, conFase.join(',') || '6 vistas');
-  await page.click('.navitem[data-view="inclusion"]');       // F2: Grupos ya es de la API; Inclusión sigue en demostración
-  const gruposTxt = await txt(page, '#view-inclusion');
-  await page.click('#view-inclusion button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
+  await page.click('.navitem[data-view="ateneos"]');        // F2: Grupos ya es de la API; C4: Inclusión también. Ateneos sigue en demostración
+  const gruposTxt = await txt(page, '#view-ateneos');
+  await page.click('#view-ateneos button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
   await page.waitForSelector('#expedienteContent .demo-panel', { timeout: 5000 });
-  check('3a-g4', 'un NNA abierto desde una vista de demostración abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
-    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Inclusión');
+  check('3a-g4', 'un NNA abierto desde una vista de demostración (Ateneos) abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
+    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Ateneos');
 
   const humo = await page.evaluate(() => {
     try {
@@ -2308,8 +2309,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, INC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB (con controles adentro) no lleva tabindex',
-      ['doc', 'inc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && paneles.lb.ti === null && paneles.lb.operables > 0 && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'los módulos en modo demostración (DOC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB e INC (conectada, C4: con controles adentro) no lleva tabindex',
+      ['doc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && ['lb', 'inc'].every((k) => paneles[k].ti === null && paneles[k].operables > 0) && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -2317,17 +2318,18 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
       marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null && !e.closest('.exp-tab')).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
       r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
-    for (const v of ['analitica', 'inclusion', 'ateneos']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica)
+    for (const v of ['analitica', 'ateneos']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica); C4: Inclusión tampoco (c4-vista)
       await pv.waitForTimeout(60); await leer(v); }
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-    for (const k of ['doc', 'inc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }
+    for (const k of ['doc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }   // C4: INC ya no es de demostración
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
+    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedan 6 paneles y 3 marcas (la de INC iba en el encabezado de su panel)
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 8 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 4 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 6 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 3 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -2394,8 +2396,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
     check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'inc,doc,pai'
-        && filasTabs[0].marcas === 'inc:glifo+texto-sr,doc:glifo+texto-sr,pai:glifo+texto-sr'
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'doc,pai'
+        && filasTabs[0].marcas === 'doc:glifo+texto-sr,pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
         && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
@@ -3166,6 +3168,212 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('c3-ajeno', 'técnico y expediente de otro grupo (con vínculo y registro cargados por el admin): las siete rutas de /organismos dan 404 {code: not_found} (el admin, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
       cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Registro del admin/.test(pant.txt),
       JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+    await ctx.close();
+  }
+
+  /* ---------- C4 · HCE-INC: la pestaña «Inclusión» y la vista «Inclusión» leen, registran y editan por la API (§5.154) ----------
+     ESCRIBE: registra la ficha de Joaquín (y le cambia el estado), le agrega una gestión y crea un expediente sin grupo con ficha
+     (admin) para el alcance. Lo demás se compara con lo que dice la API, no con literales. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const ps = await ctx.newPage();
+    ps.on('pageerror', (e) => erroresPagina.push(e.message));
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(ps, EMAIL, PASSWORD);
+    const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (t || tok), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json, total: r.headers.get('X-Total-Count') }; };
+    const yo = (await api('GET', '/auth/yo')).json;
+    const idDe = async (n) => (await api('GET', '/hce?nombre=' + encodeURIComponent(n) + '&limit=5')).json.find((h) => h.persona.nombre === n).id;
+    const idM = await idDe('Martín'), idS = await idDe('Sofía'), idJ = await idDe('Joaquín'), idL = await idDe('Lucía');
+    const opciones = (await api('GET', '/inclusion/opciones')).json;
+    const escrituras = [];                                            // POST/PATCH a /inclusion que salen del navegador
+    ps.on('request', (r) => { const u = new URL(r.url()).pathname; if (/\/inclusion(\/|$)/.test(u) && r.method() !== 'GET') escrituras.push({ m: r.method(), url: u, body: JSON.parse(r.postData() || 'null') }); });
+    const esperarInc = () => ps.waitForFunction(() => INC.estado === 'listo' && !!document.getElementById('incFicha') && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const abrirInc = async (id) => {
+      await ps.evaluate((i) => abrirExpediente(i), id);
+      await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+      await ps.click('#tabExp-inc'); await esperarInc(); await ps.waitForTimeout(80);
+    };
+    const fmt = (f) => ps.evaluate((x) => fmtFecha(x), f);
+    const txt = (id) => ps.evaluate((i) => { const e = document.getElementById(i); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; }, id);
+    const ficha = async (id) => api('GET', `/hce/${id}/inclusion`);
+    const gestiones = async (id) => api('GET', `/hce/${id}/inclusion/bitacora`);
+    /* ninguna clase ok/warn/bad/danger (ni las viejas inc-*) en la ficha, y el estado con el color de la tinta del cuerpo */
+    const tinta = () => ps.evaluate(() => {
+      const raiz = document.getElementById('panelExp');
+      const malas = [...raiz.querySelectorAll('*')].map((e) => e.className && e.className.baseVal === undefined ? String(e.className) : '').filter((c) => /(^|[\s-])(ok|warn|bad|danger|off)(\s|$)|inc-chip|semaforo/.test(c));
+      const b = document.querySelector('#incEstado .inc-estado b'), ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+      const probe = document.createElement('span'); probe.style.color = ink; document.body.appendChild(probe); const inkRgb = getComputedStyle(probe).color; probe.remove();
+      return { malas, color: b ? getComputedStyle(b).color : null, inkRgb, fondo: b ? getComputedStyle(b.closest('dd')).backgroundColor : null };
+    });
+
+    /* c4-ficha · Martín: la ficha de la API, agrupada; el estado en tinta con su descripción y «desde»; sus dos gestiones, la más nueva primero */
+    await abrirInc(idM);
+    const fM = (await ficha(idM)).json, gM = await gestiones(idM);
+    const lM = await ps.evaluate(() => ({ demo: document.querySelectorAll('#panelExp .demo-panel, #panelExp .solo-demo, #tabExp-inc .solo-demo').length,
+      bloques: [...document.querySelectorAll('#incLectura .inc-bloque h4')].map((h) => h.textContent), ges: [...document.querySelectorAll('#incGestiones .inc-ges-contenido')].map((e) => e.textContent),
+      sensibles: document.querySelectorAll('#incGestiones .inc-sensible').length }));
+    const tM = await tinta();
+    check('c4-ficha', 'pestaña Inclusión de Martín: la ficha que devuelve la API (Centro, Acompañante, Referente, Estado, Observaciones), «—» donde no hay dato, el estado en tinta (sin clases ok/warn/bad ni color propio) con su descripción y «desde» fecha_estado, sus 2 gestiones del más nuevo al más viejo; sin panel ni marca «Solo demo»',
+      lM.demo === 0 && JSON.stringify(lM.bloques) === '["Centro","Acompañante (asistente personal / AT)","Referente en el centro","Estado","Observaciones"]'
+        && await txt('incCentro') === fM.centro && await txt('incTipo') === fM.tipo_centro && await txt('incGrado') === fM.grado && await txt('incModalidad') === fM.modalidad
+        && await txt('incDias') === fM.dias_horas && await txt('incAt') === fM.at && await txt('incAtNombre') === '—' && await txt('incRefTel') === '—' && await txt('incObs') === '—'
+        && await txt('incEstado') === `${fM.estado} · desde ${await fmt(fM.fecha_estado)}` && await txt('incEstadoDesc') === fM.estado_descripcion && !('semaforo' in fM)
+        && tM.malas.length === 0 && tM.color === tM.inkRgb && gM.total === '2' && JSON.stringify(lM.ges) === JSON.stringify(gM.json.map((g) => g.contenido)) && lM.sensibles === 0,
+      JSON.stringify({ lM, tM, estado: await txt('incEstado') }).slice(0, 500));
+
+    /* c4-sin-calculo · fecha_estado, la descripción, «Sensible», la última gestión y la cantidad salen SOLO de la respuesta */
+    // unroute necesita el MISMO predicado que route: se guardan (uno nuevo no quita la ruta y la respuesta forzada seguiría)
+    const esRuta = (ruta) => (u) => u.pathname === ruta;
+    const rFicha = esRuta(`/hce/${idM}/inclusion`), rBit = esRuta(`/hce/${idM}/inclusion/bitacora`), rLista = esRuta('/inclusion');
+    await ps.route(rFicha, async (r) => { if (r.request().method() !== 'GET') return r.continue();
+      const real = await (await r.fetch()).json(); real.fecha_estado = '2001-02-03'; real.estado_descripcion = 'Descripción que manda el servidor (muestra).'; await r.fulfill({ json: real }); });
+    await ps.route(rBit, async (r) => { const real = await (await r.fetch()).json();
+      if (real[0]) { real[0].sensible = true; real[0].tema = 'Educativa / pedagógica'; } await r.fulfill({ json: real }); });
+    await abrirInc(idM);
+    const fx = { estado: await txt('incEstado'), desc: await txt('incEstadoDesc'), sens: await ps.evaluate(() => document.querySelectorAll('#incGestiones li[data-sensible] .inc-sensible').length) };
+    await ps.unroute(rFicha); await ps.unroute(rBit);
+    await ps.route(rLista, async (r) => { const real = await (await r.fetch()).json();
+      real.forEach((f) => { f.ultima_gestion = '2002-03-04'; f.gestiones = 77; f.fecha_estado = '2003-04-05'; }); await r.fulfill({ json: real }); });
+    await ps.click('.navitem[data-view="inclusion"]'); await ps.waitForFunction(() => INCV.estado === 'listo', null, { timeout: 8000 });
+    const vx = await ps.evaluate(() => [...document.querySelectorAll('#tbodyInclusion tr[data-hce]')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    await ps.unroute(rLista);
+    const f1 = await fmt('2001-02-03'), f2 = await fmt('2002-03-04'), f3 = await fmt('2003-04-05');
+    check('c4-sin-calculo', 'el navegador no calcula días ni fechas: si el servidor manda otra fecha_estado, otra descripción, «sensible» en un tema que no lo es, otra última gestión u otra cantidad, la pantalla muestra eso tal cual (pestaña y vista)',
+      fx.estado.endsWith(`desde ${f1}`) && fx.desc === 'Descripción que manda el servidor (muestra).' && fx.sens === 1
+        && vx.length > 0 && vx.every((c) => c[5] === f2 && c[6] === '77' && c[3].endsWith(`desde ${f3}`)),
+      JSON.stringify({ fx, vx: vx.slice(0, 2) }).slice(0, 400));
+
+    /* c4-sin-ficha · Joaquín no tiene ficha: «Sin registrar» (estado vacío, no un error), sin «Agregar gestión» y una línea que dice registrar la ficha; la API da 404 a una gestión sin ficha */
+    await abrirInc(idJ);
+    const sJ = await ps.evaluate(() => ({ vacio: !!document.querySelector('#incFicha .estado-vacio'), alerta: document.querySelectorAll('#panelExp [role="alert"]').length, nuevo: !!document.getElementById('btnIncNuevo'),
+      agregar: !!document.getElementById('btnIncAgregar'), linea: (document.getElementById('incSinFicha') || {}).textContent || '', txt: document.getElementById('incFicha').innerText }));
+    const sinFichaApi = await api('POST', `/hce/${idL}/inclusion/bitacora`, { fecha: '2026-10-01', interlocutor: 'Madre', tema: 'Familiar / social', contenido: 'Prueba sin ficha (c4).' });
+    const fichaJ0 = await ficha(idJ);
+    check('c4-sin-ficha', 'Joaquín (GET /hce/{id}/inclusion = 404): la ficha muestra «Sin registrar» con «+ Registrar ficha» (estado vacío, sin role="alert"), no hay «Agregar gestión» y una línea dice que primero hay que registrar la ficha; por la API, una gestión en un expediente sin ficha es 404 y pide registrarla',
+      fichaJ0.status === 404 && sJ.vacio && sJ.alerta === 0 && sJ.nuevo && !sJ.agregar && /primero registrá la ficha/.test(sJ.linea) && /Sin registrar/.test(sJ.txt)
+        && sinFichaApi.status === 404 && sinFichaApi.json.code === 'not_found' && /ficha/.test(sinFichaApi.json.detail[0].mensaje),
+      JSON.stringify({ sJ: { ...sJ, txt: sJ.txt.slice(0, 80) }, api: sinFichaApi.status }));
+
+    /* c4-registrar · Joaquín: registrar la ficha desde el diálogo: UN POST con lo tipeado (sin fecha_estado) → 201; la lectura sale de la respuesta y la Auditoría tiene la fila */
+    await ps.click('#btnIncNuevo'); await ps.waitForSelector('#modalFlujo.open #incf_centro');
+    const estadosDlg0 = await ps.evaluate(() => [...document.querySelectorAll('#incf_estado option')].map((o) => o.value));
+    await ps.fill('#incf_centro', 'Escuela de demostración (c4)'); await ps.selectOption('#incf_tipo', opciones.tipos_centro[1]); await ps.fill('#incf_grado', '3.er año');
+    await ps.selectOption('#incf_estado', 'En adaptación');
+    const descDlg = await txt('desc_incf_estado');
+    const n0 = escrituras.length;
+    const respReg = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idJ}/inclusion` && r.request().method() === 'POST');
+    await ps.click('#btnIncGuardar'); const rReg = await respReg; await ps.waitForSelector('#incLectura', { timeout: 8000 }); await ps.waitForTimeout(150);
+    const postJ = escrituras.slice(n0), fJ = (await ficha(idJ)).json;
+    const regJ = await ps.evaluate(() => ({ modal: document.getElementById('modalFlujo').classList.contains('open'), foco: document.activeElement.id, agregar: !!document.getElementById('btnIncAgregar') }));
+    await ps.click('#tabExp-log'); await ps.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await ps.selectOption('#logModulo', 'HCE-INC');
+    await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table, #panelExp .estado-vacio'), null, { timeout: 8000 });
+    await ps.waitForTimeout(150);
+    const logJ = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    check('c4-registrar', 'Joaquín: «Registrar ficha» abre el diálogo (el estado ofrece sólo los asignables y muestra la descripción del elegido); guardar envía UN POST con centro, tipo, grado y estado (sin fecha_estado) → 201; la lectura muestra lo que devolvió la API, aparece «Agregar gestión» y la pestaña Auditoría (filtro HCE-INC) tiene la fila de alta con su autor',
+      rReg.status() === 201 && postJ.length === 1 && postJ[0].m === 'POST' && JSON.stringify(Object.keys(postJ[0].body).sort()) === '["centro","estado","grado","tipo_centro"]'
+        && !estadosDlg0.includes('Sin registrar') && descDlg === opciones.estados.find((e) => e.nombre === 'En adaptación').descripcion
+        && fJ.centro === 'Escuela de demostración (c4)' && fJ.estado === 'En adaptación' && !!fJ.fecha_estado && !regJ.modal && regJ.foco === 'incTitulo' && regJ.agregar
+        && logJ.length === 1 && logJ[0][1] === yo.nombre && logJ[0][2] === 'HCE-INC' && /Se creó/.test(logJ[0][3]) && /ficha de inclusión/.test(logJ[0][3]),
+      JSON.stringify({ st: rReg.status(), postJ, regJ, logJ }).slice(0, 500));
+
+    /* c4-estado · cambiar el estado: «Sin registrar» no se ofrece; el PATCH lleva sólo el estado; «desde» es la fecha_estado de la API. Por la API: «Sin registrar» → 422 y uno asignable → 200 */
+    await ps.click('#tabExp-inc'); await esperarInc();
+    await ps.click('#btnIncEditar'); await ps.waitForSelector('#modalFlujo.open #incf_estado');
+    const estadosDlg = await ps.evaluate(() => [...document.querySelectorAll('#incf_estado option')].map((o) => o.value));
+    await ps.selectOption('#incf_estado', 'Inclusión parcial (horario reducido)');
+    const nE = escrituras.length;
+    await ps.click('#btnIncGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await ps.waitForTimeout(150);
+    const patchE = escrituras.slice(nE), fJ2 = (await ficha(idJ)).json;
+    const asignables = opciones.estados.filter((e) => e.asignable).map((e) => e.nombre);
+    const probeMal = await api('PATCH', `/hce/${idJ}/inclusion`, { estado: 'Sin registrar' }), probeBien = await api('PATCH', `/hce/${idJ}/inclusion`, { estado: 'Inclusión plena' });
+    const probeVuelta = await api('PATCH', `/hce/${idJ}/inclusion`, { estado: 'Inclusión parcial (horario reducido)' });
+    check('c4-estado', 'editar el estado: el selector ofrece exactamente los 6 asignables de GET /inclusion/opciones (no «Sin registrar»); guardar envía UN PATCH sólo con el estado y la lectura muestra «desde» la fecha_estado de la API; por la API, «Sin registrar» es 422 en `estado` y un asignable, 200',
+      JSON.stringify(estadosDlg) === JSON.stringify(asignables) && asignables.length === 6 && patchE.length === 1 && patchE[0].m === 'PATCH' && JSON.stringify(patchE[0].body) === '{"estado":"Inclusión parcial (horario reducido)"}'
+        && fJ2.estado === 'Inclusión parcial (horario reducido)' && await txt('incEstado') === `Inclusión parcial (horario reducido) · desde ${await fmt(fJ2.fecha_estado)}`
+        && probeMal.status === 422 && probeMal.json.detail[0].campo === 'estado' && probeBien.status === 200 && probeVuelta.status === 200,
+      JSON.stringify({ estadosDlg, patchE, mal: probeMal.status, bien: probeBien.status }).slice(0, 400));
+
+    /* c4-gestion · agregar una gestión: contenido en blanco → 422 de la API junto a su campo con el resumen enfocado; con texto pasa y aparece primera. Sofía: su gestión sensible dice «Sensible» en texto */
+    await abrirInc(idJ);
+    await ps.click('#btnIncAgregar'); await ps.waitForSelector('#modalFlujo.open #incg_contenido');
+    await ps.fill('#incg_interlocutor', 'Maestra de clase'); await ps.selectOption('#incg_rol', 'Centro educativo'); await ps.selectOption('#incg_tema', 'Educativa / pedagógica');
+    await ps.fill('#incg_contenido', '   \t ');
+    const respBlanco = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idJ}/inclusion/bitacora` && r.request().method() === 'POST');
+    await ps.click('#btnIncGuardar'); const rBlanco = await respBlanco;
+    await ps.waitForSelector('#incErrores:not([hidden])', { timeout: 5000 });
+    const g422 = await ps.evaluate(() => ({ foco: document.activeElement.id, inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_incg_contenido').innerText, interlocutor: document.getElementById('incg_interlocutor').value }));
+    await ps.fill('#incg_contenido', 'Se acuerdan apoyos visuales para la clase (c4).');
+    const nG = escrituras.length;
+    const respOk = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idJ}/inclusion/bitacora` && r.request().method() === 'POST');
+    await ps.click('#btnIncGuardar'); const rOk = await respOk;
+    await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    await ps.waitForFunction(() => document.querySelectorAll('#incGestiones li').length >= 1, null, { timeout: 8000 }); await ps.waitForTimeout(150);
+    const postG = escrituras.slice(nG), gJ = await gestiones(idJ);
+    const primeraJ = await ps.evaluate(() => { const li = document.querySelector('#incGestiones li'); return li ? li.innerText.replace(/\s+/g, ' ') : ''; });
+    await abrirInc(idS);
+    const gS = await gestiones(idS);
+    const sensS = await ps.evaluate(() => ({ marcas: [...document.querySelectorAll('#incGestiones li[data-sensible] .inc-sensible')].map((m) => ({ t: m.textContent, c: getComputedStyle(m).color, cls: m.className, desc: m.getAttribute('aria-describedby') })),
+      hint: (document.getElementById('incSensibleHint') || {}).textContent || '', inkRgb: (() => { const p = document.createElement('span'); p.style.color = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(); document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; })() }));
+    check('c4-gestion', 'agregar gestión: con el contenido en blanco (espacios y tab) la API contesta 422 y se marca junto a «Qué se trató» con el resumen role="alert" enfocado (lo tipeado queda); con texto, UN POST → 201 sin autor y la gestión aparece primera con el autor del token; en Sofía, la gestión que la API marca sensible dice «Sensible» en texto, en tinta, con la línea que aclara que restringe compartir y no guardar',
+      rBlanco.status() === 422 && g422.foco === 'incErrores' && JSON.stringify(g422.inv) === '["incg_contenido"]' && g422.err.length > 0 && g422.interlocutor === 'Maestra de clase'
+        && rOk.status() === 201 && postG.length === 1 && !('autor_id' in postG[0].body) && gJ.json[0].contenido === 'Se acuerdan apoyos visuales para la clase (c4).' && gJ.json[0].autor.id === yo.id
+        && primeraJ.includes('Se acuerdan apoyos visuales para la clase (c4).') && primeraJ.includes(yo.nombre)
+        && gS.json.filter((g) => g.sensible).length === 1 && sensS.marcas.length === 1 && sensS.marcas[0].t === 'Sensible' && sensS.marcas[0].c === sensS.inkRgb && sensS.marcas[0].desc === 'incSensibleHint'
+        && /restringida para compartir/.test(sensS.hint) && /no requiere autorización/.test(sensS.hint),
+      JSON.stringify({ b: rBlanco.status(), g422, ok: rOk.status(), postG, sensS }).slice(0, 600));
+
+    /* c4-ajeno · un técnico no alcanza la inclusión de un expediente fuera de sus grupos: 404 en las cinco rutas y «no encontrado» en la pantalla */
+    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C4', ci: '4.765.434-7', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
+    const cargado = [await api('POST', `/hce/${idAjeno}/inclusion`, { centro: 'Cargado por el admin (c4)', estado: 'Inclusión plena' }, tokAdmin)];
+    cargado.push(await api('POST', `/hce/${idAjeno}/inclusion/bitacora`, { fecha: '2026-04-02', interlocutor: 'Madre', tema: 'Familiar / social', contenido: 'Gestión del admin (c4).' }, tokAdmin));
+    const rutas = [['GET', ''], ['POST', '', { centro: 'x' }], ['PATCH', '', { obs: 'x' }], ['GET', '/bitacora'], ['POST', '/bitacora', { fecha: '2026-04-02', interlocutor: 'x', tema: 'Familiar / social', contenido: 'x' }]];
+    const tec = [], adm = [];
+    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/inclusion${r}`, b); tec.push([t.status, t.json && t.json.code]); }
+    for (const [m, r] of rutas.filter(([m]) => m === 'GET')) adm.push((await api(m, `/hce/${idAjeno}/inclusion${r}`, undefined, tokAdmin)).status);
+    await ps.evaluate((i) => abrirExpediente(i, { tab: 'inc' }), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
+    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
+    check('c4-ajeno', 'técnico y expediente de otro grupo (con ficha y gestión cargadas por el admin): las cinco rutas de /hce/{id}/inclusion dan 404 {code: not_found} (el admin, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
+      cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Gestión del admin/.test(pant.txt),
+      JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+
+    /* c4-vista · la vista «Inclusión»: las filas son las de GET /inclusion (sin el expediente ajeno), el filtro por estado es el de la API y una fila abre ese expediente en su pestaña «Inclusión» */
+    await ps.click('.navitem[data-view="inclusion"]'); await ps.waitForFunction(() => INCV.estado === 'listo', null, { timeout: 8000 }); await ps.waitForTimeout(80);
+    const vApi = await api('GET', '/inclusion?limit=200'), vAdm = await api('GET', '/inclusion?limit=200', undefined, tokAdmin);
+    const filasV = async () => ps.evaluate(() => [...document.querySelectorAll('#tbodyInclusion tr[data-hce]')].map((tr) => ({ id: +tr.dataset.hce, c: [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim()) })));
+    const fV = await filasV();
+    const esperado = await Promise.all(vApi.json.map(async (f) => ({ id: f.hce_id, ult: f.ultima_gestion ? await fmt(f.ultima_gestion) : 'Sin gestiones', n: String(f.gestiones), est: f.estado, desde: f.fecha_estado ? await fmt(f.fecha_estado) : null })));
+    const igualesV = fV.length === esperado.length && fV.every((f, i) => f.id === esperado[i].id && f.c[5] === esperado[i].ult && f.c[6] === esperado[i].n && f.c[3].startsWith(esperado[i].est) && (!esperado[i].desde || f.c[3].endsWith('desde ' + esperado[i].desde)));
+    const vistaUi = await ps.evaluate(() => ({ demo: document.querySelectorAll('#view-inclusion .demo-panel, #view-inclusion [data-modo-demo], #view-inclusion .solo-demo').length, kpi: document.querySelectorAll('#view-inclusion .kpi').length,
+      tabStops: [...document.querySelectorAll('#tbodyInclusion tr[data-hce]')].every((tr) => tr.querySelectorAll('button, a[href], input, select, textarea, [tabindex="0"]').length === 1),
+      opciones: [...document.querySelectorAll('#incFiltroEstado option')].map((o) => o.value), titulo: document.getElementById('tituloInclusion').textContent, desc: document.getElementById('incVistaDesc').textContent }));
+    await ps.selectOption('#incFiltroEstado', 'Sin escolarizar'); await ps.waitForFunction(() => INCV.estado === 'listo' && INCV.filtro === 'Sin escolarizar', null, { timeout: 8000 }); await ps.waitForTimeout(80);
+    const fFiltro = await filasV(), aFiltro = await api('GET', '/inclusion?estado=' + encodeURIComponent('Sin escolarizar'));
+    await ps.selectOption('#incFiltroEstado', ''); await ps.waitForFunction(() => INCV.estado === 'listo' && INCV.filtro === '', null, { timeout: 8000 }); await ps.waitForTimeout(80);
+    await ps.click(`#tbodyInclusion tr[data-hce="${idS}"] button.nna-abrir`);
+    await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => EXP.tab === 'inc' && INC.estado === 'listo', null, { timeout: 8000 });
+    const abierto = await ps.evaluate(() => ({ id: EXP.id, tab: EXP.tab, sel: document.getElementById('tabExp-inc').getAttribute('aria-selected'), ficha: !!document.getElementById('incLectura') }));
+    check('c4-vista', 'vista «Inclusión» (González): sin panel de demostración ni KPI; las filas son exactamente las de GET /inclusion, en su orden, con estado, «desde», última gestión y cantidad de la API (un solo punto de Tab por fila); no aparece el expediente ajeno que el admin sí ve; el filtro ofrece los 7 estados y «Sin escolarizar» da las filas de GET /inclusion?estado=; la fila de Sofía abre su expediente en la pestaña «Inclusión»',
+      vistaUi.demo === 0 && vistaUi.kpi === 0 && vistaUi.tabStops && igualesV && !fV.some((f) => f.id === idAjeno) && vAdm.json.some((f) => f.hce_id === idAjeno) && +vAdm.total > +vApi.total
+        && JSON.stringify(vistaUi.opciones) === JSON.stringify(['', ...opciones.estados.map((e) => e.nombre)]) && /de tus grupos/.test(vistaUi.desc)
+        && fFiltro.length === aFiltro.json.length && fFiltro.every((f, i) => f.id === aFiltro.json[i].hce_id) && aFiltro.json.every((f) => f.estado === 'Sin escolarizar') && fFiltro.length >= 1
+        && abierto.id === idS && abierto.tab === 'inc' && abierto.sel === 'true' && abierto.ficha,
+      JSON.stringify({ partes: { ui: vistaUi.demo === 0 && vistaUi.kpi === 0 && vistaUi.tabStops, igualesV, sinAjeno: !fV.some((f) => f.id === idAjeno), admVe: vAdm.json.some((f) => f.hce_id === idAjeno), totales: [vAdm.total, vApi.total],
+        opc: JSON.stringify(vistaUi.opciones) === JSON.stringify(['', ...opciones.estados.map((e) => e.nombre)]), desc: /de tus grupos/.test(vistaUi.desc), filtro: [fFiltro.length, aFiltro.json.length], abierto } }).slice(0, 600));
+
+    /* c4-salir · «Salir» con GET /inclusion en vuelo: al llegar, la vista sigue vacía (sin datos de la sesión anterior detrás del login) */
+    await ps.evaluate(() => go('inicio'));
+    await ps.route((u) => u.pathname === '/inclusion', async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue().catch(() => {}); });
+    await ps.click('.navitem[data-view="inclusion"]');
+    await ps.click('.btn-exit');
+    await ps.waitForTimeout(2200);
+    const salir = await ps.evaluate(() => ({ contenido: document.getElementById('inclusionContent').innerHTML.trim(), desc: document.getElementById('incVistaDesc').textContent, estado: INCV.estado, filas: INCV.filas.length,
+      inc: INC.ficha, login: !document.getElementById('loginScreen').classList.contains('hidden') }));
+    check('c4-salir', '«Salir» con GET /inclusion todavía sin respuesta: al llegar, la vista «Inclusión» sigue vacía (contenido y descripción), sin filas ni ficha de la sesión anterior, con el login a la vista',
+      salir.contenido === '' && salir.desc === '' && salir.estado === 'vacio' && salir.filas === 0 && salir.inc === null && salir.login, JSON.stringify(salir));
     await ctx.close();
   }
 

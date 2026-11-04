@@ -5,6 +5,8 @@
  * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
  * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC. F2 agrega Pendientes (con el filtro «Línea base»), el
  * listado de Grupos, un grupo abierto y —con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD— el diálogo «Asignar técnicos» del admin (se cierra sin guardar).
+ * C4 agrega la inclusión de Sofía en lectura (`inc`, con una gestión «Sensible»), el formulario de la ficha (`inc-formulario`) y el de una
+ * gestión (`inc-gestion`) abiertos (se cierran sin guardar), Joaquín sin ficha (`inc-sin-registrar`) y la vista «Inclusión» (`inclusion-vista`).
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -77,6 +79,14 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await abrir('Sofía', 'org'); await page.waitForSelector('#orgAlerta');             await snap('org-alerta');
     await page.click('#btnOrgBpsEditar'); await page.waitForSelector('#modalFlujo.open #orgb_prestacion');   await snap('org-formulario');
     await page.evaluate(() => closeFlujoModal());
+    // C4: la inclusión de Sofía (ficha y gestiones, una sensible), los dos formularios abiertos (se cierran sin guardar), Joaquín sin ficha y la vista del área
+    await abrir('Sofía', 'inc'); await page.waitForSelector('#incLectura');            await snap('inc');
+    await page.click('#btnIncEditar'); await page.waitForSelector('#modalFlujo.open #incf_estado');   await snap('inc-formulario');
+    await page.evaluate(() => closeFlujoModal());
+    await page.click('#btnIncAgregar'); await page.waitForSelector('#modalFlujo.open #incg_contenido');   await snap('inc-gestion');
+    await page.evaluate(() => closeFlujoModal());
+    await abrir('Joaquín', 'inc'); await page.waitForSelector('#incFicha .estado-vacio');   await snap('inc-sin-registrar');
+    await page.click('.navitem[data-view="inclusion"]'); await page.waitForFunction(() => INCV.estado === 'listo', null, { timeout: 8000 });   await snap('inclusion-vista');
     await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
     await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
