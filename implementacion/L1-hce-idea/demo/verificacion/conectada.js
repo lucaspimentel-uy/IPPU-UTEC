@@ -2644,7 +2644,20 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
     const filasUI = () => pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
     const esperarFilas = () => pc.waitForFunction(() => !!document.querySelector('#panelExp .log-table, #panelExp .estado-vacio, #panelExp .estado-error') && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
-    const filtrar = async (modulo, tipo) => { await pc.selectOption('#logModulo', modulo || ''); await esperarFilas(); await pc.selectOption('#logTipo', tipo || ''); await esperarFilas(); await pc.waitForTimeout(120); };
+    /* Espera DETERMINISTA de una carga del LOG. logCargar(true) deja la tabla anterior en pantalla mientras el pedido vuela (a propósito: filtrar
+       no vacía lo que se ve), así que esperarFilas() sola puede resolver sobre la tabla vieja. Por eso: se arma waitForResponse del
+       GET /hce/{id}/auditoria ANTES de la acción, se marca el nodo vigente del panel, se espera la respuesta y se espera a que el panel
+       se repinte (el nodo marcado ya no es el primero) con la tabla, el vacío o el error a la vista. Sin pausas fijas. */
+    const conAud = async (accion) => {
+      const resp = pc.waitForResponse((r) => r.request().method() === 'GET' && /\/hce\/\d+\/auditoria\?/.test(r.url()), { timeout: 8000 });
+      resp.catch(() => {});                                  // si la acción falla antes, la promesa armada no queda sin atender
+      await pc.evaluate(() => { window.__panelViejo = document.getElementById('panelExp').firstElementChild; });
+      await accion();
+      await resp;
+      await pc.waitForFunction(() => document.getElementById('panelExp').firstElementChild !== window.__panelViejo, null, { timeout: 8000 });
+      await esperarFilas();
+    };
+    const filtrar = async (modulo, tipo) => { await conAud(() => pc.selectOption('#logModulo', modulo || '')); await conAud(() => pc.selectOption('#logTipo', tipo || '')); };
     const rango = () => pc.evaluate(() => document.querySelector('#panelExp .log-rango')?.innerText || '');
 
     /* c1-firmas · el LOG de Martín lista las firmas de LB, PA, PB e IC con el nombre de quien firmó */
@@ -2667,7 +2680,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     /* c1-filtro · el filtro por módulo reduce las filas; las opciones son exactamente las válidas; foco; total = X-Total-Count */
     await filtrar('', '');
     const totalSinFiltro = Number(((await rango()).match(/de (\d+)/) || [])[1]);
-    await pc.focus('#logModulo'); await pc.selectOption('#logModulo', 'HCE-LB'); await esperarFilas(); await pc.waitForTimeout(120);
+    await pc.focus('#logModulo'); await conAud(() => pc.selectOption('#logModulo', 'HCE-LB'));
     const focoSel = await pc.evaluate(() => document.activeElement.id);
     const filasLB = await filasUI(); const totalLB = Number(((await rango()).match(/de (\d+)/) || [])[1]);
     const apiLB = Number((await api('GET', `/hce/${idM}/auditoria?modulo=HCE-LB&limit=1`)).total);
@@ -2685,9 +2698,9 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await filtrar('', '');
     const apiP1 = (await api('GET', `/hce/${idM}/auditoria?limit=25&offset=0`)); const apiP2 = (await api('GET', `/hce/${idM}/auditoria?limit=25&offset=25`));
     const r1 = await rango(), p1 = await filasUI(); const antDesh = await pc.isDisabled('#btnLogAnt');
-    await pc.click('#btnLogSig'); await pc.waitForFunction(() => /Mostrando 26/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
+    await conAud(() => pc.click('#btnLogSig')); await pc.waitForFunction(() => /Mostrando 26/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
     const r2 = await rango(), p2 = await filasUI(); const antHab = !(await pc.isDisabled('#btnLogAnt'));
-    await pc.click('#btnLogAnt'); await pc.waitForFunction(() => /Mostrando 1–/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
+    await conAud(() => pc.click('#btnLogAnt')); await pc.waitForFunction(() => /Mostrando 1–/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
     const nTotal = Number(apiP1.total);
     check('c1-paginado', 'paginado de 25: «Mostrando 1–25 de N» con N = X-Total-Count, «Anteriores» deshabilitado en la primera página; «Siguientes» trae las filas 26 en adelante (las mismas, en el mismo orden, que la API) y «Anteriores» vuelve',
       nTotal > 26 && r1 === `Mostrando 1–25 de ${nTotal}` && antDesh && p1.length === 25 && r2 === `Mostrando 26–${Math.min(50, nTotal)} de ${nTotal}` && antHab && p2.length === apiP2.json.length
@@ -2701,14 +2714,13 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     let guardia = 0;
     while (!(await pc.isDisabled('#btnLogSig')) && guardia++ < 20) {
       const antes = await rango();
-      await pc.click('#btnLogSig'); await pc.waitForFunction((v) => (document.querySelector('#panelExp .log-rango')?.innerText || '') !== v, antes, { timeout: 8000 });
-      await pc.waitForTimeout(80);
+      await conAud(() => pc.click('#btnLogSig')); await pc.waitForFunction((v) => (document.querySelector('#panelExp .log-rango')?.innerText || '') !== v, antes, { timeout: 8000 });
     }
     const focoUltima = await idFoco(), sigDeshUltima = await pc.isDisabled('#btnLogSig'), rangoUltima = await rango();
     check('c1-paginado-foco', 'al llegar a la primera página con «Anteriores» y a la última con «Siguientes», el botón queda deshabilitado y el foco pasa al otro botón del paginado (nunca al <body>)',
       antDeshPrimera && focoPrimera === 'btnLogSig' && sigDeshUltima && focoUltima === 'btnLogAnt' && new RegExp(`de ${nTotal}$`).test(rangoUltima),
       JSON.stringify({ focoPrimera, focoUltima, rangoUltima }));
-    await pc.click('#btnLogAnt'); await pc.waitForTimeout(200);  // se vuelve a una página intermedia o a la primera para lo que sigue
+    await conAud(() => pc.click('#btnLogAnt'));  // se vuelve a una página intermedia o a la primera para lo que sigue
     await filtrar('', '');
 
     /* c1-hora · ts con zona horaria → hora local del navegador (es-UY), aquí Asia/Tokyo */
@@ -2747,14 +2759,14 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
 
     /* c1-estados · 404 y 500 de la API: error compartido (404 sin Reintentar; 500 con Reintentar, que recupera) */
     await pc.route('**/auditoria*', (r) => r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: 'not_found', detail: [{ campo: null, mensaje: 'No existe el expediente' }] }) }));
-    await pc.evaluate(() => logCargar(false)); await esperarFilas();
+    await conAud(() => pc.evaluate(() => logCargar(false)));
     const e404 = await pc.evaluate(() => ({ alert: document.querySelectorAll('#panelExp .estado-error[role="alert"]').length, reint: document.querySelectorAll('#panelExp [data-reintentar]').length, txt: document.getElementById('panelExp').innerText }));
     await pc.unroute('**/auditoria*');
     await pc.route('**/auditoria*', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ code: 'internal_error', detail: [{ campo: null, mensaje: 'Error interno' }] }) }));
-    await pc.evaluate(() => logCargar(false)); await esperarFilas();
+    await conAud(() => pc.evaluate(() => logCargar(false)));
     const e500 = await pc.evaluate(() => ({ alert: document.querySelectorAll('#panelExp .estado-error[role="alert"]').length, reint: document.querySelectorAll('#panelExp [data-reintentar]').length }));
     await pc.unroute('**/auditoria*');
-    await pc.click('#panelExp [data-reintentar]'); await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await conAud(() => pc.click('#panelExp [data-reintentar]')); await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
     check('c1-estados', 'error de la API en la pestaña: 404 → «No se encontró el expediente.» en role="alert" SIN «Reintentar»; 500 → error en role="alert" CON «Reintentar», que al apretarlo vuelve a mostrar la tabla',
       e404.alert === 1 && e404.reint === 0 && /No se encontró el expediente\./.test(e404.txt) && e500.alert === 1 && e500.reint === 1, JSON.stringify({ e404: { ...e404, txt: undefined }, e500 }));
 
@@ -2771,7 +2783,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     /* c1-solo-lectura · el panel no tiene nada para escribir y mirarlo no deja filas */
     await pc.evaluate((i) => abrirExpediente(i), idM);
     await pc.waitForSelector('#expTitulo'); await pc.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
-    await pc.click('#tabExp-log'); await pc.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await pc.waitForSelector('#panelExp', { timeout: 8000 });
+    await conAud(() => pc.click('#tabExp-log'));             // al volver a la pestaña se muestra la tabla de antes mientras se vuelve a pedir
     await filtrar('HCE-00', 'edicion'); await filtrar('', '');
     const controles = await pc.evaluate(() => [...document.querySelectorAll('#panelExp input, #panelExp textarea, #panelExp form, #panelExp [contenteditable]')].length);
     const totalDespues = Number((await api('GET', `/hce/${idM}/auditoria?limit=1`, undefined, tokAdmin)).total);
@@ -3443,7 +3456,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       check('f2-asignar-c', 'un 403 muestra su mensaje en el resumen role="alert" con el foco, sin marcar ningún campo; el diálogo sigue abierto con lo elegido',
         r403.foco === 'asgErrores' && r403.invalidos === 0 && r403.valor === String(torres.id) && r403.abierto, JSON.stringify(r403));
 
-      /* d) éxito: Mtra. Torres como técnico 1 de Inicial -> PATCH 200 con SÓLO lo que cambió */
+      /* d) éxito: Mtra. Torres como técnico 1 de Inicial -> PATCH 200 con tecnico1_id y tecnico1_rol (el rol viaja con todo cambio de técnico) */
       const resp = pa.waitForResponse((r) => r.request().method() === 'PATCH' && /\/grupos\/\d+$/.test(r.url()));
       await pa.click('#btnAsgGuardar');
       const rp = await resp;
@@ -3451,8 +3464,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       await pa.waitForFunction((id) => !/Sin asignar/.test(document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText), inicial.id);
       const exito = await pa.evaluate((id) => ({ foco: document.activeElement.id, toast: document.getElementById('toastMsg').textContent, t1: document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText.replace(/\s+/g, ' ').trim() }), inicial.id);
       const trasApi = (await A.apiX('GET', '/grupos?anio=2026')).json.find((g) => g.id === inicial.id);
-      check('f2-asignar-d', 'Mtra. Torres como técnico 1 de Inicial desde el diálogo: PATCH 200 que envía sólo `tecnico1_id`; se cierra, la tarjeta lo muestra, GET /grupos coincide, el foco va al título del grupo y hay un aviso',
-        rp.status() === 200 && JSON.stringify(Object.keys(patches[patches.length - 1])) === '["tecnico1_id"]' && trasApi.tecnico1 && trasApi.tecnico1.id === torres.id && exito.t1.startsWith('Mtra. Torres')
+      check('f2-asignar-d', 'Mtra. Torres como técnico 1 de Inicial desde el diálogo: PATCH 200 que envía `tecnico1_id` y `tecnico1_rol` (null: el rol viaja con todo cambio de técnico); se cierra, la tarjeta lo muestra, GET /grupos coincide, el foco va al título del grupo y hay un aviso',
+        rp.status() === 200 && JSON.stringify(patches[patches.length - 1]) === JSON.stringify({ tecnico1_id: torres.id, tecnico1_rol: null }) && trasApi.tecnico1 && trasApi.tecnico1.id === torres.id && exito.t1.startsWith('Mtra. Torres')
           && exito.foco === 'grupoTit_' + inicial.id && /Inicial/.test(exito.toast), JSON.stringify({ status: rp.status(), cuerpo: patches[patches.length - 1], exito, api: trasApi.tecnico1 }));
 
       /* e) la misma persona en los dos puestos -> 422 junto al técnico 2 y en el resumen con el foco; «Sin asignar» + otro cambio pasa */
@@ -3478,6 +3491,33 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       /* f) la acción queda en la auditoría institucional (una fila por campo que cambió) */
       check('f2-asignar-f', 'la API rechaza la asignación de un técnico (PATCH /grupos con el token de González → 403) aunque la pantalla ya no le ofrezca el botón',
         (await T.apiX('PATCH', `/grupos/${inicial.id}`, { tecnico2_id: torres.id })).status === 403, '');
+
+      /* g) el rol de un puesto vaciado no se hereda: sacar al técnico 1 envía tecnico1_id null y tecnico1_rol null; el siguiente que se asigna, sin escribir rol, queda sin rol.
+         (Inicial viene de e): Mtra. Torres con «Maestra de apoyo».) */
+      const gonzalez = profs.find((p) => p.nombre === 'Dr. González');
+      const celda1 = () => pa.evaluate((id) => document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText.replace(/\s+/g, ' ').trim(), inicial.id);
+      const guardarPatch = async () => {
+        const rg = pa.waitForResponse((r) => r.request().method() === 'PATCH' && /\/grupos\/\d+$/.test(r.url()));
+        await pa.click('#btnAsgGuardar'); const x = await rg;
+        await pa.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'));
+        return x;
+      };
+      await abrir();
+      await pa.fill('#asg_r1', ''); await pa.selectOption('#asg_t1', '');
+      const g1 = await guardarPatch();
+      await pa.waitForFunction((id) => /Sin asignar/.test(document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText), inicial.id);
+      const cuerpoSacar = patches[patches.length - 1], trasSacar = (await A.apiX('GET', '/grupos?anio=2026')).json.find((x) => x.id === inicial.id);
+      await abrir();
+      const rolPrecargado = await pa.evaluate(() => document.getElementById('asg_r1').value);
+      await pa.selectOption('#asg_t1', String(gonzalez.id));
+      const g2 = await guardarPatch();
+      await pa.waitForFunction((id) => /Dr\. González/.test(document.querySelector(`#grupoCard_${id} .grupo-tecnicos dd`).innerText), inicial.id);
+      const cuerpoAsignar = patches[patches.length - 1], tarjeta = await celda1(), trasAsignar = (await A.apiX('GET', '/grupos?anio=2026')).json.find((x) => x.id === inicial.id);
+      check('f2-asignar-g', 'el rol de un puesto vaciado no se hereda: sacar al técnico 1 envía `tecnico1_id` null y `tecnico1_rol` null; al asignar después al Dr. González sin escribir rol, el diálogo no precarga ninguno, la tarjeta dice «Dr. González» sin rol y GET /grupos devuelve rol null',
+        g1.status() === 200 && JSON.stringify(cuerpoSacar) === JSON.stringify({ tecnico1_id: null, tecnico1_rol: null }) && trasSacar.tecnico1 === null
+          && rolPrecargado === '' && g2.status() === 200 && JSON.stringify(cuerpoAsignar) === JSON.stringify({ tecnico1_id: gonzalez.id, tecnico1_rol: null })
+          && tarjeta === 'Dr. González' && trasAsignar.tecnico1 && trasAsignar.tecnico1.id === gonzalez.id && trasAsignar.tecnico1.rol === null,
+        JSON.stringify({ cuerpoSacar, cuerpoAsignar, rolPrecargado, tarjeta, api: trasAsignar.tecnico1 }));
     }
     await A.c.close(); await T.c.close();
   }

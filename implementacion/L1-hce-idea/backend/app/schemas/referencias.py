@@ -18,7 +18,7 @@ EJEMPLO_GRUPOS = [{
     "tecnico2": {"id": 3, "nombre": "Mtra. Torres", "rol": "Maestro/a"},
 }]
 EJEMPLO_RECORDATORIOS = [
-    {"clave": "lb", "texto": "Línea base del año", "periodo": "Primeras semanas del año", "activo": True},
+    {"clave": "lb", "texto": "Aplicación del IDEA (HCE-LB) en las semanas 2–3 del ingreso", "periodo": "Semanas 2–3 del ingreso", "activo": True},
 ]
 EJEMPLO_PROFESIONALES = [{"id": 1, "nombre": "Ana Pérez", "especialidad": "Psicología", "rol": "tecnico", "activo": True}]
 

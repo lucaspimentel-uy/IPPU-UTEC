@@ -250,6 +250,9 @@ async function asignarGuardar(id){
   };
   const actual = _asgActual(g), body = {};
   Object.keys(nuevo).forEach(k => { if(nuevo[k] !== actual[k]) body[k] = nuevo[k]; });     // PATCH: sólo lo que cambió
+  // El servidor conserva el rol de un puesto cuyo técnico se saca y GET /grupos lo oculta: si cambia el técnico, el rol viaja siempre
+  // (lo escrito, o null si está vacío) para que quien se asigne después no herede uno que no ve (§5.153).
+  [1, 2].forEach(n => { if(("tecnico" + n + "_id") in body) body["tecnico" + n + "_rol"] = nuevo["tecnico" + n + "_rol"]; });
   if(!Object.keys(body).length){ formResumen("asgErrores", [{mensaje: "No hay cambios para guardar."}], "Nada que guardar:").focus(); return; }
   const btn = document.getElementById("btnAsgGuardar");
   GRP.guardando = true; if(btn){ btn.disabled = true; btn.textContent = "Guardando…"; }
