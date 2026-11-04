@@ -13,8 +13,13 @@ from datetime import date, timedelta
 import pytest
 
 from app import seed_catalogos
+from app.core.constantes import (
+    INCLUSION_AT_ESTADOS, INCLUSION_MEDIOS, INCLUSION_ROLES, INCLUSION_TEMA_SENSIBLE, INCLUSION_TEMAS,
+    INCLUSION_TIPOS_CENTRO,
+)
 from app.seed_demo import (
-    ANIO, GONZALEZ, NNA, TORRES, UBICACION_DEMO, DemoNoCargable, cargar_demo, ejecutar, preparar_usuarios,
+    ANIO, GONZALEZ, INCLUSION_DEMO, NNA, TORRES, UBICACION_DEMO, DemoNoCargable, cargar_demo, ejecutar,
+    preparar_usuarios,
 )
 from tests.conftest import EMAIL_ADMIN, PASSWORD_TEST, _fabrica_sesiones
 
@@ -137,6 +142,61 @@ def test_c3_martin_sofia_y_joaquin_tienen_organismos_y_los_demas_no(client, demo
 def test_c3_el_organismo_sembrado_deja_su_rastro_en_el_log(client, demo):
     filas = client.get(f"/hce/{demo.expedientes[102]}/auditoria", params={"modulo": "HCE-ORG", "limit": 200}).json()
     assert len(filas) == 4 and {f["tipo"] for f in filas} == {"carga"}  # INAU, BPS y dos envíos
+    assert all(f["usuario"]["nombre"] == GONZALEZ["nombre"] for f in filas)
+
+
+def test_c4_martin_sofia_y_bruno_tienen_ficha_de_inclusion_y_los_demas_no(client, demo):
+    """C4: Martín en inclusión plena con dos gestiones; Sofía en inclusión parcial con AT y tres gestiones (una
+    sensible); Bruno sin escolarizar con una. Joaquín y los demás, sin ficha. Los cargó el técnico del grupo y
+    `fecha_estado` la puso el servidor el día de la carga."""
+    def ficha(demo_id):
+        return client.get(f"/hce/{demo.expedientes[demo_id]}/inclusion")
+
+    def gestiones(demo_id):
+        return client.get(f"/hce/{demo.expedientes[demo_id]}/inclusion/bitacora").json()
+
+    martin = ficha(102).json()
+    assert martin["estado"] == "Inclusión plena" and martin["tipo_centro"] == "Escuela común (ANEP)"
+    assert martin["fecha_estado"] == date.today().isoformat() and "semaforo" not in martin
+    assert len(gestiones(102)) == 2 and {g["autor"]["nombre"] for g in gestiones(102)} == {GONZALEZ["nombre"]}
+
+    sofia = ficha(101).json()
+    assert sofia["estado"] == "Inclusión parcial (horario reducido)" and sofia["at"] == "Sí"
+    g_sofia = gestiones(101)
+    assert len(g_sofia) == 3 and [g["sensible"] for g in g_sofia].count(True) == 1
+    assert next(g for g in g_sofia if g["sensible"])["tema"] == INCLUSION_TEMA_SENSIBLE
+
+    bruno = ficha(107).json()
+    assert bruno["estado"] == "Sin escolarizar" and bruno["centro"] is None and len(gestiones(107)) == 1
+
+    sin = [d for d in NNA if ficha(d).status_code == 404]
+    assert sorted(sin) == [103, 104, 105, 106, 108]
+    assert demo.inclusion == ["Martín", "Sofía", "Bruno"]
+    # La vista del área (expedientes activos): exactamente esas tres, con lo que calcula el servidor.
+    filas = {f["hce_id"]: f for f in client.get("/inclusion").json()}
+    assert set(filas) == {demo.expedientes[d] for d in (101, 102, 107)}
+    assert filas[demo.expedientes[101]]["gestiones"] == 3
+    assert filas[demo.expedientes[101]]["ultima_gestion"] == max(g["fecha"] for g in INCLUSION_DEMO[101]["gestiones"])
+
+
+def test_c4_los_datos_sembrados_estan_dentro_de_las_constantes_y_son_de_2026_antes_del_13_11():
+    for inc in INCLUSION_DEMO.values():
+        f = inc["ficha"]
+        assert f.get("tipo_centro") in (None, *INCLUSION_TIPOS_CENTRO) and f.get("at") in (None, *INCLUSION_AT_ESTADOS)
+        assert "fecha_estado" not in f
+        for g in inc["gestiones"]:
+            assert g["tema"] in INCLUSION_TEMAS and g.get("rol") in (None, *INCLUSION_ROLES) and g.get("medio") in (None, *INCLUSION_MEDIOS)
+            assert date(2026, 1, 1) <= date.fromisoformat(g["fecha"]) < date(2026, 11, 13)
+    # Martín tiene 9 años en 2026: va a la escuela, no al liceo.
+    assert "Liceo" not in (INCLUSION_DEMO[102]["ficha"]["tipo_centro"] or "")
+    # La gestión sensible de Sofía no trae detalle clínico (sólo coordinación).
+    sensible = next(g for g in INCLUSION_DEMO[101]["gestiones"] if g["tema"] == INCLUSION_TEMA_SENSIBLE)
+    assert "historia clínica" in sensible["contenido"] and len(sensible["contenido"]) < 120
+
+
+def test_c4_la_inclusion_sembrada_deja_su_rastro_en_el_log(client, demo):
+    filas = client.get(f"/hce/{demo.expedientes[102]}/auditoria", params={"modulo": "HCE-INC", "limit": 200}).json()
+    assert len(filas) == 3 and {f["tipo"] for f in filas} == {"carga"}  # la ficha y dos gestiones
     assert all(f["usuario"]["nombre"] == GONZALEZ["nombre"] for f in filas)
 
 

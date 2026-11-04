@@ -14,7 +14,9 @@ Carga en una base de desarrollo los 8 NNA de `demo/js/datos.js` y los arquetipos
 CI/LB/PA/PB/IC y, desde C2, la **severidad DSM-5-TR** de Martín (dominios distintos) y de Valentina;
 los demás quedan sin registro (el estado vacío de la pestaña). Desde C3, **HCE-ORG**: Martín (INAU con dos
 envíos, AYEX vigente sin alerta), Sofía (AYEX en trámite a 25 días: alerta a 30 días, y una gestión) y
-Joaquín (INAU con ingreso reciente y sin envíos); el resto, sin vínculos. Ni documentos, ni fotos, ni INC ni PAI.
+Joaquín (INAU con ingreso reciente y sin envíos); el resto, sin vínculos. Desde C4, **HCE-INC**: Martín (inclusión
+plena, dos gestiones), Sofía (inclusión parcial con AT, tres gestiones, una «Clínica — sensible» de contenido
+neutro) y Bruno (sin escolarizar, una gestión); Joaquín y los demás, sin ficha. Ni documentos, ni fotos, ni PAI.
 
 ## Dos partes, y por qué
 
@@ -234,6 +236,56 @@ ORGANISMOS_DEMO = {
 }
 
 
+#: HCE-INC (C4): fichas y gestiones que cargaría el técnico del grupo. Datos de demostración, plausibles para la
+#: edad de cada NNA en 2026 (Martín, 9 años: escuela, no liceo; Sofía, 11: último año de escuela; Bruno, 7: sin
+#: escolarizar) y siempre dentro de las constantes de `core/constantes.py`. Los centros y las personas son
+#: genéricos («de demostración»): ningún nombre real. La gestión sensible de Sofía no trae detalle clínico.
+#: `fecha_estado` no se manda: la fija el servidor (el día de la carga). Fechas de gestión fijas, de 2026 y
+#: anteriores al 13/11.
+INCLUSION_DEMO = {
+    102: {
+        "ficha": {
+            "centro": "Escuela pública de demostración N.º 1", "tipo_centro": "Escuela común (ANEP)", "grado": "4.º año",
+            "modalidad": "Jornada simple, con apoyos visuales en clase", "dias_horas": "Lunes a viernes · 4 horas",
+            "at": "No", "ref_nombre": "Maestra de clase (demostración)", "ref_rol": "Maestra de clase",
+            "estado": "Inclusión plena",
+        },
+        "gestiones": [
+            {"fecha": "2026-04-15", "interlocutor": "Maestra de clase", "rol": "Centro educativo", "medio": "Reunión presencial",
+             "tema": "Educativa / pedagógica", "contenido": "Buena adaptación al grupo. Se acuerdan apoyos visuales para las consignas largas.",
+             "acuerdos": "Revisar los apoyos visuales al cierre del primer semestre."},
+            {"fecha": "2026-09-22", "interlocutor": "Madre", "rol": "Familia", "medio": "Llamada",
+             "tema": "Familiar / social", "contenido": "La familia cuenta que concurre con gusto y que participa de un cumpleaños del grupo."},
+        ],
+    },
+    101: {
+        "ficha": {
+            "centro": "Escuela pública de demostración N.º 2", "tipo_centro": "Escuela común (ANEP)", "grado": "6.º año",
+            "modalidad": "Jornada parcial con acompañante", "dias_horas": "3 días · 4 horas",
+            "at": "Sí", "at_nombre": "Acompañante de demostración", "ref_nombre": "Directora (demostración)", "ref_rol": "Directora",
+            "estado": "Inclusión parcial (horario reducido)",
+            "obs": "Se trabaja hacia la ampliación progresiva del horario.",
+        },
+        "gestiones": [
+            {"fecha": "2026-03-09", "interlocutor": "Madre", "rol": "Familia", "medio": "WhatsApp",
+             "tema": "Educativa / pedagógica", "contenido": "Retomó la escuela sin dificultades; el acompañante concurre tres días por semana."},
+            {"fecha": "2026-05-20", "interlocutor": "Directora", "rol": "Centro educativo", "medio": "Reunión presencial",
+             "tema": "Coordinación interinstitucional", "contenido": "Reunión de coordinación: el centro pide material sobre apoyos visuales.",
+             "acuerdos": "Enviar el material antes de fin de mes."},
+            {"fecha": "2026-08-18", "interlocutor": "Equipo de salud", "rol": "Equipo de salud", "medio": "Videollamada",
+             "tema": "Clínica — sensible", "contenido": "Intercambio de coordinación con el equipo de salud. El detalle queda en la historia clínica."},
+        ],
+    },
+    107: {
+        "ficha": {"estado": "Sin escolarizar", "obs": "La familia consulta opciones de ingreso a un centro educativo."},
+        "gestiones": [
+            {"fecha": "2026-10-06", "interlocutor": "Padre", "rol": "Familia", "medio": "Reunión presencial",
+             "tema": "Trámite o gestión", "contenido": "Se orienta a la familia sobre los pasos para solicitar la inscripción.",
+             "acuerdos": "Retomar el tema en la próxima entrevista."},
+        ],
+    },
+}
+
 SOFIA_LB = {
     "dim": [4, 2, 4, 2, 2, 2, 4, 4, 2, 2, 1, 2], "obs": {}, "fecha_consenso": "2026-03-20", "sesiones": 5,
     "sintesis": "Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
@@ -269,6 +321,7 @@ class Resumen:
     ids: dict[str, int] = field(default_factory=dict)          # «102.lb», «102.ic»… → id del módulo
     severidad: list[str] = field(default_factory=list)         # «Martín», … (HCE-SEV registrada)
     organismos: list[str] = field(default_factory=list)        # «Martín», … (HCE-ORG con algún vínculo)
+    inclusion: list[str] = field(default_factory=list)         # «Martín», … (HCE-INC con ficha)
     grupos: dict[str, int] = field(default_factory=dict)       # nombre real → grupo_id
     profesionales: dict[str, int] = field(default_factory=dict)
 
@@ -279,6 +332,7 @@ class Resumen:
             f"Borradores ({len(self.borradores)}): {', '.join(self.borradores)}",
             f"Severidad DSM-5-TR registrada ({len(self.severidad)}): {', '.join(self.severidad)}",
             f"Organismos (INAU/BPS) registrados ({len(self.organismos)}): {', '.join(self.organismos)}",
+            f"Fichas de inclusión registradas ({len(self.inclusion)}): {', '.join(self.inclusion)}",
             f"Avisos no bloqueantes de la API: {len(self.warnings)}",
         ])
 
@@ -508,6 +562,14 @@ def cargar_demo(
             api.escribir("POST", f"{ruta}/registros", registro, esperado=201)
         resumen.organismos.append(NNA[demo_id]["persona"]["nombre"])
     decir(f"Organismos INAU/BPS: {', '.join(resumen.organismos)}; los demás sin vínculos")
+    # HCE-INC (C4): la ficha y sus gestiones, por la API y como el técnico del grupo. `fecha_estado` la fija el servidor.
+    for demo_id, inc in INCLUSION_DEMO.items():
+        ruta = f"/hce/{resumen.expedientes[demo_id]}/inclusion"
+        api.escribir("POST", ruta, inc["ficha"], esperado=201)
+        for gestion in inc["gestiones"]:
+            api.escribir("POST", f"{ruta}/bitacora", gestion, esperado=201)
+        resumen.inclusion.append(NNA[demo_id]["persona"]["nombre"])
+    decir(f"Inclusión: {', '.join(resumen.inclusion)}; los demás sin ficha")
     return resumen
 
 

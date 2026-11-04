@@ -28,7 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.routers import (
-    auditoria, auth, flujo, hce, idea, informe_cierre, organismos, protocolo, referencias, severidad,
+    auditoria, auth, flujo, hce, idea, inclusion, informe_cierre, organismos, protocolo, referencias, severidad,
     valoracion_funcional,
 )
 from app.routers.dependencias import usuario_actual
@@ -76,6 +76,7 @@ for _router in (
     valoracion_funcional.router,
     severidad.router_hce, severidad.router_niveles,
     organismos.router_hce, organismos.router_opciones,
+    inclusion.router_hce, inclusion.router,
     referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)
