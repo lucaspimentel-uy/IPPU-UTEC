@@ -58,16 +58,19 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
 
 - **Conectadas** — login y su error; listado con sus estados (cargando, error, vacío, filas, filtro «Todos»); aviso (*toast*);
   Pendientes (con el bloque de períodos abierto, un filtro activo, cargando, error y vacío) y Grupos (listado, un grupo abierto y, como
-  admin, «Asignar técnicos» con su diálogo abierto —con errores de muestra y la confirmación de descarte— sin guardar);
+  admin, «Asignar técnicos» con su diálogo abierto —con errores de muestra y la confirmación de descarte— sin guardar); Inclusión
+  (la lista del área, su filtro por estado, cargando, error y vacío);
   expediente de la API con sus 13 pestañas; Auditoría (LOG: carga, filtros, paginado, error y vacío); Severidad (SEV: vacía,
   lectura, diálogo de registro y de edición) y Organismos (ORG: vacía, lectura con la alerta AYEX, diálogos del vínculo y del
-  registro); CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
+  registro); Inclusión del expediente (INC: lectura con una gestión «Sensible», la referencia de los 7 estados, el diálogo de la ficha
+  —sin cambios y confirmación de descarte— y el de una gestión con un error de muestra junto al campo, sin ficha y con error);
+  CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
   confirmación de firma, 422 por dimensión y por campo, firmado con banda y addendas); PA y PB (borrador, errores de firma, Δ);
   IC (sin crear, confirmación y errores de firma, avisos y «Cambió en el servidor», firmado); documento impreso del IC; VF
   (vacía, formulario, las cinco categorías del baremo, los niveles y la alerta de vigencia) y su reporte; diálogo de alta/edición
   en sus cuatro pasos y su confirmación de descarte; diálogo del recibí y su confirmación; estados compartidos (cargando, error,
   vacío, error en línea); enlace de salto enfocado; y el **cromo** (barra superior y lateral) en todas ellas.
-- **Modo demostración**, informadas aparte: Analítica, Inclusión, Ateneos, Perfil y el expediente de ejemplo.
+- **Modo demostración**, informadas aparte: Analítica, Ateneos, Perfil y el expediente de ejemplo.
   El panel «Modo demostración» y la marca «Solo demo» se miden además dentro de las pantallas conectadas (pestañas sin API).
 
 **Lo que la herramienta no ve** (queda en §6): estados `:hover` y `:active`, contenido dentro de SVG (los radares), la vista
@@ -162,6 +165,11 @@ paso: el chip sale con el estilo neutro y el nombre y el rango siguen escritos.
 **Mismo criterio: HCE-SEV** (`severidad_dsm` / `severidad_nivel`, M12.4) ya tiene pantalla (C2, §5.143 d) y **no lleva color por
 grado**: los niveles 1–3 de apoyo por dominio (comunicación social · conductas repetitivas) van en tinta, con la etiqueta del
 servidor, nunca con `--ok/--warn/--bad` ni con una rampa por grado.
+
+**Mismo criterio: HCE-INC** (`inclusion` / `estado_inclusion`, M12.5) ya tiene pantalla (C4, `handoff.md` §5.154 d) y **no lleva color
+por estado**: el estado va en tinta con su nombre, la descripción del servidor y «desde» la fecha del servidor, en la pestaña y en la
+vista «Inclusión». Los 7 estados no son una clasificación clínica confirmada (IPPU no los validó) y la API no da semáforo: se
+retiraron los chips `inc-ok/warn/danger/off`. La marca «Sensible» de una gestión es texto con borde, en tinta.
 
 ### 3.2 Estados: el vocabulario implementado
 
@@ -281,4 +289,5 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
 - **Colores de grupo:** cerrado en las pantallas conectadas (§5.122 e: el nombre es el de la API y no se pinta); las vistas de modo
   demostración los conservan bajo el panel.
 - **HCE-SEV:** con pantalla desde C2 y sin color por grado (§3.1, §5.143 d).
+- **HCE-INC:** con pantalla desde C4 y sin color por estado (§3.1, §5.154 d).
 - **Modo oscuro, `prefers-contrast` y colores forzados (`forced-colors`):** no se tratan.
