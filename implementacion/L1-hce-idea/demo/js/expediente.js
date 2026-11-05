@@ -31,7 +31,7 @@ const TABS_EXP = [
   {k:"sev",   r:"SEV", t:"Severidad",               g:"seg",   d:"Severidad (DSM-5-TR)"},
   {k:"inc",   r:"INC", t:"Inclusión",               g:"seg",   d:"Inclusión educativa y social"},
   {k:"org",   r:"ORG", t:"Organismos",              g:"seg",   d:"Áreas INAU y BPS"},
-  {k:"doc",   r:"DOC", t:"Documentos",              g:"reg",   d:"Documentos y fotos",           demo:true},
+  {k:"doc",   r:"DOC", t:"Documentos",              g:"reg",   d:"Documentos y fotos"},
   {k:"pai",   r:"PAI", t:"PAI",                     g:"reg",   d:"Propuesta de atención individual", demo:true},
   {k:"log",   r:"LOG", t:"Auditoría",               g:"reg",   d:"Registro de cambios"}
 ];
@@ -134,6 +134,7 @@ function selTabExp(k, enfocar){
   if(typeof evSincronizar === "function") evSincronizar();   // lo tipeado en LB/PA/PB sin guardar no se pierde al cambiar de pestaña
   if(typeof icSincronizar === "function") icSincronizar();   // ni en IC
   if(typeof vfSincronizar === "function") vfSincronizar();   // ni en VF
+  if(k !== "doc" && typeof docSalirTab === "function") docSalirTab();   // las miniaturas (Blob URLs) se liberan al salir
   EXP.tab = k;
   pintarTabsExp();
   const panel = document.getElementById("panelExp");
@@ -147,6 +148,7 @@ function selTabExp(k, enfocar){
   if(k === "sev") sevMostrar();                       // SEV: severidad DSM-5-TR (severidad.js)
   if(k === "org") orgMostrar();                       // ORG: vínculos con INAU y BPS y sus registros (organismos.js)
   if(k === "inc") incMostrar();                       // INC: ficha de inclusión y gestiones (inclusion.js)
+  if(k === "doc") docMostrar();                       // DOC: documentos, fotos y autorización de imagen (documentos.js)
   if(k === "log") logMostrar();                       // LOG: registro de cambios, de solo lectura (auditoria.js)
   if(enfocar){ const b = document.getElementById("tabExp-" + k); if(b) b.focus(); }
 }
@@ -398,6 +400,7 @@ function panelTabExpHtml(k){
   if(k === "sev") return sevPanelHtml();
   if(k === "org") return orgTabHtml();
   if(k === "inc") return incPanelHtml();
+  if(k === "doc") return docPanelConectadoHtml();
   if(k === "log") return logPanelHtml();
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
@@ -457,7 +460,7 @@ function vigilarBanda(){
 async function abrirExpediente(id, opts){
   const mi = ++EXP.seq;
   Object.assign(EXP, {id, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:(opts && opts.avisos) || [], mods:null, idea:{estado:"cargando"}});
-  evReiniciar(); icReiniciar(); vfReiniciar(); sevReiniciar(); orgReiniciar(); incReiniciar(); logReiniciar();
+  evReiniciar(); icReiniciar(); vfReiniciar(); sevReiniciar(); orgReiniciar(); incReiniciar(); docReiniciar(); logReiniciar();
   expedienteCargando();
   let hce, raw;
   try{

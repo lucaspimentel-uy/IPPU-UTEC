@@ -52,7 +52,8 @@ function nroHC(n){
    puede ver, agrupados por grupo.id). El admin ve todos los grupos del año; un técnico, aquellos donde es técnico 1 o 2
    (presentación, igual que el alta, §5.125: la autoridad es la API). Sólo el admin asigna técnicos (PATCH /grupos/{id}, §5.120 a);
    crear, renombrar o archivar grupos sigue fuera (§5.90). Lo que la API no tiene (franja de edad, días y horarios, talleres,
-   nómina «técnicos autorizados», fotos grupales, CIE-11/apoyo y uso de imagen por NNA) no se muestra: no se inventa. */
+   nómina «técnicos autorizados», CIE-11/apoyo y uso de imagen por NNA) no se muestra: no se inventa. Las fotos del grupo vuelven con C5
+   (§5.155 e): la tarjeta «Fotos del grupo» del detalle la arma documentos.js con GET /grupos/{id}/fotos (la API decide quién la ve). */
 const GRP = { seq:0, sesion:0, estado:"vacio", error:"", grupos:[], filas:[], anio:null, abierto:null, guardando:false, abriendo:false };
 
 function gruposEsAdmin(){ const u = Sesion.usuario(); return !!u && u.rol === "admin"; }
@@ -123,7 +124,7 @@ function gruposPintar(){
   if(GRP.estado === "cargando"){ cont.innerHTML = `${crumbs}<h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>${estadoCargandoHtml("Cargando los grupos…")}`; return; }
   if(GRP.estado === "error"){ cont.innerHTML = `${crumbs}<h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>${estadoErrorHtml(GRP.error, "gruposCargar()")}`; return; }
   const g = GRP.abierto !== null ? gruposVisibles().find(x => x.id === GRP.abierto) : null;
-  if(g) gruposPintarDetalle(g); else { GRP.abierto = null; gruposPintarLista(); }
+  if(g) gruposPintarDetalle(g); else { GRP.abierto = null; if(typeof grpFotosLiberar === "function") grpFotosLiberar(); gruposPintarLista(); }
 }
 function gruposPintarLista(){
   const cont = document.getElementById("gruposList");
@@ -186,7 +187,9 @@ function gruposPintarDetalle(g){
         </table>
       </div>
       <div class="lista-pie"><span class="hint">Ciclo del año: ● firmado · ◐ en curso · ○ sin iniciar</span></div>
-    </div>`;
+    </div>
+    <div class="card grp-fotos" id="grpFotosCard"></div>`;
+  if(typeof grpFotosCargar === "function") grpFotosCargar(g.id, GFOT.grupoId === g.id && GFOT.estado === "listo");
 }
 
 /* ---------- Asignar técnicos (sólo admin) ---------- */

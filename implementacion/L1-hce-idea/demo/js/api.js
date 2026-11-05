@@ -6,7 +6,9 @@
    - GET devuelve el recurso directo; POST/PATCH/PUT devuelven {data, warnings}.
    - Error: {code, detail:[{campo, mensaje}]}.
    - Las listas traen el total en la cabecera X-Total-Count.
-   apiFetch() unifica todo en {data, warnings, total}: quien llama no distingue GET de POST. */
+   apiFetch() unifica todo en {data, warnings, total}: quien llama no distingue GET de POST.
+   C5 (§5.155): `body` puede ser un FormData (alta multipart de un archivo: el navegador pone el Content-Type con su
+   boundary) y apiBlob() descarga un archivo con el token, como Blob (nunca un enlace directo sin token). */
 
 /* ---------- URL base: UN solo lugar ----------
    Por omision http://localhost:8000. Se puede cambiar con ?api=<url> en la URL de la pagina
@@ -121,7 +123,8 @@ function _qs(query){
 async function apiFetch(path, opts){
   const { method = "GET", query, body, auth = true } = opts || {};
   const headers = { "Accept": "application/json" };
-  if(body !== undefined) headers["Content-Type"] = "application/json";
+  const esForm = typeof FormData !== "undefined" && body instanceof FormData;
+  if(body !== undefined && !esForm) headers["Content-Type"] = "application/json";
   if(auth){
     const t = Sesion.token();
     if(t) headers["Authorization"] = "Bearer " + t;
@@ -129,7 +132,7 @@ async function apiFetch(path, opts){
   let resp;
   try{
     resp = await fetch(API_BASE + path + _qs(query), {
-      method, headers, body: body !== undefined ? JSON.stringify(body) : undefined
+      method, headers, body: body === undefined ? undefined : (esForm ? body : JSON.stringify(body))
     });
   }catch(_e){
     throw new ApiError(0, "network", [],
@@ -168,4 +171,38 @@ async function apiFetch(path, opts){
     total,
     status: resp.status
   };
+}
+
+/* apiBlob(path) -> {blob, tipo, nombre}: descarga autenticada (C5, §5.155 f). El archivo llega como Blob con el
+   Content-Type que manda el servidor (el tipo detectado al subirlo); `nombre` es el `filename*` de Content-Disposition.
+   Errores y 401 como apiFetch. Quien llama decide qué hacer con el Blob: guardarlo, o mostrarlo SOLO si es JPEG o PNG. */
+function nombreDeDisposicion(h){
+  if(!h) return null;
+  const ext = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(h);
+  if(ext){ try{ return decodeURIComponent(ext[1].trim()); }catch(_e){ /* cae al simple */ } }
+  const simple = /filename\s*=\s*"([^"]*)"/i.exec(h);
+  return simple ? simple[1] : null;
+}
+async function apiBlob(path){
+  const headers = {};
+  const t = Sesion.token();
+  if(t) headers["Authorization"] = "Bearer " + t;
+  let resp;
+  try{ resp = await fetch(API_BASE + path, { headers }); }
+  catch(_e){
+    throw new ApiError(0, "network", [], `No se pudo conectar con la API (${API_BASE}). Verificá que esté en ejecución y volvé a intentar.`);
+  }
+  if(!resp.ok){
+    let json = null;
+    try{ json = await resp.json(); }catch(_e){ json = null; }
+    if(resp.status === 401){
+      Sesion.limpiar();
+      if(typeof alSesionInvalida === "function") alSesionInvalida("Tu sesión expiró o ya no es válida. Ingresá de nuevo.");
+    }
+    throw new ApiError(resp.status, (json && json.code) || "http_error",
+      (json && Array.isArray(json.detail)) ? json.detail : [{ campo: null, mensaje: `La API respondió ${resp.status}` }]);
+  }
+  const blob = await resp.blob();
+  return { blob, tipo: (resp.headers.get("Content-Type") || "").split(";")[0].trim().toLowerCase(),
+    nombre: nombreDeDisposicion(resp.headers.get("Content-Disposition")) };
 }

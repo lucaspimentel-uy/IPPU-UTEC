@@ -1062,6 +1062,29 @@
   .foto-thumb .ph{height:88px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);background:var(--paper-3);color:var(--ink-2)}
   .foto-thumb .cap{padding:var(--s2);font-size:var(--fs-3xs);color:var(--ink-2);line-height:1.45}
   .doc-hist{color:var(--ink-2);font-size:var(--fs-3xs)}
+  /* C5 · HCE-DOC conectado (§5.155): tabla de documentos, marca de histórico en texto, grilla de fotos (miniaturas sólo de Blobs JPEG/PNG) */
+  .doc-nota{margin:0 0 var(--s3)}
+  .doc-tabla td{vertical-align:top}
+  .doc-tabla td.num{white-space:nowrap}
+  .doc-nombre{overflow-wrap:anywhere;min-width:160px}
+  .doc-nombre-txt{display:block;font-weight:600;color:var(--ink)}
+  .doc-hist-marca{display:inline-block;max-width:100%;margin-top:2px;padding:0 6px;border:1px solid var(--ink-2);border-radius:var(--r-sm);
+    font-size:var(--fs-2xs);font-weight:700;line-height:1.5;color:var(--ink);background:transparent}
+  .doc-tipo{font-weight:600}
+  .doc-acciones{text-align:right;white-space:nowrap}
+  .doc-acciones .btn+.btn{margin-left:var(--s1)}
+  .doc-aut-nota{margin:0;padding:0 var(--s4) var(--s3)}
+  .foto-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--s3)}
+  .foto-item{display:flex;flex-direction:column;gap:var(--s1);border:1px solid var(--rule);border-radius:var(--r-sm);padding:var(--s2);background:var(--paper);min-width:0}
+  .foto-item .btn{align-self:flex-start}
+  .foto-marco{height:110px;display:flex;align-items:center;justify-content:center;background:var(--paper-3);border-radius:var(--r-sm);overflow:hidden;color:var(--ink-2)}
+  .foto-marco.con-img{background:var(--paper)}
+  .foto-ph{font-size:var(--fs-lg)}
+  .foto-img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .foto-cap{display:flex;flex-direction:column;font-size:var(--fs-2xs);line-height:1.45;min-width:0}
+  .foto-desc{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+  .foto-fecha{color:var(--ink-2)}
+  .grp-fotos{margin-top:var(--s4)}
   /* M6 · HCE-IC — Informe de Cierre Anual: tabla comparativa, radares y membrete */
   .comp-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
   .comp-table th{

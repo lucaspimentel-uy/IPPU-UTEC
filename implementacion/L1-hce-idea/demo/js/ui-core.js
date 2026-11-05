@@ -21,6 +21,7 @@ function go(view){
   if(view === "pendientes" && typeof pendAlAbrir === "function") pendAlAbrir();
   if(view === "grupos" && typeof gruposAlAbrir === "function") gruposAlAbrir();
   if(view === "inclusion" && typeof incVistaAlAbrir === "function") incVistaAlAbrir();
+  if(typeof fotosLiberarVista === "function") fotosLiberarVista(view);   // C5: las miniaturas (Blob URLs) de la vista que se deja se revocan
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
 /* Los KPI de pendientes llevan a la vista Pendientes ya filtrada («lb» o «ci»); el foco pasa a su título. */
@@ -497,6 +498,7 @@ function limpiarUiDeSesion(){
   if(typeof sevOlvidarSesion === "function") sevOlvidarSesion();   // severidad y el catálogo de grados
   if(typeof orgOlvidarSesion === "function") orgOlvidarSesion();   // organismos y las opciones de BPS
   if(typeof incOlvidarSesion === "function") incOlvidarSesion();   // inclusión (pestaña, opciones y la vista del menú)
+  if(typeof docOlvidarSesion === "function") docOlvidarSesion();   // documentos, fotos (también las del grupo) y categorías
   if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
   if(typeof pendOlvidarSesion === "function") pendOlvidarSesion();       // Pendientes: nada del listado anterior detrás del login
   if(typeof gruposOlvidarSesion === "function") gruposOlvidarSesion();   // Grupos y el diálogo de asignación
