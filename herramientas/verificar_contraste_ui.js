@@ -23,6 +23,10 @@
  *   de muestra) SIN guardar: el filtro de escritura sigue sin dejar pasar más que GET y POST /auth/login.
  *   La pestaña INC (C4): lectura con una gestión sensible, la referencia de los 7 estados, el diálogo de la ficha y el de una
  *   gestión abiertos (sin guardar: los errores de la gestión son de muestra, pintados con formResumen), sin ficha y con error.
+ *   La pestaña DOC (C5): documentos con un registro histórico, la foto con su miniatura (GET del Blob), la autorización, los
+ *   diálogos «Cargar documento» (con un error de muestra junto al archivo y la confirmación de descarte), «Editar documento»,
+ *   «Cargar foto» y el de la autorización, abiertos SIN guardar; Sofía sin autorización y el error. En Grupos, la tarjeta «Fotos
+ *   del grupo» (Escolares), su diálogo y el estado «no encontrado».
  *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Ateneos, Perfil y el expediente de ejemplo.
  *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
@@ -387,6 +391,18 @@ function buscarContornosApagados() {
   await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo'); await esperar(120);
   await cap('Grupos · un grupo abierto (integrantes)');
   anillos.push(await medirAnilloTeclado(page, '#grupoVolver', 'enlace «Grupos de referencia» (migas)'));
+  // C5 · la tarjeta «Fotos del grupo» (Escolares tiene la foto del seed) y su diálogo, sin guardar.
+  await ev(() => abrirGrupo(gruposVisibles().find((g) => g.nombre === 'Escolares').id));
+  await page.waitForFunction(() => GFOT.estado === 'listo' && !!document.querySelector('#grpFotosGrid img'), null, { timeout: 8000 }); await esperar(150);
+  await cap('Grupos · fotos del grupo (Escolares, con miniatura)');
+  anillos.push(await medirAnilloTeclado(page, '#btnGrpFoto', 'botón «Cargar foto» (fotos del grupo)'));
+  anillos.push(await medirAnilloTeclado(page, '#grpFotosGrid .btn', 'botón «Descargar» (fotos del grupo)'));
+  await page.click('#btnGrpFoto'); await page.waitForSelector('#modalFlujo.open #fotf_archivo'); await esperar(250);
+  await cap('Grupos · fotos del grupo · diálogo «Cargar foto»');
+  await page.keyboard.press('Escape'); await esperar(150);
+  await ev(() => { GFOT.estado = 'error'; GFOT.noEncontrado = true; grpFotosPintar(); }); await esperar(80);
+  await cap('Grupos · fotos del grupo · no encontrado');
+  await ev(() => grpFotosCargar(GFOT.grupoId)); await page.waitForFunction(() => GFOT.estado === 'listo', null, { timeout: 8000 });
 
   // ---------------------------------------------------------------- INCLUSIÓN (C4): la lista del área, con el técnico
   await page.click('.navitem[data-view="inclusion"]');
@@ -619,6 +635,43 @@ function buscarContornosApagados() {
   await ev(() => { INC.estado = 'error'; INC.error = 'No se pudo cargar la inclusión (muestra).'; incRepintar(); }); await esperar(100);
   await cap('INC · error con «Reintentar»');
   await ev(() => incCargar(false)); await page.waitForSelector('#incFicha .estado-vacio', { timeout: 8000 });
+  // C5 · DOC: Martín (documentos con un histórico, la foto con miniatura, la autorización), los diálogos sin guardar, Sofía sin
+  // autorización y el error. Las miniaturas son GET; nada se sube.
+  await abrirPorNombre('Martín', 'doc');
+  await page.waitForSelector('#docTabla tr[data-historico]', { timeout: 8000 });
+  await page.waitForFunction(() => !!document.querySelector('#docFotosGrid img'), null, { timeout: 8000 }); await esperar(150);
+  await cap('DOC · lectura (Martín: documentos, un registro histórico, foto y autorización)');
+  anillos.push(await medirAnilloTeclado(page, '#btnDocCargar', 'botón «Cargar documento» (DOC)'));
+  anillos.push(await medirAnilloTeclado(page, '#docTabla [id^="btnDocBajar_"]', 'botón «Descargar» (DOC)'));
+  anillos.push(await medirAnilloTeclado(page, '#docTabla [id^="btnDocEditar_"]', 'botón «Editar» (DOC)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnDocFoto', 'botón «Cargar foto» (DOC)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnAutEditar', 'botón «Editar» de la autorización (DOC)'));
+  await page.click('#btnDocCargar'); await page.waitForSelector('#modalFlujo.open #docf_archivo'); await esperar(250);
+  await cap('DOC · diálogo «Cargar documento»');
+  anillos.push(await medirAnilloTeclado(page, '#docf_archivo', 'selector de archivo (DOC)'));
+  anillos.push(await medirAnilloTeclado(page, '#docf_categoria', 'lista desplegable (DOC)'));
+  // El 422/413 de la API no se pide (la herramienta no escribe): se pinta con el componente real, con un mensaje de muestra.
+  await ev(() => { formResumen('docErrores', [{ id: 'docf_archivo', rot: 'Archivo', mensaje: 'El archivo supera los 10 MB (muestra).' }], 'No se pudo cargar el documento:'); }); await esperar(100);
+  await cap('DOC · «Cargar documento» · error junto al archivo (muestra)');
+  await page.fill('#docf_nombre', 'Dato tipeado'); await page.keyboard.press('Escape'); await page.waitForSelector('#modalFlujo .confirmar-descarte', { timeout: 3000 });
+  await cap('DOC · «Cargar documento» · confirmar descarte');
+  await page.click('#btnCdDescartar'); await esperar(150);
+  await page.click('#docTabla [id^="btnDocEditar_"] >> nth=0'); await page.waitForSelector('#modalFlujo.open #docf_nombre'); await esperar(250);
+  await cap('DOC · diálogo «Editar documento»');
+  await page.keyboard.press('Escape'); await esperar(150);
+  await page.click('#btnDocFoto'); await page.waitForSelector('#modalFlujo.open #fotf_archivo'); await esperar(250);
+  await cap('DOC · diálogo «Cargar foto»');
+  await page.keyboard.press('Escape'); await esperar(150);
+  await page.click('#btnAutEditar'); await page.waitForSelector('#modalFlujo.open #autf_documento'); await esperar(250);
+  await cap('DOC · diálogo de la autorización de imagen');
+  anillos.push(await medirAnilloTeclado(page, '#autf_documento', 'lista desplegable (autorización, DOC)'));
+  await page.keyboard.press('Escape'); await esperar(150);
+  await abrirPorNombre('Sofía', 'doc');
+  await page.waitForSelector('#docAutCard .estado-vacio', { timeout: 8000 }); await esperar(150);
+  await cap('DOC · Sofía (autorización sin registrar)');
+  await ev(() => { DOCS.estado = 'error'; DOCS.error = 'No se pudieron cargar los documentos (muestra).'; docRepintar(); }); await esperar(100);
+  await cap('DOC · error con «Reintentar»');
+  await ev(() => docCargar(false)); await page.waitForSelector('#docDocsCard', { timeout: 8000 });
   await abrirPorNombre('Martín', 'vf');
   await cap('VF · estado vacío');
   await page.click('#btnVfNuevo'); await page.waitForSelector('#vf_pct'); await esperar(100);

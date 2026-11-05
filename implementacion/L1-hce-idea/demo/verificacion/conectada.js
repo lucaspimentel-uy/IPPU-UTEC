@@ -261,10 +261,10 @@ async function loguear(page) {
     hayInputs === 0 && (await page.locator('#expHead >> text=✎ Editar datos').count()) === 1 && editores === 1, `inputs=${hayInputs} puntos de edición=${editores}`);
 
   /* Pestañas: un módulo no conectado muestra el panel de modo demostración y SIN datos; teclado. */
-  await page.click('#tabExp-doc');
+  await page.click('#tabExp-pai');                                  // C5: DOC está conectada; la pestaña de demostración que queda es PAI
   const panelLb = (await txt(page, '#panelExp')).replace(/\s+/g, ' ');
-  const tabSel = await page.getAttribute('#tabExp-doc', 'aria-selected');
-  check('3a-g1', 'pestaña no conectada (DOC): panel «Modo demostración — no se guarda» con role="note" y badge «Solo demo»',
+  const tabSel = await page.getAttribute('#tabExp-pai', 'aria-selected');
+  check('3a-g1', 'pestaña no conectada (PAI; DOC se conectó en C5): panel «Modo demostración — no se guarda» con role="note" y badge «Solo demo»',
     /Modo demostración — no se guarda/.test(panelLb) && (await page.locator('#panelExp [role="note"]').count()) === 1 &&
     (await page.locator('#panelExp .solo-demo').count()) >= 1 && tabSel === 'true', panelLb.slice(0, 140));
   const textosTab = [];
@@ -273,9 +273,9 @@ async function loguear(page) {
     textosTab.push(k + ': ' + (await page.evaluate(() => document.getElementById('view-expediente').innerText + ' ' + [...document.querySelectorAll('#view-expediente [title]')].map((e) => e.title).join(' '))));
   }
   const tabsConFase = textosTab.filter((t) => /Fase\s*\d/.test(t)).map((t) => t.split(':')[0]);
-  // doc · pai dicen la frase; inc (el 10) ya no: está conectada desde C4 (org, el 9, es C3)
-  const sinFraseNueva = [8, 11].every((i) => /Este módulo todavía no está conectado al servidor\./.test(textosTab[i])) && !/Este módulo todavía no está conectado al servidor\./.test(textosTab[10]);
-  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2), INC (C4), ORG (C3) y LOG (C1) están conectadas y las otras 2 (DOC, PAI) dicen «Este módulo todavía no está conectado al servidor.»',
+  // sólo pai (el 11) dice la frase; doc (el 8, C5) e inc (el 10, C4) ya no: están conectadas (org, el 9, es C3)
+  const sinFraseNueva = /Este módulo todavía no está conectado al servidor\./.test(textosTab[11]) && [8, 10].every((i) => !/Este módulo todavía no está conectado al servidor\./.test(textosTab[i]));
+  check('3a-f1b', 'las 13 pestañas (texto y tooltips): sin «Fase …»; HCE-00, CI, LB, PA, PB, IC, VF, SEV (C2), INC (C4), ORG (C3), DOC (C5) y LOG (C1) están conectadas y la otra (PAI) dice «Este módulo todavía no está conectado al servidor.»',
     tabsConFase.length === 0 && sinFraseNueva, tabsConFase.length ? 'con Fase: ' + tabsConFase.join(',') : '13/13');
   await page.click('#tabExp-lb');
   await page.focus('#tabExp-lb');
@@ -2303,14 +2303,14 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       await pv.waitForTimeout(80);
       paneles[k] = await pv.evaluate(() => ({ ti: document.getElementById('panelExp').getAttribute('tabindex'), operables: document.querySelectorAll('#panelExp button:not([disabled]), #panelExp a[href], #panelExp input, #panelExp select, #panelExp textarea, #panelExp summary').length }));
     }
-    await pv.evaluate(() => selTabExp('doc'));
+    await pv.evaluate(() => selTabExp('pai'));                     // C5: DOC tiene controles; el panel de demostración que queda es PAI
     await pv.waitForTimeout(80);
-    await pv.focus('#tabExp-doc'); await pv.keyboard.press('Tab');
+    await pv.focus('#tabExp-pai'); await pv.keyboard.press('Tab');
     const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
     const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'los módulos en modo demostración (DOC, PAI) no tienen nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB e INC (conectada, C4: con controles adentro) no lleva tabindex',
-      ['doc', 'pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && ['lb', 'inc'].every((k) => paneles[k].ti === null && paneles[k].operables > 0) && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    check('3e-panel', 'el módulo en modo demostración (PAI) no tiene nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB, INC (C4) y DOC (C5), conectadas y con controles adentro, no lleva tabindex',
+      ['pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && ['lb', 'inc', 'doc'].every((k) => paneles[k].ti === null && paneles[k].operables > 0) && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -2323,13 +2323,13 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
-    for (const k of ['doc', 'pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }   // C4: INC ya no es de demostración
+    for (const k of ['pai']) { await pv.evaluate((t) => selTabExp(t), k); await pv.waitForTimeout(60); await leer(k); }   // C4: INC ya no es de demostración; C5: DOC tampoco
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
-    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedan 6 paneles y 3 marcas (la de INC iba en el encabezado de su panel)
+    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedaban 6 paneles y 3 marcas; C5: sin la pestaña DOC, 5 y 2 (su marca iba en el encabezado de su panel)
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 6 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 3 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 5 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 2 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -2396,8 +2396,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
     check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
-      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'doc,pai'
-        && filasTabs[0].marcas === 'doc:glifo+texto-sr,pai:glifo+texto-sr'
+      filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'pai'           // C5: DOC conectada; sólo PAI lleva la marca
+        && filasTabs[0].marcas === 'pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
         && filasTabs[0].nombres === 'Datos|Consentimiento|Línea base|Protocolo A|Protocolo B|Cierre|Valoración|Severidad|Inclusión|Organismos|Documentos|PAI|Auditoría', JSON.stringify(filasTabs));
 
@@ -3374,6 +3374,219 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       inc: INC.ficha, login: !document.getElementById('loginScreen').classList.contains('hidden') }));
     check('c4-salir', '«Salir» con GET /inclusion todavía sin respuesta: al llegar, la vista «Inclusión» sigue vacía (contenido y descripción), sin filas ni ficha de la sesión anterior, con el login a la vista',
       salir.contenido === '' && salir.desc === '' && salir.estado === 'vacio' && salir.filas === 0 && salir.inc === null && salir.login, JSON.stringify(salir));
+    await ctx.close();
+  }
+
+  /* ---------- C5 · HCE-DOC: documentos con archivo, autorización de imagen y fotos (§5.155) ----------
+     ESCRIBE: sube documentos y fotos desde la pantalla (Martín, Sofía, Joaquín y el grupo Escolares), edita un nombre, registra la
+     autorización de Joaquín y crea (admin) un expediente sin grupo con un documento, y una foto en Inicial, para el alcance. Todo se
+     compara con lo que dice la API, no con literales. Los archivos se arman acá (bytes mínimos: el servidor mira el contenido). */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+    const ps = await ctx.newPage();
+    ps.on('pageerror', (e) => erroresPagina.push(e.message));
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(ps, EMAIL, PASSWORD);
+    const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const login = async (email, pass) => (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) })).json()).access_token;
+    const tokAdmin = await login(ADMIN_EMAIL, ADMIN_PASSWORD), tokTorres = await login('torres@demo.ippu.test', PASSWORD);
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { ...(t === null ? {} : { Authorization: 'Bearer ' + (t || tok) }), ...(body instanceof FormData || body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body) });
+      let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json, total: r.headers.get('X-Total-Count') }; };
+    const subirApi = (ruta, bytes, nombreArchivo, campos, t) => { const fd = new FormData(); fd.append('archivo', new Blob([bytes]), nombreArchivo);
+      Object.entries(campos || {}).forEach(([k, v]) => fd.append(k, String(v))); return api('POST', ruta, fd, t); };
+    const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
+    const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(96, 7)]);
+    const HTMLB = Buffer.from('<!doctype html><html><body><script>alert(1)</script></body></html>');
+    const yo = (await api('GET', '/auth/yo')).json;
+    const idDe = async (n) => (await api('GET', '/hce?nombre=' + encodeURIComponent(n) + '&limit=5')).json.find((h) => h.persona.nombre === n).id;
+    const idM = await idDe('Martín'), idS = await idDe('Sofía'), idJ = await idDe('Joaquín');
+    const cats = (await api('GET', '/documentos/categorias')).json;
+    const catId = (n) => cats.find((c) => c.nombre === n).id;
+    const escrituras = [], descargas = [];
+    ps.on('request', (r) => { const u = new URL(r.url()).pathname;
+      if (/\/(documentos|fotos|autorizacion-imagen)(\/|$)/.test(u) && r.method() !== 'GET') escrituras.push({ m: r.method(), url: u, ct: r.headers()['content-type'] || '', body: r.postData() || '' });
+      if (/\/archivo$/.test(u)) descargas.push({ url: u, auth: r.headers().authorization || null }); });
+    const esperarDoc = () => ps.waitForFunction(() => DOCS.estado === 'listo' && !!document.getElementById('docDocsCard') && !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const abrirDoc = async (id) => {
+      await ps.evaluate((i) => abrirExpediente(i), id);
+      await ps.waitForSelector('#expTitulo'); await ps.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+      await ps.click('#tabExp-doc'); await esperarDoc(); await ps.waitForTimeout(80);
+    };
+    const filasDoc = () => ps.evaluate(() => [...document.querySelectorAll('#docTabla tbody tr[data-doc]')].map((tr) => ({ id: +tr.dataset.doc, hist: tr.dataset.historico === 'true',
+      nombre: tr.querySelector('.doc-nombre-txt').textContent, marca: (tr.querySelector('.doc-hist-marca') || {}).textContent || null, editar: !!tr.querySelector('[id^="btnDocEditar_"]'),
+      bajar: !!tr.querySelector('[id^="btnDocBajar_"]'), celdas: [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim()) })));
+    const fmt = (f) => ps.evaluate((x) => fmtFecha(x), f);
+
+    /* c5-lista · Martín: las filas son las de GET /hce/{id}/documentos, en su orden; el histórico, marcado con texto y sin «Editar» */
+    await abrirDoc(idM);
+    const dM = (await api('GET', `/hce/${idM}/documentos`)).json, fM = await filasDoc();
+    const uiM = await ps.evaluate(() => ({ demo: document.querySelectorAll('#panelExp .demo-panel, #panelExp .solo-demo, #tabExp-doc .solo-demo').length, candado: /🔒/.test(document.getElementById('panelExp').innerText),
+      total: document.getElementById('docTotal').textContent, aut: (document.getElementById('docAutDoc') || {}).textContent, nota: document.getElementById('docAutNota').textContent }));
+    const fechasOk = await Promise.all(dM.map(async (d, i) => fM[i] && fM[i].celdas[3] === await fmt(d.fecha_carga) && fM[i].celdas[2] === (d.fecha_original ? await fmt(d.fecha_original) : '—')));
+    const autM = (await api('GET', `/hce/${idM}/autorizacion-imagen`)).json;
+    check('c5-lista', 'pestaña Documentos de Martín: las filas son exactamente las de GET /hce/{id}/documentos, en su orden, con nombre, categoría, fechas, tipo y tamaño; el histórico dice «Registro histórico — sólo lectura» en texto y no ofrece «Editar» (los demás sí); «Descargar» en cada uno; la autorización muestra su copia por nombre; sin panel ni marca «Solo demo» y sin candados',
+      uiM.demo === 0 && !uiM.candado && fM.length === dM.length && fM.every((f, i) => f.id === dM[i].id && f.nombre === dM[i].nombre && f.celdas[1] === dM[i].categoria.nombre && f.hist === dM[i].es_registro_historico && f.bajar
+        && (f.hist ? f.marca === 'Registro histórico — sólo lectura' && !f.editar : f.marca === null && f.editar) && f.celdas[4].startsWith(dM[i].tipo.toUpperCase()))
+        && fechasOk.every(Boolean) && fM.filter((f) => f.hist).length === 1 && uiM.total === String(dM.length) && uiM.aut === autM.documento.nombre && /compartir/.test(uiM.nota) && /no la requiere/.test(uiM.nota),
+      JSON.stringify({ uiM, fM: fM.map((f) => [f.id, f.hist, f.marca, f.editar]) }).slice(0, 500));
+
+    /* c5-subir · subir un PDF desde la pantalla: queda primero; la descarga trae los mismos bytes y fue con el token; sin token es 401 */
+    await ps.click('#btnDocCargar'); await ps.waitForSelector('#modalFlujo.open #docf_archivo');
+    const acepta = await ps.getAttribute('#docf_archivo', 'accept');
+    const nuevoPdf = Buffer.concat([PDF, Buffer.from('% c5-subir ' + Date.now() + '\n')]);
+    await ps.setInputFiles('#docf_archivo', { name: 'informe-c5.pdf', mimeType: 'application/pdf', buffer: nuevoPdf });
+    await ps.selectOption('#docf_categoria', String(catId('Estudio complementario')));
+    await ps.fill('#docf_nombre', 'Estudio subido desde la pantalla (c5)');
+    const n0 = escrituras.length;
+    const respSubir = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idM}/documentos` && r.request().method() === 'POST');
+    await ps.click('#btnDocGuardar'); const rSubir = await respSubir;
+    await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await esperarDoc(); await ps.waitForTimeout(120);
+    const postS = escrituras.slice(n0), dM2 = (await api('GET', `/hce/${idM}/documentos`)).json, fM2 = await filasDoc();
+    const foco = await ps.evaluate(() => document.activeElement.id);
+    const nuevo = dM2[0];
+    const nd = descargas.length, descDoc = () => descargas.slice(nd).filter((d) => d.url === `/hce/${idM}/documentos/${nuevo.id}/archivo`);
+    const [dl] = await Promise.all([ps.waitForEvent('download', { timeout: 8000 }), ps.click(`#btnDocBajar_${nuevo.id}`)]);
+    const bajado = require('fs').readFileSync(await dl.path());
+    const sinToken = await api('GET', `/hce/${idM}/documentos/${nuevo.id}/archivo`, undefined, null);
+    const conToken = await fetch(`${API}/hce/${idM}/documentos/${nuevo.id}/archivo`, { headers: { Authorization: 'Bearer ' + tok } });
+    check('c5-subir', 'subir un PDF desde «Cargar documento» (el <input> sólo sugiere .pdf/.jpg/.jpeg/.png): UN POST multipart → 201 y queda primero en la lista con lo que devolvió la API; «Descargar» guarda los mismos bytes, el pedido llevó Authorization y un GET sin token es 401; la descarga es un adjunto nosniff/no-store',
+      acepta === '.pdf,.jpg,.jpeg,.png' && rSubir.status() === 201 && postS.length === 1 && /^multipart\/form-data/.test(postS[0].ct) && !/es_registro_historico|fecha_carga/.test(postS[0].body)
+        && nuevo.nombre === 'Estudio subido desde la pantalla (c5)' && nuevo.tipo === 'pdf' && fM2[0].id === nuevo.id && foco === 'docDocsTitulo'
+        && Buffer.compare(bajado, nuevoPdf) === 0 && dl.suggestedFilename() === 'Estudio subido desde la pantalla (c5).pdf'
+        && descDoc().length === 1 && /^Bearer /.test(descDoc()[0].auth || '') && sinToken.status === 401
+        && /^attachment;/.test(conToken.headers.get('content-disposition')) && conToken.headers.get('x-content-type-options') === 'nosniff' && conToken.headers.get('cache-control') === 'no-store',
+      JSON.stringify({ st: rSubir.status(), post: postS.map((p) => [p.m, p.ct.slice(0, 20)]), primero: [fM2[0] && fM2[0].id, nuevo.id], foco, bytes: [bajado.length, nuevoPdf.length], nombre: dl.suggestedFilename(), auth: descDoc().map((d) => !!d.auth), sin: sinToken.status }).slice(0, 500));
+
+    /* c5-rechazo · un HTML llamado .pdf → 422 junto al campo, con el resumen enfocado; un PDF de verdad pasa. 11 MB → el mensaje del 413 */
+    await ps.click('#btnDocCargar'); await ps.waitForSelector('#modalFlujo.open #docf_archivo');
+    await ps.setInputFiles('#docf_archivo', { name: 'informe.pdf', mimeType: 'application/pdf', buffer: HTMLB });
+    await ps.selectOption('#docf_categoria', String(catId('Otro')));
+    const resp422 = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idM}/documentos` && r.request().method() === 'POST');
+    await ps.click('#btnDocGuardar'); const r422 = await resp422;
+    await ps.waitForSelector('#docErrores:not([hidden])', { timeout: 5000 });
+    const e422 = await ps.evaluate(() => ({ foco: document.activeElement.id, inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_docf_archivo').innerText,
+      cat: document.getElementById('docf_categoria').value, abierto: document.getElementById('modalFlujo').classList.contains('open') }));
+    await ps.setInputFiles('#docf_archivo', { name: 'informe.pdf', mimeType: 'application/pdf', buffer: PDF });
+    const respOk = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idM}/documentos` && r.request().method() === 'POST');
+    await ps.click('#btnDocGuardar'); const rOk = await respOk;
+    await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await esperarDoc();
+    await ps.click('#btnDocCargar'); await ps.waitForSelector('#modalFlujo.open #docf_archivo');
+    await ps.setInputFiles('#docf_archivo', { name: 'grande.pdf', mimeType: 'application/pdf', buffer: Buffer.concat([PDF, Buffer.alloc(11 * 1024 * 1024, 48)]) });
+    await ps.selectOption('#docf_categoria', String(catId('Otro')));
+    const resp413 = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idM}/documentos` && r.request().method() === 'POST', { timeout: 30000 });
+    await ps.click('#btnDocGuardar'); const r413 = await resp413;
+    await ps.waitForSelector('#docErrores:not([hidden])', { timeout: 8000 });
+    const e413 = await ps.evaluate(() => ({ foco: document.activeElement.id, inv: [...document.querySelectorAll('#mfBody [aria-invalid="true"]')].map((e) => e.id), err: document.getElementById('err_docf_archivo').innerText, resumen: document.getElementById('docErrores').innerText }));
+    await escDescartando(ps);
+    check('c5-rechazo', 'un HTML llamado «informe.pdf» → 422 de la API junto al campo «Archivo» (aria-invalid) con el resumen role="alert" enfocado y lo elegido conservado; con un PDF de verdad pasa (201); un archivo de 11 MB → 413 con el mensaje de los 10 MB junto al campo y en el resumen',
+      r422.status() === 422 && e422.foco === 'docErrores' && JSON.stringify(e422.inv) === '["docf_archivo"]' && e422.err.length > 0 && e422.cat === String(catId('Otro')) && e422.abierto
+        && rOk.status() === 201 && r413.status() === 413 && e413.foco === 'docErrores' && JSON.stringify(e413.inv) === '["docf_archivo"]' && /10 MB/.test(e413.err) && /10 MB/.test(e413.resumen),
+      JSON.stringify({ s: [r422.status(), rOk.status(), r413.status()], e422, e413 }).slice(0, 500));
+
+    /* c5-historico · PATCH del histórico por la API → 409; editar el nombre de uno común desde la pantalla anda y aparece en Auditoría */
+    const hist = dM2.find((d) => d.es_registro_historico), comun = dM2.find((d) => !d.es_registro_historico && d.id !== nuevo.id);
+    const p409 = await api('PATCH', `/hce/${idM}/documentos/${hist.id}`, { nombre: 'Intento (c5)' });
+    await abrirDoc(idM);
+    await ps.click(`#btnDocEditar_${comun.id}`); await ps.waitForSelector('#modalFlujo.open #docf_nombre');
+    const catsEdit = await ps.evaluate(() => [...document.querySelectorAll('#docf_categoria option')].map((o) => o.textContent));
+    await ps.fill('#docf_nombre', comun.nombre + ' (editado c5)');
+    const nE = escrituras.length;
+    await ps.click('#btnDocGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await esperarDoc(); await ps.waitForTimeout(120);
+    const patchE = escrituras.slice(nE), comun2 = (await api('GET', `/hce/${idM}/documentos/${comun.id}`)).json;
+    const filaUi = (await filasDoc()).find((f) => f.id === comun.id);
+    await ps.click('#tabExp-log'); await ps.waitForSelector('#panelExp .log-table', { timeout: 8000 });
+    await ps.selectOption('#logModulo', 'HCE-DOC');
+    await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table, #panelExp .estado-vacio'), null, { timeout: 8000 }); await ps.waitForTimeout(150);
+    const logD = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
+    const filaEd = logD.find((r) => r[4] === 'nombre');
+    check('c5-historico', 'el registro histórico es inmutable: PATCH por la API → 409 y sigue igual; el diálogo «Editar» de uno común no ofrece categorías «Registro histórico»; editar su nombre envía UN PATCH sólo con `nombre` → la lista lo muestra y la pestaña Auditoría (filtro HCE-DOC) tiene la fila del campo nombre con su autor, sin el nombre en el detalle',
+      p409.status === 409 && (await api('GET', `/hce/${idM}/documentos/${hist.id}`)).json.nombre === hist.nombre && !catsEdit.some((t) => /Registro histórico/.test(t))
+        && patchE.length === 1 && patchE[0].m === 'PATCH' && JSON.stringify(Object.keys(JSON.parse(patchE[0].body))) === '["nombre"]' && comun2.nombre === comun.nombre + ' (editado c5)' && filaUi.nombre === comun2.nombre
+        && !!filaEd && filaEd[1] === yo.nombre && filaEd[2] === 'HCE-DOC' && filaEd[5].includes(comun2.nombre) && !filaEd[3].includes(comun2.nombre),
+      JSON.stringify({ p409: p409.status, patchE: patchE.map((p) => p.body), filaEd }).slice(0, 500));
+
+    /* c5-foto · Sofía no tiene autorización: subir un PNG se guarda sin aviso ni pregunta; la miniatura es una URL blob: */
+    const autS = await api('GET', `/hce/${idS}/autorizacion-imagen`);
+    await abrirDoc(idS);
+    const fotos0 = (await api('GET', `/hce/${idS}/fotos`)).json.length;
+    await ps.click('#btnDocFoto'); await ps.waitForSelector('#modalFlujo.open #fotf_archivo');
+    const dlgFoto = await ps.evaluate(() => ({ accept: document.getElementById('fotf_archivo').accept, texto: document.getElementById('mfBody').innerText }));
+    await ps.setInputFiles('#fotf_archivo', { name: 'actividad.png', mimeType: 'image/png', buffer: PNG });
+    await ps.fill('#fotf_desc', 'Foto de prueba (c5)');
+    const respF = ps.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idS}/fotos` && r.request().method() === 'POST');
+    await ps.click('#btnFotoGuardar'); const rF = await respF; const cuerpoF = await rF.json();
+    await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await esperarDoc();
+    await ps.waitForFunction((id) => !!document.querySelector(`#docFotoImg_${id} img`), cuerpoF.data.id, { timeout: 8000 });
+    const fS = await ps.evaluate((id) => ({ src: document.querySelector(`#docFotoImg_${id} img`).src, alt: document.querySelector(`#docFotoImg_${id} img`).alt, avisos: !document.getElementById('docAvisos').hidden,
+      dialogos: document.querySelectorAll('.modal-bg.open').length, primero: +document.querySelector('#docFotosGrid li').dataset.foto }), cuerpoF.data.id);
+    check('c5-foto', 'Sofía (GET autorización = 404): «Cargar foto» no menciona la autorización; un PNG se guarda (201, warnings vacío) sin aviso ni pregunta, queda primero y su miniatura es una URL blob: (de un Blob image/png) con la descripción como texto alternativo',
+      autS.status === 404 && dlgFoto.accept === '.jpg,.jpeg,.png' && !/autorizaci/i.test(dlgFoto.texto) && rF.status() === 201 && cuerpoF.warnings.length === 0
+        && (await api('GET', `/hce/${idS}/fotos`)).json.length === fotos0 + 1 && /^blob:/.test(fS.src) && fS.alt === 'Foto de prueba (c5)' && !fS.avisos && fS.dialogos === 0 && fS.primero === cuerpoF.data.id
+        && (await api('GET', `/hce/${idS}/autorizacion-imagen`)).status === 404,
+      JSON.stringify({ aut: autS.status, dlgFoto: dlgFoto.accept, st: rF.status(), fS: { ...fS, src: fS.src.slice(0, 12) } }));
+
+    /* c5-autorizacion · Joaquín: registrarla con uno de sus documentos; por la API, un documento de otro expediente es 422 */
+    const docJ = (await subirApi(`/hce/${idJ}/documentos`, PDF, 'autorizacion-joaquin.pdf', { categoria_id: catId('Autorización / consentimiento'), nombre: 'Autorización firmada de Joaquín (c5)' })).json.data;
+    await abrirDoc(idJ);
+    const vacioJ = await ps.evaluate(() => ({ vacio: !!document.querySelector('#docAutCard .estado-vacio'), alerta: document.querySelectorAll('#docAutCard [role="alert"]').length }));
+    await ps.click('#btnAutRegistrar'); await ps.waitForSelector('#modalFlujo.open #autf_documento');
+    const opcDocs = await ps.evaluate(() => [...document.querySelectorAll('#autf_documento option')].map((o) => o.value).filter(Boolean).map(Number));
+    await ps.selectOption('#autf_registrada', 'si'); await ps.fill('#autf_fecha', '2026-06-10'); await ps.selectOption('#autf_documento', String(docJ.id));
+    const nA = escrituras.length;
+    await ps.click('#btnAutGuardar'); await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }); await ps.waitForTimeout(120);
+    const postA = escrituras.slice(nA), autJ = (await api('GET', `/hce/${idJ}/autorizacion-imagen`)).json;
+    const autUi = await ps.evaluate(() => ({ reg: document.getElementById('docAutRegistrada').textContent, doc: document.getElementById('docAutDoc').textContent }));
+    const ajenoDoc = await api('PATCH', `/hce/${idJ}/autorizacion-imagen`, { documento_id: dM2[0].id });
+    const docsJ = (await api('GET', `/hce/${idJ}/documentos?limit=200`)).json.map((d) => d.id);
+    check('c5-autorizacion', 'Joaquín sin autorización: estado vacío «Sin registrar» (no un error); «Registrar» ofrece sólo SUS documentos; registrarla con uno envía UN POST {registrada, fecha, documento_id} → la pantalla muestra «Sí» y la copia por nombre; por la API, un documento de otro expediente (de Martín) es 422 en documento_id y no cambia nada',
+      vacioJ.vacio && vacioJ.alerta === 0 && JSON.stringify([...opcDocs].sort()) === JSON.stringify([...docsJ].sort()) && !opcDocs.includes(dM2[0].id)
+        && postA.length === 1 && postA[0].m === 'POST' && JSON.stringify(JSON.parse(postA[0].body)) === JSON.stringify({ registrada: true, fecha: '2026-06-10', documento_id: docJ.id })
+        && autJ.registrada === true && autJ.documento_id === docJ.id && autUi.reg === 'Sí' && autUi.doc === docJ.nombre
+        && ajenoDoc.status === 422 && ajenoDoc.json.detail[0].campo === 'documento_id' && (await api('GET', `/hce/${idJ}/autorizacion-imagen`)).json.documento_id === docJ.id,
+      JSON.stringify({ vacioJ, opcDocs, postA: postA.map((p) => p.body), autUi, ajeno: ajenoDoc.status }).slice(0, 500));
+
+    /* c5-grupo · foto del grupo desde Grupos (González, Escolares); Torres y el admin la ven; un técnico de otro grupo, 404 */
+    await ps.click('.navitem[data-view="grupos"]'); await ps.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });
+    const esc = await ps.evaluate(() => gruposVisibles().find((g) => g.nombre === 'Escolares').id);
+    const ini = (await api('GET', '/grupos')).json.find((g) => g.nombre === 'Inicial' && g.anio === (new Date()).getFullYear()) || (await api('GET', '/grupos')).json.find((g) => g.nombre === 'Inicial');
+    await ps.click(`#btnGrupo_${esc}`); await ps.waitForFunction(() => GFOT.estado === 'listo', null, { timeout: 8000 });
+    const antesG = (await api('GET', `/grupos/${esc}/fotos`)).json.length;
+    await ps.click('#btnGrpFoto'); await ps.waitForSelector('#modalFlujo.open #fotf_archivo');
+    await ps.setInputFiles('#fotf_archivo', { name: 'grupo.png', mimeType: 'image/png', buffer: PNG });
+    await ps.fill('#fotf_desc', 'Foto del grupo (c5)');
+    const respG = ps.waitForResponse((r) => new URL(r.url()).pathname === `/grupos/${esc}/fotos` && r.request().method() === 'POST');
+    await ps.click('#btnFotoGuardar'); const rG = await respG; const cuerpoG = await rG.json();
+    await ps.waitForFunction((id) => !!document.querySelector(`#grpFotoImg_${id} img`), cuerpoG.data.id, { timeout: 8000 });
+    const gUi = await ps.evaluate(() => ({ items: [...document.querySelectorAll('#grpFotosGrid li')].map((l) => +l.dataset.foto), src: document.querySelector('#grpFotosGrid img').src, foco: document.activeElement.id }));
+    const deTorres = await api('GET', `/grupos/${esc}/fotos`, undefined, tokTorres), deAdmin = await api('GET', `/grupos/${esc}/fotos`, undefined, tokAdmin);
+    const enInicial = await subirApi(`/grupos/${ini.id}/fotos`, PNG, 'inicial.png', { descripcion: 'Del admin en Inicial (c5)' }, tokAdmin);
+    const ajenoG = [await api('GET', `/grupos/${ini.id}/fotos`), await api('GET', `/grupos/${ini.id}/fotos/${enInicial.json.data.id}/archivo`), await subirApi(`/grupos/${ini.id}/fotos`, PNG, 'x.png', {})];
+    check('c5-grupo', 'detalle de Escolares (González): «Fotos del grupo» con «Cargar foto»; un PNG se sube (201, sin avisos) y aparece primero con miniatura blob:; la Mtra. Torres (técnica del grupo) y el admin la ven por la API; en Inicial (donde González no es técnico) las fotos, la descarga y la subida son 404',
+      rG.status() === 201 && cuerpoG.warnings.length === 0 && gUi.items[0] === cuerpoG.data.id && gUi.items.length === antesG + 1 && /^blob:/.test(gUi.src) && gUi.foco === 'grpFotosTitulo'
+        && deTorres.status === 200 && deTorres.json.some((f) => f.id === cuerpoG.data.id) && deAdmin.status === 200 && deAdmin.json.some((f) => f.id === cuerpoG.data.id)
+        && enInicial.status === 201 && ajenoG.every((r) => r.status === 404 && r.json && r.json.code === 'not_found'),
+      JSON.stringify({ st: rG.status(), gUi: { ...gUi, src: gUi.src.slice(0, 10) }, torres: deTorres.status, admin: deAdmin.status, ini: enInicial.status, ajeno: ajenoG.map((r) => r.status) }));
+
+    /* c5-ajeno · un técnico fuera del alcance: la pestaña dice «no encontrado» y la descarga es 404 */
+    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C5', ci: '4.765.435-1', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
+    const docAjeno = (await subirApi(`/hce/${idAjeno}/documentos`, PDF, 'ajeno.pdf', { categoria_id: catId('Otro'), nombre: 'Documento del admin (c5)' }, tokAdmin)).json.data;
+    const rutasAj = [`/hce/${idAjeno}/documentos`, `/hce/${idAjeno}/documentos/${docAjeno.id}`, `/hce/${idAjeno}/documentos/${docAjeno.id}/archivo`, `/hce/${idAjeno}/fotos`, `/hce/${idAjeno}/autorizacion-imagen`];
+    const tecAj = []; for (const r of rutasAj) { const x = await api('GET', r); tecAj.push([x.status, x.json && x.json.code]); }
+    const admAj = (await fetch(API + rutasAj[2], { headers: { Authorization: 'Bearer ' + tokAdmin } })).status;
+    await ps.evaluate((i) => abrirExpediente(i, { tab: 'doc' }), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
+    const pantAj = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
+    check('c5-ajeno', 'técnico y expediente de otro grupo (con un documento del admin): lista, documento, descarga, fotos y autorización dan 404 {code: not_found} (el admin descarga, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
+      tecAj.every(([s, c], i) => s === 404 && (i === 2 ? true : c === 'not_found')) && admAj === 200 && pantAj.alert === 1 && pantAj.reint === 0 && /No existe/.test(pantAj.txt) && !/Documento del admin/.test(pantAj.txt),
+      JSON.stringify({ tecAj, admAj, pant: { ...pantAj, txt: pantAj.txt.slice(0, 60) } }));
+
+    /* c5-delete · no se borran documentos ni fotos: DELETE es 405 y siguen ahí */
+    const fotoM = (await api('GET', `/hce/${idM}/fotos`)).json[0];
+    const dels = [await api('DELETE', `/hce/${idM}/documentos/${nuevo.id}`), await api('DELETE', `/hce/${idM}/fotos/${fotoM.id}`), await api('DELETE', `/grupos/${esc}/fotos/${cuerpoG.data.id}`)];
+    const siguen = [(await api('GET', `/hce/${idM}/documentos/${nuevo.id}`)).status, (await api('GET', `/hce/${idM}/fotos/${fotoM.id}`)).status, (await api('GET', `/grupos/${esc}/fotos/${cuerpoG.data.id}`)).status];
+    const sinBorrar = await ps.evaluate(() => /quitarDoc|quitarFoto|Quitar|Eliminar|Borrar/.test(docPanelConectadoHtml.toString() + fotosGridHtml.toString() + docFilaHtml.toString()));
+    check('c5-delete', 'DELETE de un documento, de una foto individual y de una grupal → 405, y los tres siguen (200); la pestaña conectada no ofrece «Quitar» ni «Eliminar»',
+      dels.every((d) => d.status === 405) && siguen.every((s) => s === 200) && !sinBorrar, JSON.stringify({ dels: dels.map((d) => d.status), siguen, sinBorrar }));
     await ctx.close();
   }
 

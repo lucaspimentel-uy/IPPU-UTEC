@@ -7,6 +7,10 @@
  * listado de Grupos, un grupo abierto y —con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD— el diálogo «Asignar técnicos» del admin (se cierra sin guardar).
  * C4 agrega la inclusión de Sofía en lectura (`inc`, con una gestión «Sensible»), el formulario de la ficha (`inc-formulario`) y el de una
  * gestión (`inc-gestion`) abiertos (se cierran sin guardar), Joaquín sin ficha (`inc-sin-registrar`) y la vista «Inclusión» (`inclusion-vista`).
+ * C5 agrega los documentos de Martín (`doc`, página completa: el registro histórico, la foto con su miniatura y la autorización), los
+ * diálogos «Cargar documento» (`doc-cargar`), «Editar documento» (`doc-editar`), «Cargar foto» (`doc-foto`) y el de la autorización
+ * (`doc-autorizacion`), abiertos y cerrados sin guardar, Sofía sin autorización (`doc-sin-autorizacion`) y las fotos del grupo Escolares
+ * (`grupos-fotos`, página completa).
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -87,6 +91,18 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await page.evaluate(() => closeFlujoModal());
     await abrir('Joaquín', 'inc'); await page.waitForSelector('#incFicha .estado-vacio');   await snap('inc-sin-registrar');
     await page.click('.navitem[data-view="inclusion"]'); await page.waitForFunction(() => INCV.estado === 'listo', null, { timeout: 8000 });   await snap('inclusion-vista');
+    // C5: documentos de Martín (histórico, foto con miniatura y autorización), los cuatro diálogos abiertos (se cierran sin guardar) y Sofía sin autorización
+    await abrir('Martín', 'doc'); await page.waitForSelector('#docTabla tr[data-historico]');
+    await page.waitForFunction(() => !!document.querySelector('#docFotosGrid img'), null, { timeout: 8000 });   await snapCompleta('doc');
+    await page.click('#btnDocCargar'); await page.waitForSelector('#modalFlujo.open #docf_archivo');   await snap('doc-cargar');
+    await page.evaluate(() => closeFlujoModal());
+    await page.click('#docTabla [id^="btnDocEditar_"] >> nth=0'); await page.waitForSelector('#modalFlujo.open #docf_nombre');   await snap('doc-editar');
+    await page.evaluate(() => closeFlujoModal());
+    await page.click('#btnDocFoto'); await page.waitForSelector('#modalFlujo.open #fotf_archivo');   await snap('doc-foto');
+    await page.evaluate(() => closeFlujoModal());
+    await page.click('#btnAutEditar'); await page.waitForSelector('#modalFlujo.open #autf_documento');   await snap('doc-autorizacion');
+    await page.evaluate(() => closeFlujoModal());
+    await abrir('Sofía', 'doc'); await page.waitForSelector('#docAutCard .estado-vacio');   await snap('doc-sin-autorizacion');
     await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
     await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
@@ -99,6 +115,8 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await page.click('#pendContenido .chip-estado[data-filtro="lb"]');   await snap('pendientes-filtro-lb');
     await page.click('.navitem[data-view="grupos"]'); await page.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });   await snap('grupos-listado');
     await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo');   await snap('grupos-un-grupo');
+    await page.evaluate(() => abrirGrupo(gruposVisibles().find((g) => g.nombre === 'Escolares').id));
+    await page.waitForFunction(() => GFOT.estado === 'listo' && !!document.querySelector('#grpFotosGrid img'), null, { timeout: 8000 });   await snapCompleta('grupos-fotos');
     await ctx.close();
     if (ADMIN_EMAIL && ADMIN_PASSWORD) {
       const ctxA = await browser.newContext({ viewport: { width: w, height: h } });

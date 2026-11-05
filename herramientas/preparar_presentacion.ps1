@@ -3,7 +3,8 @@
   Deja la demo lista para la presentacion con UN comando: base nueva, API y demo arriba (D0, handoff.md §5.139).
 
 .DESCRIPTION
-  Recrea la base de la presentacion (por omision `ippu_presentacion`), aplica el esquema y los catalogos, crea el
+  Recrea la base de la presentacion (por omision `ippu_presentacion`) y borra SU carpeta de archivos (uploads\<base>,
+  C5), aplica el esquema y los catalogos, crea el
   admin, levanta la API, carga la demo por la API y sirve la demo HTML. Volver a correrlo da el mismo resultado:
   detiene lo que arranco la corrida anterior (y SOLO eso) y rehace todo. Recargar despues del 2026-11-13, para que
   las fechas de firma (las estampa el servidor) no queden antes de las de evaluacion.
@@ -197,6 +198,17 @@ try {
 
   Push-Location $Backend
   try {
+    # Los archivos de HCE-DOC y las fotos de ESTA base (C5, handoff.md §5.155 a): se recrea la base, se borra su carpeta.
+    # La ruta la calcula el backend (uploads_dir del .env / UPLOADS_DIR + el nombre de la base); se borra solo si la
+    # carpeta se llama exactamente como la base: nunca la raiz de uploads ni la de otra base.
+    Paso "Archivos de '$Base': borrar su carpeta"
+    $carpetaArchivos = (Nativo { & $Python -c "from app.core.config import raiz_de_archivos; print(raiz_de_archivos())" } | Select-Object -Last 1)
+    if ($LASTEXITCODE -ne 0 -or -not $carpetaArchivos) { throw 'No pude calcular la carpeta de archivos de la base.' }
+    $carpetaArchivos = "$carpetaArchivos".Trim()
+    if ((Split-Path -Leaf $carpetaArchivos) -ne $Base) { throw "La carpeta de archivos '$carpetaArchivos' no es la de la base ${Base}: no la toco." }
+    if (Test-Path -LiteralPath $carpetaArchivos) { Remove-Item -LiteralPath $carpetaArchivos -Recurse -Force; Write-Host "  $carpetaArchivos borrada" }
+    else { Write-Host "  $carpetaArchivos no existia" }
+
     Paso 'Esquema y catalogos'
     Nativo { & $Python -m alembic upgrade head }
     if ($LASTEXITCODE -ne 0) { throw 'alembic upgrade head fallo.' }
