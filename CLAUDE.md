@@ -63,6 +63,7 @@ pip install pypdf                        # conectada.js lee el PDF del IC con el
 
 # 2 · Base descartable + esquema + catálogos (DATABASE_URL en ESTA terminal, ANTES de alembic y del seed)
 docker exec ippu-postgres psql -U ippu -d ippu -c "DROP DATABASE IF EXISTS ippu_ver WITH (FORCE)" -c "CREATE DATABASE ippu_ver"
+if (Test-Path uploads\ippu_ver) { Remove-Item -Recurse -Force uploads\ippu_ver }   # sus archivos (C5): sólo la carpeta de ESA base
 $env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_ver"
 $env:IPPU_SEED_DESTINO = "ippu_ver"      # guardia (§5.139): seed_demo y crear_usuario imprimen la base y no escriben si esto no es su nombre
 alembic upgrade head
@@ -90,7 +91,9 @@ node capturas.js                         # ESCRIBE: base nueva; PNG en salidas\ 
 cd ..\..\backend
 pytest -q                                # todo pasa, 0 skipped; sin Docker o con la base fuera del head ABORTA (exit 1)
 ```
-(La presentación tiene su propio comando y sus logs en `%TEMP%`: ver «Presentación».) Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
+Los archivos de HCE-DOC y las fotos van a `backend\uploads\<nombre de la base>\` (`UPLOADS_DIR`, fuera de git, §5.155): recrear una
+base es borrar también su carpeta, nunca la raíz ni la de otra base; pytest usa una carpeta temporal. (La presentación tiene su propio
+comando y sus logs en `%TEMP%`: ver «Presentación».) Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
 `implementacion/L1-hce-idea/demo/verificacion/README.md`.
 
 ## Presentación (un comando, §5.139)
@@ -98,7 +101,7 @@ La base de la presentación es **`ippu_presentacion`** (API `:8000`, demo `:5500
 raíz del repo, con Docker y el contenedor arriba y el entorno del paso 1 hecho:
 ```powershell
 $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"   # IPPU_EMAIL opcional
-powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1    # borra y recrea la base, carga la demo, deja API y demo arriba
+powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1    # borra y recrea la base y su carpeta de archivos, carga la demo, deja API y demo arriba
 $env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```

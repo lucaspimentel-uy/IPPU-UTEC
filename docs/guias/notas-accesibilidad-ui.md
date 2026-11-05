@@ -64,6 +64,9 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
   lectura, diálogo de registro y de edición) y Organismos (ORG: vacía, lectura con la alerta AYEX, diálogos del vínculo y del
   registro); Inclusión del expediente (INC: lectura con una gestión «Sensible», la referencia de los 7 estados, el diálogo de la ficha
   —sin cambios y confirmación de descarte— y el de una gestión con un error de muestra junto al campo, sin ficha y con error);
+  Documentos del expediente (DOC, C5: lectura con un registro histórico, la foto con su miniatura y la autorización; los diálogos
+  «Cargar documento» —con un error de muestra junto al archivo y la confirmación de descarte—, «Editar documento», «Cargar foto» y el
+  de la autorización; sin autorización y con error) y la tarjeta «Fotos del grupo» de Grupos (con miniatura, su diálogo y «no encontrado»);
   CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
   confirmación de firma, 422 por dimensión y por campo, firmado con banda y addendas); PA y PB (borrador, errores de firma, Δ);
   IC (sin crear, confirmación y errores de firma, avisos y «Cambió en el servidor», firmado); documento impreso del IC; VF
@@ -290,4 +293,7 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
   demostración los conservan bajo el panel.
 - **HCE-SEV:** con pantalla desde C2 y sin color por grado (§3.1, §5.143 d).
 - **HCE-INC:** con pantalla desde C4 y sin color por estado (§3.1, §5.154 d).
+- **HCE-DOC:** con pantalla desde C5 (§5.155). El registro histórico se marca con texto («Registro histórico — sólo lectura»), no
+  con un candado ni con color; las miniaturas tienen la descripción como texto alternativo y, sin miniatura, «Vista previa no
+  disponible» para lectores de pantalla; el `accept` del selector de archivo es una pista: el tipo lo decide la API.
 - **Modo oscuro, `prefers-contrast` y colores forzados (`forced-colors`):** no se tratan.
