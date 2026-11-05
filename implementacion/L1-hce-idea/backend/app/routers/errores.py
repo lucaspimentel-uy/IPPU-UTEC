@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.services.errores import (
-    ConflictError, ErrorDeDominio, ForbiddenAction, NotFound, Unauthorized, ValidationFailed,
+    ArchivoDemasiadoGrande, ConflictError, ErrorDeDominio, ForbiddenAction, NotFound, Unauthorized, ValidationFailed,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ _STATUS: tuple[tuple[type[ErrorDeDominio], int], ...] = (
     (ValidationFailed, 422),
     (ForbiddenAction, 403),
     (Unauthorized, 401),
+    (ArchivoDemasiadoGrande, 413),
 )
 
 

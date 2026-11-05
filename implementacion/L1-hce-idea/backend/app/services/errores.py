@@ -79,6 +79,12 @@ class ValidationFailed(ErrorDeDominio):
         super().__init__("Datos inválidos", pares)
 
 
+class ArchivoDemasiadoGrande(ErrorDeDominio):
+    """El archivo subido supera `ARCHIVO_TAMANO_MAXIMO` → 413, con `campo` = el del archivo (§5.155 b)."""
+
+    code = "too_large"
+
+
 class Unauthorized(ErrorDeDominio):
     """Sin credenciales válidas (falta el token, está vencido o es inválido; usuario o
     contraseña incorrectos) → 401 (§5.101). El mensaje nunca dice *cuál* de las dos

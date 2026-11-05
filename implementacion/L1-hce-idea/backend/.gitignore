@@ -8,7 +8,7 @@ venv/
 # Entorno / secretos
 .env
 
-# Archivos subidos (Fase 6: storage real)
+# Archivos subidos (HCE-DOC y fotos, C5 · handoff.md §5.155 a): uploads/<base>/…, nunca en git
 uploads/
 
 # Exportación local del esquema OpenAPI (se usa para planificar; no se versiona)

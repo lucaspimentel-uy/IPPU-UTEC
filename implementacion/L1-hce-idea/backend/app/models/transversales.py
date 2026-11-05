@@ -31,7 +31,11 @@ class Documento(Base):
     documento de ateneo nace con el flag en `False` (es material producido en el
     sistema nuevo, no migrado).
 
-    `archivo_ref` es una referencia, no el binario: el storage real es Fase 6.
+    `archivo_ref` es una referencia, no el binario: desde **C5** (`handoff.md` §5.155 a, §5.138 b) es la ruta
+    **relativa** del archivo dentro de la carpeta de la base (`uploads/<base>/`), con barras `/`, en la forma
+    `hce/<hce_id>/<uuid>.<ext>`; el nombre y la ruta los genera el servidor (`app/services/archivos.py`). El
+    servicio (`app/services/documentos.py`) cumple la inmutabilidad así: el PATCH de un histórico es **409** y no
+    hay DELETE de ningún documento (405: borrar material clínico no está decidido).
 
     ── M12.7 · alcance institucional (`handoff.md` §5.25) ───────────────────
     Hasta acá `hce_id` era NOT NULL: **todo documento pertenecía a un

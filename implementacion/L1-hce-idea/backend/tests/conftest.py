@@ -204,6 +204,15 @@ def _entorno_verificado():
     yield
 
 
+@pytest.fixture(autouse=True)
+def carpeta_uploads(tmp_path, monkeypatch) -> Path:
+    """**pytest nunca escribe en la carpeta real de archivos** (C5, §5.155 a): cada test apunta `uploads_dir` a una
+    carpeta temporal propia. La raíz efectiva es `<esto>/<nombre de la base de DATABASE_URL>`."""
+    carpeta = tmp_path / "uploads"
+    monkeypatch.setattr(settings, "uploads_dir", str(carpeta))
+    return carpeta
+
+
 @pytest.fixture(scope="session")
 def engine(_entorno_verificado):
     eng = create_engine(settings.test_database_url, pool_pre_ping=True)

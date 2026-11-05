@@ -732,3 +732,26 @@ ROL_TECNICO = "tecnico"
 #: hasta lo que cabe en un `integer` de Postgres.
 HC_HISTORICO_MIN = 1000
 HC_HISTORICO_MAX = 2_147_483_647
+
+# --------------------------------------------------------------------------
+# HCE-DOC — documentos, autorización de imagen y fotos (C5 · `handoff.md` §5.155, §5.138 b)
+# --------------------------------------------------------------------------
+#: Tope de un archivo subido: **10 MB = 10 × 1024 × 1024 bytes** (§5.138 b). Es una constante y no un
+#: setting a propósito: cambiarlo es una decisión del equipo, no de quien despliega. Exactamente este
+#: tamaño pasa; un byte más es 413.
+ARCHIVO_TAMANO_MAXIMO = 10 * 1024 * 1024
+#: Tipos aceptados, **detectados por el contenido** (los primeros bytes), nunca por la extensión ni por
+#: el `Content-Type` del cliente (§5.155 b). La clave es el tipo que se guarda en la extensión de
+#: `archivo_ref` y se devuelve como `tipo`; el valor, el `Content-Type` con el que se descarga.
+ARCHIVO_TIPOS: dict[str, str] = {"pdf": "application/pdf", "jpg": "image/jpeg", "png": "image/png"}
+#: Firmas de cada tipo (PDF: `%PDF-`; JPEG: FF D8 FF; PNG: las 8 de la especificación).
+ARCHIVO_FIRMAS: tuple[tuple[str, bytes], ...] = (
+    ("pdf", b"%PDF-"),
+    ("jpg", b"\xff\xd8\xff"),
+    ("png", b"\x89PNG\r\n\x1a\n"),
+)
+#: Lo que acepta cada recurso: un documento, los tres; una foto, sólo imágenes (§5.155 b).
+DOCUMENTO_TIPOS: tuple[str, ...] = ("pdf", "jpg", "png")
+FOTO_TIPOS: tuple[str, ...] = ("jpg", "png")
+#: Largo de `documento.nombre` (la columna es `String(200)`).
+DOCUMENTO_NOMBRE_MAX = 200

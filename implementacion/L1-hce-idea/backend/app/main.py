@@ -17,6 +17,8 @@ demás pide token; el `tecnico` ve sólo los expedientes de sus grupos, §5.101)
 valoración funcional (`/hce/{id}/valoracion-funcional`) y la paginación de `GET /hce`.
 Desde **C2**, la severidad DSM-5-TR (`/hce/{id}/severidad`, `/severidad-niveles`).
 Desde **C3**, los vínculos con INAU y BPS y sus registros (`/hce/{id}/organismos`, `/organismos/opciones`).
+Desde **C5**, los documentos con archivo, la autorización de imagen y las fotos (`/hce/{id}/documentos`,
+`/documentos/categorias`, `/hce/{id}/autorizacion-imagen`, `/hce/{id}/fotos`, `/grupos/{id}/fotos`).
 Los routers se
 entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
 se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
@@ -28,8 +30,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.routers import (
-    auditoria, auth, flujo, hce, idea, inclusion, informe_cierre, organismos, protocolo, referencias, severidad,
-    valoracion_funcional,
+    auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, protocolo, referencias,
+    severidad, valoracion_funcional,
 )
 from app.routers.dependencias import usuario_actual
 from app.routers.errores import registrar_manejadores
@@ -77,6 +79,8 @@ for _router in (
     severidad.router_hce, severidad.router_niveles,
     organismos.router_hce, organismos.router_opciones,
     inclusion.router_hce, inclusion.router,
+    documentos.router_categorias, documentos.router_hce, documentos.router_autorizacion,
+    fotos.router_hce, fotos.router_grupo,
     referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)
@@ -87,8 +91,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    # Sin esto el navegador no deja leer el total de la búsqueda paginada (`GET /hce`).
-    expose_headers=[hce.CABECERA_TOTAL],
+    # Sin esto el navegador no deja leer el total de la búsqueda paginada (`GET /hce`) ni el nombre de una descarga (C5).
+    expose_headers=[hce.CABECERA_TOTAL, "Content-Disposition"],
 )
 
 

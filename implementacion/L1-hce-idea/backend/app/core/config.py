@@ -5,8 +5,12 @@ Se lee de un archivo `.env` (ver `.env.example`). Desde M11.1 el proyecto es
 SQLite porque el esquema v2 usa JSONB y CHECKs que SQLite acepta sin aplicar,
 lo que dejaba pasar en los tests errores que sí explotan contra Postgres.
 """
+import re
+from pathlib import Path
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 #: Mínimo de la clave de firma de los JWT (HS256: la clave debería medir al menos lo que el hash).
 SECRET_KEY_MIN_BYTES = 32
@@ -44,6 +48,11 @@ class Settings(BaseSettings):
     # (abrirla como `file://` no sirve: el navegador manda `Origin: null`).
     cors_origins: list[str] = ["http://localhost:5500", "http://127.0.0.1:5500"]
 
+    # Archivos de HCE-DOC y fotos (C5, §5.138 b / §5.155 a). Variable `UPLOADS_DIR`. Una ruta relativa
+    # es relativa a la carpeta del backend (no al directorio desde el que se arranca uvicorn); adentro,
+    # una carpeta por base de datos (`raiz_de_archivos()`). Fuera de git (`.gitignore`: `uploads/`).
+    uploads_dir: str = "uploads"
+
     @field_validator("secret_key", mode="before")
     @classmethod
     def _exigir_secret_key(cls, v: str | None) -> str:
@@ -78,3 +87,24 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+#: La carpeta del backend (`implementacion/L1-hce-idea/backend`): contra ella se resuelve un `uploads_dir` relativo.
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+#: Un nombre de base que puede ser un segmento de ruta sin sorpresas (ni `..`, ni separadores).
+_NOMBRE_BASE_SEGURO = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
+
+
+def raiz_de_archivos() -> Path:
+    """`uploads_dir` / <nombre de la base de `DATABASE_URL`> (§5.155 a), absoluta.
+
+    Se calcula en cada llamada (no al importar) para que un test pueda apuntar `uploads_dir` a una
+    carpeta temporal. Una base por carpeta: recrear la base descartable y borrar su carpeta van juntos
+    (`CLAUDE.md`, «Cómo correr»), y la de la presentación nunca comparte archivos con otra.
+    """
+    base = make_url(settings.database_url).database or ""
+    if base in (".", "..") or not _NOMBRE_BASE_SEGURO.match(base):
+        raise RuntimeError(f"El nombre de la base de DATABASE_URL no sirve como carpeta de archivos: {base!r}")
+    carpeta = Path(settings.uploads_dir)
+    if not carpeta.is_absolute():
+        carpeta = BACKEND_DIR / carpeta
+    return (carpeta / base).resolve()

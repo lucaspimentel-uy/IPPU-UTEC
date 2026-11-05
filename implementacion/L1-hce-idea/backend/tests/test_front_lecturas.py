@@ -259,7 +259,8 @@ def test_cors_acepta_la_demo_en_localhost_5500_y_rechaza_otro_origen(client):
 
 def test_el_total_de_la_lista_se_puede_leer_desde_el_navegador(client):
     r = client.get("/hce", headers={"Origin": "http://localhost:5500"})
-    assert r.headers["access-control-expose-headers"] == "X-Total-Count"
+    # C5 (§5.155 f): además, el nombre de una descarga (Content-Disposition), que la demo lee del Blob.
+    assert r.headers["access-control-expose-headers"] == "X-Total-Count, Content-Disposition"
 
 
 def test_los_origenes_se_configuran_por_cors_origins(monkeypatch):

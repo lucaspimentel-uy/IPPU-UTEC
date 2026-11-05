@@ -62,11 +62,11 @@ class DetalleError(BaseModel):
 
 
 class RespuestaError(BaseModel):
-    """Cuerpo de **todos** los errores de la API (404, 409, 422, 403 y 500)."""
+    """Cuerpo de **todos** los errores de la API (404, 409, 413, 422, 403 y 500)."""
 
     code: str = Field(
-        description="not_found · conflict · signed_module · validation_error · forbidden · unauthorized · http_error · "
-                    "internal_error (500: mensaje genérico, nunca el texto de la excepción)",
+        description="not_found · conflict · signed_module · validation_error · forbidden · unauthorized · too_large (413: "
+                    "archivo de más de 10 MB) · http_error · internal_error (500: mensaje genérico, nunca el texto de la excepción)",
     )
     detail: list[DetalleError]
 

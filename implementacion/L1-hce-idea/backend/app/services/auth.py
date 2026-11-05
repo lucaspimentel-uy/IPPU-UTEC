@@ -80,6 +80,15 @@ def exigir_hce_visible(db: Session, usuario: Profesional, hce_id: int | None) ->
         raise NotFound(f"No existe el expediente {hce_id}")
 
 
+def exigir_grupo_visible(db: Session, usuario: Profesional, grupo_id: int) -> Grupo:
+    """El grupo, si el usuario es `admin` o su técnico/a 1 o 2; si no (o si no existe), **404** con el mismo mensaje
+    (la regla de los expedientes, §5.101). Lo usan las fotos grupales (C5, §5.155 e)."""
+    grupo = db.get(Grupo, grupo_id)
+    if grupo is None or not (es_admin(usuario) or (usuario.rol == ROL_TECNICO and _es_tecnico_del_grupo(usuario, grupo))):
+        raise NotFound(f"No existe el grupo {grupo_id}")
+    return grupo
+
+
 def condicion_de_alcance(usuario: Profesional):
     """Condición SQL para la búsqueda (sobre el `JOIN` con `grupo`): `None` = sin filtro."""
     if es_admin(usuario):

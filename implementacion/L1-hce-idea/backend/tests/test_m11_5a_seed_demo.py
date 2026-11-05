@@ -425,3 +425,61 @@ def test_la_lista_coincide_con_el_flujo_de_cada_expediente_sembrado(client, demo
     # Martín (102): PB e IC firmados; Bruno (107): sin CI.
     assert [m["estado"] for m in por_demo[102]["flujo"]] == ["firmado"] * 4 and por_demo[102]["ci"] == "registrado"
     assert por_demo[107]["ci"] == "pendiente" and {m["estado"] for m in por_demo[107]["flujo"]} == {"sin_iniciar"}
+
+
+# ── C5: HCE-DOC, autorización de imagen y fotos ─────────────────────────────
+def test_c5_martin_tiene_informe_historico_autorizacion_y_foto(client, demo):
+    """Martín: un «Informe escolar», un registro histórico de la HCE anterior y la copia de la autorización (los tres PDF),
+    una foto y la autorización registrada con esa copia. Lo cargó el técnico del grupo, por la API."""
+    hid = demo.expedientes[102]
+    docs = client.get(f"/hce/{hid}/documentos").json()
+    assert {d["categoria"]["nombre"] for d in docs} == {
+        "Informe escolar", "Registro histórico — HCE anterior (Evaluación General)", "Autorización / consentimiento"}
+    assert [d["es_registro_historico"] for d in docs].count(True) == 1
+    assert all(d["tipo"] == "pdf" and d["tiene_archivo"] and d["tamano_bytes"] > 0 for d in docs)
+    for d in docs:
+        r = client.get(f"/hce/{hid}/documentos/{d['id']}/archivo")
+        assert r.status_code == 200 and r.content.startswith(b"%PDF-1.4") and r.content.rstrip().endswith(b"%%EOF")
+    aut = client.get(f"/hce/{hid}/autorizacion-imagen").json()
+    assert aut["registrada"] is True and aut["documento_id"] == demo.ids["102.doc.autorizacion"]
+    assert aut["documento"]["categoria"] == "Autorización / consentimiento"
+    fotos = client.get(f"/hce/{hid}/fotos").json()
+    assert len(fotos) == 1 and fotos[0]["tipo"] == "png"
+    assert client.get(f"/hce/{hid}/fotos/{fotos[0]['id']}/archivo").content.startswith(b"\x89PNG\r\n\x1a\n")
+    filas = client.get(f"/hce/{hid}/auditoria", params={"modulo": "HCE-DOC", "limit": 200}).json()
+    assert len(filas) == 5 and {f["tipo"] for f in filas} == {"carga"}  # 3 documentos, la foto y la autorización
+    assert all(f["usuario"]["nombre"] == GONZALEZ["nombre"] for f in filas)
+
+
+def test_c5_sofia_tiene_documento_y_foto_sin_autorizacion_y_el_resto_nada(client, demo):
+    hid = demo.expedientes[101]
+    assert len(client.get(f"/hce/{hid}/documentos").json()) == 1
+    assert len(client.get(f"/hce/{hid}/fotos").json()) == 1
+    assert client.get(f"/hce/{hid}/autorizacion-imagen").status_code == 404  # guardar la foto no la necesitó
+    sin = [d for d in NNA if not client.get(f"/hce/{demo.expedientes[d]}/documentos").json()]
+    assert sorted(sin) == [103, 104, 105, 106, 107, 108]
+    assert demo.documentos == ["Martín (3)", "Sofía (1)"] and demo.autorizacion == ["Martín"]
+    assert demo.fotos == ["Martín", "Sofía", "grupo Escolares"]
+    # Ninguna escritura de C5 avisó (guardar una foto nunca produce aviso, §5.99).
+    assert not [w for w in demo.warnings if w.get("modulo") in ("HCE-DOC", "GRUPO")]
+
+
+def test_c5_la_foto_grupal_de_escolares_la_ve_el_otro_tecnico(client, demo):
+    escolares = demo.grupos["Escolares"]
+    r = client.post("/auth/login", json={"email": TORRES["email"], "password": PASSWORD_TEST})
+    cab = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    fotos = client.get(f"/grupos/{escolares}/fotos", headers=cab).json()
+    assert len(fotos) == 1 and fotos[0]["tipo"] == "png" and fotos[0]["descripcion"].endswith("(demostración)")
+    assert [client.get(f"/grupos/{demo.grupos[g]}/fotos").json() for g in ("Preadolescentes", "Adolescentes")] == [[], []]
+
+
+def test_c5_los_datos_sembrados_son_de_demostracion_y_de_antes_del_13_11():
+    from app.seed_demo import DOCUMENTOS_DEMO, FOTO_GRUPAL_DEMO, FOTOS_DEMO, pdf_demo, png_demo
+
+    for docs in DOCUMENTOS_DEMO.values():
+        for d in docs:
+            assert "(demostración)" in d["nombre"] and date.fromisoformat(d["fecha_original"]) < date(2026, 11, 13)
+            assert pdf_demo(d["texto"]).startswith(b"%PDF-")
+    for f in [*(x for fs in FOTOS_DEMO.values() for x in fs), FOTO_GRUPAL_DEMO]:
+        assert "(demostración)" in f["descripcion"] and date.fromisoformat(f["fecha"]) < date(2026, 11, 13)
+        assert png_demo(f["color"]).startswith(b"\x89PNG\r\n\x1a\n")

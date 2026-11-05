@@ -16,7 +16,11 @@ los demás quedan sin registro (el estado vacío de la pestaña). Desde C3, **HC
 envíos, AYEX vigente sin alerta), Sofía (AYEX en trámite a 25 días: alerta a 30 días, y una gestión) y
 Joaquín (INAU con ingreso reciente y sin envíos); el resto, sin vínculos. Desde C4, **HCE-INC**: Martín (inclusión
 plena, dos gestiones), Sofía (inclusión parcial con AT, tres gestiones, una «Clínica — sensible» de contenido
-neutro) y Bruno (sin escolarizar, una gestión); Joaquín y los demás, sin ficha. Ni documentos, ni fotos, ni PAI.
+neutro) y Bruno (sin escolarizar, una gestión); Joaquín y los demás, sin ficha. Desde C5, **HCE-DOC y fotos**: Martín (un
+«Informe escolar», un registro histórico de la HCE anterior, la copia de la autorización de imagen, una foto y la
+autorización registrada con esa copia), Sofía (un documento y una foto, **sin** autorización: guardar no la exige) y
+una foto grupal en Escolares. Los archivos se generan en código (un PDF mínimo válido y un PNG chico): ninguna imagen
+ni nombre reales. Ni PAI.
 
 ## Dos partes, y por qué
 
@@ -63,7 +67,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import struct
 import sys
+import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -286,6 +292,71 @@ INCLUSION_DEMO = {
     },
 }
 
+#: HCE-DOC y fotos (C5, §5.155): lo que cargaría el técnico del grupo, **por la API** (multipart). Los archivos se
+#: generan acá (`pdf_demo`, `png_demo`): texto de demostración, ninguna imagen ni dato real. La autorización de Martín
+#: apunta a su documento «Autorización / consentimiento» (clave `autorizacion`); Sofía no tiene autorización, para
+#: mostrar que guardar una foto no la necesita (§5.99).
+DOCUMENTOS_DEMO = {
+    102: [
+        {"clave": "informe", "categoria": "Informe escolar", "nombre": "Informe escolar — primer semestre (demostración)",
+         "fecha_original": "2026-07-10", "archivo": "informe-escolar.pdf", "texto": "Informe escolar de demostracion - datos ficticios"},
+        {"clave": "historico", "categoria": "Registro histórico — HCE anterior (Evaluación General)",
+         "nombre": "Evaluación general 2024 — HCE anterior (demostración)", "fecha_original": "2024-11-20",
+         "archivo": "evaluacion-general-2024.pdf", "texto": "Registro historico de demostracion - HCE anterior"},
+        {"clave": "autorizacion", "categoria": "Autorización / consentimiento", "nombre": "Autorización de uso de imagen firmada (demostración)",
+         "fecha_original": "2026-03-02", "archivo": "autorizacion-imagen.pdf", "texto": "Autorizacion de uso de imagen - demostracion"},
+    ],
+    101: [
+        {"clave": "informe", "categoria": "Informe médico externo", "nombre": "Informe de neuropediatría (demostración)",
+         "fecha_original": "2026-02-18", "archivo": "informe-medico.pdf", "texto": "Informe medico externo de demostracion"},
+    ],
+}
+FOTOS_DEMO = {
+    102: [{"descripcion": "Taller de juego estructurado (demostración)", "fecha": "2026-09-10", "color": (64, 120, 170)}],
+    101: [{"descripcion": "Actividad de expresión plástica (demostración)", "fecha": "2026-08-27", "color": (170, 110, 60)}],
+}
+#: La autorización de Martín: registrada, con la copia firmada (el documento `autorizacion` de arriba).
+AUTORIZACION_DEMO = {102: {"registrada": True, "fecha": "2026-03-02", "documento": "autorizacion"}}
+FOTO_GRUPAL_DEMO = {"grupo": "Escolares", "descripcion": "Salida al parque del grupo (demostración)", "fecha": "2026-10-15", "color": (90, 150, 90)}
+
+
+def pdf_demo(texto: str) -> bytes:
+    """Un PDF 1.4 **mínimo y válido** (una página A4 con una línea de texto ASCII), con la tabla xref bien calculada."""
+    linea = "".join(c for c in texto if c not in "()\\" and 32 <= ord(c) < 127)
+    contenido = f"BT /F1 14 Tf 72 770 Td ({linea}) Tj ET".encode("ascii")
+    objetos = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length " + str(len(contenido)).encode() + b" >>\nstream\n" + contenido + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    salida = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for n, cuerpo in enumerate(objetos, start=1):
+        offsets.append(len(salida))
+        salida += f"{n} 0 obj\n".encode() + cuerpo + b"\nendobj\n"
+    xref = len(salida)
+    salida += f"xref\n0 {len(objetos) + 1}\n0000000000 65535 f \n".encode()
+    salida += b"".join(f"{o:010d} 00000 n \n".encode() for o in offsets)
+    salida += f"trailer\n<< /Size {len(objetos) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+    return bytes(salida)
+
+
+def png_demo(rgb: tuple[int, int, int], ancho: int = 160, alto: int = 120) -> bytes:
+    """Un PNG RGB chico y válido: un degradé del color dado (ninguna imagen real)."""
+    def trozo(tipo: bytes, datos: bytes) -> bytes:
+        return struct.pack(">I", len(datos)) + tipo + datos + struct.pack(">I", zlib.crc32(tipo + datos) & 0xFFFFFFFF)
+
+    filas = bytearray()
+    for y in range(alto):
+        filas.append(0)
+        k = 0.6 + 0.4 * y / max(alto - 1, 1)
+        filas += bytes(int(c * k) for c in rgb) * ancho
+    cabecera = struct.pack(">IIBBBBB", ancho, alto, 8, 2, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + trozo(b"IHDR", cabecera) + trozo(b"IDAT", zlib.compress(bytes(filas), 9)) + trozo(b"IEND", b"")
+
+
 SOFIA_LB = {
     "dim": [4, 2, 4, 2, 2, 2, 4, 4, 2, 2, 1, 2], "obs": {}, "fecha_consenso": "2026-03-20", "sesiones": 5,
     "sintesis": "Perfil leve (total 31/96). Mayor afectación relativa en flexibilidad y en la relación con pares. Lenguaje formal preservado con dificultades pragmáticas claras. Nivel de soporte orientativo: 1.",
@@ -322,6 +393,9 @@ class Resumen:
     severidad: list[str] = field(default_factory=list)         # «Martín», … (HCE-SEV registrada)
     organismos: list[str] = field(default_factory=list)        # «Martín», … (HCE-ORG con algún vínculo)
     inclusion: list[str] = field(default_factory=list)         # «Martín», … (HCE-INC con ficha)
+    documentos: list[str] = field(default_factory=list)        # «Martín (3)», … (HCE-DOC con documentos)
+    fotos: list[str] = field(default_factory=list)             # «Martín», «grupo Escolares», …
+    autorizacion: list[str] = field(default_factory=list)      # «Martín», … (autorización de imagen registrada)
     grupos: dict[str, int] = field(default_factory=dict)       # nombre real → grupo_id
     profesionales: dict[str, int] = field(default_factory=dict)
 
@@ -333,6 +407,8 @@ class Resumen:
             f"Severidad DSM-5-TR registrada ({len(self.severidad)}): {', '.join(self.severidad)}",
             f"Organismos (INAU/BPS) registrados ({len(self.organismos)}): {', '.join(self.organismos)}",
             f"Fichas de inclusión registradas ({len(self.inclusion)}): {', '.join(self.inclusion)}",
+            f"Documentos cargados: {', '.join(self.documentos)} · fotos: {', '.join(self.fotos)}",
+            f"Autorización de imagen registrada ({len(self.autorizacion)}): {', '.join(self.autorizacion)}",
             f"Avisos no bloqueantes de la API: {len(self.warnings)}",
         ])
 
@@ -389,6 +465,16 @@ class _Api:
 
     def get(self, ruta: str, **kw) -> Any:
         return self._pedir("GET", ruta, 200, **kw)
+
+    def subir(self, ruta: str, nombre_archivo: str, contenido: bytes, tipo_mime: str, campos: dict) -> dict:
+        """Alta multipart (C5): un archivo y campos de formulario; 201 esperado."""
+        r = self.cliente.request("POST", ruta, headers=self.cabeceras, files={"archivo": (nombre_archivo, contenido, tipo_mime)},
+                                 data={k: v for k, v in campos.items() if v is not None})
+        if r.status_code != 201:
+            raise DemoNoCargable(f"POST {ruta} → {r.status_code} (se esperaba 201): {r.text}")
+        respuesta = r.json()
+        self.resumen.warnings.extend(respuesta.get("warnings", []))
+        return respuesta["data"]
 
     def escribir(self, metodo: str, ruta: str, cuerpo: dict | None = None, esperado: int = 200) -> dict:
         respuesta = self._pedir(metodo, ruta, esperado, json=cuerpo if cuerpo is not None else {})
@@ -570,6 +656,34 @@ def cargar_demo(
             api.escribir("POST", f"{ruta}/bitacora", gestion, esperado=201)
         resumen.inclusion.append(NNA[demo_id]["persona"]["nombre"])
     decir(f"Inclusión: {', '.join(resumen.inclusion)}; los demás sin ficha")
+    # HCE-DOC y fotos (C5): por la API (multipart), como el técnico del grupo. Archivos generados en código.
+    categorias = {c["nombre"]: c["id"] for c in api.get("/documentos/categorias")}
+    docs_ids: dict[int, dict[str, int]] = {}
+    for demo_id, docs in DOCUMENTOS_DEMO.items():
+        hid = resumen.expedientes[demo_id]
+        for d in docs:
+            creado = api.subir(f"/hce/{hid}/documentos", d["archivo"], pdf_demo(d["texto"]), "application/pdf", {
+                "categoria_id": str(categorias[d["categoria"]]), "nombre": d["nombre"], "fecha_original": d["fecha_original"],
+            })
+            docs_ids.setdefault(demo_id, {})[d["clave"]] = creado["id"]
+            resumen.ids[f"{demo_id}.doc.{d['clave']}"] = creado["id"]
+        resumen.documentos.append(f"{NNA[demo_id]['persona']['nombre']} ({len(docs)})")
+    for demo_id, fotos in FOTOS_DEMO.items():
+        for f in fotos:
+            api.subir(f"/hce/{resumen.expedientes[demo_id]}/fotos", "foto.png", png_demo(f["color"]), "image/png",
+                      {"descripcion": f["descripcion"], "fecha": f["fecha"]})
+        resumen.fotos.append(NNA[demo_id]["persona"]["nombre"])
+    for demo_id, aut in AUTORIZACION_DEMO.items():
+        api.escribir("POST", f"/hce/{resumen.expedientes[demo_id]}/autorizacion-imagen", {
+            "registrada": aut["registrada"], "fecha": aut["fecha"], "documento_id": docs_ids[demo_id][aut["documento"]],
+        }, esperado=201)
+        resumen.autorizacion.append(NNA[demo_id]["persona"]["nombre"])
+    g = FOTO_GRUPAL_DEMO
+    api.subir(f"/grupos/{resumen.grupos[g['grupo']]}/fotos", "foto-grupo.png", png_demo(g["color"]), "image/png",
+              {"descripcion": g["descripcion"], "fecha": g["fecha"]})
+    resumen.fotos.append(f"grupo {g['grupo']}")
+    decir(f"Documentos: {', '.join(resumen.documentos)}; fotos: {', '.join(resumen.fotos)}; "
+          f"autorización de imagen: {', '.join(resumen.autorizacion)}")
     return resumen
 
 
