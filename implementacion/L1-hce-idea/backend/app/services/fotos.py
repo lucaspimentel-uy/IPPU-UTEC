@@ -62,7 +62,7 @@ def obtener(db: Session, *, foto_id: int, hce_id: int | None = None, grupo_id: i
         obtener_hce(db, hce_id)
     foto = db.scalar(select(Foto).where(Foto.id == foto_id, _condicion(hce_id=hce_id, grupo_id=grupo_id)))
     if foto is None:
-        raise NotFound(f"No existe la foto {foto_id}")
+        raise NotFound("No existe la foto")
     return foto
 
 
@@ -92,6 +92,6 @@ def crear(
     else:
         registrar_carga(
             db, modulo=MODULO_GRUPO, hce_id=None, usuario_id=profesional_id,
-            detalle=f"grupo {grupo.id} · {grupo.nombre} {grupo.anio} · foto grupal cargada",
+            detalle=f"Grupo {grupo.nombre} {grupo.anio} · foto grupal cargada",
         )
     return foto

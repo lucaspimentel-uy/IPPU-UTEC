@@ -56,7 +56,7 @@ def obtener_severidad(db: Session, hce_id: int, *, para_escribir: bool = False) 
     obtener_hce(db, hce_id)
     sev = db.get(SeveridadDsm, hce_id, with_for_update=True if para_escribir else None)
     if sev is None:
-        raise NotFound(f"El expediente {hce_id} no tiene severidad DSM-5-TR registrada")
+        raise NotFound("Este expediente no tiene severidad DSM-5-TR registrada")
     return sev
 
 
@@ -116,7 +116,7 @@ def registrar_severidad(
     if errores:
         raise ValidationFailed(errores)
     conflicto = ConflictError(
-        f"El expediente {hce_id} ya tiene la severidad registrada: se edita, no se vuelve a crear",
+        "Este expediente ya tiene la severidad registrada: se edita, no se vuelve a crear",
         [(None, "Ya existe la severidad de este expediente")],
     )
     if db.get(SeveridadDsm, hce_id) is not None:

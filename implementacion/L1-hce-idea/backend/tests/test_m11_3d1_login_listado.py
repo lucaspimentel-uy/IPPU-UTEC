@@ -131,7 +131,7 @@ def test_un_tecnico_recibe_404_en_el_expediente_de_otro_grupo_y_200_en_el_suyo(c
     r = client.get(f"/hce/{otro}", headers=cab)
     assert r.status_code == 404
     inexistente = client.get(f"/hce/{otro + 999}", headers=cab)
-    assert r.json()["detail"][0]["mensaje"] == inexistente.json()["detail"][0]["mensaje"].replace(str(otro + 999), str(otro))
+    assert r.json()["detail"][0]["mensaje"] == inexistente.json()["detail"][0]["mensaje"] == "No existe el expediente"
     # lo que cuelga del expediente, por su ruta y por id
     for ruta in ("flujo", "idea", "protocolo", "informe-cierre", "valoracion-funcional", "consentimiento"):
         assert client.get(f"/hce/{otro}/{ruta}", headers=cab).status_code == 404, ruta
@@ -147,7 +147,8 @@ def test_un_tecnico_no_alcanza_por_id_un_idea_de_otro_grupo(client, grupos, tecn
     idea_propia = client.post(f"/hce/{_alta(client, propio.id)}/idea", json={"anio": 2026}).json()["data"]["id"]
     cab = token_de(tecnico)
     r = client.get(f"/idea/{idea_ajena}", headers=cab)
-    assert r.status_code == 404 and r.json()["detail"][0]["mensaje"] == f"No existe el IDEA {idea_ajena}"
+    assert r.status_code == 404 and r.json()["detail"][0]["mensaje"] == "No existe el IDEA"
+    assert client.get(f"/idea/{idea_ajena + 999}", headers=cab).json()["detail"] == r.json()["detail"]  # ajeno = inexistente, mismo texto
     assert client.patch(f"/idea/{idea_ajena}", json={"objetivos": "x"}, headers=cab).status_code == 404
     assert client.post(f"/idea/{idea_ajena}/firmar", headers=cab).status_code == 404
     assert client.get(f"/idea/{idea_propia}", headers=cab).status_code == 200

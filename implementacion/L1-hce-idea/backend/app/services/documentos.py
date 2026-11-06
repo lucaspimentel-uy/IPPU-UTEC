@@ -86,7 +86,7 @@ def obtener(db: Session, hce_id: int, doc_id: int, *, para_escribir: bool = Fals
         consulta = consulta.with_for_update()
     doc = db.scalar(consulta)
     if doc is None:
-        raise NotFound(f"No existe el documento {doc_id} en este expediente")
+        raise NotFound("No existe el documento en este expediente")
     return doc
 
 
@@ -229,7 +229,7 @@ def obtener_autorizacion(db: Session, hce_id: int, *, para_escribir: bool = Fals
         consulta = consulta.with_for_update()
     aut = db.scalar(consulta)
     if aut is None:
-        raise NotFound(f"El expediente {hce_id} no tiene registrada la autorización de uso de imagen")
+        raise NotFound("Este expediente no tiene registrada la autorización de uso de imagen")
     return aut
 
 
@@ -245,7 +245,7 @@ def _documento_del_expediente(db: Session, hce_id: int, documento_id: Any, error
 
 def _conflicto_autorizacion(hce_id: int) -> ConflictError:
     return ConflictError(
-        f"El expediente {hce_id} ya tiene registrada la autorización de imagen: se edita, no se vuelve a crear",
+        "Este expediente ya tiene registrada la autorización de imagen: se edita, no se vuelve a crear",
         [(None, "Ya está registrada la autorización de uso de imagen de este expediente")],
     )
 

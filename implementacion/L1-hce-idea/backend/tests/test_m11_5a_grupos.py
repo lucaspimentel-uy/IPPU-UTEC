@@ -88,7 +88,7 @@ def test_tecnico_recibe_403_aunque_el_grupo_no_exista_y_admin_404(client, equipo
 def test_grupo_inexistente_404_y_existente_200(client, grupo, equipo):
     r = client.patch("/grupos/999999", json={"tecnico1_id": equipo[0].id})
     assert r.status_code == 404
-    assert r.json() == {"code": "not_found", "detail": [{"campo": None, "mensaje": "No existe el grupo 999999"}]}
+    assert r.json() == {"code": "not_found", "detail": [{"campo": None, "mensaje": "No existe el grupo"}]}
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": equipo[0].id}).status_code == 200
 
 
@@ -103,7 +103,7 @@ def test_profesional_inactivo_422_por_campo_y_activo_200(client, grupo, equipo):
 def test_profesional_inexistente_422_por_campo_y_existente_200(client, grupo, equipo):
     r = client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": 999999})
     assert r.status_code == 422
-    assert r.json()["detail"] == [{"campo": "tecnico1_id", "mensaje": "No existe el profesional 999999"}]
+    assert r.json()["detail"] == [{"campo": "tecnico1_id", "mensaje": "El profesional elegido no existe"}]
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": equipo[0].id}).status_code == 200
 
 
@@ -164,7 +164,7 @@ def test_una_fila_de_auditoria_por_campo_que_cambio_con_valor_anterior_legible(
     }
     assert all(f.tipo == AUDITORIA_TIPO_EDICION and f.hce_id is None for f in filas)
     assert all(f.usuario_id == admin.id for f in filas)
-    assert all(f.detalle == f"grupo {grupo.id} · Escolares {grupo.anio}" for f in filas)
+    assert all(f.detalle == f"Grupo Escolares {grupo.anio}" for f in filas)
 
     # Cambiar el técnico deja el anterior legible; repetir el mismo rol no escribe fila.
     client.patch(f"/grupos/{grupo.id}", json={"tecnico1_id": torres.id, "tecnico1_rol": "Psicólogo/a"})

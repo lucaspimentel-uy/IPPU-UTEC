@@ -3587,6 +3587,77 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const sinBorrar = await ps.evaluate(() => /quitarDoc|quitarFoto|Quitar|Eliminar|Borrar/.test(docPanelConectadoHtml.toString() + fotosGridHtml.toString() + docFilaHtml.toString()));
     check('c5-delete', 'DELETE de un documento, de una foto individual y de una grupal → 405, y los tres siguen (200); la pestaña conectada no ofrece «Quitar» ni «Eliminar»',
       dels.every((d) => d.status === 405) && siguen.every((s) => s === 200) && !sinBorrar, JSON.stringify({ dels: dels.map((d) => d.status), siguen, sinBorrar }));
+
+    /* c5-grupo-salir · una subida de foto grupal en vuelo y el usuario se va de Grupos (cierra el diálogo y navega): su respuesta ya no es
+       vigente y no repinta, pero el candado «guardando» se suelta; al volver, «Cargar foto» guarda (antes quedaba trabado hasta recargar).
+       La respuesta se retiene en el navegador (Playwright la pide al servidor y la entrega después), así que la subida es real. */
+    const limpiarToast = () => ps.evaluate(() => { clearTimeout(window._toastT); document.getElementById('toast').classList.remove('show'); document.getElementById('toastMsg').textContent = ''; });
+    const reteniendo = async (patron) => {
+      let suelta; const retenida = new Promise((res) => { suelta = res; }); const est = { enVuelo: false };
+      await ps.route(patron, async (route) => { if (route.request().method() !== 'POST') return route.continue();
+        est.enVuelo = true; const resp = await route.fetch(); await retenida; await route.fulfill({ response: resp }); });
+      return { est, suelta, quitar: () => ps.unroute(patron) };
+    };
+    await ps.click('.navitem[data-view="grupos"]'); await ps.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });
+    await ps.click(`#btnGrupo_${esc}`); await ps.waitForFunction(() => GFOT.estado === 'listo', null, { timeout: 8000 });
+    await limpiarToast();
+    const retG = await reteniendo(new RegExp(`/grupos/${esc}/fotos$`));
+    await ps.click('#btnGrpFoto'); await ps.waitForSelector('#modalFlujo.open #fotf_archivo');
+    await ps.setInputFiles('#fotf_archivo', { name: 'salir.png', mimeType: 'image/png', buffer: PNG });
+    await ps.click('#btnFotoGuardar');
+    await ps.waitForFunction(() => GFOT.guardando === true, null, { timeout: 8000 });
+    await ps.waitForTimeout(300);
+    const enVueloG = retG.est.enVuelo;
+    await ps.evaluate(() => { closeFlujoModal(true); go('pendientes'); });          // Cancelar + otra vista, con la subida en vuelo
+    const alIrse = await ps.evaluate(() => ({ guardando: GFOT.guardando, grupos: document.getElementById('view-grupos').classList.contains('active') }));
+    retG.suelta(); await ps.waitForTimeout(500); await retG.quitar();
+    const trasG = await ps.evaluate(() => ({ guardando: GFOT.guardando, modal: document.getElementById('modalFlujo').classList.contains('open'),
+      toast: document.getElementById('toast').classList.contains('show') && /Foto cargada/.test(document.getElementById('toastMsg').textContent), vista: document.querySelector('.view.active').id }));
+    await ps.click('.navitem[data-view="grupos"]'); await ps.waitForFunction(() => GRP.estado === 'listo', null, { timeout: 8000 });
+    await ps.click(`#btnGrupo_${esc}`); await ps.waitForFunction(() => GFOT.estado === 'listo', null, { timeout: 8000 });
+    const antesV = (await api('GET', `/grupos/${esc}/fotos`)).json.length;
+    await ps.click('#btnGrpFoto'); await ps.waitForSelector('#modalFlujo.open #fotf_archivo');
+    await ps.setInputFiles('#fotf_archivo', { name: 'volver.png', mimeType: 'image/png', buffer: PNG });
+    const respV = ps.waitForResponse((r) => new URL(r.url()).pathname === `/grupos/${esc}/fotos` && r.request().method() === 'POST', { timeout: 6000 });
+    await ps.click('#btnFotoGuardar');
+    const rV = await respV.catch(() => null);
+    await ps.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 }).catch(() => {});
+    const despuesV = (await api('GET', `/grupos/${esc}/fotos`)).json.length;
+    check('c5-grupo-salir', 'subida de foto grupal en vuelo + salir de Grupos: el candado se suelta al irse (GFOT.guardando false), la respuesta tardía no repinta ni muestra «Foto cargada» ni reabre el diálogo; al volver, «Cargar foto» sí guarda (POST 201, una foto más por la API)',
+      enVueloG && alIrse.guardando === false && alIrse.grupos === false && trasG.guardando === false && !trasG.modal && !trasG.toast && trasG.vista === 'view-pendientes'
+        && rV !== null && rV.status() === 201 && despuesV === antesV + 1,
+      JSON.stringify({ enVueloG, alIrse, trasG, volver: rV && rV.status(), antesV, despuesV }));
+
+    /* c5-salir · «Salir» con la subida de un documento en vuelo: la respuesta tardía no repinta (ni toast, ni foco, ni tarjeta de documentos),
+       no queda nada trabado y la vista queda vacía; al entrar de nuevo, «Cargar documento» se abre con el botón habilitado. */
+    await abrirDoc(idM); await limpiarToast();
+    const retD = await reteniendo(new RegExp(`/hce/${idM}/documentos$`));
+    await ps.click('#btnDocCargar'); await ps.waitForSelector('#modalFlujo.open #docf_archivo');
+    await ps.setInputFiles('#docf_archivo', { name: 'salir.pdf', mimeType: 'application/pdf', buffer: Buffer.concat([PDF, Buffer.from('% c5-salir ' + Date.now() + '\n')]) });
+    await ps.selectOption('#docf_categoria', String(catId('Otro')));
+    await ps.click('#btnDocGuardar');
+    await ps.waitForFunction(() => DOCS.guardando === true, null, { timeout: 8000 });
+    await ps.waitForTimeout(300);
+    const enVueloD = retD.est.enVuelo;
+    await ps.evaluate(() => closeFlujoModal(true));                                 // Cancelar: el diálogo cierra y la subida sigue
+    await ps.click('.btn-exit');                                                    // «Salir»
+    await ps.waitForSelector('#loginScreen:not(.hidden)', { timeout: 8000 });
+    retD.suelta(); await ps.waitForTimeout(500); await retD.quitar();
+    const trasD = await ps.evaluate(() => ({ guardando: DOCS.guardando, hceId: DOCS.hceId, filas: DOCS.docs.filas.length, fotos: DOCS.fotos.filas.length, aut: DOCS.aut,
+      tarjeta: !!document.getElementById('docDocsCard'), expediente: document.getElementById('expedienteContent').innerHTML.trim(),
+      modal: document.getElementById('modalFlujo').classList.contains('open'), login: !document.getElementById('loginScreen').classList.contains('hidden'),
+      toast: document.getElementById('toast').classList.contains('show') && /Documento cargado/.test(document.getElementById('toastMsg').textContent),
+      foco: document.activeElement.id }));
+    await ps.fill('#loginUser', EMAIL); await ps.fill('#loginPass', PASSWORD); await ps.click('#loginBtn');
+    await ps.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+    await abrirDoc(idM);
+    await ps.click('#btnDocCargar'); await ps.waitForSelector('#modalFlujo.open #btnDocGuardar');
+    const reabre = await ps.evaluate(() => ({ habilitado: !document.getElementById('btnDocGuardar').disabled, guardando: DOCS.guardando }));
+    await ps.evaluate(() => closeFlujoModal(true));
+    check('c5-salir', '«Salir» con la subida de un documento en vuelo: el login queda a la vista con el foco en su usuario, la respuesta tardía no repinta (sin tarjeta de documentos, sin toast «Documento cargado», sin diálogo, expediente vacío), DOCS queda vacío y sin candado; al entrar de nuevo, «Cargar documento» abre con «Cargar» habilitado',
+      enVueloD && trasD.login && trasD.foco === 'loginUser' && trasD.guardando === false && trasD.hceId === null && trasD.filas === 0 && trasD.fotos === 0 && trasD.aut === null
+        && !trasD.tarjeta && trasD.expediente === '' && !trasD.modal && !trasD.toast && reabre.habilitado && reabre.guardando === false,
+      JSON.stringify({ enVueloD, trasD: { ...trasD, expediente: trasD.expediente.slice(0, 30) }, reabre }));
     await ctx.close();
   }
 

@@ -54,7 +54,7 @@ FIRMANTES_IC = 2
 def obtener_informe(db: Session, informe_id: int) -> InformeCierre:
     informe = db.get(InformeCierre, informe_id)
     if informe is None:
-        raise NotFound(f"No existe el informe de cierre {informe_id}")
+        raise NotFound("No existe el informe de cierre")
     return informe
 
 
@@ -146,7 +146,7 @@ def crear_informe(
         raise ValidationFailed(errores)
     if informe_de_anio(db, hce_id, anio) is not None:
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene un informe de cierre del {anio}",
+            f"Este expediente ya tiene un informe de cierre del {anio}",
             [("anio", "Ya existe un informe de cierre de ese año para el expediente")],
         )
 
@@ -166,7 +166,7 @@ def crear_informe(
 def _obtener_para_escribir(db: Session, informe_id: int) -> InformeCierre:
     informe = db.get(InformeCierre, informe_id, with_for_update=True)
     if informe is None:
-        raise NotFound(f"No existe el informe de cierre {informe_id}")
+        raise NotFound("No existe el informe de cierre")
     return informe
 
 
@@ -227,7 +227,7 @@ def _errores_de_firma(
         for posicion, profesional_id in enumerate(ids):
             profesional = db.get(Profesional, profesional_id)
             if profesional is None or not profesional.activo:
-                errores.append((f"firmantes.{posicion}", f"El profesional {profesional_id} no existe o no está activo"))
+                errores.append((f"firmantes.{posicion}", "El profesional elegido no existe o no está activo"))
             else:
                 profesionales.append(profesional)
     return errores, profesionales

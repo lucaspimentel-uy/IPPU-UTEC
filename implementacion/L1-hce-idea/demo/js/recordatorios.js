@@ -6,7 +6,7 @@
    Avisos en el panel institucional, configurables por coordinación (demo: en
    memoria). NUNCA fechas límite bloqueantes: informan, no impiden firmar. */
 const RECORDATORIOS = [
-  {key:"lb", txt:"Aplicación del IDEA (HCE-LB) en las primeras semanas del ingreso", periodo:"Al ingreso", activo:true},
+  {key:"lb", txt:"Aplicación del IDEA (HCE-LB) del año en sus primeras semanas",   periodo:"Inicio del año", activo:true},
   {key:"pa", txt:"Protocolo A (HCE-PA) durante el receso de julio",                  periodo:"Julio",      activo:true},
   {key:"pb", txt:"Protocolo B (HCE-PB) en la última semana lectiva",                 periodo:"Diciembre",  activo:true},
   {key:"ic", txt:"Informe de Cierre (HCE-IC) en los días posteriores al Protocolo B",periodo:"Días post-PB", activo:true},
@@ -36,7 +36,7 @@ function renderRecordatorios(){
 function recToggle(i,v){ RECORDATORIOS[i].activo = v; renderRecordatorios(); }
 function recPeriodo(i,v){ RECORDATORIOS[i].periodo = v; }
 
-/* Las fotos grupales salieron de la vista Grupos (F2): la API no las tiene todavía; vuelven con el registro fotográfico (C5). */
+/* Las fotos grupales viven en la vista Grupos, conectada a la API (C5, `documentos.js`). */
 
 // El dialogo de alta/edicion ya NO se cierra al hacer clic en el fondo (Fase 3-b): es un formulario largo y un
 // clic de mas perderia lo tipeado. Se cierra con «×», con Cancelar o con Escape.

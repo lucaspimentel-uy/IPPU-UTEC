@@ -116,7 +116,7 @@ def banda_de(db: Session, total: int | None) -> dict[str, Any] | None:
 def obtener_idea(db: Session, idea_id: int) -> Idea:
     idea = db.get(Idea, idea_id)
     if idea is None:
-        raise NotFound(f"No existe el IDEA {idea_id}")
+        raise NotFound("No existe el IDEA")
     return idea
 
 
@@ -204,7 +204,7 @@ def _preparar_escalares(
     for campo in ("evaluador_t1_id", "evaluador_t2_id"):
         profesional_id = d.get(campo)
         if profesional_id is not None and db.get(Profesional, profesional_id) is None:
-            errores.append((campo, f"No existe el profesional {profesional_id}"))
+            errores.append((campo, "El profesional elegido no existe"))
     return d
 
 
@@ -290,7 +290,7 @@ def crear_idea(
         raise ValidationFailed(errores)
     if idea_de_anio(db, hce_id, anio) is not None:
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene un IDEA del {anio}",
+            f"Este expediente ya tiene un IDEA del {anio}",
             [("anio", "Ya existe un IDEA de ese año para el expediente")],
         )
 
@@ -316,7 +316,7 @@ def _obtener_para_escribir(db: Session, idea_id: int) -> Idea:
     y una firma simultáneos no se pisen (la firma validó sobre un estado que el PATCH cambió)."""
     idea = db.get(Idea, idea_id, with_for_update=True)
     if idea is None:
-        raise NotFound(f"No existe el IDEA {idea_id}")
+        raise NotFound("No existe el IDEA")
     return idea
 
 

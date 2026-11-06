@@ -35,7 +35,7 @@ def obtener_consentimiento(db: Session, hce_id: int) -> Consentimiento:
     obtener_hce(db, hce_id)
     ci = db.get(Consentimiento, hce_id)
     if ci is None:
-        raise NotFound(f"El expediente {hce_id} no tiene consentimiento registrado (CI pendiente)")
+        raise NotFound("Este expediente no tiene consentimiento registrado (CI pendiente)")
     return ci
 
 
@@ -77,7 +77,7 @@ def registrar_consentimiento(
         raise ValidationFailed(errores)
     if db.get(Consentimiento, hce_id) is not None:
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene el consentimiento registrado: se edita, no se vuelve a crear",
+            "Este expediente ya tiene el consentimiento registrado: se edita, no se vuelve a crear",
             [(None, "Ya existe el consentimiento de este expediente")],
         )
     ci = Consentimiento(hce_id=hce_id, **d)
@@ -86,7 +86,7 @@ def registrar_consentimiento(
         db.flush()
     except IntegrityError as exc:  # carrera: dos altas simultáneas del mismo expediente
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene el consentimiento registrado",
+            "Este expediente ya tiene el consentimiento registrado",
             [(None, "Ya existe el consentimiento de este expediente")],
         ) from exc
     registrar_carga(
@@ -104,7 +104,7 @@ def actualizar_consentimiento(
     obtener_hce(db, hce_id)
     ci = db.get(Consentimiento, hce_id, with_for_update=True)
     if ci is None:
-        raise NotFound(f"El expediente {hce_id} no tiene consentimiento registrado (CI pendiente)")
+        raise NotFound("Este expediente no tiene consentimiento registrado (CI pendiente)")
     firma.exigir_no_firmado(ci, MODULO_HCE_CI)
     errores: list[tuple[str | None, str]] = []
     cambios = _preparar(datos, errores, alta=False)

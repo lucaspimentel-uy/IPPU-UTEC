@@ -65,7 +65,7 @@ Se sirve en `http://localhost:5500` (no abre desde un archivo local: el login ne
 demo/
 ├── index.html              # markup y ORDEN DE CARGA de los scripts: ese orden es la semántica
 ├── css/estilos.css         # tokens (foco, rampa de severidad, estados) y estilos
-├── js/                     # 20 módulos, en el orden en que carga index.html:
+├── js/                     # 21 módulos, en el orden en que carga index.html:
 │   ├── utils.js            #   helpers compartidos y componentes comunes (cargando/error/vacío, diálogos) — lo tocan todos
 │   ├── api.js              #   cliente de la API y sesión
 │   ├── adaptadores.js      #   funciones puras: respuesta de la API → forma que pinta la demo
@@ -77,11 +77,13 @@ demo/
 │   ├── expediente.js       #   expediente: cabecera, pestañas, CI y stepper
 │   ├── evaluaciones.js     #   LB (IDEA), PA y PB (conectado)
 │   ├── informe-cierre.js   #   IC, documento impreso A4 y recibí (conectado)
-│   ├── hce-doc-org-vf.js   #   VF (conectado) · HCE-DOC (demostración) y HCE-ORG del expediente de ejemplo
+│   ├── hce-doc-org-vf.js   #   VF (conectado) · HCE-DOC y HCE-ORG del expediente de ejemplo (demostración)
+│   ├── documentos.js       #   DOC: documentos con archivo, autorización de imagen y fotos del expediente y del grupo (conectado, C5)
 │   ├── severidad.js        #   SEV: severidad DSM-5-TR (conectado)
 │   ├── organismos.js       #   ORG: INAU, BPS, sus registros y la alerta AYEX (conectado)
 │   ├── auditoria.js        #   LOG: registro de cambios, sólo lectura (conectado)
-│   ├── recordatorios.js · inclusion.js · ateneos.js   # vistas en demostración
+│   ├── inclusion.js        #   INC: ficha de inclusión y bitácora de gestiones (conectado, C4)
+│   ├── recordatorios.js · ateneos.js   # vistas en demostración
 │   ├── pendientes.js       #   Pendientes: lo que falta este año por NNA (conectado, F2)
 │   ├── grupos-usuario.js   #   Grupos y asignación de técnicos (conectado, F2) · Mi usuario (ejemplo)
 └── verificacion/           # Playwright: README.md · conectada.js · capturas.js · fingerprint.js · comparar.js
@@ -100,6 +102,7 @@ backend/
 ├── docker-compose.yml      # Postgres 16 en 127.0.0.1:5440 (contenedor ippu-postgres)
 ├── docker/initdb/00-crear-base-test.sql   # crea la base ippu_test al inicializar el volumen
 ├── .env.example · alembic.ini · pytest.ini · requirements.txt
+├── uploads/<nombre de la base>/   # archivos de HCE-DOC y fotos (UPLOADS_DIR, §5.155); ignorado por git; recrear una base es borrar también su carpeta
 ├── alembic/versions/dcc838486407_esquema_v2_inicial_a2.py   # migración única del esquema v2 (51 tablas)
 ├── app/
 │   ├── main.py             # entrypoint FastAPI

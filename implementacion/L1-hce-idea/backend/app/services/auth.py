@@ -77,7 +77,7 @@ def exigir_hce_visible(db: Session, usuario: Profesional, hce_id: int | None) ->
     """404 si el expediente no existe **o** el usuario no lo puede ver (mismo mensaje)."""
     hce = db.get(HceDiurna, hce_id) if hce_id is not None else None
     if hce is None or not puede_ver(usuario, hce):
-        raise NotFound(f"No existe el expediente {hce_id}")
+        raise NotFound("No existe el expediente")
 
 
 def exigir_grupo_visible(db: Session, usuario: Profesional, grupo_id: int) -> Grupo:
@@ -85,7 +85,7 @@ def exigir_grupo_visible(db: Session, usuario: Profesional, grupo_id: int) -> Gr
     (la regla de los expedientes, §5.101). Lo usan las fotos grupales (C5, §5.155 e)."""
     grupo = db.get(Grupo, grupo_id)
     if grupo is None or not (es_admin(usuario) or (usuario.rol == ROL_TECNICO and _es_tecnico_del_grupo(usuario, grupo))):
-        raise NotFound(f"No existe el grupo {grupo_id}")
+        raise NotFound("No existe el grupo")
     return grupo
 
 

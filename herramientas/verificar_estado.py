@@ -26,6 +26,7 @@ sesión (`handoff.md` §12.4).
 | Migración | nombre de archivo y `revision` en `alembic/versions/` | los `.md` que nombran la migración |
 | Un solo head | `down_revision` de cada archivo de migración | — (falla sola si hay más de una cabeza) |
 | Tests | `pytest --collect-only -q`, **sólo si Docker está arriba** | los `.md` que declaran «N passed» |
+| Módulos de la demo | los `demo/js/*.js` | «N módulos» de la cabecera de `handoff.md`, de `CLAUDE.md` y de `docs/estructura-repositorio.md` |
 
 ⚠️ **El conteo de tests no se estima nunca.** La guardia de `tests/conftest.py`
 (2026-08-15) aborta `pytest` si el contenedor no está arriba, así que sin Docker
@@ -52,6 +53,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 BACKEND = RAIZ / "implementacion" / "L1-hce-idea" / "backend"
 MODELOS = BACKEND / "app" / "models"
 VERSIONES = BACKEND / "alembic" / "versions"
+DEMO_JS = RAIZ / "implementacion" / "L1-hce-idea" / "demo" / "js"
 
 # Documentos que hacen afirmaciones sobre el estado del backend. Si alguno declara
 # un número, tiene que ser el número real.
@@ -62,6 +64,12 @@ DOCS = [
     RAIZ / "docs" / "estructura-repositorio.md",
     BACKEND / "README.md",
 ]
+
+# Los tres documentos que dicen cuántos módulos tiene la demo, cada uno con su forma:
+# «**21** módulos» (handoff.md, cabecera), «`js/` = 21 módulos» (CLAUDE.md) y «# 21 módulos,
+# en el orden…» (el árbol de estructura-repositorio.md).
+DOCS_MODULOS_DEMO = [RAIZ / "handoff.md", RAIZ / "CLAUDE.md", RAIZ / "docs" / "estructura-repositorio.md"]
+MODULOS_DEMO = r"(?:\*\*|`js/`\s*=\s*|#\s*)(\d+)(?:\*\*)?\s*módulos"
 
 # --------------------------------------------------------------------------
 # Qué NO se compara: la historia
@@ -266,6 +274,19 @@ def main() -> int:
                     f"    {texto[:160]}"
                 )
 
+    # -- módulos de la demo ------------------------------------------------
+    modulos_demo = len(list(DEMO_JS.glob("*.js")))
+    for doc in DOCS_MODULOS_DEMO:
+        encontradas = afirmaciones(MODULOS_DEMO, doc)
+        if not encontradas:
+            problemas.append(f"{doc.relative_to(RAIZ)} ya no declara cuántos módulos tiene la demo (se esperaba «N módulos»)")
+        for ln, valor, texto in encontradas:
+            if int(valor) != modulos_demo:
+                problemas.append(
+                    f"{doc.relative_to(RAIZ)}:{ln} dice «{valor} módulos», demo/js tiene {modulos_demo}\n"
+                    f"    {texto[:160]}"
+                )
+
     # -- tests -------------------------------------------------------------
     if tests is None:
         problemas_tests = f"NO MEDIDO — {motivo_tests} (se omite, no se estima)"
@@ -284,7 +305,7 @@ def main() -> int:
         for p in problemas:
             print(f"  · {p}")
         print(f"\nMedido ahora: {tablas} tablas · migración "
-              f"{revisiones[0] if revisiones else '(ninguna)'} · tests: {problemas_tests}")
+              f"{revisiones[0] if revisiones else '(ninguna)'} · demo/js: {modulos_demo} módulos · tests: {problemas_tests}")
         print("\nSi el repo es lo correcto, actualizá los .md. Si el .md es lo correcto,")
         print("alguien rompió algo. El script no decide cuál de las dos.")
         return 1
@@ -296,6 +317,7 @@ def main() -> int:
         print(f"migración   {revisiones[0] if revisiones else '(ninguna)'} "
               f"({archivos_mig[0] if archivos_mig else '—'})")
         print(f"heads       {len(heads)}")
+        print(f"demo/js     {modulos_demo} módulos")
         print(f"tests       {problemas_tests}")
     else:
         print("OK — la documentación coincide con el repo.")

@@ -380,7 +380,7 @@ function renderAnalitica(){
         <div class="hbarrow"><div class="lab">${ESCALAS_IDEA[i]}</div>
           <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
       `).join("") +
-      `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto de la línea base, no una evolución: desde el Documento Técnico el IDEA se toma una sola vez por NNA (§5.1.1).</div>`
+      `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto del IDEA que rige de cada NNA —el firmado del año más reciente (§5.97)—, no una evolución: el IDEA es anual, uno por año (§5.96).</div>`
     : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
 
   /* --- Evolución Protocolo A → B: Escala IPPU-TEA (máx. 30 por escala) --- */

@@ -97,7 +97,7 @@ def _obtener(db: Session, organismo: str, hce_id: int, *, para_escribir: bool = 
     obtener_hce(db, hce_id)
     fila = db.get(_MODELO[organismo], hce_id, with_for_update=True if para_escribir else None)
     if fila is None:
-        raise NotFound(f"El expediente {hce_id} no tiene vínculo con {_ROTULO[organismo]} registrado")
+        raise NotFound(f"Este expediente no tiene vínculo con {_ROTULO[organismo]} registrado")
     return fila
 
 
@@ -117,7 +117,7 @@ def crear_vinculo(db: Session, organismo: str, hce_id: int, datos: Mapping[str, 
     if all(d.get(c) is None for c in _CAMPOS[organismo]):
         raise ValidationFailed([(None, f"Completá al menos un dato del vínculo con {_ROTULO[organismo]}: un vínculo vacío no dice nada")])
     conflicto = ConflictError(
-        f"El expediente {hce_id} ya tiene el vínculo con {_ROTULO[organismo]}: se edita, no se vuelve a crear",
+        f"Este expediente ya tiene el vínculo con {_ROTULO[organismo]}: se edita, no se vuelve a crear",
         [(None, f"Ya existe el vínculo con {_ROTULO[organismo]} de este expediente")],
     )
     if db.get(_MODELO[organismo], hce_id) is not None:

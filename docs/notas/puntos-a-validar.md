@@ -590,6 +590,28 @@ la reserva por entrada) y **Fase 4** (que el acceso del representante la respete
 
 ---
 
+### 1.17 El período del recordatorio «lb» («Semanas 2–3 del ingreso»): ¿vale para el IDEA de **todos** los años? — abierto (2026-11-05)
+
+**Qué pasa.** El recordatorio `lb` del catálogo dice «Aplicación del IDEA (HCE-LB) en las semanas 2–3 del ingreso»
+(período «Semanas 2–3 del ingreso», Manual §4). Leído tal cual, es un IDEA **de ingreso** y nada más. Pero IPPU
+respondió el 2026-10-05 que el IDEA es **anual** (`handoff.md` §5.96): hay uno por año, y un reingreso no abre ninguna
+instancia especial (B10). Las dos cosas no se contradicen del todo —el primer IDEA del año de un NNA que ingresa cae en
+las semanas 2–3—, pero para un NNA que sigue de un año a otro la frase no dice cuándo se toma el del año siguiente.
+
+**Qué hace hoy la pantalla.** Muestra el texto del catálogo **verbatim** (no se reinterpreta ni se cambia). La demo
+dejó de decir «al ingreso» en sus propios textos de ejemplo (`recordatorios.js`, `ui-core.js`), que son de la
+analítica en demostración y no del catálogo.
+
+> *Pregunta para IPPU: el período «semanas 2–3 del ingreso» del IDEA, ¿se aplica a la IDEA de **cada año** (para
+> quienes continúan, sería las semanas 2–3 del año lectivo) o sólo a la del ingreso? Si es de cada año, ¿cómo se
+> quiere que lo diga el recordatorio?*
+
+**Qué bloquea.** **Nada hoy** — la API sirve el texto del catálogo y la pantalla lo muestra. Si IPPU confirma que es
+anual, se cambia la fila `recordatorio.lb` del catálogo (`generar_catalogos_backend.py`), no el código. Va en la
+lista de IPPU.
+
+---
+
 ## 2. Para el equipo (grupo + Matías)
 
 ### 2.1 ~~Ratificar que M11 avanzó sin cruzar su propia puerta~~ — **CERRADO** (2026-09-03, `handoff.md` §5.60 / L7)

@@ -108,7 +108,7 @@ def _aplicar_totales(protocolo: Protocolo) -> None:
 def obtener_protocolo(db: Session, protocolo_id: int) -> Protocolo:
     protocolo = db.get(Protocolo, protocolo_id)
     if protocolo is None:
-        raise NotFound(f"No existe el protocolo {protocolo_id}")
+        raise NotFound("No existe el protocolo")
     return protocolo
 
 
@@ -163,7 +163,7 @@ def _preparar_escalares(
     for campo in ("evaluador_t1_id", "evaluador_t2_id"):
         profesional_id = d.get(campo)
         if profesional_id is not None and db.get(Profesional, profesional_id) is None:
-            errores.append((campo, f"No existe el profesional {profesional_id}"))
+            errores.append((campo, "El profesional elegido no existe"))
     return d
 
 
@@ -245,7 +245,7 @@ def crear_protocolo(
         raise ValidationFailed(errores)
     if protocolo_de(db, hce_id, tipo, anio) is not None:
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene un Protocolo {tipo} del {anio}",
+            f"Este expediente ya tiene un Protocolo {tipo} del {anio}",
             [("anio", "Ya existe un protocolo de ese tipo y año para el expediente")],
         )
 
@@ -268,7 +268,7 @@ def _obtener_para_escribir(db: Session, protocolo_id: int) -> Protocolo:
     """El protocolo con la fila bloqueada (`FOR UPDATE`) hasta el fin de la transacción."""
     protocolo = db.get(Protocolo, protocolo_id, with_for_update=True)
     if protocolo is None:
-        raise NotFound(f"No existe el protocolo {protocolo_id}")
+        raise NotFound("No existe el protocolo")
     return protocolo
 
 

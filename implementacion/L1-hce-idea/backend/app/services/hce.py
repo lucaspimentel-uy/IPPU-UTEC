@@ -88,7 +88,7 @@ def _plano_sql(columna):
 def obtener_hce(db: Session, hce_id: int) -> HceDiurna:
     hce = db.get(HceDiurna, hce_id)
     if hce is None:
-        raise NotFound(f"No existe el expediente {hce_id}")
+        raise NotFound("No existe el expediente")
     return hce
 
 
@@ -213,7 +213,7 @@ def _preparar_hce(
     d = normalizar_opcionales({c: datos[c] for c in HCE_CAMPOS if c in datos}, HCE_TEXTOS)
     grupo_id = d.get("grupo_id")
     if grupo_id is not None and db.get(Grupo, grupo_id) is None:
-        errores.append(("grupo_id", f"No existe el grupo {grupo_id}"))
+        errores.append(("grupo_id", "No existe el grupo"))
     if "hc_historico" in d:
         hc = d["hc_historico"]
         if hc is None:

@@ -417,16 +417,18 @@ async function fotoGuardar(destino){
   if(fec) fd.append("fecha", fec);
   const btn = _docEl("btnFotoGuardar");
   est.guardando = true; if(btn){ btn.disabled = true; btn.textContent = "Cargando…"; }
+  const token = est.subida = {};    // identifica ESTA subida: la respuesta de una vieja no suelta el candado de una nueva
+  const huerfana = () => { if(est.subida === token){ est.guardando = false; est.subida = null; } };
   try{
     const r = await apiFetch(enGrupo ? `/grupos/${id}/fotos` : `/hce/${id}/fotos`, {method: "POST", body: fd});
-    if(!vigente()) return;
+    if(!vigente()){ huerfana(); return; }
     est.guardando = false; est.avisos = r.warnings || [];
     closeFlujoModal();
     if(enGrupo){ await grpFotosCargar(id, true); const t = _docEl("grpFotosTitulo"); if(t) t.focus(); }
     else { await docCargar(true); const t = _docEl("docFotosTitulo"); if(t) t.focus(); }
     toast("Foto cargada");
   }catch(err){
-    if(!vigente()) return;
+    if(!vigente()){ huerfana(); return; }
     est.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Cargar foto"; }
     _docErrores(err, FOTO_CAMPOS, "fotErrores", "No se pudo cargar la foto:");
   }
@@ -490,9 +492,11 @@ async function autGuardar(){
 
 /* ===================== FOTOS DEL GRUPO (detalle de Grupos) =====================
    GET /grupos/{id}/fotos: sólo el admin y los técnicos de ese grupo (la API decide; un 404 es «no encontrado»). */
-const GFOT = {grupoId: null, nombre: "", estado: "vacio", filas: [], total: 0, error: "", noEncontrado: false, seq: 0, urls: {}, guardando: false, avisos: []};
-function grpFotosLiberar(){ GFOT.seq++; _liberarUrls(GFOT.urls); GFOT.urls = {}; }
-function grpFotosOlvidar(){ grpFotosLiberar(); Object.assign(GFOT, {grupoId: null, nombre: "", estado: "vacio", filas: [], total: 0, error: "", noEncontrado: false, guardando: false, avisos: []}); }
+const GFOT = {grupoId: null, nombre: "", estado: "vacio", filas: [], total: 0, error: "", noEncontrado: false, seq: 0, urls: {}, guardando: false, subida: null, avisos: []};
+/* Al salir de Grupos una subida en vuelo queda huérfana (su respuesta ya no es vigente y no repinta): el candado se suelta acá,
+   o «Cargar foto» no haría nada hasta recargar. */
+function grpFotosLiberar(){ GFOT.seq++; _liberarUrls(GFOT.urls); GFOT.urls = {}; GFOT.guardando = false; GFOT.subida = null; }
+function grpFotosOlvidar(){ grpFotosLiberar(); Object.assign(GFOT, {grupoId: null, nombre: "", estado: "vacio", filas: [], total: 0, error: "", noEncontrado: false, guardando: false, subida: null, avisos: []}); }
 function grpFotosCardHtml(){
   let cuerpo;
   if(GFOT.estado === "cargando" || GFOT.estado === "vacio") cuerpo = estadoCargandoHtml("Cargando las fotos del grupo…");

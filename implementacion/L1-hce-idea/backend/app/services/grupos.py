@@ -50,7 +50,7 @@ def asignar_tecnicos(
     """Aplica `cambios` (sólo las claves presentes, semántica PATCH) y audita cada campo que cambió."""
     grupo = db.scalars(select(Grupo).where(Grupo.id == grupo_id).with_for_update()).first()
     if grupo is None:
-        raise NotFound(f"No existe el grupo {grupo_id}")
+        raise NotFound("No existe el grupo")
 
     cambios = normalizar_opcionales(cambios, CAMPOS_ROL)
     errores: list[tuple[str | None, str]] = []
@@ -60,7 +60,7 @@ def asignar_tecnicos(
             continue
         profesional = db.get(Profesional, profesional_id)
         if profesional is None:
-            errores.append((campo, f"No existe el profesional {profesional_id}"))
+            errores.append((campo, "El profesional elegido no existe"))
         elif not profesional.activo:
             errores.append((campo, "Tiene que ser un profesional activo"))
 
@@ -84,6 +84,6 @@ def asignar_tecnicos(
     if filas:
         # Sin `hce_id`, `detalle` es lo único que dice a qué grupo apunta la fila (sin datos personales).
         for fila in filas:
-            fila.detalle = f"grupo {grupo.id} · {grupo.nombre} {grupo.anio}"
+            fila.detalle = f"Grupo {grupo.nombre} {grupo.anio}"
         db.flush()
     return grupo

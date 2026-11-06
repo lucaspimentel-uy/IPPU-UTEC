@@ -110,7 +110,7 @@ def _visible_por(modelo, parametro: str, nombre: str):
         try:
             auth.exigir_hce_visible(db, usuario, hce_id)
         except NotFound:
-            raise NotFound(f"No existe {nombre} {crudo}") from None
+            raise NotFound(f"No existe {nombre}") from None
 
     return dependencia
 

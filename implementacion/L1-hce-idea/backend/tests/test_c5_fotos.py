@@ -179,7 +179,7 @@ def test_la_foto_grupal_deja_una_fila_institucional_con_el_grupo(client, db_api,
     assert len(filas) == 1
     f = filas[0]
     assert (f.hce_id, f.tipo, f.campo) == (None, "carga", None)
-    assert f.detalle.startswith(f"grupo {g.id} · {g.nombre} {g.anio}") and "Secreta" not in f.detalle
+    assert f.detalle == f"Grupo {g.nombre} {g.anio} · foto grupal cargada" and "Secreta" not in f.detalle
 
 
 def test_la_foto_grupal_no_requiere_autorizaciones_ni_avisa(client, escenario):

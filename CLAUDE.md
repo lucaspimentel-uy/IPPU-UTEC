@@ -40,7 +40,7 @@ la demo v4.1 no son norma**: son insumo; no se modela ni se siembra nada sólo p
   se cita desde acá) · `notas/` (`puntos-a-validar.md`, `preguntas-ippu.md`, `consulta-a-ippu.md` —snapshot del 19/08, §5.34—,
   respuestas de IPPU) · `fuentes/` (respaldo, no se lee, §5.29) · `prototipo-v4/` (insumo de build, §5.30).
 - `implementacion/L1-hce-idea/`: `backend/` (FastAPI + SQLAlchemy + Alembic + Postgres; antes de tocar modelos, leer
-  `docs/esquema-datos-v2.md`) · `demo/` (HTML conectada a la API; `js/` = 20 módulos, el orden de carga es la semántica; lo no
+  `docs/esquema-datos-v2.md`) · `demo/` (HTML conectada a la API; `js/` = 21 módulos, el orden de carga es la semántica; lo no
   conectado dice «Modo demostración») · `demo/verificacion/` (Playwright: `conectada.js`, `capturas.js`, `fingerprint.js` +
   `comparar.js` para las vistas en demostración). L3 (Samuel) se reinicia sobre los requerimientos de IPPU (§5.151): no tiene carpeta hasta la nueva F1.
 - `herramientas/`: `generar_catalogos_backend.py` (`--check`; el JSON de catálogos se genera, no se edita) · `verificar_estado.py` ·

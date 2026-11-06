@@ -92,7 +92,7 @@ def obtener_ficha(db: Session, hce_id: int, *, para_escribir: bool = False) -> I
     obtener_hce(db, hce_id)
     ficha = _ficha_de(db, hce_id, para_escribir=para_escribir)
     if ficha is None:
-        raise NotFound(f"El expediente {hce_id} no tiene ficha de inclusión registrada")
+        raise NotFound("Este expediente no tiene ficha de inclusión registrada")
     return ficha
 
 
@@ -128,7 +128,7 @@ def _preparar_ficha(db: Session, datos: Mapping[str, Any], errores: list[tuple[s
 
 def _detalle_conflicto(hce_id: int) -> ConflictError:
     return ConflictError(
-        f"El expediente {hce_id} ya tiene la ficha de inclusión: se edita, no se vuelve a crear",
+        "Este expediente ya tiene la ficha de inclusión: se edita, no se vuelve a crear",
         [(None, "Ya existe la ficha de inclusión de este expediente")],
     )
 
@@ -228,7 +228,7 @@ def crear_gestion(
     ficha = _ficha_de(db, hce_id)
     if ficha is None:
         raise NotFound(
-            f"El expediente {hce_id} no tiene ficha de inclusión: registrá la ficha primero",
+            "Este expediente no tiene ficha de inclusión: registrá la ficha primero",
             [(None, "Este expediente no tiene ficha de inclusión: registrá la ficha antes de agregar gestiones")],
         )
     d = normalizar_opcionales({c: datos[c] for c in _TEXTOS_BITACORA if c in datos}, _TEXTOS_BITACORA)

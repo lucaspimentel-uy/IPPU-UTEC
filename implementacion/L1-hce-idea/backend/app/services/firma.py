@@ -117,7 +117,7 @@ def agregar_addenda(
         errores.append(("texto", "Es obligatorio"))
     profesional = db.get(Profesional, profesional_id) if profesional_id is not None else None
     if profesional is None:
-        errores.append(("profesional_id", "Es obligatorio y debe existir" if profesional_id is None else f"No existe el profesional {profesional_id}"))
+        errores.append(("profesional_id", "Es obligatorio y debe existir" if profesional_id is None else "El profesional elegido no existe"))
     if errores:
         raise ValidationFailed(errores)
 

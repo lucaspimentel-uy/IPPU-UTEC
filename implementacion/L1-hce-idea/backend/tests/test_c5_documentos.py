@@ -8,18 +8,20 @@ carpeta de archivos es temporal en cada test (`carpeta_uploads`, conftest).
 """
 import json
 import re
+import threading
 from datetime import date
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core import config
 from app.core.constantes import ARCHIVO_TAMANO_MAXIMO
 from app.main import app
 from app.models.catalogos import CategoriaDocumento
+from app.models.identidad import HceDiurna, Persona, Profesional
 from app.models.transversales import Auditoria, AutorizacionImagen, Documento
 from app.services import documentos as servicio_doc
 from app.services import fechas
@@ -494,6 +496,68 @@ def test_la_carrera_por_la_autorizacion_es_409_y_no_un_500(client, categorias, h
     monkeypatch.setattr(Session, "get", _no_la_ve)
     r = client.post(f"/hce/{hid}/autorizacion-imagen", json={"registrada": False})
     assert r.status_code == 409 and r.json()["code"] == "conflict"
+
+
+def test_dos_altas_concurrentes_de_la_autorizacion_dan_exactamente_un_201(engine, hash_test, token_de):
+    """Dos requests **reales y simultáneos** (conexiones propias, con commit) sobre el mismo expediente: los dos pasan
+    la verificación previa a la vez y la PK(hce_id) decide. Uno 201, el otro 409 y una sola fila. Limpia lo que creó."""
+    from sqlalchemy.orm import sessionmaker
+
+    from app.core.database import get_db
+
+    Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    with Sesion() as s:
+        admin = Profesional(nombre="Zz Carrera", email="carrera-c5@ippu.test", rol="admin", activo=True, hashed_password=hash_test)
+        persona = Persona(nombre="A", apellido="B", ci="70000551", fecha_nac=date(2016, 1, 1))
+        s.add_all([admin, persona])
+        s.flush()
+        hce = HceDiurna(persona_id=persona.id, hc_historico=9551)
+        s.add(hce)
+        s.commit()
+        ids = (admin.id, persona.id, hce.id)
+        admin_obj = Profesional(id=admin.id)
+
+    barrera = threading.Barrier(2, timeout=10)
+    original = Session.get
+
+    def _ambas_pasan_la_verificacion(self, entidad, ident, **kw):
+        visto = original(self, entidad, ident, **kw)
+        if entidad is AutorizacionImagen:
+            barrera.wait()  # las dos ya miraron y no hay fila: ahora las dos intentan insertar
+        return visto
+
+    def _get_db():
+        s = Sesion()
+        try:
+            yield s
+        finally:
+            s.close()
+
+    estados: list[int] = []
+    Session.get = _ambas_pasan_la_verificacion
+    app.dependency_overrides[get_db] = _get_db
+    try:
+        def _post():
+            with TestClient(app, headers=token_de(admin_obj)) as c:
+                estados.append(c.post(f"/hce/{ids[2]}/autorizacion-imagen", json={"registrada": True}).status_code)
+
+        hilos = [threading.Thread(target=_post) for _ in range(2)]
+        for h in hilos:
+            h.start()
+        for h in hilos:
+            h.join(20)
+        assert sorted(estados) == [201, 409], estados
+        with Sesion() as s:
+            assert s.scalar(select(func.count()).select_from(AutorizacionImagen).where(AutorizacionImagen.hce_id == ids[2])) == 1
+    finally:
+        Session.get = original
+        app.dependency_overrides.pop(get_db, None)
+        with Sesion() as s:
+            s.execute(delete(HceDiurna).where(HceDiurna.id == ids[2]))  # la autorización y la auditoría caen por CASCADE
+            s.execute(delete(Auditoria).where(Auditoria.usuario_id == ids[0]))
+            s.execute(delete(Persona).where(Persona.id == ids[1]))
+            s.execute(delete(Profesional).where(Profesional.id == ids[0]))
+            s.commit()
 
 
 def test_un_documento_de_otro_expediente_en_la_autorizacion_es_422_y_uno_propio_pasa(client, categorias, hoy):

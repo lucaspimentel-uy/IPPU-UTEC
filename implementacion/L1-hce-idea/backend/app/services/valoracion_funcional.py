@@ -73,7 +73,7 @@ def obtener_vf(db: Session, hce_id: int, *, para_escribir: bool = False) -> Valo
     obtener_hce(db, hce_id)
     vf = db.get(ValoracionFuncional, hce_id, with_for_update=True if para_escribir else None)
     if vf is None:
-        raise NotFound(f"El expediente {hce_id} no tiene valoración funcional registrada")
+        raise NotFound("Este expediente no tiene valoración funcional registrada")
     return vf
 
 
@@ -159,7 +159,7 @@ def crear_vf(
     obtener_hce(db, hce_id)
     if db.get(ValoracionFuncional, hce_id) is not None:
         raise ConflictError(
-            f"El expediente {hce_id} ya tiene valoración funcional: se edita con PATCH",
+            "Este expediente ya tiene valoración funcional: se edita con PATCH",
             [(None, "Ya existe la valoración funcional del expediente")],
         )
     errores: list[tuple[str | None, str]] = []
