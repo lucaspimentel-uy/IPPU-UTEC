@@ -118,7 +118,7 @@ function confirmarAddenda(id, key){
 /* --- Modales de flujo (reusan #modalFlujo) --------------------------- */
 /* Dialogo modal accesible (Fase 3-d, §5.126; lo usa el «recibí» del IC conectado y los modales del expediente de ejemplo):
    role="dialog" + aria-modal en index.html; la app de atras queda inerte, el foco entra al primer campo (o al titulo),
-   Tab no sale del dialogo, Esc lo cierra (recordatorios.js) y el foco vuelve a quien lo abrio. */
+   Tab no sale del dialogo, Esc lo cierra (grupos-usuario.js; antes recordatorios.js) y el foco vuelve a quien lo abrio. */
 let FLUJO_MODAL_OPENER = null, FLUJO_MODAL_OPENER_ID = "", FLUJO_MODAL_ANCLA = null, FLUJO_MODAL_SNAP = "", FLUJO_MODAL_TOCADO = false;
 function openFlujoModal(title, sub, bodyHtml, footHtml){
   const m = document.getElementById("modalFlujo");

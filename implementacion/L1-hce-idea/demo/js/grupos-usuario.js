@@ -301,7 +301,9 @@ function renderUsuario(){
    El listener sobre `.navitem[data-view="usuarios"]` se retira porque ya no hay
    ningún elemento que lo matchee: no fallaba, pero quedaba como cableado muerto
    apuntando a un nodo inexistente. */
-document.querySelectorAll('.navitem[data-view="analitica"]').forEach(b=>b.addEventListener("click", renderRecordatorios));
-
 renderUsuario();
-renderRecordatorios();
+
+/* Escape cierra el diálogo abierto (venía de recordatorios.js, que se retiró en C7: los recordatorios del panel son de la API, panel.js).
+   El diálogo de alta/edición ya NO se cierra con un clic en el fondo (Fase 3-b): es un formulario largo y un clic de más perdería lo
+   tipeado; se cierra con «×», con Cancelar o con Escape, y con datos tipeados pide confirmar (Fase 3-e). */
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeAlta(); cerrarFlujoModalUsuario(); } });

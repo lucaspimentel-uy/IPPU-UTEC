@@ -1,8 +1,8 @@
 /* Capturas de pantalla de la demo CONECTADA (Fase 3-e · handoff §5.135): una imagen por pantalla a 1280×800 y a 1024×768, en
  * demo/verificacion/salidas/ (gitignored). Sirven para revisar a ojo la pasada visual; no comparan nada.
  *
- * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF · una vista de
- * modo demostración (Analítica). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
+ * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF. C7 reemplaza la
+ * captura de la Analítica de demostración por el Panel institucional conectado (`3e-panel` y `f1-panel-completa`). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
  * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC. F2 agrega Pendientes (con el filtro «Línea base»), el
  * listado de Grupos, un grupo abierto y —con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD— el diálogo «Asignar técnicos» del admin (se cierra sin guardar).
  * C4 agrega la inclusión de Sofía en lectura (`inc`, con una gestión «Sensible»), el formulario de la ficha (`inc-formulario`) y el de una
@@ -120,7 +120,10 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await page.evaluate(() => closeFlujoModal());
     await page.click('#btnAtDocCargar'); await page.waitForSelector('#modalFlujo.open #atdf_archivo');   await snap('ateneos-documento');
     await page.evaluate(() => closeFlujoModal());
-    await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
+    // C7: el Panel institucional (conectado): la parte de arriba y la página completa (con el heatmap de demostración al pie)
+    await page.click('.navitem[data-view="analitica"]'); await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
+    await page.evaluate(() => { document.getElementById('toast').classList.remove('show'); });   await snap('panel');
+    await snapCompleta('panel');
     // F1: página completa (la banda y la barra de acciones quedan donde las deja el desplazamiento)
     await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');
     await abrir('Martín', 'pb');                                          await snapCompleta('pb-resultado');

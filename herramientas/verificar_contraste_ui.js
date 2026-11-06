@@ -30,7 +30,9 @@
  *   Ateneos (C6): indicador y lista (cargando · error · vacío), el detalle de un clínico con acuerdos, documentos y un aviso, «no
  *   encontrado», los diálogos «Nuevo registro» (clínico con un acuerdo y errores de muestra; jornada), «Editar registro», «Agregar
  *   acuerdo» (con un error de muestra) y «Adjuntar documento», abiertos SIN guardar, y la tarjeta «Ateneos clínicos» de Martín.
- *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Perfil y el expediente de ejemplo.
+ *   Panel institucional (C7): el técnico y, con credenciales de admin, la institución; el año anterior; alertas, sin ciclo A → B y
+ *   sin expedientes (pintados con el render real sobre una copia de la respuesta, sin pedir nada); cargando y error.
+ *   MODO DEMOSTRACIÓN (se informan aparte): Perfil y el expediente de ejemplo (el heatmap del Panel se mide con el Panel).
  *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
@@ -462,11 +464,27 @@ function buscarContornosApagados() {
   anillos.push(await medirAnilloTeclado(page, '#expAteneosLista .exp-at-abrir', 'ateneo clínico en la tarjeta del expediente'));
   await page.click('.navitem[data-view="inicio"]');
 
-  // ---------------------------------------------------------------- VISTAS EN MODO DEMOSTRACIÓN
-  for (const v of ['analitica']) {
-    await page.click(`.navitem[data-view="${v}"]`); await esperar(120);
-    await cap(`Vista ${v} (modo demostración)`, 'demo');
-  }
+  // ---------------------------------------------------------------- PANEL INSTITUCIONAL (C7, conectado; el heatmap de la tarjeta sigue de demostración)
+  await page.click('.navitem[data-view="analitica"]');
+  await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 }); await esperar(150);
+  await cap('Panel institucional (técnico: sus grupos)');
+  anillos.push(await medirAnilloTeclado(page, '#panelAnio', 'lista desplegable (año del Panel)'));
+  anillos.push(await medirAnilloTeclado(page, '#panelRecordatorios [data-pend]', 'cuenta de un recordatorio (Panel → Pendientes)'));
+  await page.selectOption('#panelAnio', { index: 1 });
+  await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 }); await esperar(120);
+  await cap('Panel institucional · el año anterior (sin enlaces a Pendientes)');
+  await page.selectOption('#panelAnio', { index: 0 });
+  await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
+  // Lo que el seed no tiene (alertas, ningún ciclo A → B, n 0) se pinta con el render real sobre una copia de la respuesta: no se pide nada.
+  await ev(() => { const d = JSON.parse(JSON.stringify(PANEL.datos)); d.alertas = { nna_con_alguna: 2, escalas: d.alertas.escalas.map((x, i) => ({ escala: x.escala, cantidad: i % 2 })) }; d.bandas.fuera_de_catalogo = 1; PANEL.datos = d; panelPintar(); });
+  await esperar(100); await cap('Panel institucional · alertas por escala y un total fuera del catálogo (muestra)');
+  await ev(() => { const d = JSON.parse(JSON.stringify(PANEL.datos)); d.protocolo.n_ciclo_ab = 0; d.alertas.nna_con_alguna = 0; PANEL.datos = d; panelPintar(); });
+  await esperar(100); await cap('Panel institucional · sin ciclo A → B (estados vacíos de protocolo y alertas)');
+  await ev(() => { const d = JSON.parse(JSON.stringify(PANEL.datos)); d.n_activos = 0; PANEL.datos = d; panelPintar(); });
+  await esperar(100); await cap('Panel institucional · sin expedientes activos (estado vacío)');
+  await ev(() => { PANEL.estado = 'cargando'; panelPintar(); }); await esperar(80); await cap('Panel institucional · cargando');
+  await ev(() => { PANEL.estado = 'error'; PANEL.error = 'No se pudo cargar el panel (muestra).'; panelPintar(); }); await esperar(80); await cap('Panel institucional · error con «Reintentar»');
+  await ev(() => panelCargar()); await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
   await page.click('.userchip'); await esperar(120);
   await cap('Perfil de ejemplo (modo demostración)', 'demo');
   await page.click('.navitem[data-view="inicio"]');
@@ -790,6 +808,9 @@ function buscarContornosApagados() {
     await page.click('#btnCdDescartar'); await esperar(150);
     await page.click('#gruposList .h2-link >> nth=0'); await page.waitForSelector('#tablaGrupo'); await esperar(120);
     await cap('Grupos · un grupo abierto (admin, con «Asignar técnicos»)');
+    await page.click('.navitem[data-view="analitica"]');
+    await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 }); await esperar(150);
+    await cap('Panel institucional (admin: la institución)');
   } else {
     console.log('\n(Sin IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD: no se midió el diálogo de asignación de técnicos del admin.)');
   }

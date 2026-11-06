@@ -32,8 +32,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.limites import LimitesDelCuerpo
 from app.routers import (
-    ateneos, auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, protocolo,
-    referencias, severidad, valoracion_funcional,
+    ateneos, auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, panel,
+    protocolo, referencias, severidad, valoracion_funcional,
 )
 from app.routers.dependencias import usuario_actual
 from app.routers.errores import registrar_manejadores
@@ -91,6 +91,7 @@ for _router in (
     documentos.router_categorias, documentos.router_hce, documentos.router_autorizacion,
     fotos.router_hce, fotos.router_grupo,
     ateneos.router, ateneos.router_ateneo,
+    panel.router,
     referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)

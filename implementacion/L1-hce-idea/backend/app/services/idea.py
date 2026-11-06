@@ -34,7 +34,7 @@ una dimensión que nunca se tocó **no tiene entrada**.
 - **Auditoría:** crear escribe una fila `carga`; cada **campo** que cambia en un PATCH, una
   fila `edicion`; de `dim`, **una por dimensión cambiada**, con `campo='dim.Dn'`.
 """
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from sqlalchemy import select
@@ -91,6 +91,20 @@ def calcular_totales(dim: Mapping | None) -> dict[str, int | None]:
     return resultado
 
 
+def bandas(db: Session) -> list[BandaIdea]:
+    """El catálogo `banda_idea` entero, por `orden` e `id`: **una** consulta. Quien deriva muchas bandas a la
+    vez (el panel institucional, C7) lo trae una vez y usa `banda_en`; la regla es la misma que `banda_de`."""
+    return list(db.scalars(select(BandaIdea).order_by(BandaIdea.orden, BandaIdea.id)))
+
+
+def banda_en(catalogo: Sequence[BandaIdea], total: int | None) -> BandaIdea | None:
+    """La fila de `catalogo` (ya ordenado por `orden`, `id`) que cubre `total`; `None` sin total o sin tramo.
+    Si dos tramos se superponen gana el de menor `orden`."""
+    if total is None:
+        return None
+    return next((b for b in catalogo if b.total_min <= total <= b.total_max), None)
+
+
 def banda_de(db: Session, total: int | None) -> dict[str, Any] | None:
     """La banda del `total` según el catálogo `banda_idea` (D4); `None` si no hay total o ningún tramo lo cubre.
 
@@ -99,11 +113,7 @@ def banda_de(db: Session, total: int | None) -> dict[str, Any] | None:
     """
     if total is None:
         return None
-    banda = db.scalars(
-        select(BandaIdea)
-        .where(BandaIdea.total_min <= total, total <= BandaIdea.total_max)
-        .order_by(BandaIdea.orden, BandaIdea.id)
-    ).first()
+    banda = banda_en(bandas(db), total)
     if banda is None:
         return None
     return {

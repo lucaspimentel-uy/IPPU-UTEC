@@ -300,9 +300,11 @@ async function loguear(page) {
   const textoVistas = {};
   for (const [v, sel] of vistas) {
     await page.click(sel);
-    if (v === 'pendientes' || v === 'grupos' || v === 'inclusion' || v === 'ateneos') {   // F2, C4 y C6: ya no son de demostración (conectadas a la API): no llevan el panel
-      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : x === 'inclusion' ? INCV.estado : AT.lista.estado) === 'listo', v, { timeout: 8000 });
-      if ((await page.locator(`#view-${v} .demo-panel`).count()) !== 0) conPanel.push(v);
+    if (v === 'pendientes' || v === 'grupos' || v === 'inclusion' || v === 'ateneos' || v === 'analitica') {   // F2, C4, C6 y C7: ya no son de demostración (conectadas a la API): no llevan el panel
+      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : x === 'inclusion' ? INCV.estado : x === 'analitica' ? PANEL.estado : AT.lista.estado) === 'listo', v, { timeout: 8000 });
+      // C7: en el Panel institucional sólo la tarjeta del heatmap (demostración, §5.1.3) lleva el panel compartido
+      const fuera = await page.evaluate((x) => [...document.querySelectorAll(`#view-${x} .demo-panel`)].filter((e) => !e.closest('#panelHeatmap')).length, v);
+      if (fuera !== 0) conPanel.push(v);
     } else {
       const t = (await txt(page, `#view-${v} .demo-panel`)).replace(/\s+/g, ' ');
       const roleNote = await page.locator(`#view-${v} .demo-panel[role="note"]`).isVisible();
@@ -310,23 +312,31 @@ async function loguear(page) {
     }
     textoVistas[v] = await page.evaluate(() => document.body.innerText);
   }
-  check('3a-g3', 'Analítica y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2), Inclusión (conectada, C4) y Ateneos (conectada, C6) ya no lo llevan',
-    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '2/2 con panel, 4/4 sin panel');
+  check('3a-g3', 'Usuarios muestra el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2), Inclusión (conectada, C4), Ateneos (conectada, C6) y el Panel institucional (conectado, C7: sólo la tarjeta del heatmap lo lleva) ya no lo llevan',
+    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '1/1 con panel, 5/5 sin panel');
   check('3a-u', '«Mi usuario» (vista de ejemplo) no afirma ser la cuenta con sesión iniciada',
     !/sesión iniciada|datos de la cuenta|mi perfil/i.test(await txt(page, '#view-usuarios')) && /Perfil de ejemplo/.test(await txt(page, '#view-usuarios')),
     (await txt(page, '#view-usuarios .pagedesc')).trim());
   const conFase = Object.entries(textoVistas).filter(([, t]) => /Fase\s*3|Fase\s*\d-[a-e]/.test(t)).map(([v]) => v);
   check('3a-f0', 'ninguna vista visible menciona «Fase 3…» (las etapas son interna del equipo)', conFase.length === 0, conFase.join(',') || '6 vistas');
-  await page.click('.navitem[data-view="analitica"]');      // F2: Grupos ya es de la API; C4: Inclusión también; C6: Ateneos también. Queda la Analítica (sus recordatorios)
-  const gruposTxt = await txt(page, '#view-analitica');
-  await page.click('#view-analitica button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
-  await page.waitForSelector('#expedienteContent .demo-panel', { timeout: 5000 });
-  check('3a-g4', 'un NNA abierto desde una vista de demostración (los recordatorios de la Analítica; desde C6 Ateneos es de la API) abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
-    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Analítica');
+  /* C7: ninguna vista conectada abre el expediente de EJEMPLO (los ids de la demo y los de la API nunca se mezclan). Los
+     recordatorios del Panel eran el último lugar que lo abría; el código del expediente de ejemplo queda (3a-g5 lo usa). */
+  await page.click('.navitem[data-view="inicio"]');
+  await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+  const abrenDemo = [];
+  for (const [v, sel] of [['inicio', null], ...vistas.filter(([x]) => x !== 'usuarios')]) {
+    if (sel) {
+      await page.click(sel);
+      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : x === 'inclusion' ? INCV.estado : x === 'analitica' ? PANEL.estado : AT.lista.estado) === 'listo', v, { timeout: 8000 });
+    }
+    if (await page.evaluate((x) => /abrirExpedienteDemo/.test(document.getElementById('view-' + x).innerHTML), v)) abrenDemo.push(v);
+  }
+  check('3a-g4', 'ninguna vista conectada (Inicio, Pendientes, Grupos, Inclusión, Ateneos y, desde C7, el Panel institucional) abre el expediente de EJEMPLO: no hay abrirExpedienteDemo en su HTML (los ids de la demo y los de la API no se mezclan)',
+    abrenDemo.length === 0, abrenDemo.join(',') || '6 vistas sin abrirExpedienteDemo');
 
   const humo = await page.evaluate(() => {
     try {
-      abrirExpedienteDemo(102); renderUsuario(); renderNNA();
+      abrirExpedienteDemo(102); renderUsuario();   // C7: renderNNA() se retiró (sólo recalculaba la analítica de ejemplo)
       return 'ok';
     } catch (e) { return 'ERROR: ' + e.message; }
   });
@@ -2355,14 +2365,21 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const reglasClinicas = sinComentarios(css).split('}').filter((r) => /(\.banda-|\.score-badge|\.banda-chip|\.vf-cat)/.test(r.split('{')[0]) && /--(ok|warn|bad)\b/.test(r));
     const demo = await pv.evaluate(() => ({ bandas: IDEA_BANDAS.every((b) => Number.isInteger(b.paso) && b.paso >= 1 && b.paso <= 6 && !('color' in b)), colorBanda: typeof colorBanda, pasos: IDEA_BANDAS.map((b) => b.paso).join('') }));
     await pv.evaluate(() => { go('analitica'); });
-    await pv.waitForTimeout(150);
-    const ana = await pv.evaluate(() => ({ bandasFill: [...document.querySelectorAll('#distChart .fill')].map((f) => f.getAttribute('style')), cifrasFuera: document.querySelectorAll('#view-analitica .hbar-num').length, textoEnFill: [...document.querySelectorAll('#view-analitica .fill')].filter((f) => f.textContent.trim()).length,
-      heat: [...document.querySelectorAll('.heat-cell')].map((c) => [getComputedStyle(c).backgroundColor, getComputedStyle(c).color]) }));
-    check('3e-color1', 'la regla de color: las 6 bandas del IDEA del modo demostración usan un paso de la rampa de un solo matiz (sin ok/warn/bad, sin colorBanda), la distribución por banda de Analítica pinta con var(--rampa-N) y ninguna regla de .banda-*/.score-badge del CSS usa ok/warn/bad',
-      demo.bandas && demo.colorBanda === 'undefined' && demo.pasos === '123456' && enBandas.length === 0 && reglasClinicas.length === 0 && ana.bandasFill.length === 6 && ana.bandasFill.every((s) => /var\(--rampa-[1-6]\)/.test(s) && !/--(ok|warn|bad)/.test(s)),
-      JSON.stringify({ demo, enBandas: enBandas.length, reglasClinicas: reglasClinicas.length, fills: ana.bandasFill.length }));
-    check('3e-color2', 'Analítica (modo demostración): las cifras de las barras viven fuera del relleno (nada de texto sobre el color de la serie) y cada celda del heatmap usa un texto elegido contra su fondo',
-      ana.cifrasFuera >= 10 && ana.textoEnFill === 0 && ana.heat.length === 24, JSON.stringify({ cifrasFuera: ana.cifrasFuera, textoEnFill: ana.textoEnFill, celdas: ana.heat.length }));
+    await pv.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
+    const ana = await pv.evaluate(() => {
+      const tinta = (() => { const e = document.createElement('span'); e.style.color = 'var(--ink)'; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; })();
+      const estados = ['--ok', '--warn', '--bad'].map((v) => { const e = document.createElement('span'); e.style.color = `var(${v})`; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; });
+      const deltaYAlertas = [...document.querySelectorAll('#panelProtocolo td.num, #panelAlertas .panel-alerta-n, #panelAlertas .estado-msg')];
+      return { chips: [...document.querySelectorAll('#panelBandas .banda-chip')].map((c) => c.getAttribute('data-banda-paso')),
+        chipsConEstado: [...document.querySelectorAll('#panelBandas .banda-chip')].filter((c) => estados.includes(getComputedStyle(c).backgroundColor) || estados.includes(getComputedStyle(c).color)).length,
+        deltaYAlertas: deltaYAlertas.length, noTinta: deltaYAlertas.filter((e) => getComputedStyle(e).color !== tinta).map((e) => e.textContent.trim()),
+        heat: [...document.querySelectorAll('.heat-cell')].map((c) => [getComputedStyle(c).backgroundColor, getComputedStyle(c).color]) };
+    });
+    check('3e-color1', 'la regla de color: las 6 bandas del IDEA del modo demostración usan un paso de la rampa de un solo matiz (sin ok/warn/bad, sin colorBanda), la distribución por banda del Panel institucional (conectado, C7) pinta cada banda con el chip de la rampa (pasos 1–6 en el orden del catálogo, nunca ok/warn/bad) y ninguna regla de .banda-*/.score-badge del CSS usa ok/warn/bad',
+      demo.bandas && demo.colorBanda === 'undefined' && demo.pasos === '123456' && enBandas.length === 0 && reglasClinicas.length === 0 && ana.chips.join('') === '123456' && ana.chipsConEstado === 0,
+      JSON.stringify({ demo, enBandas: enBandas.length, reglasClinicas: reglasClinicas.length, chips: ana.chips, chipsConEstado: ana.chipsConEstado }));
+    check('3e-color2', 'Panel institucional (C7): el Δ medio y las alertas van en tinta (glifo + texto, ningún color de estado) y cada celda del heatmap de demostración usa un texto elegido contra su fondo',
+      ana.deltaYAlertas >= 4 && ana.noTinta.length === 0 && ana.heat.length === 24, JSON.stringify({ deltaYAlertas: ana.deltaYAlertas, noTinta: ana.noTinta, celdas: ana.heat.length }));
     // los estados cargando / error / vacío son UN componente en todas las pantallas conectadas
     const fuenteConectada = js.filter(([f]) => ['ui-core.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'expediente.js'].includes(f)).map(([f, t]) => [f, sinComentarios(t)]);
     const artesanales = fuenteConectada.flatMap(([f, t]) => t.split('\n').map((l, i) => [f, i + 1, l]).filter(([, , l]) => /class="hint" role="status">Cargando|class="empty-state" role="(alert|status)"|<div class="big" aria-hidden="true">!<\/div>\$\{escHtml/.test(l)));
@@ -2399,8 +2416,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
       marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null && !e.closest('.exp-tab')).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
       r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
-    for (const v of ['analitica']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica); C4: Inclusión tampoco (c4-vista); C6: Ateneos tampoco (c6-lista)
-      await pv.waitForTimeout(60); await leer(v); }
+    for (const v of ['analitica']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica); C4: Inclusión tampoco (c4-vista); C6: Ateneos tampoco (c6-lista); C7: del Panel sólo queda la tarjeta del heatmap (c7-demo)
+      await pv.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 }); await leer(v); }
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
     await pv.evaluate((i) => abrirExpediente(i), idMartinV); await pv.waitForSelector('#expTitulo'); await pv.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
@@ -2408,7 +2425,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
-    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedaban 6 paneles y 3 marcas; C5: sin la pestaña DOC, 5 y 2 (su marca iba en el encabezado de su panel); C6: sin la vista Ateneos, 4 y 2
+    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedaban 6 paneles y 3 marcas; C5: sin la pestaña DOC, 5 y 2 (su marca iba en el encabezado de su panel); C6: sin la vista Ateneos, 4 y 2; C7: el panel de la vista Analítica pasa a la tarjeta del heatmap: siguen 4 y 2
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
       nPaneles >= 4 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 2 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
@@ -2610,7 +2627,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && enTabs.every((t) => t.visible && t.txt.includes('⚠') && t.txt.includes('Alerta clínica') && t.txt.includes(textoAlerta) && t.color === hexF(t.ink) && t.borde === hexF(t.ink)), JSON.stringify(enTabs.slice(0, 3)).slice(0, 400));
 
     /* ---------- f1-h: sin la vista «Intermedia» (ruta, manejador, entrada de navegación, reglas .lik-*) y sin los textos de desarrollo ---------- */
-    const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'recordatorios.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];
+    const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'panel.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];   // C7: panel.js reemplaza a recordatorios.js
     const fuentesF1 = await leerFuentes(archivos);
     const halla = (re) => fuentesF1.filter(([, t]) => re.test(t)).map(([f]) => f);
     const prohibidosF1 = { vista: halla(/view-intermedia|data-view="intermedia"|go\(['"]intermedia['"]\)/), manejador: halla(/lik-opts|likSel|likFormula/), reglas: fuentesF1.filter(([f, t]) => f.endsWith('.css') && /\.lik-[a-z]/.test(t)).map(([f]) => f),
@@ -4298,6 +4315,180 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         JSON.stringify({ cuerpoSacar, cuerpoAsignar, rolPrecargado, tarjeta, api: trasAsignar.tecnico1 }));
     }
     await A.c.close(); await T.c.close();
+  }
+
+  /* =====================================================================================================================
+     C7 · PANEL INSTITUCIONAL CONECTADO (handoff §5.159; GET /panel?anio=, GET /recordatorios)
+     Todo número de la pantalla se compara con GET /panel (o con la respuesta simulada de c7-sin-calculo): el navegador sólo
+     formatea. c7-alcance ESCRIBE (saca a la Mtra. Torres de todos sus grupos para tener un técnico sin grupo): va al final.
+     =================================================================================================================== */
+  {
+    const entrar = async (email, pass) => {
+      const { ctx: c, page: pg } = await nuevaPagina();
+      await pg.setViewportSize({ width: 1280, height: 800 });
+      await pg.goto(urlDemo());
+      await pg.fill('#loginUser', email); await pg.fill('#loginPass', pass); await pg.click('#loginBtn');
+      await pg.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      const token = await pg.evaluate(() => sessionStorage.getItem('ippu.token'));
+      const apiX = async (metodo, ruta, body) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+        let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json }; };
+      return { c, pg, apiX };
+    };
+    const abrirPanel = async (pg) => {
+      await pg.click('.navitem[data-view="analitica"]');
+      await pg.waitForFunction(() => PANEL.estado === 'listo' || PANEL.estado === 'error', null, { timeout: 8000 });
+    };
+    const anioHoy = new Date().getFullYear();
+    /* El texto que la pantalla tiene que mostrar para cada número de GET /panel: sólo formato (coma decimal, signo, «N NNA»). */
+    const dec = (v) => (v === null || v === undefined ? '—' : v.toFixed(1).replace('.', ','));
+    const dlt = (v) => (v === null || v === undefined ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ','));
+    const esperado = (d) => {
+      const e = { n_activos: String(d.n_activos), 'cobertura_lb.porcentaje': d.cobertura_lb.porcentaje === null ? '—' : `${d.cobertura_lb.porcentaje} %`,
+        'cobertura_lb.cantidad': String(d.cobertura_lb.cantidad), 'ciclos_completos.cantidad': String(d.ciclos_completos.cantidad),
+        'protocolo.n_ciclo_ab': String(d.protocolo.n_ciclo_ab), 'alertas.nna_con_alguna': String(d.alertas.nna_con_alguna),
+        'bandas.sin_idea_firmado': `${d.bandas.sin_idea_firmado} NNA`, 'pendientes_flujo.ci': `${d.pendientes_flujo.ci} NNA` };
+      d.bandas.filas.forEach((f, i) => { e[`bandas.filas.${i}.cantidad`] = `${f.cantidad} NNA`; });
+      if (d.bandas.fuera_de_catalogo) e['bandas.fuera_de_catalogo'] = `${d.bandas.fuera_de_catalogo} NNA`;
+      if (d.protocolo.n_ciclo_ab) d.protocolo.escalas.forEach((x) => { e[`protocolo.${x.escala}.media_pa`] = dec(x.media_pa); e[`protocolo.${x.escala}.media_pb`] = dec(x.media_pb); e[`protocolo.${x.escala}.media_delta`] = dlt(x.media_delta); });
+      if (d.alertas.nna_con_alguna) d.alertas.escalas.forEach((x) => { e[`alertas.${x.escala}.cantidad`] = x.cantidad ? `${x.cantidad} NNA con alerta` : 'Ninguno'; });
+      for (const k of ['lb', 'pa', 'pb', 'ic']) e[`pendientes_flujo.${k}`] = d.pendientes_flujo[k] ? `${d.pendientes_flujo[k]} NNA sin firmar` : 'Ninguno';
+      if (d.n_activos === 0) for (const k of Object.keys(e)) if (!k.startsWith('pendientes_flujo')) delete e[k];   // sin expedientes: sólo los recordatorios
+      return e;
+    };
+    /* Compara cada [data-c7] de la pantalla con lo esperado; devuelve las diferencias y cuántas claves se miraron. */
+    const comparar = async (pg, d) => {
+      const pantalla = await pg.evaluate(() => [...document.querySelectorAll('#panelContenido [data-c7]')].map((e) => [e.getAttribute('data-c7'), e.textContent.trim()]));
+      const e = esperado(d), dif = [];
+      for (const [k, v] of Object.entries(e)) { const enPant = pantalla.filter(([x]) => x === k).map(([, t]) => t); if (!enPant.length || enPant.some((t) => t !== v)) dif.push(`${k}: ${JSON.stringify(enPant)} ≠ ${v}`); }
+      for (const [k] of pantalla) if (!(k in e)) dif.push(`${k}: en pantalla y no en la API`);
+      const chips = await pg.evaluate(() => [...document.querySelectorAll('#panelBandas .banda-chip')].map((c) => c.textContent.replace(/\s+/g, ' ').trim()));
+      if (d.n_activos) d.bandas.filas.forEach((f, i) => { if (chips[i] !== `Banda ${f.perfil} · ${f.total_min}–${f.total_max}`) dif.push(`chip ${i}: ${chips[i]}`); });
+      return { dif, claves: Object.keys(e).length };
+    };
+
+    const G = await entrar(EMAIL, PASSWORD);
+    await abrirPanel(G.pg);
+    const apiG = (await G.apiX('GET', `/panel?anio=${anioHoy}`)).json;
+    const numG = await comparar(G.pg, apiG);
+    const descG = await G.pg.evaluate(() => document.getElementById('panelDesc').textContent);
+    check('c7-numeros', `cada número del Panel institucional (KPI, bandas, protocolo, alertas, recordatorios) es el de GET /panel?anio=${anioHoy}, con el formato de la pantalla y nada más; las bandas son las del catálogo, en su orden`,
+      numG.dif.length === 0 && numG.claves >= 20 && (await G.pg.locator('#panelKpi .kpi').count()) === 4, numG.dif.slice(0, 6).join(' | ') || `${numG.claves} valores`);
+
+    /* c7-anio · el selector de año vuelve a pedir el panel con ?anio= */
+    const opciones = await G.pg.evaluate(() => [...document.querySelectorAll('#panelAnio option')].map((o) => o.value));
+    await G.pg.evaluate(() => { document.getElementById('panelAnio').dataset.c7Marca = '1'; });   // el mismo nodo después de recargar: el selector no se repinta
+    const pedido = G.pg.waitForRequest((r) => new URL(r.url()).pathname === '/panel');
+    await G.pg.selectOption('#panelAnio', String(anioHoy - 1));
+    const rAnio = new URL((await pedido).url()).searchParams.get('anio');
+    await G.pg.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
+    const apiPrev = (await G.apiX('GET', `/panel?anio=${anioHoy - 1}`)).json;
+    const numPrev = await comparar(G.pg, apiPrev);
+    const prev = await G.pg.evaluate(() => ({ lab: document.querySelector('#panelKpi .kpi .lab').textContent, enlaces: document.querySelectorAll('#panelRecordatorios [data-pend]').length, mismo: document.getElementById('panelAnio').dataset.c7Marca === '1' }));
+    check('c7-anio', `el selector ofrece ${anioHoy} y ${anioHoy - 1}; elegir ${anioHoy - 1} pide GET /panel?anio=${anioHoy - 1}, la pantalla muestra esos números (cobertura «${anioHoy - 1}») y los recordatorios no enlazan a Pendientes (que es del año en curso); el selector no se repinta (es el mismo nodo: no pierde el foco)`,
+      JSON.stringify(opciones) === JSON.stringify([String(anioHoy), String(anioHoy - 1)]) && rAnio === String(anioHoy - 1) && numPrev.dif.length === 0 && prev.lab.includes(String(anioHoy - 1)) && prev.enlaces === 0 && prev.mismo,
+      JSON.stringify({ opciones, rAnio, dif: numPrev.dif.slice(0, 3), prev }));
+    await G.pg.selectOption('#panelAnio', String(anioHoy));
+    await G.pg.waitForFunction((a) => PANEL.estado === 'listo' && PANEL.datos.anio === a, anioHoy, { timeout: 8000 });
+
+    /* c7-recordatorios · textos de GET /recordatorios; una cuenta abre Pendientes con su filtro */
+    const recsApi = (await G.apiX('GET', '/recordatorios')).json;
+    const recsPant = await G.pg.evaluate(() => [...document.querySelectorAll('#panelRecordatorios tbody tr')].map((tr) => [tr.getAttribute('data-clave'), tr.cells[0].textContent.trim(), tr.cells[1].textContent.trim(), tr.cells[2].textContent.trim(), !!tr.querySelector('[data-pend]')]));
+    const editable = await G.pg.locator('#panelRecordatorios input, #panelRecordatorios select, #panelRecordatorios textarea').count();
+    const conCuenta = ['lb', 'pa', 'pb', 'ic'].find((k) => apiG.pendientes_flujo[k] > 0);
+    let pend = null;
+    if (conCuenta) {
+      await G.pg.click(`#panelRecordatorios [data-pend="${conCuenta}"]`);
+      await G.pg.waitForFunction(() => PEND.estado === 'listo' && !!document.getElementById('tbodyPend'), null, { timeout: 8000 });
+      pend = await G.pg.evaluate(() => ({ vista: document.querySelector('.view.active').id, filtro: PEND.filtro, chip: ((document.querySelector('#pendContenido .chip-estado.active') || {}).dataset || {}).filtro, foco: document.activeElement.id }));
+    }
+    check('c7-recordatorios', 'la tarjeta «Recordatorios» lista GET /recordatorios en su orden (texto, período, «Activo»/«Inactivo»), sin campos editables; sólo lb, pa, pb e ic llevan cuenta, y una cuenta abre Pendientes con ese filtro y el foco en su título',
+      JSON.stringify(recsPant.map((r) => r.slice(0, 4))) === JSON.stringify(recsApi.map((r) => [r.clave, r.texto, r.periodo, r.activo ? 'Activo' : 'Inactivo'])) && editable === 0
+        && recsPant.filter((r) => r[4]).every((r) => ['lb', 'pa', 'pb', 'ic'].includes(r[0])) && !!conCuenta && pend.vista === 'view-pendientes' && pend.filtro === conCuenta && pend.chip === conCuenta && pend.foco === 'tituloPendientes',
+      JSON.stringify({ n: [recsPant.length, recsApi.length], editable, conCuenta, pend }));
+
+    /* c7-sin-calculo · con una respuesta simulada de GET /panel la pantalla muestra ESOS números: no calcula nada */
+    const falso = JSON.parse(JSON.stringify(apiG));
+    Object.assign(falso, { n_activos: 23, alcance: 'mis_grupos' });
+    falso.cobertura_lb = { cantidad: 11, de: 23, porcentaje: 37 };
+    falso.ciclos_completos = { cantidad: 4, de: 23, porcentaje: 99 };
+    falso.bandas.filas.forEach((f, i) => { f.cantidad = 10 + i; });
+    Object.assign(falso.bandas, { sin_idea_firmado: 7, fuera_de_catalogo: 2 });
+    falso.protocolo = { n_ciclo_ab: 5, escalas: falso.protocolo.escalas.map((x, i) => ({ escala: x.escala, media_pa: 12.3 + i, media_pb: 7.1, media_delta: i === 0 ? -1.5 : i === 1 ? 0 : 8.4 })) };
+    falso.alertas = { nna_con_alguna: 3, escalas: falso.alertas.escalas.map((x, i) => ({ escala: x.escala, cantidad: i === 2 ? 0 : i + 1 })) };
+    falso.pendientes_flujo = { ci: 6, lb: 0, pa: 13, pb: 14, ic: 15 };
+    await G.pg.evaluate(() => go('inicio'));
+    await G.pg.route((u) => u.pathname === '/panel', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(falso) }));
+    await abrirPanel(G.pg);
+    const numF = await comparar(G.pg, falso);
+    const fuente = await (await fetch(DEMO + '/js/panel.js')).text();
+    const sinComent = fuente.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const aritmetica = sinComent.split('\n').filter((l) => /\.reduce\(|Math\.round|\bNNA\.(filter|map|find|length|forEach|some|every)\b|\/\s*d\.n_activos|\*\s*100/.test(l));
+    check('c7-sin-calculo', 'con GET /panel simulado (números inventados e incoherentes entre sí a propósito: 99 % de ciclos con 4 de 23) la pantalla muestra exactamente esos números, y panel.js no suma, no promedia, no redondea ni lee el arreglo de ejemplo NNA',
+      numF.dif.length === 0 && numF.claves >= 25 && aritmetica.length === 0, (numF.dif.slice(0, 5).join(' | ') || `${numF.claves} valores`) + (aritmetica.length ? ' · ' + aritmetica.join(' / ') : ''));
+    await G.pg.unroute((u) => u.pathname === '/panel');
+
+    /* c7-error · un 500 de GET /panel: error compartido (role=alert) con «Reintentar», que vuelve a pedir y pinta */
+    await G.pg.unrouteAll({ behavior: 'ignoreErrors' });
+    await G.pg.evaluate(() => go('inicio'));
+    let fallas = 1;
+    await G.pg.route((u) => u.pathname === '/panel', async (route) => { if (fallas-- > 0) await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ code: 'error_interno', detail: [{ campo: null, mensaje: 'Error de prueba (c7)' }] }) }); else await route.continue(); });
+    await abrirPanel(G.pg);
+    const err = await G.pg.evaluate(() => { const e = document.querySelector('#panelContenido .estado-error'); return { estado: PANEL.estado, rol: e ? e.getAttribute('role') : null, boton: !!document.querySelector('#panelContenido [data-reintentar]') }; });
+    await G.pg.click('#panelContenido [data-reintentar]');
+    await G.pg.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
+    const trasReintentar = await comparar(G.pg, apiG);
+    check('c7-error', 'un error de GET /panel se muestra con el estado compartido (role="alert") y «Reintentar»; reintentar vuelve a pedir y pinta los números de la API',
+      err.estado === 'error' && err.rol === 'alert' && err.boton && trasReintentar.dif.length === 0, JSON.stringify({ err, dif: trasReintentar.dif.slice(0, 3) }));
+    await G.pg.unrouteAll({ behavior: 'ignoreErrors' });
+
+    /* c7-demo · sólo la tarjeta del heatmap conserva una marca de demostración; nada de «Pipeline» */
+    const demo = await G.pg.evaluate(() => { const v = document.getElementById('view-analitica');
+      const marcas = [...v.querySelectorAll('[data-modo-demo], .demo-panel, .solo-demo')];
+      return { total: marcas.length, fueraHeat: marcas.filter((e) => !e.closest('#panelHeatmap')).length, enHeat: !!document.querySelector('#panelHeatmap .demo-panel[role="note"]'),
+        pipeline: /Pipeline|Ingesta|anonimizaci|reporte automático|Informe:.*INAU/i.test(v.innerText), abreDemo: /abrirExpedienteDemo/.test(v.innerHTML), viejos: ['anKpi', 'distChart', 'escalasChart', 'protChart', 'recordatoriosBody'].filter((id) => document.getElementById(id)).length }; });
+    check('c7-demo', 'en el Panel institucional sólo la tarjeta del heatmap lleva el panel compartido «Modo demostración»; no hay «Pipeline» ni «reporte a INAU», no se abre el expediente de ejemplo y no quedan los contenedores de la analítica de ejemplo',
+      demo.total >= 1 && demo.fueraHeat === 0 && demo.enHeat && !demo.pipeline && !demo.abreDemo && demo.viejos === 0, JSON.stringify(demo));
+
+    /* c7-salir · «Salir» con GET /panel todavía sin respuesta: al llegar, la vista sigue vacía */
+    await G.pg.evaluate(() => go('inicio'));
+    await G.pg.route((u) => u.pathname === '/panel', async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue().catch(() => {}); });
+    await G.pg.click('.navitem[data-view="analitica"]');
+    await G.pg.click('.btn-exit');
+    await G.pg.waitForTimeout(2200);
+    const salir = await G.pg.evaluate(() => ({ contenido: document.getElementById('panelContenido').innerHTML.trim(), desc: document.getElementById('panelDesc').textContent, filtros: document.getElementById('panelFiltros').innerHTML.trim(),
+      estado: PANEL.estado, datos: PANEL.datos, recs: PANEL.recs.length, login: !document.getElementById('loginScreen').classList.contains('hidden') }));
+    check('c7-salir', '«Salir» con GET /panel todavía sin respuesta: al llegar, el Panel sigue vacío (sin números, descripción ni selector) y sin datos de la sesión anterior, con el login a la vista',
+      salir.contenido === '' && salir.desc === '' && salir.filtros === '' && salir.estado === 'vacio' && salir.datos === null && salir.recs === 0 && salir.login, JSON.stringify(salir));
+    await G.c.close();
+
+    /* c7-alcance · González (técnico) y el admin ven el alcance y el n que dice la API; un técnico sin grupo, los estados vacíos.
+       ESCRIBE: saca a la Mtra. Torres de todos sus grupos (base descartable; es lo último que corre). */
+    const A = await entrar(ADMIN_EMAIL, ADMIN_PASSWORD);
+    await abrirPanel(A.pg);
+    const apiA = (await A.apiX('GET', `/panel?anio=${anioHoy}`)).json;
+    const numA = await comparar(A.pg, apiA);
+    const descA = await A.pg.evaluate(() => document.getElementById('panelDesc').textContent);
+    const grupos = [];
+    for (const a of [anioHoy, anioHoy - 1, anioHoy - 2]) grupos.push(...(await A.apiX('GET', `/grupos?anio=${a}`)).json);
+    const torres = (await A.apiX('GET', '/profesionales')).json.find((p) => p.nombre === 'Mtra. Torres');
+    for (const g of grupos) {
+      const cuerpo = {};
+      if (g.tecnico1 && g.tecnico1.id === torres.id) Object.assign(cuerpo, { tecnico1_id: null, tecnico1_rol: null });
+      if (g.tecnico2 && g.tecnico2.id === torres.id) Object.assign(cuerpo, { tecnico2_id: null, tecnico2_rol: null });
+      if (Object.keys(cuerpo).length) await A.apiX('PATCH', `/grupos/${g.id}`, cuerpo);
+    }
+    await A.c.close();
+    const S = await entrar('torres@demo.ippu.test', PASSWORD);
+    await abrirPanel(S.pg);
+    const apiS = (await S.apiX('GET', `/panel?anio=${anioHoy}`)).json;
+    const numS = await comparar(S.pg, apiS);
+    const vacio = await S.pg.evaluate(() => ({ desc: document.getElementById('panelDesc').textContent, vacio: !!document.querySelector('#panelVacio .estado-vacio'), kpis: document.querySelectorAll('#panelKpi').length,
+      recs: !!document.getElementById('panelRecordatorios') }));
+    check('c7-alcance', `González ve «de tus grupos» (alcance ${apiG.alcance}, n ${apiG.n_activos}) y el admin «de la institución» (alcance ${apiA.alcance}, n ${apiA.n_activos}), cada número como su GET /panel; un técnico sin grupo (Mtra. Torres, sacada de sus grupos) recibe n 0 y ve el estado vacío, con los recordatorios en «Ninguno» y sin KPI`,
+      apiG.alcance === 'mis_grupos' && apiA.alcance === 'institucion' && descG.includes(`sobre ${apiG.n_activos} expedientes activos de tus grupos`) && descA.includes(`sobre ${apiA.n_activos} expedientes activos de la institución`) && numA.dif.length === 0
+        && apiS.alcance === 'mis_grupos' && apiS.n_activos === 0 && numS.dif.length === 0 && vacio.vacio && vacio.kpis === 0 && vacio.recs && vacio.desc.includes('sobre 0 expedientes activos de tus grupos'),
+      JSON.stringify({ g: [apiG.alcance, apiG.n_activos], a: [apiA.alcance, apiA.n_activos], s: [apiS.alcance, apiS.n_activos], dif: [...numA.dif, ...numS.dif].slice(0, 3), vacio }));
+    await S.c.close();
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));

@@ -17,11 +17,12 @@ function go(view){
     if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   window.scrollTo({top:0});
-  /* Las vistas conectadas piden sus datos cada vez que se abren (pendientes.js, grupos-usuario.js, inclusion.js, ateneos.js). */
+  /* Las vistas conectadas piden sus datos cada vez que se abren (pendientes.js, grupos-usuario.js, inclusion.js, ateneos.js, panel.js). */
   if(view === "pendientes" && typeof pendAlAbrir === "function") pendAlAbrir();
   if(view === "grupos" && typeof gruposAlAbrir === "function") gruposAlAbrir();
   if(view === "inclusion" && typeof incVistaAlAbrir === "function") incVistaAlAbrir();
   if(view === "ateneos" && typeof atAlAbrir === "function") atAlAbrir();   // C6: lista + indicador (o el registro pedido desde un expediente)
+  if(view === "analitica" && typeof panelAlAbrir === "function") panelAlAbrir();   // C7: GET /panel + GET /recordatorios
   if(typeof fotosLiberarVista === "function") fotosLiberarVista(view);   // C5: las miniaturas (Blob URLs) de la vista que se deja se revocan
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
@@ -269,16 +270,10 @@ function toggleActivo(id){
     delete p.bajaFecha;
     p.historial.push({tipo:"note", fecha:hoy, titulo:"Reactivación", desc:"NNA reactivado en el programa (demo)."});
   }
-  renderNNA();
   abrirExpedienteDemo(id);
   toast(p.activo ? `${p.nombre} reactivado` : `${p.nombre} dado de baja`);
 }
 
-function renderNNA(){
-  // Fase 3-a: el listado y los KPIs de Inicio ya no salen de este array (ver «INICIO CONECTADO»).
-  // Esta funcion sigue para las vistas que quedan en modo demostracion.
-  renderAnalitica();   // la analítica institucional se deriva del mismo modelo: se recalcula con cada cambio
-}
 function setKpi(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 
 /* La vista Pendientes ya no es de demostración: vive en pendientes.js (conectada a GET /hce y GET /recordatorios). */
@@ -290,146 +285,7 @@ function scrollASeccion(anchorId){
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
-renderNNA();
-
-/* ================= ANALÍTICA INSTITUCIONAL — INDICADORES CALCULADOS =================
-   Esta vista se calcula desde el modelo (array NNA + motor de flujo de M1). Antes eran
-   constantes: los KPIs vivían en el markup y las series, acá. Dos reglas duras la acotan:
-
-   §5.2 (no-homologabilidad) — IDEA y Escala IPPU-TEA miden constructos distintos y con
-     lógica de puntaje inversa (el IDEA BAJA cuando hay mejora; la IPPU-TEA SUBE). No se
-     suman, no se promedian juntas y no comparten eje: van en dos tarjetas separadas.
-   §5.1.3 — el heatmap de talleres queda fuera de alcance: sigue con datos de muestra,
-     no se calcula, y el markup lo rotula como tal.
-
-   Lo que ya NO se puede calcular, y por qué: esta vista mostraba "IDEA enero vs noviembre".
-   Desde M4 el IDEA es línea base ÚNICA (se quitó la lógica anual), así que ese segundo
-   punto temporal no existe en el modelo. La única lectura de evolución legítima es el
-   delta B−A de la IPPU-TEA, que ya calculó el motor al firmar el Protocolo B
-   (flujo.pb.deltas): acá se promedia, nunca se recalcula.
-
-   Declaradas como `function` a propósito: renderNNA() —que corre antes en este archivo—
-   llama a renderAnalitica(), y un `const` de sección quedaría en zona muerta temporal.
-   Misma familia de trampa que la del hoisting descrita en handoff §5.5.2. */
-
-function promedio(xs){ return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; }
-function fmt1(v){ return v==null ? "—" : v.toFixed(1).replace(".", ","); }
-
-/* Agregados poblacionales. Sólo NNA ACTIVOS: un expediente dado de baja no cuenta ni
-   para la cobertura ni para los promedios del padrón. */
-function analiticaAgregados(){
-  const activos = NNA.filter(n=>n.activo);
-  const conLB   = activos.filter(tieneLBFirmada);
-
-  /* IDEA — sólo líneas base firmadas y completas. Una dimensión en 'NS' haría que el total
-     no sea comparable con el del resto; validarIntegridad ya impide firmar así, este filtro
-     es la red por si el dato llegara de otro lado. */
-  const lbs     = conLB.map(n=>lbTotales(n.flujo.lb.dim)).filter(t=>!t.hayNS && t.count===12);
-  const ideaEsc = [0,1,2,3].map(i=>promedio(lbs.map(t=>t.esc[i])));
-  const ideaTot = promedio(lbs.map(t=>t.total));
-  const banda   = Object.fromEntries(IDEA_BANDAS.map(b=>[b.perfil,0]));
-  lbs.forEach(t=>banda[bandaIdea(t.total)]++);
-
-  /* IPPU-TEA — sólo NNA con Protocolo A y B firmados y con el delta ya registrado por el
-     motor (M5.3). Si el B se firmó sin A (la secuencia sólo avisa, §5.95), `deltas` es null y
-     el NNA queda fuera del promedio: no hay evolución que medir. */
-  const conAB    = activos.filter(n=>n.flujo.pa.firmado && n.flujo.pb.firmado && n.flujo.pb.deltas);
-  const paEsc    = [0,1,2,3].map(i=>promedio(conAB.map(n=>protTotales(n.flujo.pa.item).esc[i])));
-  const pbEsc    = [0,1,2,3].map(i=>promedio(conAB.map(n=>protTotales(n.flujo.pb.item).esc[i])));
-  const deltaTot = promedio(conAB.map(n=>n.flujo.pb.deltas.total));
-
-  const ciclos = activos.filter(n=>SECUENCIA.every(k=>n.flujo[k].firmado));
-  return {activos, conLB, lbs, ideaEsc, ideaTot, banda, conAB, paEsc, pbEsc, deltaTot, ciclos};
-}
-
-function renderAnalitica(){
-  const a    = analiticaAgregados();
-  const nAct = a.activos.length;
-  const ESCALAS_IDEA = ["Relación Social","Comunicación y Lenguaje","Anticipación / Flexibilidad","Simbolización"];
-  const COLOR_ESC    = ["var(--teal)","var(--escB)","var(--purple)","var(--magenta)"];
-  const MAX_IDEA_ESC = 24;   // 3 dimensiones × 8 puntos
-  const MAX_PROT_ESC = 30;   // 6 ítems × 5 puntos
-  const ancho = (v,max) => v==null ? 0 : Math.max(0, Math.min(100, v/max*100));
-  const plural = (n,s,p) => n===1 ? s : p;
-
-  /* --- KPIs --- */
-  const cobertura = nAct ? Math.round(a.conLB.length/nAct*100) : 0;
-  // deltaInterpreta clasifica un delta entero; el promedio se redondea sólo para elegir
-  // la etiqueta, nunca para mostrar el número.
-  const dInt = a.deltaTot==null ? null : deltaInterpreta(Math.round(a.deltaTot));
-  const dTxt = a.deltaTot==null ? "—" : (a.deltaTot>0?"+":"") + fmt1(a.deltaTot);
-  const kpis = [
-    {lab:"Cobertura de línea base", val:`${cobertura} %`,
-     sub:`${a.conLB.length} de ${nAct} NNA activos con HCE-LB firmada`},
-    {lab:"IDEA promedio — línea base", val:`${fmt1(a.ideaTot)}<span class="kpi-den"> / 96</span>`,
-     sub: a.ideaTot==null ? "Sin líneas base firmadas todavía"
-        : `Banda ${bandaIdea(a.ideaTot)} · promedio de ${a.lbs.length} ${plural(a.lbs.length,"línea base","líneas base")}`},
-    {lab:"Δ B−A · Escala IPPU-TEA", val:dTxt,
-     sub: a.conAB.length ? `${dInt.t} · ${a.conAB.length} de ${nAct} con ciclo A → B cerrado`
-                         : "Ningún NNA con Protocolo A y B firmados"},
-    {lab:"Ciclos completos", val:`${a.ciclos.length}<span class="kpi-den"> / ${nAct}</span>`,
-     sub:"CI → LB → PA → PB → IC firmados"}
-  ];
-  document.getElementById("anKpi").innerHTML = kpis.map(k=>`
-    <div class="kpi"><div class="lab">${k.lab}</div>
-      <div class="val">${k.val}</div>
-      <div class="sub">${k.sub}</div></div>`).join("");
-
-  /* --- Perfil poblacional por escala: línea base IDEA (máx. 24 por escala) --- */
-  document.getElementById("escalasChart").innerHTML = a.lbs.length
-    ? a.ideaEsc.map((v,i)=>`
-        <div class="hbarrow"><div class="lab">${ESCALAS_IDEA[i]}</div>
-          <div class="track"><div class="fill" style="width:${ancho(v,MAX_IDEA_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
-      `).join("") +
-      `<div class="note">Promedio por escala sobre ${a.lbs.length} ${plural(a.lbs.length,"línea base IDEA firmada","líneas base IDEA firmadas")} (máx. 24 pts por escala). <b>Menor puntaje = menor afectación.</b> Es una foto del IDEA que rige de cada NNA —el firmado del año más reciente (§5.97)—, no una evolución: el IDEA es anual, uno por año (§5.96).</div>`
-    : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Todavía no hay ninguna línea base IDEA firmada. El perfil poblacional aparece con la primera.</div>`;
-
-  /* --- Evolución Protocolo A → B: Escala IPPU-TEA (máx. 30 por escala) --- */
-  document.getElementById("protChart").innerHTML = a.conAB.length
-    ? a.paEsc.map((v,i)=>`
-        <div class="hbarrow"><div class="lab">${IPPU_ESCALAS[i]}</div>
-          <div class="track"><div class="fill" style="width:${ancho(v,MAX_PROT_ESC)}%;background:#B9C6D6"></div></div><span class="hbar-num">${fmt1(v)}</span></div>
-        <div class="hbarrow" style="margin-bottom:18px"><div class="lab" style="font-size:var(--fs-2xs)">→ Protocolo B</div>
-          <div class="track"><div class="fill" style="width:${ancho(a.pbEsc[i],MAX_PROT_ESC)}%;background:${COLOR_ESC[i]}"></div></div><span class="hbar-num">${fmt1(a.pbEsc[i])}</span></div>
-      `).join("") +
-      `<div class="note">Promedio por escala de ${a.conAB.length} ${plural(a.conAB.length,"NNA con Protocolo A y B firmados","NNA con Protocolos A y B firmados")} (máx. 30 pts por escala). Barra gris = A · barra de color = B. <b>Acá el puntaje SUBE cuando hay progreso</b>, al revés que el IDEA: por eso los dos instrumentos nunca comparten eje ni se promedian juntos (§5.2).</div>`
-    : `<div class="empty-state"><div class="big" aria-hidden="true">◔</div>Ningún NNA tiene todavía el Protocolo A y el B firmados. La evolución A → B aparece al cerrarse el primer ciclo.</div>`;
-
-  /* --- Distribución por banda de severidad (6 bandas §5.13/D4) --- */
-  const BANDAS = IDEA_BANDAS.map((b,i)=>{
-    const min = i===0 ? 0 : IDEA_BANDAS[i-1].max+1;
-    const nombreCorto = b.perfil.split(" (")[0]; // corta el paréntesis descriptivo largo
-    return [`${nombreCorto} (${min} – ${b.max}) · ${b.ns}`, b.perfil, b.paso];
-  });
-  const nLb = a.lbs.length, sinLB = nAct - a.conLB.length;
-  document.getElementById("distChart").innerHTML = BANDAS.map(b=>`
-    <div class="hbarrow"><div class="lab">${b[0]}</div>
-      <div class="track" style="height:24px"><div class="fill" style="width:${nLb ? a.banda[b[1]]/nLb*100 : 0}%;background:var(--rampa-${b[2]});box-shadow:inset 0 0 0 1px var(--rampa-borde)"></div></div><span class="hbar-num">${a.banda[b[1]]} NNA</span></div>
-  `).join("") +
-    `<div class="note">Distribución de ${nLb} ${plural(nLb,"línea base IDEA firmada","líneas base IDEA firmadas")} según la banda orientativa del puntaje total, con el soporte DSM-5-TR orientativo asociado. ` +
-    (sinLB ? `Quedan fuera ${sinLB} ${plural(sinLB,"NNA activo sin línea base firmada","NNA activos sin línea base firmada")}.`
-           : `Todos los NNA activos tienen su línea base firmada.`) + `</div>`;
-}
-
-// Heatmap talleres × escalas — datos ilustrativos (§5.1.3, fuera de alcance).
-// Los nombres se alinean con los 14 reales del prototipo (§5.14 / D5); los valores no.
-const talleres = [
-  ["Taller de habilidades sociales",[2.1,1.4,0.8,1.0]],
-  ["Taller de cuentos y estimulación del lenguaje",[1.2,2.0,0.5,0.9]],
-  ["Educación Física",[0.6,0.4,1.1,0.3]],
-  ["Actividades lúdicas y de juego",[1.0,0.8,0.6,1.8]],
-  ["Taller de música y expresión",[0.9,1.1,0.7,1.2]],
-  ["Taller de higiene y AVD",[0.4,0.3,1.6,0.2]]
-];
-/* Heatmap de muestra: el texto de cada celda se elige contra SU fondo (blanco solo sobre el verde oscuro; tinta sobre los claros). */
-const heatColor = v => v>=1.5 ? "#0A6B5E" : v>=0.9 ? "#6FBF9E" : v>=0.4 ? "#D9C26B" : "#C9CFD8";
-const heatTexto = v => v>=1.5 ? "#FFFFFF" : "var(--ink)";
-document.getElementById("heatTable").innerHTML =
-  `<tr><th class="row">Taller</th><th>Rel. Soc.</th><th>Comun.</th><th>Anticip.</th><th>Simbol.</th></tr>` +
-  talleres.map(t=>`<tr><th class="row">${t[0]}</th>${t[1].map(v=>`<td><div class="heat-cell" style="background:${heatColor(v)};color:${heatTexto(v)}">${v.toFixed(1)}</div></td>`).join("")}</tr>`).join("");
-
-// La distribución por banda de severidad se calcula en renderAnalitica() (más arriba),
-// junto con los KPIs y los dos gráficos por escala.
+/* El panel institucional ya no se calcula acá: lo calcula el servidor (GET /panel) y lo pinta js/panel.js (C7, §5.159). */
 /* ===================== TOAST ===================== */
 function toast(msg){
   const t = document.getElementById("toast");
@@ -504,6 +360,7 @@ function limpiarUiDeSesion(){
   if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
   if(typeof pendOlvidarSesion === "function") pendOlvidarSesion();       // Pendientes: nada del listado anterior detrás del login
   if(typeof gruposOlvidarSesion === "function") gruposOlvidarSesion();   // Grupos y el diálogo de asignación
+  if(typeof panelOlvidarSesion === "function") panelOlvidarSesion();     // Panel institucional (C7): nada de los agregados anteriores detrás del login
   if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
   _el("modalTitle").textContent = ""; _el("mfSub").textContent = "";   // los títulos de los diálogos nombran al NNA: vacíos detrás del login (B2, §5.157)
   _el("expedienteContent").innerHTML = "";

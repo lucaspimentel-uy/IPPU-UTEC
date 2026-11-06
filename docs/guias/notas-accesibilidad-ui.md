@@ -71,13 +71,15 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
   documentos y un aviso de la API; «no encontrado»; los diálogos «Nuevo registro» —clínico con un acuerdo y errores de muestra junto
   al NNA y a los acuerdos, y el bloque de la jornada—, «Editar registro», «Agregar acuerdo» con un error de muestra y «Adjuntar
   documento», abiertos sin guardar) y la tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín;
+  el Panel institucional (C7: el técnico y el admin, el año anterior, las alertas por escala, sin ciclo A → B, sin expedientes
+  activos, cargando y error; el heatmap de demostración de su tarjeta se mide con él);
   CI (pendiente con errores, registrado, en edición); IDEA (borrador con `NS`,
   confirmación de firma, 422 por dimensión y por campo, firmado con banda y addendas); PA y PB (borrador, errores de firma, Δ);
   IC (sin crear, confirmación y errores de firma, avisos y «Cambió en el servidor», firmado); documento impreso del IC; VF
   (vacía, formulario, las cinco categorías del baremo, los niveles y la alerta de vigencia) y su reporte; diálogo de alta/edición
   en sus cuatro pasos y su confirmación de descarte; diálogo del recibí y su confirmación; estados compartidos (cargando, error,
   vacío, error en línea); enlace de salto enfocado; y el **cromo** (barra superior y lateral) en todas ellas.
-- **Modo demostración**, informadas aparte: Analítica, Perfil y el expediente de ejemplo.
+- **Modo demostración**, informadas aparte: Perfil y el expediente de ejemplo (desde C7 la Analítica es el Panel institucional conectado).
   El panel «Modo demostración» y la marca «Solo demo» se miden además dentro de las pantallas conectadas (pestañas sin API).
 
 **Lo que la herramienta no ve** (queda en §6): estados `:hover` y `:active`, contenido dentro de SVG (los radares), la vista
@@ -303,4 +305,7 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
 - **Ateneos:** con pantalla desde C6 (§5.158). El tipo va en tinta, sin chips de color (no es un estado); «Sensible» es una marca de
   texto con borde, como en INC; el indicador es texto («2026: 3 de 8 ateneos»), sin ok/warn/bad; un solo punto de Tab por fila (el
   título); el código va en la fuente de códigos.
+- **Panel institucional:** conectado desde C7 (§5.159). Las bandas se pintan con el chip de la rampa de la banda del IDEA (pasos 1–6,
+  el nombre y el rango escritos), nunca con ok/warn/bad; el Δ medio y las alertas van en tinta con glifo (↑ ↓ = · ⚠) + texto; los
+  números van en tablas con `caption` y encabezados; sólo la tarjeta del heatmap lleva el panel de modo demostración.
 - **Modo oscuro, `prefers-contrast` y colores forzados (`forced-colors`):** no se tratan.

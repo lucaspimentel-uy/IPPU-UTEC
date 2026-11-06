@@ -931,6 +931,19 @@
   .inc-lista td{vertical-align:top}
   .inc-lista .num{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
 
+  /* Panel institucional conectado (C7, §5.159) — los números los da GET /panel; acá sólo forma. La banda usa la rampa de
+     la banda del IDEA (.banda-chip); el Δ y las alertas van en tinta con glifo + texto: ningún color nuevo. */
+  .panel-filtros{flex-wrap:wrap;gap:var(--s3) var(--s4);margin-bottom:var(--s4)}
+  .panel-filtros select{padding:6px 9px;border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink);font:inherit;font-size:var(--fs-xs)}
+  .panel-filtros .filtro-grupo{flex-wrap:wrap}
+  #view-analitica .grid3,.panel-ancho,#panelVacio{margin-bottom:var(--s4)}
+  #view-analitica .comp-table td,#view-analitica .comp-table th{vertical-align:middle}
+  #view-analitica .comp-table td.num{white-space:nowrap}
+  .panel-alertas{list-style:none;margin:0;padding:0}
+  .panel-alertas li{display:flex;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;padding:var(--s2) 0;border-bottom:1px solid var(--rule-2);font-size:var(--fs-xs);color:var(--ink)}
+  .panel-alertas li:last-child{border-bottom:none}
+  .panel-alerta-n{font-weight:700;font-variant-numeric:tabular-nums}
+
   /* Vista Ateneos y capacitación conectada (C6, §5.158) — lista con el indicador arriba + detalle + diálogos.
      El tipo va en tinta (sin chips de color: no es un estado); «Sensible» es una marca de TEXTO con borde, como en INC. */
   .at-indicador .at-ind-total{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink)}

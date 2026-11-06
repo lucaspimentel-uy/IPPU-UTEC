@@ -17,7 +17,7 @@
   (Documento Técnico §5.2: «Δ ≤ −7 **en una escala** dispara alerta institucional»; la demo
   hace lo mismo): el Δ del total se interpreta pero no alerta.
 """
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from sqlalchemy import select
@@ -68,17 +68,19 @@ def calcular_delta(a: Protocolo | Idea, b: Protocolo | Idea) -> dict[str, int | 
     }
 
 
-def _tramo(db: Session, valor: int) -> DeltaInterpretacion | None:
-    """La fila de `delta_interpretacion` que cubre `valor` (límites `NULL` = abiertos).
+def tramos(db: Session) -> list[DeltaInterpretacion]:
+    """El catálogo `delta_interpretacion` entero, por `orden` e `id`: **una** consulta. Quien lee muchos Δ
+    a la vez (el panel institucional, C7) lo trae una vez y usa `tramo_en`; la regla es la misma."""
+    return list(db.scalars(select(DeltaInterpretacion).order_by(DeltaInterpretacion.orden, DeltaInterpretacion.id)))
+
+
+def tramo_en(catalogo: Sequence[DeltaInterpretacion], valor: int) -> DeltaInterpretacion | None:
+    """La fila de `catalogo` (ya ordenado por `orden`, `id`) que cubre `valor` (límites `NULL` = abiertos).
     Si dos tramos se superponen gana el de menor `orden`; `None` si ninguno lo cubre."""
-    return db.scalars(
-        select(DeltaInterpretacion)
-        .where(
-            (DeltaInterpretacion.delta_min.is_(None)) | (DeltaInterpretacion.delta_min <= valor),
-            (DeltaInterpretacion.delta_max.is_(None)) | (DeltaInterpretacion.delta_max >= valor),
-        )
-        .order_by(DeltaInterpretacion.orden, DeltaInterpretacion.id)
-    ).first()
+    for tramo in catalogo:
+        if (tramo.delta_min is None or tramo.delta_min <= valor) and (tramo.delta_max is None or valor <= tramo.delta_max):
+            return tramo
+    return None
 
 
 def interpretar(db: Session, deltas: Mapping[str, int | None] | None) -> dict[str, Any] | None:
@@ -86,9 +88,10 @@ def interpretar(db: Session, deltas: Mapping[str, int | None] | None) -> dict[st
     del catálogo (mover un tramo cambia la lectura, también de un PB firmado). `None` sin Δ."""
     if deltas is None:
         return None
+    catalogo = tramos(db)
     salida: dict[str, Any] = {}
     for clave, valor in deltas.items():
-        tramo = _tramo(db, valor) if valor is not None else None
+        tramo = tramo_en(catalogo, valor) if valor is not None else None
         salida[clave] = (
             {"etiqueta": tramo.etiqueta, "accion": tramo.accion, "signo": tramo.signo}
             if tramo is not None else None
@@ -104,12 +107,21 @@ def alertas_del_protocolo(db: Session, deltas: Mapping[str, int | None] | None) 
     """
     if not deltas:
         return []
+    return alertas_con_catalogo(tramos(db), deltas)
+
+
+def alertas_con_catalogo(
+    catalogo: Sequence[DeltaInterpretacion], deltas: Mapping[str, int | None] | None,
+) -> list[dict[str, Any]]:
+    """`alertas_del_protocolo` con el catálogo ya leído (`tramos`): misma regla, sin consultas."""
+    if not deltas:
+        return []
     alertas = []
     for escala in PROTOCOLO_ESCALAS:
         valor = deltas.get(escala)
         if valor is None:
             continue
-        tramo = _tramo(db, valor)
+        tramo = tramo_en(catalogo, valor)
         if tramo is not None and tramo.alerta:
             alertas.append({"escala": escala, "delta": valor, "etiqueta": tramo.etiqueta})
     return alertas

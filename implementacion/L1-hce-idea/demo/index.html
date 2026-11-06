@@ -163,40 +163,22 @@
       <div id="pendContenido"></div>
     </section>
 
-    <!-- ============ VISTA: ANALÍTICA INSTITUCIONAL ============ -->
+    <!-- ============ VISTA: PANEL INSTITUCIONAL (C7, §5.159) ============
+         Conectada: GET /panel?anio= (los agregados los calcula el servidor; el navegador sólo los pinta) y GET /recordatorios
+         (sólo lectura), en js/panel.js. El heatmap de talleres queda de demostración (fuera de alcance, §5.1.3), con el
+         panel compartido de modo demostración en su propia tarjeta. -->
     <section class="view" id="view-analitica">
-      <div data-modo-demo></div>
       <div class="crumbs">General › <b>Panel institucional</b></div>
-      <h1 class="pagetitle">Panel institucional — Dirección y equipo técnico</h1>
-      <p class="pagedesc">Datos de ejemplo: así se verían los indicadores agregados y anonimizados de la HCE —cobertura de la línea base IDEA, perfil poblacional por escala, evolución del ciclo Protocolo A → B y completitud del flujo—, insumo para el Plan Anual y el reporte a INAU.</p>
+      <h1 class="pagetitle" id="tituloPanel" tabindex="-1">Panel institucional</h1>
+      <p class="pagedesc" id="panelDesc"></p>
+      <div class="nna-toolbar panel-filtros" id="panelFiltros"></div>
+      <div id="panelContenido"></div>
 
-      <!-- M10 · Recordatorios de períodos del Manual (§4): configurables, nunca bloqueantes -->
-      <div class="card" style="margin-bottom:18px">
-        <div class="cardhead"><h2>Recordatorios — períodos del Manual (configurables por coordinación)</h2></div>
-        <div class="cardbody" id="recordatoriosBody"></div>
-      </div>
-
-      <!-- KPIs derivados del modelo (renderAnalitica en js/ui-core.js). Antes eran constantes
-           en este markup; el "Taller de mayor eficacia" se retiró porque cruzar taller × escala
-           es el heatmap, que está fuera de alcance (handoff §5.1.3). -->
-      <div class="kpirow" id="anKpi"></div>
-
-      <div class="grid3">
-        <div class="card">
-          <div class="cardhead"><h2>Perfil poblacional por escala — línea base IDEA</h2></div>
-          <div class="cardbody" id="escalasChart"></div>
-        </div>
-
-        <!-- La Escala IPPU-TEA es otro instrumento: va en su propia tarjeta y nunca en el mismo
-             eje que el IDEA (regla dura de no-homologabilidad, handoff §5.2). -->
-        <div class="card">
-          <div class="cardhead"><h2>Evolución Protocolo A → B — Escala IPPU-TEA</h2></div>
-          <div class="cardbody" id="protChart"></div>
-        </div>
-
-        <div class="card">
-          <div class="cardhead"><h2>Heatmap — Talleres × mejora promedio por escala</h2><span class="pill pend">datos ilustrativos</span></div>
+      <div class="grid3 panel-demo">
+        <div class="card" id="panelHeatmap">
+          <div class="cardhead"><h2>Heatmap — Talleres × mejora promedio por escala</h2></div>
           <div class="cardbody">
+            <div data-modo-demo="Valores de muestra, fijos: no salen de la HCE ni de la API. Cruzar talleres por escala está fuera del alcance de esta versión."></div>
             <table class="heat" id="heatTable"></table>
             <div class="legend">
               <span><i style="background:#0A6B5E"></i>Mejora alta (≥ 1,5 pts)</span>
@@ -204,26 +186,7 @@
               <span><i style="background:#D9C26B"></i>Mejora leve</span>
               <span><i style="background:#C9CFD8"></i>Sin cambio</span>
             </div>
-            <div class="note"><b>Único panel de esta vista que no se calcula:</b> son valores de muestra, fijos. Cruzar talleres × escala quedó fuera del alcance de la ronda (handoff §5.1.3) y con un solo NNA con ciclo A → B cerrado el cruce todavía no tendría sustento. Se conserva como referencia de la lectura que se busca: priorizar talleres en el Plan Anual.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardhead"><h2>Distribución de NNA por banda de severidad</h2></div>
-          <div class="cardbody" id="distChart"></div>
-        </div>
-
-        <div class="card">
-          <div class="cardhead"><h2>Pipeline de datos institucional</h2></div>
-          <div class="cardbody">
-            <ol style="font-size:.82rem;line-height:1.7;padding-left:20px;color:var(--ink-2)">
-              <li><b style="color:var(--ink)">Fuentes:</b> HCE, evaluaciones IDEA, talleres, notas clínicas.</li>
-              <li><b style="color:var(--ink)">Ingesta:</b> extracción, validación de integridad, anonimización.</li>
-              <li><b style="color:var(--ink)">Análisis:</b> agregados poblacionales y comparativas entre períodos.</li>
-              <li><b style="color:var(--ink)">Visualización:</b> este panel, con corte por grupo, taller y escala.</li>
-              <li><b style="color:var(--ink)">Informe:</b> reporte automático para dirección, equipo e INAU.</li>
-            </ol>
-            <div class="note">Los datos individuales solo son visibles para el equipo técnico autorizado (roles y JWT por terapeuta). Este panel opera únicamente con datos agregados y anonimizados.</div>
+            <div class="note">Se conserva como referencia de la lectura que se busca —priorizar talleres en el Plan Anual—; ningún número de esta tarjeta se calcula (handoff §5.1.3).</div>
           </div>
         </div>
       </div>
@@ -449,7 +412,7 @@
 <script src="js/severidad.js"></script>
 <script src="js/organismos.js"></script>
 <script src="js/auditoria.js"></script>
-<script src="js/recordatorios.js"></script>
+<script src="js/panel.js"></script>
 <script src="js/pendientes.js"></script>
 <script src="js/grupos-usuario.js"></script>
 <script src="js/inclusion.js"></script>
