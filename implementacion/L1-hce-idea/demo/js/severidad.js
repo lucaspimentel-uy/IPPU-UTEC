@@ -25,7 +25,10 @@ function sevReiniciar(){
   Object.assign(SEV, {hceId: null, estado: "cargando", rec: null, avisos: [], guardando: false, error: ""});
   // El catálogo de grados no depende del expediente: se conserva mientras dure la sesión (ver sevOlvidarSesion).
 }
-function sevOlvidarSesion(){ sevReiniciar(); SEV.niveles = null; }
+function sevOlvidarSesion(){
+  sevReiniciar(); SEV.niveles = null;
+  const j = _sevEl("sev_just"); if(j){ j.value = ""; j.textContent = ""; }   // la justificación queda en el diálogo cerrado: vacía tras «Salir» (B2, §5.157)
+}
 
 /* ---------- Carga ---------- */
 function sevMostrar(){

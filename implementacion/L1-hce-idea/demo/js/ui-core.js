@@ -503,6 +503,7 @@ function limpiarUiDeSesion(){
   if(typeof pendOlvidarSesion === "function") pendOlvidarSesion();       // Pendientes: nada del listado anterior detrás del login
   if(typeof gruposOlvidarSesion === "function") gruposOlvidarSesion();   // Grupos y el diálogo de asignación
   if(typeof closeFlujoModal === "function") closeFlujoModal(true);   // el diálogo del recibí no queda abierto detrás del login
+  _el("modalTitle").textContent = ""; _el("mfSub").textContent = "";   // los títulos de los diálogos nombran al NNA: vacíos detrás del login (B2, §5.157)
   _el("expedienteContent").innerHTML = "";
   _el("userAvatar").textContent = "··";
   _el("userNombre").textContent = "—";

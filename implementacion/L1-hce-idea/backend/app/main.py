@@ -29,6 +29,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.limites import LimitesDelCuerpo
 from app.routers import (
     auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, protocolo, referencias,
     severidad, valoracion_funcional,
@@ -54,11 +55,18 @@ app = FastAPI(
         "todas las rutas salvo `/health`, `/auth/login` y la documentación lo piden en "
         "`Authorization: Bearer <token>` (sin token o vencido: `401`). Un `tecnico` sólo ve los "
         "expedientes de los grupos en los que es técnico/a 1 o 2; uno fuera de su alcance es `404`, "
-        "igual que uno que no existe."
+        "igual que uno que no existe.\n\n"
+        "**Límites del cuerpo** (`POST`, `PATCH`, `PUT`; se deciden antes de leer el cuerpo): sin un token válido, `401` "
+        "(salvo `/auth/login`); chunked sin `Content-Length`, `411`; más de 1 MB —o de 10 MB + 64 KiB en las tres "
+        "subidas multipart—, `413` `too_large`."
     ),
     responses=RESPUESTA_500,
 )
 
+# **Orden de los middlewares** (el último que se agrega queda más afuera): CORS → el del 500 (`registrar_manejadores`)
+# → `LimitesDelCuerpo` → la app. Los límites van primero para quedar **adentro de los dos**: sus 401/411/413 llevan
+# las cabeceras CORS y, si algo de ellos falla, sale el sobre `internal_error` con CORS (§5.115 c, §5.157 a).
+app.add_middleware(LimitesDelCuerpo)
 registrar_manejadores(app)
 
 # Sin token: sólo el login (y `/health` y la documentación, que no pasan por un router).

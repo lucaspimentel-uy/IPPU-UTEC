@@ -27,3 +27,8 @@ Desktop.ini
 
 # Salidas de la verificacion de la demo (PDF de page.pdf() de conectada.js): artefactos generados
 implementacion/L1-hce-idea/demo/verificacion/salidas/
+
+# Secretos (auditoría de seguridad B15, §5.157): ningún .env en ningún nivel; la plantilla sí se versiona.
+.env
+.env.*
+!.env.example

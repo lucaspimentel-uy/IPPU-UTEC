@@ -77,7 +77,7 @@ $env:PYTHONUTF8 = "1"; $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSW
 python -m app.seed_demo --url http://localhost:8001
 
 # 5 · Demo en el navegador (otra terminal; no sirve por file://, la API sólo acepta el origen :5500)
-cd ..\demo; python -m http.server 5500   # http://localhost:5500/index.html?api=http://localhost:8001 · gonzalez@demo.ippu.test
+cd ..\demo; python -m http.server 5500 --bind 127.0.0.1   # sólo esta máquina · http://localhost:5500/index.html?api=http://localhost:8001 · gonzalez@demo.ippu.test
 
 # 6 · Verificación (1.ª terminal, base recién cargada)
 cd ..\demo\verificacion

@@ -49,6 +49,14 @@ async function preflight() {
    API de esta corrida: si no, `API=http://localhost:8001 node conectada.js` consultaria una API y la demo otra. */
 const urlDemo = (q) => DEMO + '/index.html' + (q && /[?&]api=/.test(q) ? q : (q ? q + '&' : '?') + 'api=' + encodeURIComponent(API));
 const txt = (page, sel) => page.locator(sel).first().innerText();
+/* Los fuentes de la demo, de a UNO (no con Promise.all): `http.server` tiene una cola de 5 conexiones y en Windows, llena,
+   contesta con RST; una ráfaga de 23 fetch daba `ECONNREFUSED` de vez en cuando (la inestabilidad de handoff §6, «después
+   de 3e-estados», es la de f1-h; medido el 2026-11-06). Devuelve [[nombre, texto], …] en el orden pedido. */
+async function leerFuentes(nombres, prefijo = '') {
+  const salida = [];
+  for (const f of nombres) salida.push([f, await (await fetch(DEMO + '/' + prefijo + f)).text()]);
+  return salida;
+}
 
 /* Esc sobre un diálogo con lo tipeado SIN guardar pide confirmación (Fase 3-e): este helper la contesta con «Descartar y cerrar».
    Si el diálogo no tenía nada sin guardar, Esc lo cierra sin preguntar y no hay nada que contestar. */
@@ -361,7 +369,8 @@ async function loguear(page) {
   {
     const { ctx: c2, page: p2 } = await nuevaPagina();
     await p2.goto(urlDemo());
-    await p2.evaluate(() => { sessionStorage.setItem('ippu.token', 'token-invalido'); sessionStorage.setItem('ippu.usuario', '{"nombre":"X","rol":"admin"}'); });
+    // con la API de esta corrida guardada junto al token (§5.157 b): sin ella, la sesión se borra al cargar y no llega a validarse
+    await p2.evaluate(() => { sessionStorage.setItem('ippu.token', 'token-invalido'); sessionStorage.setItem('ippu.usuario', '{"nombre":"X","rol":"admin"}'); sessionStorage.setItem('ippu.api', API_BASE); });
     await p2.goto(urlDemo());
     await p2.waitForSelector('#loginError:not([hidden])', { timeout: 8000 });
     const m = await txt(p2, '#loginError');
@@ -381,11 +390,70 @@ async function loguear(page) {
     await p3.waitForSelector('#loginError:not([hidden])', { timeout: 8000 });
     const m = await txt(p3, '#loginError');
     const apiUsada = await p3.evaluate(() => API_BASE);
-    const muestraUrl = await p3.evaluate(() => { const c = document.getElementById('loginScreen').cloneNode(true); c.querySelector('#loginError').remove(); return /localhost:9/.test(c.textContent); });   // el mensaje de error sí la nombra
-    check('3a-k', 'API inalcanzable (?api=…): mensaje legible (nombra la API que no responde) y sin sesión; ?api= sigue mandando (la demo usa esa API) pero el login ya no muestra la URL fuera de ese mensaje (F1)',
-      /No se pudo conectar con la API/.test(m) && apiUsada === 'http://localhost:9' && !muestraUrl && (await p3.evaluate(() => sessionStorage.length)) === 0,
-      `mensaje="${m}" API_BASE="${apiUsada}" url a la vista=${muestraUrl}`);
+    const linea = await p3.evaluate(() => { const e = document.getElementById('loginApi'); return { visible: !e.hidden && e.offsetParent !== null, texto: e.textContent }; });   // el mensaje de error también la nombra
+    check('3a-k', 'API inalcanzable (?api=…): mensaje legible (nombra la API que no responde) y sin sesión; ?api= a localhost sigue mandando (la demo usa esa API) y, como no es la de omisión, el login lo dice en su línea #loginApi (§5.157 b, cambia lo de F1)',
+      /No se pudo conectar con la API/.test(m) && apiUsada === 'http://localhost:9' && linea.visible && linea.texto.includes('http://localhost:9') && (await p3.evaluate(() => sessionStorage.length)) === 0,
+      `mensaje="${m}" API_BASE="${apiUsada}" linea=${JSON.stringify(linea)}`);
     await c3.close();
+  }
+
+  /* ---------- sec- (auditoría de seguridad M2, §5.157 b): ?api= no se lleva el token ni la contraseña ----------
+     Un servidor espía en 127.0.0.1:9999 anota cada pedido (y contesta el preflight, para que en el código anterior el
+     GET /auth/yo con el Bearer llegara de verdad). Con una sesión abierta contra la API de esta corrida, abrir la demo
+     con ?api=<el espía> no le manda ningún Authorization (la sesión guardada era de otra API: se borra al cargar) y el
+     login muestra a qué API iría la contraseña. Un host que no es localhost ni 127.0.0.1 se ignora (queda la de omisión). */
+  {
+    const http = require('http');
+    const vistos = [];
+    const espia = http.createServer((req, res) => {
+      vistos.push({ metodo: req.method, url: req.url, authorization: req.headers.authorization || null, pide: req.headers['access-control-request-headers'] || null });
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+      if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+      res.statusCode = 401; res.setHeader('Content-Type', 'application/json');
+      res.end('{"code":"unauthorized","detail":[{"campo":null,"mensaje":"espía"}]}');
+    });
+    await new Promise((ok, mal) => { espia.once('error', mal); espia.listen(9999, '127.0.0.1', ok); });
+    try {
+      const { ctx: cs, page: ps } = await nuevaPagina();
+      await loguear(ps);
+      await esperarResumen(ps, 'Mostrando 7 de 7');
+      const antes = await ps.evaluate(() => ({ token: !!sessionStorage.getItem('ippu.token'), api: sessionStorage.getItem('ippu.api') }));
+      await ps.goto(DEMO + '/index.html?api=' + encodeURIComponent('http://127.0.0.1:9999'));
+      await ps.waitForSelector('#loginScreen:not(.hidden)', { timeout: 8000 });
+      await ps.waitForTimeout(1500);   // cualquier pedido tardío al espía cae acá
+      const tras = await ps.evaluate(() => {
+        const e = document.getElementById('loginApi');
+        return { api: API_BASE, token: sessionStorage.getItem('ippu.token'), linea: !e.hidden && e.offsetParent !== null, texto: e.textContent, foco: document.activeElement.id };
+      });
+      const conToken = vistos.filter((v) => v.authorization || /authorization/i.test(v.pide || ''));
+      check('sec-espia', '?api=http://127.0.0.1:9999 con una sesión abierta contra otra API: el espía no recibe ningún Authorization (ni un preflight que lo pida), la sesión guardada se borra y el login muestra «http://127.0.0.1:9999» en su línea, con el foco en el usuario',
+        antes.token && antes.api === API && conToken.length === 0 && tras.api === 'http://127.0.0.1:9999' && tras.token === null && tras.linea
+          && tras.texto.includes('http://127.0.0.1:9999') && tras.foco === 'loginUser',
+        JSON.stringify({ antes, tras, vistos }).slice(0, 600));
+
+      const hosts = [];
+      for (const ajena of ['http://evil.example', 'https://evil.example:8001/api', 'http://localhost.evil.example:8001', 'http://localhost@evil.example', 'http://127.0.0.2:8001', 'file:///c:/x']) {
+        await ps.goto(DEMO + '/index.html?api=' + encodeURIComponent(ajena));
+        await ps.waitForSelector('#loginScreen:not(.hidden)', { timeout: 8000 });
+        hosts.push(await ps.evaluate(() => ({ api: API_BASE, linea: !document.getElementById('loginApi').hidden })));
+      }
+      check('sec-host', '?api= con un host que no es localhost ni 127.0.0.1 (evil.example, «localhost.evil.example», «localhost@evil.example», 127.0.0.2, file:) se ignora: API_BASE es la de omisión y el login no muestra ninguna línea de API',
+        hosts.every((h) => h.api === 'http://localhost:8000' && !h.linea) && vistos.filter((v) => v.authorization).length === 0, JSON.stringify(hosts));
+
+      await loguear(ps);   // vuelta a la API de esta corrida: entra y una recarga conserva la sesión
+      await esperarResumen(ps, 'Mostrando 7 de 7');
+      await ps.reload();
+      await ps.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      await esperarResumen(ps, 'Mostrando 7 de 7');
+      const vuelta = await ps.evaluate(() => ({ api: sessionStorage.getItem('ippu.api'), usuario: document.getElementById('userNombre').textContent.trim() }));
+      check('sec-vuelta', `?api=${API} (localhost): entra, guarda la API junto al token y una recarga conserva la sesión`,
+        vuelta.api === API && vuelta.usuario === 'Dr. González', JSON.stringify(vuelta));
+      await cs.close();
+    } finally {
+      await new Promise((ok) => espia.close(ok));
+    }
   }
 
   /* ---------- (s) cerrar la sesión con una carga en vuelo: nada de datos de NNA queda ni reaparece ---------- */
@@ -1138,13 +1206,26 @@ async function loguear(page) {
       await pj.waitForSelector('#modalAlta.open');
     };
 
-    /* «Salir» con el diálogo de edición abierto (la app está inerte tras el diálogo: se invoca logout() como lo hace el botón) */
+    /* «Salir» con el diálogo de edición abierto (la app está inerte tras el diálogo: se invoca logout() como lo hace el botón).
+       Antes se abre y se cierra el diálogo de severidad de Martín: su subtítulo (#mfSub) y su justificación (#sev_just) quedan en el
+       diálogo cerrado, y el título del de edición (#modalTitle) nombra a Martín; tras «Salir», los tres vacíos (B2, §5.157). */
+    await pj.evaluate((id) => abrirExpediente(id), idMartinJ);
+    await pj.waitForSelector('#expTitulo'); await pj.waitForFunction(() => !!EXP.flujo, null, { timeout: 8000 });
+    await pj.click('#tabExp-sev');
+    await pj.waitForSelector('#btnSevEditar', { timeout: 8000 });
+    await pj.click('#btnSevEditar'); await pj.waitForSelector('#modalFlujo.open #sev_just');
+    const sevAntes = await pj.evaluate(() => ({ sub: document.getElementById('mfSub').textContent, just: document.getElementById('sev_just').value }));
+    await pj.keyboard.press('Escape'); await pj.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 3000 });
     await abrirEdicion();
     const antes = await pj.evaluate((cs) => cs.map((c) => document.getElementById(c).value), campos);
+    const tituloAntes = await pj.evaluate(() => document.getElementById('modalTitle').textContent);
     await pj.evaluate(() => logout());
     const e1 = await estadoDialogo();
-    check('3c-j2', 'con el diálogo de edición abierto, «Salir» deja f_nombre, f_ci, f_ref, f_tel y f_motivo vacíos, WIZ.orig null y sin grupos en memoria (antes tenían datos de Martín)',
-      antes[0] !== '' && antes[1] !== '' && e1.vacios && e1.orig === null && e1.grupos === 0 && e1.login && !e1.abierto, `antes=[${antes.slice(0, 2)}…] después vacíos=${e1.vacios}`);
+    const titulos = await pj.evaluate(() => { const j = document.getElementById('sev_just'); return { titulo: document.getElementById('modalTitle').textContent, sub: document.getElementById('mfSub').textContent, just: j ? j.value + j.textContent : '' }; });
+    check('3c-j2', 'con el diálogo de edición abierto, «Salir» deja f_nombre, f_ci, f_ref, f_tel y f_motivo vacíos, WIZ.orig null y sin grupos en memoria (antes tenían datos de Martín); también vacíos el título del diálogo de edición (#modalTitle), el subtítulo del diálogo compartido (#mfSub) y la justificación de severidad (#sev_just), que antes nombraban a Martín o tenían su texto (B2, §5.157)',
+      antes[0] !== '' && antes[1] !== '' && e1.vacios && e1.orig === null && e1.grupos === 0 && e1.login && !e1.abierto
+        && /Martín/.test(tituloAntes) && sevAntes.sub !== '' && sevAntes.just !== '' && titulos.titulo === '' && titulos.sub === '' && titulos.just === '',
+      `antes=[${antes.slice(0, 2)}…] después vacíos=${e1.vacios} · ${JSON.stringify({ tituloAntes, sevAntes: { sub: sevAntes.sub.slice(0, 40), just: sevAntes.just.length }, titulos })}`);
     /* un 401 con el diálogo abierto */
     await pj.fill('#loginUser', EMAIL); await pj.fill('#loginPass', PASSWORD);
     await pj.click('#loginBtn');
@@ -1847,7 +1928,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     }
 
     /* ---------- fuentes: ni IC ni VF calculan nada en el navegador ---------- */
-    const fuentes = await Promise.all(['informe-cierre.js', 'hce-doc-org-vf.js'].map(async (f) => (await (await fetch(DEMO + '/js/' + f)).text())));
+    const fuentes = (await leerFuentes(['informe-cierre.js', 'hce-doc-org-vf.js'], 'js/')).map(([, t]) => t);
     const codigo = fuentes.join('\n').replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // sin comentarios: primero los de bloque, después los de línea
     const prohibidos = ['lbTotales', 'protTotales', 'calcularDelta', 'deltaInterpreta', 'ALERTA_DELTA', 'categoriaBaremo', 'sugiereNivel', 'genVFBorrador', 'vfAlertaVigencia', 'descDelta', 'colorBanda', 'bandaIdea'].filter((n) => new RegExp('\\b' + n + '\\b').test(codigo));
     check('3d-f', 'el código del IC y de la VF no usa lbTotales/protTotales/calcularDelta/deltaInterpreta/categoriaBaremo/sugiereNivel/genVFBorrador/vfAlertaVigencia (nada de negocio se calcula en el navegador)', prohibidos.length === 0, prohibidos.join(',') || 'limpio');
@@ -2266,7 +2347,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const { ctx: cv, page: pv } = await nuevaPagina();
     await loguear(pv);
     await pv.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
-    const js = await Promise.all(['catalogos.js', 'ui-core.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'expediente.js', 'flujo.js'].map(async (f) => [f, await (await fetch(DEMO + '/js/' + f)).text()]));
+    const js = await leerFuentes(['catalogos.js', 'ui-core.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'expediente.js', 'flujo.js'], 'js/');
     const css = await (await fetch(DEMO + '/css/estilos.css')).text();
     const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
     const lineasConEstado = (t) => sinComentarios(t).split('\n').filter((l) => /var\(--(ok|warn|bad)\)/.test(l));
@@ -2530,7 +2611,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
 
     /* ---------- f1-h: sin la vista «Intermedia» (ruta, manejador, entrada de navegación, reglas .lik-*) y sin los textos de desarrollo ---------- */
     const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'recordatorios.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];
-    const fuentesF1 = await Promise.all(archivos.map(async (f) => [f, await (await fetch(DEMO + '/' + f)).text()]));
+    const fuentesF1 = await leerFuentes(archivos);
     const halla = (re) => fuentesF1.filter(([, t]) => re.test(t)).map(([f]) => f);
     const prohibidosF1 = { vista: halla(/view-intermedia|data-view="intermedia"|go\(['"]intermedia['"]\)/), manejador: halla(/lik-opts|likSel|likFormula/), reglas: fuentesF1.filter(([f, t]) => f.endsWith('.css') && /\.lik-[a-z]/.test(t)).map(([f]) => f),
       frases: ['v4.1 — Demo L1', 'Demo parcialmente conectada a la API', 'se van conectando por etapas', 'la API lo avisa', '(calculado por el servidor)', 'Avisos de la API', 'La contraseña se envía a la API'].filter((fr) => fuentesF1.some(([, t]) => t.includes(fr))) };

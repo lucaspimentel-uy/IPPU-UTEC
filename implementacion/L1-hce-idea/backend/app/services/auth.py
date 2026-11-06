@@ -18,7 +18,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import ROL_ADMIN, ROL_TECNICO
-from app.core.seguridad import gastar_verificacion, leer_token, verificar_password
+from app.core.seguridad import (
+    MENSAJE_SIN_TOKEN, MENSAJE_TOKEN_INVALIDO, gastar_verificacion, leer_token, verificar_password,
+)
 from app.models.identidad import Grupo, HceDiurna, Profesional
 from app.services.errores import ForbiddenAction, NotFound, Unauthorized
 
@@ -56,7 +58,7 @@ def usuario_de_token(db: Session, token: str | None) -> Profesional:
     profesional_id = leer_token(token) if token else None
     profesional = db.get(Profesional, profesional_id) if profesional_id is not None else None
     if profesional is None or not profesional.activo or not profesional.hashed_password:
-        mensaje = "Falta el token de acceso" if not token else "El token de acceso es inválido o venció"
+        mensaje = MENSAJE_SIN_TOKEN if not token else MENSAJE_TOKEN_INVALIDO
         raise Unauthorized(mensaje, [(None, mensaje)])
     return profesional
 

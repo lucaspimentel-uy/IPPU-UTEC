@@ -19,6 +19,10 @@ from jose import JWTError, jwt
 from app.core.config import settings
 
 ALGORITMO = "HS256"
+#: Los dos textos del 401 de un recurso protegido: los usan `services/auth.usuario_de_token` (con la base) y el
+#: middleware de `core/limites.py` (sin la base, antes de leer el cuerpo; §5.157 a). Un solo lugar: el mismo 401.
+MENSAJE_SIN_TOKEN = "Falta el token de acceso"
+MENSAJE_TOKEN_INVALIDO = "El token de acceso es inválido o venció"
 #: Límite de bcrypt: lo que pase de acá no participaría del hash.
 BCRYPT_MAX_BYTES = 72
 
@@ -36,6 +40,10 @@ def verificar_password(password: str, hashed: str | None) -> bool:
         return False
     datos = password.encode("utf-8")
     if len(datos) > BCRYPT_MAX_BYTES:
+        # Ninguna contraseña guardada pasa de 72 bytes (`hashear_password`), así que es `False`; pero se gasta
+        # **un bcrypt igual** (§5.119, §5.157 c): sin él, un email existente con una contraseña larga contestaba
+        # en milisegundos y uno inexistente tras un bcrypt, y el tiempo decía qué emails existen.
+        gastar_verificacion(password)
         return False
     try:
         return bcrypt.checkpw(datos, hashed.encode("ascii"))

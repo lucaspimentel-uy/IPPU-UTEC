@@ -1165,7 +1165,12 @@
     padding:var(--s2) var(--s3);margin-bottom:var(--s3);font-size:var(--fs-2xs);font-weight:600;
     text-align:left;line-height:1.5
   }
-  .login-error[hidden],.login-estado[hidden]{display:none}
+  .login-error[hidden],.login-estado[hidden],.login-api[hidden]{display:none}
+  /* La API a la que va la contraseña, sólo si no es la de omisión (§5.157 b): el mismo par que .login-estado (--ink sobre --paper-3). */
+  .login-api{
+    background:var(--paper-3);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r-sm);
+    padding:var(--s2) var(--s3);margin:0 0 var(--s3);font-size:var(--fs-2xs);text-align:left;overflow-wrap:anywhere
+  }
   .login-estado{
     background:var(--paper-3);color:var(--ink);border:1px solid var(--rule);border-radius:var(--r-sm);
     padding:var(--s2) var(--s3);margin-bottom:var(--s3);font-size:var(--fs-2xs);text-align:left

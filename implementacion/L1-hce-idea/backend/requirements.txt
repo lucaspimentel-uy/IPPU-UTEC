@@ -18,7 +18,10 @@ psycopg[binary]==3.2.3
 # al hashear (`ValueError: password cannot be longer than 72 bytes` en su prueba interna).
 bcrypt==5.0.0
 python-jose[cryptography]==3.3.0
-python-multipart==0.0.20
+# python-multipart: 0.0.31 es la más baja que arregla los seis avisos de pip-audit (CVE-2026-24486, -40347, -42561,
+# -53538, -53539, -53540; §5.157 d), que se alcanzan sin token. Anda con starlette 0.41.3 (importa `python_multipart`).
+# `tests/test_dependencias.py` falla si la instalada es más vieja que este pin.
+python-multipart==0.0.31
 
 # --- Dev / tests ---
 pytest==8.3.4

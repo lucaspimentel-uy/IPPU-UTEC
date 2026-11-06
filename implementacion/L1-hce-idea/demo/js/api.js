@@ -10,18 +10,20 @@
    C5 (§5.155): `body` puede ser un FormData (alta multipart de un archivo: el navegador pone el Content-Type con su
    boundary) y apiBlob() descarga un archivo con el token, como Blob (nunca un enlace directo sin token). */
 
-/* ---------- URL base: UN solo lugar ----------
-   Por omision http://localhost:8000. Se puede cambiar con ?api=<url> en la URL de la pagina
-   (p. ej. demo en 5500 contra una API en otro puerto). Como el login manda la contrasena a
-   esa URL, la pantalla de login la MUESTRA siempre (un enlace con ?api= ajeno no puede pasar
-   desapercibido). */
+/* ---------- URL base: UN solo lugar (auditoria de seguridad M2, handoff §5.157 b) ----------
+   Por omision http://localhost:8000. Se puede cambiar con ?api=<url> en la URL de la pagina (p. ej. la verificacion,
+   contra una API en :8001), pero SOLO hacia esta maquina: el host tiene que ser localhost o 127.0.0.1 (cualquier
+   puerto). Cualquier otro host se ignora y se usa el de omision: un enlace con ?api= ajeno no puede llevarse el token
+   ni la proxima contrasena. Cuando la API no es la de omision, el login lo dice en una linea (#loginApi). */
 const API_BASE_POR_DEFECTO = "http://localhost:8000";
+const API_HOSTS_PERMITIDOS = ["localhost", "127.0.0.1"];
 const API_BASE = (function(){
   try{
     const q = new URLSearchParams(location.search).get("api");
     if(q){
       const u = new URL(q);
-      if(u.protocol === "http:" || u.protocol === "https:") return u.origin + u.pathname.replace(/\/+$/, "");
+      if((u.protocol === "http:" || u.protocol === "https:") && API_HOSTS_PERMITIDOS.includes(u.hostname))
+        return u.origin + u.pathname.replace(/\/+$/, "");
     }
   }catch(_e){ /* ?api= invalido: se ignora y se usa el valor por omision */ }
   return API_BASE_POR_DEFECTO;
@@ -29,12 +31,20 @@ const API_BASE = (function(){
 
 /* ---------- Sesion: sessionStorage (muere con la pestana) ----------
    El almacenamiento puede lanzar (modo privado, datos bloqueados): todo va en try/catch y la
-   demo sigue funcionando sin persistencia (el token queda en memoria de la pagina). */
+   demo sigue funcionando sin persistencia (el token queda en memoria de la pagina).
+   El token se guarda JUNTO con la API que lo emitio (K_API): si la pagina se abre contra otra API (otro ?api=), la
+   sesion guardada se borra aca, al cargar, ANTES de cualquier pedido; un token sin API guardada tambien. Asi un token
+   nunca viaja a una API distinta de la que lo dio. */
 const Sesion = (function(){
-  const K_TOKEN = "ippu.token", K_USUARIO = "ippu.usuario";
+  const K_TOKEN = "ippu.token", K_USUARIO = "ippu.usuario", K_API = "ippu.api";
   let enMemoria = { token: null, usuario: null };
   function leer(k){ try{ return sessionStorage.getItem(k); }catch(_e){ return null; } }
   function escribir(k, v){ try{ sessionStorage.setItem(k, v); }catch(_e){ /* sin persistencia */ } }
+  function borrar(){
+    enMemoria = { token: null, usuario: null };
+    try{ sessionStorage.removeItem(K_TOKEN); sessionStorage.removeItem(K_USUARIO); sessionStorage.removeItem(K_API); }catch(_e){ /* nada */ }
+  }
+  if(leer(K_TOKEN) !== null && leer(K_API) !== API_BASE) borrar();
   return {
     token(){ return leer(K_TOKEN) || enMemoria.token; },
     usuario(){
@@ -44,14 +54,21 @@ const Sesion = (function(){
     },
     guardar(token, usuario){
       enMemoria = { token, usuario };
+      escribir(K_API, API_BASE);
       escribir(K_TOKEN, token);
       escribir(K_USUARIO, JSON.stringify(usuario));
     },
-    limpiar(){
-      enMemoria = { token: null, usuario: null };
-      try{ sessionStorage.removeItem(K_TOKEN); sessionStorage.removeItem(K_USUARIO); }catch(_e){ /* nada */ }
-    }
+    limpiar: borrar
   };
+})();
+
+/* El login dice a que API va la contrasena cuando no es la de omision (#loginApi, index.html). Con la de omision no
+   dice nada (F1 retiro la URL del login, §5.140 g); fuera de localhost/127.0.0.1 no puede ser (ver API_BASE). */
+(function(){
+  const el = document.getElementById("loginApi");
+  if(!el || API_BASE === API_BASE_POR_DEFECTO) return;
+  el.textContent = "Tu usuario y tu contraseña van a la API de " + API_BASE + ", que no es la habitual.";
+  el.hidden = false;
 })();
 
 /* ---------- Error de la API ---------- */
