@@ -27,7 +27,7 @@ const DOC_CAMPOS = {archivo: ["docf_archivo", "Archivo"], categoria_id: ["docf_c
 const FOTO_CAMPOS = {archivo: ["fotf_archivo", "Archivo"], descripcion: ["fotf_desc", "Descripción"], fecha: ["fotf_fecha", "Fecha"]};
 const AUT_CAMPOS = {registrada: ["autf_registrada", "¿Está registrada?"], fecha: ["autf_fecha", "Fecha"], documento_id: ["autf_documento", "Copia firmada"]};
 const AUT_NOTA = "La autorización de uso de imagen regula si las fotos se pueden compartir; guardarlas en la HCE no la requiere.";
-const TIPO_TXT = {pdf: "PDF", jpg: "JPG", png: "PNG"};
+const TIPO_TXT = {pdf: "PDF", jpg: "JPG", png: "PNG", pptx: "PPTX"};   // PPTX sólo en los documentos de un ateneo (C6)
 const MIME_IMAGEN = ["image/jpeg", "image/png"];
 
 /* ---------- Miniaturas: Blob URLs que se revocan ---------- */

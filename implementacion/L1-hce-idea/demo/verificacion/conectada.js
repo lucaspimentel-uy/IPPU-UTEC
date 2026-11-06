@@ -300,8 +300,8 @@ async function loguear(page) {
   const textoVistas = {};
   for (const [v, sel] of vistas) {
     await page.click(sel);
-    if (v === 'pendientes' || v === 'grupos' || v === 'inclusion') {   // F2 y C4: ya no son de demostración (conectadas a la API): no llevan el panel
-      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : INCV.estado) === 'listo', v, { timeout: 8000 });
+    if (v === 'pendientes' || v === 'grupos' || v === 'inclusion' || v === 'ateneos') {   // F2, C4 y C6: ya no son de demostración (conectadas a la API): no llevan el panel
+      await page.waitForFunction((x) => (x === 'pendientes' ? PEND.estado : x === 'grupos' ? GRP.estado : x === 'inclusion' ? INCV.estado : AT.lista.estado) === 'listo', v, { timeout: 8000 });
       if ((await page.locator(`#view-${v} .demo-panel`).count()) !== 0) conPanel.push(v);
     } else {
       const t = (await txt(page, `#view-${v} .demo-panel`)).replace(/\s+/g, ' ');
@@ -310,19 +310,19 @@ async function loguear(page) {
     }
     textoVistas[v] = await page.evaluate(() => document.body.innerText);
   }
-  check('3a-g3', 'Analítica, Ateneos y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2) e Inclusión (conectada, C4) ya no lo llevan',
-    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '3/3 con panel, 3/3 sin panel');
+  check('3a-g3', 'Analítica y Usuarios muestran el panel «Modo demostración — no se guarda» (role="note"); Pendientes y Grupos (conectadas, F2), Inclusión (conectada, C4) y Ateneos (conectada, C6) ya no lo llevan',
+    sinPanel.length === 0 && conPanel.length === 0, sinPanel.length || conPanel.length ? 'sin panel: ' + sinPanel.join(',') + ' · con panel (no debería): ' + conPanel.join(',') : '2/2 con panel, 4/4 sin panel');
   check('3a-u', '«Mi usuario» (vista de ejemplo) no afirma ser la cuenta con sesión iniciada',
     !/sesión iniciada|datos de la cuenta|mi perfil/i.test(await txt(page, '#view-usuarios')) && /Perfil de ejemplo/.test(await txt(page, '#view-usuarios')),
     (await txt(page, '#view-usuarios .pagedesc')).trim());
   const conFase = Object.entries(textoVistas).filter(([, t]) => /Fase\s*3|Fase\s*\d-[a-e]/.test(t)).map(([v]) => v);
   check('3a-f0', 'ninguna vista visible menciona «Fase 3…» (las etapas son interna del equipo)', conFase.length === 0, conFase.join(',') || '6 vistas');
-  await page.click('.navitem[data-view="ateneos"]');        // F2: Grupos ya es de la API; C4: Inclusión también. Ateneos sigue en demostración
-  const gruposTxt = await txt(page, '#view-ateneos');
-  await page.click('#view-ateneos button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
+  await page.click('.navitem[data-view="analitica"]');      // F2: Grupos ya es de la API; C4: Inclusión también; C6: Ateneos también. Queda la Analítica (sus recordatorios)
+  const gruposTxt = await txt(page, '#view-analitica');
+  await page.click('#view-analitica button[onclick^="abrirExpedienteDemo"] >> nth=0');   // un NNA de la vista demo abre el expediente de EJEMPLO, rotulado
   await page.waitForSelector('#expedienteContent .demo-panel', { timeout: 5000 });
-  check('3a-g4', 'un NNA abierto desde una vista de demostración (Ateneos) abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
-    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Ateneos');
+  check('3a-g4', 'un NNA abierto desde una vista de demostración (los recordatorios de la Analítica; desde C6 Ateneos es de la API) abre el expediente de EJEMPLO, con su panel (no mezcla ids de la API)',
+    /Expediente de ejemplo/.test(await txt(page, '#expedienteContent .demo-panel')), gruposTxt.length + ' chars en Analítica');
 
   const humo = await page.evaluate(() => {
     try {
@@ -2399,7 +2399,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       paneles: [...document.querySelectorAll('.demo-panel')].filter((e) => e.offsetParent !== null).map((e) => [e.getAttribute('role'), e.className, [...e.querySelectorAll('*')].map((c) => c.tagName + '.' + c.className).join('>'), (e.querySelector('b') || {}).textContent]),
       marcas: [...document.querySelectorAll('.solo-demo')].filter((e) => e.offsetParent !== null && !e.closest('.exp-tab')).map((e) => [e.tagName, e.className, e.textContent.trim()]) }));
       r.paneles.forEach((p) => { firmas.add(JSON.stringify(p)); nPaneles++; }); r.marcas.forEach((m) => { marcas.add(JSON.stringify(m)); nMarcas++; }); };
-    for (const v of ['analitica', 'ateneos']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica); C4: Inclusión tampoco (c4-vista)
+    for (const v of ['analitica']) { await pv.evaluate((x) => go(x), v);     // F2: Pendientes y Grupos ya no son de demostración (f2-texto lo verifica); C4: Inclusión tampoco (c4-vista); C6: Ateneos tampoco (c6-lista)
       await pv.waitForTimeout(60); await leer(v); }
     await pv.evaluate(() => { go('usuarios'); renderUsuario(); }); await pv.waitForTimeout(60); await leer('usuarios');
     await pv.evaluate(() => abrirExpedienteDemo(102)); await pv.waitForTimeout(100); await leer('ejemplo');
@@ -2408,9 +2408,9 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate((t) => selTabExp(t), 'vf'); await pv.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
     await pv.evaluate(() => { const g = document.querySelector('.vf-guia'); if (g) g.open = true; }); await leer('vf');
     const sinTitulos = [...firmas].map((f) => JSON.parse(f));
-    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedaban 6 paneles y 3 marcas; C5: sin la pestaña DOC, 5 y 2 (su marca iba en el encabezado de su panel)
+    // C4: sin la vista Inclusión ni la pestaña INC (conectadas) quedaban 6 paneles y 3 marcas; C5: sin la pestaña DOC, 5 y 2 (su marca iba en el encabezado de su panel); C6: sin la vista Ateneos, 4 y 2
     check('3e-demo', 'el panel «Modo demostración» (role=note, glifo, título «Modo demostración — no se guarda») y la marca «Solo demo» son idénticos en todas las vistas y pestañas no conectadas: una sola estructura, un solo texto (la marca compacta de las pestañas, glifo + texto sólo para lectores de pantalla, la mide f1-tabs)',
-      nPaneles >= 5 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 2 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
+      nPaneles >= 4 && firmas.size === 1 && sinTitulos[0][0] === 'note' && sinTitulos[0][3] === 'Modo demostración — no se guarda' && nMarcas >= 2 && marcas.size === 1 && JSON.parse([...marcas][0])[2] === 'Solo demo', JSON.stringify({ nPaneles, estructuras: firmas.size, nMarcas, marcasDistintas: marcas.size }));
     await cv.close();
   }
 
@@ -3739,6 +3739,211 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       enVueloD && trasD.login && trasD.foco === 'loginUser' && trasD.guardando === false && trasD.hceId === null && trasD.filas === 0 && trasD.fotos === 0 && trasD.aut === null
         && !trasD.tarjeta && trasD.expediente === '' && !trasD.modal && !trasD.toast && reabre.habilitado && reabre.guardando === false,
       JSON.stringify({ enVueloD, trasD: { ...trasD, expediente: trasD.expediente.slice(0, 30) }, reabre }));
+    await ctx.close();
+  }
+
+  /* ---------- C6 · Ateneos y jornadas de capacitación (§5.158) ----------
+     ESCRIBE: crea desde el diálogo un registro de cada tipo, edita uno, le agrega un acuerdo, adjunta un PDF al institucional del seed y
+     (admin, por la API) crea un expediente en Inicial con un ateneo clínico y uno de grupo, para el alcance. Todo se compara con lo que
+     dice la API, no con literales: el código lo asigna el servidor. */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+    const pa = await ctx.newPage();
+    pa.on('pageerror', (e) => erroresPagina.push(e.message));
+    pa.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    await loguearComo(pa, EMAIL, PASSWORD);
+    const tok = await pa.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const login = async (email, pass) => (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) })).json()).access_token;
+    const tokAdmin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { ...(t === null ? {} : { Authorization: 'Bearer ' + (t || tok) }), ...(body instanceof FormData || body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body) });
+      let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json, total: r.headers.get('X-Total-Count') }; };
+    const PDF = Buffer.concat([Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n'), Buffer.from('% c6-doc ' + Date.now() + '\n')]);
+    const escrituras = [], descargas = [];
+    pa.on('request', (r) => { const u = new URL(r.url()).pathname;
+      if (/^\/ateneos/.test(u) && r.method() !== 'GET') escrituras.push({ m: r.method(), url: u, body: r.postData() || '' });
+      if (/\/archivo$/.test(u)) descargas.push({ url: u, auth: r.headers().authorization || null }); });
+    const esperarLista = () => pa.waitForFunction(() => AT.modo === 'lista' && AT.lista.estado === 'listo' && AT.ind.estado === 'listo', null, { timeout: 8000 });
+    const esperarDetalle = () => pa.waitForFunction(() => AT.modo === 'detalle' && (AT.det.estado === 'listo' || AT.det.estado === 'error'), null, { timeout: 8000 });
+    const irAteneos = async () => { await pa.click('.navitem[data-view="ateneos"]'); await esperarLista(); };
+    const filasUi = () => pa.evaluate(() => [...document.querySelectorAll('#tablaAteneos tbody tr[data-ateneo]')].map((tr) => {
+      const tipo = tr.querySelector('.at-tipo');
+      return { id: +tr.dataset.ateneo, celdas: [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim()), sensible: tr.dataset.sensible === 'true',
+        marca: (tr.querySelector('.at-sensible') || {}).textContent || null, tabs: tr.querySelectorAll('button, a[href], input, select, textarea, [tabindex="0"]').length,
+        tipoFondo: getComputedStyle(tipo).backgroundColor, tipoHijos: [...tipo.children].filter((c) => !c.classList.contains('at-sensible')).length,
+        mono: getComputedStyle(tr.querySelector('.at-codigo')).fontFamily };
+    }));
+    const fmt = (f) => pa.evaluate((x) => fmtFecha(x), f);
+
+    /* c6-lista · las filas son las de GET /ateneos (mismo token), en su orden; el tipo va en texto, sin color; «Sensible» en texto en el clínico */
+    await irAteneos();
+    const lApi = (await api('GET', '/ateneos')).json, fUi = await filasUi();
+    const fechas = await Promise.all(lApi.map((a) => fmt(a.fecha)));
+    const vistaUi = await pa.evaluate(() => ({ demo: document.querySelectorAll('#view-ateneos [data-modo-demo], #view-ateneos .demo-panel, #view-ateneos .solo-demo').length,
+      chips: document.querySelectorAll('#view-ateneos .at-chip').length, abreDemo: /abrirExpedienteDemo/.test(document.getElementById('view-ateneos').innerHTML) }));
+    check('c6-lista', 'vista «Ateneos y capacitación»: sin panel ni marca de demostración; las filas son exactamente las de GET /ateneos, en su orden (código, fecha, tipo en texto y sin color, título, grupo o NNA, acuerdos); «Sensible» en texto sólo en los clínicos; un solo punto de Tab por fila (el título); el código en la fuente de códigos',
+      vistaUi.demo === 0 && vistaUi.chips === 0 && !vistaUi.abreDemo && lApi.length >= 4 && fUi.length === lApi.length
+        && fUi.every((f, i) => f.id === lApi[i].id && f.celdas[0] === lApi[i].codigo && f.celdas[1] === fechas[i] && f.celdas[2].startsWith(lApi[i].tipo_label)
+          && f.celdas[3] === lApi[i].titulo && f.celdas[5] === String(lApi[i].acuerdos) && f.sensible === lApi[i].sensible && (f.marca === 'Sensible') === lApi[i].sensible
+          && f.tabs === 1 && f.tipoHijos === 0 && /rgba\(0, 0, 0, 0\)|transparent/.test(f.tipoFondo) && !/sans-serif$/.test(f.mono.trim()) || false),
+      JSON.stringify({ vistaUi, n: [fUi.length, lApi.length], f0: fUi[0] }).slice(0, 500));
+
+    /* c6-indicador · el texto es el de GET /ateneos/indicador (año en curso por omisión): «2026: N de 8 ateneos» y una línea por grupo */
+    const ind = (await api('GET', '/ateneos/indicador')).json;
+    const indUi = await pa.evaluate(() => ({ total: document.getElementById('atIndTotal').textContent.trim(), grupos: [...document.querySelectorAll('#atIndGrupos li')].map((li) => li.textContent.trim()),
+      color: [...document.querySelectorAll('#atIndicador *')].some((e) => /\b(ok|warn|bad)\b/.test(e.className)) }));
+    check('c6-indicador', 'el indicador dice lo que cuenta la API, en texto y sin colores de estado: «<año>: <total> de <meta> ateneos» y «<grupo>: <cantidad> de <meta por grupo>» por cada grupo del año',
+      indUi.total === `${ind.anio}: ${ind.total} de ${ind.meta_total} ateneos` && JSON.stringify(indUi.grupos) === JSON.stringify(ind.grupos.map((g) => `${g.nombre}: ${g.cantidad} de ${ind.meta_por_grupo}`)) && !indUi.color,
+      JSON.stringify({ indUi, api: { total: ind.total, grupos: ind.grupos.length } }));
+
+    /* c6-nuevo · uno de cada tipo desde el diálogo; el servidor asigna el código siguiente; un clínico sin NNA y una jornada con acuerdo → 422 junto al campo */
+    const anioReg = new Date().getFullYear();
+    const siguiente = async () => { const todos = (await api('GET', '/ateneos?limit=200', undefined, tokAdmin)).json;
+      const nums = todos.map((a) => a.codigo).filter((c) => c.startsWith(`AT-${anioReg}-`)).map((c) => +c.slice(-3)); return `AT-${anioReg}-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0')}`; };
+    const idMartin = (await api('GET', '/hce?nombre=Mart%C3%ADn&limit=5')).json.find((h) => h.persona.nombre === 'Martín').id;
+    const grupos26 = (await api('GET', `/grupos?anio=${anioReg}`)).json, escolares = grupos26.find((g) => g.nombre === 'Escolares'), inicial = grupos26.find((g) => g.nombre === 'Inicial');
+    const abrirNuevo = async () => { await irAteneos(); await pa.click('#btnAtNuevo'); await pa.waitForSelector('#modalFlujo.open #atf_tipo'); };
+    const guardar = async () => {
+      const resp = pa.waitForResponse((r) => new URL(r.url()).pathname === '/ateneos' && r.request().method() === 'POST');
+      await pa.click('#btnAtGuardar'); return resp;
+    };
+    const esperarCerrado = () => pa.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    const resultadosNuevo = [];
+    const llenar = async (tipo, extra) => {
+      await pa.selectOption('#atf_tipo', tipo); await pa.fill('#atf_fecha', `${anioReg}-10-2${resultadosNuevo.length}`);
+      await pa.fill('#atf_titulo', `Registro ${tipo} desde la pantalla (c6)`); await pa.fill('#atf_participantes', 'Técnicos responsables · Coordinación técnica');
+      if (extra) await extra();
+    };
+    // clínico: sin NNA → 422 en «NNA referido»; con NNA → 201
+    await abrirNuevo(); await llenar('clinico');
+    const visibles = await pa.evaluate(() => ({ nna: !document.getElementById('atfNnaCampo').hidden, grupo: !document.getElementById('atfGrupoCampo').hidden,
+      jornada: !document.getElementById('atfBloqueJornada').hidden, clinico: !document.getElementById('atfBloqueClinico').hidden }));
+    const r422a = await guardar(); await pa.waitForSelector('#atErrores:not([hidden])');
+    const e422a = await pa.evaluate(() => ({ foco: document.activeElement.id, inval: document.getElementById('atf_nna').getAttribute('aria-invalid'), err: document.getElementById('err_atf_nna').textContent }));
+    let esperado = await siguiente();
+    await pa.selectOption('#atf_nna', String(idMartin)); await pa.fill('#atf_situacion', 'Situación de prueba (c6).');
+    const r1 = await guardar(); await esperarCerrado(); await esperarDetalle();
+    resultadosNuevo.push({ tipo: 'clinico', st: r1.status(), codigo: (await r1.json()).data.codigo, esperado, ui: await pa.evaluate(() => document.getElementById('atDetMeta').textContent) });
+    // de grupo
+    await abrirNuevo(); esperado = await siguiente();
+    await llenar('grupo', async () => { await pa.selectOption('#atf_grupo', String(escolares.id)); });
+    const r2 = await guardar(); await esperarCerrado(); await esperarDetalle();
+    resultadosNuevo.push({ tipo: 'grupo', st: r2.status(), codigo: (await r2.json()).data.codigo, esperado, ui: await pa.evaluate(() => document.getElementById('atDetMeta').textContent) });
+    // institucional, con un acuerdo juntado en el diálogo
+    await abrirNuevo(); esperado = await siguiente();
+    await llenar('institucional', async () => { await pa.click('#btnAtfAcAgregar'); await pa.fill('#atf_ac_0_acuerdo', 'Acuerdo cargado con el registro (c6)'); await pa.fill('#atf_ac_0_responsable_rol', 'Coordinación técnica'); });
+    const r3 = await guardar(); await esperarCerrado(); await esperarDetalle();
+    const d3 = (await r3.json()).data;
+    resultadosNuevo.push({ tipo: 'institucional', st: r3.status(), codigo: d3.codigo, esperado, ui: await pa.evaluate(() => document.getElementById('atDetMeta').textContent) });
+    // jornada con un acuerdo → 422 junto a «Acuerdos»; sin el acuerdo → 201
+    await abrirNuevo(); await llenar('jornada', async () => { await pa.fill('#atf_capacitador', 'Equipo técnico interno'); await pa.click('#btnAtfAcAgregar'); await pa.fill('#atf_ac_0_acuerdo', 'No corresponde'); });
+    const visJ = await pa.evaluate(() => ({ jornada: !document.getElementById('atfBloqueJornada').hidden, clinico: !document.getElementById('atfBloqueClinico').hidden, nna: !document.getElementById('atfNnaCampo').hidden, grupo: !document.getElementById('atfGrupoCampo').hidden }));
+    const r422b = await guardar(); await pa.waitForSelector('#atErrores:not([hidden])');
+    const e422b = await pa.evaluate(() => ({ foco: document.activeElement.id, inval: document.getElementById('atf_acuerdos').getAttribute('aria-invalid'), err: document.getElementById('err_atf_acuerdos').textContent }));
+    esperado = await siguiente();
+    await pa.click('#btnAtfAcQuitar_0');
+    const r4 = await guardar(); await esperarCerrado(); await esperarDetalle();
+    resultadosNuevo.push({ tipo: 'jornada', st: r4.status(), codigo: (await r4.json()).data.codigo, esperado, ui: await pa.evaluate(() => document.getElementById('atDetMeta').textContent) });
+    const posts = escrituras.filter((e) => e.m === 'POST' && e.url === '/ateneos');
+    check('c6-nuevo', '«Nuevo registro» (diálogo compartido): el tipo muestra sólo su bloque; un clínico sin NNA → 422 de la API junto a «NNA referido» (resumen role="alert" con el foco); una jornada con un acuerdo → 422 junto a «Acuerdos»; corregidos, los cuatro tipos se guardan (201) con el código siguiente que asigna el servidor y el detalle lo muestra; ningún POST manda código, número ni sensible',
+      visibles.nna && visibles.grupo && !visibles.jornada && visibles.clinico && visJ.jornada && !visJ.clinico && !visJ.nna && !visJ.grupo
+        && r422a.status() === 422 && e422a.foco === 'atErrores' && e422a.inval === 'true' && e422a.err !== ''
+        && r422b.status() === 422 && e422b.foco === 'atErrores' && e422b.inval === 'true' && /jornada/i.test(e422b.err)
+        && resultadosNuevo.length === 4 && resultadosNuevo.every((x) => x.st === 201 && x.codigo === x.esperado && x.ui.includes(x.codigo))
+        && posts.length === 6 && posts.every((p) => !/"(codigo|numero|anio_correlativo|sensible)"/.test(p.body)),
+      JSON.stringify({ visibles, visJ, e422a, e422b, resultadosNuevo: resultadosNuevo.map((x) => [x.tipo, x.st, x.codigo, x.esperado]), posts: posts.length }).slice(0, 600));
+
+    /* c6-editar · editar un campo (un PATCH sólo con lo que cambió) y verlo en el detalle; un acuerdo agregado después del alta */
+    await pa.evaluate((id) => atAbrir(id), d3.id); await esperarDetalle();
+    const nE = escrituras.length;
+    await pa.click('#btnAtEditar'); await pa.waitForSelector('#modalFlujo.open #atf_observaciones');
+    await pa.fill('#atf_observaciones', 'Observación editada desde la pantalla (c6)');
+    const rP = pa.waitForResponse((r) => new URL(r.url()).pathname === `/ateneos/${d3.id}` && r.request().method() === 'PATCH');
+    await pa.click('#btnAtGuardar'); const rPatch = await rP; await esperarCerrado();
+    await pa.waitForFunction(() => /editada desde la pantalla/.test(document.getElementById('atObservaciones').textContent), null, { timeout: 8000 });
+    const patchBody = JSON.parse(escrituras.slice(nE).find((e) => e.m === 'PATCH').body);
+    await pa.click('#btnAcAgregar'); await pa.waitForSelector('#modalFlujo.open #acf_acuerdo');
+    await pa.fill('#acf_acuerdo', 'Acuerdo agregado después del alta (c6)'); await pa.fill('#acf_plazo', `${anioReg}-12-15`);
+    const rA = pa.waitForResponse((r) => new URL(r.url()).pathname === `/ateneos/${d3.id}/acuerdos` && r.request().method() === 'POST');
+    await pa.click('#btnAtGuardar'); const rAc = await rA; await esperarCerrado();
+    await pa.waitForFunction(() => AT.det.estado === 'listo' && /agregado después del alta/.test(document.getElementById('atAcuerdosCard').innerText), null, { timeout: 8000 });
+    const dE = (await api('GET', `/ateneos/${d3.id}`)).json;
+    const acUi = await pa.evaluate(() => [...document.querySelectorAll('#atAcuerdosTabla tbody tr')].map((tr) => tr.children[0].innerText.trim()));
+    const focoAc = await pa.evaluate(() => document.activeElement.id);
+    check('c6-editar', 'editar un registro envía UN PATCH sólo con el campo cambiado y el detalle lo muestra (lo que guarda la API); «+ Agregar acuerdo» después del alta → POST /ateneos/{id}/acuerdos 201 y la tabla de acuerdos es la de la API, en su orden, con el foco en su título',
+      rPatch.status() === 200 && JSON.stringify(Object.keys(patchBody)) === '["observaciones"]' && dE.observaciones === 'Observación editada desde la pantalla (c6)'
+        && rAc.status() === 201 && JSON.stringify(acUi) === JSON.stringify(dE.acuerdos.map((a) => a.acuerdo)) && dE.acuerdos.length === 2 && focoAc === 'atAcuerdosTitulo',
+      JSON.stringify({ patchBody, acUi, focoAc }).slice(0, 400));
+
+    /* c6-clinico-ajeno · el admin crea, en Inicial (donde González no es técnico), un expediente con un ateneo clínico y uno de grupo:
+       González no ve el clínico (ni en la lista ni en el total) y abrirlo da «no encontrado»; el de grupo sí lo ve (acceso general) */
+    const suf = String(Date.now()).slice(-6);
+    const idAj = (await api('POST', '/hce', { persona: { nombre: 'Ajeno' + suf, apellido: 'Cseis', ci: '3' + suf + '6', fecha_nac: '2016-07-07' }, grupo_id: inicial.id }, tokAdmin)).json.data.id;
+    const clinAj = (await api('POST', '/ateneos', { tipo: 'clinico', fecha: `${anioReg}-09-01`, titulo: 'Clínico ajeno (c6)', hce_referida_id: idAj, grupo_id: inicial.id }, tokAdmin)).json.data;
+    const grupoAj = (await api('POST', '/ateneos', { tipo: 'grupo', fecha: `${anioReg}-09-02`, titulo: 'De grupo de Inicial (c6)', grupo_id: inicial.id }, tokAdmin)).json.data;
+    await irAteneos();
+    const idsUi = (await filasUi()).map((f) => f.id), totalUi = await pa.evaluate(() => AT.lista.total);
+    const lG = await api('GET', '/ateneos'), lAdm = await api('GET', '/ateneos', undefined, tokAdmin);
+    await pa.evaluate((id) => atAbrir(id), clinAj.id); await esperarDetalle();
+    const noEnc = await pa.evaluate(() => ({ estado: AT.det.estado, nf: AT.det.noEncontrado, txt: document.querySelector('#ateneosContent [role="alert"]') ? document.querySelector('#ateneosContent [role="alert"]').innerText : '',
+      reintentar: !!document.querySelector('#ateneosContent [data-reintentar]'), titulo: /Clínico ajeno/.test(document.getElementById('ateneosContent').innerText) }));
+    const apiAj = await api('GET', `/ateneos/${clinAj.id}`), apiNada = await api('GET', '/ateneos/9999001');
+    await pa.evaluate((id) => atAbrir(id), grupoAj.id); await esperarDetalle();
+    const grupoVisto = await pa.evaluate(() => AT.det.estado === 'listo' && /De grupo de Inicial/.test(document.getElementById('atDetTitulo').textContent));
+    check('c6-clinico-ajeno', 'un ateneo clínico de un NNA de otro grupo: no está en la lista de González ni en su total (el admin sí lo ve), GET /ateneos/{id} es 404 igual que uno inexistente y la pantalla muestra «No se encontró el registro.» en role="alert" sin «Reintentar» ni el título; el ateneo de grupo de Inicial sí se ve y se abre',
+      !idsUi.includes(clinAj.id) && idsUi.includes(grupoAj.id) && totalUi === +lG.total && !lG.json.some((a) => a.id === clinAj.id) && lAdm.json.some((a) => a.id === clinAj.id)
+        && +lAdm.total === +lG.total + 1 && apiAj.status === 404 && JSON.stringify(apiAj.json) === JSON.stringify(apiNada.json)
+        && noEnc.estado === 'error' && noEnc.nf && /No se encontró el registro/.test(noEnc.txt) && !noEnc.reintentar && !noEnc.titulo && grupoVisto,
+      JSON.stringify({ totalUi, lG: lG.total, lAdm: lAdm.total, noEnc, st: apiAj.status, grupoVisto }));
+
+    /* c6-resumen · la tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín lista los de GET /ateneos?hce_referida_id= y abre el ateneo */
+    await pa.evaluate((i) => abrirExpediente(i), idMartin); await pa.waitForSelector('#expTitulo');
+    await pa.waitForFunction(() => EXP_AT.estado === 'listo' && !!document.getElementById('expAteneosLista'), null, { timeout: 8000 });
+    const delM = (await api('GET', `/ateneos?hce_referida_id=${idMartin}`)).json;
+    const tarjeta = await pa.evaluate(() => [...document.querySelectorAll('#expAteneosLista li')].map((li) => ({ id: +li.dataset.ateneo, txt: li.innerText.replace(/\s+/g, ' ').trim() })));
+    const seed1 = delM.find((a) => a.codigo === `AT-${anioReg}-001`);
+    await pa.click(`#btnExpAt_${seed1.id}`); await esperarDetalle();
+    const abierto = await pa.evaluate(() => ({ vista: document.querySelector('.view.active').id, codigo: AT.det.datos && AT.det.datos.codigo, foco: document.activeElement.id }));
+    check('c6-resumen', 'pestaña «Datos» de Martín: la tarjeta «Ateneos clínicos» tiene exactamente los de GET /ateneos?hce_referida_id= (con el AT-<año>-001 del seed), en su orden, con código, fecha y «Sensible»; tocar uno abre ese ateneo en la vista Ateneos con el foco en su título',
+      !!seed1 && tarjeta.length === delM.length && tarjeta.every((t, i) => t.id === delM[i].id && t.txt.includes(delM[i].codigo) && t.txt.includes(delM[i].titulo) && /Sensible/.test(t.txt))
+        && abierto.vista === 'view-ateneos' && abierto.codigo === seed1.codigo && abierto.foco === 'atDetTitulo',
+      JSON.stringify({ tarjeta: tarjeta.map((t) => t.id), api: delM.map((a) => a.id), abierto }));
+
+    /* c6-doc · adjuntar un PDF al institucional del seed y descargarlo con el token */
+    const inst = (await api('GET', '/ateneos?tipo=institucional')).json.find((a) => a.codigo === `AT-${anioReg}-003`);
+    await pa.evaluate((id) => atAbrir(id), inst.id); await esperarDetalle();
+    const docsAntes = (await api('GET', `/ateneos/${inst.id}/documentos`)).json.length;
+    await pa.click('#btnAtDocCargar'); await pa.waitForSelector('#modalFlujo.open #atdf_archivo');
+    const acepta = await pa.getAttribute('#atdf_archivo', 'accept');
+    const catsAt = await pa.evaluate(() => [...document.querySelectorAll('#atdf_categoria option')].map((o) => o.textContent));
+    await pa.setInputFiles('#atdf_archivo', { name: 'acta-c6.pdf', mimeType: 'application/pdf', buffer: PDF });
+    await pa.selectOption('#atdf_categoria', { label: 'Otro' });
+    await pa.fill('#atdf_nombre', 'Acta adjuntada desde la pantalla (c6)');
+    const rD = pa.waitForResponse((r) => new URL(r.url()).pathname === `/ateneos/${inst.id}/documentos` && r.request().method() === 'POST');
+    await pa.click('#btnAtGuardar'); const rDoc = await rD; await esperarCerrado();
+    await pa.waitForFunction(() => AT.det.estado === 'listo' && /adjuntada desde la pantalla/.test(document.getElementById('atDocsCard').innerText), null, { timeout: 8000 });
+    const docsApi = (await api('GET', `/ateneos/${inst.id}/documentos`)).json, nuevoDoc = docsApi[0];
+    const nd = descargas.length;
+    const [dl] = await Promise.all([pa.waitForEvent('download', { timeout: 8000 }), pa.click(`#btnAtDocBajar_${nuevoDoc.id}`)]);
+    const bajado = require('fs').readFileSync(await dl.path());
+    const desc = descargas.slice(nd).filter((d) => d.url === `/ateneos/${inst.id}/documentos/${nuevoDoc.id}/archivo`);
+    const sinTok = await api('GET', `/ateneos/${inst.id}/documentos/${nuevoDoc.id}/archivo`, undefined, null);
+    check('c6-doc', '«+ Adjuntar documento» en el institucional del seed (el <input> sugiere .pdf/.jpg/.jpeg/.png/.pptx y no ofrece categorías «Registro histórico»): UN POST multipart → 201, la tarjeta lo lista primero como la API; «Descargar» guarda los mismos bytes con Authorization y sin token es 401',
+      acepta === '.pdf,.jpg,.jpeg,.png,.pptx' && !catsAt.some((c) => /Registro histórico/.test(c)) && rDoc.status() === 201 && docsApi.length === docsAntes + 1
+        && nuevoDoc.nombre === 'Acta adjuntada desde la pantalla (c6)' && nuevoDoc.tipo === 'pdf' && Buffer.compare(bajado, PDF) === 0
+        && desc.length === 1 && /^Bearer /.test(desc[0].auth || '') && sinTok.status === 401,
+      JSON.stringify({ acepta, st: rDoc.status(), n: [docsAntes, docsApi.length], bytes: [bajado.length, PDF.length], auth: desc.map((d) => !!d.auth), sin: sinTok.status }));
+
+    /* c6-salir · «Salir» con GET /ateneos todavía sin respuesta: al llegar, la vista sigue vacía y el estado no tiene datos de la sesión anterior */
+    await pa.evaluate(() => go('inicio'));
+    await pa.route((u) => u.pathname === '/ateneos', async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue().catch(() => {}); });
+    await pa.click('.navitem[data-view="ateneos"]');
+    await pa.click('.btn-exit');
+    await pa.waitForTimeout(2200);
+    const salir = await pa.evaluate(() => ({ contenido: document.getElementById('ateneosContent').innerHTML.trim(), filas: AT.lista.filas.length, estado: AT.lista.estado, det: AT.det.datos,
+      ind: AT.ind.datos, exp: EXP_AT.filas.length, login: !document.getElementById('loginScreen').classList.contains('hidden') }));
+    check('c6-salir', '«Salir» con GET /ateneos todavía sin respuesta: al llegar, la vista «Ateneos» sigue vacía, sin filas, indicador, detalle ni tarjeta del expediente de la sesión anterior, con el login a la vista',
+      salir.contenido === '' && salir.filas === 0 && salir.estado === 'vacio' && salir.det === null && salir.ind === null && salir.exp === 0 && salir.login, JSON.stringify(salir));
     await ctx.close();
   }
 

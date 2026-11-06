@@ -483,3 +483,46 @@ def test_c5_los_datos_sembrados_son_de_demostracion_y_de_antes_del_13_11():
     for f in [*(x for fs in FOTOS_DEMO.values() for x in fs), FOTO_GRUPAL_DEMO]:
         assert "(demostración)" in f["descripcion"] and date.fromisoformat(f["fecha"]) < date(2026, 11, 13)
         assert png_demo(f["color"]).startswith(b"\x89PNG\r\n\x1a\n")
+
+
+# ── C6: ateneos y jornadas ───────────────────────────────────────────────────
+def test_c6_los_cuatro_ateneos_de_la_demo_con_su_codigo_tipo_y_acuerdos(client, demo, como_gonzalez):
+    filas = client.get("/ateneos", params={"anio": ANIO}).json()
+    por_codigo = {f["codigo"]: f for f in filas}
+    assert sorted(por_codigo) == [f"AT-{date.today().year}-00{i}" for i in (1, 2, 3, 4)]
+    a = date.today().year
+    assert [(por_codigo[f"AT-{a}-00{i}"]["tipo"], por_codigo[f"AT-{a}-00{i}"]["acuerdos"]) for i in (1, 2, 3, 4)] == [
+        ("clinico", 2), ("grupo", 1), ("institucional", 0), ("jornada", 0)]
+    clinico = por_codigo[f"AT-{a}-001"]
+    assert clinico["sensible"] is True and clinico["nna"]["hce_id"] == demo.expedientes[102] and clinico["nna"]["nombre"] == "Martín"
+    assert clinico["grupo"]["nombre"] == "Escolares" and clinico["grupo"]["anio"] == ANIO
+    assert por_codigo[f"AT-{a}-002"]["grupo"]["nombre"] == "Preadolescentes"
+    assert por_codigo[f"AT-{a}-003"]["documentos"] == 1 and por_codigo[f"AT-{a}-003"]["grupo"] is None
+    assert demo.ateneos == [f"AT-{a}-001 (clinico)", f"AT-{a}-002 (grupo)", f"AT-{a}-003 (institucional)", f"AT-{a}-004 (jornada)"]
+    # el autor es el Dr. González (el técnico que cargó la demo), y el resumen de Martín los encuentra por el expediente
+    detalle = client.get(f"/ateneos/{clinico['id']}").json()
+    assert detalle["autor"]["nombre"] == GONZALEZ["nombre"] and [x["orden"] for x in detalle["acuerdos"]] == [0, 1]
+    assert [f["codigo"] for f in client.get("/ateneos", params={"hce_referida_id": demo.expedientes[102]}, headers=como_gonzalez).json()] == [f"AT-{a}-001"]
+    docs = client.get(f"/ateneos/{por_codigo[f'AT-{a}-003']['id']}/documentos").json()
+    assert len(docs) == 1 and docs[0]["tipo"] == "pdf"
+    pdf = client.get(f"/ateneos/{por_codigo[f'AT-{a}-003']['id']}/documentos/{docs[0]['id']}/archivo")
+    assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF-")
+    ind = client.get("/ateneos/indicador", params={"anio": ANIO}).json()
+    assert ind["total"] == 3 and {g["nombre"]: g["cantidad"] for g in ind["grupos"]}["Escolares"] == 1
+
+
+def test_c6_un_tecnico_sin_grupo_no_ve_el_clinico_y_si_los_otros_tres(client, demo, crear_profesional, hash_test, token_de):
+    cab = token_de(crear_profesional(nombre="Sin grupo", hashed_password=hash_test))
+    tipos = sorted(f["tipo"] for f in client.get("/ateneos", headers=cab).json())
+    assert tipos == ["grupo", "institucional", "jornada"]
+
+
+def test_c6_los_ateneos_sembrados_son_de_demostracion_de_2026_antes_del_13_11_y_con_roles():
+    from app.seed_demo import ATENEOS_DEMO
+
+    assert [a["tipo"] for a in ATENEOS_DEMO] == ["clinico", "grupo", "institucional", "jornada"]
+    for a in ATENEOS_DEMO:
+        f = date.fromisoformat(a["fecha"])
+        assert f.year == 2026 and f < date(2026, 11, 13) and "(demostración)" in a["titulo"]
+        assert not any(n in a["participantes"] for n in ("González", "Torres", "Dr.", "Lic.", "Mtra."))
+    assert "acuerdos" not in ATENEOS_DEMO[3] and len(ATENEOS_DEMO[0]["acuerdos"]) == 2 and len(ATENEOS_DEMO[1]["acuerdos"]) == 1

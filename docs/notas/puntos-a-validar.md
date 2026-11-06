@@ -1016,6 +1016,17 @@ en M12.8a.
 cuenta ateneos por grupo ni por año. **Sigue abierto como trabajo de construcción**, ahora con la
 semántica resuelta.
 
+**Construido en C6 (2026-11-06, `handoff.md` §5.158 g).** `GET /ateneos/indicador?anio=` cuenta **por `fecha`** y la vista
+«Ateneos» lo muestra arriba, en texto («2026: 3 de 8 ateneos», «Escolares: 1 de 2»). El total suma los ateneos **clínicos, de
+grupo e institucionales**; la **jornada de capacitación no suma** (es la instancia donde se repasan los ateneos, §5.46). Por
+grupo cuenta los ateneos con ese `grupo_id` —los de grupo y los clínicos que lo tienen de contexto—, para los grupos de ese
+año. Cuenta todos los ateneos, los pueda abrir o no quien consulta (es un agregado sin contenido). Las metas son constantes.
+
+**Pregunta nueva para IPPU (abierta).** *¿Qué registros cuentan para la meta de 8 ateneos al año y 2 por grupo?* En
+particular: (1) ¿la jornada de capacitación cuenta como ateneo? (hoy no); (2) ¿el ateneo institucional cuenta para el total?
+(hoy sí) y (3) ¿un ateneo clínico cuenta para el grupo del NNA? (hoy sí, si se registró con ese grupo de contexto). Cambiar la
+respuesta es una constante (`ATENEO_TIPOS_INDICADOR`) y la consulta por grupo; ninguna migración. **No bloquea el 26/11.**
+
 ### 2.15 ~~Las prestaciones se declaran en dos lugares~~ — **RESUELTO por §5.57 (salida 2); queda sólo el puntero de construcción a M11.3/M11.4** (2026-09-02, marcado 2026-09-03)
 
 > **RESUELTO como decisión (`handoff.md` §5.57 / L4):** `pai_prestacion` es **declaración fechada** del
@@ -1089,6 +1100,10 @@ decide qué se muestra y qué se imprime en el PAI.
 >    privacidad.** Con eso el guard 1 es **inimplementable**: una lista en prosa no autoriza a nadie. Para
 >    que autorice tiene que pasar a **relación** (`ateneo_participante` N:M a `profesional`), y eso necesita
 >    el modelo de usuarios (§2.11 / `handoff.md` §5.72) por debajo. **No se toca ahora.**
+>
+> **C6 (2026-11-06, `handoff.md` §5.158 a):** del ítem 1 quedan construidos el **equipo tratante** (los técnicos del grupo del
+> expediente referido) y **dirección** (el admin): un clínico fuera de ese alcance es 404 y no aparece en la lista. Los ítems 2–4
+> —participantes, enmascarado y registro del acceso con motivo— siguen pendientes, posteriores al 26/11.
 
 ---
 

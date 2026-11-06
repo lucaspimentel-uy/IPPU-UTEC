@@ -252,20 +252,14 @@
       <div id="inclusionContent"></div>
     </section>
 
-    <!-- ============ VISTA: ATENEOS Y CAPACITACIÓN (F1-nav4) ============
-         Sección `#/ateneos` del Prototipo v4 (`HCE_IPPU_Prototipo_v4.html:227` en la
-         navegación / `vAteneos` línea 1878 · `vAteneoDet` línea 1911), portada con la
-         fuente, los colores y el formato de la demo. Primera sección de la demo que NO
-         cuelga de un NNA: registro institucional transversal con 4 tipos en UNA sola
-         entidad con campos según tipo (`docs/markdown/prototipo-v4-referencia.md` §9;
-         backend M12.7, `ateneo` + `ateneo_acuerdo`).
-         Listado y detalle viven los dos dentro de #ateneosContent (mismo paradigma que
-         la vista Grupos post-F1-nav2; el prototipo usa dos rutas de hash). -->
+    <!-- ============ VISTA: ATENEOS Y CAPACITACIÓN (C6, §5.158) ============
+         Conectada: GET /ateneos, /ateneos/indicador, /ateneos/{id} y sus acuerdos y documentos (ateneos.js). Registro
+         institucional transversal con 4 tipos en una sola entidad con campos según tipo (backend M12.7, `ateneo` +
+         `ateneo_acuerdo`). Lista (con el indicador arriba) y detalle viven los dos dentro de #ateneosContent. -->
     <section class="view" id="view-ateneos">
-      <div data-modo-demo></div>
       <div class="crumbs">Servicio de Atención Diurna › <b>Ateneos y capacitación</b></div>
-      <h1 class="pagetitle">Ateneos clínicos y jornadas de capacitación</h1>
-      <p class="pagedesc">Registro institucional transversal, con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos referidos a un NNA aparecen también en su expediente y heredan su matriz de acceso por roles.</p>
+      <h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1>
+      <p class="pagedesc">Registro institucional con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos clínicos aparecen también en el expediente del NNA.</p>
       <div id="ateneosContent"></div>
     </section>
 

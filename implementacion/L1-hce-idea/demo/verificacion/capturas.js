@@ -11,6 +11,10 @@
  * diálogos «Cargar documento» (`doc-cargar`), «Editar documento» (`doc-editar`), «Cargar foto» (`doc-foto`) y el de la autorización
  * (`doc-autorizacion`), abiertos y cerrados sin guardar, Sofía sin autorización (`doc-sin-autorizacion`) y las fotos del grupo Escolares
  * (`grupos-fotos`, página completa).
+ * C6 agrega la vista «Ateneos» con el indicador (`ateneos-lista`, página completa), el detalle del clínico de Martín (`ateneos-detalle`, página
+ * completa), los diálogos «Nuevo registro» (`ateneos-nuevo`, con un acuerdo agregado), «Agregar acuerdo» (`ateneos-acuerdo`) y «Adjuntar
+ * documento» (`ateneos-documento`), abiertos y cerrados sin guardar, y la tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín
+ * (`ateneos-resumen`).
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -105,6 +109,17 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await abrir('Sofía', 'doc'); await page.waitForSelector('#docAutCard .estado-vacio');   await snap('doc-sin-autorizacion');
     await abrir('Martín', 'log'); await page.waitForSelector('#panelExp .log-table');   await snap('log');
     await page.evaluate(() => { const d = document.querySelector('.log-ver'); if (d) d.open = true; });   await snap('log-ver-completo');
+    // C6: la vista Ateneos (indicador y lista), el detalle del clínico de Martín, los tres diálogos abiertos (se cierran sin guardar) y la tarjeta del expediente
+    await page.click('.navitem[data-view="ateneos"]'); await page.waitForFunction(() => AT.lista.estado === 'listo' && AT.ind.estado === 'listo', null, { timeout: 8000 });   await snapCompleta('ateneos-lista');
+    await page.click('#btnAtNuevo'); await page.waitForSelector('#modalFlujo.open #atf_tipo');
+    await page.selectOption('#atf_tipo', 'clinico'); await page.click('#btnAtfAcAgregar');   await snap('ateneos-nuevo');
+    await page.evaluate(() => closeFlujoModal());
+    await abrir('Martín', 'hce00'); await page.waitForSelector('#expAteneosLista');   await snap('ateneos-resumen');
+    await page.click('#expAteneosLista button >> nth=0'); await page.waitForFunction(() => AT.det.estado === 'listo', null, { timeout: 8000 });   await snapCompleta('ateneos-detalle');
+    await page.click('#btnAcAgregar'); await page.waitForSelector('#modalFlujo.open #acf_acuerdo');   await snap('ateneos-acuerdo');
+    await page.evaluate(() => closeFlujoModal());
+    await page.click('#btnAtDocCargar'); await page.waitForSelector('#modalFlujo.open #atdf_archivo');   await snap('ateneos-documento');
+    await page.evaluate(() => closeFlujoModal());
     await page.click('.navitem[data-view="analitica"]');                 await snap('modo-demostracion-analitica');
     // F1: página completa (la banda y la barra de acciones quedan donde las deja el desplazamiento)
     await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');

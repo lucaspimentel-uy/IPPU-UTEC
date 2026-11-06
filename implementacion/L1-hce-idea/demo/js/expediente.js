@@ -191,6 +191,7 @@ function hce00Html(p){
     </div>
     <div>
       ${ideaVigenteCardHtml()}
+      ${typeof atExpCardHtml === "function" ? atExpCardHtml() : ""}
       <div class="info-card">
         <h3><span class="ic" aria-hidden="true">☎</span> Contacto familiar</h3>
         <dl class="ib">
@@ -484,6 +485,7 @@ async function abrirExpediente(id, opts){
     <div id="panelExp" role="tabpanel" aria-label="Contenido del módulo">${panelTabExpHtml("hce00")}</div>`;
   pintarAvisosExp(); vigilarPanelExp(); vigilarBanda();
   cargarModsExp(); cargarIdeaVigente();         // addendas por modulo (marcas) y «qué IDEA rige» (§5.97), de la API
+  if(typeof atExpCargar === "function") atExpCargar();   // C6: los ateneos clínicos de este NNA (tarjeta de «Datos»)
   if(opts && opts.tab && TABS_EXP.some(t => t.k === opts.tab)) selTabExp(opts.tab);   // p. ej. desde la vista Inclusión
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
@@ -491,7 +493,7 @@ async function abrirExpediente(id, opts){
 
 /* ===================== EXPEDIENTE DE EJEMPLO (modo demostración) =====================
    Lee el array NNA de datos.js (ids 101–108, NO los de la API). Lo usan solo las vistas de
-   demostración (Ateneos…) y lleva el panel de modo demo. */
+   demostración (los recordatorios de la analítica) y lleva el panel de modo demo. Sin ateneos: desde C6 son de la API. */
 function abrirExpedienteDemo(id){
   const p = NNA.find(n=>n.id===id);
   if(!p) return;
@@ -560,7 +562,6 @@ function abrirExpedienteDemo(id){
       <span class="section-nav-lbl">Ir a sección:</span>
       <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-doc')">🗂 HCE-DOC · Documentos y fotos</button>
       <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-org')">🏛 HCE-ORG · Áreas INAU y BPS</button>
-      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-ateneos')">◈ Ateneos clínicos referidos</button>
     </div>
 
     ${flujoPanelHtml(p)}
@@ -628,11 +629,6 @@ function abrirExpedienteDemo(id){
     ${docPanelHtml(p)}
 
     ${orgPanelHtml(p)}
-
-    <!-- F1-nav4 (2026-08-19): ateneos clínicos referidos a este NNA. El panel lo arma
-         ateneos.js (que carga después que este archivo, igual que hce-doc-org-vf.js:
-         la función se resuelve al renderizar, no al cargar). -->
-    ${ateneosPanelHtml(p)}
   `;
   go("expediente");
 }

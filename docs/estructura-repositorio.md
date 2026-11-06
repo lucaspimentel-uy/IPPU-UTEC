@@ -83,7 +83,8 @@ demo/
 │   ├── organismos.js       #   ORG: INAU, BPS, sus registros y la alerta AYEX (conectado)
 │   ├── auditoria.js        #   LOG: registro de cambios, sólo lectura (conectado)
 │   ├── inclusion.js        #   INC: ficha de inclusión y bitácora de gestiones (conectado, C4)
-│   ├── recordatorios.js · ateneos.js   # vistas en demostración
+│   ├── recordatorios.js    #   recordatorios de la analítica (demostración)
+│   ├── ateneos.js          #   Ateneos y capacitación: lista con el indicador, detalle, acuerdos y adjuntos (conectado, C6)
 │   ├── pendientes.js       #   Pendientes: lo que falta este año por NNA (conectado, F2)
 │   ├── grupos-usuario.js   #   Grupos y asignación de técnicos (conectado, F2) · Mi usuario (ejemplo)
 └── verificacion/           # Playwright: README.md · conectada.js · capturas.js · fingerprint.js · comparar.js

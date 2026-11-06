@@ -320,6 +320,54 @@ AUTORIZACION_DEMO = {102: {"registrada": True, "fecha": "2026-03-02", "documento
 FOTO_GRUPAL_DEMO = {"grupo": "Escolares", "descripcion": "Salida al parque del grupo (demostración)", "fecha": "2026-10-15", "color": (90, 150, 90)}
 
 
+#: Ateneos y jornadas (C6, §5.158): los cuatro tipos, cargados por la API **en este orden** (el servidor asigna
+#: `AT-<año>-001` … `004`). Fechas de 2026 anteriores al 13/11; en `participantes`, **roles y no nombres**; contenido
+#: neutro y de demostración. El clínico es de Martín, con Escolares 2026 de contexto; la jornada no lleva acuerdos. El
+#: institucional lleva un PDF adjunto (categoría «Otro», generado en código).
+ATENEOS_DEMO: list[dict[str, Any]] = [
+    {"tipo": "clinico", "nna": 102, "grupo": "Escolares", "fecha": "2026-09-17",
+     "titulo": "Revisión de proceso: transiciones en sala (demostración)",
+     "participantes": "Técnicos responsables del grupo · Coordinación técnica",
+     "situacion": "Episodios de desregulación en los cambios de actividad durante el segundo semestre.",
+     "hipotesis": "La desregulación se asocia a la falta de anticipación visual de las transiciones.",
+     "recursos": "Interés por la música como motivador · vínculo con el equipo · familia colaboradora en las rutinas.",
+     "seguimiento": "Revisión de los acuerdos en el ateneo de grupo de noviembre.",
+     "acuerdos": [
+         {"acuerdo": "Implementar una agenda visual de transiciones en sala", "responsable_rol": "Técnico/a responsable 2",
+          "plazo": "2026-10-15"},
+         {"acuerdo": "Registrar la frecuencia de episodios antes y después de la agenda visual",
+          "responsable_rol": "Técnico/a responsable 1", "plazo": "2026-11-30"},
+     ]},
+    {"tipo": "grupo", "grupo": "Preadolescentes", "fecha": "2026-10-08",
+     "titulo": "Balance del segundo semestre del grupo (demostración)",
+     "participantes": "Técnicos responsables · Coordinación técnica",
+     "situacion": "Balance de la dinámica grupal y de los apoyos visuales en uso en la sala.",
+     "hipotesis": "Los apoyos visuales compartidos ordenan mejor las consignas grupales que los individuales.",
+     "recursos": "Dinámica grupal consolidada · materiales visuales elaborados por el equipo.",
+     "seguimiento": "Verificación en el primer ateneo de grupo del próximo año.",
+     "acuerdos": [
+         {"acuerdo": "Unificar los apoyos visuales de la sala para todo el grupo", "responsable_rol": "Coordinación técnica",
+          "plazo": "2026-12-15"},
+     ]},
+    {"tipo": "institucional", "fecha": "2026-06-18",
+     "titulo": "Estructura de los registros de ateneo (demostración)",
+     "participantes": "Equipo técnico · Dirección",
+     "situacion": "Análisis de cómo se registraron los ateneos del primer semestre.",
+     "hipotesis": "Explicitar la hipótesis y los recursos en cada registro mejora el seguimiento de los acuerdos.",
+     "recursos": "Plantilla de registro acordada por el equipo.",
+     "seguimiento": "Nueva revisión de los registros a fin de año.",
+     "documento": {"categoria": "Otro", "nombre": "Acta de la reunión (demostración)", "archivo": "acta-ateneo.pdf",
+                   "texto": "Acta de ateneo institucional - demostracion, datos ficticios"}},
+    {"tipo": "jornada", "fecha": "2026-05-08",
+     "titulo": "Aplicación calibrada del IDEA (demostración)",
+     "participantes": "Evaluadores IDEA de la institución",
+     "capacitador": "Equipo técnico interno (Dirección técnica)", "modalidad": "Presencial",
+     "contenidos": "Reglas comunes de aplicación · anclajes con ejemplos · errores frecuentes.",
+     "materiales": "Criterios de aplicación del IDEA (documento institucional).",
+     "evaluacion": "Ejercicio de puntuación independiente y puesta en común."},
+]
+
+
 def pdf_demo(texto: str) -> bytes:
     """Un PDF 1.4 **mínimo y válido** (una página A4 con una línea de texto ASCII), con la tabla xref bien calculada."""
     linea = "".join(c for c in texto if c not in "()\\" and 32 <= ord(c) < 127)
@@ -396,6 +444,7 @@ class Resumen:
     documentos: list[str] = field(default_factory=list)        # «Martín (3)», … (HCE-DOC con documentos)
     fotos: list[str] = field(default_factory=list)             # «Martín», «grupo Escolares», …
     autorizacion: list[str] = field(default_factory=list)      # «Martín», … (autorización de imagen registrada)
+    ateneos: list[str] = field(default_factory=list)           # «AT-2026-001 (clinico)», … (C6)
     grupos: dict[str, int] = field(default_factory=dict)       # nombre real → grupo_id
     profesionales: dict[str, int] = field(default_factory=dict)
 
@@ -409,6 +458,7 @@ class Resumen:
             f"Fichas de inclusión registradas ({len(self.inclusion)}): {', '.join(self.inclusion)}",
             f"Documentos cargados: {', '.join(self.documentos)} · fotos: {', '.join(self.fotos)}",
             f"Autorización de imagen registrada ({len(self.autorizacion)}): {', '.join(self.autorizacion)}",
+            f"Ateneos y jornadas ({len(self.ateneos)}): {', '.join(self.ateneos)}",
             f"Avisos no bloqueantes de la API: {len(self.warnings)}",
         ])
 
@@ -684,6 +734,21 @@ def cargar_demo(
     resumen.fotos.append(f"grupo {g['grupo']}")
     decir(f"Documentos: {', '.join(resumen.documentos)}; fotos: {', '.join(resumen.fotos)}; "
           f"autorización de imagen: {', '.join(resumen.autorizacion)}")
+    # Ateneos y jornadas (C6): por la API, como el técnico; el servidor asigna el código y el autor.
+    for at in ATENEOS_DEMO:
+        cuerpo = {k: v for k, v in at.items() if k not in ("nna", "grupo", "documento")}
+        if "nna" in at:
+            cuerpo["hce_referida_id"] = resumen.expedientes[at["nna"]]
+        if "grupo" in at:
+            cuerpo["grupo_id"] = resumen.grupos[at["grupo"]]
+        creado = api.escribir("POST", "/ateneos", cuerpo, esperado=201)
+        resumen.ids[f"ateneo.{at['tipo']}"] = creado["id"]
+        if "documento" in at:
+            d = at["documento"]
+            api.subir(f"/ateneos/{creado['id']}/documentos", d["archivo"], pdf_demo(d["texto"]), "application/pdf",
+                      {"categoria_id": str(categorias[d["categoria"]]), "nombre": d["nombre"]})
+        resumen.ateneos.append(f"{creado['codigo']} ({at['tipo']})")
+    decir(f"Ateneos: {', '.join(resumen.ateneos)}")
     return resumen
 
 

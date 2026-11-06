@@ -17,10 +17,11 @@ function go(view){
     if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   window.scrollTo({top:0});
-  /* Las vistas conectadas piden sus datos cada vez que se abren (pendientes.js, grupos-usuario.js, inclusion.js). */
+  /* Las vistas conectadas piden sus datos cada vez que se abren (pendientes.js, grupos-usuario.js, inclusion.js, ateneos.js). */
   if(view === "pendientes" && typeof pendAlAbrir === "function") pendAlAbrir();
   if(view === "grupos" && typeof gruposAlAbrir === "function") gruposAlAbrir();
   if(view === "inclusion" && typeof incVistaAlAbrir === "function") incVistaAlAbrir();
+  if(view === "ateneos" && typeof atAlAbrir === "function") atAlAbrir();   // C6: lista + indicador (o el registro pedido desde un expediente)
   if(typeof fotosLiberarVista === "function") fotosLiberarVista(view);   // C5: las miniaturas (Blob URLs) de la vista que se deja se revocan
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
@@ -499,6 +500,7 @@ function limpiarUiDeSesion(){
   if(typeof orgOlvidarSesion === "function") orgOlvidarSesion();   // organismos y las opciones de BPS
   if(typeof incOlvidarSesion === "function") incOlvidarSesion();   // inclusión (pestaña, opciones y la vista del menú)
   if(typeof docOlvidarSesion === "function") docOlvidarSesion();   // documentos, fotos (también las del grupo) y categorías
+  if(typeof atOlvidarSesion === "function") atOlvidarSesion();     // ateneos (lista, indicador, detalle) y la tarjeta del expediente
   if(typeof logReiniciar === "function") logReiniciar();       // registro de cambios
   if(typeof pendOlvidarSesion === "function") pendOlvidarSesion();       // Pendientes: nada del listado anterior detrás del login
   if(typeof gruposOlvidarSesion === "function") gruposOlvidarSesion();   // Grupos y el diálogo de asignación

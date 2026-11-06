@@ -59,16 +59,15 @@ const norm = (s) => (s == null ? s : String(s)
      llegar a ella (`entrada`) y el selector del contenedor que un render() deja poblado
      (`contenido`). NO se infiere de `.navitem[data-view=...]`: `usuarios` no es un
      `.navitem` (vive en el `.userchip`, `index.html:43`) y su contenido no se pinta al
-     cargar la página como sí hace ateneos
-     (`renderAteneos()` corre al final de su módulo) — sólo se llena
+     cargar la página — sólo se llena
      cuando corre `renderUsuario()`, que el propio onclick del `.userchip` ya encadena. Si la
      nav vuelve a cambiar, se corrige ACÁ — no se agrega un caso especial en el loop de abajo.
      F2: Pendientes y Grupos ya no son vistas en modo demostración (se arman con la API al abrirlas): salen de esta lista; las miden
-     f2-… en conectada.js. C4: Inclusión tampoco (GET /inclusion): sale de la lista; la miden c4-… en conectada.js. */
+     f2-… en conectada.js. C4: Inclusión tampoco (GET /inclusion): sale de la lista; la miden c4-… en conectada.js. C6: Ateneos
+     tampoco (GET /ateneos): sale de la lista; la miden c6-… en conectada.js. */
   const VISTAS = {
     inicio:     { entrada: '.navitem[data-view="inicio"]',     contenido: '#tbodyNNA' },
     analitica:  { entrada: '.navitem[data-view="analitica"]',  contenido: '#anKpi' },
-    ateneos:    { entrada: '.navitem[data-view="ateneos"]',    contenido: '#ateneosContent' },
     usuarios:   { entrada: '.userchip',                        contenido: '#usuarioContent' },
   };
 

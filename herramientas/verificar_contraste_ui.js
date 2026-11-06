@@ -27,7 +27,10 @@
  *   diálogos «Cargar documento» (con un error de muestra junto al archivo y la confirmación de descarte), «Editar documento»,
  *   «Cargar foto» y el de la autorización, abiertos SIN guardar; Sofía sin autorización y el error. En Grupos, la tarjeta «Fotos
  *   del grupo» (Escolares), su diálogo y el estado «no encontrado».
- *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Ateneos, Perfil y el expediente de ejemplo.
+ *   Ateneos (C6): indicador y lista (cargando · error · vacío), el detalle de un clínico con acuerdos, documentos y un aviso, «no
+ *   encontrado», los diálogos «Nuevo registro» (clínico con un acuerdo y errores de muestra; jornada), «Editar registro», «Agregar
+ *   acuerdo» (con un error de muestra) y «Adjuntar documento», abiertos SIN guardar, y la tarjeta «Ateneos clínicos» de Martín.
+ *   MODO DEMOSTRACIÓN (se informan aparte): Analítica, Perfil y el expediente de ejemplo.
  *   El panel «Modo demostración» y la marca «Solo demo» se miden también en las pantallas conectadas (pestañas sin API).
  *
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
@@ -415,8 +418,52 @@ function buscarContornosApagados() {
   await ev(() => { INCV.estado = 'listo'; INCV.filtro = 'Desvinculado/a'; INCV.filas = []; INCV.total = 0; incVistaPintar(); }); await cap('Inclusión · filtro sin filas (estado vacío)');
   await ev(() => { INCV.filtro = ''; return incVistaCargar(); }); await page.waitForFunction(() => INCV.estado === 'listo' && INCV.filas.length > 0, null, { timeout: 8000 });
 
+  // ---------------------------------------------------------------- ATENEOS (C6): indicador y lista, detalle, los tres diálogos SIN guardar
+  await page.click('.navitem[data-view="ateneos"]');
+  await page.waitForFunction(() => AT.lista.estado === 'listo' && AT.ind.estado === 'listo' && !!document.querySelector('#atTbody tr[data-ateneo]'), null, { timeout: 8000 }); await esperar(150);
+  await cap('Ateneos · indicador y lista (con un clínico «Sensible»)');
+  anillos.push(await medirAnilloTeclado(page, '#atFiltroTipo', 'filtro por tipo (Ateneos)'));
+  anillos.push(await medirAnilloTeclado(page, '#atBuscar', 'búsqueda (Ateneos)'));
+  anillos.push(await medirAnilloTeclado(page, '#atTbody .nna-abrir', 'título de un registro (Ateneos)'));
+  await ev(() => { AT.lista.estado = 'cargando'; AT.ind.estado = 'cargando'; atPintarFilas(); atPintarIndicador(); }); await cap('Ateneos · cargando');
+  await ev(() => { AT.lista.estado = 'error'; AT.lista.error = 'No se pudo cargar la lista de ateneos (muestra).'; AT.ind.estado = 'error'; AT.ind.error = 'No se pudo cargar el indicador (muestra).'; atPintarFilas(); atPintarIndicador(); }); await cap('Ateneos · con error');
+  await ev(() => { AT.lista.estado = 'listo'; AT.lista.filas = []; AT.lista.total = 0; AT.filtro.q = 'sin resultados'; atPintarFilas(); }); await cap('Ateneos · filtro sin filas (estado vacío)');
+  await ev(() => { AT.filtro.q = ''; atVolverLista(); }); await page.waitForFunction(() => AT.lista.estado === 'listo' && AT.ind.estado === 'listo' && AT.lista.filas.length > 0, null, { timeout: 8000 });
+  await page.click('#atTbody tr[data-sensible="true"] .nna-abrir'); await page.waitForFunction(() => AT.det.estado === 'listo', null, { timeout: 8000 }); await esperar(150);
+  await cap('Ateneos · detalle de un clínico (acuerdos y documentos)');
+  anillos.push(await medirAnilloTeclado(page, '#btnAtVolver', 'miga «‹ Ateneos y capacitación»'));
+  await ev(() => { AT.avisos = [{ code: 'fecha_y_anio_del_grupo', mensaje: 'La fecha es de 2026 y el grupo es Escolares 2025: se guarda igual (muestra).' }]; atPintarDetalle(); }); await cap('Ateneos · detalle con un aviso de la API');
+  await ev(() => { AT.avisos = []; atPintarDetalle(); });
+  await page.click('#btnAtEditar'); await page.waitForSelector('#modalFlujo.open #atf_tipo'); await esperar(150);
+  await cap('Ateneos · diálogo «Editar registro»');
+  await ev(() => closeFlujoModal());
+  await page.click('#btnAcAgregar'); await page.waitForSelector('#modalFlujo.open #acf_acuerdo'); await esperar(120);
+  await ev(() => formResumen('acErrores', [{ id: 'acf_acuerdo', rot: 'Acuerdo', mensaje: 'Es obligatorio: un acuerdo sin texto no es un acuerdo. (muestra)' }], 'No se pudo guardar el acuerdo:'));
+  await cap('Ateneos · diálogo «Agregar acuerdo» con un error de muestra');
+  await ev(() => closeFlujoModal());
+  await page.click('#btnAtDocCargar'); await page.waitForSelector('#modalFlujo.open #atdf_archivo'); await esperar(120);
+  await cap('Ateneos · diálogo «Adjuntar documento»');
+  await ev(() => closeFlujoModal());
+  await ev(() => { AT.det.estado = 'error'; AT.det.noEncontrado = true; atPintarDetalle(); }); await cap('Ateneos · registro no encontrado');
+  await ev(() => atVolverLista()); await page.waitForFunction(() => AT.lista.estado === 'listo', null, { timeout: 8000 });
+  await page.click('#btnAtNuevo'); await page.waitForSelector('#modalFlujo.open #atf_tipo');
+  await page.selectOption('#atf_tipo', 'clinico'); await page.click('#btnAtfAcAgregar'); await esperar(120);
+  await ev(() => formResumen('atErrores', [{ id: 'atf_nna', rot: 'NNA referido', mensaje: 'Es obligatorio en un ateneo clínico: elegí el NNA. (muestra)' },
+    { id: 'atf_acuerdos', rot: 'Acuerdos', mensaje: 'Una jornada de capacitación no lleva acuerdos. (muestra)' }], 'No se pudo guardar el registro:'));
+  await cap('Ateneos · diálogo «Nuevo registro» (clínico, con un acuerdo y errores de muestra)');
+  anillos.push(await medirAnilloTeclado(page, '#atf_ac_0_acuerdo', 'acuerdo del borrador (Ateneos)'));
+  await page.selectOption('#atf_tipo', 'jornada'); await esperar(80);
+  await cap('Ateneos · diálogo «Nuevo registro» (jornada: su bloque)');
+  await ev(() => closeFlujoModal());
+  // La tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín (el seed tiene uno)
+  await ev(async () => abrirExpediente((await apiFetch('/hce', { query: { nombre: 'Martín' } })).data[0].id));
+  await page.waitForSelector('#expAteneosLista', { timeout: 8000 }); await esperar(150);
+  await cap('Expediente · pestaña Datos con la tarjeta «Ateneos clínicos»');
+  anillos.push(await medirAnilloTeclado(page, '#expAteneosLista .exp-at-abrir', 'ateneo clínico en la tarjeta del expediente'));
+  await page.click('.navitem[data-view="inicio"]');
+
   // ---------------------------------------------------------------- VISTAS EN MODO DEMOSTRACIÓN
-  for (const v of ['analitica', 'ateneos']) {
+  for (const v of ['analitica']) {
     await page.click(`.navitem[data-view="${v}"]`); await esperar(120);
     await cap(`Vista ${v} (modo demostración)`, 'demo');
   }

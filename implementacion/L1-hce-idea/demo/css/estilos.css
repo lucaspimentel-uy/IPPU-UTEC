@@ -931,51 +931,39 @@
   .inc-lista td{vertical-align:top}
   .inc-lista .num{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
 
-  /* Vista Ateneos y capacitación (F1-nav4 2026-08-19) — listado + detalle.
-     Chips de tipo con la paleta demo (--teal / --purple / --orange / --ink-2), uno por
-     cada AT_TIPOS; no se toman los tonos del Prototipo v4. */
-  .at-chip{
-    display:inline-block;padding:2px 9px;border-radius:var(--r-sm);
-    font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:600;line-height:1.5;
-    border:1px solid transparent;white-space:nowrap
-  }
-  .at-chip.at-clinico{background:var(--teal-soft);   color:var(--teal-ink);border-color:#9ED4CB}
-  .at-chip.at-grupo  {background:var(--purple-soft); color:var(--purple); border-color:#C4B0E6}
-  .at-chip.at-inst   {background:var(--paper-3);     color:var(--ink-2);  border-color:var(--rule)}
-  .at-chip.at-jornada{background:var(--orange-soft); color:var(--orange-hover);border-color:var(--orange-line)}
-  .at-chip.at-sin    {background:var(--paper-2);     color:var(--ink-2);  border-color:var(--rule)}
-  /* `.at-hint` nació porque `.hint` sólo existía dentro de `.field`. Ahora `.hint`
-     es global (ver cabecera), pero se mantiene el alias para no tocar el JS. */
-  .at-hint{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.45}
-  .at-filtros{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s3) var(--s4);
-    margin-bottom:var(--s4);padding-bottom:var(--s4);border-bottom:1px dashed var(--rule)
-  }
-  .at-table th,.at-table td{font-size:var(--fs-xs);vertical-align:top}
-  .at-table td .btn-link{padding:0;font-size:var(--fs-xs);text-align:left}
-  .at-table .at-hint{margin-top:2px}
-  .at-detalle-head{display:flex;align-items:flex-start;gap:var(--s3);flex-wrap:wrap}
-  .at-detalle-head .pagedesc{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
-  .at-subtitulo{
-    font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
-    color:var(--ink-2);margin:var(--s5) 0 var(--s2)
-  }
-  /* Tabla editable de acuerdos: acuerdo · responsable (rol) · plazo · quitar. */
-  .at-acuerdos{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
-  .at-acuerdos th{
-    text-align:left;padding:var(--s2);font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2);
-    border-bottom:1px solid var(--rule)
-  }
-  .at-acuerdos td{padding:var(--s2);border-bottom:1px solid var(--rule-2);vertical-align:top}
-  .at-acuerdos td:last-child{text-align:right;white-space:nowrap}
-  .at-acuerdos input,.at-acuerdos textarea{
-    width:100%;font-family:inherit;font-size:var(--fs-xs);padding:7px 9px;
-    border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink)
-  }
-  .at-acuerdos input:focus,.at-acuerdos textarea:focus{border-color:var(--orange)}
-  .at-acuerdos textarea{resize:vertical;min-height:44px;line-height:1.5}
-  /* Panel de ateneos dentro del expediente: misma tabla, sin campos editables. */
-  .at-exp-table td .btn-link{padding:0;font-size:var(--fs-xs);text-align:left}
+  /* Vista Ateneos y capacitación conectada (C6, §5.158) — lista con el indicador arriba + detalle + diálogos.
+     El tipo va en tinta (sin chips de color: no es un estado); «Sensible» es una marca de TEXTO con borde, como en INC. */
+  .at-indicador .at-ind-total{margin:0 0 var(--s2);font-size:var(--fs-sm);color:var(--ink)}
+  .at-ind-grupos{margin:0 0 var(--s2);padding-left:var(--s5);font-size:var(--fs-xs);color:var(--ink);line-height:1.6}
+  .at-ind-nota{margin:0}
+  .at-filtros{flex-wrap:wrap;gap:var(--s3) var(--s4)}
+  .at-buscar input{min-width:200px;padding:6px 9px;border:1px solid var(--control-borde);border-radius:var(--r-sm);background:var(--paper);color:var(--ink);font:inherit;font-size:var(--fs-xs)}
+  .at-lista td{vertical-align:top}
+  .at-lista .num{text-align:left;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .at-lista .at-titulo .nna-abrir{font-size:var(--fs-xs)}
+  #tablaAteneos tbody tr[data-ateneo]{cursor:pointer}
+  #tablaAteneos tbody tr[data-ateneo]:hover .nna-abrir{color:var(--accion-hover);text-decoration:underline}
+  #tablaAteneos .col-ir{width:1%;padding-right:var(--s4);color:var(--ink-2);font-size:var(--fs-md);text-align:right}
+  .at-sensible{display:inline-block;padding:0 6px;border:1px solid var(--ink-2);border-radius:var(--r-sm);
+    font-size:var(--fs-2xs);font-weight:700;line-height:1.5;color:var(--ink);background:transparent;white-space:nowrap}
+  .at-nota{margin-top:var(--s3)}
+  .at-miga .at-volver{padding:0;font-size:var(--fs-2xs);font-weight:600}
+  .at-det-cab{display:flex;align-items:flex-start;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3)}
+  .at-det-titulo{margin:0;font-size:var(--fs-lg);color:var(--ink)}
+  .at-det-meta{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;margin:var(--s1) 0 0}
+  .at-textos{display:grid;gap:var(--s3)}
+  .at-bloque-txt h4{margin:0 0 var(--s1);font-size:var(--fs-2xs);font-weight:700;color:var(--ink)}
+  .at-bloque-txt p{margin:0}
+  .at-acuerdos td{vertical-align:top}
+  .at-fs[hidden],.field[hidden]{display:none}
+  .at-ac-filas{display:grid;gap:var(--s3);margin-bottom:var(--s2)}
+  .at-ac-fila{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(10.5rem,auto) auto;gap:var(--s2);align-items:end;
+    padding-bottom:var(--s2);border-bottom:1px solid var(--rule-2)}
+  .at-ac-fila .field{margin:0}
+  @media(max-width:760px){.at-ac-fila{grid-template-columns:1fr}}
+  /* Tarjeta «Ateneos clínicos» de la pestaña «Datos» del expediente. */
+  .exp-ateneos{list-style:none;margin:0;padding:0;display:grid;gap:var(--s2)}
+  .exp-ateneos .exp-at-abrir{padding:0;font-size:var(--fs-xs);font-weight:600;text-align:left}
 
   /* Vista Grupos · listado + detalle (F1-nav2 2026-08-17). */
   .grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:var(--s4)}
@@ -1129,7 +1117,7 @@
     .card,.info-card,.flujo-card,.inf-banner,.kpi{box-shadow:none;break-inside:avoid}
     .card,.info-card,.flujo-card{border-color:#BBB}
     .inf-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .mbadge,.pill,.at-chip{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mbadge,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 
   /* ============ FASE 3-a · DEMO CONECTADA (handoff §5.122) ============

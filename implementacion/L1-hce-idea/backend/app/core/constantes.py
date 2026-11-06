@@ -239,6 +239,17 @@ ATENEO_TIPOS: dict[str, str] = {
 #: porque el código es derivado y no la PK.
 ATENEO_CODIGO_PREFIJO = "AT"
 
+#: Indicador institucional de ateneos (`handoff.md` §5.46 I11, §5.74; C6 §5.158 g): **8 al año, al menos 2 por
+#: grupo**, contados por `ateneo.fecha`. Constantes y no settings: cambiarlas es una decisión de IPPU.
+ATENEO_META_TOTAL = 8
+ATENEO_META_POR_GRUPO = 2
+#: Los tipos que suma el total del indicador (C6, §5.158 g). La jornada queda afuera: es la instancia donde se
+#: repasan los ateneos (§5.46), no un ateneo. **Pregunta abierta con IPPU** (`puntos-a-validar.md` §2.14).
+ATENEO_TIPOS_INDICADOR: tuple[str, ...] = ("clinico", "grupo", "institucional")
+#: Clave del candado de transacción (`pg_advisory_xact_lock(clave, año)`) que serializa la asignación del
+#: correlativo de un año (C6, §5.158 b). Un número fijo del módulo: «AT» en ASCII.
+ATENEO_CANDADO_CORRELATIVO = 0x4154
+
 
 # --------------------------------------------------------------------------
 # HCE-INC · Inclusión educativa y social (M12.5 · Prototipo v4)
@@ -623,6 +634,9 @@ MODULO_HCE_PAI = "HCE-PAI"
 #: Eventos **institucionales** sobre un grupo (asignación de técnicos, M11.5-a, `handoff.md` §5.120):
 #: `auditoria.hce_id` NULL. No es un módulo del expediente, por eso no lleva el prefijo `HCE-`.
 MODULO_GRUPO = "GRUPO"
+#: Ateneos y jornadas (C6, `handoff.md` §5.158 f): `auditoria.hce_id` NULL **también en los clínicos** (el ateneo
+#: es una referencia al expediente, no contenido de la HCE). Como `GRUPO`, sin el prefijo `HCE-`.
+MODULO_ATENEO = "ATENEO"
 
 #: Valor de `auditoria.tipo` para la edición de un campo (el CHECK de la tabla
 #: admite además firma · excepcion · addenda · alerta · carga · acceso, que son de
@@ -743,15 +757,27 @@ ARCHIVO_TAMANO_MAXIMO = 10 * 1024 * 1024
 #: Tipos aceptados, **detectados por el contenido** (los primeros bytes), nunca por la extensión ni por
 #: el `Content-Type` del cliente (§5.155 b). La clave es el tipo que se guarda en la extensión de
 #: `archivo_ref` y se devuelve como `tipo`; el valor, el `Content-Type` con el que se descarga.
-ARCHIVO_TIPOS: dict[str, str] = {"pdf": "application/pdf", "jpg": "image/jpeg", "png": "image/png"}
-#: Firmas de cada tipo (PDF: `%PDF-`; JPEG: FF D8 FF; PNG: las 8 de la especificación).
+ARCHIVO_TIPOS: dict[str, str] = {
+    "pdf": "application/pdf", "jpg": "image/jpeg", "png": "image/png",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+}
+#: Firmas de cada tipo (PDF: `%PDF-`; JPEG: FF D8 FF; PNG: las 8 de la especificación; PPTX: un ZIP, `PK\x03\x04`,
+#: que **además** tiene que declarar la presentación en su `[Content_Types].xml` — `services/archivos.py`, C6 §5.158 i).
 ARCHIVO_FIRMAS: tuple[tuple[str, bytes], ...] = (
     ("pdf", b"%PDF-"),
     ("jpg", b"\xff\xd8\xff"),
     ("png", b"\x89PNG\r\n\x1a\n"),
+    ("pptx", b"PK\x03\x04"),
 )
-#: Lo que acepta cada recurso: un documento, los tres; una foto, sólo imágenes (§5.155 b).
+#: El tipo de contenido que hace de un ZIP una presentación PowerPoint (no la de macros, ni la plantilla, ni el pase de
+#: diapositivas): la parte principal declarada en `[Content_Types].xml`.
+PPTX_TIPO_PRINCIPAL = "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
+#: Tope de `[Content_Types].xml` (descomprimido): el de una presentación real ocupa pocos KB.
+PPTX_CONTENT_TYPES_MAXIMO = 256 * 1024
+#: Lo que acepta cada recurso: un documento del expediente, los tres; una foto, sólo imágenes (§5.155 b); un documento
+#: de ateneo, además **PPTX** (§5.46: IPPU pidió adjuntar presentaciones; C6 §5.158 i).
 DOCUMENTO_TIPOS: tuple[str, ...] = ("pdf", "jpg", "png")
 FOTO_TIPOS: tuple[str, ...] = ("jpg", "png")
+ATENEO_DOCUMENTO_TIPOS: tuple[str, ...] = ("pdf", "jpg", "png", "pptx")
 #: Largo de `documento.nombre` (la columna es `String(200)`).
 DOCUMENTO_NOMBRE_MAX = 200

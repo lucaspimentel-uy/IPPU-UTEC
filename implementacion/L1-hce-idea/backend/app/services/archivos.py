@@ -3,7 +3,8 @@
 ## Dónde y cómo (§5.155 a)
 
 - **Raíz** = `settings.uploads_dir` / <nombre de la base de `DATABASE_URL`> (`core/config.raiz_de_archivos`),
-  fuera de git. Adentro, `hce/<hce_id>/<uuid>.<ext>` o `grupo/<grupo_id>/<uuid>.<ext>`.
+  fuera de git. Adentro, `hce/<hce_id>/<uuid>.<ext>`, `grupo/<grupo_id>/<uuid>.<ext>` o, desde C6 (§5.158 h),
+  `ateneo/<ateneo_id>/<uuid>.<ext>`.
 - `archivo_ref` guarda **esa ruta relativa a la raíz, con barras `/`** (portable entre Windows y Linux).
 - **El servidor genera todo nombre y toda ruta**: el nombre de archivo del cliente nunca llega al sistema de
   archivos (a lo sumo, es la etiqueta `documento.nombre`). Antes de leer o escribir, la ruta se resuelve y se
@@ -22,6 +23,12 @@ bloques: un archivo grande nunca está entero en memoria); cualquier otra cosa (
 es) → 422. Todos con `campo` = el del archivo. **No hay antivirus ni re-codificación de imágenes** (fuera del
 26/11).
 
+**PPTX, sólo en los documentos de un ateneo (C6, §5.158 i).** Un ZIP (`50 4B 03 04`) que, ya escrito entero, tiene un
+`[Content_Types].xml` (leído **solo**, con tope de tamaño y sin extraer nada más) que declara la parte principal de una
+presentación (`PPTX_TIPO_PRINCIPAL`). Con macros (`presentation.macroEnabled`), una plantilla, un pase de diapositivas, un
+.docx, un ZIP sin `[Content_Types].xml` o uno roto → 422. Para un documento del expediente o una foto, un ZIP es 422 de
+entrada (no está en `permitidos`).
+
 El servicio no importa FastAPI: recibe un objeto con `.read(n)` (el `UploadFile.file` de Starlette, que ya
 está en un temporal en disco a partir de 1 MB).
 """
@@ -31,19 +38,27 @@ import os
 import re
 import tempfile
 import uuid
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
+from xml.etree import ElementTree
 
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from app.core.config import raiz_de_archivos
-from app.core.constantes import ARCHIVO_FIRMAS, ARCHIVO_TAMANO_MAXIMO, ARCHIVO_TIPOS
+from app.core.constantes import (
+    ARCHIVO_FIRMAS, ARCHIVO_TAMANO_MAXIMO, ARCHIVO_TIPOS, PPTX_CONTENT_TYPES_MAXIMO, PPTX_TIPO_PRINCIPAL,
+)
 from app.services.errores import ArchivoDemasiadoGrande, NotFound, ValidationFailed
 
 #: Forma exacta de un `archivo_ref` válido: lo que no case con esto no se lee ni se escribe.
-REF_VALIDA = re.compile(r"^(hce|grupo)/[1-9][0-9]*/[0-9a-f]{32}\.(pdf|jpg|png)$")
+#: El PPTX sólo puede estar bajo `ateneo/` (es el único dueño que lo acepta).
+REF_VALIDA = re.compile(
+    r"^(?:(?:hce|grupo)/[1-9][0-9]*/[0-9a-f]{32}\.(?:pdf|jpg|png)|ateneo/[1-9][0-9]*/[0-9a-f]{32}\.(?:pdf|jpg|png|pptx))$"
+)
+DUENOS = ("hce", "grupo", "ateneo")
 _BLOQUE = 64 * 1024
 _CABECERA = max(len(f) for _, f in ARCHIVO_FIRMAS)
 _INFO_NUEVOS = "archivos_nuevos"
@@ -58,7 +73,8 @@ class ArchivoGuardado:
 
 
 def detectar_tipo(cabecera: bytes) -> str | None:
-    """`pdf` | `jpg` | `png` según los primeros bytes; `None` si no es ninguno de los tres."""
+    """`pdf` | `jpg` | `png` | `pptx` según los primeros bytes; `None` si no es ninguno. `pptx` es sólo «es un ZIP»:
+    lo confirma `_verificar_pptx` con el archivo entero."""
     for tipo, firma in ARCHIVO_FIRMAS:
         if cabecera.startswith(firma):
             return tipo
@@ -140,7 +156,7 @@ def guardar(
     temporal de la misma carpeta y lo renombra; si algo falla acá, el temporal se borra. Si el request falla
     **después** (la fila, la auditoría, el commit), el rollback de `db` borra el archivo (`_escuchar`).
     """
-    if dueno not in ("hce", "grupo") or not isinstance(dueno_id, int) or dueno_id < 1:
+    if dueno not in DUENOS or not isinstance(dueno_id, int) or dueno_id < 1:
         raise ValueError("dueño inválido")
     carpeta = raiz_de_archivos() / dueno / str(dueno_id)
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -167,6 +183,8 @@ def guardar(
             raise ValidationFailed([(campo, "El archivo está vacío.")])
         if tipo is None:
             tipo = _aceptar(cabecera, permitidos, campo)
+        if tipo == "pptx":
+            _verificar_pptx(temporal, permitidos, campo)
         final = carpeta / f"{uuid.uuid4().hex}.{tipo}"
         os.replace(temporal, final)
     except BaseException:
@@ -180,10 +198,41 @@ def guardar(
     return ArchivoGuardado(ref=ref, tipo=tipo, tamano=total)
 
 
+def _rechazo(permitidos: tuple[str, ...], campo: str) -> ValidationFailed:
+    nombres = [t.upper() for t in permitidos]
+    lista = nombres[0] if len(nombres) == 1 else f"{', '.join(nombres[:-1])} o {nombres[-1]}"
+    return ValidationFailed([(campo, f"El contenido del archivo no es {lista}: sólo se aceptan archivos {lista}.")])
+
+
 def _aceptar(cabecera: bytes, permitidos: tuple[str, ...], campo: str) -> str:
     tipo = detectar_tipo(cabecera)
     if tipo is None or tipo not in permitidos:
-        nombres = [t.upper() for t in permitidos]
-        lista = nombres[0] if len(nombres) == 1 else f"{', '.join(nombres[:-1])} o {nombres[-1]}"
-        raise ValidationFailed([(campo, f"El contenido del archivo no es {lista}: sólo se aceptan archivos {lista}.")])
+        raise _rechazo(permitidos, campo)
     return tipo
+
+
+def _verificar_pptx(ruta: str, permitidos: tuple[str, ...], campo: str) -> None:
+    """El ZIP ya escrito es una presentación PowerPoint **sin macros**; si no, 422 (§5.158 i).
+
+    Se abre el índice del ZIP y se lee **sólo** `[Content_Types].xml`, y sólo si su tamaño declarado y el leído no pasan
+    de `PPTX_CONTENT_TYPES_MAXIMO` (un ZIP que miente sobre el tamaño se corta en el tope). Nada se extrae a disco. Un XML
+    con `<!DOCTYPE` se rechaza antes de parsearlo (sin entidades: nada que expandir). Pasa si alguna `ContentType` es
+    exactamente `PPTX_TIPO_PRINCIPAL` y ninguna es de macros."""
+    try:
+        with zipfile.ZipFile(ruta) as zf:
+            info = zf.getinfo("[Content_Types].xml")
+            if info.file_size > PPTX_CONTENT_TYPES_MAXIMO:
+                raise _rechazo(permitidos, campo)
+            with zf.open(info) as f:
+                xml = f.read(PPTX_CONTENT_TYPES_MAXIMO + 1)
+    except (KeyError, zipfile.BadZipFile, zipfile.LargeZipFile, NotImplementedError, OSError, RuntimeError, EOFError):
+        raise _rechazo(permitidos, campo) from None
+    if len(xml) > PPTX_CONTENT_TYPES_MAXIMO or b"<!DOCTYPE" in xml.upper() or b"<!ENTITY" in xml.upper():
+        raise _rechazo(permitidos, campo)
+    try:
+        raiz = ElementTree.fromstring(xml)
+    except ElementTree.ParseError:
+        raise _rechazo(permitidos, campo) from None
+    tipos = [e.get("ContentType", "") for e in raiz.iter() if e.get("ContentType") is not None]
+    if PPTX_TIPO_PRINCIPAL not in tipos or any("macroenabled" in t.lower() for t in tipos):
+        raise _rechazo(permitidos, campo)

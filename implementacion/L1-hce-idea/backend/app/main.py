@@ -19,6 +19,7 @@ Desde **C2**, la severidad DSM-5-TR (`/hce/{id}/severidad`, `/severidad-niveles`
 Desde **C3**, los vínculos con INAU y BPS y sus registros (`/hce/{id}/organismos`, `/organismos/opciones`).
 Desde **C5**, los documentos con archivo, la autorización de imagen y las fotos (`/hce/{id}/documentos`,
 `/documentos/categorias`, `/hce/{id}/autorizacion-imagen`, `/hce/{id}/fotos`, `/grupos/{id}/fotos`).
+Desde **C6**, los ateneos y las jornadas con sus acuerdos, su indicador y sus documentos (`/ateneos`).
 Los routers se
 entregan **por rebanadas** (M11.4 se disolvió, `handoff.md` §5.106); los de la v1
 se retiraron porque hablaban del modelo anterior al Documento Técnico (ver
@@ -31,8 +32,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.limites import LimitesDelCuerpo
 from app.routers import (
-    auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, protocolo, referencias,
-    severidad, valoracion_funcional,
+    ateneos, auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, protocolo,
+    referencias, severidad, valoracion_funcional,
 )
 from app.routers.dependencias import usuario_actual
 from app.routers.errores import registrar_manejadores
@@ -57,7 +58,7 @@ app = FastAPI(
         "expedientes de los grupos en los que es técnico/a 1 o 2; uno fuera de su alcance es `404`, "
         "igual que uno que no existe.\n\n"
         "**Límites del cuerpo** (`POST`, `PATCH`, `PUT`; se deciden antes de leer el cuerpo): sin un token válido, `401` "
-        "(salvo `/auth/login`); chunked sin `Content-Length`, `411`; más de 1 MB —o de 10 MB + 64 KiB en las tres "
+        "(salvo `/auth/login`); chunked sin `Content-Length`, `411`; más de 1 MB —o de 10 MB + 64 KiB en las cuatro "
         "subidas multipart—, `413` `too_large`."
     ),
     responses=RESPUESTA_500,
@@ -89,6 +90,7 @@ for _router in (
     inclusion.router_hce, inclusion.router,
     documentos.router_categorias, documentos.router_hce, documentos.router_autorizacion,
     fotos.router_hce, fotos.router_grupo,
+    ateneos.router, ateneos.router_ateneo,
     referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
 ):
     app.include_router(_router, dependencies=_PROTEGIDO)

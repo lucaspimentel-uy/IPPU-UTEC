@@ -9,43 +9,8 @@
    histórico de solo lectura ("Registro histórico — HCE anterior", §10).
    ===================================================================== */
 
-/* ---------- GRUPOS DE REFERENCIA DE EJEMPLO ----------
-   La vista Grupos ya es la de la API (más abajo). Este arreglo de grupos «por color» (§5.18 / D9) queda sólo porque los
-   ateneos de ejemplo (ateneos.js) leen sus ids para sus selectores; nada de la vista Grupos lo usa. */
-const GRUPOS = [
-  {id:"Azul", franja:"6 – 9 años",  dias:"Lun · Mié · Vie", horario:"9:00 – 12:00",
-   responsable1:{nombre:"Dr. González", rol:"Psicología"},
-   responsable2:{nombre:"Lic. Pereira", rol:"Fonoaudiología"},
-   tecnicosAutorizados:[],
-   talleres:["Taller de habilidades sociales","Taller de cuentos y estimulación del lenguaje","Actividades lúdicas y de juego","Educación Física"],
-   obs:"Grupo de menor edad. Énfasis en intervención temprana y juego."},
-  {id:"Celeste", franja:"9 – 12 años", dias:"Lun · Mié · Vie", horario:"13:00 – 16:00",
-   responsable1:{nombre:"Lic. Torres", rol:"Psicopedagogía"},
-   responsable2:null,
-   tecnicosAutorizados:[],
-   talleres:["Taller de habilidades sociales","Taller de música y expresión","Taller de expresión plástica","Taller de higiene y AVD"],
-   obs:"Trabajo en habilidades sociales y expresión."},
-  {id:"Naranja", franja:"12 – 15 años", dias:"Mar · Jue", horario:"9:00 – 12:00",
-   responsable1:{nombre:"Lic. Pereira", rol:"Fonoaudiología"},
-   responsable2:{nombre:"Dra. Silva", rol:"Neuropediatría"},
-   tecnicosAutorizados:[],
-   talleres:["Taller de cuentos y estimulación del lenguaje","Taller de higiene y AVD","Actividades sensoriales"],
-   obs:"Mayor proporción de apoyos sustanciales. Foco en autonomía y CAA."},
-  {id:"Verde", franja:"15 – 18 años", dias:"Mar · Jue", horario:"13:00 – 16:00",
-   responsable1:{nombre:"Lic. Torres", rol:"Psicopedagogía"},
-   responsable2:null,
-   tecnicosAutorizados:[],
-   talleres:["Taller de higiene y AVD","Taller de cocina","Taller de habilidades sociales"],
-   obs:"Preparación para la vida adulta e inserción."}
-];
-
-/* Nº de HCE derivado del id numérico. En la demo no hay `hc` como campo; el prototipo
-   v4 lo muestra como "HC-2025-014" — replicamos el formato para consistencia visual.
-   El año viene del año de alta si existe (p.altaFecha), si no, del año en curso. Lo usan Inclusión y Ateneos (demo). */
-function nroHC(n){
-  const anio = (n.altaFecha ? String(n.altaFecha).slice(0,4) : new Date().getFullYear().toString());
-  return `HC-${anio}-${String(n.id).padStart(3,"0")}`;
-}
+/* El arreglo de grupos «por color» de ejemplo (`GRUPOS`) y `nroHC()` se retiraron en C6 (§5.158): sólo los leían los
+   ateneos de ejemplo, que ahora son de la API. */
 
 /* ============ VISTA GRUPOS · conectada (F2) ============
    GET /grupos (los del año, con sus dos técnicos y el rol de cada uno EN el grupo) + GET /hce (los NNA activos que la persona

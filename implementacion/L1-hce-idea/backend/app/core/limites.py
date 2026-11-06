@@ -13,8 +13,9 @@ este orden:
    esté activo lo sigue mirando `usuario_actual` (con la base), después.
 2. **Tamaño declarado.** Sin `Content-Length` y con `Transfer-Encoding` (chunked) → **411**; un `Content-Length`
    que no es un número → **400**. Sin ninguna de las dos cabeceras el cuerpo es vacío (HTTP/1.1) y se trata como 0.
-3. **Tope por ruta.** `Content-Length` mayor que el tope → **413** `too_large`: las tres subidas multipart
-   (`POST /hce/{id}/documentos`, `/hce/{id}/fotos`, `/grupos/{id}/fotos`) admiten `ARCHIVO_TAMANO_MAXIMO` + 64 KiB
+3. **Tope por ruta.** `Content-Length` mayor que el tope → **413** `too_large`: las cuatro subidas multipart
+   (`POST /hce/{id}/documentos`, `/hce/{id}/fotos`, `/grupos/{id}/fotos` y, desde C6, `/ateneos/{id}/documentos`)
+   admiten `ARCHIVO_TAMANO_MAXIMO` + 64 KiB
    (el archivo más el sobre multipart; el tope exacto del archivo lo sigue aplicando `services/archivos.py`) y el
    `campo` es `archivo`; cualquier otra ruta, **1 MiB** con `campo` null.
 4. **Recorte.** Lo que llegue más allá del `Content-Length` declarado no le llega a la app.
@@ -40,8 +41,8 @@ RUTA_SIN_TOKEN = "/auth/login"
 TOPE_SUBIDA = ARCHIVO_TAMANO_MAXIMO + 64 * 1024
 #: Tope de todo lo demás (JSON). El cuerpo más grande que mandan la demo y el seed: 1749 bytes (§5.157 a).
 TOPE_JSON = 1024 * 1024
-#: Las tres rutas de subida (`POST`), por su forma; un id que no es número llega igual y lo rechaza la ruta (422).
-_RUTAS_DE_SUBIDA = re.compile(r"^/(?:hce/[^/]+/(?:documentos|fotos)|grupos/[^/]+/fotos)/?$")
+#: Las cuatro rutas de subida (`POST`), por su forma; un id que no es número llega igual y lo rechaza la ruta (422).
+_RUTAS_DE_SUBIDA = re.compile(r"^/(?:hce/[^/]+/(?:documentos|fotos)|grupos/[^/]+/fotos|ateneos/[^/]+/documentos)/?$")
 _DIGITOS = re.compile(r"[0-9]{1,18}")
 
 _MENSAJE_SUBIDA = "El archivo supera los 10 MB: el máximo es 10 MB."   # el mismo de services/archivos.py
