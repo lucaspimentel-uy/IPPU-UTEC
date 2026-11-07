@@ -365,7 +365,7 @@ async function ciGuardar(){
     EXP.ci = {estado:"registrado", datos: adaptarCi(r.data), editando:false};
     EXP.avisos = r.warnings || []; pintarAvisosExp();
     repintarCi("ciTitulo");
-    toast(registrar ? "Consentimiento registrado" : "Consentimiento actualizado");
+    toastGuardado(registrar ? "Consentimiento registrado" : "Consentimiento actualizado", r.warnings);
     recargarFlujoExp(true);                          // el stepper y las pestañas leen el estado de la API, no el del formulario
     refrescarListaTrasEscritura();                   // y la fila del listado también
   }catch(err){

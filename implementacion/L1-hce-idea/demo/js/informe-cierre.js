@@ -438,7 +438,7 @@ async function icGuardar(opts){
     const e = _icEl("icEstado"); if(e) e.innerHTML = icEstadoHtml();
     icPintarAcciones(); icPintarAvisos();
     pintarTabsExp();
-    if(!paraFirmar){ toast(r.status === 201 ? "Borrador creado" : "Borrador guardado"); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
+    if(!paraFirmar){ toastGuardado(r.status === 201 ? "Borrador creado" : "Borrador guardado", r.warnings); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
     return true;
   }catch(err){
     if(mi !== EXP.seq || IC.hceId !== id) return false;
@@ -492,7 +492,7 @@ async function icFirmar(){
     if(EXP.mods) EXP.mods.ic = IC.rec;
     icRepintar();
     const t = _icEl("icTitulo"); if(t) t.focus();
-    toast("HCE-IC firmado");
+    toastGuardado("HCE-IC firmado", r.warnings);
     pintarTabsExp();
     recargarFlujoExp(true); refrescarListaTrasEscritura();
   }catch(err){
@@ -517,7 +517,7 @@ async function icAddenda(){
     const ta = _icEl("ic_add_texto"); if(ta) ta.value = "";
     IC.addBorrador = "";
     icRepintar();
-    toast("Addenda registrada");
+    toastGuardado("Addenda registrada", r.warnings);
     const t = _icEl("icAddTitulo"); if(t) t.focus();
     pintarTabsExp();
   }catch(err){
@@ -566,7 +566,7 @@ async function confirmarRecibi(){
     IC.rec = res.data; IC.avisos = res.warnings || [];
     if(EXP.mods) EXP.mods.ic = IC.rec;
     closeFlujoModal();
-    toast("Recibí de la familia registrado");
+    toastGuardado("Recibí de la familia registrado", res.warnings);
     if(EXP.tab === "ic") icRepintar();
     if(_icEl("view-informe").classList.contains("active")) icCargarDocumento();
     else { const t = _icEl("icTitulo"); if(t) t.focus(); }

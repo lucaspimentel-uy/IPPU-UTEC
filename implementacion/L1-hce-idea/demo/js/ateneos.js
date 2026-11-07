@@ -223,7 +223,7 @@ function atPintarLista(){
         <button type="button" class="btn btn-ghost btn-mini" id="atPagNext" onclick="atPagina(1)" disabled>Siguiente ›</button>
       </div>
     </div>
-    <p class="hint at-nota" id="atNota">Los ateneos clínicos son datos sensibles de salud: los ve quien puede abrir el expediente del NNA. Los de grupo, los institucionales y las jornadas son de acceso general del equipo.</p>`;
+    <p class="hint at-nota" id="atNota">Los ateneos clínicos son datos sensibles de salud: los ve quien puede abrir el expediente del NNA. Los de grupo, los institucionales y las jornadas son de acceso general del equipo. Si se cambia el tipo de un clínico, deja de ser sensible y pasa a verlo todo el equipo.</p>`;
   atPintarFilas();
   if(!AT.grupos) atCargarGruposFiltro();
   if(!AT.opciones) atTraerOpciones().then(() => { if(AT.modo !== "lista") return; const s = _atEl("atFiltroTipo"); if(s) s.innerHTML = `<option value="">Todos</option>${AT.opciones.tipos.map(t => `<option value="${escHtml(t.clave)}"${t.clave === AT.filtro.tipo ? " selected" : ""}>${escHtml(t.label)}</option>`).join("")}`; }).catch(() => {});
@@ -403,7 +403,7 @@ function _atFormHtml(d, crear){
       <div id="atfAcuerdosFilas" class="at-ac-filas"></div>
       <button type="button" class="btn btn-ghost btn-mini" id="btnAtfAcAgregar" onclick="atBorradorAgregar()">+ Agregar acuerdo</button></fieldset>` : "";
   return `<div id="atErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint hint-intro">${crear ? "El código del registro lo asigna el sistema al guardar." : "Dejar un dato vacío lo borra. Si cambiás el tipo, lo que no corresponde al tipo nuevo se quita."}</p>
+    <p class="hint hint-intro">${crear ? "El código del registro lo asigna el sistema al guardar." : "Dejar un dato vacío lo borra. Si cambiás el tipo, se quita lo que el tipo nuevo no admite (el NNA, el grupo o los campos de la jornada); el desarrollo clínico se conserva, salvo en una jornada. Pasar un clínico a otro tipo pide confirmación."}</p>
     <fieldset class="inc-fs at-fs"><legend>Datos generales</legend>
       ${_atSel("tipo", tipos, d.tipo || "", crear ? "— elegir tipo —" : null, {req: true, onchange: "atFormTipo()"})}
       ${_atCampoTxt("fecha", d.fecha, {tipo: "date", req: true})}
@@ -539,7 +539,7 @@ async function atGuardarNuevo(){
     if(ses !== AT.sesion) return;
     AT.guardando = false; AT.borrador = [];
     closeFlujoModal();
-    toast(`Registro ${r.data.codigo} guardado`);
+    toastGuardado(`Registro ${r.data.codigo} guardado`, r.warnings);
     await atAbrir(r.data.id, r.warnings || []);
   }catch(err){
     if(ses !== AT.sesion) return;
@@ -547,7 +547,13 @@ async function atGuardarNuevo(){
     _atErrores(err, "atErrores", "No se pudo guardar el registro:");
   }
 }
-async function atGuardarEdicion(){
+/* Un clínico es sensible y hereda el acceso del expediente; los otros tipos son de acceso general (§5.58). Convertirlo lo expone a todo
+   el equipo (grupo, institucional) o borra su desarrollo (jornada): antes de mandarlo se pide confirmación (§5.161 a). */
+const AT_TXT_CONVERTIR = {
+  jornada: "Al guardar, el registro deja de estar ligado al NNA y la situación, la hipótesis, los recursos y el seguimiento se borran del registro.",
+  general: "Al guardar, el registro deja de estar ligado al NNA y lo va a ver todo el equipo, con su situación, hipótesis, recursos y seguimiento."
+};
+async function atGuardarEdicion(confirmado){
   if(AT.guardando || AT.det.estado !== "listo") return;
   const ses = AT.sesion, d = AT.det.datos, id = d.id;
   formLimpiar(_atEl("modalFlujo"), "atErrores");
@@ -555,6 +561,11 @@ async function atGuardarEdicion(){
   Object.keys(v).forEach(c => { const antes = d[c] === undefined ? null : d[c]; if(v[c] !== antes) body[c] = v[c]; });
   if("titulo" in body && body.titulo === null) body.titulo = _atEl("atf_titulo").value;   // un título en blanco lo rechaza la API
   if(!Object.keys(body).length){ formResumen("atErrores", [{mensaje: "No hay cambios para guardar."}], "Nada que guardar:").focus(); return; }
+  if(confirmado !== true && d.tipo === "clinico" && body.tipo && body.tipo !== "clinico"){
+    pedirConfirmacion(_atEl("modalFlujo"), {texto: body.tipo === "jornada" ? AT_TXT_CONVERTIR.jornada : AT_TXT_CONVERTIR.general,
+      rotuloSeguir: "Seguir editando", rotuloConfirmar: "Convertir y guardar", alConfirmar: () => atGuardarEdicion(true)});
+    return;
+  }
   const btn = _atEl("btnAtGuardar");
   AT.guardando = true; if(btn){ btn.disabled = true; btn.textContent = "Guardando…"; }
   try{
@@ -564,7 +575,7 @@ async function atGuardarEdicion(){
     closeFlujoModal();
     atPintarDetalle();
     const t = _atEl("atDetTitulo"); if(t) t.focus();
-    toast("Registro guardado");
+    toastGuardado("Registro guardado", r.warnings);
   }catch(err){
     if(ses !== AT.sesion || AT.det.id !== id) return;
     AT.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Guardar cambios"; }
@@ -609,7 +620,7 @@ async function atGuardarAcuerdo(acuerdoId){
     await atRecargarDetalle();
     if(ses !== AT.sesion || AT.det.id !== id) return;
     const t = _atEl("atAcuerdosTitulo"); if(t) t.focus();
-    toast(acuerdoId === null ? "Acuerdo agregado" : "Acuerdo guardado");
+    toastGuardado(acuerdoId === null ? "Acuerdo agregado" : "Acuerdo guardado", r.warnings);
   }catch(err){
     if(ses !== AT.sesion || AT.det.id !== id) return;
     AT.guardando = false; if(btn){ btn.disabled = false; btn.textContent = rotulo; }
@@ -658,7 +669,7 @@ async function atGuardarDocumento(){
     await atRecargarDetalle();
     if(ses !== AT.sesion || AT.det.id !== id) return;
     const t = _atEl("atDocsTitulo"); if(t) t.focus();
-    toast("Documento adjuntado");
+    toastGuardado("Documento adjuntado", r.warnings);
   }catch(err){
     if(ses !== AT.sesion || AT.det.id !== id) return;
     AT.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Adjuntar documento"; }

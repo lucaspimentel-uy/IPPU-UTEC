@@ -549,7 +549,7 @@ async function vfGuardar(){
     VF.rec = r.data; VF.estado = "listo"; VF.nuevo = false; VF.sucio = false; VF.campos = null; VF.guardando = false; VF.avisos = r.warnings || [];
     vfRepintar();
     const t = _vfEl("vfResultado") || _vfEl("vfTitulo"); if(t) t.focus();
-    toast(crear ? "Valoración funcional creada" : "Valoración funcional guardada");
+    toastGuardado(crear ? "Valoración funcional creada" : "Valoración funcional guardada", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || VF.hceId !== id) return;
     VF.guardando = false; vfPintarAcciones();

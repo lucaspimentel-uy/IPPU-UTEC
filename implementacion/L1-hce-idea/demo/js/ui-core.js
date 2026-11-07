@@ -301,6 +301,9 @@ function toast(msg, tipo){
   clearTimeout(window._toastT);
   window._toastT = setTimeout(()=>t.classList.remove("show"), 3200);
 }
+/* Despues de una escritura: «ok» si la respuesta no trae avisos (`warnings[]`), «info» si los trae (se guardó, pero hay algo para
+   leer; los avisos se muestran aparte, §5.161 b). El texto del mensaje no cambia. */
+function toastGuardado(msg, warnings){ toast(msg, Array.isArray(warnings) && warnings.length ? "info" : "ok"); }
 
 /* ===================== SESIÓN (Fase 3-a · login contra la API) =====================
    POST /auth/login -> token + usuario, guardados en sessionStorage (api.js · Sesion).

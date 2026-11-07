@@ -69,7 +69,7 @@ ya resolvió** (`getComputedStyle`, no el CSS): no hay estimaciones a mano. Mide
   de la autorización; sin autorización y con error) y la tarjeta «Fotos del grupo» de Grupos (con miniatura, su diálogo y «no encontrado»);
   Ateneos (C6: el indicador y la lista con un clínico «Sensible», cargando, error y vacío; el detalle de un clínico con acuerdos,
   documentos y un aviso de la API; «no encontrado»; los diálogos «Nuevo registro» —clínico con un acuerdo y errores de muestra junto
-  al NNA y a los acuerdos, y el bloque de la jornada—, «Editar registro», «Agregar acuerdo» con un error de muestra y «Adjuntar
+  al NNA y a los acuerdos, y el bloque de la jornada—, «Editar registro» —con la banda de confirmación de la conversión de un clínico, con cada uno de sus dos textos—, «Agregar acuerdo» con un error de muestra y «Adjuntar
   documento», abiertos sin guardar) y la tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín;
   el Panel institucional (C7: el técnico y el admin, el año anterior, las alertas por escala, sin ciclo A → B, sin expedientes
   activos, cargando y error; el heatmap de demostración de su tarjeta se mide con él);
@@ -145,13 +145,13 @@ conectadas, a 1280×800 y a 1024×768 donde importa el ancho.
 | **Cabecera de tarjeta** | franja `--paper-2` con filete, 12/16 px; título sans 14 px / 600 en tinta; una cuenta opcional (`.card-n`, texto 14 px en `--ink-2`, nunca un chip); acciones a la derecha; **sin glifo decorativo** y sin versalitas | `.card > .cardhead`, `.info-card > h3`, `.flujo-card > h3`, `.escala > header`, `.prot-esc > header` (`f3-cabecera`) |
 | **Etiqueta o chip** | sans 12 px / 600, 1 px de borde, radio `--r-sm`, una línea; la variante sólo cambia color o estilo del borde. **Marca** («Sensible», «Registro histórico», «Inactivo»): tinta con borde `--ink-2`, sin relleno. La rampa (`.banda-chip`) es la única con relleno propio y no parte el rango | `.st`, `.pill`, `.mbadge`, `.log-tipo`, `.solo-demo`, `.marca` (`f3-chips`, `f3-banda`) |
 | **Aviso flotante** | `toast(msg, tipo)`: `ok` ✓ · `info` ℹ · `error` ! (+ «Error:» sólo para lectores de pantalla); glifo `aria-hidden` + texto, `role="status"` | `ui-core.js` (`f3-toast`) |
-| **Íconos** | glifos de texto (✎ + ✓ ⚠ › ‹ ⌕ ● ◐ ○ ✚ ◌ ◇) o SVG en línea en `currentColor` (`iconoHtml()`, `utils.js`), siempre `aria-hidden`; el control lleva su nombre en texto o en `aria-label`. **Ningún emoji** ni recurso de otro servidor; ⚠ e ℹ se admiten porque Windows los dibuja monocromos | `f3-iconos` |
+| **Íconos** | glifos de texto (✎ + ✓ ⚠ › ‹ ⌕ ● ◐ ○ ✚ ◌ ◇ ☰ ▣ ⨯ ↻ ◷ ▤ ↑ ↓ →) o SVG en línea en `currentColor` (`iconoHtml()`, `utils.js`), siempre `aria-hidden`; el control lleva su nombre en texto o en `aria-label`. **Ningún emoji** ni recurso de otro servidor; ⚠ e ℹ se admiten porque Windows los dibuja monocromos | `f3-iconos` |
 | **«Guardar»** | secundario donde la pantalla tiene su acción principal propia («Firmar»); principal donde guardar es la única acción que confirma (un diálogo, la VF, el CI) | `f3-guardar` |
 | **Vacío · cargando · error** | `estadoVacioHtml` / `estadoCargandoHtml` / `estadoErrorHtml` (`utils.js`); lo que todavía no se registró es «Sin registrar.» | `f3-estados`, `3e-…` |
 
 **Monoespaciada permitida** (`f1b-tipo`): `.cod` (HC, C.I., N.º, AT-2026-003, CIE-11), `.tab-cod` (código de módulo en la pestaña),
-`.fr-code` y `.fstep .fname` (códigos del flujo del expediente de ejemplo) y `.grupo-integrantes .hint` (la HC en el detalle de un grupo).
-Nada más: ni puntajes, ni fechas (la de un registro de ORG), ni nombres de campo ni el «ver completo» de Auditoría.
+`.fr-code` y `.fstep .fname` (códigos del flujo del expediente de ejemplo). La regla `.grupo-integrantes .hint` (la HC en el detalle de un grupo) queda en
+el CSS, pero **hoy ninguna plantilla la usa**. Nada más: ni puntajes, ni fechas (la de un registro de ORG), ni nombres de campo ni el «ver completo» de Auditoría.
 
 **Valores de ficha.** Rótulo 13 px en `--ink-2`, valor 15 px en tinta, **los dos en 400**: la jerarquía la dan el tamaño y el color. En
 una tarjeta angosta (≤ 360 px) el rótulo va arriba del valor.

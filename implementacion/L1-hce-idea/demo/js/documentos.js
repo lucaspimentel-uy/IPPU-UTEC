@@ -332,7 +332,7 @@ async function docGuardarCarga(){
     await docCargar(true);
     if(mi !== EXP.seq || DOCS.hceId !== id) return;
     const t = _docEl("docDocsTitulo"); if(t) t.focus();
-    toast("Documento cargado");
+    toastGuardado("Documento cargado", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || DOCS.hceId !== id) return;
     DOCS.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Cargar documento"; }
@@ -373,7 +373,7 @@ async function docGuardarEdicion(docId){
     closeFlujoModal();
     await docCargar(true);
     const t = _docEl("docDocsTitulo"); if(t) t.focus();
-    toast("Documento guardado");
+    toastGuardado("Documento guardado", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || DOCS.hceId !== id) return;
     DOCS.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Guardar cambios"; }
@@ -426,7 +426,7 @@ async function fotoGuardar(destino){
     closeFlujoModal();
     if(enGrupo){ await grpFotosCargar(id, true); const t = _docEl("grpFotosTitulo"); if(t) t.focus(); }
     else { await docCargar(true); const t = _docEl("docFotosTitulo"); if(t) t.focus(); }
-    toast("Foto cargada");
+    toastGuardado("Foto cargada", r.warnings);
   }catch(err){
     if(!vigente()){ huerfana(); return; }
     est.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Cargar foto"; }
@@ -476,7 +476,7 @@ async function autGuardar(){
     closeFlujoModal();
     docRepintar();
     const t = _docEl("docAutTitulo"); if(t) t.focus();
-    toast(crear ? "Autorización registrada" : "Autorización guardada");
+    toastGuardado(crear ? "Autorización registrada" : "Autorización guardada", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || DOCS.hceId !== id) return;
     DOCS.guardando = false; if(btn){ btn.disabled = false; btn.textContent = rotulo; }

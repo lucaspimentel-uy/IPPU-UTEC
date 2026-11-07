@@ -590,7 +590,7 @@ la reserva por entrada) y **Fase 4** (que el acceso del representante la respete
 
 ---
 
-### 1.17 El período del recordatorio «lb» («Semanas 2–3 del ingreso»): ¿vale para el IDEA de **todos** los años? — abierto (2026-11-05)
+### 1.18 El período del recordatorio «lb» («Semanas 2–3 del ingreso»): ¿vale para el IDEA de **todos** los años? — abierto (2026-11-05)
 
 **Qué pasa.** El recordatorio `lb` del catálogo dice «Aplicación del IDEA (HCE-LB) en las semanas 2–3 del ingreso»
 (período «Semanas 2–3 del ingreso», Manual §4). Leído tal cual, es un IDEA **de ingreso** y nada más. Pero IPPU

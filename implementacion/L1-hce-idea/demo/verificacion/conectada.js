@@ -4194,6 +4194,97 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && desc.length === 1 && /^Bearer /.test(desc[0].auth || '') && sinTok.status === 401,
       JSON.stringify({ acepta, st: rDoc.status(), n: [docsAntes, docsApi.length], bytes: [bajado.length, PDF.length], auth: desc.map((d) => !!d.auth), sin: sinTok.status }));
 
+    /* c6-convertir · convertir un clínico en otro tipo pide confirmación DENTRO del diálogo (la banda del descarte, §5.161 a): «Seguir editando»
+       no manda nada y deja lo tipeado; «Convertir y guardar» manda UN PATCH y el registro deja de ser sensible. Otro tipo → clínico no pregunta. */
+    const TXT_GENERAL = 'Al guardar, el registro deja de estar ligado al NNA y lo va a ver todo el equipo, con su situación, hipótesis, recursos y seguimiento.';
+    const TXT_JORNADA = 'Al guardar, el registro deja de estar ligado al NNA y la situación, la hipótesis, los recursos y el seguimiento se borran del registro.';
+    const mk = async (cuerpo) => (await api('POST', '/ateneos', cuerpo)).json.data;
+    const clinA = await mk({ tipo: 'clinico', fecha: `${anioReg}-10-05`, titulo: 'Clínico a convertir en institucional (c6)', hce_referida_id: idMartin, situacion: 'Situación que se verá en todo el equipo (c6).' });
+    const clinB = await mk({ tipo: 'clinico', fecha: `${anioReg}-10-06`, titulo: 'Clínico a convertir en jornada (c6)', hce_referida_id: idMartin, situacion: 'Situación que se borraría (c6).' });
+    const grupoC = await mk({ tipo: 'grupo', fecha: `${anioReg}-10-07`, titulo: 'De grupo que pasa a clínico (c6)', grupo_id: escolares.id });
+    const patches = (id) => escrituras.filter((e) => e.m === 'PATCH' && e.url === `/ateneos/${id}`).length;
+    const abrirEdicion = async (id) => { await pa.evaluate((x) => atAbrir(x), id); await esperarDetalle(); await pa.click('#btnAtEditar'); await pa.waitForSelector('#modalFlujo.open #atf_tipo'); };
+    const banda = () => pa.evaluate(() => { const b = document.querySelector('#modalFlujo .confirmar-descarte'); if (!b) return null;
+      return { rol: b.getAttribute('role'), txt: b.querySelector('.cd-txt').textContent.trim().replace(/^⚠/, ''), foco: document.activeElement.id,
+        botones: [...b.querySelectorAll('button')].map((x) => [x.id, x.textContent.trim(), x.className.trim(), Math.round(x.getBoundingClientRect().height)]), previo: b.previousElementSibling.className }; });
+    const estadoDialogo = () => pa.evaluate(() => ({ banda: !!document.querySelector('.confirmar-descarte'), abierto: document.getElementById('modalFlujo').classList.contains('open'),
+      tipo: (document.getElementById('atf_tipo') || {}).value, obs: (document.getElementById('atf_observaciones') || {}).value, guardar: !!document.getElementById('btnAtGuardar') && !document.getElementById('btnAtGuardar').disabled }));
+    // A · clínico → institucional
+    await abrirEdicion(clinA.id);
+    await pa.selectOption('#atf_tipo', 'institucional'); await pa.fill('#atf_observaciones', 'Escrito antes de convertir (c6)');
+    await pa.click('#btnAtGuardar'); await pa.waitForSelector('#modalFlujo .confirmar-descarte');
+    const bA = await banda();
+    await pa.click('#btnCdSeguir');                                           // «Seguir editando»: nada se manda, el diálogo y lo tipeado siguen
+    const trasSeguir = await estadoDialogo();
+    const apiTrasSeguir = (await api('GET', `/ateneos/${clinA.id}`)).json;
+    await pa.click('#btnAtGuardar'); await pa.waitForSelector('#modalFlujo .confirmar-descarte');
+    await pa.keyboard.press('Escape');                                        // Esc = lo seguro
+    const trasEsc = await estadoDialogo();
+    await pa.click('#btnAtGuardar'); await pa.waitForSelector('#modalFlujo .confirmar-descarte');
+    await pa.click('#btnAtCancelar');                                         // Cancelar con la banda a la vista: la trata como «Seguir editando» (descarteAbierto)
+    const trasCancelar = await estadoDialogo();
+    const pendientesA = patches(clinA.id);
+    await pa.click('#btnAtGuardar'); await pa.waitForSelector('#modalFlujo .confirmar-descarte');
+    const rConv = pa.waitForResponse((r) => new URL(r.url()).pathname === `/ateneos/${clinA.id}` && r.request().method() === 'PATCH');
+    await pa.click('#btnCdDescartar'); const respConv = await rConv; await esperarCerrado();
+    const enviosA = escrituras.filter((e) => e.m === 'PATCH' && e.url === `/ateneos/${clinA.id}`);
+    const bodyConv = enviosA.length ? JSON.parse(enviosA[0].body) : {};
+    const dConv = (await api('GET', `/ateneos/${clinA.id}`)).json;
+    await irAteneos();
+    const filaA = (await filasUi()).find((f) => f.id === clinA.id);
+    const labelInst = (await api('GET', '/ateneos/opciones')).json.tipos.find((t) => t.clave === 'institucional').label;
+    // B · clínico → jornada: el texto de la jornada; sólo se cancela
+    await abrirEdicion(clinB.id);
+    await pa.selectOption('#atf_tipo', 'jornada'); await pa.click('#btnAtGuardar'); await pa.waitForSelector('#modalFlujo .confirmar-descarte');
+    const bB = await banda();
+    await pa.click('#btnCdSeguir'); await pa.evaluate(() => closeFlujoModal(true));
+    const enviosB = patches(clinB.id), dB = (await api('GET', `/ateneos/${clinB.id}`)).json;
+    // el mismo clínico, sin cambiar el tipo: no se pregunta (esperarCerrado fallaría con la banda a la vista)
+    await abrirEdicion(clinB.id);
+    await pa.fill('#atf_observaciones', 'Sin cambiar el tipo (c6)'); await pa.click('#btnAtGuardar'); await esperarCerrado();
+    const enviosBsin = patches(clinB.id);
+    // C · de otro tipo a clínico: no se pregunta
+    await abrirEdicion(grupoC.id);
+    await pa.selectOption('#atf_tipo', 'clinico'); await pa.selectOption('#atf_nna', String(idMartin));
+    const rC = pa.waitForResponse((r) => new URL(r.url()).pathname === `/ateneos/${grupoC.id}` && r.request().method() === 'PATCH');
+    await pa.click('#btnAtGuardar'); const respC = await rC; await esperarCerrado();
+    const dC = (await api('GET', `/ateneos/${grupoC.id}`)).json;
+    const botonesOk = (b) => b.botones.length === 2 && b.botones.every((x) => x[3] >= 24);
+    check('c6-convertir', 'clínico → institucional o jornada: la banda del descarte (role="alert", foco en «Seguir editando», mismas clases) trae el texto de su caso; «Seguir editando», Esc y Cancelar no mandan nada y conservan lo tipeado (GET sin cambios); «Convertir y guardar» manda UN PATCH y la fila queda sin «Sensible»; sin cambiar el tipo y de otro tipo a clínico no se pregunta',
+      !!bA && bA.rol === 'alert' && bA.txt === TXT_GENERAL && bA.foco === 'btnCdSeguir' && botonesOk(bA) && bA.botones[0][1] === 'Seguir editando' && bA.botones[1][1] === 'Convertir y guardar'
+        && bA.botones[0][2] === 'btn btn-ghost' && bA.botones[1][2] === 'btn btn-descartar' && /modal-head/.test(bA.previo)
+        && !trasSeguir.banda && trasSeguir.abierto && trasSeguir.tipo === 'institucional' && trasSeguir.obs === 'Escrito antes de convertir (c6)' && trasSeguir.guardar
+        && apiTrasSeguir.tipo === 'clinico' && apiTrasSeguir.sensible === true && apiTrasSeguir.hce_referida_id === idMartin
+        && !trasEsc.banda && trasEsc.abierto && trasEsc.tipo === 'institucional' && !trasCancelar.banda && trasCancelar.abierto && pendientesA === 0
+        && respConv.status() === 200 && enviosA.length === 1 && bodyConv.tipo === 'institucional' && bodyConv.hce_referida_id === null
+        && dConv.tipo === 'institucional' && dConv.sensible === false && dConv.hce_referida_id === null && dConv.observaciones === 'Escrito antes de convertir (c6)'
+        && !!filaA && filaA.celdas[2].startsWith(labelInst) && filaA.marca === null && filaA.sensible === false
+        && !!bB && bB.rol === 'alert' && bB.txt === TXT_JORNADA && bB.foco === 'btnCdSeguir' && bB.botones[1][1] === 'Convertir y guardar' && enviosB === 0 && dB.tipo === 'clinico' && dB.sensible === true
+        && enviosBsin === 1 && respC.status() === 200 && dC.tipo === 'clinico' && dC.sensible === true && dC.hce_referida_id === idMartin,
+      JSON.stringify({ bA, trasSeguir, apiTrasSeguir: [apiTrasSeguir.tipo, apiTrasSeguir.sensible], trasEsc, trasCancelar, pendientesA, st: respConv.status(), enviosA: enviosA.length, bodyConv,
+        dConv: [dConv.tipo, dConv.sensible], filaA: filaA && [filaA.celdas[2], filaA.marca], bB, enviosB, dB: [dB.tipo, dB.sensible], enviosBsin, stC: respC.status(), dC: [dC.tipo, dC.sensible] }).slice(0, 1100));
+
+    /* f3-toast-avisos · (sólo lectura: la respuesta del PATCH se contesta en el navegador, no llega a la API) tras un guardado el toast es «info» si la
+       respuesta trae warnings[] y «ok» si no; el texto del mensaje es el mismo (§5.161 b) */
+    const datosA = (await api('GET', `/ateneos/${clinA.id}`)).json;
+    const guardarFalso = async (warnings) => {
+      await pa.route((u) => u.pathname === `/ateneos/${clinA.id}`, (route) => route.request().method() === 'PATCH'
+        ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: datosA, warnings }) }) : route.continue());
+      await abrirEdicion(clinA.id); await pa.fill('#atf_observaciones', 'Prueba de avisos (f3, no se guarda)');
+      await pa.click('#btnAtGuardar'); await esperarCerrado();
+      const t = await pa.evaluate(() => ({ tipo: document.getElementById('toast').dataset.tipo, glifo: document.getElementById('toastIco').textContent, msg: document.getElementById('toastMsg').textContent }));
+      await pa.unrouteAll({ behavior: 'ignoreErrors' });
+      return t;
+    };
+    const conAviso = await guardarFalso([{ code: 'prueba_f3', mensaje: 'Aviso de prueba F3.' }]);
+    const sinAviso = await guardarFalso([]);
+    const helper = await pa.evaluate(() => [[{ mensaje: 'a' }], [], undefined, null].map((w) => { toastGuardado('x', w); return document.getElementById('toast').dataset.tipo; }));
+    const datosDespues = (await api('GET', `/ateneos/${clinA.id}`)).json;
+    check('f3-toast-avisos', 'tras guardar, el toast es «info» (ℹ) si la respuesta trae warnings[] y «ok» (✓) si no, con el mismo mensaje; toastGuardado() lo decide sólo por warnings[]; nada llegó a la API',
+      conAviso.tipo === 'info' && conAviso.glifo === 'ℹ' && conAviso.msg === 'Registro guardado' && sinAviso.tipo === 'ok' && sinAviso.glifo === '✓' && sinAviso.msg === 'Registro guardado'
+        && JSON.stringify(helper) === '["info","ok","ok","ok"]' && datosDespues.observaciones === datosA.observaciones,
+      JSON.stringify({ conAviso, sinAviso, helper }));
+
     /* c6-salir · «Salir» con GET /ateneos todavía sin respuesta: al llegar, la vista sigue vacía y el estado no tiene datos de la sesión anterior */
     await pa.evaluate(() => go('inicio'));
     await pa.route((u) => u.pathname === '/ateneos', async (route) => { await new Promise((x) => setTimeout(x, 1500)); await route.continue().catch(() => {}); });

@@ -234,7 +234,7 @@ async function asignarGuardar(id){
     gruposPintar();
     const t = document.getElementById(GRP.abierto === id ? "grupoTitulo" : "grupoTit_" + id); if(t) t.focus();
     const avisos = (r.warnings || []).map(w => w && w.mensaje).filter(Boolean);
-    toast(`Técnicos del grupo ${g.nombre} guardados${avisos.length ? ". Aviso: " + avisos.join(" ") : ""}`);
+    toast(`Técnicos del grupo ${g.nombre} guardados${avisos.length ? ". Aviso: " + avisos.join(" ") : ""}`, avisos.length ? "info" : "ok");
   }catch(err){
     if(ses !== GRP.sesion) return;
     GRP.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Guardar asignación"; }

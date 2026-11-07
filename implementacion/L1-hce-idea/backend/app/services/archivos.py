@@ -24,7 +24,8 @@ es) → 422. Todos con `campo` = el del archivo. **No hay antivirus ni re-codifi
 26/11).
 
 **PPTX, sólo en los documentos de un ateneo (C6, §5.158 i).** Un ZIP (`50 4B 03 04`) que, ya escrito entero, tiene un
-`[Content_Types].xml` (leído **solo**, con tope de tamaño y sin extraer nada más) que declara la parte principal de una
+`[Content_Types].xml` (leído **solo**, con tope de tamaño, sin extraer nada más y sin DOCTYPE ni entidades en ninguna
+codificación) que declara la parte principal de una
 presentación (`PPTX_TIPO_PRINCIPAL`). Con macros (`presentation.macroEnabled`), una plantilla, un pase de diapositivas, un
 .docx, un ZIP sin `[Content_Types].xml` o uno roto → 422. Para un documento del expediente o una foto, un ZIP es 422 de
 entrada (no está en `permitidos`).
@@ -42,7 +43,7 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO
-from xml.etree import ElementTree
+from xml.parsers import expat
 
 from sqlalchemy import event
 from sqlalchemy.orm import Session
@@ -211,13 +212,44 @@ def _aceptar(cabecera: bytes, permitidos: tuple[str, ...], campo: str) -> str:
     return tipo
 
 
+class _Rechazado(Exception):
+    """Interna: el XML trae un DOCTYPE o una declaración de entidad."""
+
+
+def _tipos_declarados(xml: bytes) -> list[str] | None:
+    """Los `ContentType` de `[Content_Types].xml`, o `None` si no es XML bien formado o trae DOCTYPE o entidades.
+
+    Lo parsea `expat` directamente (stdlib): `StartDoctypeDeclHandler` y `EntityDeclHandler` cortan el parseo antes de que
+    haya algo que expandir, en la codificación que sea (UTF-8, UTF-16 con o sin BOM): el filtro de bytes de quien llama sólo
+    ve ASCII."""
+    tipos: list[str] = []
+
+    def rechazar(*_args) -> None:
+        raise _Rechazado
+
+    def elemento(_nombre: str, atributos: dict[str, str]) -> None:
+        if "ContentType" in atributos:
+            tipos.append(atributos["ContentType"])
+
+    parser = expat.ParserCreate()
+    parser.StartDoctypeDeclHandler = rechazar
+    parser.EntityDeclHandler = rechazar
+    parser.StartElementHandler = elemento
+    try:
+        parser.Parse(xml, True)
+    except (_Rechazado, expat.ExpatError):
+        return None
+    return tipos
+
+
 def _verificar_pptx(ruta: str, permitidos: tuple[str, ...], campo: str) -> None:
     """El ZIP ya escrito es una presentación PowerPoint **sin macros**; si no, 422 (§5.158 i).
 
     Se abre el índice del ZIP y se lee **sólo** `[Content_Types].xml`, y sólo si su tamaño declarado y el leído no pasan
     de `PPTX_CONTENT_TYPES_MAXIMO` (un ZIP que miente sobre el tamaño se corta en el tope). Nada se extrae a disco. Un XML
-    con `<!DOCTYPE` se rechaza antes de parsearlo (sin entidades: nada que expandir). Pasa si alguna `ContentType` es
-    exactamente `PPTX_TIPO_PRINCIPAL` y ninguna es de macros."""
+    con DOCTYPE o con una declaración de entidad se rechaza **en cualquier codificación** (`_tipos_declarados`: `expat`
+    con los manejadores de DOCTYPE y de entidades; el filtro de bytes `<!DOCTYPE` / `<!ENTITY` queda como primera
+    barrera). Pasa si alguna `ContentType` es exactamente `PPTX_TIPO_PRINCIPAL` y ninguna es de macros."""
     try:
         with zipfile.ZipFile(ruta) as zf:
             info = zf.getinfo("[Content_Types].xml")
@@ -229,10 +261,8 @@ def _verificar_pptx(ruta: str, permitidos: tuple[str, ...], campo: str) -> None:
         raise _rechazo(permitidos, campo) from None
     if len(xml) > PPTX_CONTENT_TYPES_MAXIMO or b"<!DOCTYPE" in xml.upper() or b"<!ENTITY" in xml.upper():
         raise _rechazo(permitidos, campo)
-    try:
-        raiz = ElementTree.fromstring(xml)
-    except ElementTree.ParseError:
-        raise _rechazo(permitidos, campo) from None
-    tipos = [e.get("ContentType", "") for e in raiz.iter() if e.get("ContentType") is not None]
+    tipos = _tipos_declarados(xml)
+    if tipos is None:
+        raise _rechazo(permitidos, campo)
     if PPTX_TIPO_PRINCIPAL not in tipos or any("macroenabled" in t.lower() for t in tipos):
         raise _rechazo(permitidos, campo)

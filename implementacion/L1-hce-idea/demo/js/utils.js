@@ -43,7 +43,7 @@ function badgeSoloDemoTab(){
 }
 /* ===== Íconos (F3, §5.160): SVG en línea, trazo en currentColor, siempre decorativos (aria-hidden): el texto del control es su
    nombre accesible. Ningún emoji ni recurso de otro servidor. Los demás íconos de la interfaz son glifos de texto
-   (✎ editar · + agregar · ✓ confirmar · ⚠ alerta · › ir · ‹ volver · ⌕ buscar · ● ◐ ○ estados · ◌ vacío · ◇ demostración). */
+   (✎ editar · + agregar · ✓ confirmar · ⚠ alerta · › ir · ‹ volver · ⌕ buscar · ● ◐ ○ estados · ◌ vacío · ◇ demostración · ☰ ▣ ⨯ ↻ ◷ ▤ ↑ ↓ → los que acompañan un estado vacío, una acción del expediente de ejemplo o un sentido). */
 const _ICONOS = {
   imprimir: '<path d="M4 6V1.5h8V6"/><rect x="1.5" y="6" width="13" height="5.5" rx="1"/><path d="M4 9.5h8V14.5H4z"/>'
 };
@@ -106,15 +106,17 @@ function vaciarCampos(raiz){
     else e.value = "";
   });
 }
-/* Confirmacion de descarte DENTRO del dialogo (no es otro dialogo): banda destructiva con glifo + texto, el foco va a
-   «Seguir editando» (lo seguro) y Esc tambien sigue editando. Devuelve false si ya estaba a la vista. */
-function pedirDescarte(modal, alDescartar, alSeguir){
+/* Confirmacion DENTRO del dialogo (no es otro dialogo): banda destructiva con glifo + texto y dos botones. El foco va al seguro
+   («Seguir editando», no manda nada) y Esc tambien lo elige. Una sola banda a la vez; devuelve false si ya estaba a la vista.
+   La usan el descarte (pedirDescarte) y la conversion de un ateneo clinico (ateneos.js): misma banda, mismos ids y clases, asi
+   que descarteAbierto() y el cierre / Esc del dialogo las tratan igual. */
+function pedirConfirmacion(modal, {texto, rotuloSeguir, rotuloConfirmar, alConfirmar, alSeguir}){
   if(!modal || modal.querySelector(".confirmar-descarte")) return false;
   const banda = document.createElement("div");
   banda.className = "confirmar-descarte"; banda.setAttribute("role", "alert");
-  banda.innerHTML = `<span class="cd-txt" id="cdTxt"><span class="cd-glifo" aria-hidden="true">⚠</span>Hay datos sin guardar. Si cerrás, se pierden.</span>
-    <span class="cd-acciones"><button type="button" class="btn btn-ghost" id="btnCdSeguir" aria-describedby="cdTxt">Seguir editando</button>
-    <button type="button" class="btn btn-descartar" id="btnCdDescartar" aria-describedby="cdTxt">Descartar y cerrar</button></span>`;
+  banda.innerHTML = `<span class="cd-txt" id="cdTxt"><span class="cd-glifo" aria-hidden="true">⚠</span>${escHtml(texto)}</span>
+    <span class="cd-acciones"><button type="button" class="btn btn-ghost" id="btnCdSeguir" aria-describedby="cdTxt">${escHtml(rotuloSeguir)}</button>
+    <button type="button" class="btn btn-descartar" id="btnCdDescartar" aria-describedby="cdTxt">${escHtml(rotuloConfirmar)}</button></span>`;
   const previo = document.activeElement;                    // el campo donde se estaba: «Seguir editando» vuelve ahí
   const cab = modal.querySelector(".modal-head");
   cab.insertAdjacentElement("afterend", banda);
@@ -125,10 +127,14 @@ function pedirDescarte(modal, alDescartar, alSeguir){
     if(vuelta) vuelta.focus();
     if(alSeguir) alSeguir();
   };
-  banda.querySelector("#btnCdDescartar").onclick = () => { quitar(); alDescartar(); };
+  banda.querySelector("#btnCdDescartar").onclick = () => { quitar(); alConfirmar(); };
   banda.addEventListener("keydown", ev => { if(ev.key === "Escape"){ ev.preventDefault(); ev.stopPropagation(); banda.querySelector("#btnCdSeguir").click(); } });
   banda.querySelector("#btnCdSeguir").focus();
   return true;
+}
+function pedirDescarte(modal, alDescartar, alSeguir){
+  return pedirConfirmacion(modal, {texto: "Hay datos sin guardar. Si cerrás, se pierden.", rotuloSeguir: "Seguir editando",
+    rotuloConfirmar: "Descartar y cerrar", alConfirmar: alDescartar, alSeguir});
 }
 function descarteAbierto(modal){ return !!(modal && modal.querySelector(".confirmar-descarte")); }
 

@@ -204,7 +204,7 @@ async function orgGuardarVinculo(k){
     closeFlujoModal();
     orgRepintar();
     const t = _orgEl("orgTitulo"); if(t) t.focus();
-    toast(crear ? `Vínculo con ${N} registrado` : `Vínculo con ${N} guardado`);
+    toastGuardado(crear ? `Vínculo con ${N} registrado` : `Vínculo con ${N} guardado`, r.warnings);
   }catch(err){
     if(mi !== EXP.seq || ORG.hceId !== id) return;
     ORG.guardando = false; if(btn){ btn.disabled = false; btn.textContent = rotulo; }
@@ -263,7 +263,7 @@ async function orgGuardarRegistro(k){
     await orgCargar(true);                       // el orden lo da la API: se vuelve a pedir la lista
     if(mi !== EXP.seq || ORG.hceId !== id) return;
     const t = _orgEl("orgTitulo"); if(t) t.focus();
-    toast(R.hecho);
+    toastGuardado(R.hecho, r.warnings);
   }catch(err){
     if(mi !== EXP.seq || ORG.hceId !== id) return;
     ORG.guardando = false; if(btn){ btn.disabled = false; btn.textContent = `✓ Registrar ${R.uno}`; }

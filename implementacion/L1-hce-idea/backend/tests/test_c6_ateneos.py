@@ -618,7 +618,7 @@ def test_la_subida_de_un_ateneo_tiene_el_tope_de_las_subidas(client, escena):
 
 
 # ── PPTX (§5.158 i) ──────────────────────────────────────────────────────────
-def _zip(partes: dict[str, str]) -> bytes:
+def _zip(partes: dict[str, str | bytes]) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for nombre, texto in partes.items():
@@ -664,6 +664,44 @@ def test_lo_que_no_es_un_pptx_sin_macros_es_422_y_el_pptx_pasa(client, escena, c
     r = _subir_at(client, a["id"], categorias[OTRO], contenido=contenido, nombre_archivo="x.pptx", ctype=MIME_PPTX)
     assert r.status_code == 422 and _campos(r) == ["archivo"], r.text
     assert _subir_at(client, a["id"], categorias[OTRO], contenido=PPTX, nombre_archivo="x.pptx").status_code == 201
+
+
+_TIPOS_XML = ('<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+              f'<Override PartName="/ppt/presentation.xml" ContentType="{PPTX_TIPO_PRINCIPAL}"/></Types>')
+_DOCTYPE = '<!DOCTYPE Types [<!ENTITY a "b">]>'
+
+
+def _ct_utf16(cuerpo: str, codec: str) -> bytes:
+    """Un PPTX cuyo `[Content_Types].xml` está en UTF-16 (el filtro de bytes `<!DOCTYPE` no lo ve)."""
+    return _zip({"[Content_Types].xml": cuerpo.encode(codec), "ppt/presentation.xml": "<p:presentation xmlns:p='x'/>"})
+
+
+@pytest.mark.parametrize("codec", ["utf-16", "utf-16-le", "utf-16-be"])
+def test_un_content_types_en_utf16_con_doctype_es_422_y_sin_doctype_pasa(client, escena, categorias, codec):
+    a = _crear(client, _cuerpo("institucional"))["data"]
+    con = _ct_utf16(f'<?xml version="1.0"?>{_DOCTYPE}{_TIPOS_XML}', codec)
+    sin = _ct_utf16(f'<?xml version="1.0"?>{_TIPOS_XML}', codec)
+    r = _subir_at(client, a["id"], categorias[OTRO], contenido=con, nombre_archivo="x.pptx", ctype=MIME_PPTX)
+    assert r.status_code == 422 and _campos(r) == ["archivo"], r.text
+    assert _subir_at(client, a["id"], categorias[OTRO], contenido=sin, nombre_archivo="x.pptx", ctype=MIME_PPTX).status_code == 201
+
+
+def test_un_subconjunto_interno_con_entity_es_422_y_el_pptx_valido_pasa(client, escena, categorias):
+    """En UTF-8 y en UTF-16: la declaración de la entidad corta el parseo, no se expande nada."""
+    a = _crear(client, _cuerpo("institucional"))["data"]
+    for contenido in (_zip({"[Content_Types].xml": f'{_DOCTYPE}{_TIPOS_XML}'}), _ct_utf16(f'{_DOCTYPE}{_TIPOS_XML}', "utf-16")):
+        r = _subir_at(client, a["id"], categorias[OTRO], contenido=contenido, nombre_archivo="x.pptx", ctype=MIME_PPTX)
+        assert r.status_code == 422 and _campos(r) == ["archivo"], r.text
+    assert _subir_at(client, a["id"], categorias[OTRO], contenido=PPTX, nombre_archivo="x.pptx", ctype=MIME_PPTX).status_code == 201
+
+
+def test_tipos_declarados_lee_los_content_type_y_rechaza_doctype_y_entidades():
+    from app.services.archivos import _tipos_declarados
+    assert _tipos_declarados(_TIPOS_XML.encode("utf-8")) == [PPTX_TIPO_PRINCIPAL]
+    assert _tipos_declarados(_TIPOS_XML.encode("utf-16")) == [PPTX_TIPO_PRINCIPAL]
+    assert _tipos_declarados(f"{_DOCTYPE}{_TIPOS_XML}".encode("utf-16-le")) is None
+    assert _tipos_declarados(f'<!DOCTYPE Types SYSTEM "http://x/y.dtd">{_TIPOS_XML}'.encode("utf-16-be")) is None
+    assert _tipos_declarados(b"<Types><Override") is None
 
 
 def test_un_content_types_enorme_es_422_sin_leerlo_entero(client, escena, categorias):

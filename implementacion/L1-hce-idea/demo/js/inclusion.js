@@ -277,7 +277,7 @@ async function incGuardarFicha(){
     closeFlujoModal();
     incRepintar();
     const t = _incEl("incTitulo"); if(t) t.focus();
-    toast(crear ? "Ficha de inclusión registrada" : "Ficha de inclusión guardada");
+    toastGuardado(crear ? "Ficha de inclusión registrada" : "Ficha de inclusión guardada", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || INC.hceId !== id) return;
     INC.guardando = false; if(btn){ btn.disabled = false; btn.textContent = rotulo; }
@@ -349,7 +349,7 @@ async function incGuardarGestion(){
     await incCargar(true);
     if(mi !== EXP.seq || INC.hceId !== id) return;
     const t = _incEl("incGesTitulo"); if(t) t.focus();
-    toast("Gestión registrada");
+    toastGuardado("Gestión registrada", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || INC.hceId !== id) return;
     INC.guardando = false; if(btn){ btn.disabled = false; btn.textContent = "✓ Registrar gestión"; }

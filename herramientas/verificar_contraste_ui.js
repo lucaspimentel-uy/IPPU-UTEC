@@ -438,6 +438,11 @@ function buscarContornosApagados() {
   await ev(() => { AT.avisos = []; atPintarDetalle(); });
   await page.click('#btnAtEditar'); await page.waitForSelector('#modalFlujo.open #atf_tipo'); await esperar(150);
   await cap('Ateneos · diálogo «Editar registro»');
+  // §5.161 a: convertir un clínico pregunta ANTES de mandar nada (la banda sale del diálogo, no de la API): los dos textos, sin guardar.
+  await page.selectOption('#atf_tipo', 'institucional'); await page.click('#btnAtGuardar'); await page.waitForSelector('#modalFlujo .confirmar-descarte'); await esperar(120);
+  await cap('Ateneos · diálogo «Editar registro» · confirmar conversión (a institucional)');
+  await page.click('#btnCdSeguir'); await page.selectOption('#atf_tipo', 'jornada'); await page.click('#btnAtGuardar'); await page.waitForSelector('#modalFlujo .confirmar-descarte'); await esperar(120);
+  await cap('Ateneos · diálogo «Editar registro» · confirmar conversión (a jornada)');
   await ev(() => closeFlujoModal());
   await page.click('#btnAcAgregar'); await page.waitForSelector('#modalFlujo.open #acf_acuerdo'); await esperar(120);
   await ev(() => formResumen('acErrores', [{ id: 'acf_acuerdo', rot: 'Acuerdo', mensaje: 'Es obligatorio: un acuerdo sin texto no es un acuerdo. (muestra)' }], 'No se pudo guardar el acuerdo:'));

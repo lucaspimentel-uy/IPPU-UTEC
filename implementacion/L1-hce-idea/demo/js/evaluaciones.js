@@ -926,7 +926,7 @@ async function evGuardar(opts){
     if(EXP.mods) EXP.mods[ev.k] = ev.rec;
     evActualizar(); evPintarAvisos();
     pintarTabsExp();
-    if(!paraFirmar){ toast(r.status === 201 ? "Borrador creado" : "Borrador guardado"); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
+    if(!paraFirmar){ toastGuardado(r.status === 201 ? "Borrador creado" : "Borrador guardado", r.warnings); refrescarListaTrasEscritura(); recargarFlujoExp(true); }
     return true;
   }catch(err){
     if(mi !== EXP.seq || EVS[ev.k] !== ev) return false;
@@ -991,7 +991,7 @@ async function evFirmar(){
     }
     evRepintar(ev.k);
     const t = _evEl("evTitulo"); if(t) t.focus();
-    toast(`${EV_INFO[ev.k].modulo} firmado`);
+    toastGuardado(`${EV_INFO[ev.k].modulo} firmado`, r.warnings);
     pintarTabsExp();
     recargarFlujoExp(true); refrescarListaTrasEscritura();
     if(ev.k === "lb") cargarIdeaVigente();
@@ -1036,7 +1036,7 @@ async function evAddenda(){
     const ta = _evEl("ev_add_texto"); if(ta) ta.value = "";      // ya quedó guardada: ni el campo ni el borrador se restauran al repintar
     ev.addBorrador = "";
     evRepintar(ev.k);
-    toast("Addenda registrada");
+    toastGuardado("Addenda registrada", r.warnings);
     const t = _evEl("evAddTitulo"); if(t) t.focus();
     pintarTabsExp();
   }catch(err){

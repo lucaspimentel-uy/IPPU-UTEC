@@ -463,12 +463,12 @@ async function guardarNNA(){
     cerrarModalAlta(true);
     refrescarListaTrasEscritura();
     if(metodo === "POST"){
-      toast("Expediente creado");
+      toastGuardado("Expediente creado", r.warnings);
       abrirExpediente(r.data.id, {avisos: r.warnings});
     }else if(EXP.id === hceId){
       EXP.raw = r.data; EXP.hce = adaptarHce00(r.data); EXP.avisos = r.warnings || [];
       pintarCabeceraExp(); pintarAvisosExp(); selTabExp(EXP.tab);
-      toast("Cambios guardados");
+      toastGuardado("Cambios guardados", r.warnings);
       const t = document.getElementById("expTitulo"); if(t) t.focus();
     }
   }catch(err){

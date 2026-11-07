@@ -187,7 +187,7 @@ async function sevGuardar(){
     closeFlujoModal();
     sevRepintar();
     const t = _sevEl("sevTitulo"); if(t) t.focus();
-    toast(crear ? "Severidad registrada" : "Severidad guardada");
+    toastGuardado(crear ? "Severidad registrada" : "Severidad guardada", r.warnings);
   }catch(err){
     if(mi !== EXP.seq || SEV.hceId !== id) return;
     SEV.guardando = false; if(btn){ btn.disabled = false; btn.textContent = crear ? "✓ Registrar severidad" : "✓ Guardar cambios"; }

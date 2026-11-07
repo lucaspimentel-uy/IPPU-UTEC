@@ -14,7 +14,7 @@
  * C6 agrega la vista «Ateneos» con el indicador (`ateneos-lista`, página completa), el detalle del clínico de Martín (`ateneos-detalle`, página
  * completa), los diálogos «Nuevo registro» (`ateneos-nuevo`, con un acuerdo agregado), «Agregar acuerdo» (`ateneos-acuerdo`) y «Adjuntar
  * documento» (`ateneos-documento`), abiertos y cerrados sin guardar, y la tarjeta «Ateneos clínicos» de la pestaña «Datos» de Martín
- * (`ateneos-resumen`).
+ * (`ateneos-resumen`); la banda de conversión de un clínico, con cada texto (`ateneos-convertir-general`, `ateneos-convertir-jornada`).
  *
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
@@ -127,6 +127,11 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await page.click('#btnAcAgregar'); await page.waitForSelector('#modalFlujo.open #acf_acuerdo');   await snap('ateneos-acuerdo');
     await page.evaluate(() => closeFlujoModal());
     await page.click('#btnAtDocCargar'); await page.waitForSelector('#modalFlujo.open #atdf_archivo');   await snap('ateneos-documento');
+    await page.evaluate(() => closeFlujoModal());
+    // C6 (§5.161 a): convertir el clínico pide confirmación antes de mandar nada: la banda con cada texto (no se guarda; se cierra el diálogo)
+    await page.click('#btnAtEditar'); await page.waitForSelector('#modalFlujo.open #atf_tipo');
+    await page.selectOption('#atf_tipo', 'institucional'); await page.click('#btnAtGuardar'); await page.waitForSelector('#modalFlujo .confirmar-descarte');   await snap('ateneos-convertir-general');
+    await page.click('#btnCdSeguir'); await page.selectOption('#atf_tipo', 'jornada'); await page.click('#btnAtGuardar'); await page.waitForSelector('#modalFlujo .confirmar-descarte');   await snap('ateneos-convertir-jornada');
     await page.evaluate(() => closeFlujoModal());
     // C7: el Panel institucional (conectado): la parte de arriba y la página completa (con el heatmap de demostración al pie)
     await page.click('.navitem[data-view="analitica"]'); await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
