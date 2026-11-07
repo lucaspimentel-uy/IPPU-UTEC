@@ -40,9 +40,10 @@ function edadALaFecha(fechaNac, fechaRef){
   return edadAnios(fechaNac, new Date(+m[1], +m[2] - 1, +m[3]));
 }
 
-/* Iniciales para avatar: primeras letras de las dos primeras palabras ("Dr. González" -> "DG"). */
+/* Iniciales del avatar: la primera letra (o cifra) de las dos primeras palabras, sin signos ni paréntesis:
+   «Coordinación (demo)» → «CD», «Dr. González» → «DG». */
 function inicialesDe(nombre){
-  const partes = String(nombre || "").trim().split(/\s+/).filter(Boolean);
+  const partes = String(nombre || "").trim().split(/\s+/).map(p => p.replace(/[^\p{L}\p{N}]/gu, "")).filter(Boolean);
   return ((partes[0] || "")[0] || "").toUpperCase() + ((partes[1] || "")[0] || "").toUpperCase();
 }
 

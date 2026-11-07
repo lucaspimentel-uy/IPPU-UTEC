@@ -15,7 +15,7 @@ const DOC_CATS = ["Informe médico externo","Informe escolar","Evaluación exter
 function docBodyHtml(p){
   const rows = p.docs.length ? p.docs.map((d,i)=>`
     <tr>
-      <td>${d.historico?"🔒 ":""}${d.nombre}</td>
+      <td>${d.nombre}${d.historico?' <span class="marca">Registro histórico</span>':""}</td>
       <td>${d.cat}</td>
       <td class="num">${fmtFecha(d.fechaOrig)}</td>
       <td class="num">${fmtFecha(d.fechaCarga)}</td>
@@ -26,7 +26,7 @@ function docBodyHtml(p){
     : `<tr><td colspan="5" style="color:var(--ink-2);font-size:.8rem;padding:10px">Sin documentos adjuntos en esta HCE.</td></tr>`;
   const a = p.autImagen||{};
   const fotosHtml = p.fotos.length ? p.fotos.map((f,i)=>`
-    <div class="foto-thumb"><div class="ph">📷</div><div class="cap">${f.desc||"Sin descripción"} · ${fmtFecha(f.fecha)}<br><a href="javascript:void(0)" style="color:var(--bad)" onclick="quitarFoto(${p.id},${i})">Quitar</a></div></div>`).join("")
+    <div class="foto-thumb"><div class="ph"><span aria-hidden="true">◌</span><span class="sr-only">Sin imagen</span></div><div class="cap">${f.desc||"Sin descripción"} · ${fmtFecha(f.fecha)}<br><a href="javascript:void(0)" style="color:var(--bad)" onclick="quitarFoto(${p.id},${i})">Quitar</a></div></div>`).join("")
     : `<span style="font-size:.78rem;color:var(--ink-2)">Sin fotografías individuales registradas.</span>`;
   return `
     <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:10px">Repositorio de copias digitalizadas: informes externos, documentación de organismos, autorizaciones y estudios — contextualizan pero <b>no reemplazan</b> los instrumentos propios de IPPU. Los registros del sistema anterior (Eval. por áreas, Eval. General, Observaciones) viven acá como <b>archivo histórico de solo lectura</b> con su fecha original (§10); no se traducen a campos estructurados.</div>
@@ -44,12 +44,12 @@ function docBodyHtml(p){
     </div>
     <div style="font-size:.76rem;color:var(--ink-2);margin-bottom:var(--s3)">Autorización de uso de imagen: ${a.registrada
       ? `registrada (${fmtFecha(a.fecha)} · copia en documentos: ${a.adjunto||"—"})`
-      : `no registrada <button class="btn btn-ghost btn-mini" onclick="openAutImagenModal(${p.id})">✍ Registrar autorización de imagen</button>`}</div>
+      : `no registrada <button class="btn btn-ghost btn-mini" onclick="openAutImagenModal(${p.id})">Registrar autorización de imagen</button>`}</div>
     <div class="foto-thumbs">${fotosHtml}</div>`;
 }
 function docPanelHtml(p){
   return `<div class="flujo-card" id="anchor-doc">
-    <h3><span class="ic">🗂</span> HCE-DOC · Documentos y fotos
+    <h3>HCE-DOC · Documentos y fotos
       <span class="spacer"></span>
       <span style="font-size:var(--fs-2xs);color:var(--ink-2);font-weight:400">${p.docs.length} documento(s) · ${p.fotos.length} foto(s)</span>
     </h3>
@@ -65,7 +65,7 @@ function renderDoc(id){
 function subirDoc(id){
   const p = NNA.find(n=>n.id===id); if(!p) return;
   const nombre = (document.getElementById("doc_nombre").value||"").trim();
-  if(!nombre){ toast("Ingresá el nombre del documento."); return; }
+  if(!nombre){ toast("Ingresá el nombre del documento.", "error"); return; }
   const cat = document.getElementById("doc_cat").value;
   const fechaOrig = document.getElementById("doc_fecha").value || HOY;
   const historico = cat.startsWith("Registro histórico");
@@ -77,7 +77,7 @@ function subirDoc(id){
 function quitarDoc(id, ix){
   const p = NNA.find(n=>n.id===id); if(!p) return;
   const d = p.docs[ix]; if(!d) return;
-  if(d.historico){ toast("Los registros históricos del sistema anterior son de solo lectura (§10) — no se pueden quitar."); return; }
+  if(d.historico){ toast("Los registros históricos del sistema anterior son de solo lectura (§10) — no se pueden quitar.", "info"); return; }
   p.docs.splice(ix,1);
   logEvento(p, {modulo:"doc", tipo:"edicion", detalle:`Documento quitado — «${d.nombre}» (${d.cat}).`});
   renderDoc(id);
@@ -87,16 +87,16 @@ function quitarDoc(id, ix){
 /* Autorización de uso de imagen: registro con copia adjunta + constancia en HCE-LOG. */
 function openAutImagenModal(id){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
-  if(nna.autImagen && nna.autImagen.registrada){ toast("La autorización de imagen ya está registrada."); return; }
+  if(nna.autImagen && nna.autImagen.registrada){ toast("La autorización de imagen ya está registrada.", "info"); return; }
   const body = `<div class="section-label">Autorización de uso de imagen (§8.4)</div>
-    <p class="hint" style="margin-bottom:12px">La familia firmó la autorización escrita. La copia queda adjunta en HCE-DOC (categoría «Autorización / consentimiento») y la constancia en HCE-LOG. Esta autorización regula si las fotografías se pueden <b>compartir</b> (art. 11, CNA — Ley N.º 17.823); <b>guardarlas en la HCE no la requiere</b> (§5.99).</p>
+    <p class="hint hint-intro">La familia firmó la autorización escrita. La copia queda adjunta en HCE-DOC (categoría «Autorización / consentimiento») y la constancia en HCE-LOG. Esta autorización regula si las fotografías se pueden <b>compartir</b> (art. 11, CNA — Ley N.º 17.823); <b>guardarlas en la HCE no la requiere</b> (§5.99).</p>
     <div class="field"><label>Firmante (familia / referente)</label><input id="mfFirmante" value="${nna.referente||""}"></div>
     <div class="field"><label>Fecha</label><input id="mfFecha" type="date" value="${HOY}"></div>
     <div class="field"><label>Adjunto (documento firmado)</label><input id="mfAdjunto" value="autorizacion_imagen_2026.pdf"><div class="hint">Demo: no se sube un archivo real.</div></div>`;
   const foot = `<span class="left">HCE-DOC · protección de imagen de NNA</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarAutImagen(${id})">✍ Registrar autorización</button>
+      <button class="btn btn-primary" onclick="confirmarAutImagen(${id})">Registrar autorización</button>
     </div>`;
   openFlujoModal("Registrar autorización de imagen", `${nna.nombre} ${nna.apellido} · Expediente #${nna.id}`, body, foot);
 }
@@ -193,7 +193,7 @@ function orgBodyHtml(p){
 }
 function orgPanelHtml(p){
   return `<div class="flujo-card" id="anchor-org">
-    <h3><span class="ic">🏛</span> HCE-ORG · Áreas INAU y BPS
+    <h3>HCE-ORG · Áreas INAU y BPS
       <span class="spacer"></span>
       <span style="font-size:var(--fs-2xs);color:var(--ink-2);font-weight:400">${p.inau.envios.length} envío(s) INAU · ${p.bps.gestiones.length} gestión(es) BPS</span>
     </h3>
@@ -213,7 +213,7 @@ function agregarRegOrg(id, org){
   const p = NNA.find(n=>n.id===id); if(!p) return;
   const fecha = document.getElementById(org+"_f").value;
   const txt = (document.getElementById(org+"_t").value||"").trim();
-  if(!fecha || !txt){ toast("Completá fecha y detalle del registro."); return; }
+  if(!fecha || !txt){ toast("Completá fecha y detalle del registro.", "error"); return; }
   (org==="inau" ? p.inau.envios : p.bps.gestiones).push({fecha, txt});
   logEvento(p, {modulo:"org", tipo:"edicion", detalle:`${org==="inau"?"Envío a INAU registrado":"Gestión ante BPS registrada"} — ${txt} (${fmtFecha(fecha)}).`});
   renderOrg(id);
@@ -373,7 +373,7 @@ function vfPanelHtml(){
   }
   if(VF.estado === "vacio" && !VF.nuevo){
     return `${cab}<div class="info-card"><div class="ib">
-      ${estadoVacioHtml("♿", `Todavía no se registró una valoración funcional para este expediente.<br>
+      ${estadoVacioHtml("◌", `Todavía no se registró una valoración funcional para este expediente.<br>
         <span class="hint">Es un estado normal: se registra cuando el equipo cuenta con la información. Todos los campos son opcionales.</span>`,
         `<button type="button" class="btn btn-primary" id="btnVfNuevo" onclick="vfNuevo()">+ Registrar valoración funcional</button>`)}
     </div></div>`;
@@ -417,9 +417,9 @@ function vfEditorHtml(){
     <div id="vfAvisos" class="review-note avisos-api" role="status"${(VF.avisos || []).length ? "" : " hidden"}>${vfAvisosHtml()}</div>
     <div id="vfErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
 
-    <div class="card"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoración oficial (BUND) — registro</h2></div>
-      <div style="padding:16px 18px">
-        <p class="hint" style="margin-bottom:var(--s3)"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</p>
+    <div class="card"><div class="cardhead"><h2>Valoración oficial (BUND) — registro</h2></div>
+      <div class="cardbody">
+        <p class="hint hint-intro"><b>IPPU registra, no certifica (§7.1):</b> la valoración oficial la realizan los equipos habilitados (MSP, MIDES, BPS) mediante el <b>Baremo Único Nacional de Discapacidad — BUND</b> (Ley N.º 20.378 · Decreto 72/025), en base a IBMF, IRSA y el propio BUND. En menores de 2 años no aplica el BUND (sólo IBMF e IRSA). La constancia de valoración se adjunta en HCE-DOC.</p>
         <div class="form-grid">
           <div class="field"><label for="vf_estado">Estado</label>
             <select id="vf_estado" data-vf aria-describedby="err_vf_estado" onchange="vfSucio()"><option value="">— sin registrar —</option>${estadosOpc}</select><div class="ev-err" id="err_vf_estado"></div></div>
@@ -433,17 +433,17 @@ function vfEditorHtml(){
         <div class="vf-salva"><b>Salvaguarda dura (§7.5):</b> los puntajes del IDEA y de la Escala IPPU-TEA <u>no se convierten ni se traducen</u> al % del baremo — miden constructos distintos. La categoría sale únicamente del % oficial.</div>
       </div></div>
 
-    <div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Perfil funcional en clave CIF (§7.3) — autonomía, capacidades, barreras y apoyos</h2></div>
-      <div style="padding:16px 18px">
+    <div class="card tarjeta-sep"><div class="cardhead"><h2>Perfil funcional en clave CIF (§7.3) — autonomía, capacidades, barreras y apoyos</h2></div>
+      <div class="cardbody">
         <div class="tabla-scroll"><table class="comp-table vf-doms"><caption class="sr-only">Nivel de autonomía por dominio de la vida diaria</caption>
           <thead><tr><th scope="col">Dominio de la vida diaria</th><th scope="col">Referencia CIF</th><th scope="col">Nivel de autonomía</th><th scope="col">Registrado</th></tr></thead><tbody>${filasDom}</tbody></table></div>
-        <div class="form-grid full" style="margin-top:12px">
+        <div class="form-grid full mt-s3">
           ${campo("vf_capacidades", "Capacidades y fortalezas (qué puede, qué disfruta, qué lo motiva)", r.capacidades, true)}
           ${campo("vf_barreras", "Barreras del entorno (físicas, comunicacionales, actitudinales, de servicios)", r.barreras, true)}
           ${campo("vf_apoyos", "Apoyos y facilitadores existentes", r.apoyos, true)}
           ${campo("vf_obs", "Observaciones (consultas de la familia, gestiones en curso)", r.obs, true)}
           <div class="field"><label for="vf_sintesis">Síntesis funcional descriptiva (base del reporte a la familia)</label>
-            <textarea id="vf_sintesis" data-vf style="min-height:110px" aria-describedby="hint_vf_sintesis err_vf_sintesis" oninput="vfSucio()">${escHtml(_cvV("vf_sintesis", r.sintesis_funcional || ""))}</textarea>
+            <textarea id="vf_sintesis" data-vf class="ta-110" aria-describedby="hint_vf_sintesis err_vf_sintesis" oninput="vfSucio()">${escHtml(_cvV("vf_sintesis", r.sintesis_funcional || ""))}</textarea>
             <div class="hint" id="hint_vf_sintesis">La escriben los técnicos responsables: no se autogenera.</div><div class="ev-err" id="err_vf_sintesis"></div></div>
         </div>
       </div></div>
@@ -455,20 +455,20 @@ function vfEditorHtml(){
     </div>
 
     <details class="vf-guia"><summary>Guía orientativa para la familia — categorías del baremo y prestaciones (§7.7) ${badgeSoloDemo()}</summary>
-      <div class="tabla-scroll"><table class="comp-table" style="margin-top:10px"><caption class="sr-only">Categorías del baremo (guía estática)</caption><thead><tr><th scope="col">Categoría</th><th scope="col">Rango</th><th scope="col">Implicancia práctica orientativa</th></tr></thead><tbody>
-        ${BUND_CATS.map(c => `<tr><th scope="row">${escHtml(c.cat)}</th><td class="num" style="text-align:left">${escHtml(c.rango)}</td><td>${escHtml(c.imp)}</td></tr>`).join("")}
+      <div class="tabla-scroll"><table class="comp-table mt-10"><caption class="sr-only">Categorías del baremo (guía estática)</caption><thead><tr><th scope="col">Categoría</th><th scope="col">Rango</th><th scope="col">Implicancia práctica orientativa</th></tr></thead><tbody>
+        ${BUND_CATS.map(c => `<tr><th scope="row">${escHtml(c.cat)}</th><td class="num txt-izq">${escHtml(c.rango)}</td><td>${escHtml(c.imp)}</td></tr>`).join("")}
       </tbody></table></div>
-      <div class="tabla-scroll"><table class="comp-table" style="margin-top:12px"><caption class="sr-only">Prestaciones y beneficios (guía estática)</caption><thead><tr><th scope="col">Prestación / beneficio</th><th scope="col">Organismo</th><th scope="col">Orientación</th></tr></thead><tbody>
+      <div class="tabla-scroll"><table class="comp-table mt-s3"><caption class="sr-only">Prestaciones y beneficios (guía estática)</caption><thead><tr><th scope="col">Prestación / beneficio</th><th scope="col">Organismo</th><th scope="col">Orientación</th></tr></thead><tbody>
         ${PRESTACIONES.map(x => `<tr><th scope="row">${escHtml(x.n)}</th><td>${escHtml(x.o)}</td><td class="vf-ref">${escHtml(x.d)}</td></tr>`).join("")}
       </tbody></table></div>
-      <p class="hint" style="margin-top:8px">Contenido informativo mantenido por coordinación, <b>sin respaldo en la API</b>: no clasifica nada ni genera trámites dentro de la HCE. La HCE orienta, los organismos resuelven; las gestiones concretas se registran en HCE-ORG.</p>
+      <p class="hint mt-s2">Contenido informativo mantenido por coordinación, <b>sin respaldo en la API</b>: no clasifica nada ni genera trámites dentro de la HCE. La HCE orienta, los organismos resuelven; las gestiones concretas se registran en HCE-ORG.</p>
     </details>`;
 }
 function vfAccionesHtml(){
   const occ = VF.guardando, crear = !VF.rec;
   return `<button type="button" class="btn btn-primary" id="btnVfGuardar" onclick="vfGuardar()"${occ ? " disabled" : ""}>${occ ? "Guardando…" : (crear ? "✓ Crear valoración funcional" : "✓ Guardar cambios")}</button>
     ${crear ? `<button type="button" class="btn btn-ghost" id="btnVfCancelar" onclick="vfCancelarNuevo()"${occ ? " disabled" : ""}>Cancelar</button>`
-            : `<button type="button" class="btn btn-ghost" id="btnVfReporte" onclick="vfAbrirReporte()"${occ ? " disabled" : ""}>🖨 Reporte de Valoración Funcional (familia)</button>`}`;
+            : `<button type="button" class="btn btn-ghost" id="btnVfReporte" onclick="vfAbrirReporte()"${occ ? " disabled" : ""}>${iconoHtml("imprimir")} Reporte de Valoración Funcional (familia)</button>`}`;
 }
 function vfPintarAcciones(){ const a = _vfEl("vfAcciones"); if(a) a.innerHTML = vfAccionesHtml(); }
 function vfSucio(){ if(VF.estado === "listo" || VF.estado === "vacio") VF.sucio = true; }
@@ -538,7 +538,7 @@ async function vfGuardar(){
   const mi = EXP.seq, id = EXP.id, crear = !VF.rec;
   vfLimpiarErrores();
   const body = vfCuerpo();
-  if(!crear && !Object.keys(body).length){ VF.avisos = []; vfCerrarAvisos(); toast("No hay cambios para guardar"); return; }
+  if(!crear && !Object.keys(body).length){ VF.avisos = []; vfCerrarAvisos(); toast("No hay cambios para guardar", "info"); return; }
   VF.guardando = true; vfPintarAcciones();
   try{
     const r = crear
@@ -607,7 +607,7 @@ function vfReporteHtml(V, hce, pb){
   const doms = VF_DOMINIOS.filter(([k]) => dom[k]);
   const lleno = (t) => t !== null && t !== undefined && String(t).trim() !== "";
   const parrafos = (t) => String(t).split("\n").filter(x => x.trim()).map(x => `<p class="doc-p">${escHtml(x)}</p>`).join("");
-  const card = (titulo, inner) => `<div class="card doc-seccion" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${inner}</div></div>`;
+  const card = (titulo, inner) => `<div class="card doc-seccion tarjeta-sep"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${inner}</div></div>`;
   // Evolución del año en palabras: la lectura del Δ B−A de cada escala la calculó el servidor (sin números crudos).
   const interp = pb && pb.firmado && pb.deltas ? pb.interpretacion : null;
   const evol = interp ? IC_ESC_PROT.map((c, i) => interp[c]
@@ -643,8 +643,8 @@ function vfReporteHtml(V, hce, pb){
       `${oficial ? `<p class="doc-p">${oficial}.</p>` : ""}
        ${V.categoria ? `<p class="doc-p"><b>Categoría según el baremo:</b> ${escHtml(V.categoria.categoria)} (${escHtml(V.categoria.rango)}). ${escHtml(V.categoria.implicancia)}</p>` : ""}
        <p class="doc-nota">La familia puede consultar al equipo de IPPU por la gestión de prestaciones (BPS, MIDES, Sistema de Cuidados, transporte, apoyos educativos). El otorgamiento de cada prestación es resolución del organismo competente.</p>`)}
-    <div class="card doc-seccion doc-cierre" style="margin-top:16px"><div class="cardbody">
-      <div class="firmas-grid" style="grid-template-columns:1fr 1fr">
+    <div class="card doc-seccion doc-cierre tarjeta-sep"><div class="cardbody">
+      <div class="firmas-grid firmas-2">
         <div><label>Por el equipo técnico</label><div class="flin"></div><div class="fnom">${tecnicos || "—"}</div></div>
         <div><label>Recibido por la familia</label><div class="flin"></div><div class="fnom">${escHtml(per.referente || "")}</div></div>
       </div>
@@ -652,5 +652,5 @@ function vfReporteHtml(V, hce, pb){
     </div></div>`;
   const encabezado = `<b>Fundación IPPU · Reporte de Valoración Funcional</b> — ${escHtml(nombre)} · N.º de HC ${escHtml(hce.hc_historico)} · C.I. ${escHtml(ciFormateada(per.ci))}`;
   return `${infBannerHtml(`Reporte de Valoración Funcional — ${nombre}`, `Documento descriptivo para la familia · generable a demanda · vista previa del ${fechaGen}`,
-    `<button type="button" class="btn-print" onclick="window.print()">🖨 Imprimir / guardar como PDF</button>${INF_VOLVER_VF}`)}${infHojaHtml(encabezado, cuerpo)}`;
+    `<button type="button" class="btn-print" onclick="window.print()">${iconoHtml("imprimir")} Imprimir / guardar como PDF</button>${INF_VOLVER_VF}`)}${infHojaHtml(encabezado, cuerpo)}`;
 }

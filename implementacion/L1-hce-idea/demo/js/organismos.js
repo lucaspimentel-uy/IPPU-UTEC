@@ -43,7 +43,8 @@ function orgOlvidarSesion(){ orgReiniciar(); ORG.opciones = null; }
 
 /* ---------- Carga ---------- */
 function orgMostrar(){
-  if(ORG.hceId === EXP.id && ORG.estado === "listo"){ orgRepintar(); orgCargar(true); return; }
+  // Un aviso de la API es de la escritura que lo trajo: al volver a la pestaña ya no se muestra (como en LB, PA, PB e IC).
+  if(ORG.hceId === EXP.id && ORG.estado === "listo"){ ORG.avisos = []; orgRepintar(); orgCargar(true); return; }
   orgCargar(false);
 }
 async function orgCargar(conservar){
@@ -113,10 +114,10 @@ function orgVinculoHtml(k){
   const r = ORG.vinculos[k], N = ORG_NOMBRE[k], K = k[0].toUpperCase() + k.slice(1);
   const titulo = k === "inau" ? "INAU · Convenio de atención" : "BPS · Prestaciones";
   const cuerpo = r ? `${orgLecturaHtml(k, r)}
-      <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnOrg${K}Editar" onclick="orgAbrirVinculo('${k}')">✎ Editar<span class="sr-only"> el vínculo con ${N}</span></button></div>`
-    : `<div class="ib">${estadoVacioHtml("◌", `Todavía no se registró el vínculo con ${N} de este expediente.`,
+      <div class="ib ib-pie"><button type="button" class="btn btn-ghost" id="btnOrg${K}Editar" onclick="orgAbrirVinculo('${k}')">✎ Editar<span class="sr-only"> el vínculo con ${N}</span></button></div>`
+    : `<div class="ib">${estadoVacioHtml("◌", `<b>Sin registrar.</b> Todavía no se registró el vínculo con ${N} de este expediente.`,
       `<button type="button" class="btn btn-primary" id="btnOrg${K}Nuevo" onclick="orgAbrirVinculo('${k}')">+ Registrar vínculo con ${N}</button>`)}</div>`;
-  return `<div class="info-card" id="orgVinculo${K}"><h3><span class="ic" aria-hidden="true">🏛</span> ${titulo}</h3>${cuerpo}</div>`;
+  return `<div class="info-card" id="orgVinculo${K}"><h3>${titulo}</h3>${cuerpo}</div>`;
 }
 function orgRegistrosHtml(k){
   const R = ORG_REG[k], K = k[0].toUpperCase() + k.slice(1), d = ORG.registros[k];
@@ -126,8 +127,8 @@ function orgRegistrosHtml(k){
     ? `<div class="tabla-scroll"><table class="comp-table org-reg" id="orgReg${K}"><caption class="sr-only">${R.titulo}, el más reciente primero</caption>
         <thead><tr><th scope="col">Fecha</th><th scope="col">Detalle</th><th scope="col">Registrado por</th></tr></thead><tbody>${filas}</tbody></table></div>
         ${d.total > d.filas.length ? `<p class="hint" role="status">Se muestran los ${d.filas.length} más recientes de ${d.total}.</p>` : ""}`
-    : `<p class="hint org-reg-vacio" id="orgReg${K}Vacio">${R.vacio}</p>`;
-  return `<div class="info-card" id="orgRegistros${K}"><h3><span class="ic" aria-hidden="true">☰</span> ${R.titulo}
+    : `<div class="org-reg-vacio" id="orgReg${K}Vacio">${estadoVacioHtml("◌", escHtml(R.vacio))}</div>`;
+  return `<div class="info-card" id="orgRegistros${K}"><h3>${R.titulo}
       <span class="org-total" id="orgTotal${K}">${d.total}</span><span class="sr-only"> registrados</span></h3>
     <div class="ib">${tabla}
       <div class="org-reg-acciones"><button type="button" class="btn btn-ghost" id="btnOrg${K}Agregar" onclick="orgAbrirRegistro('${k}')">${R.boton}</button></div></div></div>`;
@@ -158,7 +159,7 @@ function _orgInput(id, rot, valor, tipo){
   return `<div class="field"><label for="${id}">${rot}</label><input id="${id}" type="${tipo || "text"}" value="${escHtml(valor || "")}" aria-describedby="err_${id}" autocomplete="off"><div class="err" id="err_${id}"></div></div>`;
 }
 function _orgTexto(id, rot, valor){
-  return `<div class="field"><label for="${id}">${rot}</label><textarea id="${id}" aria-describedby="err_${id}" style="min-height:90px">${escHtml(valor || "")}</textarea><div class="err" id="err_${id}"></div></div>`;
+  return `<div class="field"><label for="${id}">${rot}</label><textarea id="${id}" aria-describedby="err_${id}" class="ta-90">${escHtml(valor || "")}</textarea><div class="err" id="err_${id}"></div></div>`;
 }
 function orgAbrirVinculo(k){
   if(ORG.estado !== "listo") return;
@@ -170,9 +171,9 @@ function orgAbrirVinculo(k){
        ${_orgInput(C.tramite[0], C.tramite[1], r.tramite)}${_orgSelect(C.estado[0], (ORG.opciones || {}).bps_estados, r.estado, C.estado[1])}
        ${_orgInput(C.vencimiento[0], C.vencimiento[1], r.vencimiento, "date")}${_orgTexto(C.obs[0], "Observaciones (documentación, constancias, recordatorios)", r.obs)}`;
   const body = `<div id="orgErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">Todos los datos son opcionales${crear ? ", pero hace falta al menos uno." : ". Dejar un dato vacío lo borra."}</p>${campos}`;
+    <p class="hint hint-intro">Todos los datos son opcionales${crear ? ", pero hace falta al menos uno." : ". Dejar un dato vacío lo borra."}</p>${campos}`;
   const foot = `<span class="left">HCE-ORG · Vínculo con ${N}</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnOrgCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnOrgGuardar" onclick="orgGuardarVinculo('${k}')">${crear ? "✓ Registrar vínculo" : "✓ Guardar cambios"}</button>
     </div>`;
@@ -215,7 +216,7 @@ async function orgGuardarVinculo(k){
       return;
     }
     const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo: null, mensaje: err.message || "No se pudo guardar."}];
-    const items = detalle.map(d => { const m = d.campo && C[d.campo];
+    const items = detalle.map(d => { const m = d.campo && C[String(d.campo).replace(/^(inau|bps)\./, "").split(".")[0]];   // «inau.obs» u «obs»: el mismo control
       return {id: m ? m[0] : null, rot: m ? m[1] : "", mensaje: d.mensaje}; });
     // El formulario no se vuelve a pintar: lo tipeado se conserva y los errores quedan junto a cada campo.
     formResumen("orgErrores", items, crear ? `No se pudo registrar el vínculo con ${N}:` : "No se pudo guardar:").focus();
@@ -232,11 +233,11 @@ function orgAbrirRegistro(k){
   const body = `<div id="orgErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     <div class="field"><label for="orgr_fecha">Fecha ${req}</label><input id="orgr_fecha" type="date" value="${hoyIso}" aria-required="true" aria-describedby="err_orgr_fecha"><div class="err" id="err_orgr_fecha"></div></div>
     <div class="field"><label for="orgr_detalle">${R.dato} ${req}</label>
-      <textarea id="orgr_detalle" aria-required="true" aria-describedby="hint_orgr_detalle err_orgr_detalle" style="min-height:100px"></textarea>
+      <textarea id="orgr_detalle" aria-required="true" aria-describedby="hint_orgr_detalle err_orgr_detalle" class="ta-100"></textarea>
       <div class="hint" id="hint_orgr_detalle">Es una constancia: queda registrada con su autor y no se edita.</div><div class="err" id="err_orgr_detalle"></div></div>
     <p class="hint">El registro queda a nombre de quien lo guarda.</p>`;
   const foot = `<span class="left">HCE-ORG · ${R.titulo}</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnOrgCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnOrgGuardar" onclick="orgGuardarRegistro('${k}')">✓ Registrar ${R.uno}</button>
     </div>`;
@@ -267,7 +268,7 @@ async function orgGuardarRegistro(k){
     if(mi !== EXP.seq || ORG.hceId !== id) return;
     ORG.guardando = false; if(btn){ btn.disabled = false; btn.textContent = `✓ Registrar ${R.uno}`; }
     const detalleErr = err instanceof ApiError && err.detail.length ? err.detail : [{campo: null, mensaje: err.message || "No se pudo guardar."}];
-    const items = detalleErr.map(d => { const m = d.campo && ORG_REG_CAMPOS[d.campo];
+    const items = detalleErr.map(d => { const m = d.campo && ORG_REG_CAMPOS[String(d.campo).split(".")[0]];
       return {id: m ? m[0] : null, rot: m ? m[1] : "", mensaje: d.mensaje}; });
     formResumen("orgErrores", items, `No se pudo registrar ${R.uno === "envío" ? "el envío" : "la gestión"}:`).focus();
   }

@@ -137,13 +137,13 @@ function incLecturaHtml(f){
       <section class="inc-bloque" aria-labelledby="incBloqueObs"><h4 id="incBloqueObs">Observaciones</h4>
         <p class="ib inc-texto inc-obs" id="incObs">${f.obs ? escHtml(f.obs) : "—"}</p></section>
     </div>
-    <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnIncEditar" onclick="incAbrirFicha()">✎ Editar<span class="sr-only"> la ficha de inclusión</span></button></div>`;
+    <div class="ib ib-pie"><button type="button" class="btn btn-ghost" id="btnIncEditar" onclick="incAbrirFicha()">✎ Editar<span class="sr-only"> la ficha de inclusión</span></button></div>`;
 }
 function incFichaHtml(){
   const f = INC.ficha;
   const cuerpo = f ? incLecturaHtml(f) : `<div class="ib">${estadoVacioHtml("◌", `<b>Sin registrar.</b> El área de Inclusión todavía no registró la situación educativa de este NNA.`,
       `<button type="button" class="btn btn-primary" id="btnIncNuevo" onclick="incAbrirFicha()">+ Registrar ficha</button>`)}</div>`;
-  return `<div class="info-card" id="incFicha"><h3><span class="ic" aria-hidden="true">✎</span> Ficha</h3>${cuerpo}</div>`;
+  return `<div class="info-card" id="incFicha"><h3>Ficha</h3>${cuerpo}</div>`;
 }
 function incGestionHtml(g){
   const quien = `${escHtml(g.interlocutor)}${g.rol ? ` · ${escHtml(g.rol)}` : ""}`;
@@ -173,11 +173,11 @@ function incGestionesHtml(){
   const lista = d.filas.length
     ? `${haySensible ? `<p class="hint inc-sensible-hint" id="incSensibleHint">${escHtml(INC_SENSIBLE_HINT)}</p>` : ""}
        <ol class="inc-gestiones" id="incGestiones" aria-label="Gestiones, la más reciente primero">${d.filas.map(incGestionHtml).join("")}</ol>${incPaginadoHtml()}`
-    : `<p class="hint" id="incGesVacio">Todavía no se registró ninguna gestión.</p>`;
+    : `<div id="incGesVacio">${estadoVacioHtml("◌", "Todavía no se registró ninguna gestión.")}</div>`;
   const accion = INC.ficha
     ? `<button type="button" class="btn btn-ghost" id="btnIncAgregar" onclick="incAbrirGestion()">+ Agregar gestión</button>`
     : `<p class="hint" id="incSinFicha">Para agregar gestiones, primero registrá la ficha.</p>`;
-  return `<div class="info-card" id="incGestionesCard"><h3 id="incGesTitulo" tabindex="-1"><span class="ic" aria-hidden="true">☰</span> Gestiones
+  return `<div class="info-card" id="incGestionesCard"><h3 id="incGesTitulo" tabindex="-1">Gestiones
       <span class="org-total" id="incGesTotal">${d.total}</span><span class="sr-only"> registradas</span></h3>
     <div class="ib">${lista}<div class="org-reg-acciones">${accion}</div></div></div>`;
 }
@@ -187,7 +187,7 @@ function incReferenciaHtml(){
   return `<details class="sev-ref inc-ref" id="incRef"><summary>Referencia — los 7 estados de inclusión y qué significa cada uno</summary>
     <div class="tabla-scroll"><table class="comp-table sev-tabla"><caption class="sr-only">Estados de inclusión y su descripción</caption>
       <thead><tr><th scope="col">Estado</th><th scope="col">Qué significa</th></tr></thead><tbody>${filas}</tbody></table></div>
-    <p class="hint" style="margin-top:8px">Los 7 estados son una propuesta del equipo que IPPU todavía no confirmó.</p>
+    <p class="hint mt-s2">Los 7 estados son una propuesta del equipo que IPPU todavía no confirmó.</p>
   </details>`;
 }
 function incPanelHtml(){
@@ -230,7 +230,7 @@ function incAbrirFicha(){
   // Al registrar, o si la ficha está en «Sin registrar», el estado puede quedar sin elegir; al editar uno asignable, no se vacía.
   const vacioEstado = actualAsignable ? null : "— sin elegir —";
   const body = `<div id="incErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">Todos los datos son opcionales${crear ? ", pero hace falta al menos uno" : "; dejar un dato vacío lo borra"}. La fecha del estado la pone el sistema cada vez que el estado cambia.</p>
+    <p class="hint hint-intro">Todos los datos son opcionales${crear ? ", pero hace falta al menos uno" : "; dejar un dato vacío lo borra"}. La fecha del estado la pone el sistema cada vez que el estado cambia.</p>
     <fieldset class="inc-fs"><legend>Centro</legend>
       ${_incInput("centro", f.centro)}${_incSelect(INC_CAMPOS.tipo_centro[0], INC_CAMPOS.tipo_centro[1], o.tipos_centro, f.tipo_centro, "— sin registrar —")}
       ${_incInput("grado", f.grado)}${_incInput("modalidad", f.modalidad)}${_incInput("dias_horas", f.dias_horas)}</fieldset>
@@ -240,9 +240,9 @@ function incAbrirFicha(){
       ${_incInput("ref_nombre", f.ref_nombre)}${_incInput("ref_rol", f.ref_rol)}${_incInput("ref_tel", f.ref_tel)}</fieldset>
     <fieldset class="inc-fs"><legend>Estado</legend>
       ${_incSelect(INC_CAMPOS.estado[0], INC_CAMPOS.estado[1], asignables, actualAsignable, vacioEstado)}</fieldset>
-    <div class="field"><label for="incf_obs">Observaciones</label><textarea id="incf_obs" aria-describedby="err_incf_obs" style="min-height:90px">${escHtml(f.obs || "")}</textarea><div class="err" id="err_incf_obs"></div></div>`;
+    <div class="field"><label for="incf_obs">Observaciones</label><textarea id="incf_obs" aria-describedby="err_incf_obs" class="ta-90">${escHtml(f.obs || "")}</textarea><div class="err" id="err_incf_obs"></div></div>`;
   const foot = `<span class="left">HCE-INC · Ficha de inclusión</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnIncCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnIncGuardar" onclick="incGuardarFicha()">${crear ? "✓ Registrar ficha" : "✓ Guardar cambios"}</button>
     </div>`;
@@ -316,12 +316,12 @@ function incAbrirGestion(){
     ${sel("medio", o.medios, "— sin registrar —", false)}
     ${sel("tema", o.temas, "— elegir tema —", true, "hint_incg_tema")}
     <div class="field"><label for="incg_contenido">Qué se trató ${req}</label>
-      <textarea id="incg_contenido" aria-required="true" aria-describedby="hint_incg_contenido err_incg_contenido" style="min-height:100px"></textarea>
+      <textarea id="incg_contenido" aria-required="true" aria-describedby="hint_incg_contenido err_incg_contenido" class="ta-100"></textarea>
       <div class="hint" id="hint_incg_contenido">Queda registrada con su autor y no se edita.</div><div class="err" id="err_incg_contenido"></div></div>
-    <div class="field"><label for="incg_acuerdos">Acuerdos o próximos pasos</label><textarea id="incg_acuerdos" aria-describedby="err_incg_acuerdos" style="min-height:70px"></textarea><div class="err" id="err_incg_acuerdos"></div></div>
+    <div class="field"><label for="incg_acuerdos">Acuerdos o próximos pasos</label><textarea id="incg_acuerdos" aria-describedby="err_incg_acuerdos" class="ta-70"></textarea><div class="err" id="err_incg_acuerdos"></div></div>
     <p class="hint">La gestión queda a nombre de quien la guarda.</p>`;
   const foot = `<span class="left">HCE-INC · Gestiones</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnIncCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnIncGuardar" onclick="incGuardarGestion()">✓ Registrar gestión</button>
     </div>`;

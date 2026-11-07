@@ -41,6 +41,15 @@ function badgeSoloDemo(){
 function badgeSoloDemoTab(){
   return `<span class="solo-demo"><span aria-hidden="true">◇</span><span class="sr-only"> Solo demo</span></span>`;
 }
+/* ===== Íconos (F3, §5.160): SVG en línea, trazo en currentColor, siempre decorativos (aria-hidden): el texto del control es su
+   nombre accesible. Ningún emoji ni recurso de otro servidor. Los demás íconos de la interfaz son glifos de texto
+   (✎ editar · + agregar · ✓ confirmar · ⚠ alerta · › ir · ‹ volver · ⌕ buscar · ● ◐ ○ estados · ◌ vacío · ◇ demostración). */
+const _ICONOS = {
+  imprimir: '<path d="M4 6V1.5h8V6"/><rect x="1.5" y="6" width="13" height="5.5" rx="1"/><path d="M4 9.5h8V14.5H4z"/>'
+};
+function iconoHtml(nombre){
+  return `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true" focusable="false">${_ICONOS[nombre] || ""}</svg>`;
+}
 /* Cada <div data-modo-demo> del index.html se completa con el panel (una sola definicion). */
 function rellenarPanelesDemo(){
   document.querySelectorAll("[data-modo-demo]").forEach(el=>{

@@ -852,6 +852,236 @@ async function loguear(page) {
   }
 
   /* =====================================================================================================
+     F3 · PASADA VISUAL FINAL (handoff §5.160): un patrón por componente. NO ESCRIBE: corre con la base tal como la dejó el seed
+     (el LB de Joaquín en borrador, Valentina con el IC sin crear) y las escrituras que dispara (guardar en SEV y ORG) se
+     contestan en el navegador con route.fulfill: no llegan a la API.
+     ===================================================================================================== */
+  {
+    const { ctx: c3f, page: p3 } = await nuevaPagina();
+    await p3.setViewportSize({ width: 1280, height: 800 });
+    await loguear(p3);
+    await p3.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    const tok3 = await p3.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const get3 = async (ruta) => { const r = await fetch(API + ruta, { headers: { Authorization: 'Bearer ' + tok3 } }); return { status: r.status, json: await r.json() }; };
+    const id3 = async (n) => (await get3('/hce?nombre=' + encodeURIComponent(n) + '&limit=20')).json.find((h) => h.persona.nombre === n).id;
+    const idM3 = await id3('Martín'), idJ3 = await id3('Joaquín'), idV3 = await id3('Valentina'), idS3 = await id3('Sofía');
+    const abrir3 = async (id, tab) => {
+      await p3.evaluate((i) => abrirExpediente(i), id);
+      await p3.waitForSelector('#expTitulo');
+      await p3.waitForFunction(() => !!EXP.flujo && !!EXP.mods, null, { timeout: 8000 });
+      if (tab && tab !== 'hce00') await p3.click('#tabExp-' + tab);
+      await p3.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+      await p3.waitForTimeout(150);
+    };
+    const vista3 = async (v, listo) => { await p3.click(`.navitem[data-view="${v}"]`); await p3.waitForFunction(listo, null, { timeout: 8000 }); await p3.waitForTimeout(150); };
+    const tamanios3 = [[1280, 800], [1024, 768]];
+    /* Un recorrido por las pantallas conectadas; `medir` se evalúa en cada una. */
+    const PANTALLAS = [
+      ['listado', async () => { await p3.evaluate(() => go('inicio')); await p3.waitForTimeout(150); }],
+      ['hce00', () => abrir3(idM3, 'hce00')], ['ci', () => abrir3(idM3, 'ci')], ['lb', () => abrir3(idM3, 'lb')], ['lb-editor', () => abrir3(idJ3, 'lb')],
+      ['pa', () => abrir3(idS3, 'pa')], ['pb', () => abrir3(idM3, 'pb')], ['ic-editor', () => abrir3(idV3, 'ic')], ['ic', () => abrir3(idM3, 'ic')],
+      ['vf', () => abrir3(idM3, 'vf')], ['sev', () => abrir3(idM3, 'sev')], ['inc', () => abrir3(idM3, 'inc')], ['org', () => abrir3(idM3, 'org')],
+      ['doc', () => abrir3(idM3, 'doc')], ['log', () => abrir3(idM3, 'log')],
+      ['pendientes', () => vista3('pendientes', () => PEND.estado === 'listo')], ['grupos', () => vista3('grupos', () => GRP.estado === 'listo')],
+      ['inclusion', () => vista3('inclusion', () => INCV.estado === 'listo')], ['ateneos', () => vista3('ateneos', () => AT.lista.estado === 'listo' && AT.ind.estado === 'listo')],
+      ['panel', () => vista3('analitica', () => PANEL.estado === 'listo')],
+    ];
+    const recorrer = async (medir, arg) => { const out = {}; for (const [k, ir] of PANTALLAS) { await ir(); out[k] = await p3.evaluate(medir, arg); } return out; };
+
+    /* ---------- f3-cabecera / f3-chips: una cabecera de tarjeta y una familia de etiquetas en todas las pantallas ---------- */
+    const medirPatrones = () => {
+      const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+      const raiz = getComputedStyle(document.documentElement), ink = raiz.getPropertyValue('--ink').trim(), ink2 = raiz.getPropertyValue('--ink-2').trim(), p2 = raiz.getPropertyValue('--paper-2').trim();
+      const rgb = (h) => { const n = parseInt(h.replace('#', ''), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+      const main = document.querySelector('.view.active');
+      const cabs = [...main.querySelectorAll('.card>.cardhead,.info-card>h3,.flujo-card>h3,.escala>header,.prot-esc>header')].filter(vis);
+      const malCab = cabs.filter((c) => { const cs = getComputedStyle(c), t = c.matches('.cardhead') ? (c.querySelector('h2,h3') || c) : c, ts = getComputedStyle(t);
+        return !(cs.backgroundColor === rgb(p2) && cs.paddingTop === '12px' && cs.paddingLeft === '16px' && ts.fontSize === '14px' && ts.fontWeight === '600' && ts.color === rgb(ink)
+          && ts.textTransform === 'none' && (ts.letterSpacing === 'normal' || parseFloat(ts.letterSpacing) === 0) && !/monospace|serif/.test(ts.fontFamily.replace(/sans-serif/g, ''))); })
+        .map((c) => c.tagName + '.' + c.className + ' «' + c.textContent.trim().slice(0, 24) + '»');
+      const glifos = [...main.querySelectorAll('.ic')].length;
+      const versalitas = [...main.querySelectorAll('*')].filter((e) => vis(e) && getComputedStyle(e).textTransform === 'uppercase').map((e) => e.tagName + '.' + e.className);
+      const chips = [...main.querySelectorAll('.st,.pill,.mbadge,.log-tipo,.chip-inactivo,.marca,.inc-sensible,.at-sensible,.doc-hist-marca,.solo-demo')].filter((e) => vis(e) && !e.closest('.exp-tab'));
+      const malChip = chips.filter((e) => { const cs = getComputedStyle(e); return !(cs.fontSize === '12px' && cs.fontWeight === '600' && cs.borderTopLeftRadius === '4px' && !/monospace/.test(cs.fontFamily) && (cs.whiteSpace === 'nowrap' || e.classList.contains('doc-hist-marca'))); })
+        .map((e) => e.className + '=' + getComputedStyle(e).fontSize + '/' + getComputedStyle(e).fontWeight);
+      const cuentas = [...main.querySelectorAll('.card-n,.org-total')].filter(vis);
+      const malCuenta = cuentas.filter((e) => { const cs = getComputedStyle(e); return !(cs.fontSize === '14px' && cs.color === rgb(ink2) && cs.borderTopStyle === 'none' && cs.backgroundColor === 'rgba(0, 0, 0, 0)'); }).map((e) => e.className);
+      return { n: cabs.length, malCab, glifos, versalitas, nChips: chips.length, malChip, nCuentas: cuentas.length, malCuenta };
+    };
+    const patrones = await recorrer(medirPatrones);
+    const conProblema = Object.entries(patrones).filter(([, v]) => v.malCab.length || v.glifos || v.versalitas.length);
+    check('f3-cabecera', 'una sola cabecera de tarjeta en las 20 pantallas conectadas (listado, HCE-00, CI, LB, editor de LB, PA, PB, IC, editor del IC, VF, SEV, INC, ORG, DOC, LOG, Pendientes, Grupos, Inclusión, Ateneos, Panel): franja --paper-2, 12/16 px, título sans 14 px / 600 en tinta, sin versalitas ni glifo decorativo (.ic)',
+      Object.values(patrones).reduce((a, v) => a + v.n, 0) >= 40 && !conProblema.length, JSON.stringify(conProblema.map(([k, v]) => ({ k, cab: v.malCab.slice(0, 3), glifos: v.glifos, mayus: v.versalitas.slice(0, 3) }))).slice(0, 600));
+    const chipsMal = Object.entries(patrones).filter(([, v]) => v.malChip.length || v.malCuenta.length);
+    check('f3-chips', 'una familia de etiquetas: todo chip de estado, «Sensible», «Registro histórico», «Inactivo», «Solo demo» y tipo del LOG mide sans 12 px / 600, radio 4 px, en una línea; las cuentas de las tarjetas (.card-n) son texto 14 px en --ink-2, sin chip',
+      Object.values(patrones).reduce((a, v) => a + v.nChips, 0) >= 20 && Object.values(patrones).reduce((a, v) => a + v.nCuentas, 0) >= 3 && !chipsMal.length,
+      JSON.stringify(chipsMal.map(([k, v]) => ({ k, chip: v.malChip.slice(0, 3), cuenta: v.malCuenta.slice(0, 3) }))).slice(0, 600));
+
+    /* ---------- f3-banda: el chip de la banda en un renglón y sin recortarse, a 1280 y a 1024 (HCE-00, LB firmado, barra del editor) ---------- */
+    const medirBanda = () => [...document.querySelectorAll('#panelExp .banda-chip')].filter((c) => c.getBoundingClientRect().width > 0).map((c) => {
+      const r = c.getBoundingClientRect(), cont = c.closest('.info-card,.barra-acciones,.card'), rc = cont.getBoundingClientRect(), dd = c.closest('dd');
+      return { txt: c.innerText.replace(/\s+/g, ' '), alto: Math.round(r.height), unaLinea: r.height < 34, dentro: r.left >= rc.left - 0.5 && r.right <= rc.right + 0.5 && r.right <= window.innerWidth,
+        sinRecorte: !dd || dd.scrollWidth <= dd.clientWidth + 1 };
+    });
+    const bandas = [];
+    for (const [w, h] of tamanios3) {
+      await p3.setViewportSize({ width: w, height: h });
+      for (const [id, tab, n] of [[idM3, 'hce00', 'Martín HCE-00'], [idV3, 'hce00', 'Valentina HCE-00'], [idM3, 'lb', 'Martín LB'], [idJ3, 'lb', 'Joaquín editor LB']]) {
+        await abrir3(id, tab); (await p3.evaluate(medirBanda)).forEach((b) => bandas.push({ w, n, ...b }));
+      }
+      await vista3('analitica', () => PANEL.estado === 'listo');                  // el Panel: las seis bandas del catálogo, también las de nombre largo
+      (await p3.evaluate(() => [...document.querySelectorAll('#panelBandas .banda-chip')].map((c) => { const r = c.getBoundingClientRect(), rc = c.closest('.card').getBoundingClientRect(), td = c.closest('td');
+        return { txt: c.innerText.replace(/\s+/g, ' '), alto: Math.round(r.height), unaLinea: r.height < 34, dentro: r.left >= rc.left - 0.5 && r.right <= rc.right + 0.5 && r.right <= window.innerWidth, sinRecorte: !td || td.scrollWidth <= td.clientWidth + 1 }; })))
+        .forEach((b) => bandas.push({ w, n: 'Panel', ...b }));
+    }
+    check('f3-banda', 'el chip de la banda del IDEA va en un renglón, dentro de su tarjeta y sin recortarse a 1280×800 y a 1024×768: «Línea base IDEA vigente» de Martín y de Valentina (HCE-00), el «Puntaje» del LB firmado, la barra del editor de Joaquín y las seis bandas de la distribución del Panel',
+      bandas.length >= 20 && bandas.filter((b) => b.n === 'Panel').length === 12 && bandas.every((b) => b.unaLinea && b.dentro && b.sinRecorte), JSON.stringify(bandas.filter((b) => !(b.unaLinea && b.dentro && b.sinRecorte)).concat(bandas.slice(0, 2))).slice(0, 600));
+
+    /* ---------- f3-descriptores: el editor del LB de Joaquín (borrador) — nada bajo 12 px ni recortado; la consigna una sola vez ---------- */
+    const medirEditor = () => {
+      const f = document.getElementById('ideaForm');
+      const els = [...f.querySelectorAll('.opcion .desc,.dname,.inter-btn,.inter-label,.score-badge,.dsel,.dobs summary,.escala>header,.esc-foot')].filter((e) => e.getBoundingClientRect().width > 0);
+      const chicos = els.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 11.99).map((e) => e.className);
+      const recortados = els.filter((e) => { const cs = getComputedStyle(e); const caja = e.closest('.opcion,.inter-btn,.dimension,.escala') || f; const r = e.getBoundingClientRect(), rc = caja.getBoundingClientRect();
+        return (cs.overflow !== 'visible' && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1)) || r.right > rc.right + 0.5 || r.left < rc.left - 0.5; }).map((e) => e.className + ' «' + e.textContent.trim().slice(0, 20) + '»');
+      return { n: els.length, desc: f.querySelectorAll('.opcion .desc').length, chicos, recortados, consigna: document.querySelectorAll('#ideaComoPuntuar').length, repetida: f.querySelectorAll('.dinstr,.inter-nota').length,
+        pregunta: (f.innerText.match(/entre dos niveles/g) || []).length, desborde: document.documentElement.scrollWidth > window.innerWidth };
+    };
+    const editor = [];
+    for (const [w, h] of tamanios3) { await p3.setViewportSize({ width: w, height: h }); await abrir3(idJ3, 'lb'); editor.push({ w, ...(await p3.evaluate(medirEditor)) }); }
+    check('f3-descriptores', 'editor del LB de Joaquín (borrador) a 1280 y a 1024: los 60 descriptores, los nombres de dimensión, los puntajes y los intermedios miden ≥ 12 px y ninguno se recorta ni se sale de su caja; la consigna («Cómo puntuar…») está UNA vez, no en cada dimensión',
+      editor.length === 2 && editor.every((e) => e.desc === 60 && !e.chicos.length && !e.recortados.length && e.consigna === 1 && e.repetida === 0 && e.pregunta === 1 && !e.desborde), JSON.stringify(editor).slice(0, 600));
+
+    /* ---------- f3-radar: las etiquetas de los ejes del radar del IC a ≥ 12 px en pantalla y dentro del gráfico ---------- */
+    const medirRadar = () => [...document.querySelectorAll('#panelExp svg.ic-radar')].map((s) => {
+      const vb = s.viewBox.baseVal, esc = s.getBoundingClientRect().width / vb.width;
+      const textos = [...s.querySelectorAll('text')].map((t) => { const b = t.getBBox(); return { px: +(parseFloat(t.getAttribute('font-size')) * esc).toFixed(2),
+        dentro: b.x >= vb.x - 0.5 && b.x + b.width <= vb.x + vb.width + 0.5 && b.y >= vb.y - 0.5 && b.y + b.height <= vb.y + vb.height + 0.5 }; });
+      return { n: textos.length, min: Math.min(...textos.map((t) => t.px)), fuera: textos.filter((t) => !t.dentro).length };
+    });
+    const radares = [];
+    for (const [w, h] of tamanios3) { await p3.setViewportSize({ width: w, height: h }); for (const id of [idV3, idM3]) { await abrir3(id, 'ic'); (await p3.evaluate(medirRadar)).forEach((r) => radares.push({ w, ...r })); } }
+    check('f3-radar', 'radares del IC (editor de Valentina e IC firmado de Martín) a 1280 y a 1024: las etiquetas de los ejes miden ≥ 12 px en pantalla y ninguna se sale del gráfico',
+      radares.length >= 6 && radares.every((r) => r.n >= 7 && r.min >= 11.99 && r.fuera === 0), JSON.stringify(radares));
+    await p3.setViewportSize({ width: 1280, height: 800 });
+
+    /* ---------- f3-texto: valores de ficha sin negrita, avatar sin signos, Pendientes sin repetir la columna ---------- */
+    await abrir3(idM3, 'hce00');
+    const ficha = await p3.evaluate(() => { const dd = getComputedStyle(document.querySelector('.data-row dd')), dt = getComputedStyle(document.querySelector('.data-row dt'));
+      return { dd: dd.fontWeight + '/' + dd.fontSize, dt: dt.fontWeight + '/' + dt.fontSize, avatar: document.getElementById('userAvatar').textContent, nombre: document.getElementById('userNombre').textContent,
+        coord: inicialesDe('Coordinación (demo)'), dr: inicialesDe('Dr. González'), parentesis: inicialesDe('(Lic.) Ana Pérez') }; });
+    await vista3('pendientes', () => PEND.estado === 'listo');
+    const pend = await p3.evaluate(() => ({ titulo: document.querySelector('#pendContenido .cardhead h2').textContent.trim(), columnas: [...document.querySelectorAll('#tablaPend thead th')].map((t) => t.textContent.trim()) }));
+    check('f3-texto', 'HCE-00: rótulo y valor con el mismo peso (400; el valor a 15 px, el rótulo más chico); iniciales del avatar sin signos ni paréntesis («Coordinación (demo)» → «CD», «Dr. González» → «DG»); la tarjeta de Pendientes no repite el encabezado de su columna',
+      ficha.dd === '400/15px' && /^400\//.test(ficha.dt) && ficha.coord === 'CD' && ficha.dr === 'DG' && ficha.parentesis === 'LA' && ficha.avatar === 'DG' && !pend.columnas.includes(pend.titulo) && pend.titulo.length > 0,
+      JSON.stringify({ ficha, pend }));
+
+    /* ---------- f3-toast: el aviso flotante con su tipo (✓ éxito · ℹ información · ! error), glifo + texto ---------- */
+    const tipos = [];
+    for (const t of [undefined, 'info', 'error']) tipos.push(await p3.evaluate((tt) => { toast('Prueba F3', tt); const e = document.getElementById('toast');
+      return { tipo: e.dataset.tipo, glifo: document.getElementById('toastIco').textContent, oculto: document.getElementById('toastIco').getAttribute('aria-hidden'), sr: document.getElementById('toastTipo').textContent, rol: e.getAttribute('role') }; }, t));
+    await abrir3(idJ3, 'lb');
+    // Sin cambios no sale ningún pedido y avisa «No hay cambios para guardar». Por las dudas, una escritura a /idea se corta en el navegador (el chequeo falla).
+    const escrituras3 = [];
+    await p3.route((u) => /\/hce\/\d+\/idea/.test(u.pathname), (route) => { if (route.request().method() === 'GET') return route.continue(); escrituras3.push(route.request().method()); return route.abort(); });
+    await p3.click('#btnEvGuardar'); await p3.waitForTimeout(300);
+    await p3.unrouteAll({ behavior: 'ignoreErrors' });
+    const sinCambios = await p3.evaluate(() => ({ tipo: document.getElementById('toast').dataset.tipo, glifo: document.getElementById('toastIco').textContent, msg: document.getElementById('toastMsg').textContent }));
+    check('f3-toast', 'toast(): «ok» con ✓, «info» con ℹ y «error» con ! más «Error:» para lectores de pantalla (el glifo es aria-hidden, role="status"); «Guardar borrador» sin cambios avisa con ℹ, no con ✓',
+      JSON.stringify(tipos.map((x) => [x.tipo, x.glifo, x.sr])) === JSON.stringify([['ok', '✓', ''], ['info', 'ℹ', ''], ['error', '!', 'Error: ']]) && tipos.every((x) => x.oculto === 'true' && x.rol === 'status')
+        && sinCambios.tipo === 'info' && sinCambios.glifo === 'ℹ' && /No hay cambios/.test(sinCambios.msg) && !escrituras3.length, JSON.stringify({ tipos, sinCambios, escrituras3 }));
+
+    /* ---------- f3-iconos: sin emoji en las fuentes; los íconos son texto o SVG en línea, decorativos; todo control sólo-ícono tiene nombre ---------- */
+    const fuentes3 = await leerFuentes(['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js',
+      'informe-cierre.js', 'hce-doc-org-vf.js', 'documentos.js', 'severidad.js', 'organismos.js', 'auditoria.js', 'panel.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)]);
+    const PERMITIDOS = new Set(['⚠', 'ℹ']);          // ⚠ e ℹ: Windows los dibuja como glifo de texto monocromo
+    const emoji = fuentes3.flatMap(([f, t]) => [...t].filter((ch) => ((/\p{Emoji}/u.test(ch) && !/[0-9#*]/.test(ch)) || /\p{Extended_Pictographic}/u.test(ch) || ch === '️') && !PERMITIDOS.has(ch)).map((ch) => f + ':' + ch));
+    const externos = fuentes3.filter(([, t]) => /<(img|link|script)[^>]+(src|href)="https?:\/\//.test(t) || /url\(\s*['"]?https?:/.test(t)).map(([f]) => f);
+    const medirIconos = () => {
+      const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+      const main = document.querySelector('.view.active');
+      const svgs = [...main.querySelectorAll('svg.ico')].filter((s) => s.getAttribute('aria-hidden') !== 'true').length;
+      const sinNombre = [...document.querySelectorAll('button, a[href], [role="button"]')].filter(vis).filter((b) => {
+        const clon = b.cloneNode(true); clon.querySelectorAll('[aria-hidden="true"]').forEach((x) => x.remove());
+        return !clon.textContent.trim() && !b.getAttribute('aria-label') && !b.getAttribute('aria-labelledby') && !b.getAttribute('title'); }).map((b) => b.id || b.className);
+      return { svgs, sinNombre };
+    };
+    const iconos = await recorrer(medirIconos);
+    await abrir3(idM3, 'ic');
+    const impreso = await p3.evaluate(() => { const b = document.getElementById('btnIcImpreso'); const s = b.querySelector('svg.ico'); return { svg: !!s, oculto: s && s.getAttribute('aria-hidden'), texto: b.innerText.trim() }; });
+    const iconosMal = Object.entries(iconos).filter(([, v]) => v.svgs || v.sinNombre.length);
+    check('f3-iconos', 'ningún emoji en index.html, js/ ni css/ (sólo ⚠ e ℹ, glifos de texto) y nada cargado de otro servidor; los íconos SVG son en línea y aria-hidden (la impresora de «Ver informe impreso»); en las 20 pantallas ningún control queda sin nombre accesible',
+      !emoji.length && !externos.length && !iconosMal.length && impreso.svg && impreso.oculto === 'true' && impreso.texto === 'Ver informe impreso',
+      JSON.stringify({ emoji: emoji.slice(0, 5), externos, iconosMal: iconosMal.map(([k, v]) => [k, v]).slice(0, 3), impreso }).slice(0, 500));
+
+    /* ---------- f3-guardar: «Guardar» es secundario donde la pantalla tiene su propia acción principal (Firmar); en un diálogo cuya única acción es guardar, principal ---------- */
+    /* el botón que guarda es el de id «…Guardar» (btnEvGuardar, btnIcGuardar, btnVfGuardar, btnCiGuardar, btnSevGuardar) */
+    const medirGuardar = () => { const vis = (e) => e.getBoundingClientRect().width > 0; const bs = [...document.querySelectorAll('button')].filter(vis);
+      return { firmar: bs.filter((b) => b.classList.contains('btn-firmar')).map((b) => b.textContent.trim()), guardar: bs.filter((b) => /Guardar$/.test(b.id)).map((b) => [b.id, b.classList.contains('btn-primary') ? 'principal' : 'secundario']) }; };
+    const guardar = {};
+    for (const [k, id, tab, abrirForm] of [['LB', idJ3, 'lb'], ['PA', idS3, 'pa'], ['IC', idV3, 'ic'], ['VF', idM3, 'vf', '#btnVfNuevo'], ['CI-edición', idM3, 'ci', '#btnCiEditar'], ['dialogoSEV', idM3, 'sev', '#btnSevEditar']]) {
+      await abrir3(id, tab); if (abrirForm) { await p3.click(abrirForm); await p3.waitForTimeout(200); } guardar[k] = await p3.evaluate(medirGuardar);
+    }
+    await p3.keyboard.press('Escape'); await p3.waitForTimeout(150);         // cierra el diálogo de SEV sin tocar nada (no pregunta)
+    const conFirmar = ['LB', 'PA', 'IC'].every((k) => guardar[k].firmar.length === 1 && guardar[k].guardar.length >= 1 && guardar[k].guardar.every(([, c]) => c === 'secundario'));
+    const soloGuardar = ['VF', 'CI-edición', 'dialogoSEV'].every((k) => guardar[k].firmar.length === 0 && guardar[k].guardar.some(([, c]) => c === 'principal'));
+    check('f3-guardar', '«Guardar borrador» es secundario junto a «Firmar» (editores de LB, PA e IC); donde guardar es la única acción que confirma (VF, edición del CI, diálogo de SEV) es la principal',
+      conFirmar && soloGuardar, JSON.stringify(guardar).slice(0, 600));
+
+    /* ---------- f3-log: Auditoría con el módulo en palabras (como en su filtro), el campo con nombre legible y el título igual a la pestaña ---------- */
+    // el expediente con filas de edición (campo) en su LOG: Martín o, si en el seed no tiene, Tomás (dado de baja: activo y fecha_baja)
+    const idT3 = (await get3('/hce?nombre=Tom%C3%A1s&limit=20&incluir_inactivos=true')).json.find((h) => h.persona.nombre === 'Tomás').id;
+    let idLog3 = idM3;
+    for (const c of [idM3, idT3]) { if ((await get3(`/hce/${c}/auditoria?tipo=edicion&limit=5`)).json.some((a) => a.campo)) { idLog3 = c; break; } }
+    await abrir3(idLog3, 'log');
+    await p3.evaluate(() => { const ver = document.querySelector('#panelExp .log-ver'); if (ver) ver.open = true; });
+    const log3 = await p3.evaluate(() => {
+      const opc = Object.fromEntries([...document.querySelectorAll('#logModulo option')].filter((o) => o.value).map((o) => [o.textContent.trim(), o.value]));
+      const filas = [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => ({ mod: tr.children[2].textContent.trim(), negrita: !!tr.children[2].querySelector('b'), campo: tr.children[4].textContent.trim(), id: tr.children[4].dataset.campo || null,
+        mono: /monospace/.test(getComputedStyle(tr.children[4].firstChild && tr.children[4].firstChild.nodeType === 1 ? tr.children[4].firstChild : tr.children[4]).fontFamily) }));
+      const tab = document.querySelector('#tabExp-log .tab-nombre').textContent.trim(), titulo = document.getElementById('logTitulo').textContent.trim();
+      return { opc, filas, tab, titulo };
+    });
+    const camposConocidos = log3.filas.filter((f) => f.id);
+    check('f3-log', 'Auditoría (Martín, o Tomás si el seed no le dejó ediciones a Martín): el módulo de cada fila es el texto de su opción del filtro («Datos (HCE-00)»…), sin negrita; el campo va con su nombre legible, en la cara de texto (un identificador fuera del mapa se muestra tal cual); el título del módulo termina en el nombre de la pestaña («LOG · Auditoría»)',
+      log3.filas.length > 0 && log3.filas.every((f) => f.mod === '—' || (f.mod in log3.opc && !f.negrita)) && camposConocidos.length > 0 && camposConocidos.every((f) => !f.mono)
+        && camposConocidos.filter((f) => /^(medicacion|derivacion|activo|fecha_baja|alerta|nombre)$/.test(f.id)).every((f) => f.campo !== f.id) && camposConocidos.some((f) => f.campo !== f.id)
+        && log3.titulo === `LOG · ${log3.tab}`, JSON.stringify({ titulo: log3.titulo, tab: log3.tab, filas: log3.filas.slice(0, 4) }).slice(0, 500));
+
+    /* ---------- f3-estados: SEV, ORG y LOG con los mismos estados (revisión del bloque A) ---------- */
+    await abrir3(idJ3, 'sev');
+    const sevVacio = await p3.evaluate(() => { const v = document.querySelector('#panelExp .estado-vacio'); return { vacio: !!v, txt: v ? v.innerText : '', rol: v && v.getAttribute('role'), alerta: document.querySelectorAll('#panelExp [role="alert"]:not([hidden])').length }; });
+    await abrir3(idJ3, 'org');
+    const orgVacio = await p3.evaluate(() => ({ inau: !!document.querySelector('#orgRegInauVacio .estado-vacio'), bps: !!document.querySelector('#orgVinculoBps .estado-vacio'), txt: (document.getElementById('orgVinculoBps') || {}).innerText || '' }));
+    // Un aviso de la API (guardar con warnings[], contestado en el navegador) no queda al cambiar de pestaña y volver
+    const orgM3 = (await get3(`/hce/${idM3}/organismos`)).json, inauM = (orgM3.data || orgM3).inau;
+    await p3.route((u) => /\/hce\/\d+\/organismos\/inau$/.test(u.pathname), (route) => route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: inauM, warnings: [{ code: 'prueba_f3', mensaje: 'Aviso de prueba F3.' }] }) }) : route.continue());
+    await abrir3(idM3, 'org'); await p3.click('#btnOrgInauEditar'); await p3.waitForSelector('#modalFlujo.open #orgi_obs');
+    await p3.fill('#orgi_obs', 'Cambio de prueba F3'); await p3.click('#btnOrgGuardar');
+    await p3.waitForFunction(() => !document.getElementById('modalFlujo').classList.contains('open'), null, { timeout: 8000 });
+    const conAviso = await p3.evaluate(() => !document.getElementById('orgAvisos').hidden && /Aviso de prueba F3/.test(document.getElementById('orgAvisos').innerText));
+    await p3.click('#tabExp-sev'); await p3.waitForTimeout(200); await p3.click('#tabExp-org'); await p3.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText), null, { timeout: 8000 });
+    const trasVolver = await p3.evaluate(() => { const a = document.getElementById('orgAvisos'); return a ? !a.hidden : null; });
+    // Un error con el campo calificado («inau.obs») queda junto a su control y en el resumen enfocado
+    await p3.unrouteAll({ behavior: 'ignoreErrors' });
+    await p3.route((u) => /\/hce\/\d+\/organismos\/inau$/.test(u.pathname), (route) => route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ code: 'validation_error', detail: [{ campo: 'inau.obs', mensaje: 'Error de prueba F3 en las observaciones.' }] }) }) : route.continue());
+    await p3.click('#btnOrgInauEditar'); await p3.waitForSelector('#modalFlujo.open #orgi_obs');
+    await p3.fill('#orgi_obs', 'Otro cambio de prueba F3'); await p3.click('#btnOrgGuardar');
+    await p3.waitForFunction(() => !document.getElementById('orgErrores').hidden, null, { timeout: 8000 });
+    const errCampo = await p3.evaluate(() => ({ err: document.getElementById('err_orgi_obs').textContent, invalido: document.getElementById('orgi_obs').getAttribute('aria-invalid'), foco: document.activeElement.id, enlace: !!document.querySelector('#orgErrores a[href="#orgi_obs"]') }));
+    await p3.unrouteAll({ behavior: 'ignoreErrors' });
+    await p3.keyboard.press('Escape'); await p3.waitForTimeout(150);
+    if (await p3.locator('#btnCdDescartar').count()) await p3.click('#btnCdDescartar');
+    check('f3-estados', 'SEV sin registrar (Joaquín, 404) = el estado vacío compartido «Sin registrar» (role="status", sin alerta); ORG: una lista de registros vacía y un vínculo sin registrar con estadoVacioHtml; un aviso de la API no queda al cambiar de pestaña y volver; un 422 con campo «inau.obs» queda junto a su campo (aria-invalid, mensaje) y en el resumen con enlace, con el foco en el resumen',
+      sevVacio.vacio && /^◌?\s*Sin registrar\./.test(sevVacio.txt) && sevVacio.rol === 'status' && sevVacio.alerta === 0 && orgVacio.inau && orgVacio.bps && /Sin registrar\./.test(orgVacio.txt)
+        && conAviso && trasVolver === false && /Error de prueba F3/.test(errCampo.err) && errCampo.invalido === 'true' && errCampo.foco === 'orgErrores' && errCampo.enlace,
+      JSON.stringify({ sevVacio: { ...sevVacio, txt: sevVacio.txt.slice(0, 60) }, orgVacio: { ...orgVacio, txt: orgVacio.txt.slice(0, 60) }, conAviso, trasVolver, errCampo }));
+    await c3f.close();
+  }
+
+  /* =====================================================================================================
      FASE 3-c · IDEA, PROTOCOLOS A/B y arrastre de la 3-b (handoff §5.125). También ESCRIBE (firma, addendas).
      ===================================================================================================== */
   {
@@ -2662,21 +2892,32 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
 
     /* ---------- f1b-tipo / f1b-accion (F1b, §5.141): tipografía, escala, etiquetas, acción principal en tinta, sin superficies oscuras fuera del cromo ---------- */
     await pf.setViewportSize({ width: 1280, height: 800 });
-    const CODIGOS = '.cod,.tab-cod,.score-badge,.inter-btn,.likert-btn,.heat-cell,.fr-code,.log-table td b,.tscore,.ns-marca,td.num,.grupo-integrantes .hint,.fstep .fname,#view-pendientes table.lista td:first-child';
+    /* F3 (§5.160): monoespaciada SÓLO en códigos e identificadores (HC, C.I., N.º, AT-…, CIE-11, códigos de módulo de las pestañas y del flujo de
+       ejemplo). Los puntajes, las fechas (la del registro de ORG), los nombres de campo y el «ver completo» de Auditoría van en la cara de texto. */
+    const CODIGOS = '.cod,.tab-cod,.fr-code,.grupo-integrantes .hint,.fstep .fname';
     const medirTipo = (codigos) => {
       const vis = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
       const conTexto = [...document.querySelectorAll('body *')].filter((e) => vis(e) && !e.closest('svg,script,style,.sr-only') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
       const chicos = conTexto.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 11.99).map((e) => e.tagName + '.' + e.className + '=' + getComputedStyle(e).fontSize);
       const mono = conTexto.filter((e) => /monospace/.test(getComputedStyle(e).fontFamily) && !e.matches(codigos) && !e.closest(codigos)).map((e) => e.tagName + '.' + e.className + ' «' + e.textContent.trim().slice(0, 20) + '»');
       const serif = conTexto.filter((e) => /Charter|Georgia|serif/.test(getComputedStyle(e).fontFamily) && !/sans-serif$/.test(getComputedStyle(e).fontFamily) && !e.closest('.membrete,.inf-banner,#informeContent')).map((e) => e.tagName + '.' + e.className);
-      const etq = [...document.querySelectorAll('th:not([scope="row"]),.kpi .lab,.info-card>h3,.section-label,.st,.tabs-grupo-rot')].filter(vis).filter((e) => {
+      const etq = [...document.querySelectorAll('th:not([scope="row"]),.kpi .lab,.section-label,.st,.tabs-grupo-rot')].filter(vis).filter((e) => {   // F3: .info-card>h3 es la cabecera de tarjeta (f3-cabecera)
         const cs = getComputedStyle(e); return !(parseFloat(cs.fontSize) === 12 && cs.fontWeight === '600' && (cs.letterSpacing === 'normal' || parseFloat(cs.letterSpacing) === 0) && cs.textTransform === 'none' && !/monospace/.test(cs.fontFamily)); }).map((e) => e.tagName + '.' + e.className);
       return { chicos, mono, serif, etq, familia: getComputedStyle(document.body).fontFamily.split(',')[0] };
     };
     const tipo = {};
     await pf.evaluate(() => go('inicio')); await pf.waitForTimeout(150);
     tipo.listado = await pf.evaluate(medirTipo, CODIGOS);
-    for (const t of ['hce00', 'lb', 'pa', 'pb', 'ic', 'vf']) { await abrirF1(idMartinF, t); tipo[t] = await pf.evaluate(medirTipo, CODIGOS); }
+    for (const t of ['hce00', 'lb', 'pa', 'pb', 'ic', 'vf', 'org']) { await abrirF1(idMartinF, t); tipo[t] = await pf.evaluate(medirTipo, CODIGOS); }
+    /* F3: Auditoría con todos sus «ver completo» abiertos y uno de muestra (un JSON legible) por si la página no trae ninguno */
+    await abrirF1(idMartinF, 'log');
+    await pf.evaluate(() => { document.querySelectorAll('#panelExp .log-ver').forEach((d) => { d.open = true; });
+      const td = document.querySelector('#panelExp .log-table tbody td.log-cambio'); if (td) td.insertAdjacentHTML('beforeend', '<details class="log-ver" open data-f3><summary>ver completo</summary><pre class="log-pre">{ &quot;campo&quot;: &quot;valor de muestra&quot; }</pre></details>'); });
+    tipo.log = await pf.evaluate(medirTipo, CODIGOS);
+    const logF3 = await pf.evaluate(() => { const pre = document.querySelector('#panelExp .log-pre'), campo = document.querySelector('#panelExp .log-table tbody td:nth-child(5)'), fecha = document.querySelector('#panelExp .log-ts');
+      const r = { pre: pre ? getComputedStyle(pre).fontFamily : '', campo: campo ? getComputedStyle(campo).fontFamily : '', fecha: fecha ? getComputedStyle(fecha).fontFamily : '' };
+      document.querySelectorAll('#panelExp [data-f3]').forEach((d) => d.remove()); return r; });
+    const orgF3 = tipo.org && await (async () => { await abrirF1(idMartinF, 'org'); return pf.evaluate(() => { const td = document.querySelector('#panelExp .org-fecha'); return td ? getComputedStyle(td).fontFamily : 'sin-fecha'; }); })();
     const titulos = await pf.evaluate(() => { const h = document.querySelector('.banda-nna h1'); const cs = getComputedStyle(h); return { fam: cs.fontFamily.split(',')[0], peso: cs.fontWeight }; });
     const dato = await pf.evaluate(() => { const c = document.querySelector('.banda-meta .cod'); return c ? getComputedStyle(c).fontFamily : ''; });
     const base = await pf.evaluate(() => { const fs = (v) => { const d = document.createElement('i'); d.style.cssText = 'position:absolute;visibility:hidden;font-size:var(' + v + ')'; document.body.appendChild(d); const px = parseFloat(getComputedStyle(d).fontSize); d.remove(); return px; };
@@ -2686,9 +2927,10 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await abrirF1(idMartinF, 'lb');
     lectura.desc = await pf.evaluate(() => { const d = document.querySelector('.opcion .desc'); return d ? getComputedStyle(d).fontSize : 'sin-descriptor'; });
     const hayProblemas = Object.entries(tipo).filter(([, v]) => v.chicos.length || v.mono.length || v.serif.length || v.etq.length);
-    check('f1b-tipo', 'tipografía: Segoe UI sin webfont; títulos de pantalla en sans 600; ningún texto visible por debajo de 12 px; --fs-base = 15 px (valores de ficha), --fs-xl = 22 px, --fs-2xl = 28 px; etiquetas (th, .kpi .lab, .info-card>h3, .section-label, .st, rótulos de grupo) en sans 12 px, 600, sin versalitas ni espaciado; monoespaciada sólo en códigos y puntajes; serif sólo en documentos (listado, HCE-00, LB, PA, PB, IC, VF)',
-      /Segoe UI/.test(tipo.listado.familia) && /Segoe UI/.test(titulos.fam) && titulos.peso === '600' && /monospace/.test(dato) && base.base === 15 && base.xl === 22 && base.x2 === 28 && base.tres === 12 && lectura.dd === '15px' && !hayProblemas.length,
-      JSON.stringify({ familia: tipo.listado.familia, titulos, base, lectura, problemas: hayProblemas.map(([k, v]) => ({ k, chicos: v.chicos.slice(0, 4), mono: v.mono.slice(0, 4), serif: v.serif.slice(0, 4), etq: v.etq.slice(0, 4) })) }));
+    check('f1b-tipo', 'tipografía: Segoe UI sin webfont; títulos de pantalla en sans 600; ningún texto visible por debajo de 12 px; --fs-base = 15 px (valores de ficha), --fs-xl = 22 px, --fs-2xl = 28 px; etiquetas (th, .kpi .lab, .section-label, .st, rótulos de grupo) en sans 12 px, 600, sin versalitas ni espaciado; monoespaciada sólo en códigos e identificadores (F3: no en puntajes, ni en la fecha de un registro de ORG, ni en el campo ni en el «ver completo» de Auditoría); serif sólo en documentos (listado, HCE-00, LB, PA, PB, IC, VF, ORG, LOG)',
+      /Segoe UI/.test(tipo.listado.familia) && /Segoe UI/.test(titulos.fam) && titulos.peso === '600' && /monospace/.test(dato) && base.base === 15 && base.xl === 22 && base.x2 === 28 && base.tres === 12 && lectura.dd === '15px' && !hayProblemas.length
+        && [logF3.pre, logF3.campo, logF3.fecha, orgF3].every((ff) => /Segoe UI/.test(ff) && !/monospace/.test(ff)),
+      JSON.stringify({ familia: tipo.listado.familia, titulos, base, lectura, logF3: Object.fromEntries(Object.entries(logF3).map(([k, v]) => [k, v.split(',')[0]])), orgF3: String(orgF3).split(',')[0], problemas: hayProblemas.map(([k, v]) => ({ k, chicos: v.chicos.slice(0, 4), mono: v.mono.slice(0, 4), serif: v.serif.slice(0, 4), etq: v.etq.slice(0, 4) })) }));
     const medirAccion = () => {
       const claro = (rgb) => { const m = rgb.match(/[\d.]+/g).map(Number); const c = m.slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
       const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
@@ -2764,17 +3006,17 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await filtrar('', 'firma');
     const apiFirmas = (await api('GET', `/hce/${idM}/auditoria?tipo=firma&limit=200`)).json;
     const uiFirmas = await filasUI();
-    const modsFirmados = new Set(uiFirmas.map((f) => f[2]));
+    const modsFirmados = new Set(uiFirmas.map((f) => f[2]));          // F3: el módulo va en palabras, como en su filtro («Línea base (LB)»)
     check('c1-firmas', 'LOG de Martín (filtro «Se firmó»): lista las firmas de HCE-LB, HCE-PA, HCE-PB y HCE-IC, y en cada fila «Quién» es el nombre del autor que devuelve la API',
-      ['HCE-LB', 'HCE-PA', 'HCE-PB', 'HCE-IC'].every((m) => modsFirmados.has(m)) && uiFirmas.length === apiFirmas.length && apiFirmas.length >= 4
+      ['Línea base (LB)', 'Protocolo A (PA)', 'Protocolo B (PB)', 'Informe de cierre (IC)'].every((m) => modsFirmados.has(m)) && uiFirmas.length === apiFirmas.length && apiFirmas.length >= 4
         && uiFirmas.every((f, i) => f[1] === apiFirmas[i].usuario.nombre && f[1] !== '' && f[3].startsWith('Se firmó')),
       JSON.stringify(uiFirmas.map((f) => f[2] + ' · ' + f[1])));
 
     /* c1-edicion · la edición de HCE-00 hecha por la suite, con antes y después y su autor */
     await filtrar('HCE-00', 'edicion');
-    const ed = (await filasUI()).filter((f) => f[4] === 'derivacion');
+    const ed = (await filasUI()).filter((f) => f[4] === 'Derivación');     // F3: el campo con su nombre legible (identificador «derivacion»)
     check('c1-edicion', 'una edición de HCE-00 hecha por la suite (derivación «c1-antes» → «c1-despues») aparece con módulo, campo, antes → después y el nombre de su autor; la más nueva primero',
-      ed.length === 2 && /Antes: c1-antes Después: c1-despues/.test(ed[0][5]) && /Después: c1-antes/.test(ed[1][5]) && ed.every((f) => f[1] === yo.nombre && f[2] === 'HCE-00' && f[3].startsWith('Se editó')),
+      ed.length === 2 && /Antes: c1-antes Después: c1-despues/.test(ed[0][5]) && /Después: c1-antes/.test(ed[1][5]) && ed.every((f) => f[1] === yo.nombre && f[2] === 'Datos (HCE-00)' && f[3].startsWith('Se editó')),
       JSON.stringify(ed));
 
     /* c1-filtro · el filtro por módulo reduce las filas; las opciones son exactamente las válidas; foco; total = X-Total-Count */
@@ -2790,7 +3032,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     for (const t of opciones.tipo.filter(Boolean)) respOpc.push((await api('GET', `/hce/${idM}/auditoria?tipo=${t}&limit=1`)).status);
     const rechazos = [(await api('GET', `/hce/${idM}/auditoria?tipo=acceso`)).status, (await api('GET', `/hce/${idM}/auditoria?modulo=GRUPO`)).status];
     check('c1-filtro', 'el filtro por módulo reduce las filas (sólo HCE-LB, total = X-Total-Count) y deja el foco en el selector; los filtros ofrecen exactamente los 12 módulos y los 6 tipos válidos (la API los acepta a todos y rechaza «acceso» y «GRUPO»)',
-      filasLB.length > 0 && filasLB.every((f) => f[2] === 'HCE-LB') && totalLB === apiLB && totalLB < totalSinFiltro && focoSel === 'logModulo'
+      filasLB.length > 0 && filasLB.every((f) => f[2] === 'Línea base (LB)') && totalLB === apiLB && totalLB < totalSinFiltro && focoSel === 'logModulo'
         && opciones.mod.length === 13 && opciones.tipo.length === 7 && respOpc.every((s) => s === 200) && rechazos.every((s) => s === 422),
       JSON.stringify({ totalSinFiltro, totalLB, apiLB, focoSel, opMod: opciones.mod.length, opTipo: opciones.tipo.length, rechazos }));
 
@@ -2802,9 +3044,10 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const r2 = await rango(), p2 = await filasUI(); const antHab = !(await pc.isDisabled('#btnLogAnt'));
     await conAud(() => pc.click('#btnLogAnt')); await pc.waitForFunction(() => /Mostrando 1–/.test(document.querySelector('#panelExp .log-rango')?.innerText || ''), null, { timeout: 8000 });
     const nTotal = Number(apiP1.total);
+    const camposP2 = await pc.evaluate((cs) => cs.map((c) => c ? logCampoNombre(c) : null), apiP2.json.map((x) => x.campo));   // F3: nombre legible del campo de cada fila de la API
     check('c1-paginado', 'paginado de 25: «Mostrando 1–25 de N» con N = X-Total-Count, «Anteriores» deshabilitado en la primera página; «Siguientes» trae las filas 26 en adelante (las mismas, en el mismo orden, que la API) y «Anteriores» vuelve',
       nTotal > 26 && r1 === `Mostrando 1–25 de ${nTotal}` && antDesh && p1.length === 25 && r2 === `Mostrando 26–${Math.min(50, nTotal)} de ${nTotal}` && antHab && p2.length === apiP2.json.length
-        && p2.every((f, i) => f[4] === (apiP2.json[i].campo || '—') && f[1] === (apiP2.json[i].usuario ? apiP2.json[i].usuario.nombre : '(sin autor)')),
+        && p2.every((f, i) => f[4] === (apiP2.json[i].campo ? camposP2[i] : '—') && f[1] === (apiP2.json[i].usuario ? apiP2.json[i].usuario.nombre : '(sin autor)')),
       JSON.stringify({ r1, r2, nTotal }));
 
     /* c1-paginado-foco · el botón que tenía el foco queda deshabilitado (primera o última página): el foco no cae al <body>, pasa al otro botón.
@@ -2830,7 +3073,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
 
     /* c1-largo · valores largos: acortados CON «ver completo» (nunca cortados en silencio); JSON legible */
     await filtrar('HCE-00', 'edicion');
-    const pagLargo = async () => { const filas = await pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => ({ campo: tr.children[4].innerText.trim(), cambio: tr.children[5].innerHTML }))); return filas; };
+    const pagLargo = async () => { const filas = await pc.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => ({ campo: tr.children[4].dataset.campo || tr.children[4].innerText.trim(), cambio: tr.children[5].innerHTML }))); return filas; };   // F3: el identificador del campo va en data-campo (se muestra su nombre legible)
     const filasHCE00 = await pagLargo();
     const idxLargo = filasHCE00.findIndex((f) => f.campo === 'medicacion' && /log-ver/.test(f.cambio));
     const idxAnam = filasHCE00.findIndex((f) => f.campo === 'anamnesis');
@@ -3025,10 +3268,10 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table'), null, { timeout: 8000 });
     await ps.waitForTimeout(150);
     const filasLog = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
-    const filaCs = filasLog.find((f) => f[4] === 'nivel_cs');
+    const filaCs = filasLog.find((f) => f[4] === 'Comunicación social');   // F3: nombre legible de «nivel_cs»
     check('c2-editar-log', 'Martín: editar comunicación social de 2 a 3 manda un PATCH sólo con nivel_cs; la lectura muestra la etiqueta nueva de la API y la pestaña Auditoría (filtro HCE-SEV) lista la edición con su autor y «Antes: 2 Después: 3»',
       antesCs === 2 && ed.length === 1 && ed[0].m === 'PATCH' && JSON.stringify(ed[0].body) === '{"nivel_cs":3}' && csTras === niveles[2].etiqueta
-        && !!filaCs && filaCs[1] === yo.nombre && filaCs[2] === 'HCE-SEV' && /Antes: 2 Después: 3/.test(filaCs[5]) && filasLog.some((f) => /Se creó/.test(f[3])),
+        && !!filaCs && filaCs[1] === yo.nombre && filaCs[2] === 'Severidad (SEV)' && /Antes: 2 Después: 3/.test(filaCs[5]) && filasLog.some((f) => /Se creó/.test(f[3])),
       JSON.stringify({ ed, csTras, filaCs }));
 
     /* c2-ajeno · un técnico no alcanza la severidad de un expediente fuera de sus grupos: 404 en la API y «no encontrado» en la pantalla */
@@ -3249,9 +3492,9 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table'), null, { timeout: 8000 });
     await ps.waitForTimeout(150);
     const filasLog = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
-    const fEstado = filasLog.find((f) => f[4] === 'bps.estado'), fVenc = filasLog.find((f) => f[4] === 'bps.vencimiento');
+    const fEstado = filasLog.find((f) => f[4] === 'BPS · Estado'), fVenc = filasLog.find((f) => f[4] === 'BPS · Vencimiento o renovación');   // F3: «bps.estado», «bps.vencimiento» con su nombre legible
     check('c3-log', 'Auditoría (filtro HCE-ORG) de Sofía: la gestión nueva y el alta de INAU («Se creó un registro»), y las ediciones bps.estado («Antes: En trámite Después: Vigente») y bps.vencimiento, todas con su autor',
-      filasLog.every((f) => f[1] === yo.nombre && f[2] === 'HCE-ORG') && filasLog.filter((f) => /Se creó/.test(f[3])).length >= 4 && filasLog.some((f) => /Gestión ante BPS/.test(f[3]))
+      filasLog.every((f) => f[1] === yo.nombre && f[2] === 'Organismos (ORG)') && filasLog.filter((f) => /Se creó/.test(f[3])).length >= 4 && filasLog.some((f) => /Gestión ante BPS/.test(f[3]))
         && !!fEstado && /Antes: En trámite Después: Vigente/.test(fEstado[5]) && !!fVenc && /Después: /.test(fVenc[5]), JSON.stringify({ n: filasLog.length, fEstado }));
 
     /* c3-ajeno · un técnico no alcanza los organismos de un expediente fuera de sus grupos: 404 en las siete rutas y «no encontrado» en la pantalla */
@@ -3375,7 +3618,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       rReg.status() === 201 && postJ.length === 1 && postJ[0].m === 'POST' && JSON.stringify(Object.keys(postJ[0].body).sort()) === '["centro","estado","grado","tipo_centro"]'
         && !estadosDlg0.includes('Sin registrar') && descDlg === opciones.estados.find((e) => e.nombre === 'En adaptación').descripcion
         && fJ.centro === 'Escuela de demostración (c4)' && fJ.estado === 'En adaptación' && !!fJ.fecha_estado && !regJ.modal && regJ.foco === 'incTitulo' && regJ.agregar
-        && logJ.length === 1 && logJ[0][1] === yo.nombre && logJ[0][2] === 'HCE-INC' && /Se creó/.test(logJ[0][3]) && /ficha de inclusión/.test(logJ[0][3]),
+        && logJ.length === 1 && logJ[0][1] === yo.nombre && logJ[0][2] === 'Inclusión (INC)' && /Se creó/.test(logJ[0][3]) && /ficha de inclusión/.test(logJ[0][3]),
       JSON.stringify({ st: rReg.status(), postJ, regJ, logJ }).slice(0, 500));
 
     /* c4-estado · cambiar el estado: «Sin registrar» no se ofrece; el PATCH lleva sólo el estado; «desde» es la fecha_estado de la API. Por la API: «Sin registrar» → 422 y uno asignable → 200 */
@@ -3597,11 +3840,11 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await ps.selectOption('#logModulo', 'HCE-DOC');
     await ps.waitForFunction(() => !/Cargando/.test(document.getElementById('panelExp').innerText) && !!document.querySelector('#panelExp .log-table, #panelExp .estado-vacio'), null, { timeout: 8000 }); await ps.waitForTimeout(150);
     const logD = await ps.evaluate(() => [...document.querySelectorAll('#panelExp .log-table tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText.replace(/\s+/g, ' ').trim())));
-    const filaEd = logD.find((r) => r[4] === 'nombre');
+    const filaEd = logD.find((r) => r[4] === 'Nombre');   // F3: nombre legible del campo «nombre»
     check('c5-historico', 'el registro histórico es inmutable: PATCH por la API → 409 y sigue igual; el diálogo «Editar» de uno común no ofrece categorías «Registro histórico»; editar su nombre envía UN PATCH sólo con `nombre` → la lista lo muestra y la pestaña Auditoría (filtro HCE-DOC) tiene la fila del campo nombre con su autor, sin el nombre en el detalle',
       p409.status === 409 && (await api('GET', `/hce/${idM}/documentos/${hist.id}`)).json.nombre === hist.nombre && !catsEdit.some((t) => /Registro histórico/.test(t))
         && patchE.length === 1 && patchE[0].m === 'PATCH' && JSON.stringify(Object.keys(JSON.parse(patchE[0].body))) === '["nombre"]' && comun2.nombre === comun.nombre + ' (editado c5)' && filaUi.nombre === comun2.nombre
-        && !!filaEd && filaEd[1] === yo.nombre && filaEd[2] === 'HCE-DOC' && filaEd[5].includes(comun2.nombre) && !filaEd[3].includes(comun2.nombre),
+        && !!filaEd && filaEd[1] === yo.nombre && filaEd[2] === 'Documentos (DOC)' && filaEd[5].includes(comun2.nombre) && !filaEd[3].includes(comun2.nombre),
       JSON.stringify({ p409: p409.status, patchE: patchE.map((p) => p.body), filaEd }).slice(0, 500));
 
     /* c5-foto · Sofía no tiene autorización: subir un PNG se guarda sin aviso ni pregunta; la miniatura es una URL blob: */
@@ -4106,7 +4349,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       const suyos = gs.filter((g) => (g.tecnico1 && g.tecnico1.id === T.yo.id) || (g.tecnico2 && g.tecnico2.id === T.yo.id));
       await abrirGrupos(pt);
       const vista = await pt.evaluate(() => [...document.querySelectorAll('#gruposList .grupo-card')].map((c) => ({ nombre: c.querySelector('h2').innerText.trim(),
-        t: [...c.querySelectorAll('.grupo-tecnicos dd')].map((d) => d.innerText.replace(/\s+/g, ' ').trim()), n: +c.querySelector('.pill').innerText.match(/\d+/)[0] })));
+        t: [...c.querySelectorAll('.grupo-tecnicos dd')].map((d) => d.innerText.replace(/\s+/g, ' ').trim()), n: +c.querySelector('.card-n').innerText.match(/\d+/)[0] })));
       const aTxt = (t) => t ? `${t.nombre}${t.rol ? ' · ' + t.rol : ''}` : 'Sin asignar';
       const esp = suyos.map((g) => ({ nombre: g.nombre, t: [aTxt(g.tecnico1), aTxt(g.tecnico2)], n: hs.filter((h) => h.grupo && h.grupo.id === g.id).length }));
       const botones = await pt.locator('#gruposList button', { hasText: 'Asignar técnicos' }).count();

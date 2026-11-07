@@ -21,6 +21,48 @@ const LOG_TIPOS = [
 ];
 const _logNombre = (lista, k) => { const e = lista.find(x => x[0] === k); return e ? e[1] : k; };
 
+/* Nombre legible de cada campo (F3, §5.160): es SÓLO presentación — la API guarda y filtra por el identificador. Un campo que no
+   está en el mapa se muestra con su identificador tal cual (nunca se inventa un nombre). Los compuestos («bps.estado», «dim.D5»,
+   «items.7», «sint_escala.esc_2», «dominios.x») se arman con su prefijo. */
+const LOG_CAMPOS = {
+  nombre: "Nombre", apellido: "Apellido", ci: "C.I.", fecha_nac: "Fecha de nacimiento", sexo: "Sexo", localidad: "Localidad",
+  referente: "Referente familiar", telefono: "Teléfono", hc_historico: "N.º de HC", grupo_id: "Grupo", diagnostico: "Diagnóstico",
+  cie11: "CIE-11", dx_fecha: "Fecha del diagnóstico", derivacion: "Derivación", medicacion: "Medicación", alerta: "Alerta clínica",
+  anamnesis: "Anamnesis", activo: "Activo", fecha_baja: "Fecha de baja",
+  firmante: "Referente que firma", fecha: "Fecha", autorizaciones: "Autorizaciones", documento_id: "Documento",
+  fecha_consenso: "Fecha de consenso", sesiones: "Sesiones de observación", sintesis: "Síntesis clínica", objetivos: "Objetivos del período",
+  manual_version: "Versión del manual", evaluador_t1_id: "Evaluador/a 1", evaluador_t2_id: "Evaluador/a 2",
+  semanas: "Semanas de asistencia", sint_tec1: "Síntesis — técnico 1", sint_tec2: "Síntesis — técnico 2", otros: "Otras valoraciones",
+  ajustes: "Ajustes durante el año", deltas: "Δ B − A",
+  val_tec1: "Valoración anual — técnico/a 1", val_tec2: "Valoración anual — técnico/a 2", recomendaciones: "Recomendaciones",
+  orientaciones: "Orientaciones a la familia", recibi: "Recibí de la familia",
+  estado: "Estado", organismo: "Organismo o equipo valorador", pct: "Porcentaje de discapacidad", categoria_id: "Categoría",
+  vigencia: "Vigencia", rnpcd: "N.º RNPcD", capacidades: "Capacidades", barreras: "Barreras", apoyos: "Apoyos", obs: "Observaciones",
+  sintesis_funcional: "Síntesis funcional",
+  nivel_cs: "Comunicación social", nivel_crr: "Comportamientos restringidos y repetitivos", justificacion: "Justificación clínica",
+  profesional_id: "Registrado por",
+  centro: "Centro educativo", tipo_centro: "Tipo de centro", grado: "Grado o nivel", modalidad: "Modalidad", dias_horas: "Días y horas",
+  at: "Acompañante terapéutico", at_nombre: "Nombre del acompañante", ref_nombre: "Referente del centro", ref_rol: "Rol del referente",
+  ref_tel: "Teléfono del referente", fecha_estado: "Estado desde",
+  registrada: "Autorización registrada", fecha_original: "Fecha original", es_registro_historico: "Registro histórico",
+  tecnico1_id: "Técnico/a 1", tecnico1_rol: "Rol del técnico/a 1", tecnico2_id: "Técnico/a 2", tecnico2_rol: "Rol del técnico/a 2"
+};
+const LOG_CAMPOS_ORG = {
+  inau: {sipi: "N.º SIPI", convenio: "Convenio o proyecto", referente: "Referente territorial", ingreso: "Ingreso al convenio", obs: "Observaciones"},
+  bps: {prestacion: "Prestación", tramite: "N.º de trámite", estado: "Estado", vencimiento: "Vencimiento o renovación", obs: "Observaciones"}
+};
+function logCampoNombre(campo){
+  const c = String(campo);
+  if(Object.prototype.hasOwnProperty.call(LOG_CAMPOS, c)) return LOG_CAMPOS[c];
+  let m;
+  if((m = /^(inau|bps)\.(\w+)$/.exec(c)) && LOG_CAMPOS_ORG[m[1]][m[2]]) return `${m[1].toUpperCase()} · ${LOG_CAMPOS_ORG[m[1]][m[2]]}`;
+  if((m = /^dim\.D(\d+)$/.exec(c))) return `Dimensión ${m[1]}`;
+  if((m = /^items\.(\d+)$/.exec(c))) return `Ítem ${m[1]}`;
+  if((m = /^sint_escala\.esc_(\d)$/.exec(c))) return `Síntesis de E${m[1]}`;
+  if((m = /^dominios\.(\w+)$/.exec(c))) return `Dominio · ${m[1].charAt(0).toUpperCase()}${m[1].slice(1).replace(/_/g, " ")}`;
+  return c;
+}
+
 function logReiniciar(){
   LOG.carga++;
   Object.assign(LOG, {hceId: null, estado: "cargando", filas: [], total: 0, modulo: "", tipo: "", pagina: 0, error: "", noEncontrado: false});
@@ -112,13 +154,13 @@ function logCambioHtml(f){
 }
 function logFilaHtml(f){
   const quien = f.usuario ? `${escHtml(f.usuario.nombre)}` : `<span class="log-vacio">(sin autor)</span>`;
-  const mod = f.modulo ? `<b>${escHtml(f.modulo)}</b>` : "—";
+  const mod = f.modulo ? escHtml(_logNombre(LOG_MODULOS, f.modulo)) : "—";   // en palabras, como en su filtro
   return `<tr>
     <td class="log-ts">${logFechaHora(f.ts)}</td>
     <td>${quien}</td>
     <td>${mod}</td>
     <td><span class="log-tipo lt-edicion">${escHtml(_logNombre(LOG_TIPOS, f.tipo))}</span>${f.detalle ? `<div class="log-detalle">${escHtml(f.detalle)}</div>` : ""}</td>
-    <td>${f.campo ? `<span class="cod">${escHtml(f.campo)}</span>` : "—"}</td>
+    <td${f.campo ? ` data-campo="${escHtml(f.campo)}"` : ""}>${f.campo ? escHtml(logCampoNombre(f.campo)) : "—"}</td>
     <td class="log-cambio">${logCambioHtml(f)}</td>
   </tr>`;
 }
@@ -139,7 +181,7 @@ function logPaginadoHtml(){
   </nav>`;
 }
 function logPanelHtml(){
-  const cab = `<div class="mod-cab"><h2 id="logTitulo" tabindex="-1">LOG · Registro de cambios</h2></div>`;
+  const cab = `<div class="mod-cab"><h2 id="logTitulo" tabindex="-1">LOG · Auditoría</h2></div>`;
   const nota = `<p class="hint log-nota">Registra cambios, no accesos. Es de solo lectura: nada de lo que se ve acá se puede modificar.</p>`;
   let cuerpo;
   if(LOG.hceId !== EXP.id || LOG.estado === "cargando") cuerpo = estadoCargandoHtml("Cargando el registro de cambios…");

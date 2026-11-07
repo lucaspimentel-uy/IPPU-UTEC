@@ -187,8 +187,8 @@ function docDocumentosHtml(){
         <thead><tr><th scope="col">Documento</th><th scope="col">Categoría</th><th scope="col" class="num">Fecha original</th>
           <th scope="col" class="num">Cargado</th><th scope="col" class="num">Tipo y tamaño</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
         <tbody>${d.filas.map(docFilaHtml).join("")}</tbody></table></div>${docPaginadoHtml()}`
-    : `<p class="hint" id="docVacio">Todavía no se cargó ningún documento.</p>`;
-  return `<div class="info-card" id="docDocsCard"><h3 id="docDocsTitulo" tabindex="-1"><span class="ic" aria-hidden="true">🗂</span> Documentos
+    : `<div id="docVacio">${estadoVacioHtml("◌", "Todavía no se cargó ningún documento.")}</div>`;
+  return `<div class="info-card" id="docDocsCard"><h3 id="docDocsTitulo" tabindex="-1">Documentos
       <span class="org-total" id="docTotal">${d.total}</span><span class="sr-only"> cargados</span></h3>
     <div class="ib">
       <p class="hint doc-nota">PDF, JPG o PNG de hasta 10 MB. Los registros históricos de la HCE anterior son de sólo lectura.</p>
@@ -198,7 +198,7 @@ function docDocumentosHtml(){
 }
 /* La grilla de fotos (la usan la pestaña y el grupo): miniatura (si llegó), descripción, fecha y «Descargar». */
 function fotosGridHtml(fotos, pref, descargar){
-  if(!fotos.length) return `<p class="hint" id="${pref}FotosVacio">Todavía no se cargó ninguna foto.</p>`;
+  if(!fotos.length) return `<div id="${pref}FotosVacio">${estadoVacioHtml("◌", "Todavía no se cargó ninguna foto.")}</div>`;
   return `<ul class="foto-grid" id="${pref}FotosGrid" aria-label="Fotos, la última cargada primero">${fotos.map(f => {
     const desc = f.descripcion ? escHtml(f.descripcion) : "Sin descripción";
     return `<li class="foto-item" data-foto="${f.id}">
@@ -209,7 +209,7 @@ function fotosGridHtml(fotos, pref, descargar){
 }
 function docFotosHtml(){
   const f = DOCS.fotos;
-  return `<div class="info-card" id="docFotosCard"><h3 id="docFotosTitulo" tabindex="-1"><span class="ic" aria-hidden="true">▣</span> Fotos
+  return `<div class="info-card" id="docFotosCard"><h3 id="docFotosTitulo" tabindex="-1">Fotos
       <span class="org-total" id="docFotosTotal">${f.total}</span><span class="sr-only"> cargadas</span></h3>
     <div class="ib">${fotosGridHtml(f.filas, "doc", "docDescargarFoto")}
       ${f.total > f.filas.length ? `<p class="hint">Se muestran las ${f.filas.length} más recientes de ${f.total}.</p>` : ""}
@@ -224,10 +224,10 @@ function docAutorizacionHtml(){
         <div class="data-row"><dt>Fecha</dt><dd id="docAutFecha">${a.fecha ? escHtml(fmtFecha(a.fecha)) : "—"}</dd></div>
         <div class="data-row"><dt>Copia firmada</dt><dd id="docAutDoc">${a.documento ? escHtml(a.documento.nombre) : "—"}</dd></div>
       </dl>
-      <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnAutEditar" onclick="autAbrir()">✎ Editar<span class="sr-only"> la autorización de uso de imagen</span></button></div>`
+      <div class="ib ib-pie"><button type="button" class="btn btn-ghost" id="btnAutEditar" onclick="autAbrir()">✎ Editar<span class="sr-only"> la autorización de uso de imagen</span></button></div>`
     : `<div class="ib">${estadoVacioHtml("◌", "<b>Sin registrar.</b> No se registró la autorización de uso de imagen de este NNA.",
         `<button type="button" class="btn btn-ghost" id="btnAutRegistrar" onclick="autAbrir()">+ Registrar</button>`)}</div>`;
-  return `<div class="info-card" id="docAutCard"><h3 id="docAutTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✍</span> Autorización de uso de imagen</h3>
+  return `<div class="info-card" id="docAutCard"><h3 id="docAutTitulo" tabindex="-1">Autorización de uso de imagen</h3>
     ${cuerpo}<p class="hint doc-aut-nota" id="docAutNota">${escHtml(AUT_NOTA)}</p></div>`;
 }
 function docPanelConectadoHtml(){
@@ -258,7 +258,7 @@ async function _descargar(ruta, nombre, alFallar){
   }catch(err){
     if(err instanceof ApiError && err.status === 401) return;
     const msg = err instanceof ApiError ? err.message : "No se pudo descargar el archivo.";
-    if(alFallar) alFallar(msg); else toast(msg);
+    if(alFallar) alFallar(msg); else toast(msg, "error");
   }
 }
 function docDescargar(docId){
@@ -275,7 +275,7 @@ const _REQ = `<span class="req" aria-hidden="true">*</span><span class="sr-only"
 function _docNombreNna(){ return EXP.hce ? `${EXP.hce.nombre} ${EXP.hce.apellido}`.trim() : ""; }
 function _docPie(izq, idGuardar, rotulo, accion){
   return `<span class="left">${izq}</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnDocCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="${idGuardar}" onclick="${accion}">${rotulo}</button>
     </div>`;
@@ -440,11 +440,11 @@ async function autAbrir(){
   const mi = EXP.seq, id = EXP.id, a = DOCS.aut, crear = !a;
   let docs;
   try{ docs = (await apiFetch(`/hce/${id}/documentos`, {query: {limit: 200}})).data; }
-  catch(err){ if(err instanceof ApiError && err.status === 401) return; toast(err instanceof ApiError ? err.message : "No se pudieron leer los documentos."); return; }
+  catch(err){ if(err instanceof ApiError && err.status === 401) return; toast(err instanceof ApiError ? err.message : "No se pudieron leer los documentos.", "error"); return; }
   if(mi !== EXP.seq || DOCS.hceId !== id) return;
   const reg = crear ? "" : (a.registrada ? "si" : "no");
   const body = `<div id="autErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">${escHtml(AUT_NOTA)}</p>
+    <p class="hint hint-intro">${escHtml(AUT_NOTA)}</p>
     <div class="field"><label for="autf_registrada">¿La familia firmó la autorización? ${_REQ}</label>
       <select id="autf_registrada" aria-required="true" aria-describedby="err_autf_registrada">${crear ? `<option value="">— elegir —</option>` : ""}
         <option value="si"${reg === "si" ? " selected" : ""}>Sí</option><option value="no"${reg === "no" ? " selected" : ""}>No</option></select><div class="err" id="err_autf_registrada"></div></div>
@@ -504,7 +504,7 @@ function grpFotosCardHtml(){
   else cuerpo = `${fotosGridHtml(GFOT.filas, "grp", "grpDescargarFoto")}
     ${GFOT.total > GFOT.filas.length ? `<p class="hint">Se muestran las ${GFOT.filas.length} más recientes de ${GFOT.total}.</p>` : ""}
     <div class="org-reg-acciones"><button type="button" class="btn btn-ghost" id="btnGrpFoto" onclick="fotoAbrirCarga('grupo')">+ Cargar foto</button></div>`;
-  return `<div class="cardhead"><h2 id="grpFotosTitulo" tabindex="-1">Fotos del grupo</h2><div class="cardhead-sp"></div>${GFOT.estado === "listo" ? `<span class="pill neutro">${GFOT.total}<span class="sr-only"> fotos</span></span>` : ""}</div>
+  return `<div class="cardhead"><h2 id="grpFotosTitulo" tabindex="-1">Fotos del grupo</h2><div class="cardhead-sp"></div>${GFOT.estado === "listo" ? `<span class="card-n">${GFOT.total}<span class="sr-only"> fotos</span></span>` : ""}</div>
     <div class="cardbody">${cuerpo}</div>`;
 }
 function grpFotosPintar(){

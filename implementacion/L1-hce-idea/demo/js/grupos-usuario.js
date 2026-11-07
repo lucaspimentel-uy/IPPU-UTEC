@@ -104,7 +104,7 @@ function gruposPintarLista(){
         <div class="cardhead">
           <h2 id="grupoTit_${g.id}" tabindex="-1"><button type="button" class="btn-link h2-link" id="btnGrupo_${g.id}" onclick="abrirGrupo(${g.id})">${escHtml(g.nombre)}</button></h2>
           <div class="cardhead-sp"></div>
-          <span class="pill neutro">${n} NNA<span class="sr-only"> activos</span></span>
+          <span class="card-n">${n} NNA<span class="sr-only"> activos</span></span>
         </div>
         <div class="cardbody">
           <dl class="grupo-tecnicos">
@@ -143,7 +143,7 @@ function gruposPintarDetalle(g){
       ${gruposEsAdmin() ? `<div class="grupo-acciones">${gruposAsignarBtn(g, "Det")}</div>` : ""}
     </div>
     <div class="card">
-      <div class="cardhead"><h2>Integrantes activos</h2><div class="cardhead-sp"></div><span class="pill neutro">${filas.length} NNA</span></div>
+      <div class="cardhead"><h2>Integrantes activos</h2><div class="cardhead-sp"></div><span class="card-n">${filas.length} NNA</span></div>
       <div class="tabla-scroll">
         <table class="lista" id="tablaGrupo">
           <caption class="sr-only">NNA activos del grupo ${escHtml(g.nombre)}</caption>
@@ -184,17 +184,17 @@ async function asignarAbrir(id){
     profs = (await apiFetch("/profesionales", {query:{activo:true}})).data;
   }catch(err){
     GRP.abriendo = false;
-    if(ses === GRP.sesion) toast(err instanceof ApiError ? err.message : "No se pudo cargar la lista de profesionales.");
+    if(ses === GRP.sesion) toast(err instanceof ApiError ? err.message : "No se pudo cargar la lista de profesionales.", "error");
     return;
   }
   GRP.abriendo = false;
   if(ses !== GRP.sesion) return;
   const body = `<div id="asgErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">El cambio se aplica al guardar: el técnico asignado ve desde ese momento los expedientes del grupo, y queda registrado en la auditoría.</p>
+    <p class="hint hint-intro">El cambio se aplica al guardar: el técnico asignado ve desde ese momento los expedientes del grupo, y queda registrado en la auditoría.</p>
     ${_asgSelect("asg_t1", "Técnico 1", profs, g.tecnico1)}${_asgRol("asg_r1", "Rol del técnico 1", g.tecnico1 ? g.tecnico1.rol : "")}
     ${_asgSelect("asg_t2", "Técnico 2", profs, g.tecnico2)}${_asgRol("asg_r2", "Rol del técnico 2", g.tecnico2 ? g.tecnico2.rol : "")}`;
   const foot = `<span class="left">Grupo ${escHtml(g.nombre)} · ${escHtml(g.anio)}</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnAsgCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnAsgGuardar" onclick="asignarGuardar(${g.id})">✓ Guardar asignación</button>
     </div>`;
@@ -276,7 +276,7 @@ function renderUsuario(){
     </div>
     <div class="exp-grid">
       <div class="info-card">
-        <h3><span class="ic">▤</span> Datos del perfil de ejemplo</h3>
+        <h3>Datos del perfil de ejemplo</h3>
         <div class="ib">
           <div class="data-row"><dt>Nombre</dt><dd>${u.nombre}</dd></div>
           <div class="data-row"><dt>Rol</dt><dd>${u.rol}</dd></div>
@@ -286,7 +286,7 @@ function renderUsuario(){
         </div>
       </div>
       <div class="info-card">
-        <h3><span class="ic">◫</span> Equipo técnico</h3>
+        <h3>Equipo técnico</h3>
         <div class="ib">
           ${EQUIPO.map(t=>`<div class="data-row"><dt>${t.n}</dt><dd>${t.e} · Grupos ${t.g}</dd></div>`).join("")}
         </div>

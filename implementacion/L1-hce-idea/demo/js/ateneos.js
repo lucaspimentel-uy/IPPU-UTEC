@@ -133,7 +133,7 @@ async function atCargarGruposFiltro(){
 }
 
 function atIndicadorHtml(){
-  const cab = `<h3 id="atIndTitulo"><span class="ic" aria-hidden="true">◎</span> Indicador institucional</h3>`;
+  const cab = `<h3 id="atIndTitulo">Indicador institucional</h3>`;
   const i = AT.ind;
   if(i.estado === "cargando" || i.estado === "vacio") return `${cab}<div class="ib">${estadoCargandoHtml("Cargando el indicador…")}</div>`;
   if(i.estado === "error") return `${cab}<div class="ib">${estadoErrorHtml(i.error, "atCargarIndicador()")}</div>`;
@@ -200,7 +200,7 @@ function atPintarLista(){
     <section class="info-card at-indicador" id="atIndicador" aria-labelledby="atIndTitulo">${atIndicadorHtml()}</section>
     <div id="atAvisos" class="review-note avisos-api" role="status"${AT.avisos.length ? "" : " hidden"}>${atAvisosHtml()}</div>
     <div class="card">
-      <div class="cardhead"><h2 id="atListaTitulo" tabindex="-1">Registros de ateneos y jornadas</h2><div style="flex:1"></div>
+      <div class="cardhead"><h2 id="atListaTitulo" tabindex="-1">Registros de ateneos y jornadas</h2><div class="cardhead-sp"></div>
         <button type="button" class="btn btn-primary" id="btnAtNuevo" onclick="atAbrirNuevo()">+ Nuevo registro</button></div>
       <div class="nna-toolbar at-filtros" role="search" aria-label="Filtrar ateneos">
         <div class="filtro-grupo"><label for="atFiltroAnio">Año</label><select id="atFiltroAnio" onchange="atFiltrar('anio', this.value)">${optAnios}</select></div>
@@ -302,9 +302,9 @@ function atAcuerdosHtml(d){
         <tbody>${d.acuerdos.map((a, i) => `<tr data-acuerdo="${a.id}"><td class="inc-texto">${escHtml(a.acuerdo)}</td><td>${_atV(a.responsable_rol)}</td>
           <td class="num">${a.plazo ? escHtml(fmtFecha(a.plazo)) : "—"}</td>
           <td><button type="button" class="btn btn-ghost btn-mini" id="btnAcEditar_${a.id}" onclick="atAbrirAcuerdo(${a.id})">✎ Editar<span class="sr-only"> el acuerdo ${i + 1}</span></button></td></tr>`).join("")}</tbody></table></div>`
-    : `<p class="hint" id="atAcuerdosVacio">${jornada ? "Una jornada de capacitación no lleva acuerdos." : "Sin acuerdos registrados."}</p>`;
+    : `<div id="atAcuerdosVacio">${estadoVacioHtml("◌", jornada ? "Una jornada de capacitación no lleva acuerdos." : "Sin acuerdos registrados.")}</div>`;
   const accion = jornada ? "" : `<div class="org-reg-acciones"><button type="button" class="btn btn-ghost" id="btnAcAgregar" onclick="atAbrirAcuerdo(null)">+ Agregar acuerdo</button></div>`;
-  return `<div class="info-card" id="atAcuerdosCard"><h3 id="atAcuerdosTitulo" tabindex="-1"><span class="ic" aria-hidden="true">☰</span> Acuerdos
+  return `<div class="info-card" id="atAcuerdosCard"><h3 id="atAcuerdosTitulo" tabindex="-1">Acuerdos
       <span class="org-total" id="atAcuerdosTotal">${d.acuerdos.length}</span><span class="sr-only"> registrados</span></h3><div class="ib">${filas}${accion}</div></div>`;
 }
 function atDocsHtml(){
@@ -317,8 +317,8 @@ function atDocsHtml(){
           <td>${escHtml(x.categoria.nombre)}</td><td class="num">${x.fecha_original ? escHtml(fmtFecha(x.fecha_original)) : "—"}</td>
           <td class="num">${escHtml(fmtFecha(x.fecha_carga))}</td><td class="num"><span class="doc-tipo">${escHtml(x.tipo ? (TIPO_TXT[x.tipo] || x.tipo) : "—")}</span> · ${escHtml(fmtTamano(x.tamano_bytes))}</td>
           <td class="doc-acciones">${x.tiene_archivo ? `<button type="button" class="btn btn-ghost btn-mini" id="btnAtDocBajar_${x.id}" onclick="atDescargarDoc(${x.id})">Descargar<span class="sr-only"> ${n}</span></button>` : `<span class="hint">Sin archivo</span>`}</td></tr>`; }).join("")}</tbody></table></div>`
-    : `<p class="hint" id="atDocVacio">Todavía no se adjuntó ningún documento.</p>`;
-  return `<div class="info-card" id="atDocsCard"><h3 id="atDocsTitulo" tabindex="-1"><span class="ic" aria-hidden="true">🗂</span> Documentos
+    : `<div id="atDocVacio">${estadoVacioHtml("◌", "Todavía no se adjuntó ningún documento.")}</div>`;
+  return `<div class="info-card" id="atDocsCard"><h3 id="atDocsTitulo" tabindex="-1">Documentos
       <span class="org-total" id="atDocTotal">${D.total}</span><span class="sr-only"> adjuntos</span></h3>
     <div class="ib"><p class="hint doc-nota">PDF, JPG, PNG o presentaciones PPTX (sin macros) de hasta 10 MB.</p>${tabla}
       <div class="org-reg-acciones"><button type="button" class="btn btn-ghost" id="btnAtDocCargar" onclick="atAbrirDocumento()">+ Adjuntar documento</button></div></div></div>`;
@@ -333,11 +333,11 @@ function atDetalleHtml(){
   const d = D.datos, jornada = d.tipo === "jornada";
   const sensible = d.sensible ? ` · <span class="at-sensible" id="atDetSensible">${AT_SENSIBLE_TXT}</span>` : "";
   const bloque = jornada
-    ? `<div class="info-card" id="atBloque"><h3><span class="ic" aria-hidden="true">✎</span> Jornada de capacitación</h3><dl class="ib">
+    ? `<div class="info-card" id="atBloque"><h3>Jornada de capacitación</h3><dl class="ib">
         ${_atFila("Capacitador/a", _atV(d.capacitador), "atCapacitador")}${_atFila("Modalidad", _atV(d.modalidad), "atModalidad")}</dl>
         <div class="ib at-textos">${_atTexto("Contenidos desarrollados", d.contenidos, "atContenidos")}${_atTexto("Materiales", d.materiales, "atMateriales")}
         ${_atTexto("Evaluación de la jornada", d.evaluacion, "atEvaluacion")}</div></div>`
-    : `<div class="info-card" id="atBloque"><h3><span class="ic" aria-hidden="true">✎</span> Desarrollo del ateneo</h3>
+    : `<div class="info-card" id="atBloque"><h3>Desarrollo del ateneo</h3>
         <div class="ib at-textos">${_atTexto("Situación presentada", d.situacion, "atSituacion")}${_atTexto("Hipótesis clínica", d.hipotesis, "atHipotesis")}
         ${_atTexto("Registro de recursos", d.recursos, "atRecursos")}${_atTexto("Seguimiento previsto", d.seguimiento, "atSeguimiento")}</div></div>`;
   const nna = d.nna ? `${escHtml(atNnaTxt(d.nna))}${d.nna.hc_historico !== null ? ` · HC <span class="cod">${escHtml(d.nna.hc_historico)}</span>` : ""}` : "—";
@@ -345,11 +345,11 @@ function atDetalleHtml(){
     <div class="at-det-cab">
       <div><h2 id="atDetTitulo" tabindex="-1" class="at-det-titulo">${escHtml(d.titulo)}</h2>
         <p class="pagedesc at-det-meta" id="atDetMeta"><span class="cod">${escHtml(d.codigo)}</span> · <span id="atDetTipo">${escHtml(d.tipo_label)}</span> · ${escHtml(fmtFecha(d.fecha))}${sensible}</p></div>
-      <div style="flex:1"></div>
+      <div class="cardhead-sp"></div>
       <button type="button" class="btn btn-ghost" id="btnAtEditar" onclick="atAbrirEditar()">✎ Editar<span class="sr-only"> el registro</span></button>
     </div>
     <div id="atAvisos" class="review-note avisos-api" role="status"${AT.avisos.length ? "" : " hidden"}>${atAvisosHtml()}</div>
-    <div class="info-card" id="atGenerales"><h3><span class="ic" aria-hidden="true">▤</span> Datos generales</h3><dl class="ib">
+    <div class="info-card" id="atGenerales"><h3>Datos generales</h3><dl class="ib">
       ${_atFila("Tipo", escHtml(d.tipo_label), "atGenTipo")}${_atFila("Fecha", escHtml(fmtFecha(d.fecha)), "atGenFecha")}
       ${d.tipo === "clinico" ? _atFila("NNA referido", nna, "atGenNna") : ""}
       ${d.tipo === "clinico" || d.tipo === "grupo" ? _atFila("Grupo", escHtml(atGrupoTxt(d.grupo)), "atGenGrupo") : ""}
@@ -357,7 +357,7 @@ function atDetalleHtml(){
       ${_atFila("Registrado por", d.autor ? escHtml(d.autor.nombre) : "—", "atGenAutor")}
       ${_atFila("Código", `<span class="cod">${escHtml(d.codigo)}</span> <span class="hint">(año de registro)</span>`, "atGenCodigo")}</dl></div>
     ${bloque}
-    <div class="info-card" id="atObsCard"><h3><span class="ic" aria-hidden="true">❏</span> Observaciones</h3><div class="ib"><p class="inc-texto" id="atObservaciones">${d.observaciones ? escHtml(d.observaciones) : "—"}</p></div></div>
+    <div class="info-card" id="atObsCard"><h3>Observaciones</h3><div class="ib"><p class="inc-texto" id="atObservaciones">${d.observaciones ? escHtml(d.observaciones) : "—"}</p></div></div>
     ${atAcuerdosHtml(d)}
     ${atDocsHtml()}`;
 }
@@ -373,7 +373,7 @@ const _AT_REQ = `<span class="req" aria-hidden="true">*</span><span class="sr-on
 function _atCampoTxt(campo, valor, opts){
   const [id, rot] = AT_CAMPOS[campo], o = opts || {};
   const ctl = o.area
-    ? `<textarea id="${id}" aria-describedby="${o.hint ? `hint_${id} ` : ""}err_${id}" style="min-height:${o.alto || 70}px">${escHtml(valor || "")}</textarea>`
+    ? `<textarea id="${id}" aria-describedby="${o.hint ? `hint_${id} ` : ""}err_${id}" class="ta-${o.alto || 70}">${escHtml(valor || "")}</textarea>`
     : `<input id="${id}" type="${o.tipo || "text"}" value="${escHtml(valor || "")}" autocomplete="off"${o.req ? ` aria-required="true"` : ""} aria-describedby="${o.hint ? `hint_${id} ` : ""}err_${id}">`;
   return `<div class="field"${o.wrap ? ` id="${o.wrap}"` : ""}><label for="${id}">${rot}${o.req ? " " + _AT_REQ : ""}</label>${ctl}${o.hint ? `<div class="hint" id="hint_${id}">${o.hint}</div>` : ""}<div class="err" id="err_${id}"></div></div>`;
 }
@@ -403,7 +403,7 @@ function _atFormHtml(d, crear){
       <div id="atfAcuerdosFilas" class="at-ac-filas"></div>
       <button type="button" class="btn btn-ghost btn-mini" id="btnAtfAcAgregar" onclick="atBorradorAgregar()">+ Agregar acuerdo</button></fieldset>` : "";
   return `<div id="atErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">${crear ? "El código del registro lo asigna el sistema al guardar." : "Dejar un dato vacío lo borra. Si cambiás el tipo, lo que no corresponde al tipo nuevo se quita."}</p>
+    <p class="hint hint-intro">${crear ? "El código del registro lo asigna el sistema al guardar." : "Dejar un dato vacío lo borra. Si cambiás el tipo, lo que no corresponde al tipo nuevo se quita."}</p>
     <fieldset class="inc-fs at-fs"><legend>Datos generales</legend>
       ${_atSel("tipo", tipos, d.tipo || "", crear ? "— elegir tipo —" : null, {req: true, onchange: "atFormTipo()"})}
       ${_atCampoTxt("fecha", d.fecha, {tipo: "date", req: true})}
@@ -446,7 +446,7 @@ function _atBorradorSync(){
 function _atBorradorHtml(){
   if(!AT.borrador.length) return `<p class="hint" id="atfAcVacio">Sin acuerdos todavía.</p>`;
   return AT.borrador.map((a, i) => `<div class="at-ac-fila" data-fila="${i}" role="group" aria-label="Acuerdo ${i + 1}">
-      <div class="field"><label for="atf_ac_${i}_acuerdo">Acuerdo ${i + 1} ${_AT_REQ}</label><textarea id="atf_ac_${i}_acuerdo" aria-required="true" aria-describedby="err_atf_ac_${i}_acuerdo" style="min-height:48px">${escHtml(a.acuerdo)}</textarea><div class="err" id="err_atf_ac_${i}_acuerdo"></div></div>
+      <div class="field"><label for="atf_ac_${i}_acuerdo">Acuerdo ${i + 1} ${_AT_REQ}</label><textarea id="atf_ac_${i}_acuerdo" aria-required="true" aria-describedby="err_atf_ac_${i}_acuerdo" class="ta-48">${escHtml(a.acuerdo)}</textarea><div class="err" id="err_atf_ac_${i}_acuerdo"></div></div>
       <div class="field"><label for="atf_ac_${i}_responsable_rol">Responsable (rol)</label><input id="atf_ac_${i}_responsable_rol" type="text" value="${escHtml(a.responsable_rol)}" autocomplete="off" aria-describedby="err_atf_ac_${i}_responsable_rol"><div class="err" id="err_atf_ac_${i}_responsable_rol"></div></div>
       <div class="field"><label for="atf_ac_${i}_plazo">Plazo</label><input id="atf_ac_${i}_plazo" type="date" value="${escHtml(a.plazo)}" aria-describedby="err_atf_ac_${i}_plazo"><div class="err" id="err_atf_ac_${i}_plazo"></div></div>
       <button type="button" class="btn btn-ghost btn-mini at-ac-quitar" id="btnAtfAcQuitar_${i}" onclick="atBorradorQuitar(${i})">Quitar<span class="sr-only"> el acuerdo ${i + 1}</span></button>
@@ -468,7 +468,7 @@ async function atAbrirNuevo(){
   const ses = AT.sesion, btn = _atEl("btnAtNuevo");
   if(btn) btn.disabled = true;
   try{ await _atPrepararFormulario(); }
-  catch(err){ if(ses === AT.sesion){ if(btn) btn.disabled = false; toast(err instanceof ApiError ? err.message : "No se pudo preparar el formulario."); } return; }
+  catch(err){ if(ses === AT.sesion){ if(btn) btn.disabled = false; toast(err instanceof ApiError ? err.message : "No se pudo preparar el formulario.", "error"); } return; }
   if(ses !== AT.sesion) return;
   if(btn) btn.disabled = false;
   AT.borrador = [];
@@ -479,14 +479,14 @@ async function atAbrirEditar(){
   if(AT.det.estado !== "listo") return;
   const ses = AT.sesion, d = AT.det.datos;
   try{ await _atPrepararFormulario(); }
-  catch(err){ if(ses === AT.sesion) toast(err instanceof ApiError ? err.message : "No se pudo preparar el formulario."); return; }
+  catch(err){ if(ses === AT.sesion) toast(err instanceof ApiError ? err.message : "No se pudo preparar el formulario.", "error"); return; }
   if(ses !== AT.sesion || AT.det.datos !== d) return;
   openFlujoModal("Editar registro", `${d.codigo} · Ateneos y capacitación`, _atFormHtml(d, false), _atPie("✓ Guardar cambios", "atGuardarEdicion()"));
   atFormTipo();
 }
 function _atPie(rotulo, accion){
   return `<span class="left">Ateneos y capacitación</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnAtCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnAtGuardar" onclick="${accion}">${rotulo}</button>
     </div>`;
@@ -578,7 +578,7 @@ function atAbrirAcuerdo(acuerdoId){
   const d = AT.det.datos, a = acuerdoId === null ? {} : d.acuerdos.find(x => x.id === acuerdoId);
   if(!a) return;
   const body = `<div id="acErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <div class="field"><label for="acf_acuerdo">Acuerdo ${_AT_REQ}</label><textarea id="acf_acuerdo" aria-required="true" aria-describedby="err_acf_acuerdo" style="min-height:80px">${escHtml(a.acuerdo || "")}</textarea><div class="err" id="err_acf_acuerdo"></div></div>
+    <div class="field"><label for="acf_acuerdo">Acuerdo ${_AT_REQ}</label><textarea id="acf_acuerdo" aria-required="true" aria-describedby="err_acf_acuerdo" class="ta-80">${escHtml(a.acuerdo || "")}</textarea><div class="err" id="err_acf_acuerdo"></div></div>
     <div class="field"><label for="acf_rol">Responsable (rol)</label><input id="acf_rol" type="text" value="${escHtml(a.responsable_rol || "")}" autocomplete="off" aria-describedby="hint_acf_rol err_acf_rol">
       <div class="hint" id="hint_acf_rol">Un rol (por ejemplo, «Coordinación técnica»), no un nombre.</div><div class="err" id="err_acf_rol"></div></div>
     <div class="field"><label for="acf_plazo">Plazo</label><input id="acf_plazo" type="date" value="${escHtml(a.plazo || "")}" aria-describedby="err_acf_plazo"><div class="err" id="err_acf_plazo"></div></div>
@@ -625,7 +625,7 @@ async function atAbrirDocumento(){
   const ses = AT.sesion, d = AT.det.datos;
   let cats;
   try{ cats = (await docTraerCategorias()).filter(c => !c.es_registro_historico); }
-  catch(err){ if(ses === AT.sesion) toast(err instanceof ApiError ? err.message : "No se pudieron cargar las categorías."); return; }
+  catch(err){ if(ses === AT.sesion) toast(err instanceof ApiError ? err.message : "No se pudieron cargar las categorías.", "error"); return; }
   if(ses !== AT.sesion || AT.det.datos !== d) return;
   const body = `<div id="atDocErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     <div class="field"><label for="atdf_archivo">Archivo ${_AT_REQ}</label>
@@ -694,12 +694,12 @@ async function atExpCargar(){
 }
 function atExpPintar(){ const el = _atEl("expAteneos"); if(el) el.outerHTML = atExpCardHtml(); }
 function atExpCardHtml(){
-  const cab = `<h3 id="expAteneosTitulo"><span class="ic" aria-hidden="true">◈</span> Ateneos clínicos
+  const cab = `<h3 id="expAteneosTitulo">Ateneos clínicos
     ${EXP_AT.estado === "listo" ? `<span class="org-total" id="expAteneosTotal">${EXP_AT.total}</span><span class="sr-only"> registrados</span>` : ""}</h3>`;
   let cuerpo;
   if(EXP_AT.hceId !== EXP.id || EXP_AT.estado === "cargando" || EXP_AT.estado === "vacio") cuerpo = estadoCargandoHtml("Cargando los ateneos clínicos…");
   else if(EXP_AT.estado === "error") cuerpo = estadoErrorHtml(EXP_AT.error, "atExpCargar()");
-  else if(!EXP_AT.filas.length) cuerpo = `<p class="hint" id="expAteneosVacio">No hay ateneos clínicos registrados sobre este NNA.</p>`;
+  else if(!EXP_AT.filas.length) cuerpo = `<div id="expAteneosVacio">${estadoVacioHtml("◌", "No hay ateneos clínicos registrados sobre este NNA.")}</div>`;
   else cuerpo = `<ul class="exp-ateneos" id="expAteneosLista">${EXP_AT.filas.map(f => `<li data-ateneo="${f.id}">
       <button type="button" class="btn-link exp-at-abrir" id="btnExpAt_${f.id}" onclick="atAbrirDesdeExpediente(${f.id})">${escHtml(f.titulo)}</button>
       <span class="nna-sub"><span class="cod">${escHtml(f.codigo)}</span> · ${escHtml(fmtFecha(f.fecha))} · ${escHtml(f.acuerdos)} ${f.acuerdos === 1 ? "acuerdo" : "acuerdos"} · <span class="at-sensible">${AT_SENSIBLE_TXT}</span></span>

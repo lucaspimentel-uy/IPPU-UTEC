@@ -75,9 +75,9 @@ function logEvento(nna, {modulo, tipo, detalle, ts, usuario}){
 /* --- Acciones (mutan estado y registran en HCE-LOG) ------------------ */
 function firmarModulo(id, key){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
-  if(nna.flujo[key].firmado){ toast("El módulo ya está firmado."); return; }
+  if(nna.flujo[key].firmado){ toast("El módulo ya está firmado.", "info"); return; }
   const v = validarIntegridad(nna, key);
-  if(!v.ok){ toast(v.msg); return; }
+  if(!v.ok){ toast(v.msg, "error"); return; }
   openFirmaModal(id, key);
 }
 function confirmarFirma(id, key){
@@ -102,13 +102,13 @@ function confirmarFirma(id, key){
 }
 function addendaModulo(id, key){
   const nna = NNA.find(n=>n.id===id); if(!nna) return;
-  if(!nna.flujo[key].firmado){ toast("Solo se agregan addendas a módulos firmados."); return; }
+  if(!nna.flujo[key].firmado){ toast("Solo se agregan addendas a módulos firmados.", "info"); return; }
   openAddendaModal(id, key);
 }
 function confirmarAddenda(id, key){
   const nna = NNA.find(n=>n.id===id);
   const texto = (document.getElementById("mfTexto").value||"").trim();
-  if(!texto){ toast("Escribí la corrección/justificación de la addenda."); return; }
+  if(!texto){ toast("Escribí la corrección/justificación de la addenda.", "error"); return; }
   nna.flujo[key].addendas.push({fecha:HOY, profesional:USUARIO_ACTUAL, texto});
   logEvento(nna, {modulo:key, tipo:"addenda", detalle:texto});
   closeFlujoModal(); renderFlujo(id);
@@ -341,7 +341,7 @@ function flujoBodyHtml(nna){
 }
 function flujoPanelHtml(nna){
   return `<div class="flujo-card">
-    <h3><span class="ic">⚑</span> Flujo de módulos (HCE) · CI, LB, PA, PB, IC
+    <h3>Flujo de módulos (HCE) · CI, LB, PA, PB, IC
       <span class="spacer"></span>
       <button class="btn btn-ghost btn-mini" onclick="verHceLog(${nna.id})">☰ Ver auditoría (HCE-LOG)</button>
     </h3>

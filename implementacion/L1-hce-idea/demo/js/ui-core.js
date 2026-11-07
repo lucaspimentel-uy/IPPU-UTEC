@@ -287,8 +287,15 @@ function scrollASeccion(anchorId){
 
 /* El panel institucional ya no se calcula acá: lo calcula el servidor (GET /panel) y lo pinta js/panel.js (C7, §5.159). */
 /* ===================== TOAST ===================== */
-function toast(msg){
+/* `tipo`: "ok" (por omisión: se hizo lo pedido) · "info" (no pasó nada malo: p. ej. «No hay cambios para guardar») · "error" (no se
+   pudo). Glifo + texto (✓ · ℹ · !) y, para un lector de pantalla, «Error:» delante del mensaje; el color del glifo sólo acompaña. */
+const TOAST_TIPOS = {ok: {glifo: "✓", sr: ""}, info: {glifo: "ℹ", sr: ""}, error: {glifo: "!", sr: "Error: "}};
+function toast(msg, tipo){
   const t = document.getElementById("toast");
+  const k = TOAST_TIPOS[tipo] ? tipo : "ok";
+  t.dataset.tipo = k;
+  document.getElementById("toastIco").textContent = TOAST_TIPOS[k].glifo;
+  document.getElementById("toastTipo").textContent = TOAST_TIPOS[k].sr;
   document.getElementById("toastMsg").textContent = msg;
   t.classList.add("show");
   clearTimeout(window._toastT);
@@ -400,7 +407,7 @@ function entrar(usuario){
   cargarGrupos();
   cargarKpis();
   cargarLista();
-  toast("Bienvenido, " + usuario.nombre);
+  toast("Bienvenido, " + usuario.nombre, "info");
 }
 
 async function doLogin(e){

@@ -118,12 +118,12 @@ higiene»); la herramienta los mide sobre lo que se renderiza.
 
 - **Fuentes de sistema, sin webfont** (la presentación puede correr sin conexión): `--f-text` (sans, «Segoe UI» primero) es toda la
   interfaz; `--f-display` es un alias suyo (títulos de pantalla en sans 600); `--f-doc` (serif) **sólo** para documentos impresos
-  (membrete, encabezado del informe, títulos del IC); `--f-dato` (monoespaciada) **sólo** para códigos —HC, C.I., N.º, códigos de
-  módulo— y puntajes dentro de tablas y botones de puntaje. Una cifra suelta (un total, un KPI) va en sans, tabular.
+  (membrete, encabezado del informe, títulos del IC); `--f-dato` (monoespaciada) **sólo** para códigos e identificadores (lista en
+  §2.6). Toda cifra —un puntaje, un total, un KPI— va en sans, tabular (desde F3, §5.160; F1b admitía puntajes en monoespaciada).
 - **Nada por debajo de 12 px:** `--fs-2xs` es el piso y `--fs-3xs` quedó como alias suyo. `--fs-base` (15 px) es el texto de lectura
   clínica: valores de ficha, descriptores del IDEA, ítems de PA/PB, síntesis y observaciones.
-- **Etiquetas** (cabeceras de tabla, `.kpi .lab`, `.info-card>h3`, `.section-label`, `.st`, rótulos de grupo): sans 12 px, 600, en
-  minúscula normal, sin espaciado entre letras.
+- **Etiquetas** (cabeceras de tabla, `.kpi .lab`, `.section-label`, `.st`, rótulos de grupo): sans 12 px, 600, en minúscula normal,
+  sin espaciado entre letras. La cabecera de una tarjeta no es una etiqueta: es el patrón de §2.6.
 - **Acción principal en tinta:** `--accion` / `--accion-hover` rellenan `.btn-primary`. **El naranja es marca** (logo, ítem activo de la
   barra lateral, regla de la pestaña activa y anillo de foco): nunca texto sobre `--bg` ni relleno de un botón. «Firmar» conserva
   `--accion-firma`; «Guardar» es secundario salvo que sea la única acción que confirma la pantalla.
@@ -134,6 +134,27 @@ higiene»); la herramienta los mide sobre lo que se renderiza.
 - **Operable se ve operable:** `.btn-ghost`, el botón de impresión y los chips de filtro del listado usan `--control-borde` (el
   filete `--rule` no delimita un control).
 - **Radios:** `--r-sm` para todo chip y todo control, `--r` para tarjetas, `--r-lg` para diálogos.
+
+### 2.6 Un patrón por componente (F3, `handoff.md` §5.160)
+
+Cada pieza tiene **una** forma; una pantalla nueva usa éstas y no arma la suya. Las mide `conectada.js` (`f3-…`) en las pantallas
+conectadas, a 1280×800 y a 1024×768 donde importa el ancho.
+
+| Pieza | La forma | Dónde vive |
+|---|---|---|
+| **Cabecera de tarjeta** | franja `--paper-2` con filete, 12/16 px; título sans 14 px / 600 en tinta; una cuenta opcional (`.card-n`, texto 14 px en `--ink-2`, nunca un chip); acciones a la derecha; **sin glifo decorativo** y sin versalitas | `.card > .cardhead`, `.info-card > h3`, `.flujo-card > h3`, `.escala > header`, `.prot-esc > header` (`f3-cabecera`) |
+| **Etiqueta o chip** | sans 12 px / 600, 1 px de borde, radio `--r-sm`, una línea; la variante sólo cambia color o estilo del borde. **Marca** («Sensible», «Registro histórico», «Inactivo»): tinta con borde `--ink-2`, sin relleno. La rampa (`.banda-chip`) es la única con relleno propio y no parte el rango | `.st`, `.pill`, `.mbadge`, `.log-tipo`, `.solo-demo`, `.marca` (`f3-chips`, `f3-banda`) |
+| **Aviso flotante** | `toast(msg, tipo)`: `ok` ✓ · `info` ℹ · `error` ! (+ «Error:» sólo para lectores de pantalla); glifo `aria-hidden` + texto, `role="status"` | `ui-core.js` (`f3-toast`) |
+| **Íconos** | glifos de texto (✎ + ✓ ⚠ › ‹ ⌕ ● ◐ ○ ✚ ◌ ◇) o SVG en línea en `currentColor` (`iconoHtml()`, `utils.js`), siempre `aria-hidden`; el control lleva su nombre en texto o en `aria-label`. **Ningún emoji** ni recurso de otro servidor; ⚠ e ℹ se admiten porque Windows los dibuja monocromos | `f3-iconos` |
+| **«Guardar»** | secundario donde la pantalla tiene su acción principal propia («Firmar»); principal donde guardar es la única acción que confirma (un diálogo, la VF, el CI) | `f3-guardar` |
+| **Vacío · cargando · error** | `estadoVacioHtml` / `estadoCargandoHtml` / `estadoErrorHtml` (`utils.js`); lo que todavía no se registró es «Sin registrar.» | `f3-estados`, `3e-…` |
+
+**Monoespaciada permitida** (`f1b-tipo`): `.cod` (HC, C.I., N.º, AT-2026-003, CIE-11), `.tab-cod` (código de módulo en la pestaña),
+`.fr-code` y `.fstep .fname` (códigos del flujo del expediente de ejemplo) y `.grupo-integrantes .hint` (la HC en el detalle de un grupo).
+Nada más: ni puntajes, ni fechas (la de un registro de ORG), ni nombres de campo ni el «ver completo» de Auditoría.
+
+**Valores de ficha.** Rótulo 13 px en `--ink-2`, valor 15 px en tinta, **los dos en 400**: la jerarquía la dan el tamaño y el color. En
+una tarjeta angosta (≤ 360 px) el rótulo va arriba del valor.
 
 ---
 
@@ -286,8 +307,9 @@ Nada de esto reemplaza una prueba con personas y con tecnología de apoyo real (
 - **Reflow a 320 px (1.4.10):** verificado en el listado y en HCE-00; las demás pantallas conectadas están verificadas a 1024 y
   1280 px y a 390 px en el alta, el IC y la VF, pero no a 320 px.
 - **Estados `:hover` / `:active` / `:disabled`:** la herramienta no los mide.
-- **Gráficos SVG** (los radares del IC): el texto de sus ejes y los trazos no pasan por la herramienta; los colores están como hex
-  dentro del JS, no como tokens. El dato no depende sólo del color (trazo continuo o punteado, marca redonda o cuadrada).
+- **Gráficos SVG** (los radares del IC): el contraste de sus ejes y trazos no pasa por la herramienta; los colores están como hex
+  dentro del JS, no como tokens. El dato no depende sólo del color (trazo continuo o punteado, marca redonda o cuadrada). Desde F3 las
+  etiquetas de los ejes miden 12 px en pantalla y no se salen del gráfico (`f3-radar`).
 - **Likert de los protocolos** (PA/PB): sus cinco botones por ítem siguen siendo un punto de Tab cada uno. El tabindex móvil se
   hizo sólo en el editor del IDEA.
 - **Expediente de ejemplo en modo demostración:** su cabecera pasó a clara en F1 (sin el rótulo «Activo/Inactivo» coloreado), pero

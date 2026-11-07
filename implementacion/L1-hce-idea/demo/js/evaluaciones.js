@@ -253,7 +253,7 @@ async function cargarIdeaVigente(){
 }
 
 function ideaVigenteCardHtml(){
-  const cab = `<h3 id="ideaVigenteTitulo"><span class="ic" aria-hidden="true">◐</span> Línea base IDEA vigente</h3>`;
+  const cab = `<h3 id="ideaVigenteTitulo">Línea base IDEA vigente</h3>`;
   const i = EXP.idea;
   if(!i || i.estado === "cargando") return `<div class="info-card">${cab}<div class="ib">${estadoCargandoHtml("Cargando la línea base vigente…")}</div></div>`;
   if(i.estado === "error"){
@@ -272,7 +272,7 @@ function ideaVigenteCardHtml(){
     cuerpo = `<div class="ib"><p class="hint">Todavía no hay una línea base IDEA firmada.</p></div>`;
   }
   const enCurso = c
-    ? `<div class="ib" style="padding-top:0"><p class="hint">Hay una línea base del año ${escHtml(c.anio)} <b>en curso</b> (sin firmar): no reemplaza a la vigente hasta que se firme.
+    ? `<div class="ib ib-pie"><p class="hint">Hay una línea base del año ${escHtml(c.anio)} <b>en curso</b> (sin firmar): no reemplaza a la vigente hasta que se firme.
         <button type="button" class="btn btn-ghost btn-mini" onclick="selTabExp('lb', true)">Abrir →</button></p></div>` : "";
   return `<div class="info-card">${cab}${cuerpo}${enCurso}</div>`;
 }
@@ -353,8 +353,8 @@ function evEvaluadoresHtml(ev){
       <select id="ev_t${n}" data-ev aria-describedby="err_ev_t${n}" onchange="evSucio()"><option value="">— Elegí —</option>${opts.join("")}</select>
       <div class="ev-err" id="err_ev_t${n}"></div></div>`;
   };
-  return `<div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Evaluadores (firman los dos, en un solo acto)</h2></div>
-    <div style="padding:16px 18px">
+  return `<div class="card tarjeta-sep"><div class="cardhead"><h2>Evaluadores (firman los dos, en un solo acto)</h2></div>
+    <div class="cardbody">
       ${PROF_ERROR ? estadoErrorInlineHtml("No se pudo cargar la lista de profesionales.", "evReintentar()") : ""}
       <div class="form-grid">${sel(1)}${sel(2)}</div>
       <p class="hint">Se precargan los técnicos del grupo; quedan guardados en el borrador. Para firmar tienen que ser dos profesionales activos y distintos.</p>
@@ -380,12 +380,10 @@ function ideaDimHtml(ev, ei, di){
     `<button type="button" class="inter-btn${st.valor === v ? " sel" : ""}"${ti(v)} data-ev data-dim="${key}" data-inter="${v}" aria-pressed="${st.valor === v}" onclick="evDim('${key}',${v})">Puntaje ${v}</button>`).join("");
   return `<div class="dimension" id="dim-${key}" onkeydown="evTeclaDim(event)">
     <div class="dname" id="dname-${key}">${escHtml(d.label)}</div>
-    <div class="dinstr">Elegí la descripción que mejor caracterice al NNA — asignar siempre la puntuación más baja posible. Tocá de nuevo la elegida para dejarla sin puntuar.</div>
     <div class="opciones" id="dimgrp-${key}" role="group" aria-labelledby="dname-${key}" aria-describedby="err_dim_${key}" tabindex="-1">${opc}</div>
     <div class="inter-row" role="group" aria-label="Puntajes intermedios y NS de ${escHtml(d.label)}">
-      <span class="inter-label">¿El caso se sitúa claramente entre dos niveles?</span>${inter}
+      <span class="inter-label">Intermedio o NS:</span>${inter}
       <button type="button" class="inter-btn inter-ns${st.valor === "NS" ? " sel" : ""}"${ti("NS")} data-ev data-dim="${key}" data-ns="1" aria-pressed="${st.valor === "NS"}" aria-label="NS: observación insuficiente" onclick="evDim('${key}','NS')"><span aria-hidden="true">◌ </span>NS</button>
-      <span class="inter-nota">Intermedias (Rivière) · NS = observación insuficiente (impide firmar)</span>
     </div>
     <div class="dsel" id="dsel-${key}">Seleccionado: ${valorDimHtml(st.valor)}</div>
     <details class="dobs"${st.obs ? " open" : ""} id="dobsd-${key}"><summary>Observación de la dimensión (opcional)</summary>
@@ -403,17 +401,18 @@ function ideaHtml(ev){
   const escalas = DIMENSIONES.map((escala, ei) => `<div class="escala ${escala.esc}">
     <header><span>${escHtml(escala.escName)}</span><span class="dims">D${ei * 3 + 1} · D${ei * 3 + 2} · D${ei * 3 + 3} — Máx. 24 pts</span></header>
     ${escala.dims.map((_, di) => ideaDimHtml(ev, ei, di)).join("")}
-    <div class="esc-foot"><span class="subtxt">Puntaje 0 = sin trastorno · 8 = afectación severa</span>
-      <span>Subtotal escala: <b id="sub${ei}"></b></span></div></div>`).join("");
+    <div class="esc-foot"><span class="spacer"></span><span>Subtotal escala: <b id="sub${ei}"></b></span></div></div>`).join("");
   return `${evEncabezadoHtml(ev)}
     <p class="mod-nota">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). El total y la banda se calculan al guardar: la banda es una orientación para el equipo y el juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda).</p>
     ${evAvisosBloqueHtml(ev)}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}
-    <div id="ideaForm" style="margin-top:16px">${escalas}</div>
-    <div class="card" style="margin-top:16px">
-      <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Datos de la línea base (HCE-LB)</h2></div>
-      <div style="padding:16px 18px">
+    <div id="ideaForm" class="tarjeta-sep">
+      <p class="review-note ev-como" id="ideaComoPuntuar"><span><b>Cómo puntuar cada dimensión:</b> elegí la descripción que mejor caracterice al NNA, siempre la puntuación más baja posible (0 = sin trastorno · 8 = afectación severa); tocá de nuevo la elegida para dejarla sin puntuar. Si el caso se sitúa claramente entre dos niveles, usá un puntaje intermedio (1, 3, 5 o 7, Rivière). NS = observación insuficiente: impide firmar.</span></p>
+      ${escalas}</div>
+    <div class="card tarjeta-sep">
+      <div class="cardhead"><h2>Datos de la línea base (HCE-LB)</h2></div>
+      <div class="cardbody">
         <div class="form-grid">
           <div class="field"><label for="lb_fecha">Fecha de consenso <span class="req" aria-hidden="true">*</span><span class="sr-only">(necesaria para firmar)</span></label>
             <input id="lb_fecha" type="date" data-ev value="${escHtml(cv(ev, "lb_fecha", rec.fecha_consenso || ""))}" aria-describedby="err_lb_fecha" oninput="evSucio()"><div class="ev-err" id="err_lb_fecha"></div></div>
@@ -584,7 +583,7 @@ function evFirmasHtml(rec){
 function evAddendasHtml(ev){
   const rec = ev.rec;
   const lista = (rec.addendas || []).map(a => `<li><b>${a.fecha ? fmtFecha(a.fecha) : "—"} · ${escHtml(nombreProfesional(a.profesional_id))}:</b> ${escHtml(a.texto)}</li>`).join("");
-  return `<div class="info-card ev-add" id="evAddendas"><h3 id="evAddTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✚</span> Addendas${addendaMarcaHtml((rec.addendas || []).length, false)}</h3>
+  return `<div class="info-card ev-add" id="evAddendas"><h3 id="evAddTitulo" tabindex="-1">Addendas${addendaMarcaHtml((rec.addendas || []).length, false)}</h3>
     <div class="ib">
       ${lista ? `<ol class="ev-add-lista">${lista}</ol>` : `<p class="hint">Sin addendas. El registro firmado no se edita: toda corrección se agrega acá, con su fecha y su autor (quien tiene la sesión iniciada).</p>`}
       <div id="evAddErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
@@ -601,16 +600,16 @@ function ideaLecturaHtml(ev){
     const k = "D" + (ei * 3 + di + 1), x = (r.dim || {})[k] || {valor: null, obs: null};
     return `<tr><th scope="row">${escHtml(d.label)}</th><td class="num">${valorDimHtml(x.valor)}</td><td>${x.obs ? escHtml(x.obs) : "—"}</td></tr>`;
   }).join("")).join("");
-  const delta = ev.delta && ev.delta.delta ? `<div class="info-card"><h3><span class="ic" aria-hidden="true">△</span> Δ interanual del IDEA (${escHtml(ev.delta.anio)} − ${escHtml(ev.delta.anio_anterior)})</h3>
+  const delta = ev.delta && ev.delta.delta ? `<div class="info-card"><h3>Δ interanual del IDEA (${escHtml(ev.delta.anio)} − ${escHtml(ev.delta.anio_anterior)})</h3>
     <dl class="ib">
       <div class="data-row"><dt>Total</dt><dd>${fmtDelta(ev.delta.delta.total)}</dd></div>
       ${["esc_a", "esc_b", "esc_c", "esc_d"].map((c, i) => `<div class="data-row"><dt>${escHtml(escNom[i])}</dt><dd>${fmtDelta(ev.delta.delta[c])}</dd></div>`).join("")}
-    </dl><div class="ib" style="padding-top:0"><p class="hint">En el IDEA menor es mejor: un Δ negativo es una mejora. Sin interpretación: la calcula el servidor al leer y solo dentro del mismo instrumento.</p></div></div>` : "";
+    </dl><div class="ib ib-pie"><p class="hint">En el IDEA menor es mejor: un Δ negativo es una mejora. Sin interpretación: la calcula el servidor al leer y solo dentro del mismo instrumento.</p></div></div>` : "";
   return `${evEncabezadoHtml(ev)}
     ${evAvisosBloqueHtml(ev)}
     <div class="exp-grid">
       <div>
-        <div class="info-card"><h3><span class="ic" aria-hidden="true">▤</span> Puntaje</h3>
+        <div class="info-card"><h3>Puntaje</h3>
           <div class="ib ev-puntaje">
             <div class="tot-lectura"><span id="evTotal">${_num(r.total)}</span><small> / 96</small></div>
             <div id="evBanda">${r.banda ? bandaChipHtml(r.banda) : ""}</div>
@@ -621,7 +620,7 @@ function ideaLecturaHtml(ev){
         ${delta}
       </div>
       <div>
-        <div class="info-card"><h3><span class="ic" aria-hidden="true">◐</span> Datos y firma</h3>
+        <div class="info-card"><h3>Datos y firma</h3>
           <dl class="ib">
             <div class="data-row"><dt>Fecha de consenso</dt><dd>${r.fecha_consenso ? fmtFecha(r.fecha_consenso) : "—"}</dd></div>
             <div class="data-row"><dt>Sesiones de observación</dt><dd>${_num(r.sesiones)}</dd></div>
@@ -632,10 +631,10 @@ function ideaLecturaHtml(ev){
           </dl></div>
       </div>
     </div>
-    <div class="info-card"><h3><span class="ic" aria-hidden="true">≡</span> Dimensiones (solo lectura)</h3>
+    <div class="info-card"><h3>Dimensiones (solo lectura)</h3>
       <div class="ib"><div class="tabla-scroll"><table class="lista ev-tabla"><caption class="sr-only">Puntaje y observación de las 12 dimensiones del IDEA</caption>
         <thead><tr><th scope="col">Dimensión</th><th scope="col">Puntaje</th><th scope="col">Observación</th></tr></thead><tbody>${filas}</tbody></table></div></div></div>
-    <div class="info-card"><h3><span class="ic" aria-hidden="true">❏</span> Síntesis y objetivos</h3>
+    <div class="info-card"><h3>Síntesis y objetivos</h3>
       <dl class="ib"><div class="data-row"><dt>Síntesis clínica</dt><dd class="ev-largo">${_txt(r.sintesis)}</dd></div>
       <div class="data-row"><dt>Objetivos del período</dt><dd class="ev-largo">${_txt(r.objetivos)}</dd></div></dl></div>
     ${evAddendasHtml(ev)}`;
@@ -675,10 +674,10 @@ function protHtml(ev){
     ${evAvisosBloqueHtml(ev)}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}
-    <div id="protForm" style="margin-top:16px">${esc}</div>
-    <div class="card" style="margin-top:16px">
-      <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Datos del ${esB ? "Protocolo B (HCE-PB)" : "Protocolo A (HCE-PA)"}</h2></div>
-      <div style="padding:16px 18px">
+    <div id="protForm" class="tarjeta-sep">${esc}</div>
+    <div class="card tarjeta-sep">
+      <div class="cardhead"><h2>Datos del ${esB ? "Protocolo B (HCE-PB)" : "Protocolo A (HCE-PA)"}</h2></div>
+      <div class="cardbody">
         <div class="form-grid">
           <div class="field"><label for="prot_fecha">Fecha de aplicación <span class="req" aria-hidden="true">*</span><span class="sr-only">(necesaria para firmar)</span></label>
             <input id="prot_fecha" type="date" data-ev value="${escHtml(cv(ev, "prot_fecha", rec.fecha || ""))}" aria-describedby="err_prot_fecha" oninput="evSucio()"><div class="ev-err" id="err_prot_fecha"></div></div>
@@ -736,7 +735,7 @@ function resultadoPbHtml(ev){
       <div class="res-tot"><span class="res-rot">Protocolo B</span><b>${_num(r.total)}</b><small> / 120</small></div>
       <div class="res-tot"><span class="res-rot">Protocolo A</span><b>${a ? _num(a.total) : "—"}</b><small> / 120</small></div>`;
   if(!r.deltas){
-    return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit"><span class="ic" aria-hidden="true">△</span> Resultado</h3><div class="ib">
+    return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit">Resultado</h3><div class="ib">
       ${totales}</div>
       <p class="hint" id="evDeltaNota">El Δ todavía no se calculó: el Protocolo A de ${escHtml(r.anio)} no estaba firmado cuando se firmó este B. Se completa en cuanto se firme el A.</p></div></section>`;
   }
@@ -752,7 +751,7 @@ function resultadoPbHtml(ev){
   };
   const alertaTxt = alertas.length
     ? `<div class="review-note ev-alertas" role="status"><span aria-hidden="true">⚠</span><div><b>Alerta institucional:</b> ${alertas.map(x => `${escHtml(IPPU_ESCALAS[ESC_CLAVE_PROT.indexOf(x.escala)] || x.escala)} (Δ ${fmtDelta(x.delta)}, ${escHtml(x.etiqueta)})`).join(" · ")}. Se registró al firmar el B.</div></div>` : "";
-  return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit"><span class="ic" aria-hidden="true">△</span> Resultado — Δ B − A</h3><div class="ib">
+  return `<section class="info-card res-pb" id="evResultado" aria-labelledby="evResTit"><h3 id="evResTit">Resultado — Δ B − A</h3><div class="ib">
     ${totales}${celda("total", "Δ total")}</div>
     <div class="res-escalas">${IPPU_ESCALAS.map((n, i) => celda(ESC_CLAVE_PROT[i], `E${i + 1} · ${n}`)).join("")}</div>
     ${alertaTxt}
@@ -772,13 +771,13 @@ function protLecturaHtml(ev){
     ${r.tipo === "B" ? resultadoPbHtml(ev) : ""}
     <div class="exp-grid">
       <div>
-        <div class="info-card"><h3><span class="ic" aria-hidden="true">▤</span> Puntaje</h3>
+        <div class="info-card"><h3>Puntaje</h3>
           <div class="ib ev-puntaje"><div class="tot-lectura"><span id="evTotal">${_num(r.total)}</span><small> / 120</small></div>
             <div class="hint">Escala de progreso (mayor = más progreso).</div></div>
           <dl class="ib">${IPPU_ESCALAS.map((n, i) => `<div class="data-row"><dt>E${i + 1} · ${escHtml(n)}</dt><dd>${_num(r[ESC_CLAVE_PROT[i]])} / 30</dd></div>`).join("")}</dl></div>
       </div>
       <div>
-        <div class="info-card"><h3><span class="ic" aria-hidden="true">◐</span> Datos y firma</h3>
+        <div class="info-card"><h3>Datos y firma</h3>
           <dl class="ib">
             <div class="data-row"><dt>Fecha de aplicación</dt><dd>${r.fecha ? fmtFecha(r.fecha) : "—"}</dd></div>
             <div class="data-row"><dt>Semanas de asistencia</dt><dd>${_num(r.semanas)}</dd></div>
@@ -786,14 +785,14 @@ function protLecturaHtml(ev){
             <div class="data-row"><dt>Evaluador/a 2</dt><dd>${escHtml(nombreProfesional(r.evaluador_t2_id))}</dd></div>
             <div class="data-row"><dt>Firmado por</dt><dd>${evFirmasHtml(r)}</dd></div>
           </dl></div>
-        <div class="info-card"><h3><span class="ic" aria-hidden="true">❏</span> Síntesis</h3>
+        <div class="info-card"><h3>Síntesis</h3>
           <dl class="ib"><div class="data-row"><dt>Técnico 1</dt><dd class="ev-largo">${_txt(r.sint_tec1)}</dd></div>
             <div class="data-row"><dt>Técnico 2</dt><dd class="ev-largo">${_txt(r.sint_tec2)}</dd></div>
             <div class="data-row"><dt>Otras valoraciones</dt><dd class="ev-largo">${_txt(r.otros)}</dd></div>
             ${r.tipo === "B" ? `<div class="data-row"><dt>Ajustes durante el año</dt><dd class="ev-largo">${_txt(r.ajustes)}</dd></div>` : ""}</dl></div>
       </div>
     </div>
-    <div class="info-card"><h3><span class="ic" aria-hidden="true">≡</span> Ítems (solo lectura)</h3><div class="ib" style="padding:0">${esc}</div></div>
+    <div class="info-card"><h3>Ítems (solo lectura)</h3><div class="ib ib-sin-margen">${esc}</div></div>
     ${evAddendasHtml(ev)}`;
 }
 
@@ -910,7 +909,7 @@ async function evGuardar(opts){
   evLimpiarErrores();
   const body = evCuerpo(ev);
   if(ev.rec && !Object.keys(body).length){
-    if(!paraFirmar){ ev.avisos = []; evPintarAvisos(); toast("No hay cambios para guardar"); }
+    if(!paraFirmar){ ev.avisos = []; evPintarAvisos(); toast("No hay cambios para guardar", "info"); }
     return true;
   }
   if(!ev.rec){ if(ev.k === "lb") body.anio = ev.anio; else { body.tipo = EV_INFO[ev.k].tipo; body.anio = ev.anio; } }

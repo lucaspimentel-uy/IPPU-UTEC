@@ -3,7 +3,7 @@
  *
  * Pantallas: login · listado · HCE-00 · CI · LB · PA · PB (con Δ) · editor del IC · informe impreso del IC · VF. C7 reemplaza la
  * captura de la Analítica de demostración por el Panel institucional conectado (`3e-panel` y `f1-panel-completa`). C2 agrega la severidad de Martín en lectura (`sev`) y con el formulario abierto (`sev-formulario`). C3 agrega los organismos de Martín (`org`), la alerta AYEX de Sofía (`org-alerta`) y el formulario de BPS abierto (`org-formulario`). F1 (handoff §5.140) agrega tres capturas de página completa (`f1-…-completa`): el editor de LB
- * (con la barra de acciones), el PB firmado con su bloque «Resultado» y el editor del IC. F2 agrega Pendientes (con el filtro «Línea base»), el
+ * (con la barra de acciones al pie, en el flujo normal mientras se captura), el PB firmado con su bloque «Resultado» y el editor del IC. F2 agrega Pendientes (con el filtro «Línea base»), el
  * listado de Grupos, un grupo abierto y —con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD— el diálogo «Asignar técnicos» del admin (se cierra sin guardar).
  * C4 agrega la inclusión de Sofía en lectura (`inc`, con una gestión «Sensible»), el formulario de la ficha (`inc-formulario`) y el de una
  * gestión (`inc-gestion`) abiertos (se cierran sin guardar), Joaquín sin ficha (`inc-sin-registrar`) y la vista «Inclusión» (`inclusion-vista`).
@@ -44,7 +44,15 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     const snap = async (nombre) => { await page.waitForTimeout(250); const f = `3e-${nombre}-${w}x${h}.png`; await page.screenshot({ path: path.join(SALIDAS, f) }); hechas.push(f); };
-    const snapCompleta = async (nombre) => { await page.waitForTimeout(250); const f = `f1-${nombre}-completa-${w}x${h}.png`; await page.screenshot({ path: path.join(SALIDAS, f), fullPage: true }); hechas.push(f); };
+    /* Página completa: la barra de acciones (pegada abajo, position:sticky) se pone en el flujo normal mientras se captura —si no, queda
+       en el medio de la imagen, sobre el contenido (el radar del IC)— y se restaura después (F3, §5.160). */
+    const snapCompleta = async (nombre) => {
+      await page.waitForTimeout(250); const f = `f1-${nombre}-completa-${w}x${h}.png`;
+      await page.evaluate(() => document.querySelectorAll('.barra-acciones').forEach((b) => { b.dataset.posCaptura = b.style.position; b.style.position = 'static'; }));
+      try { await page.screenshot({ path: path.join(SALIDAS, f), fullPage: true }); }
+      finally { await page.evaluate(() => document.querySelectorAll('.barra-acciones').forEach((b) => { b.style.position = b.dataset.posCaptura || ''; delete b.dataset.posCaptura; })); }
+      hechas.push(f);
+    };
 
     await page.goto(DEMO + '/index.html?api=' + encodeURIComponent(API));
     await page.waitForSelector('#loginScreen', { state: 'attached' });
@@ -124,7 +132,7 @@ const TAMANIOS = [[1280, 800], [1024, 768]];
     await page.click('.navitem[data-view="analitica"]'); await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 });
     await page.evaluate(() => { document.getElementById('toast').classList.remove('show'); });   await snap('panel');
     await snapCompleta('panel');
-    // F1: página completa (la banda y la barra de acciones quedan donde las deja el desplazamiento)
+    // F1: página completa (la barra de acciones va al pie, en el flujo normal, mientras se captura: snapCompleta)
     await abrir('Joaquín', 'lb');                                         await snapCompleta('lb');
     await abrir('Martín', 'pb');                                          await snapCompleta('pb-resultado');
     await abrir('Valentina', 'ic');                                       await snapCompleta('ic-editor');

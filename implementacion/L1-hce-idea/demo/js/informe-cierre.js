@@ -43,15 +43,20 @@ function radarSVG(series, size, descripcion){
   const cx = size / 2, cy = size / 2, R = size / 2 - 50, N = IPPU_ESCALAS.length;
   const pt = (i, fr) => { const a = -Math.PI / 2 + i * 2 * Math.PI / N; return [cx + R * fr * Math.cos(a), cy + R * fr * Math.sin(a)]; };
   const alt = descripcion || ("Radar por escala: " + series.map(se => `${se.nombre || "serie"}: ${se.vals.map((v, i) => `${IPPU_ESCALAS[i]} ${v === null || v === undefined ? "sin dato" : v}`).join(", ")}`).join(". "));
-  let s = `<svg viewBox="0 0 ${size} ${size}" width="${size}" style="max-width:100%" role="img" aria-label="${escHtml(alt)}"><title>${escHtml(alt)}</title>`;
+  /* F3 (§5.160): las etiquetas de los ejes van a 12 px (el piso del sistema) y AFUERA del gráfico: arriba y abajo centradas, a los
+     costados alineadas contra el vértice. El lienzo es 50 px más ancho de cada lado para que entren sin recortarse. */
+  const MARGEN = 50, W = size + 2 * MARGEN, FS = 12, IL = 14;
+  let s = `<svg class="ic-radar" viewBox="${-MARGEN} 0 ${W} ${size}" width="${W}" role="img" aria-label="${escHtml(alt)}"><title>${escHtml(alt)}</title>`;
   for(let g = 1; g <= 4; g++)
     s += `<polygon points="${Array.from({length: N}, (_, i) => pt(i, g / 4).join(",")).join(" ")}" fill="none" stroke="#D8E2EC" stroke-width="1"/>`;
-  const cortas = [["Relación", "Social"], ["Comunicación", "y Lenguaje"], ["Anticipación", "y Flexib."], ["Simbolización"]];
+  const rotulos = [["Relación", "Social"], ["Comunicación", "y Lenguaje"], ["Anticipación", "y Flexibilidad"], ["Simbolización"]];
+  const texto = (x, y, t, ancla) => `<text x="${x}" y="${y}" font-size="${FS}" font-weight="600" fill="#43596E" text-anchor="${ancla}">${t}</text>`;
   for(let i = 0; i < N; i++){
     const [x, y] = pt(i, 1); s += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#D8E2EC"/>`;
-    const [lx0, ly] = pt(i, 1.28);
-    const lx = Math.min(Math.max(lx0, 38), size - 38);   // que las etiquetas no se recorten en el borde
-    cortas[i].forEach((t, li) => s += `<text x="${lx}" y="${ly - 4 + li * 11}" font-size="9.5" font-weight="600" fill="#43596E" text-anchor="middle">${t}</text>`);
+    const ls = rotulos[i % rotulos.length], n = ls.length;
+    if(i === 0) ls.forEach((t, li) => s += texto(cx, y - 10 - (n - 1 - li) * IL, t, "middle"));          // arriba
+    else if(i === 2) ls.forEach((t, li) => s += texto(cx, y + 20 + li * IL, t, "middle"));               // abajo
+    else ls.forEach((t, li) => s += texto(i === 1 ? x + 8 : x - 8, y + 4 - (n - 1) * IL / 2 + li * IL, t, i === 1 ? "start" : "end"));   // a los costados
   }
   series.forEach(se => {
     const vals = se.vals.map(v => typeof v === "number" ? v : 0);
@@ -211,7 +216,7 @@ function icEstadoHtml(){
 function icEncabezadoHtml(){
   return `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual — ${escHtml(IC.anio)}</h2>
     <span id="icEstado" class="ev-estado">${icEstadoHtml()}</span><span class="spacer"></span>
-    <button type="button" class="btn btn-ghost btn-mini" id="btnIcImpreso" onclick="icAbrirDocumento()">🖨 Ver informe impreso</button></div>`;
+    <button type="button" class="btn btn-ghost btn-mini" id="btnIcImpreso" onclick="icAbrirDocumento()">${iconoHtml("imprimir")} Ver informe impreso</button></div>`;
 }
 function icAvisosBloqueHtml(){
   return `<div id="icAvisos" class="review-note avisos-api" role="status"${(IC.avisos || []).length ? "" : " hidden"}>${icAvisosHtml()}</div>`;
@@ -238,8 +243,8 @@ function icCuantCardHtml(primero){
     const d = icCuantDatos({idea: IC.idea, a: IC.pa, b: IC.pb, deltas: IC.pb && IC.pb.deltas, interpretacion: IC.pb && IC.pb.interpretacion, alertas: IC.pb && IC.pb.alertas});
     cuerpo = `${icTablaHtml(d)}${icRadaresHtml(d)}`;
   }
-  return `<div class="card"${primero ? "" : ` style="margin-top:16px"`}><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Análisis cuantitativo — desde los módulos firmados de ${escHtml(IC.anio)}</h2></div>
-    <div style="padding:16px 18px">${cuerpo}</div></div>`;
+  return `<div class="card${primero ? "" : " tarjeta-sep"}"><div class="cardhead"><h2>Análisis cuantitativo — desde los módulos firmados de ${escHtml(IC.anio)}</h2></div>
+    <div class="cardbody">${cuerpo}</div></div>`;
 }
 
 const _cvI = (id, base) => (IC.campos && Object.prototype.hasOwnProperty.call(IC.campos, id)) ? IC.campos[id] : base;
@@ -259,8 +264,8 @@ function icFirmantesHtml(){
       <select id="ic_f${n}" data-ic aria-describedby="err_ic_f${n}" onchange="icSucio()"><option value="">— Elegí —</option>${opts.join("")}</select>
       <div class="ev-err" id="err_ic_f${n}"></div></div>`;
   };
-  return `<div class="card" style="margin-top:16px"><div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Firmantes (firman los dos, en un solo acto)</h2></div>
-    <div style="padding:16px 18px">
+  return `<div class="card tarjeta-sep"><div class="cardhead"><h2>Firmantes (firman los dos, en un solo acto)</h2></div>
+    <div class="cardbody">
       ${PROF_ERROR ? estadoErrorInlineHtml("No se pudo cargar la lista de profesionales.", "icReintentar()") : ""}
       <div class="form-grid">${sel(1)}${sel(2)}</div>
       <p class="hint">Se precargan los técnicos del grupo, pero se eligen al firmar: no quedan guardados en el borrador. Tienen que ser dos profesionales activos y distintos.</p>
@@ -282,13 +287,13 @@ function icEditorHtml(){
     ${icAvisosBloqueHtml()}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${icCuantCardHtml()}
-    <div class="card" style="margin-top:16px">
-      <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Síntesis cualitativa por escala</h2></div>
-      <div style="padding:16px 18px"><p class="hint">Extensión sugerida: ≈100 palabras por escala (el servidor avisa al firmar si queda corta; no bloquea).</p><div class="form-grid full">${escFields}</div></div>
+    <div class="card tarjeta-sep">
+      <div class="cardhead"><h2>Síntesis cualitativa por escala</h2></div>
+      <div class="cardbody"><p class="hint">Extensión sugerida: ≈100 palabras por escala (el servidor avisa al firmar si queda corta; no bloquea).</p><div class="form-grid full">${escFields}</div></div>
     </div>
-    <div class="card" style="margin-top:16px">
-      <div class="cardhead" style="padding:13px 18px;border-bottom:1px solid var(--line)"><h2 style="font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)">Valoraciones anuales, recomendaciones y orientaciones</h2></div>
-      <div style="padding:16px 18px">
+    <div class="card tarjeta-sep">
+      <div class="cardhead"><h2>Valoraciones anuales, recomendaciones y orientaciones</h2></div>
+      <div class="cardbody">
         <div class="form-grid full">
           ${campo("ic_val1", "Valoración anual — técnico/a 1", rec.val_tec1)}
           ${campo("ic_val2", "Valoración anual — técnico/a 2", rec.val_tec2)}
@@ -337,12 +342,12 @@ function icLecturaHtml(){
   const esc = IPPU_ESCALAS.map((n, i) => `<div class="data-row"><dt>E${i + 1} · ${escHtml(n)}</dt><dd class="ev-largo">${_txt(se["esc_" + (i + 1)])}</dd></div>`).join("");
   const recibi = r.recibi
     ? `${escHtml(r.recibi.firmante)} · registrado el ${r.recibi.fecha ? fmtFecha(r.recibi.fecha) : "—"}`
-    : `Pendiente de registro <button type="button" class="btn btn-ghost btn-mini" id="btnIcRecibi" onclick="openRecibiModal()">✍ Registrar recibí</button>`;
+    : `Pendiente de registro <button type="button" class="btn btn-ghost btn-mini" id="btnIcRecibi" onclick="openRecibiModal()">Registrar recibí</button>`;
   return `${icEncabezadoHtml()}
     ${icAvisosBloqueHtml()}
     ${icCuantCardHtml(true)}
-    <div class="info-card" style="margin-top:16px"><h3><span class="ic" aria-hidden="true">❏</span> Análisis cualitativo por escala</h3><dl class="ib">${esc}</dl></div>
-    <div class="info-card"><h3><span class="ic" aria-hidden="true">≡</span> Síntesis interdisciplinaria, recomendaciones y orientaciones</h3>
+    <div class="info-card tarjeta-sep"><h3>Análisis cualitativo por escala</h3><dl class="ib">${esc}</dl></div>
+    <div class="info-card"><h3>Síntesis interdisciplinaria, recomendaciones y orientaciones</h3>
       <dl class="ib">
         <div class="data-row"><dt>Valoración anual — técnico/a 1</dt><dd class="ev-largo">${_txt(r.val_tec1)}</dd></div>
         <div class="data-row"><dt>Valoración anual — técnico/a 2</dt><dd class="ev-largo">${_txt(r.val_tec2)}</dd></div>
@@ -350,7 +355,7 @@ function icLecturaHtml(){
         <div class="data-row"><dt>Orientaciones a la familia</dt><dd class="ev-largo">${_txt(r.orientaciones)}</dd></div>
         <div class="data-row"><dt>Fecha del informe</dt><dd>${r.fecha ? fmtFecha(r.fecha) : "—"}</dd></div>
       </dl></div>
-    <div class="info-card"><h3><span class="ic" aria-hidden="true">◐</span> Firmas y recibí</h3>
+    <div class="info-card"><h3>Firmas y recibí</h3>
       <dl class="ib">
         <div class="data-row"><dt>Firmado por</dt><dd>${evFirmasHtml(r)}</dd></div>
         <div class="data-row"><dt>Recibí de la familia</dt><dd id="icRecibiTxt">${recibi}</dd></div>
@@ -360,7 +365,7 @@ function icLecturaHtml(){
 function icAddendasHtml(){
   const rec = IC.rec;
   const lista = (rec.addendas || []).map(a => `<li><b>${a.fecha ? fmtFecha(a.fecha) : "—"} · ${escHtml(nombreProfesional(a.profesional_id))}:</b> ${escHtml(a.texto)}</li>`).join("");
-  return `<div class="info-card ev-add" id="icAddendas"><h3 id="icAddTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✚</span> Addendas${addendaMarcaHtml((rec.addendas || []).length, false)}</h3>
+  return `<div class="info-card ev-add" id="icAddendas"><h3 id="icAddTitulo" tabindex="-1">Addendas${addendaMarcaHtml((rec.addendas || []).length, false)}</h3>
     <div class="ib">
       ${lista ? `<ol class="ev-add-lista">${lista}</ol>` : `<p class="hint">Sin addendas. El informe firmado no se edita: toda corrección se agrega acá, con su fecha y su autor (quien tiene la sesión iniciada).</p>`}
       <div id="evAddErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
@@ -417,7 +422,7 @@ async function icGuardar(opts){
   evLimpiarErrores();
   const body = icCuerpo();
   if(IC.rec && !Object.keys(body).length){
-    if(!paraFirmar){ IC.avisos = []; icPintarAvisos(); toast("No hay cambios para guardar"); }
+    if(!paraFirmar){ IC.avisos = []; icPintarAvisos(); toast("No hay cambios para guardar", "info"); }
     return true;
   }
   if(!IC.rec) body.anio = IC.anio;
@@ -530,20 +535,20 @@ async function icAddenda(){
 /* ---------- Recibí de la familia (modal #modalFlujo, accesible: ver flujo.js · openFlujoModal) ---------- */
 function openRecibiModal(){
   const r = IC.rec;
-  if(!r || !r.firmado){ toast("El recibí se registra con el informe firmado."); return; }
-  if(r.recibi){ toast("El recibí ya está registrado."); return; }
+  if(!r || !r.firmado){ toast("El recibí se registra con el informe firmado.", "info"); return; }
+  if(r.recibi){ toast("El recibí ya está registrado.", "info"); return; }
   const ref = EXP.raw && EXP.raw.persona ? EXP.raw.persona.referente : "";
   const nombre = EXP.hce ? `${EXP.hce.nombre} ${EXP.hce.apellido}`.trim() : "";
   const body = `<div id="recibiErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">Constancia de que la familia recibió el informe en entrevista presencial. Se registra <b>una sola vez</b>, después de la firma, y no modifica el informe firmado.</p>
+    <p class="hint hint-intro">Constancia de que la familia recibió el informe en entrevista presencial. Se registra <b>una sola vez</b>, después de la firma, y no modifica el informe firmado.</p>
     <div class="field"><label for="mfFirmante">Firmante (familia / referente) <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatorio)</span></label>
       <input id="mfFirmante" value="${escHtml(ref || "")}" autocomplete="off" aria-describedby="err_mfFirmante"><div class="err" id="err_mfFirmante"></div></div>
     <div class="field"><label for="mfFecha">Fecha <span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatoria)</span></label>
       <input id="mfFecha" type="date" aria-describedby="err_mfFecha"><div class="err" id="err_mfFecha"></div></div>`;
   const foot = `<span class="left">HCE-IC · Informe de Cierre Anual</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnRecibiOk" onclick="confirmarRecibi()">✍ Registrar recibí</button>
+      <button type="button" class="btn btn-primary" id="btnRecibiOk" onclick="confirmarRecibi()">Registrar recibí</button>
     </div>`;
   openFlujoModal("Registrar «recibí» de la familia", nombre ? `${nombre} · Informe de cierre ${IC.anio}` : `Informe de cierre ${IC.anio}`, body, foot);
 }
@@ -569,7 +574,7 @@ async function confirmarRecibi(){
   }catch(err){
     if(mi !== EXP.seq || IC.hceId !== id) return;
     IC.guardando = false;
-    if(btn){ btn.disabled = false; btn.textContent = "✍ Registrar recibí"; }
+    if(btn){ btn.disabled = false; btn.textContent = "Registrar recibí"; }
     const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo: null, mensaje: err.message || "No se pudo registrar el recibí."}];
     const mapa = {firmante: ["mfFirmante", "Firmante"], fecha: ["mfFecha", "Fecha"]};
     const items = detalle.map(d => ({id: d.campo && mapa[d.campo] ? mapa[d.campo][0] : null, rot: d.campo && mapa[d.campo] ? mapa[d.campo][1] : "", mensaje: d.mensaje}));
@@ -659,7 +664,7 @@ function icSinFirmarHtml(titulo){
       ${estadoVacioHtml("▤", `No hay un Informe de Cierre Anual <b>firmado</b> para ${EXP.hce ? escHtml(`${EXP.hce.nombre} ${EXP.hce.apellido}`.trim()) : "este NNA"}.<br>
         El informe imprimible se genera <b>únicamente desde el HCE-IC firmado</b>: no se elaboran versiones alternativas (§5.3).`)}
       <ol class="fl-lista" aria-label="Estado de los módulos del año ${f ? escHtml(f.anio) : ""}">${filas}</ol>
-      <div style="display:flex;justify-content:center;margin-top:14px"><button type="button" class="btn btn-primary" onclick="icVolverAlExpediente()">✎ Ir al informe de cierre</button></div>
+      <div class="inf-centro"><button type="button" class="btn btn-primary" onclick="icVolverAlExpediente()">✎ Ir al informe de cierre</button></div>
     </div></div>`;
 }
 
@@ -683,10 +688,10 @@ function icDocumentoHtml(){
   const datos = icCuantDatos({idea: d.idea, a: pr.a, b: pr.b, deltas: pr.deltas, interpretacion: pr.interpretacion, alertas: pr.alertas});
   const se = inf.sint_escala || {};
   const hc = e.hc_numero === null || e.hc_numero === undefined ? "—" : e.hc_numero;
-  const botones = `<button type="button" class="btn-print" onclick="window.print()">🖨 Imprimir / guardar como PDF</button>
-    ${!inf.recibi ? `<button type="button" class="btn-print btn-print-acento" id="btnInfRecibi" onclick="openRecibiModal()">✍ Registrar recibí</button>` : ""}${INF_VOLVER}`;
+  const botones = `<button type="button" class="btn-print" onclick="window.print()">${iconoHtml("imprimir")} Imprimir / guardar como PDF</button>
+    ${!inf.recibi ? `<button type="button" class="btn-print btn-print-acento" id="btnInfRecibi" onclick="openRecibiModal()">Registrar recibí</button>` : ""}${INF_VOLVER}`;
   const adds = (inf.addendas || []);
-  const card = (titulo, interior, cls = "") => `<div class="card doc-seccion${cls ? " " + cls : ""}" style="margin-top:16px"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${interior}</div></div>`;
+  const card = (titulo, interior, cls = "") => `<div class="card doc-seccion tarjeta-sep${cls ? " " + cls : ""}"><div class="cardhead"><h2>${titulo}</h2></div><div class="cardbody">${interior}</div></div>`;
   const cuerpo = `
     <div class="card"><div class="cardbody">
       <div class="membrete">
@@ -711,7 +716,7 @@ function icDocumentoHtml(){
     ${card("5. Orientaciones a la familia", `<p class="doc-p">${_txt(inf.orientaciones)}</p>`)}
     ${adds.length ? card("Addendas", adds.map(a => `<p class="doc-p"><b>${a.fecha ? fmtFecha(a.fecha) : "—"} · ${escHtml(nombreProfesional(a.profesional_id))}:</b> ${escHtml(a.texto)}</p>`).join("")) : ""}
 
-    <div class="card doc-seccion doc-cierre" style="margin-top:16px"><div class="cardbody">
+    <div class="card doc-seccion doc-cierre tarjeta-sep"><div class="cardbody">
       <div class="firmas-grid">
         <div><label>Firma — profesional 1</label><div class="flin"></div><div class="fnom">${firmaTxt(firmas[0])}</div></div>
         <div><label>Firma — profesional 2</label><div class="flin"></div><div class="fnom">${firmaTxt(firmas[1])}</div></div>

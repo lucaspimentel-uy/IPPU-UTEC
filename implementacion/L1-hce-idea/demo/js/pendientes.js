@@ -119,7 +119,7 @@ function pendPintar(){
   }).join("");
   cont.innerHTML = `${pendOrientacionHtml()}
     <div class="card">
-      <div class="cardhead"><h2>Falta este año</h2></div>
+      <div class="cardhead"><h2>NNA activos con pendientes</h2></div>
       <div class="nna-toolbar"><div class="estado-chips" role="group" aria-label="Qué falta">${chips}</div></div>
       <div class="tabla-scroll">
         <table class="lista" id="tablaPend">

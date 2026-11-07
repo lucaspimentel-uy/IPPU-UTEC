@@ -32,7 +32,8 @@ function sevOlvidarSesion(){
 
 /* ---------- Carga ---------- */
 function sevMostrar(){
-  if(SEV.hceId === EXP.id && (SEV.estado === "listo" || SEV.estado === "vacio")){ sevRepintar(); sevCargar(true); return; }
+  // Un aviso de la API es de la escritura que lo trajo: al volver a la pestaña ya no se muestra (como en LB, PA, PB e IC).
+  if(SEV.hceId === EXP.id && (SEV.estado === "listo" || SEV.estado === "vacio")){ SEV.avisos = []; sevRepintar(); sevCargar(true); return; }
   sevCargar(false);
 }
 async function sevCargar(conservar){
@@ -84,7 +85,7 @@ function sevLecturaHtml(r){
       <div class="data-row"><dt>Fecha del juicio</dt><dd id="sevFecha">${escHtml(fmtFecha(r.fecha))}</dd></div>
       <div class="data-row"><dt>Registrado por</dt><dd id="sevAutor">${escHtml(r.profesional ? r.profesional.nombre : "—")}</dd></div>
     </dl>
-    <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnSevEditar" onclick="sevAbrirForm()">✎ Editar</button></div>`;
+    <div class="ib ib-pie"><button type="button" class="btn btn-ghost" id="btnSevEditar" onclick="sevAbrirForm()">✎ Editar</button></div>`;
 }
 /* Tabla de referencia de los tres grados (DSM-5-TR): texto del catálogo, sin color por grado. Plegada por omisión. */
 function sevReferenciaHtml(){
@@ -93,7 +94,7 @@ function sevReferenciaHtml(){
     <div class="tabla-scroll"><table class="comp-table sev-tabla"><caption class="sr-only">Grados de severidad DSM-5-TR: descriptor por dominio y apoyos</caption>
       <thead><tr><th scope="col">Grado</th><th scope="col">Comunicación social</th><th scope="col">Comportamientos restringidos y repetitivos</th><th scope="col">Apoyos que orienta</th></tr></thead>
       <tbody>${filas}</tbody></table></div>
-    <p class="hint" style="margin-top:8px">Los apoyos <b>orientan</b>: no determinan prestaciones ni elegibilidad, que resuelven otros organismos.</p>
+    <p class="hint mt-s2">Los apoyos <b>orientan</b>: no determinan prestaciones ni elegibilidad, que resuelven otros organismos.</p>
   </details>`;
 }
 function sevPanelHtml(){
@@ -103,7 +104,7 @@ function sevPanelHtml(){
   const cab = `<div class="mod-cab"><h2 id="sevTitulo" tabindex="-1">SEV · Severidad (DSM-5-TR)</h2>${estado}</div>`;
   if(!listo && SEV.estado !== "error") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando la severidad…")}</div></div>`;
   if(SEV.estado === "error") return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(SEV.error, "sevReintentar()")}</div></div>`;
-  const cuerpo = rec ? sevLecturaHtml(rec) : `<div class="ib">${estadoVacioHtml("◌", `Todavía no se registró la severidad DSM-5-TR de este expediente.<br>
+  const cuerpo = rec ? sevLecturaHtml(rec) : `<div class="ib">${estadoVacioHtml("◌", `<b>Sin registrar.</b> Todavía no se registró la severidad DSM-5-TR de este expediente.<br>
       <span class="hint">Se registra por juicio clínico, los dos dominios juntos, y se corrige cuando el equipo lo considere.</span>`,
       `<button type="button" class="btn btn-primary" id="btnSevNuevo" onclick="sevAbrirForm()">+ Registrar severidad</button>`)}</div>`;
   return `${cab}
@@ -138,16 +139,16 @@ function sevAbrirForm(){
       <p class="sev-desc" id="desc_sev_${dom}" aria-live="polite"${desc ? "" : " hidden"}>${escHtml(desc)}</p><div class="err" id="err_sev_${dom}"></div></div>`;
   };
   const body = `<div id="sevErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
-    <p class="hint" style="margin-bottom:12px">Por juicio clínico y por separado para cada dominio. <b>Se guardan los dos dominios juntos</b>: si falta uno, no se guarda nada.</p>
+    <p class="hint hint-intro">Por juicio clínico y por separado para cada dominio. <b>Se guardan los dos dominios juntos</b>: si falta uno, no se guarda nada.</p>
     ${SEV_DOMINIOS.map(([dom, rot]) => sel(dom, rot)).join("")}
     <div class="field"><label for="sev_just">Justificación clínica ${req(true)}</label>
-      <textarea id="sev_just" aria-required="true" aria-describedby="hint_sev_just err_sev_just" style="min-height:110px">${escHtml(r.justificacion || "")}</textarea>
+      <textarea id="sev_just" aria-required="true" aria-describedby="hint_sev_just err_sev_just" class="ta-110">${escHtml(r.justificacion || "")}</textarea>
       <div class="hint" id="hint_sev_just">Qué se observó y en qué contextos.</div><div class="err" id="err_sev_just"></div></div>
     <div class="field"><label for="sev_fecha">Fecha del juicio ${req(true)}</label>
       <input id="sev_fecha" type="date" value="${escHtml(r.fecha || "")}" aria-required="true" aria-describedby="err_sev_fecha"><div class="err" id="err_sev_fecha"></div></div>
     <p class="hint">El registro queda a nombre de quien lo guarda.</p>`;
   const foot = `<span class="left">HCE-SEV · Severidad DSM-5-TR</span>
-    <div style="display:flex;gap:10px">
+    <div class="acciones-pie">
       <button type="button" class="btn btn-ghost" id="btnSevCancelar" onclick="cerrarFlujoModalUsuario()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnSevGuardar" onclick="sevGuardar()">${crear ? "✓ Registrar severidad" : "✓ Guardar cambios"}</button>
     </div>`;

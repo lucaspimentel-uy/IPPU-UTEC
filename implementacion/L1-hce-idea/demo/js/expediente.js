@@ -159,8 +159,8 @@ function filaDato(rotulo, valor){
 }
 function filaTecnico(rotulo, nombre, rol){
   return `<div class="data-row"><dt>${rotulo}</dt><dd>${nombre
-    ? `${escHtml(nombre)}${rol ? ` · <span style="color:var(--ink-2)">${escHtml(rol)}</span>` : ""}`
-    : "— <span style=\"color:var(--ink-2)\">(sin asignar)</span>"}</dd></div>`;
+    ? `${escHtml(nombre)}${rol ? ` · <span class="rol-tec">${escHtml(rol)}</span>` : ""}`
+    : "— <span class=\"rol-tec\">(sin asignar)</span>"}</dd></div>`;
 }
 
 function hce00Html(p){
@@ -171,7 +171,7 @@ function hce00Html(p){
   return `<div class="exp-grid">
     <div>
       <div class="info-card">
-        <h3><span class="ic" aria-hidden="true">▤</span> HCE-00 · Identificación y datos clínicos</h3>
+        <h3>HCE-00 · Identificación y datos clínicos</h3>
         <dl class="ib">
           ${filaDato("Diagnóstico", p.dx)}
           ${filaDato("CIE-11", p.cie11)}
@@ -185,7 +185,7 @@ function hce00Html(p){
         </dl>
       </div>
       <div class="info-card">
-        <h3><span class="ic" aria-hidden="true">❏</span> HCE-00 · Anamnesis — Historia del desarrollo</h3>
+        <h3>HCE-00 · Anamnesis — Historia del desarrollo</h3>
         <dl class="ib">${anam}</dl>
       </div>
     </div>
@@ -193,7 +193,7 @@ function hce00Html(p){
       ${ideaVigenteCardHtml()}
       ${typeof atExpCardHtml === "function" ? atExpCardHtml() : ""}
       <div class="info-card">
-        <h3><span class="ic" aria-hidden="true">☎</span> Contacto familiar</h3>
+        <h3>Contacto familiar</h3>
         <dl class="ib">
           ${filaDato("Referente", p.referente)}
           ${filaDato("Teléfono", p.tel)}
@@ -295,14 +295,14 @@ function ciFormHtml(d, registrar){
 
 function ciPanelHtml(){
   const ci = _ci();
-  const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1"><span class="ic" aria-hidden="true">✍</span> CI · Consentimiento informado ${estado || ""}</h3>`;
+  const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1">CI · Consentimiento informado ${estado || ""}</h3>`;
   if(ci.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando consentimiento…")}</div></div>`;
   if(ci.estado === "error"){
     return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(ci.mensaje, "cargarCi()")}</div></div>`;
   }
   if(ci.estado === "pendiente"){
     return `<div class="info-card">${cab(pillCi("pendiente"))}<div class="ib">
-      <p class="hint" style="margin-bottom:var(--s3)">El consentimiento todavía no está registrado. Es un estado visible del expediente: <b>no bloquea</b> ninguna evaluación. Se registra una sola vez y después se puede editar.</p>
+      <p class="hint hint-intro">El consentimiento todavía no está registrado. Es un estado visible del expediente: <b>no bloquea</b> ninguna evaluación. Se registra una sola vez y después se puede editar.</p>
       ${ciFormHtml({firmante:"", fecha:"", evaluacion:false, registro:false, comunicacion:false}, true)}
     </div></div>`;
   }
@@ -319,7 +319,7 @@ function ciPanelHtml(){
       ${filaDato("Autoriza el registro en la HCE", si(d.registro))}
       ${filaDato("Autoriza la comunicación a organismos", si(d.comunicacion))}
     </dl>
-    <div class="ib" style="padding-top:0"><button type="button" class="btn btn-ghost" id="btnCiEditar" onclick="ciEditar()">✎ Editar</button></div>
+    <div class="ib ib-pie"><button type="button" class="btn btn-ghost" id="btnCiEditar" onclick="ciEditar()">✎ Editar</button></div>
   </div>`;
 }
 
@@ -560,8 +560,8 @@ function abrirExpedienteDemo(id){
 
     <div class="section-nav no-print">
       <span class="section-nav-lbl">Ir a sección:</span>
-      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-doc')">🗂 HCE-DOC · Documentos y fotos</button>
-      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-org')">🏛 HCE-ORG · Áreas INAU y BPS</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-doc')">HCE-DOC · Documentos y fotos</button>
+      <button class="btn btn-ghost btn-mini" onclick="scrollASeccion('anchor-org')">HCE-ORG · Áreas INAU y BPS</button>
     </div>
 
     ${flujoPanelHtml(p)}
@@ -569,7 +569,7 @@ function abrirExpedienteDemo(id){
     <div class="exp-grid">
       <div>
         <div class="info-card">
-          <h3><span class="ic">▤</span> HCE-00 · Identificación y datos clínicos
+          <h3>HCE-00 · Identificación y datos clínicos
             <span class="mbadge mb-borrador" style="margin-left:8px" title="Módulo siempre editable (§3.2): nunca se bloquea, aun con otros módulos firmados">Siempre abierto</span>
           </h3>
           <div class="ib">
@@ -578,22 +578,22 @@ function abrirExpedienteDemo(id){
             <div class="data-row"><dt>Fecha dx.</dt><dd>${fmtFecha(p.dxFecha)}</dd></div>
             <div class="data-row"><dt>Derivación</dt><dd>${p.deriv}</dd></div>
             <div class="data-row"><dt>Nivel de soporte</dt><dd>${p.apoyo}</dd></div>
-            <div class="data-row"><dt>Téc. resp. 1</dt><dd>${p.tecnico1||"—"} · <span style="color:var(--ink-2)">${p.tecnico1_rol||"Psicólogo/a"}</span></dd></div>
-            <div class="data-row"><dt>Téc. resp. 2</dt><dd>${p.tecnico2||"—"} · <span style="color:var(--ink-2)">${p.tecnico2_rol||"Maestro/a"}</span></dd></div>
+            <div class="data-row"><dt>Téc. resp. 1</dt><dd>${p.tecnico1||"—"} · <span class="rol-tec">${p.tecnico1_rol||"Psicólogo/a"}</span></dd></div>
+            <div class="data-row"><dt>Téc. resp. 2</dt><dd>${p.tecnico2||"—"} · <span class="rol-tec">${p.tecnico2_rol||"Maestro/a"}</span></dd></div>
             <div class="data-row"><dt>Medicación</dt><dd>${p.med}</dd></div>
             <div class="data-row"><dt>Alertas</dt><dd style="${p.alerta!=="—"?"color:var(--bad);font-weight:600":""}">${p.alerta}</dd></div>
           </div>
         </div>
         <div class="info-card">
-          <h3><span class="ic">❏</span> HCE-00 · Anamnesis — Historia del desarrollo</h3>
+          <h3>HCE-00 · Anamnesis — Historia del desarrollo</h3>
           <div class="ib">${anamnesisHtml}</div>
         </div>
         <div class="info-card">
-          <h3><span class="ic">◫</span> Plan IPPU — Talleres asignados</h3>
+          <h3>Plan IPPU — Talleres asignados</h3>
           <div class="ib"><div class="talleres-list">${tallerTags}</div></div>
         </div>
         <div class="info-card">
-          <h3><span class="ic">☎</span> Contacto familiar</h3>
+          <h3>Contacto familiar</h3>
           <div class="ib">
             <div class="data-row"><dt>Referente</dt><dd>${p.referente}</dd></div>
             <div class="data-row"><dt>Teléfono</dt><dd>${p.tel}</dd></div>
@@ -604,7 +604,7 @@ function abrirExpedienteDemo(id){
 
       <div>
         <div class="info-card">
-          <h3><span class="ic">◐</span> Línea base — IDEA (HCE-LB)</h3>
+          <h3>Línea base — IDEA (HCE-LB)</h3>
           <div class="ib">
             ${(()=>{ const lb=p.flujo.lb; const t=lbTotales(lb.dim); const est=estadoModulo(p,"lb");
               if(est==="firmado") return `<div class="data-row"><dt>Total IDEA</dt><dd>${t.total} / 96 · <b>${bandaIdea(t.total)}</b></dd></div>
@@ -617,7 +617,7 @@ function abrirExpedienteDemo(id){
           </div>
         </div>
         <div class="info-card">
-          <h3><span class="ic">◷</span> Historial clínico</h3>
+          <h3>Historial clínico</h3>
           <div class="ib">
             ${eventos.length ? `<div class="tline">${timelineHtml}</div>` :
               `<div class="empty-state"><div class="big" aria-hidden="true">◷</div>Sin eventos registrados todavía.</div>`}
