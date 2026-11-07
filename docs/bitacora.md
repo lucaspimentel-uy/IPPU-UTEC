@@ -20,6 +20,11 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-07 · L1 — Cierre de la aceptación de la corrección del bloque C** (Lucas con Claude, local en Windows, misma rama, sobre 9bfc3ed; §5.161). Sin código nuevo; completa la entrada de abajo, que quedó «verificación incompleta».
+  - `pytest -q` 1342 passed, 0 skipped (head `dcc838486407`); conteo actualizado en `handoff.md` y el README del backend; `verificar_estado.py --check` y `generar_catalogos_backend.py --check` OK.
+  - `conectada.js` 310/310 y 310/310, cada una sobre una `ippu_ver` recreada (con su carpeta de archivos). Presentación sobre `ippu_presentacion_ver`: `verificar_presentacion.js` OK, `-Detener` deja :8000 y :5500 libres; base y carpeta borradas. `capturas.js` 92: la banda de conversión, con sus dos textos, a 1280×800 y 1024×768 — texto completo en tres líneas, botones de 34 px, anillo de foco visible (con el foco llegado por teclado; por clic el navegador no lo dibuja, igual que en la banda del descarte) y sin recortes.
+  - Intermitencias de la sesión anterior (una por una, sin reproducir): `waitForFunction` de 8 s en `c3-opciones` y un clic en «Abrir expediente» sin pedido; pasaron en la corrida siguiente; en §6 con el procedimiento. Una espera propia: un script de verificación colgado ~6 h porque la API y la demo, hijas del script, heredaban la salida redirigida; no corrió ningún chequeo en ese lapso.
+  - Citas del recordatorio `lb` renumeradas §1.17 → §1.18 en §5.156 y en la entrada de C5 (una línea en §5.161).
 - **2026-11-07 · L1 — Corrección del bloque C (C6, C7, F3)** (Lucas con Claude, local en Windows, rama `l1-correccion-bloque-c`, sobre cd182b9; §5.161). Sin DDL (head `dcc838486407`). **Verificación incompleta** (ver abajo).
   - (a) Convertir un clínico en otro tipo pide confirmación antes de mandar: `pedirConfirmacion` en `utils.js` (la banda del descarte, que ahora la usa `pedirDescarte`); textos de grupo/institucional y de jornada; ayuda y nota de la lista corregidas.
   - (b) `toastGuardado(msg, warnings)` en `ui-core.js` en 24 avisos de éxito (info si hay avisos, ok si no); `grupos-usuario.js` conserva su «Aviso: …» y sólo cambia el tipo. Ningún sitio con `warnings[]` sin mostrar.
