@@ -8,7 +8,9 @@
    **documentación mínima** (§5.114): el resto de `handoff.md` y los documentos largos son referencia. Los prompts de sesión
    viven en el **plan del equipo**, no en el repo (§5.136 d; el de L1, enlazado en la cabecera).
 2. **Rama corta** desde `main`; las ramas se suben **sólo a `origin`**. `main` avanza por fast-forward
-   (`git merge --ff-only`) y se sube a `origin` **y** a `gitlab`, sin `--force`.
+   (`git merge --ff-only`) y se sube a `origin` **y** a `gitlab`, sin `--force`. **Desde el 2026-11-13 hasta el 2026-11-26** el
+   trabajo nuevo sale de la rama de integración `hce-post26` y vuelve a ella; llega a `main` **después de la presentación**, y
+   `main` sólo recibe arreglos de la presentación (`hce-post26` se rebasa sobre ellos) (§5.162 a).
 3. Nadie tiene módulos exclusivos (§5.6): se avisa qué se toma. En la demo, **archivos distintos** de `demo/js/`;
    `index.html` y `js/utils.js` los tocan todos → coordinar (§12.3).
 4. Al terminar, verificar y escribir **sólo**: entrada de `docs/bitacora.md` (≤ 15 líneas), casilla de §6, un §5 si hubo
@@ -36,7 +38,7 @@ la demo v4.1 no son norma**: son insumo; no se modela ni se siembra nada sólo p
 
 ## Mapa del repositorio (detalle: `docs/estructura-repositorio.md`)
 - `handoff.md` (cabecera = estado · §5 decisiones · §6 pendientes · §7 preguntas) · `README.md` · este archivo.
-- `docs/`: `bitacora.md` (append-only, §5.84) · `pendientes-resueltos.md` · `guias/notas-accesibilidad-ui.md` · `markdown/` (se lee y
+- `docs/`: `bitacora.md` (append-only, §5.84) · `pendientes-resueltos.md` · `inventario-hce.md` (lo que existe, medido del código, §5.162) · `guias/notas-accesibilidad-ui.md` · `markdown/` (se lee y
   se cita desde acá) · `notas/` (`puntos-a-validar.md`, `preguntas-ippu.md`, `consulta-a-ippu.md` —snapshot del 19/08, §5.34—,
   respuestas de IPPU) · `fuentes/` (respaldo, no se lee, §5.29) · `prototipo-v4/` (insumo de build, §5.30).
 - `implementacion/L1-hce-idea/`: `backend/` (FastAPI + SQLAlchemy + Alembic + Postgres; antes de tocar modelos, leer
@@ -105,7 +107,8 @@ powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 
 $env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```
-Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+⚠️ **No redirigir la salida de `ver.ps1 -Modo preparar`** (el wrapper de las sesiones, que no está en este repo): se cuelga, porque la API y la demo
+**heredan la redirección** y el que llama espera a que la cierren. Arrancar la API y la demo en su propio proceso. Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
 `crear_usuario` no escriben (el script lo fija solo).
 
@@ -137,5 +140,15 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
 4 escalas → **12 dimensiones (D1–D12)**, cada una **0–8**, total **0–96** (menor = mejor). IDEA completa enero/noviembre +
 intermedia Likert en junio (`equiv. IDEA = (5 − promedio)×2`). Detalle: `handoff.md` §3.
 
-## Después del 2026-11-26
-PAI (salvo que sobre tiempo) · guards de divulgación y de compartir · registro de accesos con motivo · reserva del adolescente · administración de usuarios, grupos y catálogos · roles y matriz · Docker completo · React + Tailwind (§5.106).
+## HCE terminada (§5.162)
+**Definición** (decidida el 2026-11-07): una HCE **completamente funcional con datos simulados**, con toda la funcionalidad necesaria
+y la **seguridad verificada**, que **reemplaza el sistema que IPPU usa hoy** (sin integración: sus datos se migrarán después). Lo
+que falta, medido del código: `docs/inventario-hce.md`; el detalle y las decisiones: `handoff.md` §5.162 y §6, «HCE terminada».
+- **Adentro:** los módulos clínicos conectados y el PAI · usuarios, roles y la matriz del Protocolo §5 (cinco roles, uno por usuario) ·
+  registro de accesos con motivo · guards de divulgación · ateneo clínico con participantes · administración de grupos, catálogos y
+  usuarios · la deuda de seguridad y una auditoría de cierre.
+- **Stack objetivo:** el frontend pasa a **React + TypeScript + Tailwind** (tipos generados desde `openapi.json`, Tailwind configurado
+  desde los tokens de `estilos.css`), **después del backend** del trabajo nuevo. Backend, API, dirección visual, accesibilidad y
+  herramientas de contraste no cambian. Hasta entonces, el frontend es la demo HTML (§5.106).
+- **Afuera:** la migración desde la HCE actual · el despliegue en producción · el estado de revisión de informes · la guía de
+  trámites para las familias · **la reserva de datos del adolescente** (§5.104 B9, diferida por IPPU).

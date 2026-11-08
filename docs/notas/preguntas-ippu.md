@@ -9,7 +9,7 @@
 >
 > **Cómo leerla.** Cada pregunta dice **qué se pregunta**, **por qué importa**, **qué bloquea** y **dónde
 > aterriza la respuesta** (a qué archivo del repo vuelve). Están agrupadas por urgencia:
-> **A. bloquea ahora · B. bloquea M11.3 (los servicios del backend) · C. se lleva para el registro.**
+> **A. bloquea ahora · B. bloquea M11.3 (los servicios del backend) · C. se lleva para el registro · D. nace de las decisiones del equipo del 2026-11-07 y no bloquea nada.**
 >
 > **Fuentes consolidadas** (detalle y conteo por fuente al final):
 > `docs/notas/puntos-a-validar.md` §1 y §3 · `docs/notas/consulta-a-ippu.md` (lo que quedó abierto tras la
@@ -365,6 +365,48 @@ en varios lugares del repo y conviene tener un número único con su definición
 
 ---
 
+## D · Nacen de las decisiones del equipo del 2026-11-07 (`handoff.md` §5.162) — no bloquean nada
+
+> **Estado (2026-11-08): NUEVAS, sin preguntar.** Ninguna bloquea: todo se construye con la decisión del equipo y la respuesta
+> de IPPU sólo ajusta. **Aterrizan en:** `puntos-a-validar.md` §1.19–§1.23.
+
+### D1 · Estudiantes e investigadores UTEC-LIDIA: ¿usuarios de la aplicación o destinatarios de datos disociados?
+**Qué se pregunta.** Cuando una persona de UTEC-LIDIA (o un estudiante o pasante) necesita ver datos de la HCE, ¿entra con su propio
+usuario a la aplicación, o se le entrega un conjunto de datos disociado fuera de ella?
+**Por qué importa.** El Protocolo (matriz §5) les da «acceso supervisado»; decide si son un sexto rol o un destinatario del registro de divulgación.
+**Qué bloquea.** Nada: hoy no hay rol para ellos.
+**Dónde aterriza.** `puntos-a-validar.md` §1.19 · `handoff.md` §5.72, §5.162 d.
+
+### D2 · ¿Existe un «perfil del área de Inclusión»? ¿Qué ve?
+**Qué se pregunta.** ¿El área de Inclusión tiene personas con acceso propio al sistema? Si es así, ¿qué necesitan ver y qué no?
+**Por qué importa.** Un prototipo lo mostraba, pero ni el Protocolo ni IPPU lo mencionan; no se construye un rol que nadie confirmó.
+**Qué bloquea.** Nada: quien trabaja en Inclusión usa uno de los cinco roles confirmados.
+**Dónde aterriza.** `puntos-a-validar.md` §1.20 · `handoff.md` §5.72, §5.162 d.
+
+### D3 · ¿Quién ocupa cada rol en la institución?
+**Qué se pregunta.** ¿Quién es hoy dirección técnica-clínica o coordinación, quién es personal administrativo vinculado a la atención y
+quién es dirección no técnica? ¿Hay alguien que cumpla dos de esas funciones?
+**Por qué importa.** Cada usuario tiene un solo rol; quien cumple dos funciones recibe el de mayor alcance.
+**Qué bloquea.** Nada: los usuarios de la demo son de ejemplo.
+**Dónde aterriza.** `puntos-a-validar.md` §1.21 · `handoff.md` §5.162 e–f.
+
+### D4 · ¿El criterio del motivo de acceso les funciona?
+**Qué se pregunta.** El técnico que abre un NNA de su propio grupo queda registrado solo, sin motivo; el que abre uno ajeno
+(interconsulta o ateneo) y la coordinación cuando supervisa escriben el motivo antes de abrir (una lista corta más texto libre). ¿Les sirve
+así? ¿Qué motivos son los habituales?
+**Por qué importa.** El Protocolo §4, §7 y §8 piden registrar todo acceso con su motivo; es un requisito legal.
+**Qué bloquea.** Nada: se construye así y se ajusta con la respuesta.
+**Dónde aterriza.** `puntos-a-validar.md` §1.22 y §2.17 · `handoff.md` §5.162 g.
+
+### D5 · ¿Cuánto se conservan el historial de cambios y el registro de accesos?
+**Qué se pregunta.** ¿Por cuánto tiempo hay que conservar esos dos registros? ¿Quién los revisa y cada cuánto?
+**Por qué importa.** Los valores completos se quedan en el historial; el plazo decide cuánto se guarda y cuándo se revisa (el Protocolo §8
+recomienda una revisión al menos semestral).
+**Qué bloquea.** Nada: hoy no se borra nada.
+**Dónde aterriza.** `puntos-a-validar.md` §1.23 · `handoff.md` §5.162 j.
+
+---
+
 ## Apéndice — conteo por fuente y solapamientos
 
 **Conteo de ítems abiertos consolidados, por fuente** (un ítem puede venir de varias):
@@ -382,7 +424,7 @@ en varios lugares del repo y conviene tener un número único con su definición
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 | Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 5 nuevas del 2026-11-08** (D1–D5, serie D, sin preguntar). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 

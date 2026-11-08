@@ -31,6 +31,7 @@ docs/
 ├── bitacora.md             # registro de sesiones, append-only; NO se corrige (§5.84)
 ├── pendientes-resueltos.md # lo cerrado de §6 y §7, verbatim, con su stub en handoff (§5.84)
 ├── estructura-repositorio.md   # este archivo
+├── inventario-hce.md       # lo que existe de la HCE, medido del código: módulos, tablas sin API, demo, seguridad (§5.162)
 ├── guias/
 │   └── notas-accesibilidad-ui.md   # contraste, foco y reglas de dominio color↔significado
 ├── markdown/               # conversiones .md de las fuentes: se lee y se cita desde acá
@@ -39,6 +40,8 @@ docs/
 └── prototipo-v4/           # insumo de build, SÍ se lee (§5.30)
 ```
 
+- **`inventario-hce.md`**: fotografía del código al 2026-11-08 (módulo por módulo: tablas, rutas, tests, pantalla, guards, deuda y lo que falta
+  para la HCE terminada), con el comando de cada cifra en su apéndice. Se rehace cuando el plan lo pida; **no** lo mantiene `verificar_estado.py`.
 - **`guias/notas-accesibilidad-ui.md`**: se cita por nombre de sección —«Contraste WCAG» (con «Línea base vigente»), «Reglas
   de dominio», «Foco», «Cómo se verifica» y «Pendientes»—, no por número.
 - **`markdown/`**: Documento Técnico, Protocolo de acceso/confidencialidad/resguardo, cuestionario respondido, escala IDEA,

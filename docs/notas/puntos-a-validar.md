@@ -43,6 +43,10 @@
 > dos supuestos cerrados. El punto de **segunda mano** del consentimiento (§5.38) quedó **CONFIRMADO por
 > escrito** (A3, §5.94).
 >
+> ## 🗓️ Actualizado el 2026-11-08 con las **decisiones del equipo del 2026-11-07** (`handoff.md` §5.162)
+>
+> Se definió la **HCE terminada** y se confirmaron los cinco roles, el criterio del motivo de acceso y la participación en el ateneo. **Nuevos, para IPPU:** §1.19 (estudiante/investigador) · §1.20 (perfil de Inclusión) · §1.21 (quién ocupa cada rol) · §1.22 (el criterio del motivo de acceso) · §1.23 (retención). **Ninguno bloquea:** todo se construye con la decisión del equipo. **Actualizados:** §2.11 (roles confirmados, `admin` → coordinación), §2.16 (participantes decididos) y §2.17 (criterio decidido, a validar por IPPU).
+>
 > ⚠️ **12 de los 26 bloques del registro de la reunión quedaron SIN respuesta.** La lista está en
 > `respuestas-reunion-ippu-2026-08-21.md` §16 — es la agenda del próximo contacto.
 >
@@ -612,6 +616,48 @@ lista de IPPU.
 
 ---
 
+### 1.19 Estudiantes e investigadores UTEC-LIDIA: ¿son un rol de la aplicación o sólo destinatarios de un dato disociado? — abierto (2026-11-08)
+
+**Qué es.** La matriz §5 del Protocolo da a «Estudiantes en formación, pasantes, investigadores (incl. convenio UTEC-LIDIA)» *«acceso supervisado; datos preferentemente disociados/anonimizados»*, con acuerdo de confidencialidad previo. §5.72 dejó este sexto candidato sin resolver; el 2026-11-07 el equipo confirmó cinco roles y lo **dejó afuera** (`handoff.md` §5.162 d).
+
+> *Pregunta para IPPU: cuando una persona de UTEC-LIDIA (o un estudiante o pasante) necesita ver datos de la HCE, ¿entra con su propio usuario a la aplicación, o se le entrega un conjunto de datos disociado fuera de la aplicación?*
+
+**Qué bloquea.** **Nada** — se construye con la decisión del equipo. **Cómo se construye mientras:** no hay rol para ellos; si la respuesta es «destinatario», lo cubre `divulgacion` (§5.71, §5.80) con su guard; si es «rol», se agrega un sexto rol con acceso supervisado en una sesión aparte.
+
+### 1.20 ¿Existe un «perfil del área de Inclusión» y qué ve? — abierto (2026-11-08)
+
+**Qué es.** La demo v4.1 traía un «perfil de área de Inclusión» al lado de coordinación y dirección técnica; no está en la matriz §5 del Protocolo ni en nuestro CHECK de roles (§5.72). IPPU nunca contestó si existe (B5c; §5.101 lo dejó fuera del 26/11); el 2026-11-07 el equipo lo **dejó afuera** de los cinco roles (§5.162 d). Recordar que la demo no es norma (§5.92).
+
+> *Pregunta para IPPU: ¿el área de Inclusión tiene personas con acceso propio al sistema? Si es así, ¿qué necesitan ver y qué no (la ficha de inclusión y sus gestiones, otros módulos de los expedientes que acompañan)?*
+
+**Qué bloquea.** **Nada.** **Mientras:** quien trabaja en Inclusión usa uno de los cinco roles (el que le corresponda por su función); la ficha de inclusión (C4, §5.154) se rige por el alcance de grupos.
+
+### 1.21 ¿Quién ocupa cada uno de los cinco roles en la institución? — abierto (2026-11-08)
+
+**Qué es.** Con los cinco roles confirmados (técnico tratante · técnico no tratante · dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica, §5.162 d) falta saber **qué personas o cargos** de IPPU corresponden a cada uno, para sembrar el ejemplo y para que la administración de usuarios (§5.90) use los nombres de IPPU. Un usuario tiene **un** rol; quien cumple dos funciones recibe el de mayor alcance (§5.162 f).
+
+> *Pregunta para IPPU: ¿quién es hoy dirección técnica-clínica o coordinación, quién es personal administrativo vinculado a la atención y quién es dirección no técnica? ¿Hay alguien que cumpla dos de estas funciones a la vez?*
+
+**Qué bloquea.** **Nada.** **Mientras:** los usuarios de la demo son de ejemplo (`seed_demo`); los roles se asignan con los nombres genéricos de la matriz del Protocolo.
+
+### 1.22 ¿El criterio del motivo de acceso les funciona? — abierto (2026-11-08)
+
+**Qué es.** El criterio que el equipo decidió el 2026-11-07 (§5.162 g), sobre Protocolo §7 y §8: el técnico **tratante** que abre un NNA de su grupo queda registrado **automáticamente, sin motivo**; el técnico **no tratante** (interconsulta o ateneo) y la **supervisión de coordinación** escriben el **motivo antes de abrir** (catálogo corto más texto libre); la firma es la credencial individual más esa entrada del registro; la copia de la HC entregada a la familia se registra ahí (§5.103). Hace concreto §2.17.
+
+> *Pregunta para IPPU: ¿les sirve así? ¿Piden motivo al abrir la historia de un NNA que no es de su grupo y también a la coordinación cuando supervisa? ¿Qué motivos son los habituales (para armar el catálogo corto)?*
+
+**Qué bloquea.** **Nada** — IPPU lo **valida sin que bloquee**. **Mientras:** se construye tal cual está decidido; el catálogo de motivos es el borrador del equipo y se ajusta con la respuesta.
+
+### 1.23 ¿Cuánto tiempo se conservan la auditoría y el registro de accesos? — abierto (2026-11-08)
+
+**Qué es.** La auditoría de cambios guarda los **valores completos**, anterior y nuevo (el esquema §4 pide que el anterior siga legible), y el registro de accesos (§5.162 g) guarda quién abrió qué y por qué. El equipo decidió que sólo los roles que lo necesitan leen la auditoría y que el cifrado en reposo es del despliegue; el **plazo de retención** lo define IPPU (§5.162 j). El Protocolo §8 recomienda una auditoría interna periódica (al menos semestral) de esos registros.
+
+> *Pregunta para IPPU: ¿por cuánto tiempo hay que conservar el historial de cambios y el de accesos a las historias clínicas? ¿Quién los revisa y cada cuánto?*
+
+**Qué bloquea.** **Nada.** **Mientras:** no se borra nada (la auditoría es sólo-inserción, esquema §4) y no hay plazo escrito.
+
+---
+
 ## 2. Para el equipo (grupo + Matías)
 
 ### 2.1 ~~Ratificar que M11 avanzó sin cruzar su propia puerta~~ — **CERRADO** (2026-09-03, `handoff.md` §5.60 / L7)
@@ -897,6 +943,13 @@ referente por NNA distinto del técnico de grupo —tabla o campo nuevo—, o (3
 > tecnico1/tecnico2, el `admin` ve todo. **El resto de la matriz, la conflación `admin` ↔ «dirección no
 > técnica» y el «perfil de área de Inclusión» quedan para después del 26/11.** Lo de abajo se conserva
 > como historia de cómo se llegó acá.
+>
+> **2026-11-08 (`handoff.md` §5.162 d–f): los cinco roles quedan CONFIRMADOS** (técnico tratante · técnico no tratante ·
+> dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica) y cierran la propuesta de §5.72.
+> **El `admin` actual pasa a ser dirección/coordinación técnica-clínica** (supervisión clínica con motivo, más administración
+> de usuarios y de catálogos); **dirección no técnica** es un rol nuevo, sin contenido clínico individual, sólo agregados. Un
+> rol por usuario; el alcance sale de los grupos. Los dos candidatos dudosos (estudiante/investigador, perfil de Inclusión) van
+> a IPPU (§1.19, §1.20) y no se construyen. Resuelve la conflación `admin` ↔ «dirección no técnica» y acota §5.101.
 
 
 **Qué es.** IPPU confirmó cómo trabajan: **cada técnico tiene su propio usuario**, **ve sólo los grupos
@@ -1104,6 +1157,11 @@ decide qué se muestra y qué se imprime en el PAI.
 > **C6 (2026-11-06, `handoff.md` §5.158 a):** del ítem 1 quedan construidos el **equipo tratante** (los técnicos del grupo del
 > expediente referido) y **dirección** (el admin): un clínico fuera de ese alcance es 404 y no aparece en la lista. Los ítems 2–4
 > —participantes, enmascarado y registro del acceso con motivo— siguen pendientes, posteriores al 26/11.
+>
+> **2026-11-08 (`handoff.md` §5.162 h): participantes DECIDIDOS.** Los participantes del ateneo clínico se vinculan **como
+> usuarios** (`ateneo_participante`, ítem 4), **ven el ateneo y no la HCE**, y «lo pertinente» es **el contenido del propio
+> ateneo**, sin enmascarado aparte: el ítem 2 deja de ser un trabajo separado. El ítem 3 (motivo) lo concreta §2.17. Queda
+> construirlo.
 
 ---
 
@@ -1112,6 +1170,12 @@ decide qué se muestra y qué se imprime en el PAI.
 > **2026-10-05 (B12, `handoff.md` §5.103):** a este registro de accesos va **también la entrega a la
 > familia de una copia de la HC** (acceso del titular, no divulgación). Sigue siendo **posterior al 26/11**
 > (§5.88 · §5.101).
+>
+> **2026-11-08 (`handoff.md` §5.162 g): CRITERIO DECIDIDO, a validar por IPPU sin que bloquee (§1.22).** El técnico **tratante** que
+> abre un NNA de su grupo queda registrado automáticamente, **sin motivo**; el técnico **no tratante** (interconsulta o ateneo)
+> y la **supervisión de coordinación** escriben el **motivo antes de abrir** (catálogo corto más texto libre); la firma es la
+> credencial individual más esa entrada del registro; la copia de la HC a la familia se registra acá (§5.103). Entra en la
+> **HCE terminada** (§5.162 b); falta construirlo. La retención del registro la define IPPU (§1.23).
 
 
 **Qué es.** El **Documento Técnico** define HCE-LOG (`auditoria`) como *«quién, cuándo, **qué campo, valor
