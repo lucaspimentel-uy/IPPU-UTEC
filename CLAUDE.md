@@ -133,6 +133,12 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
   no tratante y la coordinación abren un expediente con motivo (`403 reason_required` → `POST /hce/{id}/accesos`, ventana de 120
   min); el técnico manda además la C.I. completa del NNA. Inexistente = 404 igual en todas partes.
 
+## Convenciones de los tests (A1, §5.165 c)
+La identidad por omisión del `client` de la suite (la coordinación de pruebas) **pasa la matriz de acceso sólo en los tests**
+(`tests/conftest.py::_identidad_de_la_suite_sin_matriz`): así los pedidos que cargan lo clínico sobre expedientes sin tratante siguen
+probando lo mismo. Por eso **todo test de acceso usa `token_de(<su propio usuario>)`**, nunca el `client` por omisión: con él la
+matriz no se ejerce (ver `tests/test_a1_matriz.py`).
+
 ## Verificación — reglas de higiene
 - **Contraste:** la documentación **no afirma cantidades ni ratios** (cuántos pares, entre qué valores): se escribe «ningún par
   falla» (línea base, §5.135) y «todo par nuevo ≥ 4,5:1». Los conteos de chequeos (`181/181`) van en `handoff.md` y la bitácora;
