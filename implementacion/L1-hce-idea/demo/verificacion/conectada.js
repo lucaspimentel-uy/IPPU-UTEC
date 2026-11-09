@@ -4794,8 +4794,9 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pm.waitForFunction(() => !document.querySelector('#modalFlujo.open') && document.getElementById('view-inicio').classList.contains('active'), null, { timeout: 8000 });
     const tras = pedidos.slice(antes);
     const sigueB = await api('GET', `/hce/${idB}`);
-    check('a1-motivo-cancelar', '«Cancelar» cierra el diálogo y vuelve al listado sin pedir el acceso (ningún POST /hce/{id}/accesos) y el expediente sigue cerrado',
-      !tras.some((p) => p.startsWith('POST') && p.endsWith('/accesos')) && sigueB.status === 403, JSON.stringify({ tras, sigueB: sigueB.status }));
+    const focoCancelar = await pm.evaluate(() => document.activeElement && document.activeElement.id);
+    check('a1-motivo-cancelar', '«Cancelar» cierra el diálogo y vuelve al listado (con el foco en su título, no en <body>) sin pedir el acceso (ningún POST /hce/{id}/accesos) y el expediente sigue cerrado',
+      !tras.some((p) => p.startsWith('POST') && p.endsWith('/accesos')) && sigueB.status === 403 && focoCancelar === 'tituloInicio', JSON.stringify({ tras, sigueB: sigueB.status, foco: focoCancelar }));
     await cm.close();
   }
 

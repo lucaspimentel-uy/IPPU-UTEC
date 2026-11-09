@@ -553,6 +553,7 @@ function motivoCancelar(){
   MOTIVO.id = null;
   closeFlujoModal(true);
   go("inicio");
+  const t = document.getElementById("tituloInicio"); if(t) t.focus();   // el foco no cae en <body>: el título del listado
 }
 async function motivoConfirmar(){
   const id = MOTIVO.id; if(id === null || MOTIVO.guardando) return;
