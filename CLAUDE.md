@@ -107,8 +107,7 @@ powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 
 $env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```
-⚠️ **No redirigir la salida de `ver.ps1 -Modo preparar`** (el wrapper de las sesiones, que no está en este repo): se cuelga, porque la API y la demo
-**heredan la redirección** y el que llama espera a que la cierren. Arrancar la API y la demo en su propio proceso. Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
 `crear_usuario` no escriben (el script lo fija solo).
 
@@ -144,9 +143,9 @@ intermedia Likert en junio (`equiv. IDEA = (5 − promedio)×2`). Detalle: `hand
 **Definición** (decidida el 2026-11-07): una HCE **completamente funcional con datos simulados**, con toda la funcionalidad necesaria
 y la **seguridad verificada**, que **reemplaza el sistema que IPPU usa hoy** (sin integración: sus datos se migrarán después). Lo
 que falta, medido del código: `docs/inventario-hce.md`; el detalle y las decisiones: `handoff.md` §5.162 y §6, «HCE terminada».
-- **Adentro:** los módulos clínicos conectados y el PAI · usuarios, roles y la matriz del Protocolo §5 (cinco roles, uno por usuario) ·
+- **Adentro:** los módulos clínicos conectados y el PAI · usuarios, roles y la matriz del Protocolo §5 (cuatro roles, uno por usuario; tratante o no tratante es la relación con el expediente) ·
   registro de accesos con motivo · guards de divulgación · ateneo clínico con participantes · administración de grupos, catálogos y
-  usuarios · la deuda de seguridad y una auditoría de cierre.
+  usuarios · la deuda de seguridad B1–B17 y una auditoría de cierre.
 - **Stack objetivo:** el frontend pasa a **React + TypeScript + Tailwind** (tipos generados desde `openapi.json`, Tailwind configurado
   desde los tokens de `estilos.css`), **después del backend** del trabajo nuevo. Backend, API, dirección visual, accesibilidad y
   herramientas de contraste no cambian. Hasta entonces, el frontend es la demo HTML (§5.106).

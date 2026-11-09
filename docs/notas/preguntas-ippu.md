@@ -380,7 +380,7 @@ usuario a la aplicación, o se le entrega un conjunto de datos disociado fuera d
 ### D2 · ¿Existe un «perfil del área de Inclusión»? ¿Qué ve?
 **Qué se pregunta.** ¿El área de Inclusión tiene personas con acceso propio al sistema? Si es así, ¿qué necesitan ver y qué no?
 **Por qué importa.** Un prototipo lo mostraba, pero ni el Protocolo ni IPPU lo mencionan; no se construye un rol que nadie confirmó.
-**Qué bloquea.** Nada: quien trabaja en Inclusión usa uno de los cinco roles confirmados.
+**Qué bloquea.** Nada: quien trabaja en Inclusión usa uno de los cuatro roles confirmados.
 **Dónde aterriza.** `puntos-a-validar.md` §1.20 · `handoff.md` §5.72, §5.162 d.
 
 ### D3 · ¿Quién ocupa cada rol en la institución?

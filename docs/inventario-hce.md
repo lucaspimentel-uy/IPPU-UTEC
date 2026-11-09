@@ -60,7 +60,7 @@ hay tests transversales que no se asignan (§1.3). Un mismo archivo puede aparec
 
 | Módulo | Regla de acceso o guard que **sí** se cumple hoy | Deuda abierta (referencia a §6) | Qué falta para la HCE terminada |
 |---|---|---|---|
-| **Persona y HCE-00** | Alcance por grupo (404 fuera); un técnico sólo da de alta en un grupo propio (403); `hc_historico` ≥ 1000 lo asigna el servidor (§5.109); C.I. canónica (§5.110); baja y reingreso con auditoría. Duplicado de C.I. o N.º de HC: 409, **genérico para el técnico** (`routers/hce.py:31`, §5.119 d) | B1 (NUL e ids fuera de rango dan 500) · B5 (decidido, §5.162 i; falta construir) · B8 (C.I. y nombres en la URL de búsqueda) | motivo de acceso al abrir (§5.162 g) · los cinco roles · el aviso de C.I. de §5.162 i · migración de datos (**afuera**) |
+| **Persona y HCE-00** | Alcance por grupo (404 fuera); un técnico sólo da de alta en un grupo propio (403); `hc_historico` ≥ 1000 lo asigna el servidor (§5.109); C.I. canónica (§5.110); baja y reingreso con auditoría. Duplicado de C.I. o N.º de HC: 409, **genérico para el técnico** (`routers/hce.py:31`, §5.119 d) | B1 (NUL e ids fuera de rango dan 500) · B5 (decidido, §5.162 i; falta construir) · B8 (C.I. y nombres en la URL de búsqueda) | motivo de acceso al abrir (§5.162 g) · los cuatro roles · el aviso de C.I. de §5.162 i · migración de datos (**afuera**) |
 | **CI** | El CI **no traba** (§5.94); un módulo sin CI avisa, no bloquea | — | — |
 | **Flujo anual** | La secuencia **sólo avisa**: `warnings[]` más una fila `auditoria` `excepcion` (§5.95, §5.116) | — | — |
 | **LB — IDEA** | Firmar = bloquear (409); corrección por addenda cuyo autor es el usuario del token (§5.116, §5.119); puntaje único por dimensión (§5.98); banda sólo desde `banda_idea`; el IDEA que rige es el de su año (§5.97) | §7: la API acepta como evaluador a cualquier profesional activo | — |
@@ -76,12 +76,12 @@ hay tests transversales que no se asignan (§1.3). Un mismo archivo puede aparec
 | **Ateneos** | Ateneo de grupo, institucional y jornada: acceso general; **clínico: sólo el `admin` y los técnicos del grupo del expediente referido**, 404 en el resto (§5.158 a); correlativo con candado; adjuntos con PPTX por contenido | — | `ateneo_participante`: hoy `participantes` es **texto** (`models/ateneo.py:257`) y no da acceso; participantes como usuarios que ven el ateneo y no la HCE (§5.162 h); estado «cumplido» de los acuerdos; qué tipos suma el indicador (IPPU) |
 | **Panel y recordatorios** | Agregados del servidor; el `admin` ve la institución y el técnico sus grupos | — | supresión de celdas chicas; la vista de **dirección no técnica** (sólo agregados, §5.162 e); editar recordatorios (administración) |
 | **Grupos y profesionales** | `PATCH /grupos/{id}` sólo `admin` (403, `routers/referencias.py:69`); el cambio de técnico deja auditoría | B6 (`GET /grupos` y `GET /profesionales` completos para cualquier técnico, `services/referencias.py:14`) | **crear, renombrar y archivar** grupos (§5.90): no existe endpoint ni pantalla |
-| **Auth y usuarios** | JWT de 8 h; login con tiempo parejo; 401 antes de leer el cuerpo (§5.157); dos roles por CHECK (`models/identidad.py:35`): `admin` y `tecnico` | B3 (`jwt.decode` sin exigir `exp`, `core/seguridad.py:76`) · B4 (sin límite de intentos ni revocación; el logout es sólo del cliente) | los **cinco roles** y un rol por usuario (§5.162 d–f) · administración de usuarios (alta, baja, clave) · el usuario `dirección no técnica` |
+| **Auth y usuarios** | JWT de 8 h; login con tiempo parejo; 401 antes de leer el cuerpo (§5.157); dos roles por CHECK (`models/identidad.py:35`): `admin` y `tecnico` | B3 (`jwt.decode` sin exigir `exp`, `core/seguridad.py:76`) · B4 (sin límite de intentos ni revocación; el logout es sólo del cliente) | los **cuatro roles** y un rol por usuario; tratante o no tratante es la relación con el expediente (§5.162 d–f) · administración de usuarios (alta, baja, clave) · el usuario `dirección no técnica` |
 | **PAI** | **Ninguna**: el esquema existe sin guards | — | servicio, router, pantalla y guards: §IX sólo si el tipo es «Actualización anual» (§5.54), `pai_prestacion` (§5.57), `pai_taller` (§5.104 B3) |
 | **Divulgación** | **Ninguna** | — | servicio, router, pantalla y guards: los dos CHECK cruzados fuera de la DDL (`esquema-datos-v2.md` §4), `disociado` ≡ `agregado` (§5.103); la copia a la familia **no** es divulgación aunque el catálogo la ofrece (§5.103) |
 | **Catálogos de talleres y de centros** | — | — | administración: alta, orden, orientación a grupos, retiro (§5.90) |
 | **Catálogos IDEA e IPPU-TEA** | — | — | decidir si la API los sirve (hoy la demo lleva su copia en `catalogos.js`: es una segunda fuente de los mismos textos); administración |
-| **Seed y CLI** | La CLI y el seed no escriben sin `IPPU_SEED_DESTINO` (§5.139) | — | usuarios de ejemplo para los cinco roles |
+| **Seed y CLI** | La CLI y el seed no escriben sin `IPPU_SEED_DESTINO` (§5.139) | — | usuarios de ejemplo para los cuatro roles |
 
 ### 1.3 Tests que no se asignan a un módulo (transversales)
 
@@ -198,7 +198,7 @@ antemano que los ids se conservan como contrato de prueba.
 ### 4.1 Los hallazgos B1–B17 de la auditoría del 2026-11-05
 
 B2, B14 y B15 se hicieron en §5.157 (e); B1, B3–B13, B16 y B17 siguen abiertos (§5.157, «Fuera, a propósito»). La definición de la HCE
-terminada nombra **B1–B11** (§5.162 b); B12, B13, B16 y B17 se ubicaron en §6, «HCE terminada», y el equipo confirma si entran.
+terminada nombra **B1–B17** (§5.162 b, corregido el 2026-11-08: B12, B13, B16 y B17 entran, confirmado por el equipo); B14 y B15 están hechos.
 
 | Id | Hallazgo (§6) | Estado hoy | Evidencia en el código | Decisión de §5.162 |
 |---|---|---|---|---|

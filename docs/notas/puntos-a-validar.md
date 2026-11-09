@@ -45,7 +45,7 @@
 >
 > ## 🗓️ Actualizado el 2026-11-08 con las **decisiones del equipo del 2026-11-07** (`handoff.md` §5.162)
 >
-> Se definió la **HCE terminada** y se confirmaron los cinco roles, el criterio del motivo de acceso y la participación en el ateneo. **Nuevos, para IPPU:** §1.19 (estudiante/investigador) · §1.20 (perfil de Inclusión) · §1.21 (quién ocupa cada rol) · §1.22 (el criterio del motivo de acceso) · §1.23 (retención). **Ninguno bloquea:** todo se construye con la decisión del equipo. **Actualizados:** §2.11 (roles confirmados, `admin` → coordinación), §2.16 (participantes decididos) y §2.17 (criterio decidido, a validar por IPPU).
+> Se definió la **HCE terminada** y se confirmaron los cuatro roles de la aplicación (tratante y no tratante son la relación del técnico con el expediente), el criterio del motivo de acceso y la participación en el ateneo. **Nuevos, para IPPU:** §1.19 (estudiante/investigador) · §1.20 (perfil de Inclusión) · §1.21 (quién ocupa cada uno de los cuatro roles) · §1.22 (el criterio del motivo de acceso) · §1.23 (retención). **Ninguno bloquea:** todo se construye con la decisión del equipo. **Actualizados:** §2.11 (roles confirmados, `admin` → coordinación), §2.16 (participantes decididos) y §2.17 (criterio decidido, a validar por IPPU).
 >
 > ⚠️ **12 de los 26 bloques del registro de la reunión quedaron SIN respuesta.** La lista está en
 > `respuestas-reunion-ippu-2026-08-21.md` §16 — es la agenda del próximo contacto.
@@ -618,7 +618,7 @@ lista de IPPU.
 
 ### 1.19 Estudiantes e investigadores UTEC-LIDIA: ¿son un rol de la aplicación o sólo destinatarios de un dato disociado? — abierto (2026-11-08)
 
-**Qué es.** La matriz §5 del Protocolo da a «Estudiantes en formación, pasantes, investigadores (incl. convenio UTEC-LIDIA)» *«acceso supervisado; datos preferentemente disociados/anonimizados»*, con acuerdo de confidencialidad previo. §5.72 dejó este sexto candidato sin resolver; el 2026-11-07 el equipo confirmó cinco roles y lo **dejó afuera** (`handoff.md` §5.162 d).
+**Qué es.** La matriz §5 del Protocolo da a «Estudiantes en formación, pasantes, investigadores (incl. convenio UTEC-LIDIA)» *«acceso supervisado; datos preferentemente disociados/anonimizados»*, con acuerdo de confidencialidad previo. §5.72 dejó este sexto candidato sin resolver; el 2026-11-07 el equipo confirmó los roles de la aplicación (hoy cuatro, corregido el 2026-11-08) y lo **dejó afuera** (`handoff.md` §5.162 d).
 
 > *Pregunta para IPPU: cuando una persona de UTEC-LIDIA (o un estudiante o pasante) necesita ver datos de la HCE, ¿entra con su propio usuario a la aplicación, o se le entrega un conjunto de datos disociado fuera de la aplicación?*
 
@@ -626,15 +626,15 @@ lista de IPPU.
 
 ### 1.20 ¿Existe un «perfil del área de Inclusión» y qué ve? — abierto (2026-11-08)
 
-**Qué es.** La demo v4.1 traía un «perfil de área de Inclusión» al lado de coordinación y dirección técnica; no está en la matriz §5 del Protocolo ni en nuestro CHECK de roles (§5.72). IPPU nunca contestó si existe (B5c; §5.101 lo dejó fuera del 26/11); el 2026-11-07 el equipo lo **dejó afuera** de los cinco roles (§5.162 d). Recordar que la demo no es norma (§5.92).
+**Qué es.** La demo v4.1 traía un «perfil de área de Inclusión» al lado de coordinación y dirección técnica; no está en la matriz §5 del Protocolo ni en nuestro CHECK de roles (§5.72). IPPU nunca contestó si existe (B5c; §5.101 lo dejó fuera del 26/11); el 2026-11-07 el equipo lo **dejó afuera** de los roles de la aplicación (hoy cuatro, §5.162 d). Recordar que la demo no es norma (§5.92).
 
 > *Pregunta para IPPU: ¿el área de Inclusión tiene personas con acceso propio al sistema? Si es así, ¿qué necesitan ver y qué no (la ficha de inclusión y sus gestiones, otros módulos de los expedientes que acompañan)?*
 
-**Qué bloquea.** **Nada.** **Mientras:** quien trabaja en Inclusión usa uno de los cinco roles (el que le corresponda por su función); la ficha de inclusión (C4, §5.154) se rige por el alcance de grupos.
+**Qué bloquea.** **Nada.** **Mientras:** quien trabaja en Inclusión usa uno de los cuatro roles (el que le corresponda por su función); la ficha de inclusión (C4, §5.154) se rige por el alcance de grupos.
 
-### 1.21 ¿Quién ocupa cada uno de los cinco roles en la institución? — abierto (2026-11-08)
+### 1.21 ¿Quién ocupa cada uno de los cuatro roles en la institución? — abierto (2026-11-08)
 
-**Qué es.** Con los cinco roles confirmados (técnico tratante · técnico no tratante · dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica, §5.162 d) falta saber **qué personas o cargos** de IPPU corresponden a cada uno, para sembrar el ejemplo y para que la administración de usuarios (§5.90) use los nombres de IPPU. Un usuario tiene **un** rol; quien cumple dos funciones recibe el de mayor alcance (§5.162 f).
+**Qué es.** Con los cuatro roles de la aplicación confirmados (técnico · dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica; «tratante» y «no tratante» son la relación del técnico con el expediente, derivada de sus grupos, §5.162 d) falta saber **qué personas o cargos** de IPPU corresponden a cada uno, para sembrar el ejemplo y para que la administración de usuarios (§5.90) use los nombres de IPPU. Un usuario tiene **un** rol; quien cumple dos funciones recibe el de mayor alcance (§5.162 f).
 
 > *Pregunta para IPPU: ¿quién es hoy dirección técnica-clínica o coordinación, quién es personal administrativo vinculado a la atención y quién es dirección no técnica? ¿Hay alguien que cumpla dos de estas funciones a la vez?*
 
@@ -944,8 +944,9 @@ referente por NNA distinto del técnico de grupo —tabla o campo nuevo—, o (3
 > técnica» y el «perfil de área de Inclusión» quedan para después del 26/11.** Lo de abajo se conserva
 > como historia de cómo se llegó acá.
 >
-> **2026-11-08 (`handoff.md` §5.162 d–f): los cinco roles quedan CONFIRMADOS** (técnico tratante · técnico no tratante ·
-> dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica) y cierran la propuesta de §5.72.
+> **2026-11-08 (`handoff.md` §5.162 d–f): los cuatro roles de la aplicación quedan CONFIRMADOS** (técnico ·
+> dirección/coordinación técnica-clínica · personal administrativo · dirección no técnica; tratante y no tratante son la relación
+> del técnico con el expediente, derivada de los grupos; corregido el 2026-11-08 tras la review) y cierran la propuesta de §5.72.
 > **El `admin` actual pasa a ser dirección/coordinación técnica-clínica** (supervisión clínica con motivo, más administración
 > de usuarios y de catálogos); **dirección no técnica** es un rol nuevo, sin contenido clínico individual, sólo agregados. Un
 > rol por usuario; el alcance sale de los grupos. Los dos candidatos dudosos (estudiante/investigador, perfil de Inclusión) van
