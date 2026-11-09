@@ -435,6 +435,8 @@ de `GET /accesos/motivos`). (3) El «Reintentar» de una pestaña cuya ventana v
 `a1-motivo-422` (sin la C.I., el error junto a su campo) y `a1-motivo-ci` (una C.I. equivocada: el mensaje de la API y nada se
 abre). (5) El diálogo no ofrece la copia a la familia: no abre ninguna ventana (su flujo es de A2).
 
+**2026-11-09 · Al verificar la etapa 5 (§5.165 d).** (6) `ROL_TXT` usa los rótulos de la sección a: el del técnico es «Técnico/a» y `3a-a` lo espera. (7) «Cancelar» lleva el foco al título del listado (no a `<body>`) y `a1-motivo-cancelar` lo afirma. (8) El contraste abre el diálogo también como coordinación, sin «C.I. del NNA». (9) El diálogo no usa emoji (F3): su ícono es «ℹ».
+
 ## j. Las sesiones A1–A4
 
 En el orden del plan; **cambia el reparto, no el orden**: la ventana (tabla y `POST /hce/{id}/accesos`) pasa de A2 a **A1** porque
