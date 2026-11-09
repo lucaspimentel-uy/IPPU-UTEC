@@ -122,6 +122,17 @@ y obliga a cada pantalla a saber qué catálogo puede pedir.
 | `GET /profesionales` | asignables | asignables | permitir | 403 | 403 | B6; F4-13 |
 | Catálogos: `/severidad-niveles`, `/organismos/opciones`, `/inclusion/opciones`, `/documentos/categorias`, `/ateneos/opciones`, `/recordatorios` (6) | permitir | permitir | permitir | permitir | permitir | F4-19 |
 
+**2026-11-09 · Lo que A1 decidió al construir la matriz (§5.165).** (1) El no tratante **lee** `GET /hce/{id}/identificacion` con
+su ventana (es un subconjunto de `GET /hce/{id}`) y no la escribe; tratante, coordinación y administrativo, sin motivo. (2)
+`mis_grupos` en `GET /grupos` y `asignables` en `GET /profesionales` son B6: A1 decide el acceso por rol (403 a dirección NT y a
+administrativo en `/profesionales`) y **A3 recorta el contenido**. (3) El 403 `forbidden` de la matriz tiene un único mensaje,
+«Tu rol no permite esta acción.»; `grupo_propio` conserva su 403 con `campo: grupo_id`. (4) Un dato clínico con valor en el alta
+de coordinación o administrativo (o cualquier clave clínica en `PATCH /hce/{id}/identificacion`) es **422 por campo**, «Es un dato
+clínico: lo carga el equipo tratante.»; vacío, `''` o `{}` no cuentan. (5) La lista de ateneos del técnico incluye el clínico de un
+expediente sobre el que tiene una ventana vigente (`alcance_ateneos` = lo que puede leer). (6) La ventana sólo la abren las filas
+`no_tratante` y `supervision`: una de `gestion` o `titular` no abre la lectura clínica. (7) En un expediente, el `_visible_por` de
+los módulos por id (`/idea/{id}`…) mira el rol **antes** que la fila del módulo. Las filas de las cinco rutas nuevas están en el CSV.
+
 **Las cuatro decisiones explícitas que pide la matriz:**
 
 - **El no tratante con motivo lee todo el expediente salvo la auditoría y las fotos, y no escribe nunca (F4-4).** El Protocolo §6.1
@@ -203,6 +214,15 @@ puede leer (el ateneo no es la HCE y su título es contenido, §5.158 a), el gru
 expediente, no por grupo) y todo id fuera de `int4` (§5.163 a). *Rechazado:* el mismo 404 también para el no tratante, con la
 consulta por C.I. como única puerta: la consulta ya reveló la existencia, así que el 404 no protege nada y obliga a la pantalla a
 adivinar si ofrece el motivo.
+
+**2026-11-09 · Corrección de la review de A0, decisión (a) del equipo (§5.165; enmienda F4-8 y F4-9).** Para un **técnico no
+tratante**, `POST /hce/{id}/accesos` exige además **`ci`** en el cuerpo, que se compara con la C.I. del expediente después de la
+forma canónica de §5.110 (`5.789.123-4` = `57891234`); si no coincide, la respuesta es **el 404 de un expediente inexistente**
+(el mismo cuerpo). Sin `ci` (o en blanco) es 422 por campo: no revela nada que el 403 `reason_required` no haya dicho. Coordinación
+no la manda (si la manda, no se mira). **Por qué:** los ids son correlativos; sin esto un técnico abriría cualquier expediente
+recorriéndolos, con el registro como único control y después del hecho. La pantalla del motivo le pide al técnico «C.I. del NNA»
+(con su rótulo) y no se la pide a coordinación. El orden en la ruta: el rol (403) → la existencia (404) → la C.I. del técnico
+(404) → el motivo (422).
 
 ## d. El registro de accesos
 
@@ -405,6 +425,15 @@ por C.I., ni el logout en el servidor, ni la administración.
 
 `fingerprint.js` y `capturas.js` no cambian (la vista del diálogo se suma al contraste: `verificar_contraste_ui.js` lo abre como
 González sobre un expediente sin grupo).
+
+**2026-11-09 · Lo que A1 corrigió al construir (§5.165).** (1) `a1-motivo-abre` afirma la fila del registro con la **respuesta 201
+de `POST /hce/{id}/accesos`** (relación, motivo, texto, 120 minutos) y no con `GET /hce/{id}/accesos`, que es de A2. (2)
+`verificar_contraste_ui.js` sólo lee y mide sobre la base recién cargada, donde no hay ningún expediente sin grupo: abre el
+**componente real** del diálogo con el cuerpo fijo del 403 `reason_required` (como el recibí, sin pedir nada; los motivos sí salen
+de `GET /accesos/motivos`). (3) El «Reintentar» de una pestaña cuya ventana venció pasa por el diálogo con dos líneas más en
+`api.js` (recuerda el último 403 `reason_required`) y en `utils.js` (`estadoErrorHtml`), no tocando cada pestaña. (4) Se suman
+`a1-motivo-422` (sin la C.I., el error junto a su campo) y `a1-motivo-ci` (una C.I. equivocada: el mensaje de la API y nada se
+abre). (5) El diálogo no ofrece la copia a la familia: no abre ninguna ventana (su flujo es de A2).
 
 ## j. Las sesiones A1–A4
 

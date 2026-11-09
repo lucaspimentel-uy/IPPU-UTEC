@@ -219,16 +219,16 @@ function _wizGrupoDeId(id){
   const o = WIZ.orig && WIZ.orig.grupo;
   return o && String(o.id) === String(id) ? o : null;
 }
-/* Grupos que se OFRECEN: el admin ve todos; un tecnico, solo aquellos de los que es tecnico1 o tecnico2.
+/* Grupos que se OFRECEN: coordinacion ve todos; un tecnico, solo aquellos de los que es tecnico1 o tecnico2.
    Es presentacion (§5.125): la autoridad es la API, y un 403 al guardar se sigue mostrando. */
 function _wizGruposOfrecidos(filas){
   const u = Sesion.usuario();
-  if(!u || u.rol === "admin") return filas;
+  if(!u || u.rol === "coordinacion") return filas;
   return filas.filter(g => (g.tecnico1 && g.tecnico1.id === u.id) || (g.tecnico2 && g.tecnico2.id === u.id));
 }
 function _wizRellenarGrupos(){
   const sel = document.getElementById("f_grupo");
-  const u = Sesion.usuario(), admin = !u || u.rol === "admin";
+  const u = Sesion.usuario(), admin = !u || u.rol === "coordinacion";
   const previo = sel.value || (WIZ.orig && WIZ.orig.grupo_id !== null && WIZ.orig.grupo_id !== undefined ? String(WIZ.orig.grupo_id) : "");
   const filas = _wizGruposOfrecidos(WIZ.grupos);
   const o = WIZ.orig && WIZ.orig.grupo;

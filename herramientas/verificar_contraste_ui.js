@@ -17,7 +17,9 @@
  *   pestañas, CI (pendiente con errores · registrado · edición), IDEA (borrador con NS · firmado con banda · firma y 422 ·
  *   addendas), PA y PB (borrador · Δ), IC (sin crear · firmado · avisos y «Cambió en el servidor» · errores), documento
  *   impreso del IC, VF (vacía · formulario · categorías y niveles), reporte de la VF, diálogo de alta/edición en sus cuatro
- *   pasos y su confirmación de descarte, diálogo del recibí y su confirmación, estados compartidos, toast, enlace de salto,
+ *   pasos y su confirmación de descarte, diálogo del recibí y su confirmación, diálogo del motivo de acceso (A1: el componente
+ *   real ante el 403 `reason_required`, con sus errores de muestra) y el estado del expediente que se abre con motivo,
+ *   estados compartidos, toast, enlace de salto,
  *   y el cromo de la app (barra lateral, cabecera) en todas ellas. Con IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD, al final «Salir» y
  *   entra el admin: Grupos con «Asignar técnicos», y el diálogo de asignación abierto (con su confirmación de descarte y sus errores
  *   de muestra) SIN guardar: el filtro de escritura sigue sin dejar pasar más que GET y POST /auth/login.
@@ -601,6 +603,25 @@ function buscarContornosApagados() {
   await cap('IC · errores de firma');
   await ev(() => { IC.avisos = [{ mensaje: 'El informe ya está firmado. Se muestra el informe tal como está en el servidor.', conflicto: true }, { mensaje: 'Aviso no bloqueante (muestra).' }]; icPintarAvisos(); });
   await cap('IC · avisos y «Cambió en el servidor»');
+  // A1 · el diálogo del motivo (docs/diseno/fase4-acceso.md i): el componente real, como lo abre González ante el 403
+  // `reason_required` de un expediente que no trata (el cuerpo fijo de la API); los motivos salen de GET /accesos/motivos. No se
+  // registra nada: «Cancelar» no pide (y el filtro de escritura abortaría un POST).
+  await ev(async () => { const id = (await apiFetch('/hce', { query: { nombre: 'Martín' } })).data[0].id;
+    expedienteMotivo(new ApiError(403, 'reason_required', [{ campo: null, mensaje: 'Este expediente no es de tus grupos: para abrirlo, registrá el motivo.' }]), id); });
+  await page.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 }); await esperar(250);
+  await cap('Diálogo del motivo de acceso');
+  anillos.push(await medirAnilloTeclado(page, '#mfMotivo', 'lista desplegable (motivo de acceso)'));
+  anillos.push(await medirAnilloTeclado(page, '#mfMotivoCi', 'campo de texto «C.I. del NNA» (motivo de acceso)'));
+  anillos.push(await medirAnilloTeclado(page, '#mfMotivoTexto', 'área de texto (motivo de acceso)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnMotivoOk', 'botón «Abrir con este motivo»'));
+  await ev(() => formResumen('motivoErrores', [{ id: 'mfMotivoCi', rot: 'C.I. del NNA', mensaje: 'Es obligatoria: escribí la C.I. completa del NNA. (muestra)' },
+    { id: 'mfMotivoTexto', rot: 'Detalle del motivo', mensaje: 'Es obligatorio para este motivo (muestra).' }], 'No se pudo abrir el expediente:'));
+  await esperar(100);
+  await cap('Diálogo del motivo de acceso · errores');
+  await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#modalFlujo.open'), null, { timeout: 3000 });
+  await esperar(150);
+  await cap('Expediente que se abre con motivo (el estado tras cerrar el diálogo)');
+  anillos.push(await medirAnilloTeclado(page, '#btnMotivoAbrir', 'botón «Registrar el motivo»'));
   await abrirPorNombre('Martín', 'ic');
   await cap('IC · firmado (tabla, radares, firmas, recibí)');
   // Recibí: Martín ya lo tiene registrado; se abre el componente real con el recibí vacío (sin llamar a la API).

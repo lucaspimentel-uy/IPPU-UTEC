@@ -309,7 +309,8 @@ function toastGuardado(msg, warnings){ toast(msg, Array.isArray(warnings) && war
    POST /auth/login -> token + usuario, guardados en sessionStorage (api.js · Sesion).
    Al cargar la pagina con token guardado se valida con GET /auth/yo antes de mostrar nada.
    Un 401 en cualquier llamada (api.js) vuelve a esta pantalla via alSesionInvalida(). */
-const ROL_TXT = {admin:"Administración", tecnico:"Técnico"};
+/* Las cuatro claves de rol (Fase 4, A1 · docs/diseno/fase4-acceso.md a). */
+const ROL_TXT = {tecnico:"Técnico/a", coordinacion:"Dirección/coordinación técnica-clínica", administrativo:"Personal administrativo", direccion_nt:"Dirección no técnica"};
 
 function _el(id){ return document.getElementById(id); }
 function limpiarErrorLogin(){ const e=_el("loginError"); e.hidden=true; e.textContent=""; }

@@ -91,6 +91,41 @@ async function loguear(page) {
   await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
 }
 
+/* ---------- Fase 4 (A1 · docs/diseno/fase4-acceso.md i): el expediente «ajeno» de los chequeos -ajeno ----------
+   Lo crea el técnico EN SU GRUPO y carga él los datos (coordinación ya no escribe lo clínico, F4-5); después coordinación le
+   quita el grupo —un pase de caso, PATCH /hce/{id}/identificacion {grupo_id: null}—: el técnico deja de ser tratante. Cada
+   `api` es la de su bloque: (metodo, ruta, body, token?) con el token del técnico por omisión. */
+async function grupoPropio(api) {
+  const yo = (await api('GET', '/auth/yo')).json;
+  const g = (await api('GET', '/grupos')).json.find((x) => (x.tecnico1 && x.tecnico1.id === yo.id) || (x.tecnico2 && x.tecnico2.id === yo.id));
+  return g.id;
+}
+async function altaPropia(api, persona) {
+  const r = await api('POST', '/hce', { persona, grupo_id: await grupoPropio(api) });
+  return r.json.data.id;
+}
+async function pasarDeCaso(api, id, tokAdmin) {
+  return (await api('PATCH', `/hce/${id}/identificacion`, { grupo_id: null }, tokAdmin)).status;
+}
+/* Coordinación sobre una ruta del ajeno: sin ventana, 403 reason_required; abre la ventana (supervisión); con ella, 200. */
+async function coordSinYConVentana(api, id, ruta, tokAdmin) {
+  const sin = await api('GET', ruta, undefined, tokAdmin);
+  const abre = await api('POST', `/hce/${id}/accesos`, { motivo_codigo: 'supervision' }, tokAdmin);
+  const con = await api('GET', ruta, undefined, tokAdmin);
+  return { sin: [sin.status, sin.json && sin.json.code], abre: abre.status, con: con.status };
+}
+const ok403 = (r, code) => r[0] === 403 && r[1] === code;
+/* La pantalla del técnico frente al ajeno: el diálogo del motivo y ningún dato del NNA; «Cancelar» (sin pedido) cierra. */
+async function pantallaMotivo(page, id, opts) {
+  await page.evaluate(([i, o]) => abrirExpediente(i, o || undefined), [id, opts || null]);
+  await page.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 });
+  const p = await page.evaluate(() => ({ dialogo: !!document.querySelector('#modalFlujo.open #mfMotivo'), banda: !!document.getElementById('expTitulo'),
+    txt: document.getElementById('expedienteContent').innerText + ' ' + document.getElementById('mfBody').innerText }));
+  await page.click('#btnMotivoCancelar');
+  await page.waitForFunction(() => !document.querySelector('#modalFlujo.open'), null, { timeout: 8000 });
+  return p;
+}
+
 (async () => {
   await preflight();
   const browser = await chromium.launch({ headless: !process.env.HEADED });
@@ -624,8 +659,8 @@ async function loguear(page) {
     const b1 = await p5.evaluate(() => ({ foco: document.activeElement.id, rol: document.getElementById('altaErrores').getAttribute('role'),
       texto: document.getElementById('altaErrores').innerText.replace(/\s+/g, ' '), camposMarcados: document.querySelectorAll('#modalAlta .field.invalid').length,
       abierto: document.getElementById('modalAlta').classList.contains('open'), boton: document.getElementById('btnCreate').disabled }));
-    check('3b-b', '409 por cédula repetida como TÉCNICO: mensaje genérico «consultá a dirección», sin nombrar el campo, foco en el resumen role="alert", el diálogo sigue abierto',
-      b1.foco === 'altaErrores' && b1.rol === 'alert' && /No se pudo completar el alta: consultá a dirección\./.test(b1.texto) && !/cédula/i.test(b1.texto.replace('No se pudo guardar:', '')) &&
+    check('3b-b', '409 por cédula repetida como TÉCNICO: el aviso de B5 «Ya hay un NNA registrado con esa C.I. Consultá con coordinación.» (A1, F4-14), sin nombrar a nadie ni marcar el campo, foco en el resumen role="alert", el diálogo sigue abierto',
+      b1.foco === 'altaErrores' && b1.rol === 'alert' && /Ya hay un NNA registrado con esa C\.I\. Consultá con coordinación\./.test(b1.texto) && !/cédula/i.test(b1.texto.replace('No se pudo guardar:', '')) &&
       b1.camposMarcados === 0 && b1.abierto && !b1.boton, JSON.stringify(b1));
     await escDescartando(p5);
 
@@ -2978,6 +3013,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await api('PATCH', `/hce/${idM}`, { medicacion: LARGO });
     const ANAM = { motivo: 'Consulta por c1 ' + 'x'.repeat(60), perinatal: 'Sin particularidades ' + 'y'.repeat(60), desarrollo: 'Hitos ' + 'z'.repeat(60) };
     await api('PATCH', `/hce/${idM}`, { anamnesis: ANAM });
+    // A1: coordinación no es tratante de Martín: abre la ventana (supervisión) para leer el LOG; el acceso va a otra tabla.
+    await api('POST', `/hce/${idM}/accesos`, { motivo_codigo: 'supervision' }, tokAdmin);
     const totalAntes = Number((await api('GET', `/hce/${idM}/auditoria?limit=1`, undefined, tokAdmin)).total);
 
     await pc.evaluate((i) => abrirExpediente(i), idM);
@@ -3134,15 +3171,17 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('c1-solo-lectura', 'la pestaña es de sólo lectura: sin campos de texto ni formularios (sólo dos selectores y el paginado), y abrirla, filtrarla y paginarla no agrega filas al LOG',
       controles === 0 && totalDespues === totalAntes, JSON.stringify({ controles, totalAntes, totalDespues }));
 
-    /* c1-ajeno · un técnico no alcanza el LOG de un expediente fuera de sus grupos: 404 (en la API y en la pantalla) */
-    /* los técnicos del seed están en los tres grupos: el expediente ajeno es uno que el admin da de alta sin grupo (un técnico no lo alcanza) */
-    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C1', ci: '4.321.098-7', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
-    const aTec = idAjeno === undefined ? null : await api('GET', `/hce/${idAjeno}/auditoria`);
-    const aAdm = idAjeno === undefined ? null : await api('GET', `/hce/${idAjeno}/auditoria`, undefined, tokAdmin);
-    await pc.evaluate((i) => abrirExpediente(i), idAjeno); await pc.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
-    const pantalla = await pc.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
-    check('c1-ajeno', 'técnico y expediente de otro grupo: GET /hce/{id}/auditoria da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos del NNA',
-      idAjeno !== undefined && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pantalla.alert === 1 && pantalla.reint === 0 && /No existe/.test(pantalla.txt), JSON.stringify({ idAjeno, tec: aTec && aTec.status, adm: aAdm && aAdm.status, pantalla: { ...pantalla, txt: pantalla.txt.slice(0, 80) } }));
+    /* c1-ajeno · A1: el técnico no lee el LOG de un expediente que no trata, ni con motivo (403 forbidden); coordinación, con
+       la ventana; la pantalla del técnico es el diálogo del motivo, sin datos del NNA. El ajeno: alta del técnico en su grupo y
+       pase de caso de coordinación (pasarDeCaso). */
+    const idAjeno = await altaPropia(api, { nombre: 'Ajeno', apellido: 'C1', ci: '4.321.098-7', fecha_nac: '2016-04-12' });
+    const pase = await pasarDeCaso(api, idAjeno, tokAdmin);
+    const aTec = await api('GET', `/hce/${idAjeno}/auditoria`);
+    const coord = await coordSinYConVentana(api, idAjeno, `/hce/${idAjeno}/auditoria`, tokAdmin);
+    const pantalla = await pantallaMotivo(pc, idAjeno);
+    check('c1-ajeno', 'técnico y expediente que no trata (alta propia + pase de caso): GET /hce/{id}/auditoria da 403 forbidden (el LOG queda fuera de la consulta del no tratante); coordinación 403 reason_required sin ventana y 200 con ella; la pantalla del técnico es el diálogo del motivo, sin datos del NNA',
+      pase === 200 && ok403([aTec.status, aTec.json.code], 'forbidden') && ok403(coord.sin, 'reason_required') && coord.abre === 201 && coord.con === 200
+        && pantalla.dialogo && !pantalla.banda && !/Ajeno/.test(pantalla.txt), JSON.stringify({ idAjeno, pase, tec: [aTec.status, aTec.json.code], coord, pantalla: { ...pantalla, txt: pantalla.txt.slice(0, 80) } }));
     await ctx.close();
   }
 
@@ -3274,15 +3313,18 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && !!filaCs && filaCs[1] === yo.nombre && filaCs[2] === 'Severidad (SEV)' && /Antes: 2 Después: 3/.test(filaCs[5]) && filasLog.some((f) => /Se creó/.test(f[3])),
       JSON.stringify({ ed, csTras, filaCs }));
 
-    /* c2-ajeno · un técnico no alcanza la severidad de un expediente fuera de sus grupos: 404 en la API y «no encontrado» en la pantalla */
-    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C2', ci: '4.765.432-1', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
-    const regAdm = await api('POST', `/hce/${idAjeno}/severidad`, { nivel_cs: 1, nivel_crr: 1, justificacion: 'Registro del admin (c2).', fecha: '2026-04-02' }, tokAdmin);
-    const aTec = await api('GET', `/hce/${idAjeno}/severidad`), aAdm = await api('GET', `/hce/${idAjeno}/severidad`, undefined, tokAdmin);
-    await ps.evaluate((i) => abrirExpediente(i), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
-    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
-    check('c2-ajeno', 'técnico y expediente de otro grupo (con severidad cargada por el admin): GET /hce/{id}/severidad da 404 {code: not_found} (el admin, 200) y la pantalla muestra el estado «no encontrado» en role="alert" sin «Reintentar» ni datos',
-      regAdm.status === 201 && aTec.status === 404 && aTec.json.code === 'not_found' && aAdm.status === 200 && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Grado|Registro del admin/.test(pant.txt),
-      JSON.stringify({ reg: regAdm.status, tec: aTec.status, adm: aAdm.status, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+    /* c2-ajeno · A1: el técnico carga la severidad en su grupo, coordinación hace el pase de caso; desde ahí el técnico recibe
+       403 reason_required en la lectura y forbidden en las escrituras; coordinación lee con la ventana; la pantalla es el diálogo. */
+    const idAjeno = await altaPropia(api, { nombre: 'Ajeno', apellido: 'C2', ci: '4.765.432-1', fecha_nac: '2016-04-12' });
+    const regTec = await api('POST', `/hce/${idAjeno}/severidad`, { nivel_cs: 1, nivel_crr: 1, justificacion: 'Registro del técnico (c2).', fecha: '2026-04-02' });
+    const pase = await pasarDeCaso(api, idAjeno, tokAdmin);
+    const aTec = await api('GET', `/hce/${idAjeno}/severidad`), eTec = await api('PATCH', `/hce/${idAjeno}/severidad`, { nivel_cs: 2 });
+    const coord = await coordSinYConVentana(api, idAjeno, `/hce/${idAjeno}/severidad`, tokAdmin);
+    const pant = await pantallaMotivo(ps, idAjeno);
+    check('c2-ajeno', 'técnico y expediente que no trata (con severidad cargada por él antes del pase de caso): GET /hce/{id}/severidad da 403 reason_required y el PATCH 403 forbidden; coordinación 403 sin ventana y 200 con ella; la pantalla es el diálogo del motivo, sin datos',
+      regTec.status === 201 && pase === 200 && ok403([aTec.status, aTec.json.code], 'reason_required') && ok403([eTec.status, eTec.json.code], 'forbidden')
+        && ok403(coord.sin, 'reason_required') && coord.abre === 201 && coord.con === 200 && pant.dialogo && !pant.banda && !/Grado|Registro del técnico|Ajeno/.test(pant.txt),
+      JSON.stringify({ reg: regTec.status, pase, tec: [aTec.status, aTec.json.code, eTec.status], coord, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
 
     /* c2-vf-reporte · el Reporte de VF (se arma en el navegador desde GET /hce/{id}/valoracion-funcional) no lleva la severidad: ni «Grado», ni las etiquetas, ni la justificación */
     let vfM = await api('GET', `/hce/${idM}/valoracion-funcional`);
@@ -3497,18 +3539,21 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       filasLog.every((f) => f[1] === yo.nombre && f[2] === 'Organismos (ORG)') && filasLog.filter((f) => /Se creó/.test(f[3])).length >= 4 && filasLog.some((f) => /Gestión ante BPS/.test(f[3]))
         && !!fEstado && /Antes: En trámite Después: Vigente/.test(fEstado[5]) && !!fVenc && /Después: /.test(fVenc[5]), JSON.stringify({ n: filasLog.length, fEstado }));
 
-    /* c3-ajeno · un técnico no alcanza los organismos de un expediente fuera de sus grupos: 404 en las siete rutas y «no encontrado» en la pantalla */
-    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C3', ci: '4.765.433-9', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
-    const cargado = await Promise.all([api('POST', `/hce/${idAjeno}/organismos/inau`, { convenio: 'Cargado por el admin (c3)' }, tokAdmin), api('POST', `/hce/${idAjeno}/organismos/registros`, { organismo: 'inau', fecha: '2026-04-02', detalle: 'Registro del admin (c3).' }, tokAdmin)]);
+    /* c3-ajeno · A1: el técnico carga el vínculo y el registro en su grupo, coordinación hace el pase de caso; desde ahí las siete
+       rutas de /organismos le dan 403 (reason_required las dos lecturas, forbidden las cinco escrituras); coordinación lee con la
+       ventana; la pantalla es el diálogo del motivo. */
+    const idAjeno = await altaPropia(api, { nombre: 'Ajeno', apellido: 'C3', ci: '4.765.433-9', fecha_nac: '2016-04-12' });
+    const cargado = await Promise.all([api('POST', `/hce/${idAjeno}/organismos/inau`, { convenio: 'Cargado por el técnico (c3)' }), api('POST', `/hce/${idAjeno}/organismos/registros`, { organismo: 'inau', fecha: '2026-04-02', detalle: 'Registro del técnico (c3).' })]);
+    const pase = await pasarDeCaso(api, idAjeno, tokAdmin);
     const rutas = [['GET', ''], ['POST', '/inau', { convenio: 'x' }], ['PATCH', '/inau', { obs: 'x' }], ['POST', '/bps', { estado: 'Vigente' }], ['PATCH', '/bps', { obs: 'x' }], ['GET', '/registros'], ['POST', '/registros', { organismo: 'inau', fecha: '2026-04-02', detalle: 'x' }]];
-    const tec = [], adm = [];
-    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/organismos${r}`, b); tec.push([t.status, t.json.code]); }
-    for (const [m, r] of rutas.filter(([m]) => m === 'GET')) adm.push((await api(m, `/hce/${idAjeno}/organismos${r}`, undefined, tokAdmin)).status);
-    await ps.evaluate((i) => abrirExpediente(i), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
-    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
-    check('c3-ajeno', 'técnico y expediente de otro grupo (con vínculo y registro cargados por el admin): las siete rutas de /organismos dan 404 {code: not_found} (el admin, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
-      cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Registro del admin/.test(pant.txt),
-      JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+    const tec = [];
+    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/organismos${r}`, b); tec.push([m, t.status, t.json.code]); }
+    const coord = await coordSinYConVentana(api, idAjeno, `/hce/${idAjeno}/organismos/registros`, tokAdmin);
+    const pant = await pantallaMotivo(ps, idAjeno);
+    check('c3-ajeno', 'técnico y expediente que no trata (vínculo y registro cargados por él antes del pase de caso): las siete rutas de /organismos dan 403 (reason_required las lecturas, forbidden las escrituras); coordinación 403 sin ventana y 200 con ella; la pantalla es el diálogo del motivo, sin datos',
+      cargado.every((c) => c.status === 201) && pase === 200 && tec.every(([m, s, c]) => s === 403 && c === (m === 'GET' ? 'reason_required' : 'forbidden'))
+        && ok403(coord.sin, 'reason_required') && coord.abre === 201 && coord.con === 200 && pant.dialogo && !pant.banda && !/Cargado por el técnico|Registro del técnico|Ajeno/.test(pant.txt),
+      JSON.stringify({ pase, tec, coord, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
     await ctx.close();
   }
 
@@ -3667,19 +3712,22 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && /restringida para compartir/.test(sensS.hint) && /no requiere autorización/.test(sensS.hint),
       JSON.stringify({ b: rBlanco.status(), g422, ok: rOk.status(), postG, sensS }).slice(0, 600));
 
-    /* c4-ajeno · un técnico no alcanza la inclusión de un expediente fuera de sus grupos: 404 en las cinco rutas y «no encontrado» en la pantalla */
-    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C4', ci: '4.765.434-7', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
-    const cargado = [await api('POST', `/hce/${idAjeno}/inclusion`, { centro: 'Cargado por el admin (c4)', estado: 'Inclusión plena' }, tokAdmin)];
-    cargado.push(await api('POST', `/hce/${idAjeno}/inclusion/bitacora`, { fecha: '2026-04-02', interlocutor: 'Madre', tema: 'Familiar / social', contenido: 'Gestión del admin (c4).' }, tokAdmin));
+    /* c4-ajeno · A1: el técnico carga la ficha y la gestión en su grupo, coordinación hace el pase de caso; desde ahí las cinco
+       rutas le dan 403 (reason_required las lecturas, forbidden las escrituras); coordinación lee con la ventana; la pantalla
+       (abierta en la pestaña «Inclusión») es el diálogo del motivo. */
+    const idAjeno = await altaPropia(api, { nombre: 'Ajeno', apellido: 'C4', ci: '4.765.434-7', fecha_nac: '2016-04-12' });
+    const cargado = [await api('POST', `/hce/${idAjeno}/inclusion`, { centro: 'Cargado por el técnico (c4)', estado: 'Inclusión plena' })];
+    cargado.push(await api('POST', `/hce/${idAjeno}/inclusion/bitacora`, { fecha: '2026-04-02', interlocutor: 'Madre', tema: 'Familiar / social', contenido: 'Gestión del técnico (c4).' }));
+    const pase = await pasarDeCaso(api, idAjeno, tokAdmin);
     const rutas = [['GET', ''], ['POST', '', { centro: 'x' }], ['PATCH', '', { obs: 'x' }], ['GET', '/bitacora'], ['POST', '/bitacora', { fecha: '2026-04-02', interlocutor: 'x', tema: 'Familiar / social', contenido: 'x' }]];
-    const tec = [], adm = [];
-    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/inclusion${r}`, b); tec.push([t.status, t.json && t.json.code]); }
-    for (const [m, r] of rutas.filter(([m]) => m === 'GET')) adm.push((await api(m, `/hce/${idAjeno}/inclusion${r}`, undefined, tokAdmin)).status);
-    await ps.evaluate((i) => abrirExpediente(i, { tab: 'inc' }), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
-    const pant = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
-    check('c4-ajeno', 'técnico y expediente de otro grupo (con ficha y gestión cargadas por el admin): las cinco rutas de /hce/{id}/inclusion dan 404 {code: not_found} (el admin, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
-      cargado.every((c) => c.status === 201) && tec.every(([s, c]) => s === 404 && c === 'not_found') && adm.every((s) => s === 200) && pant.alert === 1 && pant.reint === 0 && /No existe/.test(pant.txt) && !/Cargado por el admin|Gestión del admin/.test(pant.txt),
-      JSON.stringify({ tec, adm, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
+    const tec = [];
+    for (const [m, r, b] of rutas) { const t = await api(m, `/hce/${idAjeno}/inclusion${r}`, b); tec.push([m, t.status, t.json && t.json.code]); }
+    const coord = await coordSinYConVentana(api, idAjeno, `/hce/${idAjeno}/inclusion/bitacora`, tokAdmin);
+    const pant = await pantallaMotivo(ps, idAjeno, { tab: 'inc' });
+    check('c4-ajeno', 'técnico y expediente que no trata (ficha y gestión cargadas por él antes del pase de caso): las cinco rutas de /hce/{id}/inclusion dan 403 (reason_required las lecturas, forbidden las escrituras); coordinación 403 sin ventana y 200 con ella; la pantalla es el diálogo del motivo, sin datos',
+      cargado.every((c) => c.status === 201) && pase === 200 && tec.every(([m, s, c]) => s === 403 && c === (m === 'GET' ? 'reason_required' : 'forbidden'))
+        && ok403(coord.sin, 'reason_required') && coord.abre === 201 && coord.con === 200 && pant.dialogo && !pant.banda && !/Cargado por el técnico|Gestión del técnico|Ajeno/.test(pant.txt),
+      JSON.stringify({ pase, tec, coord, pant: { ...pant, txt: pant.txt.slice(0, 60) } }));
 
     /* c4-vista · la vista «Inclusión»: las filas son las de GET /inclusion (sin el expediente ajeno), el filtro por estado es el de la API y una fila abre ese expediente en su pestaña «Inclusión» */
     await ps.click('.navitem[data-view="inclusion"]'); await ps.waitForFunction(() => INCV.estado === 'listo', null, { timeout: 8000 }); await ps.waitForTimeout(80);
@@ -3909,17 +3957,22 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         && enInicial.status === 201 && ajenoG.every((r) => r.status === 404 && r.json && r.json.code === 'not_found'),
       JSON.stringify({ st: rG.status(), gUi: { ...gUi, src: gUi.src.slice(0, 10) }, torres: deTorres.status, admin: deAdmin.status, ini: enInicial.status, ajeno: ajenoG.map((r) => r.status) }));
 
-    /* c5-ajeno · un técnico fuera del alcance: la pestaña dice «no encontrado» y la descarga es 404 */
-    const idAjeno = (await api('POST', '/hce', { persona: { nombre: 'Ajeno', apellido: 'C5', ci: '4.765.435-1', fecha_nac: '2016-04-12' } }, tokAdmin)).json.data.id;
-    const docAjeno = (await subirApi(`/hce/${idAjeno}/documentos`, PDF, 'ajeno.pdf', { categoria_id: catId('Otro'), nombre: 'Documento del admin (c5)' }, tokAdmin)).json.data;
+    /* c5-ajeno · A1: el técnico sube un documento en su grupo, coordinación hace el pase de caso; desde ahí lista, documento,
+       descarga y autorización le piden el motivo (403 reason_required) y las fotos son 403 forbidden (fuera de la consulta del no
+       tratante, F4-4); coordinación descarga con la ventana; la pantalla (pestaña «Documentos») es el diálogo del motivo. */
+    const idAjeno = await altaPropia(api, { nombre: 'Ajeno', apellido: 'C5', ci: '4.765.435-1', fecha_nac: '2016-04-12' });
+    const docAjeno = (await subirApi(`/hce/${idAjeno}/documentos`, PDF, 'ajeno.pdf', { categoria_id: catId('Otro'), nombre: 'Documento del técnico (c5)' })).json.data;
+    const pase = await pasarDeCaso(api, idAjeno, tokAdmin);
     const rutasAj = [`/hce/${idAjeno}/documentos`, `/hce/${idAjeno}/documentos/${docAjeno.id}`, `/hce/${idAjeno}/documentos/${docAjeno.id}/archivo`, `/hce/${idAjeno}/fotos`, `/hce/${idAjeno}/autorizacion-imagen`];
     const tecAj = []; for (const r of rutasAj) { const x = await api('GET', r); tecAj.push([x.status, x.json && x.json.code]); }
+    const coordSin = await api('GET', rutasAj[2], undefined, tokAdmin);
+    const abre = await api('POST', `/hce/${idAjeno}/accesos`, { motivo_codigo: 'supervision' }, tokAdmin);
     const admAj = (await fetch(API + rutasAj[2], { headers: { Authorization: 'Bearer ' + tokAdmin } })).status;
-    await ps.evaluate((i) => abrirExpediente(i, { tab: 'doc' }), idAjeno); await ps.waitForSelector('#expedienteContent .estado-error', { timeout: 8000 });
-    const pantAj = await ps.evaluate(() => ({ alert: document.querySelectorAll('#expedienteContent [role="alert"]').length, reint: document.querySelectorAll('#expedienteContent [data-reintentar]').length, txt: document.getElementById('expedienteContent').innerText }));
-    check('c5-ajeno', 'técnico y expediente de otro grupo (con un documento del admin): lista, documento, descarga, fotos y autorización dan 404 {code: not_found} (el admin descarga, 200) y la pantalla muestra «no encontrado» en role="alert" sin «Reintentar» ni datos',
-      tecAj.every(([s, c], i) => s === 404 && (i === 2 ? true : c === 'not_found')) && admAj === 200 && pantAj.alert === 1 && pantAj.reint === 0 && /No existe/.test(pantAj.txt) && !/Documento del admin/.test(pantAj.txt),
-      JSON.stringify({ tecAj, admAj, pant: { ...pantAj, txt: pantAj.txt.slice(0, 60) } }));
+    const pantAj = await pantallaMotivo(ps, idAjeno, { tab: 'doc' });
+    check('c5-ajeno', 'técnico y expediente que no trata (un documento suyo antes del pase de caso): lista, documento, descarga y autorización dan 403 reason_required y las fotos 403 forbidden; coordinación 403 sin ventana y descarga (200) con ella; la pantalla es el diálogo del motivo, sin datos',
+      docAjeno && pase === 200 && tecAj.every(([s, c], i) => s === 403 && c === (i === 3 ? 'forbidden' : 'reason_required')) && coordSin.status === 403 && coordSin.json.code === 'reason_required'
+        && abre.status === 201 && admAj === 200 && pantAj.dialogo && !pantAj.banda && !/Documento del técnico|Ajeno/.test(pantAj.txt),
+      JSON.stringify({ pase, tecAj, coordSin: coordSin.status, abre: abre.status, admAj, pant: { ...pantAj, txt: pantAj.txt.slice(0, 60) } }));
 
     /* c5-delete · no se borran documentos ni fotos: DELETE es 405 y siguen ahí */
     const fotoM = (await api('GET', `/hce/${idM}/fotos`)).json[0];
@@ -4649,6 +4702,101 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         JSON.stringify({ cuerpoSacar, cuerpoAsignar, rolPrecargado, tarjeta, api: trasAsignar.tecnico1 }));
     }
     await A.c.close(); await T.c.close();
+  }
+
+  /* =====================================================================================================================
+     A1 · EL DIÁLOGO DEL MOTIVO (docs/diseno/fase4-acceso.md i; §5.165). ESCRIBE: dos expedientes de González que coordinación
+     pasa a «sin grupo» (pase de caso), y la ventana que abre González sobre uno. El técnico no tratante abre un expediente sólo
+     registrando el motivo y la C.I. completa del NNA (decisión (a)).
+     =================================================================================================================== */
+  {
+    const { ctx: cm, page: pm } = await nuevaPagina();
+    await pm.setViewportSize({ width: 1280, height: 800 });
+    await loguearComo(pm, EMAIL, PASSWORD);
+    const tok = await pm.evaluate(() => sessionStorage.getItem('ippu.token'));
+    const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
+    const api = async (metodo, ruta, body, t) => { const r = await fetch(API + ruta, { method: metodo, headers: { Authorization: 'Bearer ' + (t || tok), 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+      let json = null; try { json = await r.json(); } catch (_e) { json = null; } return { status: r.status, json }; };
+    const CI = '4.765.436-2';
+    const idA = await altaPropia(api, { nombre: 'Motivo', apellido: 'Uno', ci: CI, fecha_nac: '2016-05-05' });
+    const idB = await altaPropia(api, { nombre: 'Motivo', apellido: 'Dos', ci: '4.765.437-0', fecha_nac: '2016-05-06' });
+    const pases = [await pasarDeCaso(api, idA, tokAdmin), await pasarDeCaso(api, idB, tokAdmin)];
+    const motivos = (await api('GET', '/accesos/motivos')).json;
+    const delRol = motivos.filter((m) => m.quien.includes('no_tratante') && m.codigo !== 'copia_familia').map((m) => m.codigo);
+    const pedidos = []; pm.on('request', (q) => { const u = new URL(q.url()); if (u.origin === new URL(API).origin) pedidos.push(q.method() + ' ' + u.pathname); });
+
+    /* a1-motivo-dialogo · el diálogo: modal con nombre, app inerte, foco en el primer campo, rótulos, los motivos del rol, la
+       indicación junto al texto y ningún dato del NNA; Esc lo cierra y el foco no queda en <body>; «Registrar el motivo» lo reabre */
+    await pm.evaluate((i) => abrirExpediente(i), idA);
+    await pm.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 });
+    await pm.waitForTimeout(50);
+    const d = await pm.evaluate(() => {
+      const m = document.querySelector('#modalFlujo .modal'), lab = (id) => { const l = document.querySelector(`label[for="${id}"]`); return l ? l.textContent.replace(/\s+/g, ' ').trim() : ''; };
+      return { role: m.getAttribute('role'), modal: m.getAttribute('aria-modal'), nombre: document.getElementById(m.getAttribute('aria-labelledby')).textContent.trim(),
+        inerte: document.querySelector('div.layout').inert, foco: document.activeElement.id, labels: ['mfMotivo', 'mfMotivoCi', 'mfMotivoTexto'].map(lab),
+        opciones: [...document.querySelectorAll('#mfMotivo option')].map((o) => o.value).filter(Boolean), hint: document.getElementById('hint_mfMotivoTexto').textContent,
+        desc: document.getElementById('mfMotivoTexto').getAttribute('aria-describedby'), banda: !!document.getElementById('expTitulo'),
+        txt: document.getElementById('expedienteContent').innerText + ' ' + document.getElementById('mfBody').innerText };
+    });
+    await pm.keyboard.press('Escape');
+    await pm.waitForFunction(() => !document.querySelector('#modalFlujo.open'), null, { timeout: 8000 });
+    await pm.waitForTimeout(50);
+    const trasEsc = await pm.evaluate(() => ({ activo: document.activeElement && document.activeElement !== document.body ? (document.activeElement.id || document.activeElement.tagName) : 'body', boton: !!document.getElementById('btnMotivoAbrir'), banda: !!document.getElementById('expTitulo') }));
+    await pm.click('#btnMotivoAbrir');
+    await pm.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 });
+    check('a1-motivo-dialogo', 'González abre un expediente que no trata: el diálogo del motivo (role=dialog, aria-modal, nombre, app inerte, foco en «Motivo»), con rótulos para motivo, «C.I. del NNA» y detalle, los motivos de su rol según GET /accesos/motivos (sin la copia a la familia), la indicación «Escribí el motivo, no datos clínicos del NNA.» referida desde el texto y ningún dato del NNA; Esc lo cierra (foco fuera de <body>) y «Registrar el motivo» lo reabre',
+      pases.every((s) => s === 200) && d.role === 'dialog' && d.modal === 'true' && d.nombre === 'Motivo de acceso al expediente' && d.inerte && d.foco === 'mfMotivo'
+        && d.labels[0].startsWith('Motivo') && d.labels[1].startsWith('C.I. del NNA') && d.labels[2] === 'Detalle del motivo'
+        && JSON.stringify(d.opciones) === JSON.stringify(delRol) && /Escribí el motivo, no datos clínicos del NNA\./.test(d.hint) && /hint_mfMotivoTexto/.test(d.desc)
+        && !d.banda && !/Motivo Uno|Uno Motivo/.test(d.txt) && trasEsc.activo !== 'body' && trasEsc.boton && !trasEsc.banda,
+      JSON.stringify({ pases, d: { ...d, txt: d.txt.slice(0, 80) }, trasEsc, delRol }));
+
+    /* a1-motivo-422 · sin la C.I., la API responde 422 y el error va junto al campo «C.I. del NNA» (aria-invalid), con el resumen */
+    await pm.selectOption('#mfMotivo', 'interconsulta');
+    const r422 = pm.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idA}/accesos` && r.request().method() === 'POST');
+    await pm.click('#btnMotivoOk'); const resp422 = await r422;
+    await pm.waitForFunction(() => !document.getElementById('motivoErrores').hidden, null, { timeout: 8000 });
+    const e422 = await pm.evaluate(() => ({ inv: document.getElementById('mfMotivoCi').getAttribute('aria-invalid'), err: document.getElementById('err_mfMotivoCi').textContent, foco: document.activeElement.id, abierto: !!document.querySelector('#modalFlujo.open') }));
+    check('a1-motivo-422', 'sin la C.I. del NNA la API responde 422 por campo y el mensaje va junto a «C.I. del NNA» (aria-invalid), con el resumen role="alert" enfocado; el diálogo sigue abierto',
+      resp422.status() === 422 && e422.inv === 'true' && e422.err.length > 0 && e422.foco === 'motivoErrores' && e422.abierto, JSON.stringify({ st: resp422.status(), e422 }));
+
+    /* a1-motivo-ci · una C.I. que no es la del NNA: el 404 de un inexistente; la pantalla muestra el mensaje de la API y no abre nada */
+    await pm.fill('#mfMotivoCi', '1.234.567-8');
+    const rMal = pm.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idA}/accesos` && r.request().method() === 'POST');
+    await pm.click('#btnMotivoOk'); const respMal = await rMal; const cuerpoMal = await respMal.json();
+    await pm.waitForFunction(() => !document.getElementById('motivoErrores').hidden && /No existe/.test(document.getElementById('motivoErrores').innerText), null, { timeout: 8000 });
+    const mal = await pm.evaluate(() => ({ resumen: document.getElementById('motivoErrores').innerText.replace(/\s+/g, ' '), abierto: !!document.querySelector('#modalFlujo.open'), banda: !!document.getElementById('expTitulo') }));
+    const sigueCerrado = await api('GET', `/hce/${idA}`);
+    const inexistente = await api('POST', '/hce/999999/accesos', { motivo_codigo: 'interconsulta', ci: CI });
+    check('a1-motivo-ci', 'una C.I. que no es la del NNA: POST /hce/{id}/accesos responde el 404 de un expediente inexistente (el mismo cuerpo), el diálogo muestra el mensaje de la API y no se abre nada (GET /hce/{id} sigue 403 reason_required)',
+      respMal.status() === 404 && JSON.stringify(cuerpoMal) === JSON.stringify(inexistente.json) && mal.resumen.includes(cuerpoMal.detail[0].mensaje) && mal.abierto && !mal.banda
+        && sigueCerrado.status === 403 && sigueCerrado.json.code === 'reason_required', JSON.stringify({ st: respMal.status(), cuerpoMal, mal, sigue: sigueCerrado.status }));
+
+    /* a1-motivo-abre · la C.I. correcta (con su formato) y un motivo: 201 con la fila del registro, y el expediente se abre */
+    await pm.fill('#mfMotivoCi', CI);
+    await pm.fill('#mfMotivoTexto', 'Interconsulta del equipo de Escolares (a1).');
+    const rOk = pm.waitForResponse((r) => new URL(r.url()).pathname === `/hce/${idA}/accesos` && r.request().method() === 'POST');
+    await pm.click('#btnMotivoOk'); const respOk = await rOk; const fila = (await respOk.json()).data;
+    await pm.waitForSelector('#expTitulo', { timeout: 8000 });
+    const abierto = await pm.evaluate(() => ({ titulo: document.getElementById('expTitulo').textContent.trim(), dialogo: !!document.querySelector('#modalFlujo.open') }));
+    const ahora = await api('GET', `/hce/${idA}`);
+    check('a1-motivo-abre', 'con la C.I. correcta y «Interconsulta»: POST /hce/{id}/accesos 201 deja la fila del registro (no_tratante, interconsulta, el texto, 120 minutos) y el expediente se abre con su banda; GET /hce/{id} pasa a 200',
+      respOk.status() === 201 && fila.relacion === 'no_tratante' && fila.motivo_codigo === 'interconsulta' && fila.motivo_texto === 'Interconsulta del equipo de Escolares (a1).'
+        && (new Date(fila.vence) - new Date(fila.inicio)) === 120 * 60 * 1000 && abierto.titulo === 'Motivo Uno' && !abierto.dialogo && ahora.status === 200,
+      JSON.stringify({ st: respOk.status(), fila, abierto, ahora: ahora.status }));
+
+    /* a1-motivo-cancelar · «Cancelar» vuelve al listado sin ningún pedido de acceso */
+    await pm.evaluate((i) => abrirExpediente(i), idB);
+    await pm.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 });
+    await pm.selectOption('#mfMotivo', 'interconsulta');
+    const antes = pedidos.length;
+    await pm.click('#btnMotivoCancelar');
+    await pm.waitForFunction(() => !document.querySelector('#modalFlujo.open') && document.getElementById('view-inicio').classList.contains('active'), null, { timeout: 8000 });
+    const tras = pedidos.slice(antes);
+    const sigueB = await api('GET', `/hce/${idB}`);
+    check('a1-motivo-cancelar', '«Cancelar» cierra el diálogo y vuelve al listado sin pedir el acceso (ningún POST /hce/{id}/accesos) y el expediente sigue cerrado',
+      !tras.some((p) => p.startsWith('POST') && p.endsWith('/accesos')) && sigueB.status === 403, JSON.stringify({ tras, sigueB: sigueB.status }));
+    await cm.close();
   }
 
   /* =====================================================================================================================

@@ -72,6 +72,10 @@ const Sesion = (function(){
 })();
 
 /* ---------- Error de la API ---------- */
+/* El último 403 `reason_required` (Fase 4, A1): una pestaña que lo recibe muestra su mensaje y su «Reintentar» vuelve a
+   abrir el expediente, que pasa por el diálogo del motivo (utils.js · estadoErrorHtml, expediente.js · motivoReintentar). */
+let MOTIVO_ULTIMO = null;
+
 class ApiError extends Error {
   /* status 0 = no hubo respuesta (red caida, API apagada, CORS). `detail` siempre es una lista. */
   constructor(status, code, detail, mensaje){
@@ -174,6 +178,9 @@ async function apiFetch(path, opts){
     if(resp.status === 401 && auth){
       Sesion.limpiar();
       if(typeof alSesionInvalida === "function") alSesionInvalida("Tu sesión expiró o ya no es válida. Ingresá de nuevo.");
+    }
+    if(resp.status === 403 && code === "reason_required"){   // Fase 4 (A1): la ventana de acceso no está o venció
+      MOTIVO_ULTIMO = { mensaje: (detail[0] && detail[0].mensaje) || "", path };
     }
     throw new ApiError(resp.status, code, detail);
   }

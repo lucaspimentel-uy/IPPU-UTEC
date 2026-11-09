@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-09 · L1 — A1: roles, relación, matriz y ventana** (Lucas con Claude, local en Windows, rama `a1-roles-matriz`, sobre `hce-post26` fc1163e; §5.165). **Etapas 1–4 hechas; la 5 (demo) escrita y SIN verificar.**
+  - Migración única regenerada (head `dc897506906b`, 52 tablas); `alembic check` sin operaciones. `pytest -q` 1658 passed, 0 skipped. Chequeo del CSV: 94 rutas = 94 filas, sin repetidas ni sin fuente. `generar_catalogos_backend.py --check` OK. Grep de `es_admin`/`ROL_ADMIN`/`"admin"` en `app/`: sólo `crear_usuario.py` (el mensaje).
+  - **Falta (etapa 5):** correr `verificar_contraste_ui.js`, `conectada.js` dos veces sobre bases nuevas y el chequeo de la presentación sobre `ippu_presentacion_ver`; la cabecera de `handoff.md` (`verificar_estado.py --check` marca sus cifras viejas). La rama **no** se mezcla en `hce-post26` hasta eso.
+
 - **2026-11-08 · L1 — A0: diseño de la Fase 4, el acceso** (Lucas con Claude, local en Windows, rama `a0-diseno-fase4`, sobre `main` 4aa89ee; §5.164). **Sólo documentación:** nada bajo `implementacion/`; no se corrió la API (sólo se importó la app, sin base, para listar sus rutas), la demo ni `conectada.js`.
   - **Nuevo:** `docs/diseno/fase4-acceso.md` (secciones a–k: roles y relación, matriz, estados, registro de accesos, motivos, sesión, administración, cambios de datos, la demo mínima, A1–A4, preguntas) y `docs/diseno/fase4-matriz-rutas.csv` (89 rutas de negocio × 7 sujetos, con su fuente).
   - **Medido:** la app expone 89 rutas de negocio (94 con las 5 de infraestructura), las mismas que el CSV, cada una una vez; de las 89 filas, 27 citan sólo fuentes escritas, 57 una fuente escrita más una decisión de diseño y 5 (catálogos) sólo una decisión de diseño; ninguna sin fuente. `verificar_estado.py --check` OK.

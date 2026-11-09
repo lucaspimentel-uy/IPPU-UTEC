@@ -113,7 +113,7 @@ backend/
 ├── docker/initdb/00-crear-base-test.sql   # crea la base ippu_test al inicializar el volumen
 ├── .env.example · alembic.ini · pytest.ini · requirements.txt
 ├── uploads/<nombre de la base>/   # archivos de HCE-DOC y fotos (UPLOADS_DIR, §5.155); ignorado por git; recrear una base es borrar también su carpeta
-├── alembic/versions/dcc838486407_esquema_v2_inicial_a2.py   # migración única del esquema v2 (51 tablas)
+├── alembic/versions/dc897506906b_esquema_v2_inicial_a1.py   # migración única del esquema v2 (52 tablas)
 ├── app/
 │   ├── main.py             # entrypoint FastAPI
 │   ├── core/               # config (rechaza todo DATABASE_URL que no sea Postgres) · constantes · database · seguridad (JWT) · destino (guardia de las CLI que escriben, §5.139)

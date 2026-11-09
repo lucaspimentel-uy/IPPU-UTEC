@@ -56,7 +56,7 @@ function pendAlAbrir(){
 }
 function pendDescripcion(){
   const u = Sesion.usuario();
-  const de = u && u.rol === "admin" ? "de todos los grupos" : "de tus grupos";
+  const de = u && u.rol === "coordinacion" ? "de todos los grupos" : "de tus grupos";
   return `Lo que todavía tiene por hacer este año cada NNA activo ${de}: el consentimiento y, de la línea base al informe de cierre, cada módulo sin firmar. `
     + `Los períodos del Manual orientan: no son fechas límite y no se bloquea nada.`;
 }

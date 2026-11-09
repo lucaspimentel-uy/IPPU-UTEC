@@ -67,6 +67,9 @@ function estadoCargandoHtml(msg){
   return `<div class="empty-state estado-carga" role="status"><div class="big" aria-hidden="true">…</div><p class="estado-msg">${escHtml(msg || "Cargando…")}</p></div>`;
 }
 function estadoErrorHtml(msg, reintentar, extras){
+  /* Fase 4 (A1): el error es el 403 `reason_required` de una pestaña (la ventana venció): «Reintentar» pasa por el diálogo. */
+  if(reintentar && typeof MOTIVO_ULTIMO !== "undefined" && MOTIVO_ULTIMO && MOTIVO_ULTIMO.mensaje === msg && typeof motivoReintentar === "function")
+    reintentar = "motivoReintentar()";
   return `<div class="empty-state estado-error" role="alert"><div class="big" aria-hidden="true">!</div><p class="estado-msg">${escHtml(msg)}</p>
     <div class="estado-acciones">${reintentar ? `<button type="button" class="btn btn-primary btn-mini" data-reintentar onclick="${reintentar}">Reintentar</button>` : ""}${extras || ""}</div></div>`;
 }

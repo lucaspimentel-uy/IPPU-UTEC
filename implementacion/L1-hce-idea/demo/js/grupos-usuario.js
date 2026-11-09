@@ -21,7 +21,7 @@
    (§5.155 e): la tarjeta «Fotos del grupo» del detalle la arma documentos.js con GET /grupos/{id}/fotos (la API decide quién la ve). */
 const GRP = { seq:0, sesion:0, estado:"vacio", error:"", grupos:[], filas:[], anio:null, abierto:null, guardando:false, abriendo:false };
 
-function gruposEsAdmin(){ const u = Sesion.usuario(); return !!u && u.rol === "admin"; }
+function gruposEsAdmin(){ const u = Sesion.usuario(); return !!u && u.rol === "coordinacion"; }
 /* Los grupos que ESTA persona ve del año elegido (admin: todos; técnico: los suyos). */
 function gruposVisibles(){ return _wizGruposOfrecidos(GRP.grupos); }
 function gruposDeId(id){ return GRP.grupos.find(g => g.id === id) || null; }

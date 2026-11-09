@@ -369,7 +369,7 @@ const INCV = {seq: 0, estado: "vacio", error: "", filas: [], total: 0, offset: 0
 function incVistaAlAbrir(){ INCV.offset = 0; incVistaCargar(); }
 function incVistaDescripcion(){
   const u = Sesion.usuario();
-  const de = u && u.rol === "admin" ? "de todos los grupos" : "de tus grupos";
+  const de = u && u.rol === "coordinacion" ? "de todos los grupos" : "de tus grupos";
   return `La situación de inclusión de cada NNA activo ${de} que tiene ficha registrada. Cada fila abre el expediente en su pestaña «Inclusión».`;
 }
 async function incVistaCargar(){

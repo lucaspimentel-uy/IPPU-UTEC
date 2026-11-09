@@ -468,6 +468,10 @@ async function abrirExpediente(id, opts){
     // El detalle y el flujo se piden juntos; si el flujo falla, el HCE-00 se muestra igual.
     const [rh, rf] = await Promise.allSettled([apiFetch(`/hce/${id}`), apiFetch(`/hce/${id}/flujo`)]);
     if(mi !== EXP.seq) return;
+    if(rh.status === "rejected" && rh.reason instanceof ApiError && rh.reason.code === "reason_required"){
+      expedienteMotivo(rh.reason, id, opts);       // Fase 4 (A1): el expediente existe y se abre registrando el motivo
+      return;
+    }
     if(rh.status === "rejected") throw rh.reason;
     raw = rh.value.data;
     hce = adaptarHce00(raw);
@@ -490,6 +494,94 @@ async function abrirExpediente(id, opts){
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
 }
+
+/* ===================== MOTIVO DE ACCESO (Fase 4, A1 · docs/diseno/fase4-acceso.md i) =====================
+   Si GET /hce/{id} responde 403 `reason_required` (técnico no tratante o coordinación sin ventana), la pantalla no muestra
+   ningún dato del NNA: un estado con el mensaje de la API y el diálogo del motivo (#modalFlujo: foco al abrir, Esc cierra,
+   el foco vuelve). Los motivos son los de GET /accesos/motivos para el rol; el técnico escribe además la C.I. completa del
+   NNA (decisión (a), §5.165). «Abrir con este motivo» hace POST /hce/{id}/accesos y vuelve a abrir el expediente; los 422
+   van junto a su campo; «Cancelar» vuelve al listado sin pedir nada. La API decide: acá no se calcula nada. */
+let MOTIVOS_ACCESO = null;                  // GET /accesos/motivos: lista fija, una vez por sesión de página
+const MOTIVO_TEXTO_MAX = 500;
+const MOTIVO = {id: null, opts: null, mensaje: "", guardando: false};
+
+function _motivoEsTecnico(){ const u = Sesion.usuario(); return !!u && u.rol === "tecnico"; }
+/* Lo que se ofrece en el diálogo: los motivos del rol que ABREN una ventana (la copia a la familia no abre nada: §5.103, A2). */
+function _motivosDelRol(lista){
+  const quien = _motivoEsTecnico() ? "no_tratante" : "coordinacion";
+  return lista.filter(m => m.quien.indexOf(quien) >= 0 && m.codigo !== "copia_familia");
+}
+function expedienteMotivo(err, id, opts){
+  Object.assign(MOTIVO, {id, opts: opts || null, mensaje: err.message, guardando: false});
+  document.getElementById("expedienteContent").innerHTML = `<div class="card"><div class="cardbody">
+      <h1 id="expMotivoTitulo" class="pagetitle" tabindex="-1">Expediente con acceso registrado</h1>
+      <div class="empty-state estado-vacio" role="status"><div class="big" aria-hidden="true">🔒</div>
+        <p class="estado-msg">${escHtml(err.message)}</p>
+        <div class="estado-acciones"><button type="button" class="btn btn-primary btn-mini" id="btnMotivoAbrir" onclick="abrirDialogoMotivo()">Registrar el motivo</button>
+          <button type="button" class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button></div></div>
+    </div></div>`;
+  abrirDialogoMotivo();
+}
+async function abrirDialogoMotivo(){
+  const id = MOTIVO.id;
+  if(!MOTIVOS_ACCESO){
+    try{ MOTIVOS_ACCESO = (await apiFetch("/accesos/motivos")).data; }
+    catch(e){ toast(e instanceof ApiError ? e.message : "No se pudieron cargar los motivos.", "error"); return; }
+  }
+  if(MOTIVO.id !== id) return;
+  const opciones = _motivosDelRol(MOTIVOS_ACCESO).map(m => `<option value="${escHtml(m.codigo)}">${escHtml(m.label)}${m.texto_obligatorio ? " (con detalle obligatorio)" : ""}</option>`).join("");
+  const req = `<span class="req" aria-hidden="true">*</span><span class="sr-only">(obligatorio)</span>`;
+  const body = `<div id="motivoErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
+    <p class="hint hint-intro" id="motivoMensaje">${escHtml(MOTIVO.mensaje)} El acceso queda registrado con tu usuario, la fecha y el motivo, y dura 120 minutos.</p>
+    <div class="field"><label for="mfMotivo">Motivo ${req}</label>
+      <select id="mfMotivo" aria-describedby="err_mfMotivo"><option value="">Elegí el motivo</option>${opciones}</select><div class="err" id="err_mfMotivo"></div></div>
+    ${_motivoEsTecnico() ? `<div class="field"><label for="mfMotivoCi">C.I. del NNA ${req}</label>
+      <input id="mfMotivoCi" autocomplete="off" aria-describedby="hint_mfMotivoCi err_mfMotivoCi">
+      <p class="hint" id="hint_mfMotivoCi">La C.I. completa del NNA, la que trae la interconsulta o el pase.</p><div class="err" id="err_mfMotivoCi"></div></div>` : ""}
+    <div class="field"><label for="mfMotivoTexto">Detalle del motivo</label>
+      <textarea id="mfMotivoTexto" rows="3" maxlength="${MOTIVO_TEXTO_MAX}" aria-describedby="hint_mfMotivoTexto err_mfMotivoTexto"></textarea>
+      <p class="hint" id="hint_mfMotivoTexto">Escribí el motivo, no datos clínicos del NNA. Hasta ${MOTIVO_TEXTO_MAX} caracteres; obligatorio en los motivos que lo indican.</p>
+      <div class="err" id="err_mfMotivoTexto"></div></div>`;
+  const foot = `<span class="left">Registro de accesos (Protocolo §8)</span>
+    <div class="acciones-pie">
+      <button type="button" class="btn btn-ghost" id="btnMotivoCancelar" onclick="motivoCancelar()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnMotivoOk" onclick="motivoConfirmar()">Abrir con este motivo</button>
+    </div>`;
+  openFlujoModal("Motivo de acceso al expediente", "Registro de accesos", body, foot);
+}
+function motivoCancelar(){
+  MOTIVO.id = null;
+  closeFlujoModal(true);
+  go("inicio");
+}
+async function motivoConfirmar(){
+  const id = MOTIVO.id; if(id === null || MOTIVO.guardando) return;
+  const m = document.getElementById("modalFlujo");
+  formLimpiar(m, "motivoErrores");
+  const valor = el => { const e = document.getElementById(el); return e ? e.value : undefined; };
+  const body = {motivo_codigo: valor("mfMotivo") || null, motivo_texto: valor("mfMotivoTexto")};
+  if(_motivoEsTecnico()) body.ci = valor("mfMotivoCi");
+  const btn = document.getElementById("btnMotivoOk"); if(btn){ btn.disabled = true; btn.textContent = "Registrando…"; }
+  MOTIVO.guardando = true;
+  try{
+    await apiFetch(`/hce/${id}/accesos`, {method: "POST", body});
+    if(MOTIVO.id !== id) return;
+    MOTIVO.guardando = false; MOTIVO.id = null;
+    closeFlujoModal(true);
+    abrirExpediente(id, MOTIVO.opts || undefined);
+  }catch(err){
+    if(MOTIVO.id !== id) return;
+    MOTIVO.guardando = false;
+    if(btn){ btn.disabled = false; btn.textContent = "Abrir con este motivo"; }
+    const detalle = err instanceof ApiError && err.detail.length ? err.detail : [{campo: null, mensaje: err.message || "No se pudo registrar el motivo."}];
+    const mapa = {motivo_codigo: ["mfMotivo", "Motivo"], motivo_texto: ["mfMotivoTexto", "Detalle del motivo"], ci: ["mfMotivoCi", "C.I. del NNA"]};
+    const items = detalle.map(d => ({id: d.campo && mapa[d.campo] ? mapa[d.campo][0] : null, rot: d.campo && mapa[d.campo] ? mapa[d.campo][1] : "", mensaje: d.mensaje}));
+    formResumen("motivoErrores", items, "No se pudo abrir el expediente:").focus();
+  }
+}
+/* Una pestaña cuyo pedido vuelve 403 `reason_required` (la ventana venció): su estado de error muestra el mensaje de la
+   API y «Reintentar» vuelve a abrir el expediente, que pasa por el diálogo (utils.js · estadoErrorHtml). */
+function motivoReintentar(){ if(EXP.id !== null && EXP.id !== undefined) abrirExpediente(EXP.id, {tab: EXP.tab}); }
 
 /* ===================== EXPEDIENTE DE EJEMPLO (modo demostración) =====================
    Lee el array NNA de datos.js (ids 101–108, NO los de la API). Lo usan solo las vistas de
