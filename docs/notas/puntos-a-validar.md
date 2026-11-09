@@ -47,6 +47,10 @@
 >
 > Se definió la **HCE terminada** y se confirmaron los cuatro roles de la aplicación (tratante y no tratante son la relación del técnico con el expediente), el criterio del motivo de acceso y la participación en el ateneo. **Nuevos, para IPPU:** §1.19 (estudiante/investigador) · §1.20 (perfil de Inclusión) · §1.21 (quién ocupa cada uno de los cuatro roles) · §1.22 (el criterio del motivo de acceso) · §1.23 (retención). **Ninguno bloquea:** todo se construye con la decisión del equipo. **Actualizados:** §2.11 (roles confirmados, `admin` → coordinación), §2.16 (participantes decididos) y §2.17 (criterio decidido, a validar por IPPU).
 >
+> **Diseño de la Fase 4** (2026-11-08, `handoff.md` §5.164, `docs/diseno/fase4-acceso.md`). **Nuevos, para IPPU:** §1.24 (qué escribe
+> coordinación) · §1.25 (qué ve el no tratante) · §1.26 (qué hace el personal administrativo) · §1.27 (una coordinación o varias) ·
+> §1.28 (la copia a la familia) · §1.29 (qué necesita la dirección no técnica). **Ninguno bloquea.**
+>
 > ⚠️ **12 de los 26 bloques del registro de la reunión quedaron SIN respuesta.** La lista está en
 > `respuestas-reunion-ippu-2026-08-21.md` §16 — es la agenda del próximo contacto.
 >
@@ -655,6 +659,72 @@ lista de IPPU.
 > *Pregunta para IPPU: ¿por cuánto tiempo hay que conservar el historial de cambios y el de accesos a las historias clínicas? ¿Quién los revisa y cada cuánto?*
 
 **Qué bloquea.** **Nada.** **Mientras:** no se borra nada (la auditoría es sólo-inserción, esquema §4) y no hay plazo escrito.
+
+### 1.24 Cuando la coordinación supervisa una historia, ¿sólo la lee o también la escribe? — abierto (2026-11-08)
+
+**Qué es.** El Protocolo §5 da a dirección/coordinación técnica-clínica «acceso de supervisión clínica … con registro del motivo».
+El diseño de la Fase 4 (`docs/diseno/fase4-acceso.md`, F4-5; `handoff.md` §5.164) lo lee como lectura: coordinación con motivo lee
+todo y no escribe los módulos clínicos; sí edita la identificación y la logística (grupo, baja, reingreso) y administra.
+
+> *Pregunta para IPPU: cuando la coordinación revisa la historia de un NNA, ¿sólo la lee, o a veces corrige o completa algo (una
+> evaluación, la severidad, la ficha de inclusión)?*
+
+**Qué bloquea.** **Nada.** **Mientras:** sólo lee. Si escribe, es una columna de la matriz (`fase4-matriz-rutas.csv`).
+
+### 1.25 El técnico que consulta un NNA de otro grupo, ¿ve toda la historia o sólo una parte? — abierto (2026-11-08)
+
+**Qué es.** El Protocolo §6.1 limita la consulta del no tratante «a la información pertinente a esa consulta puntual». El diseño
+(F4-4) le deja leer toda la historia menos el historial de cambios y las fotos, sin escribir, y registra el motivo.
+
+> *Pregunta para IPPU: en una interconsulta o un pase de caso, ¿el técnico necesita la historia entera o sólo algunas partes? Si son
+> partes, ¿cuáles para cada motivo?*
+
+**Qué bloquea.** **Nada.** **Mientras:** toda menos el historial y las fotos. Una respuesta por motivo se agrega como tabla motivo ×
+módulo, sin cambiar la forma de la matriz.
+
+### 1.26 ¿Qué hace el personal administrativo con la historia? — abierto (2026-11-08)
+
+**Qué es.** La matriz §5 del Protocolo da al personal administrativo vinculado «datos identificatorios y logísticos (turnos,
+asistencia, facturación)» y contenido clínico sólo para una gestión puntual (p. ej. enviar un informe ya autorizado). La HCE no tiene
+turnos, asistencia ni facturación; el diseño (F4-6) le da la identificación del expediente, el estado del flujo en la búsqueda y los
+vínculos con INAU y BPS (ORG).
+
+> *Pregunta para IPPU: ¿el personal administrativo lleva los trámites con INAU y BPS (convenio, AYEX, envíos)? ¿Necesita ver o
+> enviar informes, y cuáles?*
+
+**Qué bloquea.** **Nada.** **Mientras:** lee y escribe ORG; no ve informes ni nada clínico. El envío de un informe llega con el
+guard de divulgación.
+
+### 1.27 ¿Una coordinación para todo el servicio o varias, con grupos a cargo? — abierto (2026-11-08)
+
+**Qué es.** El Protocolo §5 dice que coordinación supervisa «los casos bajo su responsabilidad técnica». El diseño (F4-3) le da toda
+la institución (Atención Diurna). Complementa §1.21 (quién ocupa cada rol): esto pregunta el **alcance**.
+
+> *Pregunta para IPPU: ¿hay una sola coordinación técnica para todo Atención Diurna, o varias, cada una a cargo de algunos grupos?*
+
+**Qué bloquea.** **Nada.** **Mientras:** una, para todo el servicio. Si son varias: una columna `grupo.coordinacion_id` y una
+condición.
+
+### 1.28 La copia de la historia que se entrega a la familia: ¿quién la entrega y qué se anota? — abierto (2026-11-08)
+
+**Qué es.** Entregar a la familia una copia de la HC es un acceso del titular, no una divulgación (`handoff.md` §5.103); el diseño
+(F4-9) la registra en el registro de accesos, por el técnico tratante o coordinación, con un texto obligatorio.
+
+> *Pregunta para IPPU: cuando se entrega a la familia una copia de la historia, ¿quién la entrega y qué tiene que quedar anotado (a
+> quién, qué partes, si la familia firmó algo)?*
+
+**Qué bloquea.** **Nada.** **Mientras:** tratante o coordinación, con el texto libre «a quién y qué partes».
+
+### 1.29 ¿Qué información necesita la dirección no técnica? — abierto (2026-11-08)
+
+**Qué es.** La dirección no técnica no tiene acceso al contenido clínico individual: sólo información agregada, de modo que sea
+imposible identificar a un usuario (Protocolo §5, §6.6 y §10). El diseño (F4-7) le da el Panel institucional, con las medias del
+protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
+
+> *Pregunta para IPPU: ¿qué indicadores necesita la dirección no técnica (para INAU, donantes, el Consejo)? ¿Les sirve que una media
+> calculada sobre menos de 5 NNA no se muestre?*
+
+**Qué bloquea.** **Nada.** **Mientras:** el Panel con esa supresión y el indicador de ateneos.
 
 ---
 

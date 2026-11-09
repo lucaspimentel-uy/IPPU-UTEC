@@ -32,6 +32,9 @@ docs/
 ├── pendientes-resueltos.md # lo cerrado de §6 y §7, verbatim, con su stub en handoff (§5.84)
 ├── estructura-repositorio.md   # este archivo
 ├── inventario-hce.md       # lo que existe de la HCE, medido del código: módulos, tablas sin API, demo, seguridad (§5.162)
+├── diseno/
+│   ├── fase4-acceso.md         # diseño de la Fase 4: roles, matriz, motivo y registro de accesos, sesión, administración (§5.164)
+│   └── fase4-matriz-rutas.csv  # la matriz por ruta de negocio × sujeto, con su fuente: A1 la convierte en tests
 ├── guias/
 │   └── notas-accesibilidad-ui.md   # contraste, foco y reglas de dominio color↔significado
 ├── markdown/               # conversiones .md de las fuentes: se lee y se cita desde acá
@@ -42,6 +45,9 @@ docs/
 
 - **`inventario-hce.md`**: fotografía del código al 2026-11-08 (módulo por módulo: tablas, rutas, tests, pantalla, guards, deuda y lo que falta
   para la HCE terminada), con el comando de cada cifra en su apéndice. Se rehace cuando el plan lo pida; **no** lo mantiene `verificar_estado.py`.
+- **`diseno/`**: diseños que preceden a una serie de sesiones; cada regla cita su fuente escrita o dice «decisión de diseño». El CSV
+  de la matriz lo editan las sesiones que construyen (A1 agrega las filas de sus rutas nuevas); su apéndice trae el comando que lo
+  compara con las rutas de la app. Las decisiones viven en `handoff.md` §5, no acá.
 - **`guias/notas-accesibilidad-ui.md`**: se cita por nombre de sección —«Contraste WCAG» (con «Línea base vigente»), «Reglas
   de dominio», «Foco», «Cómo se verifica» y «Pendientes»—, no por número.
 - **`markdown/`**: Documento Técnico, Protocolo de acceso/confidencialidad/resguardo, cuestionario respondido, escala IDEA,

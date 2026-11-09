@@ -368,7 +368,7 @@ en varios lugares del repo y conviene tener un número único con su definición
 ## D · Nacen de las decisiones del equipo del 2026-11-07 (`handoff.md` §5.162) — no bloquean nada
 
 > **Estado (2026-11-08): NUEVAS, sin preguntar.** Ninguna bloquea: todo se construye con la decisión del equipo y la respuesta
-> de IPPU sólo ajusta. **Aterrizan en:** `puntos-a-validar.md` §1.19–§1.23.
+> de IPPU sólo ajusta. **Aterrizan en:** `puntos-a-validar.md` §1.19–§1.23 (D1–D5) y §1.24–§1.29 (D6–D11).
 
 ### D1 · Estudiantes e investigadores UTEC-LIDIA: ¿usuarios de la aplicación o destinatarios de datos disociados?
 **Qué se pregunta.** Cuando una persona de UTEC-LIDIA (o un estudiante o pasante) necesita ver datos de la HCE, ¿entra con su propio
@@ -405,6 +405,46 @@ recomienda una revisión al menos semestral).
 **Qué bloquea.** Nada: hoy no se borra nada.
 **Dónde aterriza.** `puntos-a-validar.md` §1.23 · `handoff.md` §5.162 j.
 
+> **D6–D11 (2026-11-08, NUEVAS, sin preguntar)** nacen del diseño de la Fase 4 (`docs/diseno/fase4-acceso.md`, `handoff.md` §5.164).
+> Ninguna bloquea.
+
+### D6 · Cuando la coordinación supervisa una historia, ¿sólo la lee o también la corrige?
+**Qué se pregunta.** Cuando la coordinación revisa la historia de un NNA, ¿sólo la lee, o a veces corrige o completa algo (una evaluación,
+la severidad, la ficha de inclusión)?
+**Por qué importa.** El Protocolo (§5) habla de «supervisión clínica»; si la coordinación escribe, su nombre queda en lo que hace el equipo.
+**Qué bloquea.** Nada: se construye de sólo lectura.
+**Dónde aterriza.** `puntos-a-validar.md` §1.24 · `handoff.md` §5.164 (F4-5).
+
+### D7 · El técnico que consulta un NNA de otro grupo, ¿ve toda la historia o sólo una parte?
+**Qué se pregunta.** En una interconsulta o un pase de caso, ¿el técnico necesita la historia entera o sólo algunas partes? ¿Cuáles?
+**Por qué importa.** El Protocolo (§6.1) limita la consulta «a la información pertinente».
+**Qué bloquea.** Nada: se construye con toda la historia salvo el historial de cambios y las fotos.
+**Dónde aterriza.** `puntos-a-validar.md` §1.25 · `handoff.md` §5.164 (F4-4).
+
+### D8 · ¿Qué hace el personal administrativo con la historia?
+**Qué se pregunta.** ¿Lleva los trámites con INAU y BPS (convenio, AYEX, envíos)? ¿Necesita ver o enviar informes, y cuáles?
+**Por qué importa.** El Protocolo (§5) le da datos identificatorios y logísticos; la HCE no tiene turnos ni facturación.
+**Qué bloquea.** Nada: se construye con la identificación y los vínculos con INAU y BPS.
+**Dónde aterriza.** `puntos-a-validar.md` §1.26 · `handoff.md` §5.164 (F4-6).
+
+### D9 · ¿Una coordinación para todo Atención Diurna o varias?
+**Qué se pregunta.** ¿Hay una sola coordinación técnica para todo el servicio, o varias, cada una a cargo de algunos grupos?
+**Por qué importa.** Decide qué expedientes puede supervisar cada coordinación.
+**Qué bloquea.** Nada: se construye con una para todo el servicio.
+**Dónde aterriza.** `puntos-a-validar.md` §1.27 · `handoff.md` §5.164 (F4-3).
+
+### D10 · La copia de la historia para la familia: ¿quién la entrega y qué se anota?
+**Qué se pregunta.** Cuando se entrega a la familia una copia de la historia, ¿quién la entrega y qué tiene que quedar anotado?
+**Por qué importa.** Es un acceso del titular y queda en el registro de accesos (§5.103).
+**Qué bloquea.** Nada: la registra el técnico tratante o la coordinación, con un texto.
+**Dónde aterriza.** `puntos-a-validar.md` §1.28 · `handoff.md` §5.164 (F4-9).
+
+### D11 · ¿Qué información necesita la dirección no técnica?
+**Qué se pregunta.** ¿Qué indicadores necesita (para INAU, donantes, el Consejo)? ¿Les sirve que una media de menos de 5 NNA no se muestre?
+**Por qué importa.** El Protocolo (§6.6) pide que ningún informe a la dirección permita identificar a un NNA.
+**Qué bloquea.** Nada: se construye con el Panel institucional y el indicador de ateneos.
+**Dónde aterriza.** `puntos-a-validar.md` §1.29 · `handoff.md` §5.164 (F4-7).
+
 ---
 
 ## Apéndice — conteo por fuente y solapamientos
@@ -424,7 +464,7 @@ recomienda una revisión al menos semestral).
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 | Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 5 nuevas del 2026-11-08** (D1–D5, serie D, sin preguntar). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 11 nuevas del 2026-11-08** (D1–D11, serie D, sin preguntar; D6–D11 del diseño de la Fase 4). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 
