@@ -824,7 +824,7 @@ function buscarContornosApagados() {
     anillos.push(await medirAnilloTeclado(page, '#asg_t1', 'lista desplegable (asignar técnicos)'));
     anillos.push(await medirAnilloTeclado(page, '#asg_r1', 'campo de texto (asignar técnicos)'));
     // Errores de muestra (el servidor no se consulta): el resumen role="alert" y el mensaje junto al campo, con los componentes reales.
-    await ev(() => { formResumen('asgErrores', [{ id: 'asg_t2', rot: 'Técnico 2', mensaje: 'El técnico 1 y el técnico 2 tienen que ser personas distintas (muestra)' }, { mensaje: 'Sólo un admin asigna técnicos a un grupo (muestra)' }], 'No se pudo guardar la asignación:'); });
+    await ev(() => { formResumen('asgErrores', [{ id: 'asg_t2', rot: 'Técnico 2', mensaje: 'El técnico 1 y el técnico 2 tienen que ser personas distintas (muestra)' }, { mensaje: 'Tu rol no permite esta acción. (muestra)' }], 'No se pudo guardar la asignación:'); });
     await esperar(100); await cap('Diálogo · asignar técnicos con errores de muestra');
     await ev(() => { formLimpiar(document.getElementById('modalFlujo'), 'asgErrores'); });
     // Un cambio tipeado + Esc: la confirmación de descarte. NO se guarda: se descarta.
@@ -837,6 +837,22 @@ function buscarContornosApagados() {
     await page.click('.navitem[data-view="analitica"]');
     await page.waitForFunction(() => PANEL.estado === 'listo', null, { timeout: 8000 }); await esperar(150);
     await cap('Panel institucional (admin: la institución)');
+    // A1 · el diálogo del motivo como coordinación: abre un expediente de un grupo ajeno SIN ventana (el flujo real: el GET de
+    // lectura responde 403 `reason_required`; no se registra nada, «Esc» no pide) y NO ofrece el campo «C.I. del NNA» (decisión (a)).
+    await page.click('.navitem[data-view="inicio"]');
+    await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+    await ev(async () => { const r = await apiFetch('/hce', { query: { nombre: 'Martín' } }); abrirExpediente(r.data[0].id); });
+    await page.waitForSelector('#modalFlujo.open #mfMotivo', { timeout: 8000 }); await esperar(250);
+    if (await page.$('#mfMotivoCi')) throw new Error('El diálogo del motivo de coordinación ofrece «C.I. del NNA» (decisión (a): sólo el técnico).');
+    await cap('Diálogo del motivo de acceso (coordinación, sin «C.I. del NNA»)');
+    anillos.push(await medirAnilloTeclado(page, '#mfMotivo', 'lista desplegable (motivo de acceso, coordinación)'));
+    anillos.push(await medirAnilloTeclado(page, '#mfMotivoTexto', 'área de texto (motivo de acceso, coordinación)'));
+    anillos.push(await medirAnilloTeclado(page, '#btnMotivoOk', 'botón «Abrir con este motivo» (coordinación)'));
+    await ev(() => formResumen('motivoErrores', [{ id: 'mfMotivo', rot: 'Motivo', mensaje: 'Elegí el motivo (muestra).' },
+      { id: 'mfMotivoTexto', rot: 'Detalle del motivo', mensaje: 'Es obligatorio para este motivo (muestra).' }], 'No se pudo abrir el expediente:'));
+    await esperar(100); await cap('Diálogo del motivo de acceso (coordinación) · errores');
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#modalFlujo.open'), null, { timeout: 3000 });
+    await esperar(150);
   } else {
     console.log('\n(Sin IPPU_ADMIN_EMAIL / IPPU_ADMIN_PASSWORD: no se midió el diálogo de asignación de técnicos del admin.)');
   }
