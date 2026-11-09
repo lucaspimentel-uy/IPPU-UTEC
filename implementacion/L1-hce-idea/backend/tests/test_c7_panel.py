@@ -252,7 +252,7 @@ def test_un_tecnico_sin_grupo_recibe_n_0_con_las_secciones_vacias_pero_bien_form
     assert d["cobertura_lb"] == d["ciclos_completos"] == {"cantidad": 0, "de": 0, "porcentaje": None}
     assert [f["perfil"] for f in d["bandas"]["filas"]] == [b["perfil"] for b in catalogos["banda_idea"]]
     assert all(f["cantidad"] == 0 for f in d["bandas"]["filas"]) and d["bandas"]["sin_idea_firmado"] == 0
-    assert d["protocolo"] == {"n_ciclo_ab": 0, "escalas": [
+    assert d["protocolo"] == {"n_ciclo_ab": 0, "suprimido": False, "escalas": [
         {"escala": e, "media_pa": None, "media_pb": None, "media_delta": None} for e in ESCALAS]}
     assert d["alertas"] == {"nna_con_alguna": 0, "escalas": [{"escala": e, "cantidad": 0} for e in ESCALAS]}
     assert d["pendientes_flujo"] == {"ci": 0, "lb": 0, "pa": 0, "pb": 0, "ic": 0}

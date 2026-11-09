@@ -6,8 +6,10 @@ persisten», §5.122).
 
 ## Reglas que fija este módulo
 
-- **Alcance** (decisión a): el `admin` ve la institución entera; un `tecnico`, los expedientes de sus grupos (§5.101,
-  la misma condición que `GET /hce`). Sólo **expedientes activos**. La respuesta dice cuál (`alcance`) y el `n`.
+- **Alcance** (decisión a; la matriz desde A1): coordinación ve la institución entera; un `tecnico`, los expedientes de
+  sus grupos (§5.101, la misma condición que `GET /hce`); **dirección no técnica**, la institución con las medias del
+  protocolo suprimidas si `n_ciclo_ab` < `UMBRAL_CELDA_CHICA` (`suprimido: true`, F4-7); administrativo, 403. Sólo
+  **expedientes activos**. La respuesta dice cuál (`alcance`) y el `n`.
 - **El IDEA es anual** (§5.96, §5.97): la **cobertura de LB** es el IDEA **firmado de `anio`**; la **distribución por
   banda** es la del IDEA **vigente** (el firmado de mayor `anio`, `idea.idea_vigente`), así que no cambia con `anio`.
   La banda sale sólo de `banda_idea` (`idea.banda_en`, D4): una fila por banda del catálogo, en su orden, con ceros.
@@ -32,11 +34,11 @@ from sqlalchemy.orm import Session
 
 from app.core.constantes import (
     CADENA_FLUJO, CI_REGISTRADO, ESTADO_FIRMADO, MODULO_HCE_IC, MODULO_HCE_LB, MODULO_HCE_PA, MODULO_HCE_PB,
-    PROTOCOLO_ESCALAS,
+    PROTOCOLO_ESCALAS, UMBRAL_CELDA_CHICA,
 )
 from app.models.identidad import Grupo, HceDiurna, Profesional
 from app.models.modulos import Idea, Protocolo
-from app.services import auth, delta, fechas, flujo
+from app.services import delta, fechas, flujo, matriz
 from app.services import idea as servicio_idea
 from app.services.errores import ValidationFailed
 
@@ -72,7 +74,7 @@ def _proporcion(cantidad: int, de: int) -> dict[str, Any]:
 def _ids_activos(db: Session, usuario: Profesional) -> list[int]:
     """Los expedientes **activos** que el usuario ve (§5.101): todos para el admin, los de sus grupos para un técnico."""
     consulta = select(HceDiurna.id).outerjoin(Grupo, HceDiurna.grupo_id == Grupo.id).where(HceDiurna.activo.is_(True))
-    if (alcance := auth.condicion_de_alcance(usuario)) is not None:
+    if (alcance := matriz.condicion_de_alcance(usuario, "panel")) is not None:
         consulta = consulta.where(alcance)
     return list(db.scalars(consulta.order_by(HceDiurna.id)))
 
@@ -124,9 +126,16 @@ def calcular(db: Session, usuario: Profesional, anio: int | None = None) -> dict
     def cadena_firmada(hce_id: int) -> bool:
         return all(estados[hce_id][m] == ESTADO_FIRMADO for m in CADENA_FLUJO)
 
+    # F4-7: dirección no técnica ve la institución, pero una media de menos de `UMBRAL_CELDA_CHICA` NNA identifica (la de
+    # uno es su puntaje, Protocolo §6.6): se suprimen las medias, no las cuentas.
+    suprimido = matriz.es_agregado(usuario, "panel") and len(ciclo_ab) < UMBRAL_CELDA_CHICA
+
+    def media(valores) -> float | None:
+        return None if suprimido else _media(valores)
+
     return {
         "anio": anio,
-        "alcance": ALCANCE_INSTITUCION if auth.es_admin(usuario) else ALCANCE_MIS_GRUPOS,
+        "alcance": ALCANCE_MIS_GRUPOS if matriz.exigir_rol(usuario, "panel") == "mis_grupos" else ALCANCE_INSTITUCION,
         "n_activos": n,
         "cobertura_lb": _proporcion(sum(1 for h in ids if estados[h][MODULO_HCE_LB] == ESTADO_FIRMADO), n),
         "ciclos_completos": _proporcion(sum(1 for h in ids if ci[h] == CI_REGISTRADO and cadena_firmada(h)), n),
@@ -141,12 +150,13 @@ def calcular(db: Session, usuario: Profesional, anio: int | None = None) -> dict
         },
         "protocolo": {
             "n_ciclo_ab": len(ciclo_ab),
+            "suprimido": suprimido,
             "escalas": [
                 {
                     "escala": escala,
-                    "media_pa": _media(getattr(pa[h], escala) for h in ciclo_ab),
-                    "media_pb": _media(getattr(pb[h], escala) for h in ciclo_ab),
-                    "media_delta": _media(pb[h].deltas.get(escala) for h in ciclo_ab),
+                    "media_pa": media(getattr(pa[h], escala) for h in ciclo_ab),
+                    "media_pb": media(getattr(pb[h], escala) for h in ciclo_ab),
+                    "media_delta": media(pb[h].deltas.get(escala) for h in ciclo_ab),
                 }
                 for escala in PROTOCOLO_ESCALAS
             ],

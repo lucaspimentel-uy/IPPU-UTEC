@@ -123,19 +123,23 @@ def test_login_de_un_inactivo_o_sin_contrasena_es_401(client, sin_token, crear_p
 
 
 # ── Alcance por grupo ────────────────────────────────────────────────────────
-def test_un_tecnico_recibe_404_en_el_expediente_de_otro_grupo_y_200_en_el_suyo(client, grupos, tecnico, token_de):
+def test_un_tecnico_recibe_el_motivo_en_el_expediente_de_otro_grupo_404_en_uno_inexistente_y_200_en_el_suyo(
+    client, grupos, tecnico, token_de,
+):
+    """A1 (F4-8, §5.165): el expediente ajeno que existe responde 403 `reason_required` (se abre con motivo) y el que no
+    existe, 404; el 403 no lleva nada del expediente."""
     propio, ajeno = grupos
     mio, otro = _alta(client, propio.id), _alta(client, ajeno.id)
     cab = token_de(tecnico)
     assert client.get(f"/hce/{mio}", headers=cab).status_code == 200
     r = client.get(f"/hce/{otro}", headers=cab)
-    assert r.status_code == 404
+    assert (r.status_code, r.json()["code"]) == (403, "reason_required")
     inexistente = client.get(f"/hce/{otro + 999}", headers=cab)
-    assert r.json()["detail"][0]["mensaje"] == inexistente.json()["detail"][0]["mensaje"] == "No existe el expediente"
+    assert inexistente.status_code == 404 and inexistente.json()["detail"][0]["mensaje"] == "No existe el expediente"
     # lo que cuelga del expediente, por su ruta y por id
     for ruta in ("flujo", "idea", "protocolo", "informe-cierre", "valoracion-funcional", "consentimiento"):
-        assert client.get(f"/hce/{otro}/{ruta}", headers=cab).status_code == 404, ruta
-    assert client.patch(f"/hce/{otro}", json={"diagnostico": "x"}, headers=cab).status_code == 404
+        assert client.get(f"/hce/{otro}/{ruta}", headers=cab).json()["code"] == "reason_required", ruta
+    assert client.patch(f"/hce/{otro}", json={"diagnostico": "x"}, headers=cab).json()["code"] == "forbidden"
     assert client.patch(f"/hce/{mio}", json={"diagnostico": "x"}, headers=cab).status_code == 200
     # el admin ve los dos
     assert client.get(f"/hce/{otro}").status_code == 200
@@ -147,10 +151,11 @@ def test_un_tecnico_no_alcanza_por_id_un_idea_de_otro_grupo(client, grupos, tecn
     idea_propia = client.post(f"/hce/{_alta(client, propio.id)}/idea", json={"anio": 2026}).json()["data"]["id"]
     cab = token_de(tecnico)
     r = client.get(f"/idea/{idea_ajena}", headers=cab)
+    assert (r.status_code, r.json()["code"]) == (403, "reason_required")  # A1: la matriz sobre su expediente
+    r = client.get(f"/idea/{idea_ajena + 999}", headers=cab)
     assert r.status_code == 404 and r.json()["detail"][0]["mensaje"] == "No existe el IDEA"
-    assert client.get(f"/idea/{idea_ajena + 999}", headers=cab).json()["detail"] == r.json()["detail"]  # ajeno = inexistente, mismo texto
-    assert client.patch(f"/idea/{idea_ajena}", json={"objetivos": "x"}, headers=cab).status_code == 404
-    assert client.post(f"/idea/{idea_ajena}/firmar", headers=cab).status_code == 404
+    assert client.patch(f"/idea/{idea_ajena}", json={"objetivos": "x"}, headers=cab).json()["code"] == "forbidden"
+    assert client.post(f"/idea/{idea_ajena}/firmar", headers=cab).json()["code"] == "forbidden"
     assert client.get(f"/idea/{idea_propia}", headers=cab).status_code == 200
     assert client.patch(f"/idea/{idea_propia}", json={"objetivos": "x"}, headers=cab).status_code == 200
 

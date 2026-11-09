@@ -25,14 +25,16 @@ copy .env.example .env                # 3. config (Linux/Mac: cp) — completar 
 alembic upgrade head                  # 4. crear el esquema
 python -m app.seed_catalogos          # 5. cargar catálogos
 $env:IPPU_SEED_DESTINO = "ippu"       # 6. guardia (§5.139): el nombre de la base de DATABASE_URL; sin esto no escribe
-python -m app.crear_usuario --email yo@ippu.test --nombre "Yo" --rol admin   #    un usuario (pide la contraseña)
+python -m app.crear_usuario --email yo@ippu.test --nombre "Yo" --rol coordinacion   #    un usuario (pide la contraseña)
 uvicorn app.main:app --reload         # 7. API en http://127.0.0.1:8000/docs
 ```
 
 **Login (§5.118 d).** Todo salvo `/health` y `/auth/login` pide token: en Swagger, `POST /auth/login` con
-`{email, password}`, copiar `access_token` y pegarlo en **Authorize**. Un `tecnico` sólo ve los expedientes
-de los grupos en los que es `tecnico1_id`/`tecnico2_id`; un `admin` los asigna con `PATCH /grupos/{id}`
-(§5.120). La demo conectada se sirve con `python -m http.server 5500` desde `demo/` (origen permitido por `CORS_ORIGINS`).
+`{email, password}`, copiar `access_token` y pegarlo en **Authorize**. Cuatro roles (`tecnico` · `coordinacion` ·
+`administrativo` · `direccion_nt`, §5.164–§5.165); quién puede qué lo decide una sola matriz (`app/services/matriz.py`, la
+fuente es `docs/diseno/fase4-matriz-rutas.csv`). El técnico es **tratante** de los expedientes de los grupos en los que es
+`tecnico1_id`/`tecnico2_id` (coordinación los asigna con `PATCH /grupos/{id}`, §5.120); otro expediente lo abre con motivo
+(403 `reason_required` → `POST /hce/{id}/accesos`, con la C.I. completa del NNA). La demo conectada se sirve con `python -m http.server 5500` desde `demo/` (origen permitido por `CORS_ORIGINS`).
 
 Tests: `pytest -q` (usa la base `ippu_test`, aislada de la de desarrollo).
 
@@ -57,7 +59,7 @@ ocultos —pytest imprime las `s` y el conteo—, pero **una sesión vacía devo
 `skip` como fallback**, a propósito: conviviendo con la guardia, el salteo gana
 cada vez que ella no prevé un caso.
 
-Una corrida válida de hoy es **1411 passed, 0 skipped**.
+Una corrida válida de hoy es **1658 passed, 0 skipped**.
 
 ## Cargar la demo localmente (M11.5-a)
 
@@ -66,9 +68,9 @@ En este orden, desde `backend/` con el `.env` completo y `docker compose up -d`:
 ```powershell
 alembic upgrade head                                                          # 1. esquema
 python -m app.seed_catalogos                                                  # 2. catálogos y los 5 grupos reales del año
-$env:IPPU_EMAIL="admin@ippu.test"; $env:IPPU_PASSWORD="<contraseña del admin>"
+$env:IPPU_EMAIL="admin@ippu.test"; $env:IPPU_PASSWORD="<contraseña de la coordinación>"
 $env:IPPU_SEED_DESTINO="<nombre de la base de DATABASE_URL>"                #    guardia de destino (§5.139): sin esto, ni crear_usuario ni seed_demo escriben
-python -m app.crear_usuario --email $env:IPPU_EMAIL --nombre "Coordinación" --rol admin   # 3. admin (toma IPPU_PASSWORD)
+python -m app.crear_usuario --email $env:IPPU_EMAIL --nombre "Coordinación" --rol coordinacion   # 3. coordinación (toma IPPU_PASSWORD)
 uvicorn app.main:app                                                          #    API arriba (otra terminal)
 $env:PYTHONUTF8=1                                                             #    Windows: OBLIGATORIO para el paso 4 (consola cp1252)
 python -m app.seed_demo --url http://localhost:8000                           # 4. la demo, por la API
@@ -79,9 +81,10 @@ python -m app.seed_demo --url http://localhost:8000                           # 
 `app/seed_demo.py`: se rehace con una base nueva).
 
 Carga los 8 NNA de la demo por la API (Martín = §12-A). Los dos técnicos de la demo («Dr. González»,
-«Mtra. Torres») se crean fuera de la API; si el paso 3 se saltea, el seed crea también el admin con
-`IPPU_EMAIL`/`IPPU_PASSWORD`. ⚠️ **Sin `IPPU_DEMO_PASSWORD`, los dos técnicos de la demo quedan con la
-misma contraseña que el admin** — aceptable sólo en desarrollo; definirla para que sean distintas.
+«Mtra. Torres») y, desde A1, `administrativo@demo.ippu.test` y `direccion@demo.ippu.test` se crean fuera de la API; si
+el paso 3 se saltea, el seed crea también la coordinación con `IPPU_EMAIL`/`IPPU_PASSWORD`. ⚠️ **Sin
+`IPPU_DEMO_PASSWORD`, los usuarios de la demo quedan con la misma contraseña que la coordinación** — aceptable sólo en
+desarrollo; definirla para que sean distintas.
 
 Las dos CLI **imprimen la base de destino** (la de `DATABASE_URL`, o la del `.env` si no está exportada) y salen con 1 sin escribir si `IPPU_SEED_DESTINO` no vale exactamente ese nombre (`app/core/destino.py`). Además sale con código 1 **sin escribir nada** si la demo ya está cargada o si faltan los grupos (paso 2
 salteado: el mensaje pide correr `python -m app.seed_catalogos`). Detalle y límites: docstring de
@@ -96,8 +99,9 @@ Swagger en `/docs` (la referencia de cada endpoint: parámetros, errores y ejemp
 `{"code": …, "detail": [{"campo": …, "mensaje": …}]}`. **Una transacción por request**: los servicios
 (`app/services/`) sólo hacen `flush`, el commit está en `app/routers/dependencias.py`. Los tests de la API usan
 las fixtures `client`, `db_api`, `crear_grupo` y `crear_profesional` de `tests/conftest.py` (savepoints: un
-commit del router no escapa del test). `client` entra como `admin`; `token_de(profesional)` da las cabeceras
-de otro usuario.
+commit del router no escapa del test). `client` entra con la identidad de la suite (rol `coordinacion`), que **en los tests** pasa la matriz como el `admin` de
+antes (`conftest._identidad_de_la_suite_sin_matriz`, §5.165); `token_de(profesional)` da las cabeceras de otro usuario, con la
+matriz real (`tests/test_a1_matriz.py` la recorre fila por fila).
 
 ## Por qué Postgres en Docker
 

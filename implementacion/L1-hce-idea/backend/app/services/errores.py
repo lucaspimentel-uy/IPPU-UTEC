@@ -97,3 +97,10 @@ class ForbiddenAction(ErrorDeDominio):
     """La acción no está permitida en este estado o para este actor → 403."""
 
     code = "forbidden"
+
+
+class ReasonRequired(ForbiddenAction):
+    """El expediente existe y el usuario lo puede abrir **registrando el motivo** (`POST /hce/{id}/accesos`) → 403
+    `reason_required` (Fase 4, `docs/diseno/fase4-acceso.md` c). El cuerpo es fijo: sin nombre ni N.º de HC."""
+
+    code = "reason_required"

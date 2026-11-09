@@ -8,18 +8,20 @@ Contrato de respuesta y de error: docstring de `app/routers/__init__.py`. Reglas
 - `GET|POST /ateneos/{id}/documentos` · `GET …/{doc_id}` · `GET …/{doc_id}/archivo` (la descarga de C5).
 
 **Sin DELETE** de ateneos, acuerdos ni documentos (405): es un libro de actas. Institucional, de grupo y jornada son de
-acceso general; un **clínico** fuera del alcance del técnico es 404 con el mismo mensaje que uno inexistente, en todas las
-rutas `/ateneos/{id}…` (la dependencia `ateneo_visible`).
+acceso general del equipo; un **clínico** que el técnico no puede abrir (no es tratante del expediente referido ni tiene
+una ventana sobre él) es 404 con el mismo mensaje que uno inexistente, en todas las rutas `/ateneos/{id}…` (la dependencia
+`ateneo_visible`); con la ventana, lo lee y no lo escribe (403). Administrativo y dirección no técnica: 403 (el indicador,
+dirección sí).
 """
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.identidad import Profesional
-from app.routers.dependencias import sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import permitido, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.ateneos import (
@@ -34,11 +36,12 @@ from app.services.hce import LIMITE_MAXIMO, LIMITE_POR_OMISION
 
 
 def ateneo_visible(
-    ateneo_id: int, usuario: Annotated[Profesional, Depends(usuario_actual)], db: Session = Depends(get_db),
+    ateneo_id: int, request: Request, usuario: Annotated[Profesional, Depends(usuario_actual)], db: Session = Depends(get_db),
 ) -> None:
-    """**404** si el ateneo `{ateneo_id}` no existe o es un clínico fuera del alcance (el mismo mensaje). Corre antes de
-    leer el cuerpo o el formulario de la ruta."""
-    servicio.exigir_visible(db, usuario, ateneo_id)
+    """La matriz de un ateneo (`ateneo.leer` en un GET, `ateneo.escribir` en otro método): 403 para los roles sin ateneos
+    (exista o no), **404** si no existe o es un clínico que el usuario no puede abrir (el mismo mensaje), 403 si lo lee
+    con su ventana pero no lo puede escribir. Corre antes de leer el cuerpo o el formulario de la ruta."""
+    servicio.exigir_visible(db, usuario, ateneo_id, escribir=request.method not in ("GET", "HEAD"))
 
 
 router = APIRouter(prefix="/ateneos", tags=["ateneos"])
@@ -75,7 +78,7 @@ def opciones():
 
 
 @router.get("/indicador", response_model=Indicador, summary="Indicador institucional: 8 al año, 2 por grupo",
-            responses=_ejemplo(200, EJEMPLO_INDICADOR))
+            responses=_ejemplo(200, EJEMPLO_INDICADOR), dependencies=[Depends(permitido("ateneos.indicador"))])
 def indicador(db: Annotated[Session, Depends(sesion_lectura)], anio: _ANIO = None):
     """**Por `fecha`** (por omisión, el año en curso). El total suma los ateneos clínicos, de grupo e institucionales (la
     jornada no); cada grupo **de ese año**, los ateneos con su `grupo_id`. Cuenta todos, los pueda abrir o no quien
@@ -89,6 +92,7 @@ def indicador(db: Annotated[Session, Depends(sesion_lectura)], anio: _ANIO = Non
     responses={200: {"content": {"application/json": {"example": EJEMPLO_FILAS}},
                      **_total("Total de registros que cumplen los filtros (todas las páginas).")},
                422: {"model": RespuestaError, "description": "`tipo` que no es uno de los 4, o un parámetro fuera de rango."}},
+    dependencies=[Depends(permitido("ateneos.lista"))],
 )
 def listar(
     response: Response,
@@ -113,7 +117,7 @@ def listar(
 
 
 @router.post("", status_code=201, response_model=Resultado[AteneoDetalle], summary="Registrar un ateneo o una jornada",
-             responses={**_ejemplo(201, EJEMPLO_RESULTADO), **_ERROR_422})
+             responses={**_ejemplo(201, EJEMPLO_RESULTADO), **_ERROR_422}, dependencies=[Depends(permitido("ateneos.alta"))])
 def registrar(datos: AteneoCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """**Un solo POST completo** con sus acuerdos. El servidor asigna el código (`AT-<año de hoy>-<siguiente>`), el autor
     (el usuario del token) y deja una fila `carga`. Una fecha fuera del año del grupo es un **aviso**, no un error."""

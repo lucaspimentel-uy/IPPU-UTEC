@@ -1,9 +1,9 @@
 """Fotos individuales y grupales — C5 (`handoff.md` §5.155 e, §5.99). Reglas: `app/services/fotos.py`.
 
-- `/hce/{hce_id}/fotos` — alcance del expediente (`hce_visible`): `GET` (lista paginada), `POST` multipart,
-  `GET /{foto_id}` y `GET /{foto_id}/archivo`.
-- `/grupos/{grupo_id}/fotos` — lo mismo para un grupo: **sólo el `admin` y el técnico 1 o 2 de ese grupo**; para
-  cualquier otro, 404 (como un expediente fuera de alcance, §5.101).
+- `/hce/{hce_id}/fotos` — la matriz del expediente (`hce_reservado`: las fotos quedan fuera de la consulta del no
+  tratante, F4-4): `GET` (lista paginada), `POST` multipart, `GET /{foto_id}` y `GET /{foto_id}/archivo`.
+- `/grupos/{grupo_id}/fotos` — lo mismo para un grupo: **coordinación y el técnico 1 o 2 de ese grupo**; otro técnico,
+  404 (la ventana es por expediente, no por grupo); administrativo y dirección no técnica, 403.
 
 **Guardar no requiere la autorización de imagen ni produce avisos** (`warnings` vacío, §5.99). Sin DELETE (405).
 """
@@ -14,17 +14,17 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Grupo, Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_reservado, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import Aviso, FechaOpcional, RespuestaError, Resultado
 from app.schemas.documentos import EJEMPLO_FOTO, EJEMPLO_FOTOS, EJEMPLO_RESULTADO_FOTO, FotoDetalle
-from app.services import auth
+from app.services import matriz
 from app.services import fotos as servicio
 from app.services.hce import LIMITE_MAXIMO, LIMITE_POR_OMISION
 from app.core.database import get_db
 
-router_hce = APIRouter(prefix="/hce/{hce_id}/fotos", tags=["fotos"], dependencies=[Depends(hce_visible)])
+router_hce = APIRouter(prefix="/hce/{hce_id}/fotos", tags=["fotos"], dependencies=[Depends(hce_reservado)])
 router_grupo = APIRouter(prefix="/grupos/{grupo_id}/fotos", tags=["fotos"])
 _USUARIO = Annotated[Profesional, Depends(usuario_actual)]
 _LIMIT = Annotated[int, Query(ge=1, le=LIMITE_MAXIMO, description="Filas por página (1–200).")]
@@ -36,7 +36,7 @@ _FECHA = Annotated[FechaOpcional, Form(description="Cuándo se tomó (opcional).
 
 _ERROR_404_HCE = {404: {"model": RespuestaError, "description": "No existe el expediente, está fuera del alcance, o la foto es de otro dueño."}}
 _ERROR_404_GRUPO = {404: {"model": RespuestaError, "description": (
-    "No existe el grupo, el usuario no es admin ni técnico de ese grupo, o la foto es de otro dueño."
+    "No existe el grupo, el técnico no es de ese grupo, o la foto es de otro dueño."
 )}}
 _ERRORES_ARCHIVO = {
     413: {"model": RespuestaError, "description": "El archivo supera los 10 MB (`code: too_large`, `campo: archivo`)."},
@@ -51,8 +51,9 @@ def _total(descripcion: str) -> dict:
 def grupo_visible(
     grupo_id: int, usuario: Annotated[Profesional, Depends(usuario_actual)], db: Session = Depends(get_db),
 ) -> Grupo:
-    """**404** si el grupo no existe o el usuario no es `admin` ni su técnico/a 1 o 2."""
-    return auth.exigir_grupo_visible(db, usuario, grupo_id)
+    """**403** para los roles sin fotos grupales (exista o no el grupo); **404** si no existe o si el técnico no es su
+    técnico/a 1 o 2 (la ventana es por expediente, no por grupo). Coordinación, cualquiera (`matriz.exigir_grupo`)."""
+    return matriz.exigir_grupo(db, usuario, grupo_id)
 
 
 def _nombre(foto) -> str:
@@ -108,7 +109,7 @@ _GRUPO = Annotated[Grupo, Depends(grupo_visible)]
                                    **_total("Total de fotos del grupo.")}, **_ERROR_404_GRUPO})
 def listar_grupo(grupo: _GRUPO, response: Response, db: Annotated[Session, Depends(sesion_lectura)],
                  limit: _LIMIT = LIMITE_POR_OMISION, offset: _OFFSET = 0):
-    """Sólo admin y los técnicos del grupo. La última subida primero. Total en **`X-Total-Count`**."""
+    """Coordinación y los técnicos del grupo. La última subida primero. Total en **`X-Total-Count`**."""
     filas, total = servicio.listar(db, grupo_id=grupo.id, limit=limit, offset=offset)
     response.headers[CABECERA_TOTAL] = str(total)
     return [FotoDetalle.model_validate(servicio.vista(f)) for f in filas]

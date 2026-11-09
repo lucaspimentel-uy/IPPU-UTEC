@@ -1,7 +1,7 @@
 """Listas de referencia: `GET /grupos`, `GET /profesionales` — M11.3-a2; `GET /recordatorios` — F2; `PATCH /grupos/{id}` — M11.5-a.
 
 GET plano, sin sobre (contrato de `app/routers/__init__.py`). La única escritura es la
-**asignación de técnicos a un grupo**, sólo `admin` (`handoff.md` §5.120); crear, renombrar o
+**asignación de técnicos a un grupo**, sólo coordinación (`handoff.md` §5.120); crear, renombrar o
 archivar grupos sigue fuera (§5.90).
 """
 from typing import Annotated
@@ -10,17 +10,15 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import permitido, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.referencias import (
     EJEMPLO_GRUPOS, EJEMPLO_PROFESIONALES, EJEMPLO_RECORDATORIOS, EJEMPLO_RESULTADO_GRUPO, GrupoConTecnicos,
     GrupoDetalle, GrupoTecnicosActualizar, ProfesionalResumen, RecordatorioResumen,
 )
-from app.services import auth
 from app.services import grupos as servicio_grupos
 from app.services import referencias as servicio
-from app.services.errores import ForbiddenAction
 
 router_grupos = APIRouter(prefix="/grupos", tags=["referencias"])
 router_profesionales = APIRouter(prefix="/profesionales", tags=["referencias"])
@@ -31,7 +29,8 @@ _ERROR_422 = {422: {"model": RespuestaError, "description": "Parámetro inválid
 
 @router_grupos.get(
     "", response_model=list[GrupoConTecnicos], summary="Grupos de un año",
-    responses={**_ejemplo(200, EJEMPLO_GRUPOS), **_ERROR_422},
+    responses={**_ejemplo(200, EJEMPLO_GRUPOS), **_ERROR_422, 403: {"model": RespuestaError, "description": "Dirección no técnica."}},
+    dependencies=[Depends(permitido("grupos.lista"))],
 )
 def listar_grupos(
     db: Annotated[Session, Depends(sesion_lectura)],
@@ -45,7 +44,9 @@ def listar_grupos(
 
 @router_profesionales.get(
     "", response_model=list[ProfesionalResumen], summary="Profesionales",
-    responses={**_ejemplo(200, EJEMPLO_PROFESIONALES), **_ERROR_422},
+    responses={**_ejemplo(200, EJEMPLO_PROFESIONALES), **_ERROR_422,
+               403: {"model": RespuestaError, "description": "Administrativo y dirección no técnica."}},
+    dependencies=[Depends(permitido("profesionales.lista"))],
 )
 def listar_profesionales(
     db: Annotated[Session, Depends(sesion_lectura)],
@@ -66,33 +67,25 @@ def listar_recordatorios(db: Annotated[Session, Depends(sesion_lectura)]):
     return [RecordatorioResumen.model_validate(r) for r in servicio.listar_recordatorios(db)]
 
 
-def _solo_admin(usuario: Annotated[Profesional, Depends(usuario_actual)]) -> Profesional:
-    """403 para un `tecnico`: asignar técnicos es una acción de dirección (§5.120). Se mira antes
-    que el grupo, así un `tecnico` recibe 403 también por un grupo que no existe."""
-    if not auth.es_admin(usuario):
-        raise ForbiddenAction(
-            "Sólo un admin asigna técnicos a un grupo", [(None, "Sólo un admin asigna técnicos a un grupo")],
-        )
-    return usuario
-
-
 @router_grupos.patch(
     "/{grupo_id}", response_model=Resultado[GrupoDetalle], summary="Asignar técnicos a un grupo",
     responses={
         **_ejemplo(200, EJEMPLO_RESULTADO_GRUPO),
-        403: {"model": RespuestaError, "description": "Sólo `admin`."},
+        403: {"model": RespuestaError, "description": "Sólo coordinación (se mira antes que el grupo: 403 también si no existe)."},
         404: {"model": RespuestaError, "description": "No existe el grupo."},
         422: {"model": RespuestaError, "description": (
-            "Profesional inexistente o inactivo, técnico 1 = técnico 2, o un campo que no es de técnicos."
+            "Profesional inexistente, inactivo o con un rol que no trata (sólo técnico o coordinación), técnico 1 = "
+            "técnico 2, o un campo que no es de técnicos."
         )},
     },
 )
 def asignar_tecnicos(
     grupo_id: int, datos: GrupoTecnicosActualizar,
     db: Annotated[Session, Depends(sesion_transaccional)],
-    usuario: Annotated[Profesional, Depends(_solo_admin)],
+    usuario: Annotated[Profesional, Depends(usuario_actual)],
+    _condicion: Annotated[str | None, Depends(permitido("grupos.editar"))],
 ):
-    """**Sólo `admin`.** Semántica PATCH: se tocan sólo las claves que vienen; `null` desasigna.
+    """**Sólo coordinación** (§5.120, §5.162 e). Semántica PATCH: se tocan sólo las claves que vienen; `null` desasigna.
 
     - **422** por campo si el profesional no existe o está inactivo, o si técnico 1 y técnico 2
       quedarían siendo la misma persona; también si viene un campo que no sea de técnicos

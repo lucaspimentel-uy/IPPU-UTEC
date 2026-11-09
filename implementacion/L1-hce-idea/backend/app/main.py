@@ -34,7 +34,7 @@ from app.core.config import settings
 from app.core.entrada import IdsFueraDeRango, sin_caracter_nulo
 from app.core.limites import LimitesDelCuerpo
 from app.routers import (
-    ateneos, auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, panel,
+    accesos, ateneos, auditoria, auth, documentos, flujo, fotos, hce, idea, inclusion, informe_cierre, organismos, panel,
     protocolo, referencias, severidad, valoracion_funcional,
 )
 from app.routers.dependencias import usuario_actual
@@ -53,9 +53,11 @@ _DESCRIPCION = (
     "Una transacción por request; los GET no commitean.\n\n"
     "**Autenticación.** `POST /auth/login` con `{email, password}` devuelve `access_token`; "
     "todas las rutas salvo `/health`, `/auth/login` y la documentación lo piden en "
-    "`Authorization: Bearer <token>` (sin token o vencido: `401`). Un `tecnico` sólo ve los "
-    "expedientes de los grupos en los que es técnico/a 1 o 2; uno fuera de su alcance es `404`, "
-    "igual que uno que no existe.\n\n"
+    "`Authorization: Bearer <token>` (sin token o vencido: `401`).\n\n"
+    "**Roles y matriz** (Fase 4): `tecnico` · `coordinacion` · `administrativo` · `direccion_nt`. El tratante es técnico/a 1 "
+    "o 2 del grupo del expediente. El rol se mira antes que la existencia (`403` `forbidden`, exista o no); un inexistente es "
+    "`404`; un expediente que el técnico no tratante o la coordinación abren con motivo responde `403` `reason_required` "
+    "hasta registrar el motivo en `POST /hce/{id}/accesos` (una ventana de 120 minutos).\n\n"
     "**Límites del cuerpo** (`POST`, `PATCH`, `PUT`; se deciden antes de leer el cuerpo): sin un token válido, `401` "
     "(salvo `/auth/login`); chunked sin `Content-Length`, `411`; más de 1 MB —o de 10 MB + 64 KiB en las cuatro "
     "subidas multipart—, `413` `too_large`.\n\n"
@@ -115,6 +117,7 @@ def crear_app(entorno: str | None = None) -> FastAPI:
         ateneos.router, ateneos.router_ateneo,
         panel.router,
         referencias.router_grupos, referencias.router_profesionales, referencias.router_recordatorios,
+        accesos.router_motivos, accesos.router_hce,
     ):
         app.include_router(router, dependencies=protegido)
 

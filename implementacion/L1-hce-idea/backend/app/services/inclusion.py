@@ -43,7 +43,7 @@ from app.core.constantes import (
 )
 from app.models.identidad import Grupo, HceDiurna, Persona, Profesional
 from app.models.inclusion import EstadoInclusion, Inclusion, InclusionBitacora
-from app.services import auth, fechas
+from app.services import fechas, matriz
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, NotFound, ValidationFailed
 from app.services.hce import obtener_hce
@@ -279,7 +279,7 @@ def listar_fichas(
     condiciones = [HceDiurna.activo.is_(True)]
     if estado is not None:
         condiciones.append(Inclusion.estado == estado)
-    if (alcance := auth.condicion_de_alcance(usuario)) is not None:
+    if (alcance := matriz.condicion_de_alcance(usuario, "inclusion.lista")) is not None:
         condiciones.append(alcance)
     base = (
         select(Inclusion, HceDiurna, Persona, Grupo, gestiones.c.ultima, gestiones.c.cantidad)

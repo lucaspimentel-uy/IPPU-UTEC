@@ -8,9 +8,9 @@
 - **Guardar una foto nunca requiere autorización y no produce aviso ni bloqueo**, individual o grupal (§5.99,
   §5.39): acá no se lee `autorizacion_imagen` y `warnings` va vacío. La autorización regula **compartir**, que
   está fuera del 26/11.
-- **Alcance.** La individual cuelga del expediente (el router pide `hce_visible`). La grupal: sólo el `admin` y
+- **Alcance.** La individual cuelga del expediente (el router pide `hce_reservado`). La grupal: sólo coordinación y
   el técnico 1 o 2 **de ese grupo** la listan, la suben o la descargan; cualquier otro recibe **404**
-  (`auth.exigir_grupo_visible`, la regla de los expedientes, §5.101).
+  (`matriz.exigir_grupo`; desde A1, coordinación y no el `admin`, y 403 para administrativo y dirección no técnica).
 - **Orden:** la subida más reciente primero (`id` descendente). `fecha` es opcional (cuándo se tomó) y el
   servidor no la completa: la foto sin fecha también va primera si es la última que se subió.
 - **Sin DELETE** (405): borrar material clínico no está decidido.

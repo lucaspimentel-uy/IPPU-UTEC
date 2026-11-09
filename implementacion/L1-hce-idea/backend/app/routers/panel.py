@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import sesion_lectura, usuario_actual
+from app.routers.dependencias import permitido, sesion_lectura, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError
 from app.schemas.panel import EJEMPLO_PANEL, Panel
@@ -21,7 +21,9 @@ router = APIRouter(prefix="/panel", tags=["panel"])
 
 @router.get(
     "", response_model=Panel, summary="Panel institucional: agregados de la HCE",
-    responses={**_ejemplo(200, EJEMPLO_PANEL), 422: {"model": RespuestaError, "description": "`anio` fuera de rango."}},
+    responses={**_ejemplo(200, EJEMPLO_PANEL), 422: {"model": RespuestaError, "description": "`anio` fuera de rango."},
+               403: {"model": RespuestaError, "description": "Personal administrativo."}},
+    dependencies=[Depends(permitido("panel"))],
 )
 def panel(
     db: Annotated[Session, Depends(sesion_lectura)],

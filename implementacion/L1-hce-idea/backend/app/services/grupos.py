@@ -11,7 +11,8 @@ grupos sigue siendo el sub-módulo de administración (§5.90): este servicio no
 - Un profesional asignado tiene que **existir y estar activo**; los dos técnicos, **distintos**
   (contra el estado final: mandar sólo `tecnico2_id` igual al `tecnico1_id` vigente también es 422).
 - `null` en un `tecnicoN_id` lo desasigna; `''`/blanco en un rol → `NULL` (`services/texto.py`).
-- Quién puede llamarlo (sólo `admin`) lo decide el router: el servicio no conoce roles.
+- Sólo `tecnico` y `coordinacion` se asignan (F4-2: la relación tratante es de quien trata); qué rol es asignable lo
+  dice la matriz (`matriz.es_asignable`). Quién puede llamarlo (sólo coordinación) lo decide el router.
 """
 from collections.abc import Mapping
 from typing import Any
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constantes import MODULO_GRUPO
 from app.models.identidad import Grupo, Profesional
+from app.services import matriz
 from app.services.auditoria import registrar_cambios
 from app.services.errores import NotFound, ValidationFailed
 from app.services.texto import normalizar_opcionales
@@ -63,6 +65,8 @@ def asignar_tecnicos(
             errores.append((campo, "El profesional elegido no existe"))
         elif not profesional.activo:
             errores.append((campo, "Tiene que ser un profesional activo"))
+        elif not matriz.es_asignable(profesional):
+            errores.append((campo, "Tiene que ser un técnico o la coordinación: sólo quien trata se asigna a un grupo"))
 
     t1 = cambios.get("tecnico1_id", grupo.tecnico1_id)
     t2 = cambios.get("tecnico2_id", grupo.tecnico2_id)

@@ -507,7 +507,7 @@ def test_dos_altas_concurrentes_de_la_autorizacion_dan_exactamente_un_201(engine
 
     Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with Sesion() as s:
-        admin = Profesional(nombre="Zz Carrera", email="carrera-c5@ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
+        admin = Profesional(nombre="Zz Carrera", email="carrera-c5@suite.ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
         persona = Persona(nombre="A", apellido="B", ci="70000551", fecha_nac=date(2016, 1, 1))
         s.add_all([admin, persona])
         s.flush()
@@ -632,7 +632,8 @@ def test_alcance_propio_ajeno_admin_y_sin_token_en_todas_las_rutas(client, categ
     ):
         r = client.request(metodo, f"/hce/{h_propio}{ruta}", json=cuerpo, headers=cab)
         assert r.status_code in (200, 201), (metodo, ruta, r.text)
-    # Ajeno: el admin carga; el técnico recibe 404 en todo (también la descarga) y nada se escribe.
+    # Ajeno: el admin carga; el técnico (A1, §5.165) recibe el motivo en las lecturas (también la descarga) y 403 en las
+    # escrituras, y nada se escribe.
     da = _doc(client, h_ajeno, categorias[INFORME])
     client.post(f"/hce/{h_ajeno}/autorizacion-imagen", json={"registrada": True})
     rutas = [
@@ -642,9 +643,9 @@ def test_alcance_propio_ajeno_admin_y_sin_token_en_todas_las_rutas(client, categ
     ]
     for metodo, ruta, cuerpo in rutas:
         r = client.request(metodo, f"/hce/{h_ajeno}{ruta}", json=cuerpo, headers=cab)
-        assert r.status_code == 404 and r.json()["code"] == "not_found", (metodo, ruta)
+        assert (r.status_code, r.json()["code"]) == (403, "reason_required" if metodo == "GET" else "forbidden"), (metodo, ruta)
     r = _subir(client, h_ajeno, categorias[INFORME], headers=cab)
-    assert r.status_code == 404
+    assert (r.status_code, r.json()["code"]) == (403, "forbidden")
     assert client.get(f"/hce/{h_ajeno}/documentos").headers["X-Total-Count"] == "1"
     assert client.get(f"/hce/{h_ajeno}/autorizacion-imagen").json()["registrada"] is True
     # Admin: todo, en el ajeno.

@@ -326,8 +326,8 @@ def test_las_sintesis_cortas_de_la_demo_avisan_sin_bloquear(demo):
 def test_un_tecnico_sin_grupo_no_ve_a_martin_y_el_admin_si(client, demo, crear_profesional, hash_test, token_de):
     ajeno = crear_profesional(nombre="Técnico sin grupo", hashed_password=hash_test)
     martin = demo.expedientes[102]
-    assert client.get(f"/hce/{martin}", headers=token_de(ajeno)).status_code == 404
-    assert client.get(f"/idea/{demo.ids['102.lb']}", headers=token_de(ajeno)).status_code == 404
+    assert client.get(f"/hce/{martin}", headers=token_de(ajeno)).json()["code"] == "reason_required"  # A1: con motivo
+    assert client.get(f"/idea/{demo.ids['102.lb']}", headers=token_de(ajeno)).json()["code"] == "reason_required"
     assert client.get(f"/hce/{martin}").status_code == 200  # `client` entra como admin
 
 

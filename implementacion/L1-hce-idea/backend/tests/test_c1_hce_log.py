@@ -147,7 +147,8 @@ def test_alcance_propio_ajeno_admin_y_sin_token(client, crear_grupo, crear_profe
     cab = token_de(mia)
     assert client.get(f"/hce/{h_propio}/auditoria", headers=cab).status_code == 200
     r = client.get(f"/hce/{h_ajeno}/auditoria", headers=cab)
-    assert r.status_code == 404 and r.json()["code"] == "not_found"
+    # A1 (§5.165): el rastro de cambios queda fuera de la consulta del no tratante, ni con motivo (F4-4, F4-10).
+    assert r.status_code == 403 and r.json()["code"] == "forbidden"
     assert client.get(f"/hce/{h_ajeno}/auditoria").status_code == 200  # admin
     from fastapi.testclient import TestClient
 

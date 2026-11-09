@@ -45,12 +45,12 @@ from sqlalchemy.orm import Session, aliased
 
 from app.core.constantes import (
     ATENEO_CANDADO_CORRELATIVO, ATENEO_DOCUMENTO_TIPOS, ATENEO_META_POR_GRUPO, ATENEO_META_TOTAL,
-    ATENEO_TIPOS, ATENEO_TIPOS_INDICADOR, MODULO_ATENEO, ROL_TECNICO,
+    ATENEO_TIPOS, ATENEO_TIPOS_INDICADOR, MODULO_ATENEO,
 )
 from app.models.ateneo import CAMPOS_DESARROLLO_CLINICO, CAMPOS_JORNADA, TIPO_SENSIBLE, Ateneo, AteneoAcuerdo
 from app.models.identidad import Grupo, HceDiurna, Persona, Profesional
 from app.models.transversales import Documento
-from app.services import archivos, auth, fechas
+from app.services import archivos, fechas, matriz
 from app.services import documentos as servicio_documentos
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import NotFound, ValidationFailed
@@ -82,52 +82,38 @@ def opciones() -> dict[str, Any]:
     }
 
 
-# ── Visibilidad ──────────────────────────────────────────────────────────────
-def _hces_del_tecnico(usuario: Profesional):
-    """Los `hce_diurna.id` que un técnico ve (su grupo actual lo tiene como técnico 1 o 2), como subconsulta."""
-    return (
-        select(HceDiurna.id).join(Grupo, Grupo.id == HceDiurna.grupo_id)
-        .where(or_(Grupo.tecnico1_id == usuario.id, Grupo.tecnico2_id == usuario.id))
-    )
-
-
+# ── Visibilidad (la matriz, `app/services/matriz.py`) ────────────────────────
 def condicion_visible(usuario: Profesional):
-    """`None` para el admin; si no, «no es clínico, o su expediente está en el alcance del técnico»."""
-    if auth.es_admin(usuario):
-        return None
-    if usuario.rol != ROL_TECNICO:
-        return Ateneo.tipo != TIPO_SENSIBLE
-    return or_(Ateneo.tipo != TIPO_SENSIBLE, Ateneo.hce_referida_id.in_(_hces_del_tecnico(usuario)))
-
-
-def puede_ver(db: Session, usuario: Profesional, ateneo: Ateneo) -> bool:
-    if ateneo.tipo != TIPO_SENSIBLE:
-        return True
-    hce = db.get(HceDiurna, ateneo.hce_referida_id) if ateneo.hce_referida_id is not None else None
-    return auth.es_admin(usuario) or (hce is not None and auth.puede_ver(usuario, hce))
+    """El alcance de la lista: `None` (la institución) o «no es clínico, o es de un expediente que el usuario puede leer»
+    (del que es tratante o sobre el que tiene una ventana vigente). 403 para los roles sin ateneos."""
+    return matriz.condicion_ateneos_visibles(usuario, Ateneo.tipo, Ateneo.hce_referida_id, TIPO_SENSIBLE)
 
 
 def obtener(db: Session, usuario: Profesional, ateneo_id: int, *, para_escribir: bool = False) -> Ateneo:
-    """El ateneo, o **404** si no existe o es un clínico fuera del alcance (el mismo mensaje)."""
+    """El ateneo, o **404** si no existe o es un clínico que el usuario no puede abrir (el mismo mensaje). La escritura la
+    decide la dependencia de la ruta (`exigir_visible` con el método); acá se repite la lectura."""
     consulta = select(Ateneo).where(Ateneo.id == ateneo_id)
     if para_escribir:
         consulta = consulta.with_for_update()
     ateneo = db.scalar(consulta)
-    if ateneo is None or not puede_ver(db, usuario, ateneo):
+    if ateneo is None:
         raise NotFound(_NO_EXISTE)
+    matriz.exigir_ateneo(db, usuario, clinico=ateneo.tipo == TIPO_SENSIBLE, hce_referida_id=ateneo.hce_referida_id,
+                         escribir=False)
     return ateneo
 
 
-def exigir_visible(db: Session, usuario: Profesional, ateneo_id: int) -> None:
-    """Para la dependencia de las rutas `/ateneos/{ateneo_id}/…`: lee sólo `tipo` y `hce_referida_id`."""
+def exigir_visible(db: Session, usuario: Profesional, ateneo_id: int, *, escribir: bool = False) -> None:
+    """Para la dependencia de las rutas `/ateneos/{ateneo_id}/…`, en el orden de la matriz: el rol (403 exista o no), la
+    existencia (404) y, en un clínico, la relación con el expediente referido y la ventana (404 sin ella; con ella, leer
+    sí y escribir 403). Lee sólo `tipo` y `hce_referida_id`."""
+    if matriz.ateneo_prohibido_por_rol(usuario, escribir):
+        matriz.rechazar_por_rol(usuario)
     fila = db.execute(select(Ateneo.tipo, Ateneo.hce_referida_id).where(Ateneo.id == ateneo_id)).first()
     if fila is None:
         raise NotFound(_NO_EXISTE)
     tipo, hce_id = fila
-    if tipo == TIPO_SENSIBLE and not auth.es_admin(usuario):
-        hce = db.get(HceDiurna, hce_id) if hce_id is not None else None
-        if hce is None or not auth.puede_ver(usuario, hce):
-            raise NotFound(_NO_EXISTE)
+    matriz.exigir_ateneo(db, usuario, clinico=tipo == TIPO_SENSIBLE, hce_referida_id=hce_id, escribir=escribir)
 
 
 # ── Vistas ───────────────────────────────────────────────────────────────────
@@ -299,7 +285,7 @@ def _validar_forma(
     # Las referencias: que existan (y el NNA, que el usuario lo vea). El mismo mensaje para ajeno e inexistente.
     if "hce_referida_id" in presentes and hce_id is not None:
         hce = db.get(HceDiurna, hce_id) if isinstance(hce_id, int) else None
-        if hce is None or not auth.puede_ver(usuario, hce):
+        if hce is None or not matriz.puede_referir(usuario, hce):
             errores.append(("hce_referida_id", _NNA_NO_EXISTE))
     if "grupo_id" in presentes and grupo_id is not None:
         if not isinstance(grupo_id, int) or db.get(Grupo, grupo_id) is None:

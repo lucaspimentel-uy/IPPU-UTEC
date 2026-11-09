@@ -8,14 +8,14 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.constantes import AUDITORIA_TIPOS_LEIBLES, MODULOS_HCE
-from app.routers.dependencias import hce_visible, sesion_lectura
+from app.routers.dependencias import hce_reservado, sesion_lectura
 from app.routers.hce import CABECERA_TOTAL
 from app.schemas.auditoria import EJEMPLO_AUDITORIA, AuditoriaFila, AutorAuditoria
 from app.schemas.comunes import RespuestaError
 from app.services import auditoria_lectura as servicio
 from app.services.hce import LIMITE_MAXIMO, LIMITE_POR_OMISION
 
-router = APIRouter(prefix="/hce/{hce_id}", tags=["auditoria"], dependencies=[Depends(hce_visible)])
+router = APIRouter(prefix="/hce/{hce_id}", tags=["auditoria"], dependencies=[Depends(hce_reservado)])
 
 
 @router.get(

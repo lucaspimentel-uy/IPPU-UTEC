@@ -36,9 +36,12 @@ errores de dominio (`app/services/errores.py`); la traducción a HTTP está en
 ## Autenticación (M11.3-d1, §5.101)
 
 Todo pide `Authorization: Bearer <token>` (de `POST /auth/login`) salvo `/health`,
-`/auth/login` y la documentación: sin token, o vencido, **401** `unauthorized`. Un
-`tecnico` sólo alcanza los expedientes de sus grupos; uno fuera de su alcance —y lo que
-cuelga de él— es **404** con el mismo mensaje que uno que no existe.
+`/auth/login` y la documentación: sin token, o vencido, **401** `unauthorized`.
+
+**Quién puede qué (Fase 4, A1):** una sola matriz, `app/services/matriz.py` (la fuente es
+`docs/diseno/fase4-matriz-rutas.csv`). El rol se mira antes que la existencia (**403**
+`forbidden`, exista o no); un inexistente es **404** con el mismo cuerpo en todas partes; un
+expediente que existe y se abre con motivo es **403** `reason_required` (`POST /hce/{id}/accesos`).
 
 ## Transacción
 

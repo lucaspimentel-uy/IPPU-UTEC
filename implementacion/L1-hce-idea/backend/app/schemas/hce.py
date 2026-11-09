@@ -11,7 +11,7 @@ no es un valor que el servicio pueda recibir (no es un `date` ni un `int`), así
 se convierte en `None` acá, con los alias de `app.schemas.comunes`.
 """
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -135,6 +135,30 @@ class HceActualizar(Hce00Campos):
     fecha_baja: FechaOpcional = Field(None, description="Sólo con `activo: false` (o si ya está de baja).")
 
 
+class IdentificacionActualizar(BaseModel):
+    """`PATCH /hce/{id}/identificacion` (Fase 4, F4-5, F4-6): **sólo** los datos identificatorios y logísticos — la
+    persona, el N.º de HC, el grupo y el estado (baja y reingreso). Otra clave (un dato clínico de HCE-00) es 422 por
+    campo: lo escribe el equipo tratante por `PATCH /hce/{id}`."""
+
+    model_config = ConfigDict(extra="allow", json_schema_extra={"examples": [
+        {"grupo_id": 3}, {"persona": {"telefono": "098 111 222"}}, {"activo": False, "fecha_baja": "2026-11-08"},
+    ]})
+
+    persona: PersonaActualizar | None = None
+    hc_historico: EnteroOpcional = Field(None, description="No se puede borrar (`null` → 422).")
+    grupo_id: EnteroOpcional = Field(None, description="`null` deja el expediente sin grupo (nadie es tratante).")
+    activo: bool | None = Field(None, description="**Baja** (`false`, exige `fecha_baja`) o **reingreso** (`true`).")
+    fecha_baja: FechaOpcional = None
+
+
+class ConsultaCi(BaseModel):
+    """`POST /hce/consulta`: la C.I. **completa** del NNA, en el cuerpo (no en la URL: B8)."""
+
+    model_config = ConfigDict(json_schema_extra={"examples": [{"ci": "5.789.123-4"}]})
+
+    ci: str = Field(max_length=40, description="Se compara canónica (§5.110): «5.789.123-4» = «57891234». Sólo coincidencia exacta.")
+
+
 # ── Salida ───────────────────────────────────────────────────────────────────
 class GrupoResumen(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -146,7 +170,7 @@ class GrupoResumen(BaseModel):
 
 class TecnicoDeGrupo(BaseModel):
     """Un técnico del grupo. `rol` es el **rol en el grupo** (`grupo.tecnicoN_rol`, texto libre:
-    «Psicólogo/a», «Maestro/a»), **no** el rol de sesión (`admin`/`tecnico`) de `Profesional.rol`."""
+    «Psicólogo/a», «Maestro/a»), **no** el rol de sesión (`tecnico`, `coordinacion`…) de `Profesional.rol`."""
 
     id: int
     nombre: str
@@ -214,6 +238,34 @@ class HceResumen(BaseModel):
             "Estado de los cuatro módulos del **año en curso**, en el orden de la cadena y con la misma forma "
             "que `modulos[]` de `GET /hce/{id}/flujo` (`modulo`, `estado`). Se arma en bloque, no un request por fila."
         ),
+    )
+
+
+class IdentificacionDetalle(BaseModel):
+    """`GET|PATCH /hce/{id}/identificacion`: la identificación y la logística del expediente. **Ningún campo clínico**
+    (ni diagnóstico, CIE-11, fecha del diagnóstico, derivación, medicación, alerta ni anamnesis: F4-6)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    hc_historico: int | None
+    activo: bool
+    fecha_baja: date | None
+    grupo_id: int | None
+    grupo: GrupoConTecnicos | None
+    persona: PersonaDetalle
+
+
+class ConsultaFila(BaseModel):
+    """La fila mínima de `POST /hce/consulta` (F4-8): sin fecha de nacimiento, flujo ni nada clínico."""
+
+    id: int
+    hc_historico: int | None
+    nombre: str
+    apellido: str
+    grupo: GrupoResumen | None
+    relacion: Literal["tratante", "no_tratante"] = Field(
+        description="La relación de quien consulta con el expediente: `no_tratante` lo abre registrando el motivo.",
     )
 
 

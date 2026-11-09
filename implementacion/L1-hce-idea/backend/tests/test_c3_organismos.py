@@ -475,12 +475,12 @@ def test_alcance_propio_ajeno_admin_y_sin_token(client, crear_grupo, crear_profe
         r = client.request(metodo, f"/hce/{h_propio}/organismos{ruta}", json=cuerpo, headers=cab)
         assert r.status_code in (200, 201), (metodo, ruta, r.text)
     assert client.get(f"/hce/{h_propio}/organismos/registros", headers=cab).json()[0]["autor"]["id"] == mia.id
-    # El admin carga todo en el ajeno; el técnico recibe 404 en las siete, y nada se escribe.
+    # El admin carga todo en el ajeno; el técnico (A1, §5.165) recibe el motivo en las lecturas y 403 en las escrituras.
     _inau(client, h_ajeno), _bps(client, h_ajeno), _registro(client, h_ajeno)
     antes = client.get(f"/hce/{h_ajeno}/organismos").json()
     for metodo, ruta, cuerpo in rutas:
         r = client.request(metodo, f"/hce/{h_ajeno}/organismos{ruta}", json=cuerpo, headers=cab)
-        assert r.status_code == 404 and r.json()["code"] == "not_found", (metodo, ruta)
+        assert (r.status_code, r.json()["code"]) == (403, "reason_required" if metodo == "GET" else "forbidden"), (metodo, ruta)
     assert client.get(f"/hce/{h_ajeno}/organismos").json() == antes
     assert len(client.get(f"/hce/{h_ajeno}/organismos/registros").json()) == 1
     # Sin token: 401 en las siete.

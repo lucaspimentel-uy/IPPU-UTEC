@@ -215,10 +215,11 @@ def test_alcance_de_las_fotos_individuales(client, escenario):
     da = _foto(client, f"/hce/{ajeno}/fotos")  # el admin
     for sufijo in ("", f"/{da['id']}", f"/{da['id']}/archivo"):
         r = client.get(f"/hce/{ajeno}/fotos{sufijo}", headers=escenario["tina"])
-        assert r.status_code == 404 and r.json()["code"] == "not_found", sufijo
+        # A1 (F4-4): las fotos quedan fuera de la consulta del no tratante, ni con motivo.
+        assert (r.status_code, r.json()["code"]) == (403, "forbidden"), sufijo
         assert client.get(f"/hce/{ajeno}/fotos{sufijo}").status_code == 200  # admin
         assert TestClient(app).get(f"/hce/{propio}/fotos{sufijo}").status_code == 401
-    assert _subir(client, f"/hce/{ajeno}/fotos", headers=escenario["tina"]).status_code == 404
+    assert _subir(client, f"/hce/{ajeno}/fotos", headers=escenario["tina"]).status_code == 403
     assert _subir(TestClient(app), f"/hce/{propio}/fotos").status_code == 401
     assert client.get(f"/hce/{ajeno}/fotos").headers["X-Total-Count"] == "1"
 

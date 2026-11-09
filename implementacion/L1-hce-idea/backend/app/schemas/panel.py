@@ -36,6 +36,10 @@ class EscalaProtocolo(BaseModel):
 
 class Protocolo(BaseModel):
     n_ciclo_ab: int = Field(description="NNA activos con PA y PB del año firmados y `deltas` guardados.")
+    suprimido: bool = Field(False, description=(
+        "`true`: las medias van `null` porque `n_ciclo_ab` es menor que 5 y quien pregunta es dirección no técnica "
+        "(F4-7: una media de pocos NNA identifica). Las cuentas no se suprimen."
+    ))
     escalas: list[EscalaProtocolo]
 
 

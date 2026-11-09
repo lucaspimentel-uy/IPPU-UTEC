@@ -177,7 +177,7 @@ def test_dos_altas_concurrentes_dan_exactamente_un_201(engine, hash_test, token_
 
     Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with Sesion() as s:
-        admin = Profesional(nombre="Zz Carrera", email="carrera-c4@ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
+        admin = Profesional(nombre="Zz Carrera", email="carrera-c4@suite.ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
         persona = Persona(nombre="A", apellido="B", ci="70000441", fecha_nac=date(2016, 1, 1))
         sembrado = s.get(EstadoInclusion, SIN_REGISTRAR) is None  # el default de `estado` tiene que existir (FK)
         if sembrado:
@@ -549,7 +549,7 @@ def test_una_gestion_no_se_edita_ni_se_borra(client, estados, hoy):
 def test_el_autor_es_null_si_el_profesional_ya_no_existe(client, db_api, estados, hoy, crear_profesional, token_de, hash_test):
     hid = _hce(client)
     _ficha(client, hid)
-    otro = crear_profesional(nombre="Se va", rol="coordinacion", hashed_password=hash_test)
+    otro = crear_profesional(nombre="Se va", rol="coordinacion", email="se-va@suite.ippu.test", hashed_password=hash_test)
     gid = client.post(f"/hce/{hid}/inclusion/bitacora", json=GESTION, headers=token_de(otro)).json()["data"]["id"]
     db_api.execute(delete(Auditoria).where(Auditoria.usuario_id == otro.id))
     db_api.execute(InclusionBitacora.__table__.update().where(InclusionBitacora.id == gid).values(autor_id=None))
@@ -698,13 +698,13 @@ def test_alcance_propio_ajeno_admin_y_sin_token(client, estados, hoy, crear_grup
         r = client.request(metodo, f"/hce/{h_propio}/inclusion{ruta}", json=cuerpo, headers=cab)
         assert r.status_code in (200, 201), (metodo, ruta, r.text)
     assert client.get(f"/hce/{h_propio}/inclusion/bitacora", headers=cab).json()[0]["autor"]["id"] == mia.id
-    # El admin carga todo en el ajeno; el técnico recibe 404 en las cinco, y nada se escribe.
+    # El admin carga todo en el ajeno; el técnico (A1, §5.165) recibe el motivo en las lecturas y 403 en las escrituras.
     _ficha(client, h_ajeno)
     _gestion(client, h_ajeno)
     antes = client.get(f"/hce/{h_ajeno}/inclusion").json()
     for metodo, ruta, cuerpo in rutas:
         r = client.request(metodo, f"/hce/{h_ajeno}/inclusion{ruta}", json=cuerpo, headers=cab)
-        assert r.status_code == 404 and r.json()["code"] == "not_found", (metodo, ruta)
+        assert (r.status_code, r.json()["code"]) == (403, "reason_required" if metodo == "GET" else "forbidden"), (metodo, ruta)
     assert client.get(f"/hce/{h_ajeno}/inclusion").json() == antes
     assert len(client.get(f"/hce/{h_ajeno}/inclusion/bitacora").json()) == 1
     # Sin token: 401 en las cinco y en las dos rutas del área.

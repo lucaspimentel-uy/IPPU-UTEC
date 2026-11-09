@@ -185,9 +185,9 @@ def test_sin_cambios_no_escribe_auditoria(client, grupo, equipo, db_api):
 def test_tras_la_asignacion_el_tecnico_alcanza_el_expediente_del_grupo(client, grupo, equipo, token_de):
     gonzalez, _, _ = equipo
     hce = _expediente(client, grupo.id)
-    assert client.get(f"/hce/{hce}", headers=token_de(gonzalez)).status_code == 404  # antes
+    assert client.get(f"/hce/{hce}", headers=token_de(gonzalez)).status_code == 403  # antes: no tratante (A1)
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico2_id": gonzalez.id}).status_code == 200
     assert client.get(f"/hce/{hce}", headers=token_de(gonzalez)).status_code == 200  # después
     # Y al desasignarlo lo pierde.
     assert client.patch(f"/grupos/{grupo.id}", json={"tecnico2_id": None}).status_code == 200
-    assert client.get(f"/hce/{hce}", headers=token_de(gonzalez)).status_code == 404
+    assert client.get(f"/hce/{hce}", headers=token_de(gonzalez)).status_code == 403

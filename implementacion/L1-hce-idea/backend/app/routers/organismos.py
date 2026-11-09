@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constantes import ORGANISMOS
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_organismos, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.organismos import (
@@ -24,7 +24,7 @@ from app.schemas.organismos import (
 from app.services import organismos as servicio
 from app.services.hce import LIMITE_MAXIMO, LIMITE_POR_OMISION
 
-router_hce = APIRouter(prefix="/hce/{hce_id}/organismos", tags=["organismos"], dependencies=[Depends(hce_visible)])
+router_hce = APIRouter(prefix="/hce/{hce_id}/organismos", tags=["organismos"], dependencies=[Depends(hce_organismos)])
 router_opciones = APIRouter(prefix="/organismos", tags=["organismos"])
 _USUARIO = Annotated[Profesional, Depends(usuario_actual)]
 

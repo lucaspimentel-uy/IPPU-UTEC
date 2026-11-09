@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, permitido, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.inclusion import (
@@ -65,7 +65,9 @@ def opciones(db: Annotated[Session, Depends(sesion_lectura)]):
         200: {"content": {"application/json": {"example": EJEMPLO_LISTA}},
               **_total("Total de fichas que cumplen el filtro (todas las páginas).")},
         422: {"model": RespuestaError, "description": "`estado` no es uno de los 7 estados."},
+        403: {"model": RespuestaError, "description": "Personal administrativo y dirección no técnica."},
     },
+    dependencies=[Depends(permitido("inclusion.lista"))],
 )
 def listar(
     response: Response,

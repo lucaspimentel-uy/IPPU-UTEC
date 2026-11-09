@@ -188,7 +188,14 @@ def _llamar(c, metodo, plantilla, valores, **kw):
     return c.request(metodo, url, json={} if metodo in ("POST", "PATCH", "PUT") else None, **kw)
 
 
-def test_ninguna_ruta_con_id_inexistente_o_ajeno_dice_el_id_y_el_ajeno_es_igual_al_inexistente(
+#: El 403 de la matriz (A1, §5.165): un cuerpo **fijo**, sin nombre, N.º de HC ni id (F4-8).
+_CUERPOS_403 = (
+    {"code": "reason_required", "detail": [{"campo": None, "mensaje": "Este expediente no es de tus grupos: para abrirlo, registrá el motivo."}]},
+    {"code": "forbidden", "detail": [{"campo": None, "mensaje": "Tu rol no permite esta acción."}]},
+)
+
+
+def test_ninguna_ruta_con_id_inexistente_o_ajeno_dice_el_id_y_el_ajeno_es_igual_al_inexistente_o_el_403_fijo(
     client, db_api, rastro, grupos, tecnico, token_de,
 ):
     propio, ajeno = grupos
@@ -203,12 +210,17 @@ def test_ninguna_ruta_con_id_inexistente_o_ajeno_dice_el_id_y_el_ajeno_es_igual_
         r = _llamar(client, metodo, plantilla, {})
         assert r.status_code < 500, (metodo, plantilla, r.status_code, r.text)
         inexistentes += r.status_code == 404
-        # (b) el expediente y el grupo ajenos al técnico, contra los inexistentes del admin: la MISMA respuesta
+        # (b) el expediente y el grupo ajenos al técnico, contra los inexistentes del admin. Desde A1 (F4-8, §5.165) el
+        # expediente ajeno que EXISTE responde el 403 de cuerpo fijo (lectura: el motivo; escritura: prohibido) y el grupo
+        # ajeno sigue siendo la MISMA respuesta que uno inexistente (la ventana es por expediente, no por grupo).
         ajeno_tec = _llamar(client, metodo, plantilla, {"hce_id": hce_ajeno, "grupo_id": ajeno.id}, headers=cab)
         nada_admin = _llamar(client, metodo, plantilla, {"hce_id": INEXISTENTE, "grupo_id": INEXISTENTE})
         if ajeno_tec.status_code == 404:
             assert nada_admin.status_code == 404, (metodo, plantilla)
             assert ajeno_tec.json() == nada_admin.json(), (metodo, plantilla, ajeno_tec.json(), nada_admin.json())
+            comparadas += 1
+        elif ajeno_tec.status_code == 403 and "{hce_id}" in plantilla:
+            assert ajeno_tec.json() in _CUERPOS_403, (metodo, plantilla, ajeno_tec.json())
             comparadas += 1
         # (c) el expediente propio no se rechaza por alcance
         propio_tec = _llamar(client, metodo, plantilla, {"hce_id": hce_propio, "grupo_id": propio.id}, headers=cab)
@@ -218,12 +230,12 @@ def test_ninguna_ruta_con_id_inexistente_o_ajeno_dice_el_id_y_el_ajeno_es_igual_
 
     # el par exacto: la misma ruta con un expediente propio pasa, con uno ajeno o inexistente no
     assert client.get(f"/hce/{hce_propio}/flujo", headers=cab).status_code == 200
-    assert client.get(f"/hce/{hce_ajeno}/flujo", headers=cab).status_code == 404
+    assert client.get(f"/hce/{hce_ajeno}/flujo", headers=cab).json() == _CUERPOS_403[0]
     assert client.get(f"/hce/{INEXISTENTE}/flujo").status_code == 404
     _sin_id_en_la_auditoria(db_api)
 
 
-def test_el_idea_el_protocolo_y_el_informe_ajenos_dicen_lo_mismo_que_los_inexistentes(
+def test_el_idea_el_protocolo_y_el_informe_ajenos_dan_el_403_fijo_y_los_inexistentes_el_404(
     client, rastro, grupos, tecnico, token_de, equipo, tramos,
 ):
     propio, ajeno = grupos
@@ -240,8 +252,9 @@ def test_el_idea_el_protocolo_y_el_informe_ajenos_dicen_lo_mismo_que_los_inexist
             cuerpo = {} if metodo == "PATCH" else None
             real = client.request(metodo, f"/{modulo}/{ident}", json=cuerpo, headers=cab)
             falso = client.request(metodo, f"/{modulo}/{INEXISTENTE}", json=cuerpo, headers=cab)
-            assert real.status_code == falso.status_code == 404, (modulo, metodo)
-            assert real.json() == falso.json(), (modulo, metodo, real.json(), falso.json())
+            # A1 (F4-8): el que existe dice que se abre con motivo (GET) o que no se escribe (PATCH), sin ningún dato suyo.
+            assert real.status_code == 403 and real.json() == _CUERPOS_403[0 if metodo == "GET" else 1], (modulo, metodo)
+            assert falso.status_code == 404 and falso.json()["code"] == "not_found", (modulo, metodo)
     assert client.get(f"/idea/{propio_idea}", headers=cab).status_code == 200  # el par: el propio pasa
     _sin_id_en_los_rechazos(rastro)
 

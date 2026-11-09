@@ -329,6 +329,46 @@ def admin(conexion_api, hash_test):
         sesion.close()
 
 
+#: Las otras identidades «como el `admin` de antes» de la suite: las de los tests de concurrencia, que necesitan dos
+#: sesiones con el mismo alcance que la por omisión (su email termina así). Ver `_identidad_de_la_suite_sin_matriz`.
+SUFIJO_SUITE = "@suite.ippu.test"
+
+
+def es_identidad_de_la_suite(usuario) -> bool:
+    email = getattr(usuario, "email", None) or ""
+    return email == EMAIL_ADMIN or email.endswith(SUFIJO_SUITE)
+
+
+@pytest.fixture(autouse=True)
+def _identidad_de_la_suite_sin_matriz():
+    """**La identidad por omisión de la suite (`EMAIL_ADMIN`) pasa la matriz de acceso** (Fase 4, A1, §5.165).
+
+    Hasta A1 esa identidad era el `admin`, que leía y escribía todo, y ~1000 pedidos de la suite cargan y leen módulos
+    clínicos con ella (sobre expedientes sin grupo, que no tienen tratante). Desde A1 su rol es `coordinacion`, que **no**
+    escribe lo clínico y lee con motivo: reescribir cada test como tratante no cambiaría lo que prueba (la lógica de cada
+    módulo). Así que, **sólo en los tests y sólo para esa identidad**, la única función de la matriz (`matriz.celda`)
+    devuelve «permitir en la institución», lo que el `admin` tenía.
+
+    **El acceso se prueba aparte y sin esto:** `tests/test_a1_matriz.py` recorre cada fila del CSV de la matriz con
+    usuarios propios (tratante, no tratante, coordinación, administrativo, dirección no técnica), igual que los tests de
+    alcance que entran con `token_de(otro)`. Ningún código de la aplicación sabe de esta fixture.
+
+    Usa su **propio** `MonkeyPatch`: un test que hace `monkeypatch.undo()` no la deshace."""
+    from app.services import matriz
+
+    original = matriz.celda
+
+    def celda(usuario, accion, **kw):
+        if es_identidad_de_la_suite(usuario):
+            return "permitir@institucion"
+        return original(usuario, accion, **kw)
+
+    parche = pytest.MonkeyPatch()
+    parche.setattr(matriz, "celda", celda)
+    yield
+    parche.undo()
+
+
 @pytest.fixture
 def token_de():
     """`token_de(profesional)` → cabeceras `{"Authorization": "Bearer …"}` de ese profesional."""

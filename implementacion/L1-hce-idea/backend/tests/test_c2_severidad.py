@@ -287,11 +287,11 @@ def test_alcance_propio_ajeno_admin_y_sin_token(client, niveles, crear_grupo, cr
     assert r.status_code == 201 and r.json()["data"]["profesional"]["id"] == mia.id
     assert client.get(f"/hce/{h_propio}/severidad", headers=cab).status_code == 200
     assert client.patch(f"/hce/{h_propio}/severidad", json={"nivel_cs": 1}, headers=cab).status_code == 200
-    # Ajeno: 404 en las tres, aunque el registro exista; nada se escribe.
+    # Ajeno (A1, §5.165): la lectura pide el motivo y las escrituras son del tratante; nada se escribe.
     assert client.post(f"/hce/{h_ajeno}/severidad", json=CUERPO).status_code == 201  # lo carga el admin
     for metodo, cuerpo in (("GET", None), ("POST", CUERPO), ("PATCH", {"nivel_cs": 1})):
         r = client.request(metodo, f"/hce/{h_ajeno}/severidad", json=cuerpo, headers=cab)
-        assert r.status_code == 404 and r.json()["code"] == "not_found", metodo
+        assert (r.status_code, r.json()["code"]) == (403, "reason_required" if metodo == "GET" else "forbidden"), metodo
     assert client.get(f"/hce/{h_ajeno}/severidad").json()["nivel_cs"] == 2  # admin ve todo; el PATCH ajeno no tocó
     # Sin token: 401 en las tres.
     anonimo = TestClient(app)

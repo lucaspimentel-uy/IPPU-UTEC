@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.identidad import Profesional
 from app.models.modulos import Idea, InformeCierre, Protocolo
-from app.services import auth
-from app.services.errores import NotFound
+from app.services import auth, matriz
 
 
 def sesion_transaccional(db: Session = Depends(get_db)) -> Iterator[Session]:
@@ -76,23 +75,45 @@ def usuario_actual(
     return auth.usuario_de_token(db, credenciales.credentials if credenciales else None)
 
 
-def hce_visible(
-    hce_id: int,
-    usuario: Annotated[Profesional, Depends(usuario_actual)],
-    db: Session = Depends(get_db),
-) -> None:
-    """**404** si el expediente `{hce_id}` del path no existe o queda fuera del alcance del usuario."""
-    auth.exigir_hce_visible(db, usuario, hce_id)
+def _es_lectura(request: Request) -> bool:
+    return request.method in ("GET", "HEAD")
+
+
+def acceso_hce(lectura: str, escritura: str):
+    """La dependencia de las rutas `/hce/{hce_id}/…`: la acción de la matriz (`app/services/matriz.py`) es `lectura` en un
+    GET y `escritura` en cualquier otro método. Corre antes de leer el cuerpo: el orden de la sección b del diseño (rol →
+    existencia → relación y ventana → escritura) vale antes que cualquier 422."""
+
+    def dependencia(
+        hce_id: int,
+        request: Request,
+        usuario: Annotated[Profesional, Depends(usuario_actual)],
+        db: Session = Depends(get_db),
+    ) -> None:
+        matriz.exigir_en_hce(db, usuario, lectura if _es_lectura(request) else escritura, hce_id)
+
+    return dependencia
+
+
+#: Lo clínico y HCE-00: lectura con motivo para quien no trata, escritura sólo del tratante.
+hce_visible = acceso_hce("hce.leer", "hce.escribir")
+#: El rastro de cambios y las fotos del expediente: además, fuera de la consulta del no tratante (F4-4).
+hce_reservado = acceso_hce("hce.reservado", "hce.escribir")
+#: ORG: también el personal administrativo (F4-6).
+hce_organismos = acceso_hce("org.leer", "org.escribir")
+#: `GET|PATCH /hce/{id}/identificacion` (F4-5, F4-6).
+hce_identificacion = acceso_hce("identificacion.leer", "identificacion.escribir")
 
 
 def _visible_por(modelo, parametro: str, nombre: str):
-    """Dependencia para las rutas por id de algo que cuelga de un expediente (`/idea/{idea_id}`…).
+    """Dependencia para las rutas por id de algo que cuelga de un expediente (`/idea/{idea_id}`…), con la acción de
+    `hce_visible` sobre su `hce_id`.
 
     Lee **sólo la columna `hce_id`**, sin cargar la entidad: si la cargara, el `FOR UPDATE`
     que el servicio pide después (PATCH, firma, addenda) traería la fila bloqueada pero el
     mapa de identidad conservaría el estado leído antes del lock, y dos firmas simultáneas
-    podrían ver las dos «sin firmar». Si la fila no existe no hace nada: el servicio da el 404
-    de siempre. Si existe y queda fuera del alcance, el **mismo** 404 que si no existiera.
+    podrían ver las dos «sin firmar». El rol se mira **antes** que la fila (403 exista o no); si la fila no existe, el
+    404 de siempre; si existe, la matriz sobre su expediente, con «No existe <nombre>» como cuerpo del 404.
     """
     columna_id = modelo.id
 
@@ -105,12 +126,18 @@ def _visible_por(modelo, parametro: str, nombre: str):
         if not crudo.isdigit():
             return  # la validación del path ya lo rechaza con 422
         hce_id = db.scalar(select(modelo.hce_id).where(columna_id == int(crudo)))
-        if hce_id is None:
-            return
-        try:
-            auth.exigir_hce_visible(db, usuario, hce_id)
-        except NotFound:
-            raise NotFound(f"No existe {nombre}") from None
+        accion = "hce.leer" if _es_lectura(request) else "hce.escribir"
+        matriz.exigir_en_hce(db, usuario, accion, hce_id, no_existe=f"No existe {nombre}")
+
+    return dependencia
+
+
+def permitido(accion: str):
+    """La dependencia de las rutas **sin** expediente: 403 si el rol no puede `accion` (antes del cuerpo); devuelve la
+    condición de su celda (`mis_grupos`, `institucion`, `agregado`…), que el servicio aplica."""
+
+    def dependencia(usuario: Annotated[Profesional, Depends(usuario_actual)]) -> str | None:
+        return matriz.exigir_rol(usuario, accion)
 
     return dependencia
 

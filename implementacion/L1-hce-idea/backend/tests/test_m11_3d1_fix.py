@@ -13,7 +13,7 @@ from sqlalchemy import func, select
 from app.core import seguridad
 from app.core.config import SECRET_KEY_PROHIBIDA, Settings
 from app.models.transversales import Auditoria
-from app.routers.hce import MENSAJE_DUPLICADO_TECNICO
+from app.routers.hce import MENSAJE_CI_DUPLICADA_TECNICO, MENSAJE_DUPLICADO_TECNICO
 from tests.conftest import PASSWORD_TEST
 from tests.test_m11_3c_protocolo_ic import (  # noqa: F401  (`equipo` y `tramos` son fixtures)
     _ic, _idea_firmada, _prot, equipo, tramos,
@@ -134,7 +134,9 @@ def test_un_tecnico_recibe_un_409_generico_por_cedula_repetida_y_el_admin_el_esp
     filas_antes = len(_auditoria(db_api))
     r = client.post("/hce", json={"persona": _persona(ci_ajena), "grupo_id": propio.id}, headers=cab)
     assert r.status_code == 409
-    assert r.json() == {"code": "conflict", "detail": [{"campo": None, "mensaje": MENSAJE_DUPLICADO_TECNICO}]}
+    # B5 (§5.162 i, F4-14): avisa sin nombrar a nadie ni su grupo, y sin `campo`.
+    assert r.json() == {"code": "conflict", "detail": [{"campo": None, "mensaje": MENSAJE_CI_DUPLICADA_TECNICO}]}
+    assert MENSAJE_CI_DUPLICADA_TECNICO == "Ya hay un NNA registrado con esa C.I. Consultá con coordinación."
     assert len(_auditoria(db_api)) == filas_antes, "el intento fallido no deja auditoría"
     r = client.post("/hce", json={"persona": _persona(ci_ajena), "grupo_id": propio.id})  # admin
     assert r.status_code == 409 and r.json()["detail"][0]["campo"] == "persona.ci"
@@ -151,7 +153,10 @@ def test_el_409_generico_vale_tambien_para_el_patch_de_la_cedula_y_para_el_numer
     otro = client.post("/hce", json={"persona": _persona(ci_ajena), "grupo_id": ajeno.id}).json()["data"]
     mio = _alta(client, propio.id)
     cab = token_de(tecnico)
-    generico = {"code": "conflict", "detail": [{"campo": None, "mensaje": MENSAJE_DUPLICADO_TECNICO}]}
+    def generico(campo):
+        mensaje = MENSAJE_CI_DUPLICADA_TECNICO if campo == "persona.ci" else MENSAJE_DUPLICADO_TECNICO
+        return {"code": "conflict", "detail": [{"campo": None, "mensaje": mensaje}]}
+
     filas_antes = len(_auditoria(db_api))
     casos = [
         ("patch", f"/hce/{mio}", {"persona": {"ci": ci_ajena}}, "persona.ci"),
@@ -160,7 +165,7 @@ def test_el_409_generico_vale_tambien_para_el_patch_de_la_cedula_y_para_el_numer
     ]
     for metodo, ruta, cuerpo, campo in casos:
         r = getattr(client, metodo)(ruta, json=cuerpo, headers=cab)
-        assert (r.status_code, r.json()) == (409, generico), (ruta, cuerpo)
+        assert (r.status_code, r.json()) == (409, generico(campo)), (ruta, cuerpo)
         r = getattr(client, metodo)(ruta, json=cuerpo)  # admin: el específico
         assert r.status_code == 409 and r.json()["detail"][0]["campo"] == campo
     assert len(_auditoria(db_api)) == filas_antes
@@ -193,7 +198,7 @@ def test_un_email_inexistente_inactivo_o_sin_clave_corre_bcrypt_igual_y_da_el_mi
     assert llamadas and seguridad._HASH_FICTICIO not in llamadas
 
 
-# ── L2 · matriz de visibilidad: fuera del grupo 404 (igual que inexistente), dentro 2xx ──
+# ── L2 · matriz de visibilidad: fuera del grupo el 403 de la matriz (A1, §5.165; el inexistente, 404), dentro 2xx ──
 def _prot_abierto(c, hce, eq):
     return c.post(f"/hce/{hce}/protocolo", json=_prot(eq, "A")).json()["data"]["id"]
 
@@ -259,7 +264,7 @@ CASOS = [
 
 
 @pytest.mark.parametrize(("preparar", "metodo", "ruta", "cuerpo", "ok"), [c[1:] for c in CASOS], ids=[c[0] for c in CASOS])
-def test_un_tecnico_fuera_del_grupo_recibe_404_como_inexistente_y_uno_del_grupo_2xx(
+def test_un_tecnico_fuera_del_grupo_recibe_el_403_de_la_matriz_el_inexistente_404_y_uno_del_grupo_2xx(
     client, equipo, grupos, tecnico, token_de, baremo, preparar, metodo, ruta, cuerpo, ok,
 ):
     propio, ajeno = grupos
@@ -273,9 +278,9 @@ def test_un_tecnico_fuera_del_grupo_recibe_404_como_inexistente_y_uno_del_grupo_
 
     ajeno_id = preparar(client, _alta(client, ajeno.id), equipo)
     fuera, inexistente = pedir(ajeno_id), pedir(ajeno_id + _FALSO)
-    assert fuera.status_code == inexistente.status_code == 404
-    assert fuera.json()["detail"][0]["mensaje"].replace(str(ajeno_id), "N") == \
-        inexistente.json()["detail"][0]["mensaje"].replace(str(ajeno_id + _FALSO), "N")
+    assert (fuera.status_code, fuera.json()["code"]) == (403, "reason_required" if metodo == "get" else "forbidden")
+    assert str(ajeno_id) not in fuera.text  # el 403 es fijo: ni el id ni nada del expediente
+    assert inexistente.status_code == 404 and inexistente.json()["code"] == "not_found"
     propio_id = preparar(client, _alta(client, propio.id), equipo)
     dentro = pedir(propio_id)
     assert dentro.status_code == ok, dentro.text

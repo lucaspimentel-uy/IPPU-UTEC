@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session, contains_eager
 
 from app.core.constantes import HC_HISTORICO_MAX, HC_HISTORICO_MIN, MODULO_HCE_00
 from app.models.identidad import Grupo, HceDiurna, Persona, Profesional
-from app.services import auth
+from app.services import matriz
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, DuplicadoError, NotFound, ValidationFailed
 from app.services.fechas import anio_actual
@@ -37,6 +37,11 @@ PERSONA_OPCIONALES = ("sexo", "localidad", "referente", "telefono")
 PERSONA_CAMPOS = (*PERSONA_OBLIGATORIOS, "fecha_nac", *PERSONA_OPCIONALES)
 HCE_TEXTOS = ("diagnostico", "cie11", "derivacion", "medicacion", "alerta")
 HCE_CAMPOS = (*HCE_TEXTOS, "hc_historico", "grupo_id", "dx_fecha", "anamnesis")
+#: Los datos **clínicos** de HCE-00 (F4-6): coordinación y administrativo no los cargan en el alta ni los ven en la
+#: identificación. El resto de HCE-00 (persona, N.º de HC, grupo, estado) es identificatorio y logístico.
+HCE_CAMPOS_CLINICOS = ("diagnostico", "cie11", "dx_fecha", "derivacion", "medicacion", "alerta", "anamnesis")
+#: Lo que `PATCH /hce/{id}/identificacion` puede tocar del expediente (además de `persona`).
+IDENTIFICACION_CAMPOS = ("hc_historico", "grupo_id", "activo", "fecha_baja")
 BAJA_CAMPOS = ("activo", "fecha_baja")
 #: Paginación de la búsqueda (M11.3-d1): por omisión 50, nunca más de 200 por página.
 LIMITE_POR_OMISION = 50
@@ -166,7 +171,7 @@ def buscar_hce(
 
     if not incluir_inactivos:
         condiciones.append(HceDiurna.activo.is_(True))
-    if usuario is not None and (alcance := auth.condicion_de_alcance(usuario)) is not None:
+    if usuario is not None and (alcance := matriz.condicion_de_alcance(usuario, "hce.buscar")) is not None:
         condiciones.append(alcance)
 
     base = select(HceDiurna).join(HceDiurna.persona).outerjoin(HceDiurna.grupo).where(*condiciones)
@@ -178,6 +183,29 @@ def buscar_hce(
         .offset(offset)
     )
     return list(db.scalars(consulta).all()), total
+
+
+def consultar_por_ci(db: Session, ci: str) -> HceDiurna:
+    """`POST /hce/consulta` (F4-8): el expediente de la persona cuya C.I. **canónica es exactamente** la dada, activo o no.
+    Sin coincidencia parcial: «5789» no encuentra «5.789.123-4». 422 si no queda ningún dígito ni letra; 404 si no hay."""
+    if normalizar_texto(ci) is None or not clave_ci(ci).strip():
+        raise ValidationFailed([("ci", "Es obligatoria: escribí la C.I. completa del NNA.")])
+    hce = db.scalars(select(HceDiurna).join(HceDiurna.persona).where(Persona.ci == clave_ci(ci).strip())).first()
+    if hce is None:
+        raise NotFound("No existe el expediente")
+    return hce
+
+
+def datos_clinicos_presentes(hce: Mapping[str, Any]) -> list[str]:
+    """Los campos clínicos de HCE-00 que vienen **con valor** (`None`, `''`, blanco o `{}` no cuentan): lo que un alta con
+    datos identificatorios no puede traer (F4-5, F4-6)."""
+    presentes = []
+    for campo in HCE_CAMPOS_CLINICOS:
+        valor = hce.get(campo)
+        if valor is None or valor == {} or (isinstance(valor, str) and normalizar_texto(valor) is None):
+            continue
+        presentes.append(campo)
+    return presentes
 
 
 # ── Validación ───────────────────────────────────────────────────────────────
