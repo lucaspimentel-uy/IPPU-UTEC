@@ -186,7 +186,7 @@ async function pantallaMotivo(page, id, opts) {
   const usuarioSS = await page.evaluate(() => JSON.parse(sessionStorage.getItem('ippu.usuario') || 'null'));
   const tokenSS = await page.evaluate(() => sessionStorage.getItem('ippu.token'));
   check('3a-a', 'login del técnico de la demo: el chip muestra su nombre y rol (de la API)',
-    usuarioSS && chip === usuarioSS.nombre && chip === 'Dr. González' && chipRol === 'Técnico' && !!tokenSS,
+    usuarioSS && chip === usuarioSS.nombre && chip === 'Dr. González' && chipRol === 'Técnico/a' && !!tokenSS,
     `chip="${chip}" rol="${chipRol}" usuario(sessionStorage)=${usuarioSS && usuarioSS.nombre}/${usuarioSS && usuarioSS.rol}`);
 
   const tras = await page.evaluate(() => ({ foco: document.activeElement.id, tag: document.activeElement.tagName,

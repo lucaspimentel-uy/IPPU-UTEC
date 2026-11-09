@@ -515,7 +515,7 @@ function expedienteMotivo(err, id, opts){
   Object.assign(MOTIVO, {id, opts: opts || null, mensaje: err.message, guardando: false});
   document.getElementById("expedienteContent").innerHTML = `<div class="card"><div class="cardbody">
       <h1 id="expMotivoTitulo" class="pagetitle" tabindex="-1">Expediente con acceso registrado</h1>
-      <div class="empty-state estado-vacio" role="status"><div class="big" aria-hidden="true">🔒</div>
+      <div class="empty-state estado-vacio" role="status"><div class="big" aria-hidden="true">ℹ</div>
         <p class="estado-msg">${escHtml(err.message)}</p>
         <div class="estado-acciones"><button type="button" class="btn btn-primary btn-mini" id="btnMotivoAbrir" onclick="abrirDialogoMotivo()">Registrar el motivo</button>
           <button type="button" class="btn btn-ghost btn-mini" onclick="go('inicio')">‹ Volver al listado</button></div></div>
