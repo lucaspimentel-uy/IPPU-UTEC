@@ -188,11 +188,13 @@ def adjuntar(
     """`multipart/form-data` como el de los documentos del expediente (C5). Deja una fila `carga` con el código del
     ateneo, la categoría y la fecha (nunca el nombre del documento)."""
     exigir_campos(recibidos, {"archivo", "categoria_id", "nombre", "fecha_original"})
-    doc = servicio.crear_documento(
+    doc, avisos = servicio.crear_documento(
         db, usuario, ateneo_id, archivo=archivo.file, nombre_archivo=archivo.filename, categoria_id=categoria_id,
         nombre=nombre, fecha_original=fecha_original,
     )
-    return Resultado(data=DocumentoAteneoDetalle.model_validate(servicio_documentos.vista(doc)))
+    return Resultado(
+        data=DocumentoAteneoDetalle.model_validate(servicio_documentos.vista(doc)), warnings=[Aviso(**a) for a in avisos],
+    )
 
 
 @router_ateneo.get("/documentos/{doc_id}", response_model=DocumentoAteneoDetalle, summary="Un documento del ateneo",

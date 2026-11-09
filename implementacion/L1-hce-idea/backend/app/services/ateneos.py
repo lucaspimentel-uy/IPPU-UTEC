@@ -494,14 +494,15 @@ def obtener_documento(db: Session, usuario: Profesional, ateneo_id: int, doc_id:
 def crear_documento(
     db: Session, usuario: Profesional, ateneo_id: int, *, archivo: BinaryIO, nombre_archivo: str | None,
     categoria_id: Any, nombre: str | None, fecha_original,
-) -> Documento:
-    """Alta con archivo (las reglas de C5): 422 por campo, 413 sobre los 10 MB. La categoría no puede ser histórica."""
+) -> tuple[Documento, list[dict[str, Any]]]:
+    """Alta con archivo (las reglas de C5) → `(documento, avisos)`: 422 por campo, 413 sobre los 10 MB. La categoría no
+    puede ser histórica. Del nombre se quitan los caracteres Cf y Cc, con su aviso (B11, §5.163 b)."""
     ateneo = obtener(db, usuario, ateneo_id)
     errores: list[tuple[str | None, str]] = []
     cat = servicio_documentos._categoria(db, categoria_id, errores)
     if cat is not None and cat.es_registro_historico:
         errores.append(("categoria_id", "Las categorías «Registro histórico» son de los registros del expediente: no van en un ateneo."))
-    etiqueta = servicio_documentos._nombre_de_alta(nombre, nombre_archivo, errores)
+    etiqueta, avisos = servicio_documentos._nombre_de_alta(nombre, nombre_archivo, errores)
     if errores:
         raise ValidationFailed(errores)
     guardado = archivos.guardar(db, archivo, dueno="ateneo", dueno_id=ateneo.id, permitidos=ATENEO_DOCUMENTO_TIPOS)
@@ -516,4 +517,4 @@ def crear_documento(
         db, modulo=MODULO_ATENEO, hce_id=None, usuario_id=usuario.id,
         detalle=_detalle(ateneo, servicio_documentos._detalle(cat, doc.fecha_carga).replace("Documento", "documento", 1)),
     )
-    return doc
+    return doc, avisos

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from app.models.identidad import Profesional
 from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
-from app.schemas.comunes import FechaOpcional, RespuestaError, Resultado
+from app.schemas.comunes import Aviso, FechaOpcional, RespuestaError, Resultado
 from app.schemas.documentos import (
     EJEMPLO_AUTORIZACION, EJEMPLO_CATEGORIAS, EJEMPLO_DOCUMENTO, EJEMPLO_DOCUMENTOS, EJEMPLO_RESULTADO_AUTORIZACION,
     EJEMPLO_RESULTADO_DOCUMENTO, AutorizacionActualizar, AutorizacionCrear, AutorizacionDetalle, CategoriaDocumentoFila,
@@ -138,13 +138,14 @@ def cargar(
     """`multipart/form-data` con `archivo`, `categoria_id`, `nombre?` y `fecha_original?`. **El tipo se detecta por
     el contenido** (PDF, JPEG o PNG), nunca por la extensión ni por el `Content-Type`; el servidor genera el nombre
     y la ruta del archivo. `es_registro_historico` sale de la categoría. Deja una fila `carga` que no nombra el
-    documento."""
+    documento. Si el nombre traía caracteres invisibles (Cf, Cc: U+202E, U+200B, U+0007…) se quitan y `warnings[]`
+    lo dice (`nombre_con_caracteres_invisibles`)."""
     exigir_campos(recibidos, {"archivo", "categoria_id", "nombre", "fecha_original"})
-    doc = servicio.crear(
+    doc, avisos = servicio.crear(
         db, hce_id, archivo=archivo.file, nombre_archivo=archivo.filename, categoria_id=categoria_id,
         nombre=nombre, fecha_original=fecha_original, profesional_id=usuario.id,
     )
-    return Resultado(data=DocumentoDetalle.model_validate(servicio.vista(doc)))
+    return Resultado(data=DocumentoDetalle.model_validate(servicio.vista(doc)), warnings=[Aviso(**a) for a in avisos])
 
 
 @router_hce.get(
@@ -169,8 +170,8 @@ def leer(hce_id: int, doc_id: int, db: Annotated[Session, Depends(sesion_lectura
 def editar(hce_id: int, doc_id: int, datos: DocumentoActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
     """`nombre`, `categoria_id` y `fecha_original` (sólo las claves presentes). **Un registro histórico es inmutable
     (409).** Cada campo que cambia deja una fila de auditoría con el valor anterior y el nuevo."""
-    doc = servicio.actualizar(db, hce_id, doc_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
-    return Resultado(data=DocumentoDetalle.model_validate(servicio.vista(doc)))
+    doc, avisos = servicio.actualizar(db, hce_id, doc_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
+    return Resultado(data=DocumentoDetalle.model_validate(servicio.vista(doc)), warnings=[Aviso(**a) for a in avisos])
 
 
 @router_hce.get("/{doc_id}/archivo", response_class=FileResponse, summary="Descargar el archivo de un documento",

@@ -17,7 +17,7 @@ from app.models.identidad import Grupo, Profesional
 from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
-from app.schemas.comunes import FechaOpcional, RespuestaError, Resultado
+from app.schemas.comunes import Aviso, FechaOpcional, RespuestaError, Resultado
 from app.schemas.documentos import EJEMPLO_FOTO, EJEMPLO_FOTOS, EJEMPLO_RESULTADO_FOTO, FotoDetalle
 from app.services import auth
 from app.services import fotos as servicio
@@ -80,8 +80,10 @@ def cargar(
 ):
     """**No requiere la autorización de imagen y no avisa** (§5.99). Deja una fila `carga` en el expediente."""
     exigir_campos(recibidos, _PERMITIDOS)
-    foto = servicio.crear(db, hce_id=hce_id, archivo=archivo.file, descripcion=descripcion, fecha=fecha, profesional_id=usuario.id)
-    return Resultado(data=FotoDetalle.model_validate(servicio.vista(foto)))
+    foto, avisos = servicio.crear(
+        db, hce_id=hce_id, archivo=archivo.file, descripcion=descripcion, fecha=fecha, profesional_id=usuario.id,
+    )
+    return Resultado(data=FotoDetalle.model_validate(servicio.vista(foto)), warnings=[Aviso(**a) for a in avisos])
 
 
 @router_hce.get("/{foto_id}", response_model=FotoDetalle, summary="Una foto del expediente",
@@ -122,9 +124,10 @@ def cargar_grupo(
     """**No requiere autorizaciones ni avisa** (§5.99). Deja una fila `carga` con `hce_id` NULL, módulo `GRUPO` y
     `detalle` «grupo N · nombre año» (§5.120)."""
     exigir_campos(recibidos, _PERMITIDOS)
-    foto = servicio.crear(db, grupo=db.get(Grupo, grupo.id), archivo=archivo.file, descripcion=descripcion, fecha=fecha,
-                          profesional_id=usuario.id)
-    return Resultado(data=FotoDetalle.model_validate(servicio.vista(foto)))
+    foto, avisos = servicio.crear(
+        db, grupo=db.get(Grupo, grupo.id), archivo=archivo.file, descripcion=descripcion, fecha=fecha, profesional_id=usuario.id,
+    )
+    return Resultado(data=FotoDetalle.model_validate(servicio.vista(foto)), warnings=[Aviso(**a) for a in avisos])
 
 
 @router_grupo.get("/{foto_id}", response_model=FotoDetalle, summary="Una foto del grupo",

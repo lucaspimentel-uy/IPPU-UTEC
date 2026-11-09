@@ -44,6 +44,9 @@ from pathlib import Path
 # de importar `app`, porque `settings` se construye al importar `app.core.config`; la variable de
 # entorno le gana al `.env` de cada uno, así que la suite no depende de la clave local.
 os.environ["SECRET_KEY"] = "clave-fija-de-la-suite-de-tests-no-usar-fuera-0123456789"
+# La documentación (`/docs`, `/openapi.json`) sólo existe con ENVIRONMENT=dev (B12, §5.163 c) y varios tests la leen: un
+# `.env` con otro valor no puede romper la suite.
+os.environ["ENVIRONMENT"] = "dev"
 
 import pytest
 from alembic.config import Config
@@ -215,7 +218,8 @@ def carpeta_uploads(tmp_path, monkeypatch) -> Path:
 
 @pytest.fixture(scope="session")
 def engine(_entorno_verificado):
-    eng = create_engine(settings.test_database_url, pool_pre_ping=True)
+    # `hide_parameters=True`, como el engine de la app (B8): un error de un test no llena el log de valores.
+    eng = create_engine(settings.test_database_url, pool_pre_ping=True, hide_parameters=True)
     Base.metadata.drop_all(eng)
     Base.metadata.create_all(eng)
     yield eng

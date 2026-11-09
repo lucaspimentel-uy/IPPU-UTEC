@@ -14,7 +14,9 @@ expediente). El archivo lo guarda `app/services/archivos.py` (§5.138 b, §5.155
   DELETE** de documentos ni de fotos (405): borrar material clínico no está decidido (posterior al 26/11).
 - **`nombre`** = el texto dado, o el *basename* (sin ruta) del nombre de archivo del cliente si viene vacío;
   sin blancos alrededor; ≤ 200 (el dado, si es más largo, es 422; el del archivo se recorta). **Es sólo una
-  etiqueta**: nunca llega al sistema de archivos. `fecha_carga` = `fechas.hoy()`.
+  etiqueta**: nunca llega al sistema de archivos. `fecha_carga` = `fechas.hoy()`. **Sin caracteres invisibles** (B11,
+  §5.163 b): los de categoría Cf y Cc se quitan del nombre dado y del derivado, con el aviso «Se quitaron caracteres
+  invisibles del nombre.»; si no queda nada, 422 «Es obligatorio».
 - **Autorización de imagen (§5.155 d)**, 0..1 (PK `hce_id`), como SEV/INC: GET 404 = no registrada; POST
   `{registrada, fecha?, documento_id?}` (409 si ya existe, también la carrera); PATCH de las claves presentes.
   `documento_id` tiene que ser un documento **del mismo expediente** (si no, 422 en `documento_id`, con un
@@ -42,7 +44,7 @@ from app.services import archivos, fechas
 from app.services.auditoria import registrar_cambios, registrar_carga
 from app.services.errores import ConflictError, NotFound, ValidationFailed
 from app.services.hce import obtener_hce
-from app.services.texto import normalizar_texto
+from app.services.texto import aviso_invisibles, normalizar_texto, quitar_invisibles
 
 CAMPOS_EDITABLES = ("nombre", "categoria_id", "fecha_original")
 CAMPOS_AUTORIZACION = ("registrada", "fecha", "documento_id")
@@ -96,18 +98,28 @@ def _basename(nombre_archivo: str | None) -> str:
     return re.split(r"[\\/]", nombre_archivo or "")[-1].strip()
 
 
-def _nombre_de_alta(nombre: str | None, nombre_archivo: str | None, errores: list) -> str | None:
+def _nombre_de_alta(nombre: str | None, nombre_archivo: str | None, errores: list) -> tuple[str | None, list[dict[str, Any]]]:
+    """`(la etiqueta, los avisos)`. **Se quitan los caracteres Cf y Cc** del nombre dado y del derivado del archivo (B11,
+    §5.163 b: un U+202E hace que «cod.pdf» se lea «fdp.doc»); si se quitó alguno, el aviso
+    `nombre_con_caracteres_invisibles`. Un nombre dado que sólo tenía de esos queda vacío y es el 422 «Es obligatorio»;
+    uno derivado del archivo, también."""
     dado = (nombre or "").strip()
     if dado:
-        if len(dado) > DOCUMENTO_NOMBRE_MAX:
+        limpio, quitado = quitar_invisibles(dado)
+        limpio = limpio.strip()
+        if not limpio:
+            errores.append(("nombre", "Es obligatorio: escribí un nombre (el que escribiste sólo tenía caracteres invisibles)."))
+            return None, []
+        if len(limpio) > DOCUMENTO_NOMBRE_MAX:
             errores.append(("nombre", f"Puede tener como máximo {DOCUMENTO_NOMBRE_MAX} caracteres."))
-            return None
-        return dado
-    derivado = _basename(nombre_archivo)[:DOCUMENTO_NOMBRE_MAX].strip()
+            return None, []
+        return limpio, [aviso_invisibles()] if quitado else []
+    sin_ruta, quitado = quitar_invisibles(_basename(nombre_archivo))
+    derivado = sin_ruta[:DOCUMENTO_NOMBRE_MAX].strip()
     if not derivado:
         errores.append(("nombre", "Es obligatorio: escribí un nombre (el archivo no trae uno)."))
-        return None
-    return derivado
+        return None, []
+    return derivado, [aviso_invisibles()] if quitado else []
 
 
 def _categoria(db: Session, categoria_id: Any, errores: list) -> CategoriaDocumento | None:
@@ -128,14 +140,15 @@ def _detalle(categoria: CategoriaDocumento, fecha_carga) -> str:
 def crear(
     db: Session, hce_id: int, *, archivo: BinaryIO, nombre_archivo: str | None, categoria_id: Any,
     nombre: str | None, fecha_original, profesional_id: int,
-) -> Documento:
-    """Alta de un documento con su archivo. 404 sin expediente · 422 por campo (categoría, nombre, archivo
-    vacío o de otro tipo) · 413 si el archivo supera los 10 MB. Primero se validan los datos (sin tocar el
-    disco); después se guarda el archivo; si algo falla más tarde, el rollback lo borra."""
+) -> tuple[Documento, list[dict[str, Any]]]:
+    """Alta de un documento con su archivo → `(documento, avisos)`. 404 sin expediente · 422 por campo (categoría,
+    nombre, archivo vacío o de otro tipo) · 413 si el archivo supera los 10 MB. Primero se validan los datos (sin
+    tocar el disco); después se guarda el archivo; si algo falla más tarde, el rollback lo borra. El único aviso es el
+    de los caracteres invisibles quitados del nombre (B11)."""
     obtener_hce(db, hce_id)
     errores: list[tuple[str | None, str]] = []
     cat = _categoria(db, categoria_id, errores)
-    etiqueta = _nombre_de_alta(nombre, nombre_archivo, errores)
+    etiqueta, avisos = _nombre_de_alta(nombre, nombre_archivo, errores)
     if errores:
         raise ValidationFailed(errores)
     guardado = archivos.guardar(db, archivo, dueno="hce", dueno_id=hce_id, permitidos=DOCUMENTO_TIPOS)
@@ -150,14 +163,17 @@ def crear(
         db, modulo=MODULO_HCE_DOC, hce_id=hce_id, usuario_id=profesional_id,
         detalle=("Registro histórico cargado — " if cat.es_registro_historico else "") + _detalle(cat, doc.fecha_carga),
     )
-    return doc
+    return doc, avisos
 
 
 # ── Edición de metadatos ─────────────────────────────────────────────────────
-def actualizar(db: Session, hce_id: int, doc_id: int, datos: Mapping[str, Any], *, profesional_id: int) -> Documento:
-    """PATCH de `nombre`, `categoria_id` y `fecha_original` (sólo las claves presentes). **409** si el documento
-    es un registro histórico (inmutable); **422** si la categoría nueva es histórica o no existe, o si el nombre
-    queda vacío o largo. Una fila `edicion` por campo que cambió; ninguna si nada cambió."""
+def actualizar(
+    db: Session, hce_id: int, doc_id: int, datos: Mapping[str, Any], *, profesional_id: int,
+) -> tuple[Documento, list[dict[str, Any]]]:
+    """PATCH de `nombre`, `categoria_id` y `fecha_original` (sólo las claves presentes) → `(documento, avisos)`.
+    **409** si el documento es un registro histórico (inmutable); **422** si la categoría nueva es histórica o no
+    existe, o si el nombre queda vacío o largo. Una fila `edicion` por campo que cambió; ninguna si nada cambió. Del
+    nombre se quitan los caracteres Cf y Cc (B11) y, si se quitó alguno, sale el aviso."""
     doc = obtener(db, hce_id, doc_id, para_escribir=True)
     if doc.es_registro_historico:
         raise ConflictError(
@@ -166,14 +182,17 @@ def actualizar(db: Session, hce_id: int, doc_id: int, datos: Mapping[str, Any], 
         )
     errores: list[tuple[str | None, str]] = []
     cambios: dict[str, Any] = {}
+    avisos: list[dict[str, Any]] = []
     if "nombre" in datos:
-        nombre = normalizar_texto(datos["nombre"])
+        nombre, quitado = quitar_invisibles(datos["nombre"] or "")
+        nombre = normalizar_texto(nombre)
         if nombre is None:
             errores.append(("nombre", "Es obligatorio: un documento necesita un nombre."))
         elif len(nombre.strip()) > DOCUMENTO_NOMBRE_MAX:
             errores.append(("nombre", f"Puede tener como máximo {DOCUMENTO_NOMBRE_MAX} caracteres."))
         else:
             cambios["nombre"] = nombre.strip()
+            avisos += [aviso_invisibles()] if quitado else []
     nueva = None
     if "categoria_id" in datos:
         nueva = _categoria(db, datos["categoria_id"], errores)
@@ -187,7 +206,7 @@ def actualizar(db: Session, hce_id: int, doc_id: int, datos: Mapping[str, Any], 
         raise ValidationFailed(errores)
     cambios = {c: v for c, v in cambios.items() if getattr(doc, c) != v}
     if not cambios:
-        return doc
+        return doc, avisos
     categoria_antes = doc.categoria
     antes = {c: getattr(doc, c) for c in cambios}
     despues = dict(cambios)
@@ -201,7 +220,7 @@ def actualizar(db: Session, hce_id: int, doc_id: int, datos: Mapping[str, Any], 
         fila.detalle = _detalle(categoria_antes, doc.fecha_carga)
     db.flush()
     db.refresh(doc)
-    return doc
+    return doc, avisos
 
 
 # ── Autorización de uso de imagen ────────────────────────────────────────────

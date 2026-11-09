@@ -147,54 +147,104 @@ def _anotar(db: Session, ruta: Path) -> None:
 
 
 # ── Escritura ────────────────────────────────────────────────────────────────
+def _leer_cabecera(origen: BinaryIO) -> bytes:
+    """El primer bloque del origen, completado hasta `_CABECERA` bytes (o hasta el fin, si es más corto)."""
+    primero = origen.read(_BLOQUE)
+    while 0 < len(primero) < _CABECERA:
+        mas = origen.read(_BLOQUE)
+        if not mas:
+            break
+        primero += mas
+    return primero
+
+
+def _quitar_carpetas(creadas: list[Path]) -> None:
+    """Quita las carpetas que **este** llamado creó (de la más honda a la más alta), las que estén vacías."""
+    for carpeta in creadas:
+        try:
+            carpeta.rmdir()
+        except OSError:
+            break  # no está vacía (o ya no es nuestra): las de más arriba tampoco están vacías
+
+
+def _crear_carpeta(raiz: Path, carpeta: Path) -> list[Path]:
+    """Crea `carpeta` y devuelve las que **creó** (la más honda primero). Después de crearla verifica que su ruta
+    resuelta quede **dentro de la raíz** (B9: una junction o un enlace simbólico la sacaría de ahí); si no, quita
+    lo que creó y levanta `RuntimeError` (el sobre 500 genérico: la causa va al log, nunca al cliente)."""
+    creadas: list[Path] = []
+    actual = carpeta
+    while not actual.exists():
+        creadas.append(actual)
+        if actual == actual.parent:
+            break
+        actual = actual.parent
+    carpeta.mkdir(parents=True, exist_ok=True)
+    if not carpeta.resolve().is_relative_to(raiz):
+        _quitar_carpetas(creadas)
+        raise RuntimeError("La carpeta de destino de un archivo resuelve fuera de la raíz de archivos")
+    return creadas
+
+
+def _abrir_temporal(carpeta: Path) -> tuple[int, str]:
+    try:
+        return tempfile.mkstemp(dir=carpeta, prefix=".subiendo-", suffix=".part")
+    except FileNotFoundError:
+        # Carrera: otra subida rechazada que había creado esta misma carpeta la quitó (estaba vacía) justo ahora.
+        carpeta.mkdir(parents=True, exist_ok=True)
+        return tempfile.mkstemp(dir=carpeta, prefix=".subiendo-", suffix=".part")
+
+
 def guardar(
     db: Session, origen: BinaryIO, *, dueno: str, dueno_id: int, permitidos: tuple[str, ...], campo: str = "archivo",
 ) -> ArchivoGuardado:
     """Copia `origen` a `<raíz>/<dueno>/<dueno_id>/<uuid>.<ext>` y devuelve su `archivo_ref`.
 
-    Lee por bloques; el tipo sale de los primeros bytes y tiene que estar en `permitidos`. Vacío o de un
-    tipo no permitido → 422; más de `ARCHIVO_TAMANO_MAXIMO` → 413 (`campo` en los dos). Escribe a un
-    temporal de la misma carpeta y lo renombra; si algo falla acá, el temporal se borra. Si el request falla
-    **después** (la fila, la auditoría, el commit), el rollback de `db` borra el archivo (`_escuchar`).
+    **Primero se lee la cabecera y se decide el tipo; recién después se toca el disco** (B10): un archivo vacío o de un
+    tipo no permitido → 422 sin crear ninguna carpeta. Después se crea la carpeta y se verifica que su ruta resuelta
+    quede dentro de la raíz, **antes** del `mkstemp` (B9; si no, nada queda en disco y sale el 500 genérico). Lee por
+    bloques; más de `ARCHIVO_TAMANO_MAXIMO` → 413 (`campo` en el 413 y en los 422). Escribe a un temporal de la misma
+    carpeta y lo renombra; si algo falla acá, el temporal se borra **y la carpeta, si la creó este llamado y quedó
+    vacía**. Si el request falla **después** (la fila, la auditoría, el commit), el rollback de `db` borra el
+    archivo (`_escuchar`).
     """
     if dueno not in DUENOS or not isinstance(dueno_id, int) or dueno_id < 1:
         raise ValueError("dueño inválido")
-    carpeta = raiz_de_archivos() / dueno / str(dueno_id)
-    carpeta.mkdir(parents=True, exist_ok=True)
-    fd, temporal = tempfile.mkstemp(dir=carpeta, prefix=".subiendo-", suffix=".part")
+    primero = _leer_cabecera(origen)
+    if not primero:
+        raise ValidationFailed([(campo, "El archivo está vacío.")])
+    tipo = _aceptar(primero, permitidos, campo)
+    raiz = raiz_de_archivos()
+    carpeta = raiz / dueno / str(dueno_id)
+    creadas = _crear_carpeta(raiz, carpeta)
     try:
-        cabecera, total, tipo = b"", 0, None
-        with os.fdopen(fd, "wb") as destino:
-            while True:
-                bloque = origen.read(_BLOQUE)
-                if not bloque:
-                    break
-                total += len(bloque)
-                if total > ARCHIVO_TAMANO_MAXIMO:
-                    raise ArchivoDemasiadoGrande(
-                        "El archivo supera el tamaño máximo",
-                        [(campo, "El archivo supera los 10 MB: el máximo es 10 MB.")],
-                    )
-                if tipo is None:
-                    cabecera += bloque[: _CABECERA - len(cabecera)]
-                    if len(cabecera) >= _CABECERA:
-                        tipo = _aceptar(cabecera, permitidos, campo)
-                destino.write(bloque)
-        if total == 0:
-            raise ValidationFailed([(campo, "El archivo está vacío.")])
-        if tipo is None:
-            tipo = _aceptar(cabecera, permitidos, campo)
-        if tipo == "pptx":
-            _verificar_pptx(temporal, permitidos, campo)
-        final = carpeta / f"{uuid.uuid4().hex}.{tipo}"
-        os.replace(temporal, final)
+        fd, temporal = _abrir_temporal(carpeta)
+        try:
+            total = 0
+            with os.fdopen(fd, "wb") as destino:
+                bloque = primero
+                while bloque:
+                    total += len(bloque)
+                    if total > ARCHIVO_TAMANO_MAXIMO:
+                        raise ArchivoDemasiadoGrande(
+                            "El archivo supera el tamaño máximo",
+                            [(campo, "El archivo supera los 10 MB: el máximo es 10 MB.")],
+                        )
+                    destino.write(bloque)
+                    bloque = origen.read(_BLOQUE)
+            if tipo == "pptx":
+                _verificar_pptx(temporal, permitidos, campo)
+            final = carpeta / f"{uuid.uuid4().hex}.{tipo}"
+            os.replace(temporal, final)
+        except BaseException:
+            Path(temporal).unlink(missing_ok=True)
+            raise
+        ref = f"{dueno}/{dueno_id}/{final.name}"
+        if ruta_de(ref) != final.resolve():  # defensa en profundidad: lo escrito es lo que dice la ref
+            final.unlink(missing_ok=True)
+            raise RuntimeError("La ruta del archivo no coincide con su referencia")
     except BaseException:
-        Path(temporal).unlink(missing_ok=True)
+        _quitar_carpetas(creadas)
         raise
-    ref = f"{dueno}/{dueno_id}/{final.name}"
-    if ruta_de(ref) != final.resolve():  # defensa en profundidad: lo escrito es lo que dice la ref
-        final.unlink(missing_ok=True)
-        raise RuntimeError("La ruta del archivo no coincide con su referencia")
     _anotar(db, final)
     return ArchivoGuardado(ref=ref, tipo=tipo, tamano=total)
 

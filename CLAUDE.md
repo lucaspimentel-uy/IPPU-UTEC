@@ -71,8 +71,8 @@ $env:IPPU_SEED_DESTINO = "ippu_ver"      # guardia (§5.139): seed_demo y crear_
 alembic upgrade head
 python -m app.seed_catalogos
 
-# 3 · API (otra terminal: venv activo y el MISMO DATABASE_URL); docs en /docs
-uvicorn app.main:app --port 8001
+# 3 · API (otra terminal: venv activo y el MISMO DATABASE_URL)
+uvicorn app.main:app --port 8001         # docs: http://localhost:8001/docs · /redoc · /openapi.json (ver abajo)
 
 # 4 · Demo cargada por la API (8 NNA; aborta si ya están). Sin demo: python -m app.crear_usuario --email … --nombre … --rol admin
 $env:PYTHONUTF8 = "1"; $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"
@@ -97,6 +97,11 @@ Los archivos de HCE-DOC y las fotos van a `backend\uploads\<nombre de la base>\`
 base es borrar también su carpeta, nunca la raíz ni la de otra base; pytest usa una carpeta temporal. (La presentación tiene su propio
 comando y sus logs en `%TEMP%`: ver «Presentación».) Entre dos corridas que **escriben**: parar la API y repetir los pasos 2, 3 y 4. Uso de cada herramienta:
 `implementacion/L1-hce-idea/demo/verificacion/README.md`.
+
+**La documentación de la API (Swagger) sólo existe con `ENVIRONMENT=dev`** (§5.163 c): `/docs`, `/redoc` y `/openapi.json` responden
+cuando la variable `ENVIRONMENT` del `.env` o de la terminal es `dev`, que es el valor por omisión (trabajo local y presentación no
+cambian, y `.env.example` lo trae así). Con cualquier otro valor (`produccion`…) las tres rutas son 404. Para ver o generar `openapi.json`
+(la fuente de los tipos de React), levantar la API con `ENVIRONMENT=dev`: `curl http://localhost:8001/openapi.json`.
 
 ## Presentación (un comando, §5.139)
 La base de la presentación es **`ippu_presentacion`** (API `:8000`, demo `:5500`); se recarga **después del 2026-11-13**. Desde la

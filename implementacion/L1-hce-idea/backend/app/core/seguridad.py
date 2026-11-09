@@ -71,9 +71,12 @@ def crear_token(profesional_id: int, *, minutos: int | None = None) -> str:
 
 
 def leer_token(token: str) -> int | None:
-    """El `profesional.id` del token, o `None` si es inválido, está vencido o no trae `sub`."""
+    """El `profesional.id` del token, o `None` si es inválido, está vencido o **no trae `exp` o `sub`** (B3: un token
+    firmado con la clave correcta pero sin `exp` no vence nunca, así que no se acepta)."""
     try:
-        carga = jwt.decode(token, settings.secret_key, algorithms=[ALGORITMO])
+        carga = jwt.decode(
+            token, settings.secret_key, algorithms=[ALGORITMO], options={"require_exp": True, "require_sub": True},
+        )
     except JWTError:
         return None
     sub = carga.get("sub")

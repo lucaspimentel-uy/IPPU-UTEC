@@ -8,6 +8,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DataError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.services.errores import (
@@ -66,6 +67,26 @@ def registrar_manejadores(app: FastAPI) -> None:
         cabeceras = {"WWW-Authenticate": "Bearer"} if isinstance(exc, Unauthorized) else None
         return JSONResponse(
             _cuerpo(exc.code, list(exc.detalle)), status_code=_status_de(exc), headers=cabeceras,
+        )
+
+    @app.exception_handler(DataError)
+    async def _dato_que_la_base_rechaza(request: Request, exc: DataError) -> JSONResponse:
+        """Un valor que pasó la validación pero que la base no acepta (un entero fuera de rango, una fecha imposible…):
+        **422** `invalid_value`, `campo` null y un mensaje genérico (B1, §5.163 a). La sesión ya hizo rollback (la
+        dependencia transaccional, o el cierre de la sesión en un GET) antes de llegar acá. **La causa va al log y no a
+        la respuesta**, y el log lleva la clase, el SQLSTATE y —si el driver los da— la tabla y la columna, pero ni el
+        texto del error ni los valores: el mensaje de Postgres puede citar el dato que se mandó (`invalid input syntax
+        for type date: "…"`) y con `hide_parameters` el log tampoco los trae (B8)."""
+        origen = exc.orig
+        diag = getattr(origen, "diag", None)
+        logger.warning(
+            "Valor rechazado por la base en %s %s: %s sqlstate=%s tabla=%s columna=%s",
+            request.method, request.url.path, type(origen).__name__, getattr(origen, "sqlstate", None),
+            getattr(diag, "table_name", None), getattr(diag, "column_name", None),
+        )
+        return JSONResponse(
+            _cuerpo("invalid_value", [{"campo": None, "mensaje": "Alguno de los valores enviados no es válido."}]),
+            status_code=422,
         )
 
     @app.exception_handler(RequestValidationError)

@@ -32,7 +32,7 @@ from app.services import archivos
 from app.services.auditoria import registrar_carga
 from app.services.errores import NotFound
 from app.services.hce import obtener_hce
-from app.services.texto import normalizar_texto
+from app.services.texto import aviso_invisibles, normalizar_texto, quitar_invisibles
 
 
 def vista(foto: Foto) -> dict[str, Any]:
@@ -69,13 +69,18 @@ def obtener(db: Session, *, foto_id: int, hce_id: int | None = None, grupo_id: i
 def crear(
     db: Session, *, archivo: BinaryIO, descripcion: str | None, fecha, profesional_id: int,
     hce_id: int | None = None, grupo: Grupo | None = None,
-) -> Foto:
-    """Guarda la foto (JPEG o PNG) del expediente **o** del grupo. **No consulta la autorización de imagen y no
-    avisa** (§5.99). 422 si el archivo está vacío o no es una imagen aceptada; 413 si supera los 10 MB."""
+) -> tuple[Foto, list[dict[str, Any]]]:
+    """Guarda la foto (JPEG o PNG) del expediente **o** del grupo → `(foto, avisos)`. **No consulta la autorización de
+    imagen y no avisa de eso** (§5.99). 422 si el archivo está vacío o no es una imagen aceptada; 413 si supera los
+    10 MB. La foto no guarda ningún nombre (el del archivo del cliente se descarta): lo único que escribe quien sube es
+    la `descripcion`, y de ella se quitan los caracteres Cf y Cc —menos el salto de línea y la tabulación, que una
+    descripción puede llevar— con el aviso de B11 (§5.163 b)."""
     if (hce_id is None) == (grupo is None):
         raise ValueError("una foto es de un expediente o de un grupo, nunca de los dos ni de ninguno")
     if hce_id is not None:
         obtener_hce(db, hce_id)
+    descripcion, quitado = quitar_invisibles(descripcion or "", conservar="\n\r\t")
+    avisos = [aviso_invisibles("descripcion")] if quitado else []
     guardado = archivos.guardar(
         db, archivo, dueno="hce" if hce_id is not None else "grupo",
         dueno_id=hce_id if hce_id is not None else grupo.id, permitidos=FOTO_TIPOS,
@@ -94,4 +99,4 @@ def crear(
             db, modulo=MODULO_GRUPO, hce_id=None, usuario_id=profesional_id,
             detalle=f"Grupo {grupo.nombre} {grupo.anio} · foto grupal cargada",
         )
-    return foto
+    return foto, avisos

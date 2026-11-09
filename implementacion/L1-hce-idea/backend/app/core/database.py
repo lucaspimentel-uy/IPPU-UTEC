@@ -21,7 +21,11 @@ CONVENCION_NOMBRES = {
 # pool_pre_ping: descarta conexiones muertas antes de usarlas. Con el Postgres
 # en un contenedor que se reinicia, sin esto la primera consulta tras un
 # `docker compose restart` falla.
-engine = create_engine(settings.database_url, pool_pre_ping=True)
+#
+# hide_parameters: un error de la base (`StatementError`, `DataError`) sale en el log con el SQL **sin** los valores
+# enlazados. Sin esto, el log llevaba `[parameters: (...)]` con la C.I., el nombre o lo que hubiera en la sentencia
+# (B8, §5.157): datos de NNA en un archivo de texto. Sigue la sentencia y el tipo de error, que es lo que sirve.
+engine = create_engine(settings.database_url, pool_pre_ping=True, hide_parameters=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
