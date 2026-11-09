@@ -3,7 +3,7 @@
 Uso (desde la carpeta del backend, con el venv activo):
 
     python -m app.crear_usuario --email ana@ippu.test --nombre "Ana Pereira" --rol tecnico
-    python -m app.crear_usuario --email admin@ippu.test --nombre "Coordinación" --rol admin
+    python -m app.crear_usuario --email coordinacion@ippu.test --nombre "Coordinación" --rol coordinacion
 
 La contraseña se pide por teclado (no queda en el historial de la terminal). Para scripts
 —el seed de M11.5-a— se puede pasar en la variable de entorno `IPPU_PASSWORD`. Escribe en
@@ -24,7 +24,7 @@ import sys
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.constantes import ROL_ADMIN, ROL_TECNICO
+from app.core.constantes import ROL_COORDINACION, ROLES
 from app.core.destino import confirmar_destino
 from app.core.seguridad import BCRYPT_MAX_BYTES, hashear_password
 from app.models.identidad import Profesional
@@ -33,6 +33,9 @@ from app.services.auth import normalizar_email
 #: Largo mínimo de la contraseña. Login mínimo para un prototipo sin datos reales: alcanza
 #: con impedir las triviales; la política completa es de la Fase 4.
 PASSWORD_MIN = 8
+#: El rol de antes de la Fase 4 (§5.101): ya no existe, ni como alias (F4-1). Es lo único que nombra «admin».
+ROL_RETIRADO = "admin"
+MENSAJE_ROL_RETIRADO = f"El rol admin ya no existe: usá {ROL_COORDINACION}."
 
 
 class DatoInvalido(ValueError):
@@ -48,8 +51,10 @@ def crear_usuario(
         raise DatoInvalido("El email no es válido")
     if not nombre.strip():
         raise DatoInvalido("El nombre es obligatorio")
-    if rol not in (ROL_ADMIN, ROL_TECNICO):
-        raise DatoInvalido(f"El rol tiene que ser {ROL_ADMIN} o {ROL_TECNICO}")
+    if rol == ROL_RETIRADO:
+        raise DatoInvalido(MENSAJE_ROL_RETIRADO)
+    if rol not in ROLES:
+        raise DatoInvalido(f"El rol tiene que ser uno de: {', '.join(ROLES)}")
     if len(password) < PASSWORD_MIN:
         raise DatoInvalido(f"La contraseña tiene que tener al menos {PASSWORD_MIN} caracteres")
     if len(password.encode("utf-8")) > BCRYPT_MAX_BYTES:
@@ -69,9 +74,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.crear_usuario", description=__doc__.splitlines()[0])
     parser.add_argument("--email", required=True)
     parser.add_argument("--nombre", required=True)
-    parser.add_argument("--rol", required=True, choices=(ROL_ADMIN, ROL_TECNICO))
+    parser.add_argument("--rol", required=True, help=f"Uno de: {', '.join(ROLES)}. La primera coordinación se crea así (no hay alta por la API sin un usuario que la haga).")
     parser.add_argument("--especialidad", default=None, help="Va a `firmas[].rol` cuando firme.")
     args = parser.parse_args(argv)
+    if args.rol not in ROLES:  # antes del destino y de la contraseña: un rol que no existe no llega a preguntar nada
+        print(f"No se creó: {MENSAJE_ROL_RETIRADO if args.rol == ROL_RETIRADO else 'el rol tiene que ser uno de: ' + ', '.join(ROLES)}",
+              file=sys.stderr)
+        return 1
 
     if not confirmar_destino():  # antes de pedir la contraseña
         return 1

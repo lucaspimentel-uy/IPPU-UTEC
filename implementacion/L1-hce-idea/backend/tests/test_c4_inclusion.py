@@ -177,7 +177,7 @@ def test_dos_altas_concurrentes_dan_exactamente_un_201(engine, hash_test, token_
 
     Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with Sesion() as s:
-        admin = Profesional(nombre="Zz Carrera", email="carrera-c4@ippu.test", rol="admin", activo=True, hashed_password=hash_test)
+        admin = Profesional(nombre="Zz Carrera", email="carrera-c4@ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
         persona = Persona(nombre="A", apellido="B", ci="70000441", fecha_nac=date(2016, 1, 1))
         sembrado = s.get(EstadoInclusion, SIN_REGISTRAR) is None  # el default de `estado` tiene que existir (FK)
         if sembrado:
@@ -549,7 +549,7 @@ def test_una_gestion_no_se_edita_ni_se_borra(client, estados, hoy):
 def test_el_autor_es_null_si_el_profesional_ya_no_existe(client, db_api, estados, hoy, crear_profesional, token_de, hash_test):
     hid = _hce(client)
     _ficha(client, hid)
-    otro = crear_profesional(nombre="Se va", rol="admin", hashed_password=hash_test)
+    otro = crear_profesional(nombre="Se va", rol="coordinacion", hashed_password=hash_test)
     gid = client.post(f"/hce/{hid}/inclusion/bitacora", json=GESTION, headers=token_de(otro)).json()["data"]["id"]
     db_api.execute(delete(Auditoria).where(Auditoria.usuario_id == otro.id))
     db_api.execute(InclusionBitacora.__table__.update().where(InclusionBitacora.id == gid).values(autor_id=None))

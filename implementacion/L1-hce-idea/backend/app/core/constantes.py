@@ -736,11 +736,65 @@ VF_CATEGORIA_NO_CORRESPONDE = "No corresponde"
 VF_ALERTA_DIAS: tuple[int, ...] = (90, 30)
 
 # --------------------------------------------------------------------------
-# Login mínimo (§5.101 · M11.3-d1)
+# Roles, motivos de acceso y ventana (Fase 4 · A1 · `docs/diseno/fase4-acceso.md` a, d, e, h · §5.164)
 # --------------------------------------------------------------------------
-#: Los dos valores de `profesional.rol` (`ck_profesional_rol_valido`).
-ROL_ADMIN = "admin"
+#: Las cuatro claves de `profesional.rol` (F4-1); el CHECK `ck_profesional_rol_valido` se genera de `ROLES`. El
+#: `admin` de antes no existe más (ni como alias): es `coordinacion` (§5.162 e). **Nadie compara roles fuera de
+#: `app/services/matriz.py`**: las demás capas preguntan a la matriz.
 ROL_TECNICO = "tecnico"
+ROL_COORDINACION = "coordinacion"
+ROL_ADMINISTRATIVO = "administrativo"
+ROL_DIRECCION_NT = "direccion_nt"
+#: Clave → rótulo (sección a). El orden es el del Protocolo §5 (filas 1–2, 3, 4, 5).
+ROLES: dict[str, str] = {
+    ROL_TECNICO: "Técnico/a",
+    ROL_COORDINACION: "Dirección/coordinación técnica-clínica",
+    ROL_ADMINISTRATIVO: "Personal administrativo",
+    ROL_DIRECCION_NT: "Dirección no técnica",
+}
+#: Los roles que se pueden asignar como técnico 1 o 2 de un grupo (F4-2): quien trata.
+ROLES_ASIGNABLES: tuple[str, ...] = (ROL_TECNICO, ROL_COORDINACION)
+
+#: Quién usa un motivo (`quien` de `MOTIVOS_ACCESO`): la relación del que lo pide con el expediente.
+MOTIVO_QUIEN_TRATANTE = "tratante"
+MOTIVO_QUIEN_NO_TRATANTE = "no_tratante"
+MOTIVO_QUIEN_COORDINACION = "coordinacion"
+#: El catálogo de motivos de acceso (F4-11, sección e): **constante y no tabla** (criterio de §5.56: es parte del
+#: régimen del Protocolo y lo valida IPPU, D4). El CHECK de `acceso_hce.motivo_codigo` se genera de acá. `quien`: qué
+#: relación lo puede usar; `texto_obligatorio`: si `motivo_texto` es obligatorio. Borrador del equipo.
+MOTIVO_COPIA_FAMILIA = "copia_familia"
+MOTIVOS_ACCESO: dict[str, dict] = {
+    "interconsulta": {"label": "Interconsulta", "quien": (MOTIVO_QUIEN_NO_TRATANTE, MOTIVO_QUIEN_COORDINACION),
+                      "texto_obligatorio": False},
+    "pase_de_caso": {"label": "Pase de caso", "quien": (MOTIVO_QUIEN_NO_TRATANTE, MOTIVO_QUIEN_COORDINACION),
+                     "texto_obligatorio": False},
+    "ateneo": {"label": "Ateneo clínico", "quien": (MOTIVO_QUIEN_NO_TRATANTE, MOTIVO_QUIEN_COORDINACION),
+               "texto_obligatorio": False},
+    "supervision": {"label": "Supervisión clínica", "quien": (MOTIVO_QUIEN_COORDINACION,), "texto_obligatorio": False},
+    MOTIVO_COPIA_FAMILIA: {"label": "Copia de la HC entregada a la familia",
+                           "quien": (MOTIVO_QUIEN_TRATANTE, MOTIVO_QUIEN_COORDINACION), "texto_obligatorio": True},
+    "otro": {"label": "Otro motivo", "quien": (MOTIVO_QUIEN_NO_TRATANTE, MOTIVO_QUIEN_COORDINACION),
+             "texto_obligatorio": True},
+}
+#: Tope de `acceso_hce.motivo_texto` (sección e): más es 422 por campo.
+MOTIVO_TEXTO_MAX = 500
+#: Lo que la pantalla dice junto al texto del motivo (sección e); lo devuelve `GET /accesos/motivos`.
+MOTIVO_TEXTO_INDICACION = "Escribí el motivo, no datos clínicos del NNA."
+#: `acceso_hce.relacion` (sección d): el tratante y la gestión (coordinación o administrativo en la identificación u
+#: ORG) se registran sin motivo (A2); el no tratante y la supervisión abren una ventana con motivo; `titular` es la
+#: copia de la HC a la familia (§5.103), sin ventana.
+ACCESO_TRATANTE = "tratante"
+ACCESO_NO_TRATANTE = "no_tratante"
+ACCESO_SUPERVISION = "supervision"
+ACCESO_GESTION = "gestion"
+ACCESO_TITULAR = "titular"
+ACCESO_RELACIONES: tuple[str, ...] = (ACCESO_TRATANTE, ACCESO_NO_TRATANTE, ACCESO_SUPERVISION, ACCESO_GESTION, ACCESO_TITULAR)
+#: Las relaciones cuya fila **es una ventana** que abre la lectura clínica (F4-9): las otras no abren nada.
+ACCESO_RELACIONES_VENTANA: tuple[str, ...] = (ACCESO_NO_TRATANTE, ACCESO_SUPERVISION)
+#: La ventana de acceso (F4-9): 120 minutos desde el pedido que la abre (decisión de diseño, constante).
+VENTANA_ACCESO_MINUTOS = 120
+#: Dirección no técnica no ve una media del protocolo de menos de 5 NNA (F4-7; Protocolo §6.6).
+UMBRAL_CELDA_CHICA = 5
 
 #: N.º de HC institucional (`hce_diurna.hc_historico`, §5.109): entero desde 1000,
 #: hasta lo que cabe en un `integer` de Postgres.

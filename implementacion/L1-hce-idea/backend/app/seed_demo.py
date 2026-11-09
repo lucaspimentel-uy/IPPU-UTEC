@@ -86,6 +86,9 @@ UBICACION_DEMO = {"Azul": "Escolares", "Celeste": "Preadolescentes", "Naranja": 
 # ── Profesionales de la demo (`demo/js/flujo.js`, `TECNICOS`) ────────────────
 GONZALEZ = {"email": "gonzalez@demo.ippu.test", "nombre": "Dr. González", "especialidad": "Psicólogo/a"}
 TORRES = {"email": "torres@demo.ippu.test", "nombre": "Mtra. Torres", "especialidad": "Maestro/a"}
+#: Los dos roles nuevos de la Fase 4 (A1, `docs/diseno/fase4-acceso.md` h): entran con `IPPU_DEMO_PASSWORD`.
+ADMINISTRATIVO = {"email": "administrativo@demo.ippu.test", "nombre": "Administración (demo)"}
+DIRECCION = {"email": "direccion@demo.ippu.test", "nombre": "Dirección (demo)"}
 
 # ── Los 8 NNA, verbatim de `demo/js/datos.js` (id de la demo → datos) ─────────
 # `cie11`: sólo el código de `CIE_SEED` (flujo.js:385); la columna es de 20 caracteres y la demo le
@@ -465,23 +468,27 @@ class Resumen:
 
 # ── Bootstrap (fuera de la API) ──────────────────────────────────────────────
 def preparar_usuarios(db, *, admin_email: str, admin_password: str, demo_password: str) -> list[str]:
-    """Crea (si faltan) el admin y los dos profesionales de la demo con `crear_usuario`.
+    """Crea (si faltan) la coordinación, los dos técnicos de la demo y los usuarios de administración y dirección
+    no técnica (A1), con `crear_usuario`.
 
     **Escribe en la base directamente**: es lo único del seed que no pasa por la API, porque la API
     no da de alta usuarios (§5.90/§5.101). Sólo `flush`; commitea quien llama. Devuelve qué creó.
     """
     from sqlalchemy import func, select
 
-    from app.core.constantes import ROL_ADMIN, ROL_TECNICO
+    from app.core.constantes import ROL_ADMINISTRATIVO, ROL_COORDINACION, ROL_DIRECCION_NT, ROL_TECNICO
     from app.crear_usuario import crear_usuario
     from app.models.identidad import Profesional
     from app.services.auth import normalizar_email
 
     creados = []
     for email, nombre, rol, password, especialidad in (
-        (admin_email, "Coordinación (demo)", ROL_ADMIN, admin_password, None),
+        (admin_email, "Coordinación (demo)", ROL_COORDINACION, admin_password, None),
         (GONZALEZ["email"], GONZALEZ["nombre"], ROL_TECNICO, demo_password, GONZALEZ["especialidad"]),
         (TORRES["email"], TORRES["nombre"], ROL_TECNICO, demo_password, TORRES["especialidad"]),
+        # Fase 4 (A1, §5.164 F4-16): los dos roles nuevos, sin nada que cargar (el seed no entra con ellos).
+        (ADMINISTRATIVO["email"], ADMINISTRATIVO["nombre"], ROL_ADMINISTRATIVO, demo_password, None),
+        (DIRECCION["email"], DIRECCION["nombre"], ROL_DIRECCION_NT, demo_password, None),
     ):
         existe = db.scalar(select(Profesional.id).where(func.lower(Profesional.email) == normalizar_email(email)))
         if existe is None:

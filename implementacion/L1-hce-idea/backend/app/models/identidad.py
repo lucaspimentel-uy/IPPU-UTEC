@@ -14,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.constantes import ROL_TECNICO, ROLES
 from app.core.database import Base
 from app.models.mixins import OrigenMigracionMixin
 
@@ -26,13 +27,17 @@ class Profesional(Base):
     nombre: Mapped[str] = mapped_column(String(120))
     especialidad: Mapped[str | None] = mapped_column(String(80))
     email: Mapped[str] = mapped_column(String(120), unique=True)
-    rol: Mapped[str] = mapped_column(String(20), default="tecnico")
+    #: Una de las cuatro claves de `core/constantes.py::ROLES` (F4-1, A1); un rol por usuario (§5.162 f).
+    rol: Mapped[str] = mapped_column(String(20), default=ROL_TECNICO)
     # Fase 4 (JWT). Nullable mientras no haya login real.
     hashed_password: Mapped[str | None] = mapped_column(String(200))
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: Versión de las sesiones del usuario (F4-12): la ventana de acceso guarda la suya y deja de valer si no coincide.
+    #: Queda en 0 hasta A3, que la sube al desactivar, cambiar la contraseña o el rol y en el logout.
+    token_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     __table_args__ = (
-        CheckConstraint("rol IN ('admin','tecnico')", name="rol_valido"),
+        CheckConstraint("rol IN ({})".format(", ".join(f"'{r}'" for r in ROLES)), name="rol_valido"),
     )
 
 

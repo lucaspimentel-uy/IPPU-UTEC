@@ -59,7 +59,7 @@ def test_el_destino_impreso_no_lleva_la_contrasena(entorno, capsys):
 
 
 # ── crear_usuario ────────────────────────────────────────────────────────────
-ARGS_USUARIO = ["--email", "nuevo@ippu.test", "--nombre", "Nuevo", "--rol", "admin"]
+ARGS_USUARIO = ["--email", "nuevo@ippu.test", "--nombre", "Nuevo", "--rol", "coordinacion"]
 
 
 @pytest.mark.parametrize("valor", [None, "", "otra_base", "IPPU", "ippu "], ids=["sin definir", "vacía", "otra", "otra caja", "con espacio"])

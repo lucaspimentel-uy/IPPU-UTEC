@@ -1,8 +1,8 @@
-"""esquema v2 inicial a2
+"""esquema v2 inicial a1
 
-Revision ID: dcc838486407
+Revision ID: dc897506906b
 Revises: 
-Create Date: 2026-10-06 22:49:59.867746
+Create Date: 2026-11-08 23:22:13.944862
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'dcc838486407'
+revision: str = 'dc897506906b'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -148,7 +148,8 @@ def upgrade() -> None:
     sa.Column('rol', sa.String(length=20), nullable=False),
     sa.Column('hashed_password', sa.String(length=200), nullable=True),
     sa.Column('activo', sa.Boolean(), nullable=False),
-    sa.CheckConstraint("rol IN ('admin','tecnico')", name=op.f('ck_profesional_rol_valido')),
+    sa.Column('token_version', sa.Integer(), server_default='0', nullable=False),
+    sa.CheckConstraint("rol IN ('tecnico', 'coordinacion', 'administrativo', 'direccion_nt')", name=op.f('ck_profesional_rol_valido')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_profesional')),
     sa.UniqueConstraint('email', name=op.f('uq_profesional_email'))
     )
@@ -635,6 +636,31 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_valoracion_funcional'))
     )
     op.create_index(op.f('ix_valoracion_funcional_categoria_id'), 'valoracion_funcional', ['categoria_id'], unique=False)
+    op.create_table('acceso_hce',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('hce_id', sa.Integer(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
+    sa.Column('rol', sa.String(length=20), nullable=False),
+    sa.Column('relacion', sa.String(length=20), nullable=False),
+    sa.Column('motivo_codigo', sa.String(length=30), nullable=True),
+    sa.Column('motivo_texto', sa.Text(), nullable=True),
+    sa.Column('ateneo_id', sa.Integer(), nullable=True),
+    sa.Column('inicio', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('vence', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('token_version', sa.Integer(), nullable=False),
+    sa.CheckConstraint("(motivo_codigo IS NULL) = (relacion IN ('tratante', 'gestion'))", name=op.f('ck_acceso_hce_motivo_segun_relacion')),
+    sa.CheckConstraint("motivo_codigo IS NULL OR motivo_codigo IN ('interconsulta', 'pase_de_caso', 'ateneo', 'supervision', 'copia_familia', 'otro')", name=op.f('ck_acceso_hce_motivo_valido')),
+    sa.CheckConstraint("relacion IN ('tratante', 'no_tratante', 'supervision', 'gestion', 'titular')", name=op.f('ck_acceso_hce_relacion_valida')),
+    sa.CheckConstraint('vence >= inicio', name=op.f('ck_acceso_hce_vence_desde_inicio')),
+    sa.ForeignKeyConstraint(['ateneo_id'], ['ateneo.id'], name=op.f('fk_acceso_hce_ateneo_id_ateneo'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_acceso_hce_hce_id_hce_diurna'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['usuario_id'], ['profesional.id'], name=op.f('fk_acceso_hce_usuario_id_profesional'), ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_acceso_hce'))
+    )
+    op.create_index(op.f('ix_acceso_hce_ateneo_id'), 'acceso_hce', ['ateneo_id'], unique=False)
+    op.create_index(op.f('ix_acceso_hce_hce_id'), 'acceso_hce', ['hce_id'], unique=False)
+    op.create_index('ix_acceso_hce_usuario_hce_vence', 'acceso_hce', ['usuario_id', 'hce_id', 'vence'], unique=False)
+    op.create_index(op.f('ix_acceso_hce_usuario_id'), 'acceso_hce', ['usuario_id'], unique=False)
     op.create_table('ateneo_acuerdo',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('ateneo_id', sa.Integer(), nullable=False),
@@ -926,6 +952,11 @@ def downgrade() -> None:
     op.drop_table('documento')
     op.drop_index(op.f('ix_ateneo_acuerdo_ateneo_id'), table_name='ateneo_acuerdo')
     op.drop_table('ateneo_acuerdo')
+    op.drop_index(op.f('ix_acceso_hce_usuario_id'), table_name='acceso_hce')
+    op.drop_index('ix_acceso_hce_usuario_hce_vence', table_name='acceso_hce')
+    op.drop_index(op.f('ix_acceso_hce_hce_id'), table_name='acceso_hce')
+    op.drop_index(op.f('ix_acceso_hce_ateneo_id'), table_name='acceso_hce')
+    op.drop_table('acceso_hce')
     op.drop_index(op.f('ix_valoracion_funcional_categoria_id'), table_name='valoracion_funcional')
     op.drop_table('valoracion_funcional')
     op.drop_index(op.f('ix_severidad_dsm_profesional_id'), table_name='severidad_dsm')

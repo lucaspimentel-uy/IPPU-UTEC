@@ -303,10 +303,10 @@ def test_crear_usuario_hashea_y_el_usuario_puede_entrar(client, sin_token, db_ap
     {"email": "admin@ippu.test"}, {"rol": "director"}, {"password": "corta"}, {"email": "sin-arroba"},
 ])
 def test_crear_usuario_rechaza_duplicado_rol_invalido_y_clave_corta(client, db_api, cambio):
-    datos = {"email": "otro@ippu.test", "nombre": "Otro", "rol": "admin", "password": "una-clave-larga", **cambio}
+    datos = {"email": "otro@ippu.test", "nombre": "Otro", "rol": "coordinacion", "password": "una-clave-larga", **cambio}
     with pytest.raises(DatoInvalido):
         crear_usuario(db_api, **datos)
-    datos.update(email="valido@ippu.test", rol="admin", password="una-clave-larga")
+    datos.update(email="valido@ippu.test", rol="coordinacion", password="una-clave-larga")
     assert crear_usuario(db_api, **datos).id is not None  # el par
 
 

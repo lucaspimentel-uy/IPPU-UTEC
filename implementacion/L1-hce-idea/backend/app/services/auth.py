@@ -17,7 +17,7 @@ token de la cabecera está en `app/routers/dependencias.py`.
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.core.constantes import ROL_ADMIN, ROL_TECNICO
+from app.core.constantes import ROL_COORDINACION, ROL_TECNICO
 from app.core.seguridad import (
     MENSAJE_SIN_TOKEN, MENSAJE_TOKEN_INVALIDO, gastar_verificacion, leer_token, verificar_password,
 )
@@ -64,7 +64,7 @@ def usuario_de_token(db: Session, token: str | None) -> Profesional:
 
 
 def es_admin(usuario: Profesional) -> bool:
-    return usuario.rol == ROL_ADMIN
+    return usuario.rol == ROL_COORDINACION
 
 
 def _es_tecnico_del_grupo(usuario: Profesional, grupo: Grupo | None) -> bool:

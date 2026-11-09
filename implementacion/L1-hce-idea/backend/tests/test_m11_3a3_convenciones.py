@@ -250,7 +250,7 @@ def test_una_falla_despues_de_escribir_en_el_alta_no_deja_persona_expediente_ni_
 def test_profesionales_expone_activo_en_cada_fila(client, crear_profesional):
     crear_profesional(nombre="Ana", activo=True)
     crear_profesional(nombre="Beto", activo=False)
-    filas = [f for f in client.get("/profesionales").json() if f["rol"] != "admin"]  # sin el admin del login
+    filas = [f for f in client.get("/profesionales").json() if f["rol"] != "coordinacion"]  # sin el admin del login
     assert [(f["nombre"], f["activo"]) for f in filas] == [("Ana", True), ("Beto", False)]
     assert [f["nombre"] for f in client.get("/profesionales?activo=false").json()] == ["Beto"]
 

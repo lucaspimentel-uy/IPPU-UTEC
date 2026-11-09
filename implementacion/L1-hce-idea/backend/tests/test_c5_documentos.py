@@ -507,7 +507,7 @@ def test_dos_altas_concurrentes_de_la_autorizacion_dan_exactamente_un_201(engine
 
     Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with Sesion() as s:
-        admin = Profesional(nombre="Zz Carrera", email="carrera-c5@ippu.test", rol="admin", activo=True, hashed_password=hash_test)
+        admin = Profesional(nombre="Zz Carrera", email="carrera-c5@ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
         persona = Persona(nombre="A", apellido="B", ci="70000551", fecha_nac=date(2016, 1, 1))
         s.add_all([admin, persona])
         s.flush()

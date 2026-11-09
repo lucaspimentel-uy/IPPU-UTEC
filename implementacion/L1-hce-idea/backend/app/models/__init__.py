@@ -17,7 +17,12 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
   divulgacion   §2.3  HCE-DIV (M12.8a) — registro de divulgación de datos a
                       terceros. Append-only por postura; sin seed
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
+  acceso        Fase 4 (A1) — el registro de accesos a la HC (`acceso_hce`), con su
+                ventana (`docs/diseno/fase4-acceso.md` d)
 """
+from app.models.acceso import (
+    AccesoHce,
+)
 from app.models.ateneo import (
     Ateneo,
     AteneoAcuerdo,
@@ -89,6 +94,8 @@ from app.models.transversales import (
 )
 
 __all__ = [
+    # registro de accesos (Fase 4, A1)
+    "AccesoHce",
     # ateneos y jornadas (M12.7)
     "Ateneo", "AteneoAcuerdo",
     # HCE-DIV · divulgación (M12.8a)

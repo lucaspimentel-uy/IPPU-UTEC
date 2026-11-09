@@ -28,7 +28,7 @@ def test_un_patch_de_hce_00_aparece_con_autor_antes_y_despues(client, admin):
     (fila,) = r.json()
     assert fila["campo"] == "diagnostico" and fila["modulo"] == "HCE-00"
     assert fila["valor_ant"] is None and fila["valor_nuevo"] == "TEA nivel 2"
-    assert fila["usuario"] == {"id": admin.id, "nombre": admin.nombre, "rol": "admin"}
+    assert fila["usuario"] == {"id": admin.id, "nombre": admin.nombre, "rol": "coordinacion"}
     assert fila["ts"].endswith("Z") or "+" in fila["ts"] or fila["ts"][-6] == "-"  # con zona horaria
 
 

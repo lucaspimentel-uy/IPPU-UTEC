@@ -74,7 +74,7 @@ python -m app.seed_catalogos
 # 3 · API (otra terminal: venv activo y el MISMO DATABASE_URL)
 uvicorn app.main:app --port 8001         # docs: http://localhost:8001/docs · /redoc · /openapi.json (ver abajo)
 
-# 4 · Demo cargada por la API (8 NNA; aborta si ya están). Sin demo: python -m app.crear_usuario --email … --nombre … --rol admin
+# 4 · Demo cargada por la API (8 NNA; aborta si ya están). Sin demo: python -m app.crear_usuario --email … --nombre … --rol coordinacion
 $env:PYTHONUTF8 = "1"; $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"
 python -m app.seed_demo --url http://localhost:8001
 
@@ -126,8 +126,12 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
   Contrato `{data, warnings}` / `{code, detail[]}`, una transacción por request (§5.108).
 - **El navegador no calcula valores de negocio que se persisten** (totales, Δ, alertas, banda, baremo): los da la API; una
   suma en vivo se rotula «provisorio» (§5.122).
-- Postgres-only, lógica en el servidor, sin triggers (§5.2). Login `admin` | `tecnico`: el técnico ve sólo sus grupos, fuera de
-  alcance = 404 (§5.101, §5.118). Frontend del 26/11 = la demo HTML (§5.106).
+- Postgres-only, lógica en el servidor, sin triggers (§5.2). Frontend del 26/11 = la demo HTML (§5.106).
+- **Roles (A1, §5.164, §5.165):** `tecnico` · `coordinacion` · `administrativo` · `direccion_nt` (`admin` ya no existe; la
+  primera coordinación: `crear_usuario --rol coordinacion`). Tratante = técnico 1 o 2 del grupo actual del expediente. **Una sola
+  matriz** (`app/services/matriz.py`, la fuente es `docs/diseno/fase4-matriz-rutas.csv`): ningún rol se compara fuera de ella. El
+  no tratante y la coordinación abren un expediente con motivo (`403 reason_required` → `POST /hce/{id}/accesos`, ventana de 120
+  min); el técnico manda además la C.I. completa del NNA. Inexistente = 404 igual en todas partes.
 
 ## Verificación — reglas de higiene
 - **Contraste:** la documentación **no afirma cantidades ni ratios** (cuántos pares, entre qué valores): se escribe «ningún par

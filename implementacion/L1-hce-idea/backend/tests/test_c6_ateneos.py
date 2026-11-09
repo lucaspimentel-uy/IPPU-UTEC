@@ -149,7 +149,7 @@ def test_dos_altas_concurrentes_reales_reciben_numeros_distintos(engine, hash_te
     monkeypatch.setattr(fechas, "hoy", lambda: date(anio, 3, 1))
     Sesion = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     with Sesion() as s:
-        admin = Profesional(nombre="Zz Carrera C6", email="carrera-c6@ippu.test", rol="admin", activo=True, hashed_password=hash_test)
+        admin = Profesional(nombre="Zz Carrera C6", email="carrera-c6@ippu.test", rol="coordinacion", activo=True, hashed_password=hash_test)
         s.add(admin)
         s.commit()
         admin_id = admin.id

@@ -318,7 +318,7 @@ def admin(conexion_api, hash_test):
     sesion = _fabrica_sesiones(conexion_api)()
     try:
         p = Profesional(
-            nombre="Zz Admin de prueba", email=EMAIL_ADMIN, rol="admin", activo=True, hashed_password=hash_test,
+            nombre="Zz Admin de prueba", email=EMAIL_ADMIN, rol="coordinacion", activo=True, hashed_password=hash_test,
         )
         sesion.add(p)
         sesion.commit()

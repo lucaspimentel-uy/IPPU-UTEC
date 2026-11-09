@@ -43,14 +43,14 @@ def _sin_login(filas: list[dict], admin) -> list[dict]:
 
 
 def test_profesionales_ordenados_por_nombre_con_los_campos_minimos(client, admin, crear_profesional):
-    crear_profesional(nombre="Zulema Gil", especialidad="Psicología", rol="admin")
+    crear_profesional(nombre="Zulema Gil", especialidad="Psicología", rol="coordinacion")
     crear_profesional(nombre="Ana Paz", especialidad=None)
     r = client.get("/profesionales")
     assert r.status_code == 200
     filas = _sin_login(r.json(), admin)
     assert [p["nombre"] for p in filas] == ["Ana Paz", "Zulema Gil"]
     assert set(filas[0]) == {"id", "nombre", "especialidad", "rol", "activo"}, "ni email ni hash"
-    assert (filas[1]["especialidad"], filas[1]["rol"]) == ("Psicología", "admin")
+    assert (filas[1]["especialidad"], filas[1]["rol"]) == ("Psicología", "coordinacion")
     assert filas[0]["especialidad"] is None
 
 

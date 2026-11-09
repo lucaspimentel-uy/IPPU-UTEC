@@ -4,15 +4,15 @@
 
 .DESCRIPTION
   Recrea la base de la presentacion (por omision `ippu_presentacion`) y borra SU carpeta de archivos (uploads\<base>,
-  C5), aplica el esquema y los catalogos, crea el
-  admin, levanta la API, carga la demo por la API y sirve la demo HTML. Volver a correrlo da el mismo resultado:
+  C5), aplica el esquema y los catalogos, crea la
+  coordinacion, levanta la API, carga la demo por la API y sirve la demo HTML. Volver a correrlo da el mismo resultado:
   detiene lo que arranco la corrida anterior (y SOLO eso) y rehace todo. Recargar despues del 2026-11-13, para que
   las fechas de firma (las estampa el servidor) no queden antes de las de evaluacion.
 
   Las contrasenas salen del ENTORNO y no se imprimen nunca:
-    IPPU_PASSWORD       contrasena del admin (obligatoria, 8 caracteres como minimo)
-    IPPU_DEMO_PASSWORD  contrasena de los dos tecnicos de la demo (obligatoria)
-    IPPU_EMAIL          email del admin (opcional; por omision admin@demo.ippu.test)
+    IPPU_PASSWORD       contrasena de la coordinacion (obligatoria, 8 caracteres como minimo)
+    IPPU_DEMO_PASSWORD  contrasena de los dos tecnicos, de administrativo y de direccion (obligatoria)
+    IPPU_EMAIL          email de la coordinacion (opcional; por omision admin@demo.ippu.test)
 
   Conexion a Postgres: sale del DATABASE_URL del .env del backend, cambiando solo el nombre de la base. Nunca toca
   la base del .env: se niega a escribir en `ippu_test` (siempre) y en `ippu` (salvo -ConfirmarBaseDeTrabajo).
@@ -215,8 +215,8 @@ try {
     Nativo { & $Python -m app.seed_catalogos }
     if ($LASTEXITCODE -ne 0) { throw 'seed_catalogos fallo.' }
 
-    Paso 'Admin'
-    Nativo { & $Python -m app.crear_usuario --email $EmailAdmin --nombre 'Coordinación (demo)' --rol admin }
+    Paso 'Coordinacion'
+    Nativo { & $Python -m app.crear_usuario --email $EmailAdmin --nombre 'Coordinación (demo)' --rol coordinacion }
     if ($LASTEXITCODE -ne 0) { throw 'crear_usuario fallo.' }
 
     # -----------------------------------------------------------------------------------------------------------
@@ -275,8 +275,9 @@ Write-Host "`n== Presentacion lista (base '$Base')" -ForegroundColor Green
 Write-Host "  Demo:        http://localhost:$PuertoDemo/index.html?api=http://localhost:$PuertoApi"
 Write-Host "  API (docs):  http://localhost:$PuertoApi/docs"
 Write-Host '  Entrar con:  gonzalez@demo.ippu.test (tecnico) · torres@demo.ippu.test (tecnico)'
-Write-Host "               $EmailAdmin (admin)"
-Write-Host '  Contrasenas: las de IPPU_DEMO_PASSWORD (tecnicos) e IPPU_PASSWORD (admin); este script no las imprime.'
+Write-Host "               $EmailAdmin (coordinacion)"
+Write-Host '               administrativo@demo.ippu.test (administrativo) · direccion@demo.ippu.test (direccion_nt)'
+Write-Host '  Contrasenas: las de IPPU_DEMO_PASSWORD (tecnicos, administrativo, direccion) e IPPU_PASSWORD (coordinacion); este script no las imprime.'
 Write-Host "  Chequeo:     `$env:API='http://localhost:$PuertoApi'; `$env:DEMO='http://localhost:$PuertoDemo'; node herramientas\verificar_presentacion.js"
 Write-Host '  Detener:     powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener'
 exit 0

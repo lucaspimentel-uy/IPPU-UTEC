@@ -406,7 +406,15 @@ def test_cli_con_grupos_crea_los_usuarios_y_carga_la_demo(cliente_sin_usuarios, 
                       demo_password=PASSWORD_TEST)
     salida = capsys.readouterr()
     assert codigo == 0, salida.err
-    assert _profesionales(sesiones) == 3
+    # Coordinación, los dos técnicos y —desde A1 (§5.164 F4-16)— administrativo y dirección no técnica.
+    assert _profesionales(sesiones) == 5
+    from app.models.identidad import Profesional
+    with sesiones() as s:
+        roles = {p.email: p.rol for p in s.query(Profesional)}
+    assert roles == {
+        EMAIL_ADMIN: "coordinacion", "gonzalez@demo.ippu.test": "tecnico", "torres@demo.ippu.test": "tecnico",
+        "administrativo@demo.ippu.test": "administrativo", "direccion@demo.ippu.test": "direccion_nt",
+    }
     assert "Expedientes: 8" in salida.out
     assert "Severidad DSM-5-TR registrada (2): Martín, Valentina" in salida.out
     assert "Organismos (INAU/BPS) registrados (3): Martín, Sofía, Joaquín" in salida.out
