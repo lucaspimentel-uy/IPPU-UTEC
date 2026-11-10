@@ -758,7 +758,7 @@
   }
   .login-screen.hidden{display:none}
 
-  /* ============ CARGA INCOMPLETA (§5.165 c) ============ */
+  /* ============ CARGA INCOMPLETA (§5.166 c) ============ */
   /* Lo muestra el script del final de index.html si falta un módulo de js/: tapa todo (también el login) y deja una sola acción,
      «Recargar». Usa el aviso compartido (.notice.avisos-api): sus colores ya están medidos. */
   .carga-incompleta{

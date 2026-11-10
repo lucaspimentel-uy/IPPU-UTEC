@@ -15,7 +15,7 @@
     IPPU_EMAIL          email del admin (opcional; por omision admin@demo.ippu.test)
 
   Conexion a Postgres: sale del DATABASE_URL del .env del backend, cambiando el nombre de la base y FORZANDO el host a
-  127.0.0.1 (§5.165 a): por `localhost` Windows prueba ::1 primero, el contenedor publica solo 127.0.0.1:5440 y cada conexion
+  127.0.0.1 (§5.166 a): por `localhost` Windows prueba ::1 primero, el contenedor publica solo 127.0.0.1:5440 y cada conexion
   nueva cuesta unos 2 s. Nunca toca la base del .env: se niega a escribir en `ippu_test` (siempre) y en `ippu` (salvo
   -ConfirmarBaseDeTrabajo).
 
@@ -158,7 +158,7 @@ if (-not (Test-Path $EnvBackend)) { Parar "No existe $EnvBackend (copiar .env.ex
 $urlEnv = (Get-Content $EnvBackend -Encoding UTF8 | Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } | Select-Object -First 1)
 if (-not $urlEnv) { $urlEnv = 'DATABASE_URL=postgresql+psycopg://ippu:ippu@127.0.0.1:5440/ippu' }
 if ($urlEnv -notmatch '=\s*(postgresql\S*://([^:/@]+)(?::[^@]*)?@)([^/:\s]+)(:\d+)?/([^\s?]+)') { Parar "No entiendo el DATABASE_URL del .env: $urlEnv" }
-# El host se FUERZA a 127.0.0.1 (§5.165 a): por `localhost` Windows prueba ::1 primero (el contenedor publica solo
+# El host se FUERZA a 127.0.0.1 (§5.166 a): por `localhost` Windows prueba ::1 primero (el contenedor publica solo
 # 127.0.0.1:5440) y cada conexion nueva del pool cuesta ~2 s; por 127.0.0.1, ~30 ms. El puerto y las credenciales son los del .env.
 $HostEnv = $Matches[3]
 $UrlBase = "$($Matches[1])127.0.0.1$($Matches[4])/"; $UsuarioDb = $Matches[2]
@@ -287,7 +287,7 @@ if ($fallo) { exit 1 }
 # 7 · Listo
 # ---------------------------------------------------------------------------------------------------------------
 Write-Host "`n== Presentacion lista (base '$Base')" -ForegroundColor Green
-# 127.0.0.1 y no localhost, tambien para el navegador (§5.165 b): evita el intento por ::1. El CORS y API_HOSTS_PERMITIDOS lo aceptan.
+# 127.0.0.1 y no localhost, tambien para el navegador (§5.166 b): evita el intento por ::1. El CORS y API_HOSTS_PERMITIDOS lo aceptan.
 Write-Host "  Demo:        http://127.0.0.1:$PuertoDemo/index.html?api=http://127.0.0.1:$PuertoApi"
 Write-Host "  API (docs):  http://127.0.0.1:$PuertoApi/docs"
 Write-Host '  Entrar con:  gonzalez@demo.ippu.test (tecnico) · torres@demo.ippu.test (tecnico)'

@@ -89,7 +89,7 @@ async function main() {
     const page = await ctx.newPage();
     const erroresJs = [];
     page.on('pageerror', (e) => erroresJs.push(e.message));
-    /* §5.165 d: un archivo estático de la demo que no llega (un módulo de js/ que falta es un clic que no manda ningún pedido). */
+    /* §5.166 d: un archivo estático de la demo que no llega (un módulo de js/ que falta es un clic que no manda ningún pedido). */
     const cargasFallidas = [];
     page.on('requestfailed', (r) => {
       try { const u = new URL(r.url()); if (u.origin === new URL(DEMO).origin) cargasFallidas.push(`${u.pathname} (${r.failure() ? r.failure().errorText : 'sin detalle'})`); } catch { /* no es de la demo */ }

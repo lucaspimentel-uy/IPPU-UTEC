@@ -30,7 +30,7 @@ function check(id, nombre, ok, detalle) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  (${id}) ${nombre}${detalle ? '  → ' + detalle : ''}`);
 }
 
-/* Archivos estáticos de la demo que NO llegaron (§5.165 d): un `requestfailed` de un pedido al origen de la demo (index.html, js/, css/).
+/* Archivos estáticos de la demo que NO llegaron (§5.166 d): un `requestfailed` de un pedido al origen de la demo (index.html, js/, css/).
    Antes la corrida no se enteraba: el navegador lo deja en la consola como «Failed to load resource» y el chequeo z descarta ese texto
    (es lo esperado para un 4xx/5xx de la API). Un módulo que falta se ve como un clic que no manda ningún pedido. Ver el chequeo z-carga. */
 const cargasFallidas = [];
@@ -125,7 +125,7 @@ async function loguear(page) {
     return { ctx, page };
   };
 
-  /* ---------- carga-: una página que no carga completa (§5.165 c) ----------
+  /* ---------- carga-: una página que no carga completa (§5.166 c) ----------
      index.html comprueba, tras el último módulo, que cada uno de los 21 de js/ haya definido su función. Aquí se ABORTA a propósito
      js/expediente.js (route.abort): esas páginas no pasan por nuevaPagina()/vigilarCarga (el requestfailed es el esperado) ni cuentan
      sus pageerror (los módulos que dependen del que falta tiran ReferenceError, por diseño). */
@@ -260,7 +260,7 @@ async function loguear(page) {
 
   /* ---------- (c) conteos del listado y filtro de grupo (== tests/test_m11_5a_seed_demo.py) ---------- */
   await esperarResumen(page, 'Mostrando 7 de 7');
-  await esperarKpis(page);   // §5.165 d: el KPI llega en otro pedido que el listado
+  await esperarKpis(page);   // §5.166 d: el KPI llega en otro pedido que el listado
   const kpiTotal = (await txt(page, '#kpiTotal')).trim();
   check('3a-c1', 'activos: «Mostrando 7 de 7» (Tomás, dado de baja, no aparece) y KPI de activos = 7',
     (await filas(page)) === 7 && kpiTotal === '7', `filas=${await filas(page)} kpiTotal=${kpiTotal} resumen="${await txt(page, '#listaResumen')}"`);
@@ -277,7 +277,7 @@ async function loguear(page) {
   // Grupos: con incluir_inactivos (Todos) → 3 / 3 / 2, como afirma el test del seed.
   await page.click('.chip-estado[data-estado="todos"]');
   await esperarResumen(page, 'Mostrando 8 de 8');
-  await page.waitForFunction(() => document.querySelectorAll('#filtroGrupo option').length > 1, null, { timeout: 8000 });   // §5.165 d: GET /grupos es otro pedido
+  await page.waitForFunction(() => document.querySelectorAll('#filtroGrupo option').length > 1, null, { timeout: 8000 });   // §5.166 d: GET /grupos es otro pedido
   const opciones = await page.$$eval('#filtroGrupo option', (os) => os.map((o) => o.textContent.trim()));
   check('3a-c4', 'el filtro de grupo sale de GET /grupos (año en curso): 5 grupos reales + «Todos»',
     JSON.stringify(opciones) === JSON.stringify(['Todos', 'Adolescentes', 'Escolares', 'Inicial', 'Preadolescentes', 'Taller de Adolescentes']),
@@ -4500,7 +4500,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         /Nada pendiente este año/.test(vacioTodo) && /Nada pendiente de línea base este año/.test(vacioLb), JSON.stringify({ vacioTodo, vacioLb }));
       /* KPI de Inicio -> Pendientes ya filtrada, foco en el título */
       await pt.evaluate(() => go('inicio'));
-      await esperarKpis(pt);   // §5.165 d: sin esto, `+'…'` es NaN
+      await esperarKpis(pt);   // §5.166 d: sin esto, `+'…'` es NaN
       const kpis = await pt.evaluate(() => ({ lb: +document.getElementById('kpiPend').textContent, ci: +document.getElementById('kpiCi').textContent }));
       const aterrizaje = {};
       for (const [k, sel] of [['lb', '#kpiRow button >> nth=0'], ['ci', '#kpiRow button >> nth=1']]) {
@@ -4928,7 +4928,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));
-  check('z-carga', 'ningún archivo estático de la demo falló al cargar (requestfailed del origen de la demo; z descarta «Failed to load resource» y por eso no lo veía, §5.165 d)',
+  check('z-carga', 'ningún archivo estático de la demo falló al cargar (requestfailed del origen de la demo; z descarta «Failed to load resource» y por eso no lo veía, §5.166 d)',
     cargasFallidas.length === 0, cargasFallidas.join(' | '));
   await browser.close();
 

@@ -308,7 +308,7 @@ function buscarContornosApagados() {
   const page = await ctx.newPage();
   const errores = [];
   page.on('pageerror', (e) => errores.push(e.message));
-  /* §5.165 d: un archivo estático de la demo que no llega (requestfailed al origen de la demo) invalida la medición: se cuenta y falla la corrida. */
+  /* §5.166 d: un archivo estático de la demo que no llega (requestfailed al origen de la demo) invalida la medición: se cuenta y falla la corrida. */
   const cargasFallidas = [];
   page.on('requestfailed', (r) => {
     try { const u = new URL(r.url()); if (u.origin === new URL(DEMO).origin) cargasFallidas.push(`${u.pathname} (${r.failure() ? r.failure().errorText : 'sin detalle'})`); } catch { /* url rara: no es de la demo */ }
@@ -330,7 +330,7 @@ function buscarContornosApagados() {
   const ev = (f, arg) => page.evaluate(f, arg);
   const esperar = (ms) => page.waitForTimeout(ms);
 
-  // ---------------------------------------------------------------- CARGA INCOMPLETA (§5.165 c)
+  // ---------------------------------------------------------------- CARGA INCOMPLETA (§5.166 c)
   // Se aborta a propósito js/expediente.js en TODAS las cargas de una página aparte: tras la recarga automática queda el aviso
   // «La página no cargó completa» con «Recargar». No sale ningún pedido a la API (la sesión no arranca).
   {

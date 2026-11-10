@@ -52,7 +52,7 @@ la demo v4.1 no son norma**: son insumo; no se modela ni se siembra nada sólo p
 
 ## Cómo correr
 PowerShell 5.1 (sin `&&`), Docker Desktop arriba, desde `implementacion\L1-hce-idea\backend` salvo donde se indica.
-**Siempre `127.0.0.1`, nunca `localhost`** (§5.165): en Windows `localhost` prueba `::1` primero, el contenedor publica sólo
+**Siempre `127.0.0.1`, nunca `localhost`** (§5.166): en Windows `localhost` prueba `::1` primero, el contenedor publica sólo
 `127.0.0.1:5440` y cada conexión nueva a Postgres cuesta ~2 s (~30 ms por `127.0.0.1`); lo mismo vale para las URL de la API y de
 la demo. El `DATABASE_URL` / `TEST_DATABASE_URL` del `.env` (no versionado) también va con `127.0.0.1`: `.env.example` ya lo trae.
 **Verificar es SIEMPRE sobre una base descartable** (acá `ippu_ver`, API en `:8001`); la de trabajo es la del `.env` y no
@@ -115,7 +115,7 @@ powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 
 $env:API = "http://127.0.0.1:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK (y los tiempos del login y del primer listado)
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```
-Volver a correrlo da lo mismo. Fuerza el host de Postgres a `127.0.0.1` (§5.165 a), imprime la demo como `http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8000`
+Volver a correrlo da lo mismo. Fuerza el host de Postgres a `127.0.0.1` (§5.166 a), imprime la demo como `http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8000`
 —**así se abre en el ensayo y en la presentación**, con la máquina sin suspenderse— y `-Detener` dice los puertos que de verdad paró (los de la corrida que
 los arrancó, aunque no se le pase `-PuertoApi`). La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
@@ -139,7 +139,7 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
   falla» (línea base, §5.135) y «todo par nuevo ≥ 4,5:1». Los conteos de chequeos (`181/181`) van en `handoff.md` y la bitácora;
   los ratios, en el comentario de CSS junto al token. Las demás cifras que cambian (tests, tablas) no se escriben acá: las lleva
   la cabecera de `handoff.md` y las mide `python herramientas/verificar_estado.py --check` (con `generar_catalogos_backend.py --check`).
-- **Un archivo de la demo que no llega es una falla** (§5.165 c, d): `index.html` comprueba tras el último módulo que los 21 de `js/` estén
+- **Un archivo de la demo que no llega es una falla** (§5.166 c, d): `index.html` comprueba tras el último módulo que los 21 de `js/` estén
   (si no, recarga una vez y, si sigue faltando, muestra «La página no cargó completa» sin arrancar la sesión) y las herramientas fallan ante un
   `requestfailed` de un archivo estático de la demo (`z-carga` en `conectada.js`; antes quedaba en «Failed to load resource», que `z` descarta).
 - **Base descartable:** `conectada.js`, `capturas.js` y el seed escriben. Nunca contra `:8000` ni la base de la presentación;

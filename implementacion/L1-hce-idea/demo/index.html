@@ -390,7 +390,7 @@
   </div>
 </div>
 
-<!-- ===================== CARGA INCOMPLETA (§5.165 c) ===================== -->
+<!-- ===================== CARGA INCOMPLETA (§5.166 c) ===================== -->
 <!-- Lo muestra el script del final cuando falta algún módulo de js/ (un archivo que no llegó: el orden de carga es la semántica,
      así que no se reintenta de a uno). Va suelto en el <body>, sin depender de ningún módulo: es justo lo que puede faltar. -->
 <div class="carga-incompleta" id="cargaIncompleta" hidden>
@@ -428,7 +428,7 @@
 <script src="js/inclusion.js"></script>
 <script src="js/ateneos.js"></script>
 <script>
-/* Carga completa (§5.165 c). Cada módulo de js/ define una función (o, datos.js, la constante NNA) que no depende de nada más: si
+/* Carga completa (§5.166 c). Cada módulo de js/ define una función (o, datos.js, la constante NNA) que no depende de nada más: si
    falta alguna, un archivo no llegó (pasó con ERR_CONNECTION_REFUSED / ERR_NO_BUFFER_SPACE, ~1 de cada 8.600). Un clic que no manda
    ningún pedido es lo que se ve con expediente.js ausente. No se reintentan archivos sueltos: se recarga la página una vez
    (marca en sessionStorage) y, si vuelve a faltar, se avisa y NO se arranca la sesión. Con la carga completa se borra la marca. */
