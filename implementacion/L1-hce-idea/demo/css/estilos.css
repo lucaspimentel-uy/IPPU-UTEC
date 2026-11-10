@@ -757,6 +757,17 @@
     display:flex;align-items:center;justify-content:center;padding:var(--s6)
   }
   .login-screen.hidden{display:none}
+
+  /* ============ CARGA INCOMPLETA (§5.166 c) ============ */
+  /* Lo muestra el script del final de index.html si falta un módulo de js/: tapa todo (también el login) y deja una sola acción,
+     «Recargar». Usa el aviso compartido (.notice.avisos-api): sus colores ya están medidos. */
+  .carga-incompleta{
+    position:fixed;inset:0;z-index:300;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:var(--s6)
+  }
+  .carga-incompleta[hidden]{display:none}
+  .carga-incompleta .notice{width:100%;max-width:392px;margin-bottom:0}
+  .carga-incompleta .notice p{margin:0 0 var(--s3)}
   .login-card{
     background:var(--paper);border-radius:var(--r-lg);width:100%;max-width:392px;
     padding:var(--s7) var(--s6) var(--s5);border:1px solid var(--rule);border-top:3px solid var(--ink);

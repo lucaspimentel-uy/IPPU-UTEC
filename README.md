@@ -24,7 +24,7 @@ prototipo presentable que usa **sólo datos simulados**.
 ## Cómo correrlo
 
 Backend, base de datos, demo y verificación: [`CLAUDE.md`](CLAUDE.md), sección «Cómo correr». La demo necesita la
-API arriba y se sirve en `http://localhost:5500`; no abre desde un archivo local.
+API arriba y se abre en `http://127.0.0.1:5500` (con `?api=http://127.0.0.1:8000`; §5.166); no abre desde un archivo local.
 
 ## Dónde está cada cosa
 

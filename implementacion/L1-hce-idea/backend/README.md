@@ -15,7 +15,7 @@ Requiere **Docker** corriendo (la base vive en un contenedor) y Python 3.11+.
 ```bash
 cd implementacion/L1-hce-idea/backend
 
-docker compose up -d                  # 1. Postgres 16 en localhost:5440
+docker compose up -d                  # 1. Postgres 16 en 127.0.0.1:5440
 python -m venv .venv                  # 2. entorno (si no existe)
 .venv\Scripts\Activate.ps1            #    (Linux/Mac: source .venv/bin/activate)
 pip install -r requirements.txt
@@ -73,7 +73,7 @@ $env:IPPU_SEED_DESTINO="<nombre de la base de DATABASE_URL>"                #   
 python -m app.crear_usuario --email $env:IPPU_EMAIL --nombre "Coordinación" --rol coordinacion   # 3. coordinación (toma IPPU_PASSWORD)
 uvicorn app.main:app                                                          #    API arriba (otra terminal)
 $env:PYTHONUTF8=1                                                             #    Windows: OBLIGATORIO para el paso 4 (consola cp1252)
-python -m app.seed_demo --url http://localhost:8000                           # 4. la demo, por la API
+python -m app.seed_demo --url http://127.0.0.1:8000                           # 4. la demo, por la API
 ```
 
 ⚠️ **En Windows, `python -m app.seed_demo` se corre con `PYTHONUTF8=1`:** con la consola cp1252 el «→» de un

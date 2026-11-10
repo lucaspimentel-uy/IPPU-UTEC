@@ -19,14 +19,14 @@
  * Requiere Playwright (reusa el install de demo/verificacion/: `npm ci && npx playwright install chromium` allí).
  *
  * Uso:  $env:IPPU_DEMO_PASSWORD = '…'; node herramientas\verificar_presentacion.js
- * Variables: API (http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD (la de los técnicos del
+ * Variables: API (http://127.0.0.1:8000) · DEMO (http://127.0.0.1:5500) · IPPU_DEMO_PASSWORD (la de los técnicos del
  * seed, obligatoria, no se imprime) · IPPU_DEMO_EMAIL (gonzalez@demo.ippu.test) · VERIFICAR_AUTOPRUEBA (=1).
  */
 const path = require('path');
 
 const REPO = path.resolve(__dirname, '..');
-const API = (process.env.API || 'http://localhost:8000').replace(/\/$/, '');
-const DEMO = (process.env.DEMO || 'http://localhost:5500').replace(/\/$/, '');
+const API = (process.env.API || 'http://127.0.0.1:8000').replace(/\/$/, '');
+const DEMO = (process.env.DEMO || 'http://127.0.0.1:5500').replace(/\/$/, '');
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
 const URL_DEMO = DEMO + '/index.html?api=' + encodeURIComponent(API);
@@ -89,6 +89,11 @@ async function main() {
     const page = await ctx.newPage();
     const erroresJs = [];
     page.on('pageerror', (e) => erroresJs.push(e.message));
+    /* §5.166 d: un archivo estático de la demo que no llega (un módulo de js/ que falta es un clic que no manda ningún pedido). */
+    const cargasFallidas = [];
+    page.on('requestfailed', (r) => {
+      try { const u = new URL(r.url()); if (u.origin === new URL(DEMO).origin) cargasFallidas.push(`${u.pathname} (${r.failure() ? r.failure().errorText : 'sin detalle'})`); } catch { /* no es de la demo */ }
+    });
     page.setDefaultTimeout(10000);
 
     // ---- (1) el técnico entra
@@ -96,6 +101,7 @@ async function main() {
     await page.goto(URL_DEMO);
     await page.fill('#loginUser', EMAIL);
     await page.fill('#loginPass', PASSWORD);
+    const tLogin0 = Date.now();
     await page.click('#loginBtn');
     const resultado = await Promise.race([
       page.waitForSelector('#loginScreen.hidden', { state: 'attached' }).then(() => 'entro'),
@@ -104,6 +110,7 @@ async function main() {
     if (resultado !== 'entro') {
       fallar(`el login de ${EMAIL} fue rechazado («${norm(await page.locator('#loginError').innerText())}»); ¿está cargada la demo y es esa la contraseña?`);
     }
+    const msLogin = Date.now() - tLogin0;           // clic en «Ingresar» → pantalla de la app (POST /auth/login + GET /auth/yo…)
     sinEscrituras();
     const token = await page.evaluate(() => sessionStorage.getItem('ippu.token'));
     if (!token) fallar('el login no dejó token en la sesión');
@@ -121,8 +128,10 @@ async function main() {
 
     // ---- (2) el listado: los siete activos del seed
     paso = 'listado de activos';
+    const tLista0 = Date.now();
     await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent) ||
       /No se encontraron/.test(document.getElementById('tbodyNNA').textContent));
+    const msListado = Date.now() - tLista0;         // entrada a la app → listado pintado (el primer GET /hce)
     const resumen = norm(await page.locator('#listaResumen').innerText());
     // F1 (§5.140): el nombre completo es el botón de la fila («Martín G.»); se compara el nombre de pila.
     const filas = await page.$$eval('#tbodyNNA tr[data-hce]', (trs) => trs.map((tr) => ({ id: tr.dataset.hce, nombre: tr.querySelector('.nna-abrir').innerText.trim().split(/\s+/)[0], activo: tr.dataset.activo })));
@@ -186,8 +195,9 @@ async function main() {
 
     // ---- cierre
     sinEscrituras();
+    if (cargasFallidas.length) fallar(`la página perdió archivos de la demo al cargar: ${cargasFallidas.join(' | ')}`);
     if (erroresJs.length) fallar(`errores de JavaScript en la página: ${erroresJs.join(' | ')}`);
-    console.log(`OK · demo lista: ${ACTIVOS.length} activos · Martín LB ${lb.total} (${idea.banda.perfil} ${bandaApi}) · PA ${totalPa} · PB ${pb.total} · Δ ${pb.filas.total} · informe impreso abre · ${abortados.length} escrituras`);
+    console.log(`OK · demo lista: ${ACTIVOS.length} activos · Martín LB ${lb.total} (${idea.banda.perfil} ${bandaApi}) · PA ${totalPa} · PB ${pb.total} · Δ ${pb.filas.total} · informe impreso abre · ${abortados.length} escrituras · tiempos: login ${msLogin} ms, primer listado ${msListado} ms`);
   } finally {
     await browser.close();
   }

@@ -14,8 +14,10 @@
     IPPU_DEMO_PASSWORD  contrasena de los dos tecnicos, de administrativo y de direccion (obligatoria)
     IPPU_EMAIL          email de la coordinacion (opcional; por omision admin@demo.ippu.test)
 
-  Conexion a Postgres: sale del DATABASE_URL del .env del backend, cambiando solo el nombre de la base. Nunca toca
-  la base del .env: se niega a escribir en `ippu_test` (siempre) y en `ippu` (salvo -ConfirmarBaseDeTrabajo).
+  Conexion a Postgres: sale del DATABASE_URL del .env del backend, cambiando el nombre de la base y FORZANDO el host a
+  127.0.0.1 (§5.166 a): por `localhost` Windows prueba ::1 primero, el contenedor publica solo 127.0.0.1:5440 y cada conexion
+  nueva cuesta unos 2 s. Nunca toca la base del .env: se niega a escribir en `ippu_test` (siempre) y en `ippu` (salvo
+  -ConfirmarBaseDeTrabajo).
 
   Los servidores escriben su salida en %TEMP%\ippu-presentacion-api.log y %TEMP%\ippu-presentacion-demo.log (stdout y stderr juntos).
 
@@ -28,7 +30,8 @@
 .PARAMETER ConfirmarBaseDeTrabajo
   Necesario para operar sobre la base `ippu` (la de trabajo del .env). Borra todo lo que tenga.
 .PARAMETER Detener
-  Detiene la API y la demo que arranco este script (no toca la base) y termina.
+  Detiene la API y la demo que arranco este script (no toca la base) y termina. Informa los puertos que realmente
+  detuvo (los de la corrida que los arranco, no los de -PuertoApi / -PuertoDemo de esta llamada).
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1
@@ -91,7 +94,8 @@ function Detener-Propio($Registro, [string]$Nombre) {
   $p = Get-Process -Id $Registro.pid -ErrorAction SilentlyContinue
   if ($p -and $p.StartTime.ToString('o') -eq $Registro.inicio) {
     Nativo { taskkill /PID $Registro.pid /T /F | Out-Null }
-    Write-Host "  detenido: $Nombre (PID $($Registro.pid))"
+    $donde = if ($Registro.puerto) { ", puerto $($Registro.puerto)" } else { '' }
+    Write-Host "  detenido: $Nombre (PID $($Registro.pid)$donde)"
   }
 }
 
@@ -102,9 +106,9 @@ function Detener-Todo {
   Start-Sleep -Milliseconds 500
 }
 
-function Informar-Puertos {
+function Informar-Puertos([int]$PApi = $PuertoApi, [int]$PDemo = $PuertoDemo) {
   $ocupado = $false
-  foreach ($par in @(@('API', $PuertoApi), @('demo', $PuertoDemo))) {
+  foreach ($par in @(@('API', $PApi), @('demo', $PDemo))) {
     $dueno = Dueno-Del-Puerto $par[1]
     if ($dueno) { Write-Host "  ATENCION: el puerto $($par[1]) ($($par[0])) lo usa $dueno, que NO arranco este script: no lo toque." -ForegroundColor Yellow; $ocupado = $true }
     else { Write-Host "  puerto $($par[1]) ($($par[0])): libre" }
@@ -117,9 +121,15 @@ function Informar-Puertos {
 # ---------------------------------------------------------------------------------------------------------------
 if ($Detener) {
   Paso 'Detener lo que arranco este script'
-  if (-not (Leer-Estado)) { Write-Host '  nada registrado: no hay nada que detener' }
+  # Los puertos son los de la corrida que arranco los servidores (quedan en el registro), no los del parametro de esta llamada.
+  $registro = Leer-Estado
+  $pApi = $PuertoApi; $pDemo = $PuertoDemo
+  if ($registro) {
+    if ($registro.api -and $registro.api.puerto) { $pApi = [int]$registro.api.puerto }
+    if ($registro.demo -and $registro.demo.puerto) { $pDemo = [int]$registro.demo.puerto }
+  } else { Write-Host '  nada registrado: no hay nada que detener' }
   Detener-Todo
-  Informar-Puertos | Out-Null
+  Informar-Puertos $pApi $pDemo | Out-Null
   exit 0
 }
 
@@ -146,10 +156,14 @@ if (-not (Test-Path $EnvBackend)) { Parar "No existe $EnvBackend (copiar .env.ex
 
 # Conexion: la del .env del backend, cambiando solo el nombre de la base.
 $urlEnv = (Get-Content $EnvBackend -Encoding UTF8 | Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } | Select-Object -First 1)
-if (-not $urlEnv) { $urlEnv = 'DATABASE_URL=postgresql+psycopg://ippu:ippu@localhost:5440/ippu' }
-if ($urlEnv -notmatch '=\s*(postgresql\S*://([^:/@]+)(?::[^@]*)?@[^/\s]+/)([^\s?]+)') { Parar "No entiendo el DATABASE_URL del .env: $urlEnv" }
-$UrlBase = $Matches[1]; $UsuarioDb = $Matches[2]
+if (-not $urlEnv) { $urlEnv = 'DATABASE_URL=postgresql+psycopg://ippu:ippu@127.0.0.1:5440/ippu' }
+if ($urlEnv -notmatch '=\s*(postgresql\S*://([^:/@]+)(?::[^@]*)?@)([^/:\s]+)(:\d+)?/([^\s?]+)') { Parar "No entiendo el DATABASE_URL del .env: $urlEnv" }
+# El host se FUERZA a 127.0.0.1 (§5.166 a): por `localhost` Windows prueba ::1 primero (el contenedor publica solo
+# 127.0.0.1:5440) y cada conexion nueva del pool cuesta ~2 s; por 127.0.0.1, ~30 ms. El puerto y las credenciales son los del .env.
+$HostEnv = $Matches[3]
+$UrlBase = "$($Matches[1])127.0.0.1$($Matches[4])/"; $UsuarioDb = $Matches[2]
 $DatabaseUrl = "$UrlBase$Base"
+$hostMsg = if ($HostEnv -eq '127.0.0.1') { 'el .env ya lo dice asi' } else { "el .env dice $HostEnv" }
 
 # ---------------------------------------------------------------------------------------------------------------
 # 1 · Docker y Postgres
@@ -163,6 +177,7 @@ if ($LASTEXITCODE -ne 0 -or $estadoPg -notmatch '^true\b' -or $estadoPg -match '
   Parar "El contenedor $Contenedor no esta arriba y sano ('$estadoPg'). Desde el backend: docker compose up -d"
 }
 Write-Host "  ${Contenedor}: arriba ($estadoPg)"
+Write-Host "  Postgres por 127.0.0.1 ($hostMsg)"
 
 # ---------------------------------------------------------------------------------------------------------------
 # 2 · Puertos libres (lo que arranco la corrida anterior de este script se detiene; lo demas, no se toca)
@@ -224,7 +239,7 @@ try {
     # -----------------------------------------------------------------------------------------------------------
     Paso "API en :$PuertoApi"
     $api = Iniciar-Servidor @('-m', 'uvicorn', 'app.main:app', '--port', $PuertoApi) $Backend $LogApi
-    @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o') }; demo = $null; base = $Base } | ConvertTo-Json | Set-Content $Estado -Encoding UTF8
+    @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o'); puerto = $PuertoApi }; demo = $null; base = $Base } | ConvertTo-Json | Set-Content $Estado -Encoding UTF8
     $listo = $false
     for ($i = 0; $i -lt 80 -and -not $api.HasExited; $i++) {
       try { if ((Invoke-WebRequest -Uri "http://127.0.0.1:$PuertoApi/health" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200) { $listo = $true; break } } catch { }
@@ -246,7 +261,7 @@ try {
   # -------------------------------------------------------------------------------------------------------------
   Paso "Demo HTML en :$PuertoDemo"
   $web = Iniciar-Servidor @('-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1') $Demo $LogDemo
-  @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o') }; demo = @{ pid = $web.Id; inicio = $web.StartTime.ToString('o') }; base = $Base } |
+  @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o'); puerto = $PuertoApi }; demo = @{ pid = $web.Id; inicio = $web.StartTime.ToString('o'); puerto = $PuertoDemo }; base = $Base } |
     ConvertTo-Json | Set-Content $Estado -Encoding UTF8
   $listo = $false
   for ($i = 0; $i -lt 20 -and -not $web.HasExited; $i++) {
@@ -272,12 +287,13 @@ if ($fallo) { exit 1 }
 # 7 · Listo
 # ---------------------------------------------------------------------------------------------------------------
 Write-Host "`n== Presentacion lista (base '$Base')" -ForegroundColor Green
-Write-Host "  Demo:        http://localhost:$PuertoDemo/index.html?api=http://localhost:$PuertoApi"
-Write-Host "  API (docs):  http://localhost:$PuertoApi/docs"
+# 127.0.0.1 y no localhost, tambien para el navegador (§5.166 b): evita el intento por ::1. El CORS y API_HOSTS_PERMITIDOS lo aceptan.
+Write-Host "  Demo:        http://127.0.0.1:$PuertoDemo/index.html?api=http://127.0.0.1:$PuertoApi"
+Write-Host "  API (docs):  http://127.0.0.1:$PuertoApi/docs"
 Write-Host '  Entrar con:  gonzalez@demo.ippu.test (tecnico) · torres@demo.ippu.test (tecnico)'
 Write-Host "               $EmailAdmin (coordinacion)"
 Write-Host '               administrativo@demo.ippu.test (administrativo) · direccion@demo.ippu.test (direccion_nt)'
 Write-Host '  Contrasenas: las de IPPU_DEMO_PASSWORD (tecnicos, administrativo, direccion) e IPPU_PASSWORD (coordinacion); este script no las imprime.'
-Write-Host "  Chequeo:     `$env:API='http://localhost:$PuertoApi'; `$env:DEMO='http://localhost:$PuertoDemo'; node herramientas\verificar_presentacion.js"
+Write-Host "  Chequeo:     `$env:API='http://127.0.0.1:$PuertoApi'; `$env:DEMO='http://127.0.0.1:$PuertoDemo'; node herramientas\verificar_presentacion.js"
 Write-Host '  Detener:     powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener'
 exit 0

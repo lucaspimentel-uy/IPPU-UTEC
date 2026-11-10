@@ -4,12 +4,12 @@
  * este script prueba contra una API real: login, listado, HCE-00 y modo demostración.
  *
  * Requisitos (ver README.md, sección «Demo conectada»):
- *   - API en http://localhost:8000 con la base cargada por `python -m app.seed_demo`
- *   - demo servida en http://localhost:5500   (cd demo && python -m http.server 5500)
+ *   - API en http://127.0.0.1:8000 con la base cargada por `python -m app.seed_demo`
+ *   - demo servida en http://127.0.0.1:5500   (cd demo && python -m http.server 5500)
  *   - IPPU_DEMO_PASSWORD = contraseña del técnico de la demo (la del seed)
  *
  * Uso:  IPPU_DEMO_PASSWORD=... IPPU_ADMIN_EMAIL=... IPPU_ADMIN_PASSWORD=... node conectada.js
- * Opcionales: API=http://localhost:8000  DEMO=http://localhost:5500   (la demo se abre con ?api=<API>)
+ * Opcionales: API=http://127.0.0.1:8000  DEMO=http://127.0.0.1:5500   (la demo se abre con ?api=<API>)
  *             IPPU_DEMO_EMAIL=gonzalez@demo.ippu.test   HEADED=1
  * ⚠️ Desde la Fase 3-b la corrida ESCRIBE y exige CONFIRMA_BASE_DESCARTABLE=1 (aborta con exit 1 sin ella, antes de pedir nada) (crea un expediente, lo edita, registra su CI): los conteos del
  *    principio son los del seed recién cargado, así que para repetirla hay que recrear la base (README).
@@ -17,8 +17,8 @@
  */
 const { chromium } = require('playwright');
 
-const API = process.env.API || 'http://localhost:8000';
-const DEMO = process.env.DEMO || 'http://localhost:5500';
+const API = process.env.API || 'http://127.0.0.1:8000';
+const DEMO = process.env.DEMO || 'http://127.0.0.1:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
 const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL;        // el admin del seed (IPPU_EMAIL / IPPU_PASSWORD con los que se cargó)
@@ -28,6 +28,23 @@ const resultados = [];
 function check(id, nombre, ok, detalle) {
   resultados.push({ id, nombre, ok: !!ok, detalle: detalle || '' });
   console.log(`${ok ? 'PASS' : 'FAIL'}  (${id}) ${nombre}${detalle ? '  → ' + detalle : ''}`);
+}
+
+/* Archivos estáticos de la demo que NO llegaron (§5.166 d): un `requestfailed` de un pedido al origen de la demo (index.html, js/, css/).
+   Antes la corrida no se enteraba: el navegador lo deja en la consola como «Failed to load resource» y el chequeo z descarta ese texto
+   (es lo esperado para un 4xx/5xx de la API). Un módulo que falta se ve como un clic que no manda ningún pedido. Ver el chequeo z-carga. */
+const cargasFallidas = [];
+function vigilarCarga(page) {
+  page.on('requestfailed', (r) => {
+    let u; try { u = new URL(r.url()); } catch { return; }
+    if (u.origin !== new URL(DEMO).origin) return;
+    const f = r.failure();
+    cargasFallidas.push(`${u.pathname}${u.search} (${f ? f.errorText : 'sin detalle'})`);
+  });
+}
+/* Los KPI de Inicio salen de OTRO pedido (GET /hce?limit=200) que el del listado: esperar el «Mostrando…» no garantiza que ya llegaron. */
+async function esperarKpis(page) {
+  await page.waitForFunction(() => ['kpiTotal', 'kpiAlDia', 'kpiPend', 'kpiCi'].every((id) => document.getElementById(id).textContent.trim() !== '…'), null, { timeout: 8000 });
 }
 
 async function preflight() {
@@ -135,11 +152,92 @@ async function pantallaMotivo(page, id, opts) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => erroresPagina.push(e.message));
     page.on('console', (m) => {
-      // Un 4xx/5xx de la API se loguea solo como "Failed to load resource": es esperado en (b)/(i).
+      // Un 4xx/5xx de la API se loguea solo como "Failed to load resource": es esperado en (b)/(i). Los archivos estáticos de la
+      // demo que no llegan también, pero esos NO se descartan: los cuenta vigilarCarga (chequeo z-carga).
       if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text());
     });
+    vigilarCarga(page);
     return { ctx, page };
   };
+
+  /* ---------- carga-: una página que no carga completa (§5.166 c) ----------
+     index.html comprueba, tras el último módulo, que cada uno de los 21 de js/ haya definido su función. Aquí se ABORTA a propósito
+     js/expediente.js (route.abort): esas páginas no pasan por nuevaPagina()/vigilarCarga (el requestfailed es el esperado) ni cuentan
+     sus pageerror (los módulos que dependen del que falta tiran ReferenceError, por diseño). */
+  {
+    const K = 'ippu.cargaReintento';
+    const MOD = '**/js/expediente.js';
+    const abierta = async (p) => p.waitForFunction(() => typeof abrirExpediente === 'function', null, { timeout: 8000 });
+    const estado = (p) => p.evaluate((k) => { const a = document.getElementById('cargaIncompleta'); const al = a.querySelector('[role="alert"]');
+      return { oculto: a.hidden, texto: al ? al.textContent.replace(/\s+/g, ' ').trim() : '', marca: sessionStorage.getItem(k), faltan: a.getAttribute('data-faltan'),
+        foco: document.activeElement.id, loginInerte: document.getElementById('loginScreen').inert, token: sessionStorage.getItem('ippu.token') }; }, K);
+
+    // (1) carga completa: sin aviso y sin marca
+    {
+      const { ctx, page } = await nuevaPagina();
+      await page.goto(urlDemo());
+      await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
+      const e = await estado(page);
+      check('carga-ok', 'una carga completa no muestra el aviso «La página no cargó completa», no deja la marca de reintento y el login queda a la vista',
+        e.oculto && e.marca === null && !e.loginInerte, JSON.stringify(e));
+      await ctx.close();
+    }
+
+    // (2) falla sólo la primera vez: UNA recarga automática y la sesión arranca normal
+    {
+      const ctx = await browser.newContext(); const page = await ctx.newPage();
+      let pedidos = 0;
+      await ctx.route(MOD, (route) => (pedidos++ === 0 ? route.abort() : route.continue()));
+      const aApi = [];
+      page.on('request', (r) => { if (r.url().startsWith(API + '/')) aApi.push(r.method() + ' ' + new URL(r.url()).pathname); });
+      await page.goto(urlDemo()).catch(() => {});          // la recarga interrumpe esta navegación: no es un error
+      await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
+      await page.fill('#loginUser', EMAIL); await page.fill('#loginPass', PASSWORD); await page.click('#loginBtn');
+      await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+      const e = await estado(page);
+      check('carga-reintento', 'si falta un módulo la primera vez: una recarga automática (expediente.js pedido 2 veces), sin aviso, la marca se borra y la sesión arranca (login y listado)',
+        pedidos === 2 && e.oculto && e.marca === null && !!e.token, JSON.stringify({ pedidos, ...e, api: aApi.slice(0, 3) }));
+      await ctx.close();
+    }
+
+    // (3) falta en TODAS las cargas: aviso con role="alert", «Recargar» a mano, sin sesión y sin un solo pedido a la API
+    {
+      const ctx = await browser.newContext(); const page = await ctx.newPage();
+      let pedidos = 0;
+      await ctx.route(MOD, (route) => { pedidos++; return route.abort(); });
+      const aApi = [];
+      page.on('request', (r) => { if (r.url().startsWith(API + '/')) aApi.push(r.method() + ' ' + new URL(r.url()).pathname); });
+      await page.goto(urlDemo()).catch(() => {});
+      await page.waitForSelector('#cargaIncompleta:not([hidden])', { timeout: 8000 });
+      await page.waitForTimeout(600);                       // si arrancara la sesión, el pedido saldría en este margen
+      const e = await estado(page);
+      const pedidosTrasAviso = pedidos;
+      check('carga-aviso', 'si sigue faltando tras la recarga: aviso (role="alert") «La página no cargó completa. Recargá para seguir.», marca puesta, el login (inerte) no arranca la sesión y no sale ningún pedido a la API; falta = expediente.js',
+        !e.oculto && e.texto === 'La página no cargó completa. Recargá para seguir. Recargar' && e.marca === '1' && e.loginInerte && !e.token && aApi.length === 0 && pedidosTrasAviso === 2 && e.faltan === 'expediente.js',
+        JSON.stringify({ pedidos: pedidosTrasAviso, ...e, api: aApi }));
+      // teclado: el botón recibe el foco al aparecer; con Tab y Shift+Tab ES lo único que recibe foco (el login de atrás está inerte) y con Enter recarga
+      // (una vez más: la marca ya está puesta, no hay bucle). Se recorre el ciclo con Tab; '' = el foco salió del documento (body).
+      const foco0 = e.foco;
+      const visto = new Set();
+      await page.evaluate(() => document.activeElement.blur());
+      for (let i = 0; i < 4; i++) { await page.keyboard.press(i < 2 ? 'Tab' : 'Shift+Tab'); visto.add(await page.evaluate(() => document.activeElement.id)); }
+      await page.focus('#btnRecargar');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => !document.getElementById('cargaIncompleta').hidden && document.activeElement.id === 'btnRecargar', null, { timeout: 8000 });
+      await page.waitForTimeout(400);
+      check('carga-teclado', '«Recargar» tiene el foco al aparecer, se alcanza con Tab / Shift+Tab y es lo único enfocable (sólo recibe foco él o el documento), y con Enter recarga: expediente.js se pide una vez más y el aviso sigue',
+        foco0 === 'btnRecargar' && visto.has('btnRecargar') && [...visto].every((id) => id === 'btnRecargar' || id === '') && pedidos === pedidosTrasAviso + 1 && aApi.length === 0,
+        JSON.stringify({ foco0, visto: [...visto], pedidos, api: aApi.length }));
+      // el archivo vuelve: «Recargar» a mano completa la carga, el aviso se va y la marca se borra
+      await ctx.unroute(MOD);
+      await page.click('#btnRecargar');
+      await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
+      const f = await estado(page);
+      check('carga-recupera', 'cuando el archivo vuelve, «Recargar» completa la carga: sin aviso, marca borrada y login funcional', f.oculto && f.marca === null && !f.loginInerte, JSON.stringify(f));
+      await ctx.close();
+    }
+  }
 
   /* ---------- (b) contraseña incorrecta: error visible, foco en el alert, sessionStorage vacío ---------- */
   {
@@ -197,6 +295,7 @@ async function pantallaMotivo(page, id, opts) {
 
   /* ---------- (c) conteos del listado y filtro de grupo (== tests/test_m11_5a_seed_demo.py) ---------- */
   await esperarResumen(page, 'Mostrando 7 de 7');
+  await esperarKpis(page);   // §5.166 d: el KPI llega en otro pedido que el listado
   const kpiTotal = (await txt(page, '#kpiTotal')).trim();
   check('3a-c1', 'activos: «Mostrando 7 de 7» (Tomás, dado de baja, no aparece) y KPI de activos = 7',
     (await filas(page)) === 7 && kpiTotal === '7', `filas=${await filas(page)} kpiTotal=${kpiTotal} resumen="${await txt(page, '#listaResumen')}"`);
@@ -213,6 +312,7 @@ async function pantallaMotivo(page, id, opts) {
   // Grupos: con incluir_inactivos (Todos) → 3 / 3 / 2, como afirma el test del seed.
   await page.click('.chip-estado[data-estado="todos"]');
   await esperarResumen(page, 'Mostrando 8 de 8');
+  await page.waitForFunction(() => document.querySelectorAll('#filtroGrupo option').length > 1, null, { timeout: 8000 });   // §5.166 d: GET /grupos es otro pedido
   const opciones = await page.$$eval('#filtroGrupo option', (os) => os.map((o) => o.textContent.trim()));
   check('3a-c4', 'el filtro de grupo sale de GET /grupos (año en curso): 5 grupos reales + «Todos»',
     JSON.stringify(opciones) === JSON.stringify(['Todos', 'Adolescentes', 'Escolares', 'Inicial', 'Preadolescentes', 'Taller de Adolescentes']),
@@ -264,6 +364,7 @@ async function pantallaMotivo(page, id, opts) {
   const filaBruno = page.locator('#tbodyNNA tr[data-hce]', { hasText: 'Bruno' });
   const textoBruno = (await filaBruno.innerText()).replace(/\s+/g, ' ');
   const pillBruno = await filaBruno.locator('.st-ci-pend').count();
+  await esperarKpis(page);
   const kpiCi = (await txt(page, '#kpiCi')).trim();
   check('3a-e', 'la fila de Bruno muestra «CI pendiente» (texto + glifo, no solo color) y el KPI de CI pendiente = 1',
     /CI pendiente/.test(textoBruno) && pillBruno === 1 && kpiCi === '1', `fila="${textoBruno}" kpiCi=${kpiCi}`);
@@ -2997,7 +3098,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ timezoneId: TZ });
     const pc = await ctx.newPage();
     pc.on('pageerror', (e) => erroresPagina.push(e.message));
-    pc.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    pc.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(pc);
     await loguearComo(pc, EMAIL, PASSWORD);
     const tok = await pc.evaluate(() => sessionStorage.getItem('ippu.token'));
     const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
@@ -3190,7 +3291,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const ps = await ctx.newPage();
     ps.on('pageerror', (e) => erroresPagina.push(e.message));
-    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(ps);
     await loguearComo(ps, EMAIL, PASSWORD);
     const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
     const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
@@ -3347,7 +3448,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const ps = await ctx.newPage();
     ps.on('pageerror', (e) => erroresPagina.push(e.message));
-    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(ps);
     await loguearComo(ps, EMAIL, PASSWORD);
     const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
     const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
@@ -3564,7 +3665,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const ps = await ctx.newPage();
     ps.on('pageerror', (e) => erroresPagina.push(e.message));
-    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(ps);
     await loguearComo(ps, EMAIL, PASSWORD);
     const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
     const tokAdmin = (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }) })).json()).access_token;
@@ -3774,7 +3875,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
     const ps = await ctx.newPage();
     ps.on('pageerror', (e) => erroresPagina.push(e.message));
-    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    ps.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(ps);
     await loguearComo(ps, EMAIL, PASSWORD);
     const tok = await ps.evaluate(() => sessionStorage.getItem('ippu.token'));
     const login = async (email, pass) => (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) })).json()).access_token;
@@ -4063,7 +4164,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
     const pa = await ctx.newPage();
     pa.on('pageerror', (e) => erroresPagina.push(e.message));
-    pa.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); });
+    pa.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) erroresPagina.push('console: ' + m.text()); }); vigilarCarga(pa);
     await loguearComo(pa, EMAIL, PASSWORD);
     const tok = await pa.evaluate(() => sessionStorage.getItem('ippu.token'));
     const login = async (email, pass) => (await (await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) })).json()).access_token;
@@ -4452,6 +4553,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
         /Nada pendiente este año/.test(vacioTodo) && /Nada pendiente de línea base este año/.test(vacioLb), JSON.stringify({ vacioTodo, vacioLb }));
       /* KPI de Inicio -> Pendientes ya filtrada, foco en el título */
       await pt.evaluate(() => go('inicio'));
+      await esperarKpis(pt);   // §5.166 d: sin esto, `+'…'` es NaN
       const kpis = await pt.evaluate(() => ({ lb: +document.getElementById('kpiPend').textContent, ci: +document.getElementById('kpiCi').textContent }));
       const aterrizaje = {};
       for (const [k, sel] of [['lb', '#kpiRow button >> nth=0'], ['ci', '#kpiRow button >> nth=1']]) {
@@ -4975,6 +5077,8 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
   }
 
   check('z', 'sin errores de JavaScript en la página durante toda la corrida', erroresPagina.length === 0, erroresPagina.join(' | '));
+  check('z-carga', 'ningún archivo estático de la demo falló al cargar (requestfailed del origen de la demo; z descarta «Failed to load resource» y por eso no lo veía, §5.166 d)',
+    cargasFallidas.length === 0, cargasFallidas.join(' | '));
   await browser.close();
 
   const mal = resultados.filter((r) => !r.ok);

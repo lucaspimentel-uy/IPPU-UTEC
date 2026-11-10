@@ -30,13 +30,14 @@ npx playwright install chromium # una vez por máquina y por versión de Playwri
 recibí, crean la VF). Los conteos del principio son los del seed recién cargado, así que **cada corrida pide una base
 nueva** y ambas se niegan a correr sin `CONFIRMA_BASE_DESCARTABLE=1`: salen con exit 1 **antes de pedirle nada a la
 API**. Ponerla es afirmar que la base es la descartable y no la de trabajo ni la de la presentación.
-Receta: `CLAUDE.md`, «Cómo correr», pasos 2 a 4 (con `DATABASE_URL` en la misma terminal, antes de `alembic` y del seed).
+Receta: `CLAUDE.md`, «Cómo correr», pasos 2 a 4 (con `DATABASE_URL` en la misma terminal, antes de `alembic` y del seed). **Todo por
+`127.0.0.1`, no `localhost`** (§5.166): el `DATABASE_URL`, el `API=` y el `DEMO=` de las herramientas (que ya lo traen por omisión).
 Entre una corrida y la siguiente: parar la API y repetir esos pasos.
 
 ## `conectada.js`
 
 ```powershell
-$env:API = "http://localhost:8001"; $env:CONFIRMA_BASE_DESCARTABLE = "1"
+$env:API = "http://127.0.0.1:8001"; $env:CONFIRMA_BASE_DESCARTABLE = "1"
 $env:IPPU_DEMO_PASSWORD = "…"; $env:IPPU_ADMIN_EMAIL = "…"; $env:IPPU_ADMIN_PASSWORD = "…"
 node conectada.js
 ```
@@ -71,12 +72,14 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `f2-` | Pendientes y Grupos conectados (F2): `GET /recordatorios`; las filas de Pendientes contra el `ci`/`flujo` de `GET /hce`, filtros con su conteo y los dos botones de Inicio; Grupos del técnico y del admin contra `GET /grupos`, integrantes idénticos a los del listado, «Salir» con una respuesta en vuelo, WCAG 2.5.8 / 2.4.11 y celdas sin recortar a 1024 y 1280; **`f2-asignar` ESCRIBE** (asigna técnicos a Inicial desde el diálogo: 200, 422 junto al campo, descarte) y va al final |
 | `c7-` | Panel institucional (C7): cada número de la pantalla contra `GET /panel?anio=` (sólo formato), el selector de año (`?anio=`; el año anterior sin enlaces a Pendientes), los recordatorios de `GET /recordatorios` (una cuenta abre Pendientes con su filtro), `c7-sin-calculo` (una respuesta simulada con números incoherentes: la pantalla los muestra tal cual), error con «Reintentar», sólo el heatmap en demostración, «Salir» con la respuesta en vuelo; **`c7-alcance` ESCRIBE** (saca a la Mtra. Torres de sus grupos para tener un técnico sin grupo: n 0 y estados vacíos) y va al final |
 | `sec-` | Auditoría de seguridad (§5.157 b): con una sesión abierta, `?api=` a un servidor espía en `127.0.0.1:9999` (que contesta el preflight) no le manda ningún `Authorization` y el login muestra a qué API iría la contraseña; un host que no es `localhost` ni `127.0.0.1` se ignora; con el `?api=` de la corrida entra y una recarga conserva la sesión. **Necesita el puerto 9999 libre** |
-| `z` | Cero errores de JavaScript en toda la corrida |
+| `carga-` | La página que no carga completa (§5.166 c): se aborta a propósito `js/expediente.js` con `route.abort`. **Una carga completa** no muestra el aviso y no deja la marca `ippu.cargaReintento`; **si falla sólo la primera vez** hay una recarga automática (el módulo se pide dos veces), no hay aviso y la sesión arranca; **si falla siempre** queda el aviso «La página no cargó completa. Recargá para seguir.» (`role="alert"`, el módulo faltante en `data-faltan`), el login inerte, ningún pedido a la API, «Recargar» con el foco, alcanzable con Tab y operable con Enter; y cuando el archivo vuelve, «Recargar» completa la carga y borra la marca |
+| `z` | Cero errores de JavaScript en toda la corrida (descarta el texto «Failed to load resource»: es el 4xx/5xx esperado de la API) |
+| `z-carga` | Ningún archivo estático de la demo falló al cargar: un `requestfailed` de un pedido al origen de la demo (`index.html`, `js/`, `css/`) falla la corrida con el nombre del archivo y el error (§5.166 d). Las páginas de `carga-` no cuentan: ahí el aborto es a propósito |
 
 ## `capturas.js`
 
 ```powershell
-$env:API = "http://localhost:8001"; $env:CONFIRMA_BASE_DESCARTABLE = "1"; $env:IPPU_DEMO_PASSWORD = "…"
+$env:API = "http://127.0.0.1:8001"; $env:CONFIRMA_BASE_DESCARTABLE = "1"; $env:IPPU_DEMO_PASSWORD = "…"
 node capturas.js
 ```
 
@@ -87,7 +90,7 @@ Escribe: sólo contra una base descartable recién cargada.
 ## Contraste — `herramientas/verificar_contraste_ui.js`
 
 ```powershell
-$env:API = "http://localhost:8001"; $env:IPPU_DEMO_PASSWORD = "…"
+$env:API = "http://127.0.0.1:8001"; $env:IPPU_DEMO_PASSWORD = "…"
 node ..\..\..\..\herramientas\verificar_contraste_ui.js [--tabla] [--json salida.json]
 ```
 
@@ -103,7 +106,9 @@ el resultado crudo. Sale con 1 si falla algo en una pantalla conectada, si falla
   confirmaciones de firma que pulsa para medir los errores reciben un 422 enlatado, y cualquier otro `POST`/`PATCH`/`PUT`/`DELETE`
   se aborta y termina la corrida con código 1 nombrándolo. Al final imprime los contadores; con `VERIFICAR_AUTOPRUEBA=1`
   prueba el filtro (un `POST` sin ruta debe terminar en código 1).
-- Se mide sobre una base **recién cargada** y **antes** de `conectada.js`, que firma lo que el seed deja en borrador.
+- Se mide sobre una base **recién cargada** y **antes** de `conectada.js`, que firma lo que el seed deja en borrador. Mide también el aviso
+«La página no cargó completa» (con `js/expediente.js` abortado) y el anillo de su botón «Recargar»; un `requestfailed` de un archivo de la demo
+invalida la medición y sale con 1.
 
 ## `fingerprint.js` y `comparar.js` — que un refactor no cambie las vistas en modo demostración
 
@@ -113,8 +118,8 @@ modo demostración (con las horas normalizadas para que dos corridas en distinto
 `comparar.js` compara dos capturas.
 
 ```powershell
-$env:API = "http://localhost:8001"; $env:IPPU_DEMO_PASSWORD = "…"
-node fingerprint.js http://localhost:5500/index.html antes.json     # demo conectada: hace login y recorre el modo demostración; no escribe
+$env:API = "http://127.0.0.1:8001"; $env:IPPU_DEMO_PASSWORD = "…"
+node fingerprint.js http://127.0.0.1:5500/index.html antes.json     # demo conectada: hace login y recorre el modo demostración; no escribe
 node fingerprint.js ../index.html antes.json                        # ruta a un .html: versiones anteriores a la Fase 3, sin API
 node comparar.js antes.json despues.json                            # exit 0 = idénticos; exit 1 = diferencias, con la primera
 ```
