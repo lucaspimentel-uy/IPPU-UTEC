@@ -390,6 +390,16 @@
   </div>
 </div>
 
+<!-- ===================== CARGA INCOMPLETA (§5.165 c) ===================== -->
+<!-- Lo muestra el script del final cuando falta algún módulo de js/ (un archivo que no llegó: el orden de carga es la semántica,
+     así que no se reintenta de a uno). Va suelto en el <body>, sin depender de ningún módulo: es justo lo que puede faltar. -->
+<div class="carga-incompleta" id="cargaIncompleta" hidden>
+  <div class="notice avisos-api" role="alert">
+    <p id="cargaIncompletaTxt">La página no cargó completa. Recargá para seguir.</p>
+    <button type="button" class="btn btn-primary" id="btnRecargar" onclick="location.reload()">Recargar</button>
+  </div>
+</div>
+
 <!-- ===================== TOAST ===================== -->
 <div class="toast" id="toast" role="status" aria-live="polite" data-tipo="ok"><span class="toast-ico" id="toastIco" aria-hidden="true">✓</span><span class="sr-only" id="toastTipo"></span><span id="toastMsg">Listo</span></div>
 
@@ -417,6 +427,47 @@
 <script src="js/grupos-usuario.js"></script>
 <script src="js/inclusion.js"></script>
 <script src="js/ateneos.js"></script>
-<script>arrancarSesion();</script>
+<script>
+/* Carga completa (§5.165 c). Cada módulo de js/ define una función (o, datos.js, la constante NNA) que no depende de nada más: si
+   falta alguna, un archivo no llegó (pasó con ERR_CONNECTION_REFUSED / ERR_NO_BUFFER_SPACE, ~1 de cada 8.600). Un clic que no manda
+   ningún pedido es lo que se ve con expediente.js ausente. No se reintentan archivos sueltos: se recarga la página una vez
+   (marca en sessionStorage) y, si vuelve a faltar, se avisa y NO se arranca la sesión. Con la carga completa se borra la marca. */
+(function () {
+  var K = "ippu.cargaReintento";
+  var modulos = [
+    ["utils.js", typeof fmtFecha, "function"], ["api.js", typeof apiFetch, "function"],
+    ["adaptadores.js", typeof ciFormateada, "function"], ["datos.js", typeof NNA, "object"],
+    ["flujo.js", typeof initFlujo, "function"], ["catalogos.js", typeof ideaEvals, "function"],
+    ["ui-core.js", typeof arrancarSesion, "function"], ["wizard-nna.js", typeof formLimpiar, "function"],
+    ["expediente.js", typeof abrirExpediente, "function"], ["evaluaciones.js", typeof evReiniciar, "function"],
+    ["informe-cierre.js", typeof icReiniciar, "function"], ["hce-doc-org-vf.js", typeof renderDoc, "function"],
+    ["documentos.js", typeof docReiniciar, "function"], ["severidad.js", typeof sevReiniciar, "function"],
+    ["organismos.js", typeof orgReiniciar, "function"], ["auditoria.js", typeof logReiniciar, "function"],
+    ["panel.js", typeof panelAnios, "function"], ["pendientes.js", typeof pendItems, "function"],
+    ["grupos-usuario.js", typeof gruposEsAdmin, "function"], ["inclusion.js", typeof incReiniciar, "function"],
+    ["ateneos.js", typeof atTipoLabel, "function"]
+  ];
+  var faltan = [];
+  for (var i = 0; i < modulos.length; i++) if (modulos[i][1] !== modulos[i][2]) faltan.push(modulos[i][0]);
+  if (!faltan.length) {
+    try { sessionStorage.removeItem(K); } catch (_e) { /* sin sessionStorage: no hay marca que borrar */ }
+    arrancarSesion();
+    return;
+  }
+  console.warn("IPPU: la página no cargó completa; falta: " + faltan.join(", "));
+  var reintentado = true;                       // sin sessionStorage no se puede recordar el reintento: se avisa sin recargar (evita un bucle)
+  try {
+    reintentado = sessionStorage.getItem(K) === "1";
+    if (!reintentado) { sessionStorage.setItem(K, "1"); reintentado = sessionStorage.getItem(K) !== "1"; }
+  } catch (_e) { reintentado = true; }
+  if (!reintentado) { location.reload(); return; }
+  var aviso = document.getElementById("cargaIncompleta");
+  aviso.setAttribute("data-faltan", faltan.join(" "));
+  var login = document.getElementById("loginScreen");
+  login.inert = true;                           // el aviso lo tapa: que Tab y los lectores no lleguen al formulario de atrás
+  aviso.hidden = false;
+  document.getElementById("btnRecargar").focus();
+})();
+</script>
 </body>
 </html>

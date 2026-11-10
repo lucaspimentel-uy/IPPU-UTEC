@@ -19,14 +19,14 @@
  * ⚠️ ESCRIBE (crea una valoración funcional para tener una VF con datos): sólo contra una base descartable recién cargada y con
  * CONFIRMA_BASE_DESCARTABLE=1, igual que conectada.js (ver README.md → «Base descartable»).
  *
- * Uso:  CONFIRMA_BASE_DESCARTABLE=1 API=http://localhost:8001 IPPU_DEMO_PASSWORD=... node capturas.js
+ * Uso:  CONFIRMA_BASE_DESCARTABLE=1 API=http://127.0.0.1:8001 IPPU_DEMO_PASSWORD=... node capturas.js
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const API = process.env.API || 'http://localhost:8000';
-const DEMO = process.env.DEMO || 'http://localhost:5500';
+const API = process.env.API || 'http://127.0.0.1:8000';
+const DEMO = process.env.DEMO || 'http://127.0.0.1:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
 const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL, ADMIN_PASSWORD = process.env.IPPU_ADMIN_PASSWORD;

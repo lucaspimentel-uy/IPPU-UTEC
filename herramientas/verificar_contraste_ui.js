@@ -38,7 +38,7 @@
  * Requiere Playwright. Reusa el install existente de demo/verificacion/ (no se duplica una segunda instalación) — si no
  * está, `cd implementacion/L1-hce-idea/demo/verificacion && npm ci && npx playwright install chromium`.
  *
- * Uso:  API=http://localhost:8001 IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js [--json out.json] [--tabla]
+ * Uso:  API=http://127.0.0.1:8001 IPPU_DEMO_PASSWORD=... node herramientas/verificar_contraste_ui.js [--json out.json] [--tabla]
  *   --json   además vuelca el resultado crudo;
  *   --tabla  imprime los pares que fallan como tabla Markdown (elemento · primer plano · fondo · criterio), sin cifras.
  *
@@ -53,7 +53,7 @@
  * otro POST/PATCH/PUT/DELETE se ABORTA, se anota, y la corrida termina con código 1 nombrándolo. Al final se imprimen los contadores.
  * Autoprueba del filtro: `VERIFICAR_AUTOPRUEBA=1` emite un POST sin ruta desde la página y debe terminar en código 1.
  *
- * Variables: API (por omisión http://localhost:8000) · DEMO (http://localhost:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL ·
+ * Variables: API (por omisión http://127.0.0.1:8000) · DEMO (http://127.0.0.1:5500) · IPPU_DEMO_PASSWORD · IPPU_DEMO_EMAIL ·
  * IPPU_ADMIN_EMAIL · IPPU_ADMIN_PASSWORD (opcionales: sin ellas no se mide el diálogo de asignación de técnicos) ·
  * VERIFICAR_AUTOPRUEBA (=1: sólo la autoprueba del filtro).
  */
@@ -62,8 +62,8 @@ const path = require('path');
 
 const REPO = path.resolve(__dirname, '..');
 const CSS_PATH = path.join(REPO, 'implementacion/L1-hce-idea/demo/css/estilos.css');
-const API = process.env.API || 'http://localhost:8000';
-const DEMO = process.env.DEMO || 'http://localhost:5500';
+const API = process.env.API || 'http://127.0.0.1:8000';
+const DEMO = process.env.DEMO || 'http://127.0.0.1:5500';
 const EMAIL = process.env.IPPU_DEMO_EMAIL || 'gonzalez@demo.ippu.test';
 const PASSWORD = process.env.IPPU_DEMO_PASSWORD;
 const ADMIN_EMAIL = process.env.IPPU_ADMIN_EMAIL, ADMIN_PASSWORD = process.env.IPPU_ADMIN_PASSWORD;
@@ -308,12 +308,17 @@ function buscarContornosApagados() {
   const page = await ctx.newPage();
   const errores = [];
   page.on('pageerror', (e) => errores.push(e.message));
+  /* §5.165 d: un archivo estático de la demo que no llega (requestfailed al origen de la demo) invalida la medición: se cuenta y falla la corrida. */
+  const cargasFallidas = [];
+  page.on('requestfailed', (r) => {
+    try { const u = new URL(r.url()); if (u.origin === new URL(DEMO).origin) cargasFallidas.push(`${u.pathname} (${r.failure() ? r.failure().errorText : 'sin detalle'})`); } catch { /* url rara: no es de la demo */ }
+  });
 
   const capturas = [];          // {pantalla, grupo, n}
   const mapa = new Map();       // pares únicos: fg|bg|grande|tipo|ident
   const anillos = [];
-  async function cap(pantalla, grupo = 'conectada') {
-    const pares = await extraerParesVivos(page);
+  async function cap(pantalla, grupo = 'conectada', pagina = page) {
+    const pares = await extraerParesVivos(pagina);
     capturas.push({ pantalla, grupo, n: pares.length });
     for (const p of pares) {
       const key = [p.tipo, p.fg, p.bg, p.esGrande, p.dk].join('|');
@@ -324,6 +329,22 @@ function buscarContornosApagados() {
   }
   const ev = (f, arg) => page.evaluate(f, arg);
   const esperar = (ms) => page.waitForTimeout(ms);
+
+  // ---------------------------------------------------------------- CARGA INCOMPLETA (§5.165 c)
+  // Se aborta a propósito js/expediente.js en TODAS las cargas de una página aparte: tras la recarga automática queda el aviso
+  // «La página no cargó completa» con «Recargar». No sale ningún pedido a la API (la sesión no arranca).
+  {
+    const ctxCarga = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await instalarFiltroDeEscritura(ctxCarga);
+    await ctxCarga.route('**/js/expediente.js', (route) => route.abort());
+    const pCarga = await ctxCarga.newPage();
+    await pCarga.goto(URL_DEMO).catch(() => {});             // la recarga automática interrumpe esta navegación
+    await pCarga.waitForSelector('#cargaIncompleta:not([hidden])', { timeout: 8000 });
+    await pCarga.waitForTimeout(300);
+    await cap('Aviso · la página no cargó completa', 'conectada', pCarga);
+    anillos.push(await medirAnilloTeclado(pCarga, '#btnRecargar', 'botón «Recargar» (carga incompleta)'));
+    await ctxCarga.close();
+  }
 
   // ---------------------------------------------------------------- LOGIN
   await page.goto(URL_DEMO);
@@ -872,6 +893,7 @@ function buscarContornosApagados() {
   console.log(`\nSelectores del CSS con \`outline:none/0\`: ${apagados.length}${apagados.length ? ' → ' + apagados.join(' · ') : ''}`);
 
   const anilloMal = filasAnillo.filter(a => a.error || !a.pasa);
+  console.log(`\nArchivos de la demo que no cargaron (requestfailed): ${cargasFallidas.length}${cargasFallidas.length ? ' → ' + cargasFallidas.join(' | ') : ''}`);
   console.log(`\nErrores de JavaScript en la página: ${errores.length}${errores.length ? ' → ' + errores.join(' | ') : ''}`);
   console.log(`\nRESUMEN: pares/bordes que fallan en conectadas = ${fallanConectadas.length} · solo demo = ${fallanSoloDemo.length} · anillos que fallan = ${anilloMal.length} de ${filasAnillo.length} · contornos apagados = ${apagados.length}`);
 
@@ -888,7 +910,7 @@ function buscarContornosApagados() {
     console.log(`\nJSON crudo -> ${process.argv[jsonIdx + 1]}`);
   }
   if (intercepcion.abortados.length) console.error(`\nESCRITURA BLOQUEADA: la página intentó ${intercepcion.abortados.join(' · ')} (no salió del navegador). La medición no es válida.`);
-  process.exit(fallanConectadas.length || anilloMal.length || apagados.length || intercepcion.abortados.length ? 1 : 0);
+  process.exit(fallanConectadas.length || anilloMal.length || apagados.length || intercepcion.abortados.length || cargasFallidas.length ? 1 : 0);
 })().catch((e) => {
   console.error('ERROR del script:', e);
   if (intercepcion.abortados.length) { console.error(`ESCRITURA BLOQUEADA: ${intercepcion.abortados.join(' · ')}`); process.exit(1); }

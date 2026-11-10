@@ -6,8 +6,8 @@
  * Si difieren, algo se rompio. Ver README.md.
  *
  * Uso:  node fingerprint.js <ruta-al-html | URL-de-la-demo> <salida.json>
- *   - URL (http://localhost:5500/index.html): demo CONECTADA (desde la Fase 3). Hace login contra la API
- *     (env API, por omision http://localhost:8000; IPPU_DEMO_PASSWORD; IPPU_DEMO_EMAIL) y recorre el modo
+ *   - URL (http://127.0.0.1:5500/index.html): demo CONECTADA (desde la Fase 3). Hace login contra la API
+ *     (env API, por omision http://127.0.0.1:8000; IPPU_DEMO_PASSWORD; IPPU_DEMO_EMAIL) y recorre el modo
  *     demostracion: los expedientes de ejemplo se abren con abrirExpedienteDemo().
  *   - ruta a un .html: versiones ANTERIORES a la Fase 3 (sin API), como siempre.
  *
@@ -27,7 +27,7 @@ if (!htmlPath || !outPath) {
   process.exit(1);
 }
 const CONECTADA = /^https?:\/\//.test(htmlPath);
-const API = process.env.API || 'http://localhost:8000';
+const API = process.env.API || 'http://127.0.0.1:8000';
 if (CONECTADA && !process.env.IPPU_DEMO_PASSWORD) { console.error('Falta IPPU_DEMO_PASSWORD (contraseña del técnico de la demo).'); process.exit(1); }
 
 /* Normaliza lo no determinista (la hora actual aparece en HCE-LOG) para que dos

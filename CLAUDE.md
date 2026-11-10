@@ -52,6 +52,9 @@ la demo v4.1 no son norma**: son insumo; no se modela ni se siembra nada sólo p
 
 ## Cómo correr
 PowerShell 5.1 (sin `&&`), Docker Desktop arriba, desde `implementacion\L1-hce-idea\backend` salvo donde se indica.
+**Siempre `127.0.0.1`, nunca `localhost`** (§5.165): en Windows `localhost` prueba `::1` primero, el contenedor publica sólo
+`127.0.0.1:5440` y cada conexión nueva a Postgres cuesta ~2 s (~30 ms por `127.0.0.1`); lo mismo vale para las URL de la API y de
+la demo. El `DATABASE_URL` / `TEST_DATABASE_URL` del `.env` (no versionado) también va con `127.0.0.1`: `.env.example` ya lo trae.
 **Verificar es SIEMPRE sobre una base descartable** (acá `ippu_ver`, API en `:8001`); la de trabajo es la del `.env` y no
 se recrea. Trabajo diario: sin las dos primeras líneas del paso 2 y con `--port 8000`.
 ```powershell
@@ -66,24 +69,24 @@ pip install pypdf                        # conectada.js lee el PDF del IC con el
 # 2 · Base descartable + esquema + catálogos (DATABASE_URL en ESTA terminal, ANTES de alembic y del seed)
 docker exec ippu-postgres psql -U ippu -d ippu -c "DROP DATABASE IF EXISTS ippu_ver WITH (FORCE)" -c "CREATE DATABASE ippu_ver"
 if (Test-Path uploads\ippu_ver) { Remove-Item -Recurse -Force uploads\ippu_ver }   # sus archivos (C5): sólo la carpeta de ESA base
-$env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@localhost:5440/ippu_ver"
+$env:DATABASE_URL = "postgresql+psycopg://ippu:ippu@127.0.0.1:5440/ippu_ver"
 $env:IPPU_SEED_DESTINO = "ippu_ver"      # guardia (§5.139): seed_demo y crear_usuario imprimen la base y no escriben si esto no es su nombre
 alembic upgrade head
 python -m app.seed_catalogos
 
 # 3 · API (otra terminal: venv activo y el MISMO DATABASE_URL)
-uvicorn app.main:app --port 8001         # docs: http://localhost:8001/docs · /redoc · /openapi.json (ver abajo)
+uvicorn app.main:app --port 8001         # docs: http://127.0.0.1:8001/docs · /redoc · /openapi.json (ver abajo)
 
 # 4 · Demo cargada por la API (8 NNA; aborta si ya están). Sin demo: python -m app.crear_usuario --email … --nombre … --rol admin
 $env:PYTHONUTF8 = "1"; $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"
-python -m app.seed_demo --url http://localhost:8001
+python -m app.seed_demo --url http://127.0.0.1:8001
 
 # 5 · Demo en el navegador (otra terminal; no sirve por file://, la API sólo acepta el origen :5500)
-cd ..\demo; python -m http.server 5500 --bind 127.0.0.1   # sólo esta máquina · http://localhost:5500/index.html?api=http://localhost:8001 · gonzalez@demo.ippu.test
+cd ..\demo; python -m http.server 5500 --bind 127.0.0.1   # sólo esta máquina · http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8001 · gonzalez@demo.ippu.test
 
 # 6 · Verificación (1.ª terminal, base recién cargada)
 cd ..\demo\verificacion
-$env:API = "http://localhost:8001"; $env:IPPU_ADMIN_EMAIL = $env:IPPU_EMAIL; $env:IPPU_ADMIN_PASSWORD = $env:IPPU_PASSWORD
+$env:API = "http://127.0.0.1:8001"; $env:IPPU_ADMIN_EMAIL = $env:IPPU_EMAIL; $env:IPPU_ADMIN_PASSWORD = $env:IPPU_PASSWORD
 node ..\..\..\..\herramientas\verificar_contraste_ui.js   # PRIMERO: sólo lee, nunca escribe en la API; --tabla lista los pares
 $env:CONFIRMA_BASE_DESCARTABLE = "1"
 node conectada.js                        # ESCRIBE (crea, firma, addendas): base nueva por corrida
@@ -101,7 +104,7 @@ comando y sus logs en `%TEMP%`: ver «Presentación».) Entre dos corridas que *
 **La documentación de la API (Swagger) sólo existe con `ENVIRONMENT=dev`** (§5.163 c): `/docs`, `/redoc` y `/openapi.json` responden
 cuando la variable `ENVIRONMENT` del `.env` o de la terminal es `dev`, que es el valor por omisión (trabajo local y presentación no
 cambian, y `.env.example` lo trae así). Con cualquier otro valor (`produccion`…) las tres rutas son 404. Para ver o generar `openapi.json`
-(la fuente de los tipos de React), levantar la API con `ENVIRONMENT=dev`: `curl http://localhost:8001/openapi.json`.
+(la fuente de los tipos de React), levantar la API con `ENVIRONMENT=dev`: `curl http://127.0.0.1:8001/openapi.json`.
 
 ## Presentación (un comando, §5.139)
 La base de la presentación es **`ippu_presentacion`** (API `:8000`, demo `:5500`); se recarga **después del 2026-11-13**. Desde la
@@ -109,10 +112,12 @@ raíz del repo, con Docker y el contenedor arriba y el entorno del paso 1 hecho:
 ```powershell
 $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"   # IPPU_EMAIL opcional
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1    # borra y recrea la base y su carpeta de archivos, carga la demo, deja API y demo arriba
-$env:API = "http://localhost:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK
+$env:API = "http://127.0.0.1:8000"; node herramientas\verificar_presentacion.js     # sólo lectura: tiene que decir OK (y los tiempos del login y del primer listado)
 powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 -Detener   # para lo que arrancó el script (no toca la base)
 ```
-Volver a correrlo da lo mismo. La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+Volver a correrlo da lo mismo. Fuerza el host de Postgres a `127.0.0.1` (§5.165 a), imprime la demo como `http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8000`
+—**así se abre en el ensayo y en la presentación**, con la máquina sin suspenderse— y `-Detener` dice los puertos que de verdad paró (los de la corrida que
+los arrancó, aunque no se le pase `-PuertoApi`). La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
 `crear_usuario` no escriben (el script lo fija solo).
 
@@ -134,6 +139,9 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
   falla» (línea base, §5.135) y «todo par nuevo ≥ 4,5:1». Los conteos de chequeos (`181/181`) van en `handoff.md` y la bitácora;
   los ratios, en el comentario de CSS junto al token. Las demás cifras que cambian (tests, tablas) no se escriben acá: las lleva
   la cabecera de `handoff.md` y las mide `python herramientas/verificar_estado.py --check` (con `generar_catalogos_backend.py --check`).
+- **Un archivo de la demo que no llega es una falla** (§5.165 c, d): `index.html` comprueba tras el último módulo que los 21 de `js/` estén
+  (si no, recarga una vez y, si sigue faltando, muestra «La página no cargó completa» sin arrancar la sesión) y las herramientas fallan ante un
+  `requestfailed` de un archivo estático de la demo (`z-carga` en `conectada.js`; antes quedaba en «Failed to load resource», que `z` descarta).
 - **Base descartable:** `conectada.js`, `capturas.js` y el seed escriben. Nunca contra `:8000` ni la base de la presentación;
   `DATABASE_URL` e `IPPU_SEED_DESTINO` en la misma terminal **antes** de `alembic` o del seed; `:8001` y `:5500` libres al empezar y
   al terminar. (La única corrida que usa `:8000` y `ippu_presentacion` es la de `preparar_presentacion.ps1`.)
