@@ -117,7 +117,7 @@ powershell -ExecutionPolicy Bypass -File herramientas\preparar_presentacion.ps1 
 ```
 Volver a correrlo da lo mismo. Fuerza el host de Postgres a `127.0.0.1` (§5.166 a), imprime la demo como `http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8000`
 —**así se abre en el ensayo y en la presentación**, con la máquina sin suspenderse— y `-Detener` dice los puertos que de verdad paró (los de la corrida que
-los arrancó, aunque no se le pase `-PuertoApi`). La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama: el script se puede correr con la salida capturada (pipe o redirección) y vuelve cuando termina. Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
+los arrancó, aunque no se le pase `-PuertoApi`). La API y la demo escriben su salida (stdout y stderr juntos) en `%TEMP%\ippu-presentacion-api.log` y `%TEMP%\ippu-presentacion-demo.log`, y se arrancan sin heredar los handles de quien llama, pero **el script se corre directo o con `*>` a un archivo, nunca por un pipe** (`| Tee-Object`, `| Out-String`…: una sesión lo vio colgado así, §5.167 c). Se niega a recrear `ippu_test` y, sin `-ConfirmarBaseDeTrabajo`, `ippu`; un puerto ocupado por otro
 proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-PuertoDemo`. Sin `IPPU_SEED_DESTINO`, `seed_demo` y
 `crear_usuario` no escriben (el script lo fija solo).
 

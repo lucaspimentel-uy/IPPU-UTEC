@@ -164,8 +164,8 @@ const aHex = (rgbStr) => {
    PARTE 2 — EXTRACCIÓN VIVA
    ============================================================================ */
 /* Todo lo que corre en el navegador va en UNA función para poder pasarla a page.evaluate. */
-async function extraerParesVivos(page) {
-  return page.evaluate(() => {
+async function extraerParesVivos(page, raiz = null) {
+  return page.evaluate((raiz) => {
     function opaco(bg) {
       if (!bg || bg === 'transparent') return null;
       const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
@@ -200,7 +200,8 @@ async function extraerParesVivos(page) {
     const vistos = new Set();
     const identK = (el) => el.tagName.toLowerCase() + (el.type && el.tagName !== 'BUTTON' ? '[' + el.type + ']' : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : '') + (el.parentElement && el.parentElement.className && typeof el.parentElement.className === 'string' ? ' en .' + el.parentElement.className.trim().split(/\s+/)[0] : '');
     const ident = (el) => identK(el) + (el.id ? '#' + el.id : '');
-    document.querySelectorAll('body *').forEach(el => {
+    // `raiz`: sólo ese subárbol (el aviso de carga SIN hoja de estilos: debajo, la página queda con los colores del navegador y no es lo que se mide).
+    document.querySelectorAll(raiz ? raiz + ', ' + raiz + ' *' : 'body *').forEach(el => {
       if (!visible(el)) return;
       if (el.closest('script,style,svg')) return;
       const tag = el.tagName.toLowerCase();
@@ -235,7 +236,7 @@ async function extraerParesVivos(page) {
       out.push({ tipo: 'texto', fg, bg, esGrande, ident: ident(el), dk: identK(el), tag });
     });
     return out;
-  });
+  }, raiz);
 }
 
 /* Anillo de foco con TECLADO real: se pulsa una tecla (el navegador pasa a modalidad de teclado y :focus-visible aplica a
@@ -317,8 +318,8 @@ function buscarContornosApagados() {
   const capturas = [];          // {pantalla, grupo, n}
   const mapa = new Map();       // pares únicos: fg|bg|grande|tipo|ident
   const anillos = [];
-  async function cap(pantalla, grupo = 'conectada', pagina = page) {
-    const pares = await extraerParesVivos(pagina);
+  async function cap(pantalla, grupo = 'conectada', pagina = page, raiz = null) {
+    const pares = await extraerParesVivos(pagina, raiz);
     capturas.push({ pantalla, grupo, n: pares.length });
     for (const p of pares) {
       const key = [p.tipo, p.fg, p.bg, p.esGrande, p.dk].join('|');
@@ -344,6 +345,24 @@ function buscarContornosApagados() {
     await cap('Aviso · la página no cargó completa', 'conectada', pCarga);
     anillos.push(await medirAnilloTeclado(pCarga, '#btnRecargar', 'botón «Recargar» (carga incompleta)'));
     await ctxCarga.close();
+  }
+
+  // ---------------------------------------------------------------- CARGA INCOMPLETA SIN LA HOJA DE ESTILOS (§5.167 a)
+  // css/estilos.css abortada en TODAS las cargas: el aviso lleva su estilo mínimo en línea y es lo único que se mide (la página de atrás
+  // queda con los colores del navegador). Se comprueba además que la hoja de verdad falta (--ink vacío) y que el aviso quedó a la vista.
+  {
+    const ctxCss = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await instalarFiltroDeEscritura(ctxCss);
+    await ctxCss.route('**/css/estilos.css', (route) => route.abort());
+    const pCss = await ctxCss.newPage();
+    await pCss.goto(URL_DEMO).catch(() => {});
+    await pCss.waitForSelector('#cargaIncompleta:not([hidden])', { timeout: 8000 });
+    await pCss.waitForTimeout(300);
+    const sinHoja = await pCss.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() === '');
+    if (!sinHoja) { console.error('ERROR: el aviso sin hoja se midió CON la hoja puesta; la medición no vale.'); await browser.close(); process.exit(1); }
+    await cap('Aviso · la página no cargó completa (sin estilos.css)', 'conectada', pCss, '#cargaIncompleta');
+    anillos.push(await medirAnilloTeclado(pCss, '#btnRecargar', 'botón «Recargar» (carga incompleta, sin estilos.css)'));
+    await ctxCss.close();
   }
 
   // ---------------------------------------------------------------- LOGIN
