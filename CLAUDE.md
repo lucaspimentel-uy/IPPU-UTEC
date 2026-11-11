@@ -84,7 +84,10 @@ python -m app.seed_demo --url http://127.0.0.1:8001
 # 5 · Demo en el navegador (otra terminal; no sirve por file://, la API sólo acepta el origen :5500)
 cd ..\demo; python -m http.server 5500 --bind 127.0.0.1   # sólo esta máquina · http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8001 · gonzalez@demo.ippu.test
 
-# 6 · Verificación (1.ª terminal, base recién cargada)
+# 6 · Verificación. LO NORMAL ES EL RUNNER (§5.167 d): hace los pasos 2 a 4 y 6 por vos, muestrea memoria y sockets y guarda todo fuera del repo.
+#     Con IPPU_PASSWORD e IPPU_DEMO_PASSWORD en la terminal, desde la raíz (directo o con *> a un archivo, nunca por un pipe):
+#       powershell -ExecutionPolicy Bypass -File herramientas\correr_conectada.ps1 -Corridas 2 -ConContraste *> $env:TEMP\correr.txt
+#     Abajo, la receta a mano (1.ª terminal, base recién cargada):
 cd ..\demo\verificacion
 $env:API = "http://127.0.0.1:8001"; $env:IPPU_ADMIN_EMAIL = $env:IPPU_EMAIL; $env:IPPU_ADMIN_PASSWORD = $env:IPPU_PASSWORD
 node ..\..\..\..\herramientas\verificar_contraste_ui.js   # PRIMERO: sólo lee, nunca escribe en la API; --tabla lista los pares
@@ -135,6 +138,9 @@ proceso lo frena (no mata lo ajeno). Parámetros: `-Base`, `-PuertoApi`, `-Puert
   alcance = 404 (§5.101, §5.118). Frontend del 26/11 = la demo HTML (§5.106).
 
 ## Verificación — reglas de higiene
+- **Las sesiones corren `conectada.js` con `herramientas/correr_conectada.ps1`** (§5.167 d), no con una receta propia: recrea la base descartable
+  y su carpeta de archivos, levanta la API y la demo sin pipe, pide que la máquina no se suspenda, muestrea memoria y sockets cada 5 s y deja por
+  corrida la salida, los logs y las muestras fuera del repo. Una corrida colgada o abortada vuelca los pedidos en vuelo y las últimas 20 líneas de consola.
 - **Contraste:** la documentación **no afirma cantidades ni ratios** (cuántos pares, entre qué valores): se escribe «ningún par
   falla» (línea base, §5.135) y «todo par nuevo ≥ 4,5:1». Los conteos de chequeos (`181/181`) van en `handoff.md` y la bitácora;
   los ratios, en el comentario de CSS junto al token. Las demás cifras que cambian (tests, tablas) no se escriben acá: las lleva

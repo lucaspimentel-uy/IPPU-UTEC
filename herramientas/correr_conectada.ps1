@@ -15,6 +15,8 @@
     5. guarda en <Salida>\corrida-NN\: conectada.txt (stdout y stderr juntos, incluye el diagnostico si hubo), api.log, demo.log,
        preparar.log, muestras.csv (y contraste.txt);
     6. detiene lo que arranco (preparar_presentacion.ps1 -Detener).
+  Mientras corre pide a Windows que la maquina no se suspenda (SetThreadExecutionState); aun asi la tabla informa las suspensiones
+  (eventos Kernel-Power 42 durante la corrida) y la pausa mas larga entre muestras.
   Al final imprime una tabla (corrida, resultado, chequeos que fallan, duracion, memoria libre minima, TIME_WAIT maximo) y la guarda
   en <Salida>\resumen.txt. Resultado: OK | FALLA (algun chequeo) | ABORTADA (el script se cayo o venció el tope) | PREPARACION.
 
@@ -32,7 +34,8 @@
 .PARAMETER Salida
   Carpeta de salida, FUERA del repo. Por omision %TEMP%\ippu-correr-conectada\<fecha-hora>.
 .PARAMETER ServidorDemo
-  http.server (por omision) | http11 | cola128: ver preparar_presentacion.ps1 (medicion, §5.167 f).
+  http.server | http11 | cola128: ver preparar_presentacion.ps1 (medicion, §5.167 f). Vacio (por omision): el que sirve la demo en
+  preparar_presentacion.ps1 por omision, para verificar lo mismo que se presenta.
 .PARAMETER LimiteMinutos
   Tope de cada corrida de conectada.js. Por omision 30.
 .PARAMETER MuestreoSegundos
@@ -49,7 +52,7 @@ param(
   [ValidateRange(1, 100)][int]$Corridas = 1,
   [string]$Base = 'ippu_ver',
   [string]$Salida = '',
-  [ValidateSet('http.server', 'http11', 'cola128')][string]$ServidorDemo = 'http.server',
+  [ValidateSet('', 'http.server', 'http11', 'cola128')][string]$ServidorDemo = '',
   [ValidateRange(1, 240)][int]$LimiteMinutos = 30,
   [ValidateRange(1, 120)][int]$MuestreoSegundos = 5,
   [switch]$ConContraste
@@ -109,6 +112,14 @@ foreach ($par in @(@('API', $PuertoApi), @('demo', $PuertoDemo))) {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
+# Que la maquina no se suspenda mientras corre (§5.167 d). El 2026-11-10 una corrida quedo colgada 40 minutos: Chromium registro
+# ERR_NETWORK_IO_SUSPENDED y el registro de Windows, un Kernel-Power 42 (entrada en suspension) con la maquina sin teclado ni mouse.
+# ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED sobre este hilo; se restituye al terminar.
+# ---------------------------------------------------------------------------------------------------------------
+Add-Type -Namespace IppuWin -Name Energia -MemberDefinition '[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern uint SetThreadExecutionState(uint estado);'
+$null = [IppuWin.Energia]::SetThreadExecutionState([uint32]2147483651)
+
+# ---------------------------------------------------------------------------------------------------------------
 # Muestreo
 # ---------------------------------------------------------------------------------------------------------------
 $cMem = New-Object System.Diagnostics.PerformanceCounter('Memory', 'Available MBytes')
@@ -157,7 +168,7 @@ function Correr-Muestreando([string]$Linea, [string]$Carpeta, [string]$Archivo, 
     $Muestras.Add((Tomar-Muestra $Corrida $script:InicioCorrida)) | Out-Null
     if (((Get-Date) - $inicio).TotalMinutes -gt ($TopeMin + 1)) {
       $vencio = $true
-      & taskkill /PID $cmd.Id /T /F 2>&1 | Out-Null
+      & cmd.exe /d /c "taskkill /PID $($cmd.Id) /T /F >nul 2>&1"      # por cmd: un proceso que ya murio no es un error
       $null = $cmd.WaitForExit(10000)
       break
     }
@@ -183,7 +194,7 @@ function Detener-Lo-Arrancado([string]$Archivo) {
 # Corridas
 # ---------------------------------------------------------------------------------------------------------------
 $ramaTxt = (& git -C $Repo rev-parse --abbrev-ref HEAD 2>$null); $commitTxt = (& git -C $Repo rev-parse --short HEAD 2>$null)
-Write-Host "correr_conectada: $Corridas corrida(s) · base $Base · API :$PuertoApi · demo :$PuertoDemo ($ServidorDemo) · rama $ramaTxt · commit $commitTxt"
+Write-Host "correr_conectada: $Corridas corrida(s) · base $Base · API :$PuertoApi · demo :$PuertoDemo ($(if ($ServidorDemo) { $ServidorDemo } else { 'servidor por omision' })) · rama $ramaTxt · commit $commitTxt"
 Write-Host "salida: $Salida"
 
 $envGuardado = @{}
@@ -199,7 +210,7 @@ try {
     $resultado = 'OK'; $fallan = ''; $contraste = '-'
     Paso "Corrida $n de $Corridas"
 
-    $codPrep = Correr-Preparar @('-Base', $Base, '-PuertoApi', "$PuertoApi", '-ServidorDemo', $ServidorDemo) (Join-Path $dir 'preparar.log')
+    $codPrep = Correr-Preparar (@('-Base', $Base, '-PuertoApi', "$PuertoApi") + $(if ($ServidorDemo) { @('-ServidorDemo', $ServidorDemo) } else { @() })) (Join-Path $dir 'preparar.log')
     if ($codPrep -ne 0) {
       $resultado = 'PREPARACION'; $fallan = "preparar_presentacion.ps1 salio con $codPrep (ver preparar.log)"
       Write-Host "  $fallan" -ForegroundColor Red
@@ -221,7 +232,7 @@ try {
       $ids = @([regex]::Matches($txt, '(?m)^FAIL\s+\(([^)]+)\)') | ForEach-Object { $_.Groups[1].Value })
       $fallan = $ids -join ','
       if ($r.codigo -eq 0) { $resultado = 'OK' }
-      elseif ($r.vencio -or $txt -match 'DIAGN.STICO' -or -not $ids.Count) { $resultado = 'ABORTADA' }
+      elseif ($r.vencio -or $txt -cmatch '===== DIAGN.STICO' -or -not $ids.Count) { $resultado = 'ABORTADA' }
       else { $resultado = 'FALLA' }
       Write-Host "  conectada.js: $resultado (codigo $($r.codigo))$(if ($fallan) { ' · fallan: ' + $fallan })"
     }
@@ -235,11 +246,17 @@ try {
     $libreMin = if ($muestras.Count) { ($muestras | Measure-Object -Property libre_mb -Minimum).Minimum } else { '-' }
     $twDemo = if ($muestras.Count) { ($muestras | Measure-Object -Property demo_time_wait -Maximum).Maximum } else { '-' }
     $twApi = if ($muestras.Count) { ($muestras | Measure-Object -Property api_time_wait -Maximum).Maximum } else { '-' }
+    # Pausas: huecos entre muestras de mas de 3 intervalos (la maquina se detuvo o se colgo el muestreo). Suspensiones: eventos Kernel-Power 42 en la corrida.
+    $pausaMax = 0
+    for ($k = 1; $k -lt $muestras.Count; $k++) { $pausaMax = [math]::Max($pausaMax, $muestras[$k].seg - $muestras[$k - 1].seg) }
+    if ($pausaMax -le (3 * $MuestreoSegundos)) { $pausaMax = 0 }
+    $susp = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Microsoft-Windows-Kernel-Power'; Id = 42; StartTime = $script:InicioCorrida } -ErrorAction SilentlyContinue).Count
     $filas.Add([pscustomobject][ordered]@{ Corrida = $n; Resultado = $resultado; Fallan = $(if ($fallan) { $fallan } else { '-' }); Contraste = $contraste
-        Duracion_s = $dur; Libre_min_MB = $libreMin; TW_max_demo = $twDemo; TW_max_api = $twApi; Muestras = $muestras.Count })
+        Duracion_s = $dur; Libre_min_MB = $libreMin; TW_max_demo = $twDemo; TW_max_api = $twApi; Pausa_max_s = $pausaMax; Suspensiones = $susp; Muestras = $muestras.Count })
   }
 }
 finally {
+  $null = [IppuWin.Energia]::SetThreadExecutionState([uint32]2147483648)
   foreach ($v in $envGuardado.Keys) { [Environment]::SetEnvironmentVariable($v, $envGuardado[$v], 'Process') }
   # Lo que arranco este script, abajo, pase lo que pase (Ctrl-C incluido). Los puertos tienen que quedar libres.
   Detener-Lo-Arrancado (Join-Path $Salida 'detener-final.log')
@@ -248,7 +265,7 @@ finally {
 Paso 'Resumen'
 $tabla = ($filas | Format-Table -AutoSize | Out-String -Width 200).TrimEnd()
 Write-Host $tabla
-$cabecera = "correr_conectada · rama $ramaTxt · commit $commitTxt · base $Base · servidor de la demo: $ServidorDemo · $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+$cabecera = "correr_conectada · rama $ramaTxt · commit $commitTxt · base $Base · servidor de la demo: $(if ($ServidorDemo) { $ServidorDemo } else { 'el de preparar_presentacion.ps1 por omision' }) · $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 Set-Content -Path (Join-Path $Salida 'resumen.txt') -Value ($cabecera + "`r`n`r`n" + $tabla) -Encoding UTF8
 $filas | Export-Csv -Path (Join-Path $Salida 'resumen.csv') -NoTypeInformation -Encoding UTF8
 foreach ($par in @(@('API', $PuertoApi), @('demo', $PuertoDemo))) {
