@@ -37,9 +37,9 @@
   base (las descartables de verificacion) la rama y el commit solo se imprimen.
 .PARAMETER ServidorDemo
   Con que servidor se sirve la demo (§5.167 f, MEDICION; la presentacion usa el valor por omision):
-    http.server  `python -m http.server` (HTTP/1.0, cola de 5 conexiones). Por omision.
+    http.server  `python -m http.server` (HTTP/1.0, cola de 5 conexiones). El de antes de §5.167 g.
     http11       `python -m http.server --protocol HTTP/1.1`.
-    cola128      herramientas\servidor_demo.py: lo mismo que http.server pero con la cola en 128.
+    cola128      herramientas\servidor_demo.py: lo mismo que http.server pero con la cola en 128. Por omision (§5.167 g).
 .PARAMETER Detener
   Detiene la API y la demo que arranco este script (no toca la base) y termina. Informa los puertos que realmente
   detuvo (los de la corrida que los arranco, no los de -PuertoApi / -PuertoDemo de esta llamada).
@@ -55,7 +55,7 @@ param(
   [int]$PuertoDemo = 5500,
   [Parameter(ParameterSetName = 'Preparar')][switch]$ConfirmarBaseDeTrabajo,
   [Parameter(ParameterSetName = 'Preparar')][switch]$PermitirOtraRama,
-  [Parameter(ParameterSetName = 'Preparar')][ValidateSet('http.server', 'http11', 'cola128')][string]$ServidorDemo = 'http.server',
+  [Parameter(ParameterSetName = 'Preparar')][ValidateSet('http.server', 'http11', 'cola128')][string]$ServidorDemo = 'cola128',
   [Parameter(ParameterSetName = 'Detener', Mandatory = $true)][switch]$Detener
 )
 
