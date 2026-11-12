@@ -1,4 +1,5 @@
-"""Servidor mínimo de la demo con cola de conexiones grande (§5.167 f). Es una VARIANTE para medir, no el servidor de la presentación.
+"""Servidor mínimo de la demo con cola de conexiones grande (§5.167 f, g). Nació como una variante para medir; desde §5.167 g es el
+servidor por omisión de la demo de la presentación (`herramientas/preparar_presentacion.ps1 -ServidorDemo cola128`) y el de `CLAUDE.md`.
 
 `python -m http.server` es un ThreadingHTTPServer con `request_queue_size = 5` (el valor de socketserver.TCPServer): Chromium abre
 hasta 6 conexiones en paralelo por página y, con la cola llena, Windows contesta RST (ERR_CONNECTION_REFUSED). Esto es lo mismo

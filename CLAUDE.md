@@ -81,8 +81,9 @@ uvicorn app.main:app --port 8001         # docs: http://127.0.0.1:8001/docs · /
 $env:PYTHONUTF8 = "1"; $env:IPPU_EMAIL = "admin@demo.ippu.test"; $env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"
 python -m app.seed_demo --url http://127.0.0.1:8001
 
-# 5 · Demo en el navegador (otra terminal; no sirve por file://, la API sólo acepta el origen :5500)
-cd ..\demo; python -m http.server 5500 --bind 127.0.0.1   # sólo esta máquina · http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8001 · gonzalez@demo.ippu.test
+# 5 · Demo en el navegador (otra terminal; no sirve por file://, la API sólo acepta el origen :5500). Se corre desde la RAÍZ del repo,
+#     con el servidor de cola 128 (§5.167 g), no con `python -m http.server` (cola de 5: Chromium recibe ERR_CONNECTION_REFUSED en una ráfaga)
+cd ..\..\..; python herramientas\servidor_demo.py 5500 --bind 127.0.0.1 --directory implementacion\L1-hce-idea\demo   # sólo esta máquina · http://127.0.0.1:5500/index.html?api=http://127.0.0.1:8001 · gonzalez@demo.ippu.test
 
 # 6 · Verificación. LO NORMAL ES EL RUNNER (§5.167 d): hace los pasos 2 a 4 y 6 por vos, muestrea memoria y sockets y guarda todo fuera del repo.
 #     Con IPPU_PASSWORD e IPPU_DEMO_PASSWORD en la terminal, desde la raíz (directo o con *> a un archivo, nunca por un pipe):
