@@ -4,6 +4,22 @@ Herramientas de Playwright (Chromium headless) que prueban la demo **contra una 
 —base descartable, API en `:8001`, demo en `:5500`— está **una sola vez** en `CLAUDE.md`, sección «Cómo correr»;
 acá va el uso de cada herramienta.
 
+**Para correr `conectada.js` (y medir el contraste) se usa el runner `herramientas/correr_conectada.ps1`** (§5.167 d), no una receta a mano:
+recrea la base descartable y su carpeta de archivos, levanta la API (`:8001`) y la demo con `preparar_presentacion.ps1 -Base ippu_ver
+-PuertoApi 8001`, corre la herramienta, muestrea cada 5 s la memoria disponible, las conexiones TCP por estado y la memoria de node y
+python, guarda por corrida la salida, los logs y las muestras **fuera del repo**, imprime una tabla y detiene todo lo que arrancó.
+Una falla se lee con lo que deja: el volcado de diagnóstico de `conectada.js` y las muestras de esa corrida.
+
+```powershell
+$env:IPPU_PASSWORD = "<clave del admin>"; $env:IPPU_DEMO_PASSWORD = "<clave de los técnicos>"
+powershell -ExecutionPolicy Bypass -File herramientas\correr_conectada.ps1 -Corridas 2 -ConContraste *> $env:TEMP\correr.txt   # nunca por un pipe
+```
+
+Parámetros: `-Corridas` · `-Base` (descartable; se niega con `ippu`, `ippu_test` e `ippu_presentacion`) · `-Salida` (por omisión
+`%TEMP%\ippu-correr-conectada\<fecha-hora>`; se niega dentro del repo) · `-ConContraste` (mide el contraste sobre la base recién cargada,
+antes de que `conectada.js` escriba) · `-LimiteMinutos` · `-MuestreoSegundos` · `-ServidorDemo` (medición, §5.167 f). Si hay una
+presentación preparada sobre otra base, no corre. En cada `corrida-NN\`: `conectada.txt`, `api.log`, `demo.log`, `preparar.log`, `muestras.csv`.
+
 | Herramienta | Para qué | ¿Escribe en la API? |
 |---|---|---|
 | `conectada.js` | Prueba de punta a punta de las pantallas conectadas | **Sí** |
@@ -30,7 +46,7 @@ npx playwright install chromium # una vez por máquina y por versión de Playwri
 recibí, crean la VF). Los conteos del principio son los del seed recién cargado, así que **cada corrida pide una base
 nueva** y ambas se niegan a correr sin `CONFIRMA_BASE_DESCARTABLE=1`: salen con exit 1 **antes de pedirle nada a la
 API**. Ponerla es afirmar que la base es la descartable y no la de trabajo ni la de la presentación.
-Receta: `CLAUDE.md`, «Cómo correr», pasos 2 a 4 (con `DATABASE_URL` en la misma terminal, antes de `alembic` y del seed). **Todo por
+Receta a mano (el runner de arriba la hace por vos): `CLAUDE.md`, «Cómo correr», pasos 2 a 4 (con `DATABASE_URL` en la misma terminal, antes de `alembic` y del seed). **Todo por
 `127.0.0.1`, no `localhost`** (§5.166): el `DATABASE_URL`, el `API=` y el `DEMO=` de las herramientas (que ya lo traen por omisión).
 Entre una corrida y la siguiente: parar la API y repetir esos pasos.
 
@@ -44,6 +60,10 @@ node conectada.js
 
 Sale con 0 si pasa todo y con 1 si algo falla o si la API o la demo no están arriba. Cada chequeo se imprime con su
 identificador y nombre.
+
+**Si la corrida se cuelga o se aborta** (un timeout, un error del script, `SIGINT`/`SIGTERM` o el tope `CONECTADA_LIMITE_MS` que pone el
+runner), antes de salir vuelca por stderr un `DIAGNÓSTICO`: el último chequeo registrado, los **pedidos en vuelo** (método, URL, desde cuándo),
+los archivos de la demo que fallaron (con la hora y el chequeo anterior) y las **últimas 20 líneas de consola**. Con eso se ve qué estaba esperando.
 
 - `IPPU_DEMO_PASSWORD`: contraseña de los técnicos de la demo (la del seed). `IPPU_DEMO_EMAIL` (opcional): por omisión
   `gonzalez@demo.ippu.test`.
@@ -72,9 +92,9 @@ El **prefijo** del identificador es la fase que lo introdujo:
 | `f2-` | Pendientes y Grupos conectados (F2): `GET /recordatorios`; las filas de Pendientes contra el `ci`/`flujo` de `GET /hce`, filtros con su conteo y los dos botones de Inicio; Grupos del técnico y del admin contra `GET /grupos`, integrantes idénticos a los del listado, «Salir» con una respuesta en vuelo, WCAG 2.5.8 / 2.4.11 y celdas sin recortar a 1024 y 1280; **`f2-asignar` ESCRIBE** (asigna técnicos a Inicial desde el diálogo: 200, 422 junto al campo, descarte) y va al final |
 | `c7-` | Panel institucional (C7): cada número de la pantalla contra `GET /panel?anio=` (sólo formato), el selector de año (`?anio=`; el año anterior sin enlaces a Pendientes), los recordatorios de `GET /recordatorios` (una cuenta abre Pendientes con su filtro), `c7-sin-calculo` (una respuesta simulada con números incoherentes: la pantalla los muestra tal cual), error con «Reintentar», sólo el heatmap en demostración, «Salir» con la respuesta en vuelo; **`c7-alcance` ESCRIBE** (saca a la Mtra. Torres de sus grupos para tener un técnico sin grupo: n 0 y estados vacíos) y va al final |
 | `sec-` | Auditoría de seguridad (§5.157 b): con una sesión abierta, `?api=` a un servidor espía en `127.0.0.1:9999` (que contesta el preflight) no le manda ningún `Authorization` y el login muestra a qué API iría la contraseña; un host que no es `localhost` ni `127.0.0.1` se ignora; con el `?api=` de la corrida entra y una recarga conserva la sesión. **Necesita el puerto 9999 libre** |
-| `carga-` | La página que no carga completa (§5.166 c): se aborta a propósito `js/expediente.js` con `route.abort`. **Una carga completa** no muestra el aviso y no deja la marca `ippu.cargaReintento`; **si falla sólo la primera vez** hay una recarga automática (el módulo se pide dos veces), no hay aviso y la sesión arranca; **si falla siempre** queda el aviso «La página no cargó completa. Recargá para seguir.» (`role="alert"`, el módulo faltante en `data-faltan`), el login inerte, ningún pedido a la API, «Recargar» con el foco, alcanzable con Tab y operable con Enter; y cuando el archivo vuelve, «Recargar» completa la carga y borra la marca |
+| `carga-` | La página que no carga completa (§5.166 c): se aborta a propósito `js/expediente.js` con `route.abort`. **Una carga completa** no muestra el aviso y no deja la marca `ippu.cargaReintento`; **si falla sólo la primera vez** hay una recarga automática (el módulo se pide dos veces), no hay aviso y la sesión arranca; **si falla siempre** queda el aviso «La página no cargó completa. Recargá para seguir.» (`role="alert"`, la lista de lo que falta en `data-faltan` **incluye** `expediente.js`: si por un fallo de red real cayó otro archivo, aparece también y `z-carga` lo cuenta), el login inerte, ningún pedido a la API, «Recargar» con el foco, alcanzable con Tab y operable con Enter; y cuando el archivo vuelve, «Recargar» completa la carga y borra la marca. **La hoja de estilos** (§5.167 a, `carga-css-*`): `index.html` lee `--ink` (la define `:root` de `css/estilos.css`) y trata la hoja como un módulo más: si falta la primera vez, una recarga y todo normal; si falta siempre, el aviso —que lleva su estilo mínimo en línea y es legible sin la hoja— con `css/estilos.css` en `data-faltan`; y cuando la hoja vuelve, «Recargar» completa la carga |
 | `z` | Cero errores de JavaScript en toda la corrida (descarta el texto «Failed to load resource»: es el 4xx/5xx esperado de la API) |
-| `z-carga` | Ningún archivo estático de la demo falló al cargar: un `requestfailed` de un pedido al origen de la demo (`index.html`, `js/`, `css/`) falla la corrida con el nombre del archivo y el error (§5.166 d). Las páginas de `carga-` no cuentan: ahí el aborto es a propósito |
+| `z-carga` | Ningún archivo estático de la demo falló al cargar: un `requestfailed` de un pedido al origen de la demo (`index.html`, `js/`, `css/`) falla la corrida con el nombre del archivo, el error, la hora y el chequeo que acababa de registrarse (§5.166 d, §5.167 e). En las páginas de `carga-` sólo se descuenta el archivo que se aborta a propósito: otro que falle, cuenta |
 
 ## `capturas.js`
 
@@ -107,7 +127,7 @@ el resultado crudo. Sale con 1 si falla algo en una pantalla conectada, si falla
   se aborta y termina la corrida con código 1 nombrándolo. Al final imprime los contadores; con `VERIFICAR_AUTOPRUEBA=1`
   prueba el filtro (un `POST` sin ruta debe terminar en código 1).
 - Se mide sobre una base **recién cargada** y **antes** de `conectada.js`, que firma lo que el seed deja en borrador. Mide también el aviso
-«La página no cargó completa» (con `js/expediente.js` abortado) y el anillo de su botón «Recargar»; un `requestfailed` de un archivo de la demo
+«La página no cargó completa» (con `js/expediente.js` abortado y, aparte, con `css/estilos.css` abortada: ahí mide sólo el aviso, que lleva su estilo en línea, §5.167 a) y el anillo de su botón «Recargar»; un `requestfailed` de un archivo de la demo
 invalida la medición y sale con 1.
 
 ## `fingerprint.js` y `comparar.js` — que un refactor no cambie las vistas en modo demostración

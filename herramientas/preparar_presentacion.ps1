@@ -21,6 +21,8 @@
 
   Los servidores escriben su salida en %TEMP%\ippu-presentacion-api.log y %TEMP%\ippu-presentacion-demo.log (stdout y stderr juntos).
 
+  Correrlo DIRECTO o con `*> archivo`, nunca por un pipe (`| Tee-Object`, `| Out-String`...; §5.167 c): se vio colgado asi.
+
 .PARAMETER Base
   Nombre de la base a recrear. Por omision `ippu_presentacion`.
 .PARAMETER PuertoApi
@@ -29,6 +31,15 @@
   Puerto de la demo HTML. Por omision 5500 (el que permite el CORS de la API; con otro, el script lo ajusta).
 .PARAMETER ConfirmarBaseDeTrabajo
   Necesario para operar sobre la base `ippu` (la de trabajo del .env). Borra todo lo que tenga.
+.PARAMETER PermitirOtraRama
+  Con -Base ippu_presentacion (la base REAL de la presentacion) el script se niega a correr si la rama no es `main`, ANTES de tocar Docker
+  o la base (§5.167 b): una recarga hecha desde `hce-post26` mostraria trabajo nuevo a IPPU. Este parametro lo permite. Con cualquier otra
+  base (las descartables de verificacion) la rama y el commit solo se imprimen.
+.PARAMETER ServidorDemo
+  Con que servidor se sirve la demo (§5.167 f, MEDICION; la presentacion usa el valor por omision):
+    http.server  `python -m http.server` (HTTP/1.0, cola de 5 conexiones). El de antes de §5.167 g.
+    http11       `python -m http.server --protocol HTTP/1.1`.
+    cola128      herramientas\servidor_demo.py: lo mismo que http.server pero con la cola en 128. Por omision (§5.167 g).
 .PARAMETER Detener
   Detiene la API y la demo que arranco este script (no toca la base) y termina. Informa los puertos que realmente
   detuvo (los de la corrida que los arranco, no los de -PuertoApi / -PuertoDemo de esta llamada).
@@ -43,6 +54,8 @@ param(
   [int]$PuertoApi = 8000,
   [int]$PuertoDemo = 5500,
   [Parameter(ParameterSetName = 'Preparar')][switch]$ConfirmarBaseDeTrabajo,
+  [Parameter(ParameterSetName = 'Preparar')][switch]$PermitirOtraRama,
+  [Parameter(ParameterSetName = 'Preparar')][ValidateSet('http.server', 'http11', 'cola128')][string]$ServidorDemo = 'cola128',
   [Parameter(ParameterSetName = 'Detener', Mandatory = $true)][switch]$Detener
 )
 
@@ -68,7 +81,8 @@ function Nativo([scriptblock]$Bloque) {
 # Arranca un servidor con stdout y stderr a un archivo, SIN heredar los handles de quien llama. Con
 # `Start-Process -RedirectStandardOutput` el hijo hereda igual los handles heredables del padre: si la salida de este
 # script esta capturada (pipe o redireccion de una herramienta automatica), la captura no termina hasta que el servidor
-# muere. Sin -Redirect*, Start-Process usa ShellExecute, que no hereda handles; la redireccion la hace cmd.exe. El entorno
+# muere. Sin -Redirect*, Start-Process usa ShellExecute, que no hereda handles; la redireccion la hace cmd.exe. Aun asi el script
+# se corre DIRECTO o con `*>` a un archivo, nunca por un pipe: una sesion lo vio colgado (§5.167 c). El entorno
 # (DATABASE_URL, CORS_ORIGINS...) se hereda del proceso, como antes. El PID devuelto es el de cmd.exe: `taskkill /T` baja el arbol.
 function Iniciar-Servidor([string[]]$Argumentos, [string]$Carpeta, [string]$Log) {
   $linea = (@("`"$Python`"") + $Argumentos) -join ' '
@@ -143,6 +157,16 @@ if ($Base -eq 'ippu' -and -not $ConfirmarBaseDeTrabajo) {
   Parar "-Base ippu es la base de TRABAJO del .env: se borraria todo lo que tiene. Si es lo que queres, agrega -ConfirmarBaseDeTrabajo."
 }
 if ($PuertoApi -eq $PuertoDemo) { Parar 'La API y la demo no pueden usar el mismo puerto.' }
+
+# Rama y commit (§5.167 b): se imprimen al empezar y en el resumen final. La base REAL de la presentacion solo se recarga desde `main`
+# (lo que se muestra a IPPU es lo de main; el trabajo nuevo vive en hce-post26). Va ANTES de cualquier accion de Docker o de base.
+$salidaGit = @(Nativo { git -C $Repo rev-parse --abbrev-ref HEAD }); $Rama = if ($LASTEXITCODE -eq 0 -and $salidaGit.Count) { "$($salidaGit[0])".Trim() } else { '(desconocida)' }
+$salidaGit = @(Nativo { git -C $Repo rev-parse --short HEAD }); $Commit = if ($LASTEXITCODE -eq 0 -and $salidaGit.Count) { "$($salidaGit[0])".Trim() } else { '(desconocido)' }
+Write-Host "Rama: $Rama · commit: $Commit · base: $Base"
+if ($Base -eq 'ippu_presentacion' -and $Rama -ne 'main' -and -not $PermitirOtraRama) {
+  Parar "-Base ippu_presentacion es la base REAL de la presentacion y la rama es '$Rama', no 'main': no toque Docker ni la base. Cambia a main (git switch main) o, si es lo que queres, agrega -PermitirOtraRama."
+}
+if ($Base -eq 'ippu_presentacion' -and $Rama -ne 'main') { Write-Host "  ATENCION: la base de la presentacion se recarga desde '$Rama' (no main), por -PermitirOtraRama." -ForegroundColor Yellow }
 
 $EmailAdmin = if ($env:IPPU_EMAIL) { $env:IPPU_EMAIL } else { 'admin@demo.ippu.test' }
 foreach ($nombre in 'IPPU_PASSWORD', 'IPPU_DEMO_PASSWORD') {
@@ -260,7 +284,12 @@ try {
   # 6 · La demo HTML
   # -------------------------------------------------------------------------------------------------------------
   Paso "Demo HTML en :$PuertoDemo"
-  $web = Iniciar-Servidor @('-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1') $Demo $LogDemo
+  $argsDemo = switch ($ServidorDemo) {
+    'http11'  { @('-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1', '--protocol', 'HTTP/1.1') }
+    'cola128' { @(('"' + (Join-Path $Repo 'herramientas\servidor_demo.py') + '"'), $PuertoDemo, '--bind', '127.0.0.1', '--directory', $Demo) }
+    default   { @('-m', 'http.server', $PuertoDemo, '--bind', '127.0.0.1') }
+  }
+  $web = Iniciar-Servidor $argsDemo $Demo $LogDemo
   @{ api = @{ pid = $api.Id; inicio = $api.StartTime.ToString('o'); puerto = $PuertoApi }; demo = @{ pid = $web.Id; inicio = $web.StartTime.ToString('o'); puerto = $PuertoDemo }; base = $Base } |
     ConvertTo-Json | Set-Content $Estado -Encoding UTF8
   $listo = $false
@@ -269,7 +298,7 @@ try {
     Start-Sleep -Milliseconds 500
   }
   if (-not $listo) { throw "La demo no respondio en el puerto $PuertoDemo. Mirar $LogDemo" }
-  Write-Host "  index.html: ok (PID $($web.Id))"
+  Write-Host "  index.html: ok (PID $($web.Id), servidor: $ServidorDemo)"
 }
 catch {
   Write-Host "`nERROR: $($_.Exception.Message)" -ForegroundColor Red
@@ -287,6 +316,7 @@ if ($fallo) { exit 1 }
 # 7 · Listo
 # ---------------------------------------------------------------------------------------------------------------
 Write-Host "`n== Presentacion lista (base '$Base')" -ForegroundColor Green
+Write-Host "  Rama:        $Rama · commit $Commit"
 # 127.0.0.1 y no localhost, tambien para el navegador (§5.166 b): evita el intento por ::1. El CORS y API_HOSTS_PERMITIDOS lo aceptan.
 Write-Host "  Demo:        http://127.0.0.1:$PuertoDemo/index.html?api=http://127.0.0.1:$PuertoApi"
 Write-Host "  API (docs):  http://127.0.0.1:$PuertoApi/docs"

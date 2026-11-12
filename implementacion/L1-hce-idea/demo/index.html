@@ -449,6 +449,12 @@
   ];
   var faltan = [];
   for (var i = 0; i < modulos.length; i++) if (modulos[i][1] !== modulos[i][2]) faltan.push(modulos[i][0]);
+  /* La hoja de estilos (§5.167 a): --ink la define :root de css/estilos.css y no existe en ningún otro lado. El <link> del <head> bloquea
+     la ejecución de este script hasta que la hoja llegó o falló, así que a esta altura la propiedad está o no está. Sin ella la página
+     arrancaría sin estilo y sin aviso. Mismo trato que un módulo: una recarga y, si sigue faltando, el aviso. */
+  var cssOk = true;
+  try { cssOk = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() !== ""; } catch (_e) { cssOk = true; }
+  if (!cssOk) faltan.push("css/estilos.css");
   if (!faltan.length) {
     try { sessionStorage.removeItem(K); } catch (_e) { /* sin sessionStorage: no hay marca que borrar */ }
     arrancarSesion();
@@ -463,6 +469,15 @@
   if (!reintentado) { location.reload(); return; }
   var aviso = document.getElementById("cargaIncompleta");
   aviso.setAttribute("data-faltan", faltan.join(" "));
+  if (!cssOk) {
+    /* Sin estilos.css las clases del aviso no dicen nada: se le pone lo mínimo en línea para que se lea y se pueda operar (tapa la
+       página, tinta sobre papel, botón oscuro con letra blanca; los colores son los de --ink, --bg, --paper). Con la hoja, no se toca. */
+    var hijos = aviso.querySelectorAll("p, button"), caja = aviso.firstElementChild;
+    aviso.style.cssText = "position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;background:#EFF2F4;color:#16232C;font:15px/1.5 'Segoe UI',system-ui,Arial,sans-serif";
+    caja.style.cssText = "box-sizing:border-box;width:100%;max-width:392px;padding:16px;background:#FFFFFF;color:#16232C;border:1px solid #16232C;border-radius:8px";
+    hijos[0].style.cssText = "margin:0 0 12px";
+    hijos[1].style.cssText = "font:inherit;font-weight:600;padding:8px 16px;background:#16232C;color:#FFFFFF;border:0;border-radius:6px;cursor:pointer";
+  }
   var login = document.getElementById("loginScreen");
   login.inert = true;                           // el aviso lo tapa: que Tab y los lectores no lleguen al formulario de atrás
   aviso.hidden = false;

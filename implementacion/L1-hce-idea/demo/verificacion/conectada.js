@@ -34,14 +34,54 @@ function check(id, nombre, ok, detalle) {
    Antes la corrida no se enteraba: el navegador lo deja en la consola como «Failed to load resource» y el chequeo z descarta ese texto
    (es lo esperado para un 4xx/5xx de la API). Un módulo que falta se ve como un clic que no manda ningún pedido. Ver el chequeo z-carga. */
 const cargasFallidas = [];
-function vigilarCarga(page) {
+const hora = (t = Date.now()) => new Date(t).toISOString().slice(11, 23);
+/* §5.167 e: cada archivo que falló lleva la hora y el id del último chequeo que se había registrado (el que corría es el siguiente).
+   `ignorar` (RegExp sobre la URL) deja afuera el archivo que una prueba aborta A PROPÓSITO: cualquier OTRO que falle sí se informa. */
+function vigilarCarga(page, ignorar = null) {
   page.on('requestfailed', (r) => {
     let u; try { u = new URL(r.url()); } catch { return; }
     if (u.origin !== new URL(DEMO).origin) return;
+    if (ignorar && ignorar.test(r.url())) return;
     const f = r.failure();
-    cargasFallidas.push(`${u.pathname}${u.search} (${f ? f.errorText : 'sin detalle'})`);
+    const ult = resultados.length ? resultados[resultados.length - 1].id : 'inicio';
+    cargasFallidas.push(`${u.pathname}${u.search} (${f ? f.errorText : 'sin detalle'}) a las ${hora()} tras el chequeo «${ult}»`);
   });
 }
+
+/* §5.167 e · Diagnóstico de una corrida que se cuelga o se aborta. Todo contexto del navegador registra los pedidos en vuelo (método, URL,
+   desde cuándo) y las últimas 20 líneas de consola; si la corrida termina por un timeout o un error del script, se vuelcan antes de salir.
+   CONECTADA_LIMITE_MS (opcional, lo pone herramientas/correr_conectada.ps1): tope de la corrida; al vencer vuelca y sale con 1. */
+const enVuelo = new Map();                       // request -> {ctx, metodo, url, desde}
+const ultimaConsola = [];
+function vigilarContexto(ctx) {
+  ctx.on('request', (r) => enVuelo.set(r, { ctx, metodo: r.method(), url: r.url(), desde: Date.now() }));
+  ctx.on('requestfinished', (r) => enVuelo.delete(r));
+  ctx.on('requestfailed', (r) => enVuelo.delete(r));
+  ctx.on('console', (m) => { ultimaConsola.push(`${hora()} [${m.type()}] ${m.text().replace(/\s+/g, ' ').slice(0, 300)}`); if (ultimaConsola.length > 20) ultimaConsola.shift(); });
+  ctx.on('weberror', (w) => { ultimaConsola.push(`${hora()} [pageerror] ${String(w.error().message).replace(/\s+/g, ' ').slice(0, 300)}`); if (ultimaConsola.length > 20) ultimaConsola.shift(); });
+  ctx.on('close', () => { for (const [r, v] of enVuelo) if (v.ctx === ctx) enVuelo.delete(r); });   // lo que quedó de un contexto cerrado ya no está en vuelo
+}
+let diagnosticoVolcado = false;
+function volcarDiagnostico(motivo) {
+  if (diagnosticoVolcado) return; diagnosticoVolcado = true;
+  const ahora = Date.now();
+  const l = [`\n===== DIAGNÓSTICO (${motivo}) a las ${hora(ahora)} =====`];
+  const ult = resultados.length ? resultados[resultados.length - 1].id : 'ninguno';
+  l.push(`último chequeo registrado: «${ult}» (${resultados.length} hasta ahora)`);
+  l.push(`pedidos en vuelo: ${enVuelo.size}`);
+  for (const v of enVuelo.values()) l.push(`  ${v.metodo} ${v.url}  desde las ${hora(v.desde)} (hace ${ahora - v.desde} ms)`);
+  l.push(`archivos estáticos que fallaron: ${cargasFallidas.length}`);
+  for (const f of cargasFallidas) l.push('  ' + f);
+  l.push(`últimas ${ultimaConsola.length} líneas de consola:`);
+  for (const c of ultimaConsola) l.push('  ' + c);
+  l.push('===== fin del diagnóstico =====');
+  console.error(l.join('\n'));
+}
+if (process.env.CONECTADA_LIMITE_MS) {
+  setTimeout(() => { volcarDiagnostico(`tope de la corrida: CONECTADA_LIMITE_MS=${process.env.CONECTADA_LIMITE_MS}`); process.exit(1); }, +process.env.CONECTADA_LIMITE_MS).unref();
+}
+process.on('SIGINT', () => { volcarDiagnostico('SIGINT'); process.exit(1); });
+process.on('SIGTERM', () => { volcarDiagnostico('SIGTERM'); process.exit(1); });
 /* Los KPI de Inicio salen de OTRO pedido (GET /hce?limit=200) que el del listado: esperar el «Mostrando…» no garantiza que ya llegaron. */
 async function esperarKpis(page) {
   await page.waitForFunction(() => ['kpiTotal', 'kpiAlDia', 'kpiPend', 'kpiCi'].every((id) => document.getElementById(id).textContent.trim() !== '…'), null, { timeout: 8000 });
@@ -146,6 +186,8 @@ async function pantallaMotivo(page, id, opts) {
 (async () => {
   await preflight();
   const browser = await chromium.launch({ headless: !process.env.HEADED });
+  const nuevoContexto = browser.newContext.bind(browser);          // todo contexto, de donde sea que se cree, entra al diagnóstico (§5.167 e)
+  browser.newContext = async (...args) => { const c = await nuevoContexto(...args); vigilarContexto(c); return c; };
   const erroresPagina = [];
   const nuevaPagina = async () => {
     const ctx = await browser.newContext();
@@ -186,6 +228,7 @@ async function pantallaMotivo(page, id, opts) {
     // (2) falla sólo la primera vez: UNA recarga automática y la sesión arranca normal
     {
       const ctx = await browser.newContext(); const page = await ctx.newPage();
+      vigilarCarga(page, /\/js\/expediente\.js/);            // el abortado a propósito no cuenta; otro archivo caído, sí (z-carga)
       let pedidos = 0;
       await ctx.route(MOD, (route) => (pedidos++ === 0 ? route.abort() : route.continue()));
       const aApi = [];
@@ -204,6 +247,7 @@ async function pantallaMotivo(page, id, opts) {
     // (3) falta en TODAS las cargas: aviso con role="alert", «Recargar» a mano, sin sesión y sin un solo pedido a la API
     {
       const ctx = await browser.newContext(); const page = await ctx.newPage();
+      vigilarCarga(page, /\/js\/expediente\.js/);
       let pedidos = 0;
       await ctx.route(MOD, (route) => { pedidos++; return route.abort(); });
       const aApi = [];
@@ -213,8 +257,9 @@ async function pantallaMotivo(page, id, opts) {
       await page.waitForTimeout(600);                       // si arrancara la sesión, el pedido saldría en este margen
       const e = await estado(page);
       const pedidosTrasAviso = pedidos;
-      check('carga-aviso', 'si sigue faltando tras la recarga: aviso (role="alert") «La página no cargó completa. Recargá para seguir.», marca puesta, el login (inerte) no arranca la sesión y no sale ningún pedido a la API; falta = expediente.js',
-        !e.oculto && e.texto === 'La página no cargó completa. Recargá para seguir. Recargar' && e.marca === '1' && e.loginInerte && !e.token && aApi.length === 0 && pedidosTrasAviso === 2 && e.faltan === 'expediente.js',
+      // §5.167 e: la lista informada INCLUYE el archivo abortado; si por un fallo de red real cayó otro, aparece también (y z-carga lo cuenta)
+      check('carga-aviso', 'si sigue faltando tras la recarga: aviso (role="alert") «La página no cargó completa. Recargá para seguir.», marca puesta, el login (inerte) no arranca la sesión y no sale ningún pedido a la API; la lista de lo que falta incluye expediente.js',
+        !e.oculto && e.texto === 'La página no cargó completa. Recargá para seguir. Recargar' && e.marca === '1' && e.loginInerte && !e.token && aApi.length === 0 && pedidosTrasAviso === 2 && (e.faltan || '').split(' ').includes('expediente.js'),
         JSON.stringify({ pedidos: pedidosTrasAviso, ...e, api: aApi }));
       // teclado: el botón recibe el foco al aparecer; con Tab y Shift+Tab ES lo único que recibe foco (el login de atrás está inerte) y con Enter recarga
       // (una vez más: la marca ya está puesta, no hay bucle). Se recorre el ciclo con Tab; '' = el foco salió del documento (body).
@@ -235,6 +280,60 @@ async function pantallaMotivo(page, id, opts) {
       await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
       const f = await estado(page);
       check('carga-recupera', 'cuando el archivo vuelve, «Recargar» completa la carga: sin aviso, marca borrada y login funcional', f.oculto && f.marca === null && !f.loginInerte, JSON.stringify(f));
+      await ctx.close();
+    }
+
+    /* La hoja de estilos (§5.167 a): index.html lee --ink (la define :root de css/estilos.css) y la trata como un módulo más. */
+    const CSS = '**/css/estilos.css';
+    const sinHoja = (p) => p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() === '');
+
+    // (4) falla sólo la primera vez: UNA recarga, sin aviso, la hoja se aplica y la sesión arranca
+    {
+      const ctx = await browser.newContext(); const page = await ctx.newPage();
+      vigilarCarga(page, /\/css\/estilos\.css/);
+      let pedidos = 0;
+      await ctx.route(CSS, (route) => (pedidos++ === 0 ? route.abort() : route.continue()));
+      await page.goto(urlDemo()).catch(() => {});
+      await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
+      await page.fill('#loginUser', EMAIL); await page.fill('#loginPass', PASSWORD); await page.click('#loginBtn');
+      await page.waitForSelector('#loginScreen.hidden', { state: 'attached', timeout: 8000 });
+      await page.waitForFunction(() => /Mostrando \d+ de/.test(document.getElementById('listaResumen').textContent), null, { timeout: 8000 });
+      const e = await estado(page);
+      const hoja = !(await sinHoja(page));
+      check('carga-css-reintento', 'si estilos.css no llega la primera vez: una recarga automática (la hoja se pide 2 veces), sin aviso, la hoja queda aplicada, la marca se borra y la sesión arranca',
+        pedidos === 2 && hoja && e.oculto && e.marca === null && !!e.token, JSON.stringify({ pedidos, hoja, ...e }));
+      await ctx.close();
+    }
+
+    // (5) falta en TODAS las cargas: aviso legible SIN la hoja, con «Recargar», sin sesión y sin un pedido a la API; falta = css/estilos.css
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } }); const page = await ctx.newPage();
+      vigilarCarga(page, /\/css\/estilos\.css/);
+      let pedidos = 0;
+      await ctx.route(CSS, (route) => { pedidos++; return route.abort(); });
+      const aApi = [];
+      page.on('request', (r) => { if (r.url().startsWith(API + '/')) aApi.push(r.method() + ' ' + new URL(r.url()).pathname); });
+      await page.goto(urlDemo()).catch(() => {});
+      await page.waitForSelector('#cargaIncompleta:not([hidden])', { timeout: 8000 });
+      await page.waitForTimeout(600);
+      const e = await estado(page);
+      const vis = await page.evaluate(() => {
+        const a = document.getElementById('cargaIncompleta'), b = document.getElementById('btnRecargar'), p = document.getElementById('cargaIncompletaTxt');
+        const cs = getComputedStyle(a), r = b.getBoundingClientRect(), rp = p.getBoundingClientRect();
+        const arriba = document.elementFromPoint(rp.left + rp.width / 2, rp.top + rp.height / 2);
+        return { posicion: cs.position, fondo: cs.backgroundColor, btnVisible: r.width > 0 && r.height > 0 && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
+          txtTapaTodo: a.contains(arriba), tamano: parseFloat(getComputedStyle(p).fontSize), btnTamano: parseFloat(getComputedStyle(b).fontSize) };
+      });
+      check('carga-css-aviso', 'si estilos.css falta en todas las cargas: tras la recarga, aviso (role="alert") con «Recargar», LEGIBLE sin la hoja (tapa la página, texto ≥ 12 px, botón dentro de la ventana), marca puesta, login inerte, sin sesión ni pedidos a la API; la lista de lo que falta incluye css/estilos.css',
+        !e.oculto && e.texto === 'La página no cargó completa. Recargá para seguir. Recargar' && e.marca === '1' && e.loginInerte && !e.token && aApi.length === 0 && pedidos === 2 && (e.faltan || '').split(' ').includes('css/estilos.css')
+          && (await sinHoja(page)) && vis.posicion === 'fixed' && vis.btnVisible && vis.txtTapaTodo && vis.tamano >= 12 && vis.btnTamano >= 12,
+        JSON.stringify({ pedidos, ...e, vis, api: aApi }));
+      // la hoja vuelve: «Recargar» completa la carga con estilo, sin aviso y sin marca
+      await ctx.unroute(CSS);
+      await page.click('#btnRecargar');
+      await abierta(page); await page.waitForSelector('#loginScreen:not(.hidden)');
+      const f = await estado(page);
+      check('carga-css-recupera', 'cuando estilos.css vuelve, «Recargar» completa la carga: hoja aplicada, sin aviso, marca borrada y login funcional', f.oculto && f.marca === null && !f.loginInerte && !(await sinHoja(page)), JSON.stringify(f));
       await ctx.close();
     }
   }
@@ -5084,4 +5183,4 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
   const mal = resultados.filter((r) => !r.ok);
   console.log(`\n${resultados.length - mal.length}/${resultados.length} verificaciones OK` + (mal.length ? `  —  FALLAN: ${mal.map((r) => r.id).join(', ')}` : ''));
   process.exit(mal.length ? 1 : 0);
-})().catch((e) => { console.error('ERROR del script:', e); process.exit(1); });
+})().catch((e) => { console.error('ERROR del script:', e); volcarDiagnostico('error del script: ' + String(e && e.message || e).split('\n')[0]); process.exit(1); });
