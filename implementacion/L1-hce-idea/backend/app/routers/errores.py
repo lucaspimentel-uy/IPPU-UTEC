@@ -91,15 +91,20 @@ def registrar_manejadores(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def _entrada(_: Request, exc: RequestValidationError) -> JSONResponse:
-        """Lo que FastAPI/Pydantic rechazan antes de llegar al servicio (tipos, largos)."""
-        detalle = [
-            {
+        """Lo que FastAPI/Pydantic rechazan antes de llegar al servicio (tipos, largos).
+
+        Un mismo valor puede fallar en dos lugares y salir dos veces idéntico: el id de `/idea/{idea_id}` lo valida la
+        dependencia de alcance (`_visible_por`, S1b §5.168) y otra vez el endpoint. Es **un** error, así que los pares
+        `(campo, mensaje)` repetidos se cuentan una sola vez, en el orden en que aparecen."""
+        detalle: list[dict] = []
+        for e in exc.errors():
+            item = {
                 # `loc` empieza con «body» / «query» / «path»: se descarta.
                 "campo": ".".join(str(p) for p in e["loc"][1:]) or None,
                 "mensaje": e["msg"],
             }
-            for e in exc.errors()
-        ]
+            if item not in detalle:
+                detalle.append(item)
         return JSONResponse(_cuerpo(ValidationFailed.code, detalle), status_code=422)
 
     @app.exception_handler(StarletteHTTPException)

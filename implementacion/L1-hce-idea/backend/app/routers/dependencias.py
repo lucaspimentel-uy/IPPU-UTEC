@@ -2,7 +2,7 @@
 from collections.abc import Iterator
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Path
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -88,6 +88,16 @@ def hce_visible(
 def _visible_por(modelo, parametro: str, nombre: str):
     """Dependencia para las rutas por id de algo que cuelga de un expediente (`/idea/{idea_id}`…).
 
+    **Un solo id, una sola conversión (S1b, §5.168).** El id llega como parámetro de path *tipado*
+    (`int`, con el mismo nombre que en la ruta): FastAPI lo convierte una vez y le da a esta
+    dependencia **el mismo valor** que recibe el endpoint. Antes leía la cadena cruda de
+    `request.path_params` y salía sin mirar nada si `not crudo.isdigit()` bajo la suposición de que
+    «la validación del path ya lo rechaza»: era falso, porque FastAPI/Pydantic igual convierten
+    `+1`, `1.0`, ` 1`, `1 ` y `1\\n` a un `int` válido, y el endpoint corría sobre un registro que
+    esta dependencia nunca revisó (un técnico de otro grupo lo leía y lo modificaba). Y al revés,
+    `isdigit()` acepta dígitos que `int()` convierte a otro valor (`１`, U+FF11) o no convierte (`²`).
+    Con el id ya convertido no hay camino que vuelva sin revisar.
+
     Lee **sólo la columna `hce_id`**, sin cargar la entidad: si la cargara, el `FOR UPDATE`
     que el servicio pide después (PATCH, firma, addenda) traería la fila bloqueada pero el
     mapa de identidad conservaría el estado leído antes del lock, y dos firmas simultáneas
@@ -97,14 +107,11 @@ def _visible_por(modelo, parametro: str, nombre: str):
     columna_id = modelo.id
 
     def dependencia(
-        request: Request,
+        identificador: Annotated[int, Path(alias=parametro)],
         usuario: Annotated[Profesional, Depends(usuario_actual)],
         db: Session = Depends(get_db),
     ) -> None:
-        crudo = request.path_params.get(parametro, "")
-        if not crudo.isdigit():
-            return  # la validación del path ya lo rechaza con 422
-        hce_id = db.scalar(select(modelo.hce_id).where(columna_id == int(crudo)))
+        hce_id = db.scalar(select(modelo.hce_id).where(columna_id == identificador))
         if hce_id is None:
             return
         try:
