@@ -148,7 +148,7 @@ conectadas, a 1280×800 y a 1024×768 donde importa el ancho.
 | **Íconos** | glifos de texto (✎ + ✓ ⚠ › ‹ ⌕ ● ◐ ○ ✚ ◌ ◇ ☰ ▣ ⨯ ↻ ◷ ▤ ↑ ↓ →) o SVG en línea en `currentColor` (`iconoHtml()`, `utils.js`), siempre `aria-hidden`; el control lleva su nombre en texto o en `aria-label`. **Ningún emoji** ni recurso de otro servidor; ⚠ e ℹ se admiten porque Windows los dibuja monocromos | `f3-iconos` |
 | **«Guardar»** | secundario donde la pantalla tiene su acción principal propia («Firmar»); principal donde guardar es la única acción que confirma (un diálogo, la VF, el CI) | `f3-guardar` |
 | **Vacío · cargando · error** | `estadoVacioHtml` / `estadoCargandoHtml` / `estadoErrorHtml` (`utils.js`); lo que todavía no se registró es «Sin registrar.» | `f3-estados`, `3e-…` |
-| **Ayuda «?»** | el texto que **sólo explica** una pestaña o vista bajo su título va detrás de un `<button class="btn-ayuda">` «?» (24 px, nombre «Ayuda: <título>», `aria-expanded`, `aria-controls`) junto al título; el texto, sin cambios, en un `.ayuda-panel` con `hidden` que abre justo debajo del título y empuja el contenido. Clic, Enter y Espacio alternan; Esc lo cierra y devuelve el foco al botón. **Se queda a la vista** lo que dice por qué algo está bloqueado, los errores, estados, avisos de bloque y «Modo demostración» | `utils.js` (`ayudaBotonHtml`, `ayudaPanelHtml`, `cabConAyudaHtml`), `l0-ayudas` |
+| **Descripción (chevron)** | el texto que **sólo explica** una pestaña o vista va detrás de UN `<button class="btn-desc">` con un chevron junto al título de **cada** pestaña (≥ 24×24 px, nombre «Descripción: <título>», `aria-expanded`, `aria-controls`); el chevron mira a la derecha cerrado y hacia abajo abierto (sin animación con `prefers-reduced-motion`); el texto, sin cambios, en un `.ayuda-panel` con `hidden` que abre justo debajo del título y empuja el contenido. Clic, Enter y Espacio alternan; Esc lo cierra y devuelve el foco al botón. Lo que **no** describe la pestaña abierta lleva el chevron **con texto visible** (`.btn-desc-txt`: «Estados del ciclo», «Cómo puntuar cada dimensión»): su nombre es ese texto. No hay botón «?» en ninguna parte. **Se queda a la vista** lo que dice por qué algo está bloqueado, los errores, estados, avisos de bloque, «Modo demostración» y la nota de ORG | `utils.js` (`ayudaBotonHtml`, `ayudaPanelHtml`, `cabConAyudaHtml`), `l0-ayudas`, `l1-sin-interrogacion` |
 
 **Monoespaciada permitida** (`f1b-tipo`): `.cod` (HC, C.I., N.º, AT-2026-003, CIE-11), `.tab-cod` (código de módulo en la pestaña),
 `.fr-code` y `.fstep .fname` (códigos del flujo del expediente de ejemplo). La regla `.grupo-integrantes .hint` (la HC en el detalle de un grupo) queda en
@@ -281,8 +281,9 @@ pestaña, ítem de la barra lateral, resumen desplegable, controles sobre cromo 
 - **Tabindex móvil** en el editor del IDEA: un punto de Tab por dimensión (las flechas, Inicio y Fin mueven el foco dentro de ella;
   Enter o Espacio eligen).
 - **Listado (F1):** un solo punto de Tab por fila (el nombre, un botón; Enter abre el expediente); con el mouse abre la fila entera.
-- **Pestañas del expediente (F1b, §5.141 i):** la ayuda «?» va al final de la tira de pestañas, en el DOM y a la vista: Tab desde una
-  pestaña llega al «?» y después al panel.
+- **Pestañas del expediente (F1b, §5.141 i; L1, §5.171):** «Estados del ciclo» (botón con texto y chevron) va al final de la tira de pestañas, en el DOM y a la vista
+  (a 1280 px, sobre el borde derecho de la tira, en la franja de los rótulos de grupo): Tab desde una pestaña llega a «Estados del ciclo» y después al panel, cuyo primer
+  control es el chevron de la descripción.
 - **Orden de Tab:** el del DOM (barra superior → barra lateral → contenido). Se verificó recorriendo con el teclado login → listado
   → expediente → las siete pestañas del flujo → informe impreso → volver, sin que el foco caiga en `<body>`.
 

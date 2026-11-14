@@ -30,18 +30,21 @@ function check(id, nombre, ok, detalle) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  (${id}) ${nombre}${detalle ? '  → ' + detalle : ''}`);
 }
 
-/* Ayuda detrás de un «?» (L0, §5.169): prueba CADA .btn-ayuda a la vista de la vista activa. Cerrada por omisión; clic abre (aria-expanded, el panel
-   queda DEBAJO del botón y empuja lo que sigue, sin taparlo); clic cierra; Enter y Espacio alternan; Esc cierra y deja el foco en el botón;
-   objetivo ≥ 24×24; nombre accesible «Ayuda: …». Devuelve [{id, ok, ...}] y no deja nada abierto. */
+/* Descripción detrás de un chevron (L1, §5.171; antes el «?» de L0, §5.169): prueba CADA .btn-desc a la vista de la vista activa. Cerrada por omisión; clic abre
+   (aria-expanded, el panel queda DEBAJO del botón y empuja lo que sigue, sin taparlo); clic cierra; Enter y Espacio alternan; Esc cierra y deja el foco en el
+   botón; objetivo ≥ 24×24; nombre accesible «Descripción: …» (o, si el botón lleva texto visible, ese texto); el chevron mira a la derecha cerrado y hacia abajo
+   abierto (se mide la rotación). Devuelve [{id, ok, ...}] y no deja nada abierto. */
 async function probarAyudas(page) {
-  const ids = await page.evaluate(() => [...document.querySelectorAll('.view.active .btn-ayuda')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.id));
-  const leer = (id) => page.evaluate((i) => {
+  const ids = await page.evaluate(() => [...document.querySelectorAll('.view.active .btn-desc')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.id));
+  const leer = async (id) => { await page.waitForTimeout(220); return leerAhora(id); };   // el chevron gira con una transición de .12 s (con movimiento permitido): se mide ya quieto
+  const leerAhora = (id) => page.evaluate((i) => {
     const b = document.getElementById(i), p = document.getElementById(b.getAttribute('aria-controls'));
     const rb = b.getBoundingClientRect(), rp = p.getBoundingClientRect();
     let sig = p.nextElementSibling; while (sig && sig.getBoundingClientRect().height === 0) sig = sig.nextElementSibling;   // el siguiente que ocupa lugar (los avisos ocultos no cuentan)
     if (!sig) { let u = p.parentElement; while (u && !sig) { sig = u.nextElementSibling; while (sig && sig.getBoundingClientRect().height === 0) sig = sig.nextElementSibling; u = u.parentElement; } }
     return { exp: b.getAttribute('aria-expanded'), oculto: p.hidden, visible: rp.width > 0 && rp.height > 0, texto: p.textContent.trim().length,
-      w: rb.width, h: rb.height, nombre: b.getAttribute('aria-label') || '', foco: document.activeElement === b,
+      w: rb.width, h: rb.height, nombre: b.getAttribute('aria-label') || '', rotulo: (b.textContent || '').trim(), foco: document.activeElement === b,
+      giro: (() => { const m = getComputedStyle(b.querySelector('.ico-chev')).transform; if (m === 'none') return 0; const [a, bb] = m.match(/matrix\(([^)]*)\)/)[1].split(',').map(Number); return Math.round(Math.atan2(bb, a) * 180 / Math.PI); })(),
       debajo: rp.top >= rb.bottom - 1, sigTop: sig ? Math.round(sig.getBoundingClientRect().top) : null, panelBottom: Math.round(rp.bottom) };
   }, id);
   const out = [];
@@ -56,7 +59,7 @@ async function probarAyudas(page) {
     await page.keyboard.press('Space'); r.espacio = await leer(id);
     await page.keyboard.press('Escape'); r.esc = await leer(id);
     const c = r.cerrada, a = r.abierta;
-    r.ok = c.exp === 'false' && c.oculto && !c.visible && c.w >= 23.9 && c.h >= 23.9 && /^Ayuda: \S/.test(c.nombre)
+    r.ok = c.exp === 'false' && c.oculto && !c.visible && c.w >= 23.9 && c.h >= 23.9 && (/^Descripción: \S/.test(c.nombre) || (c.nombre === '' && c.rotulo.length > 3)) && c.giro === 0 && a.giro === 90
       && a.exp === 'true' && !a.oculto && a.visible && a.texto > 20 && (!r.cerrada.sigTop || a.sigTop > r.cerrada.sigTop) && a.debajo && (a.sigTop === null || a.panelBottom <= a.sigTop + 1)
       && r.cerrada2.exp === 'false' && r.cerrada2.oculto
       && r.enter.exp === 'true' && r.enter2.exp === 'false' && r.espacio.exp === 'true' && r.espacio.visible
@@ -345,14 +348,30 @@ async function loguear(page) {
     await page.goto(urlDemo());
     const loginL0 = await page.evaluate(() => ({ hint: !!document.querySelector('.login-hint'), txt: document.getElementById('loginScreen').innerText, h1: (document.querySelector('#loginScreen h1') || {}).textContent,
       etiquetas: ['loginUser', 'loginPass'].map((i) => !!document.querySelector(`label[for="${i}"]`)) }));
-    check('l0-login', 'el login ya no trae la pista «Ingresá con tu usuario de la HCE.»; conserva su h1 «Fundación IPPU» y sus dos campos con etiqueta',
-      !loginL0.hint && !/Ingresá con tu usuario/.test(loginL0.txt) && loginL0.h1 === 'Fundación IPPU' && loginL0.etiquetas.every(Boolean), JSON.stringify({ h1: loginL0.h1, hint: loginL0.hint }));
-    /* L0 (D, §5.169): el logo de IPPU reemplaza al cuadrado «IP»: decorativo (alt vacío; «Fundación IPPU» sigue como texto), 34 px de alto en la barra
-       y 48 en el login, ancho automático con la proporción del archivo, y cargado. Sin ningún «IP» de marcador. */
+    check('l0-login', 'el login no trae la pista «Ingresá con tu usuario de la HCE.» ni los textos «Fundación IPPU» y «Protocolo IDEA» (el logo lleva el nombre de la institución); su h1 es «Historia Clínica Electrónica» y rotula el diálogo; dos campos con etiqueta (L1, §5.171)',
+      !loginL0.hint && !/Ingresá con tu usuario/.test(loginL0.txt) && !/Fundación IPPU/.test(loginL0.txt) && !/Protocolo IDEA/.test(loginL0.txt) && loginL0.h1 === 'Historia Clínica Electrónica' && loginL0.etiquetas.every(Boolean), JSON.stringify({ h1: loginL0.h1, hint: loginL0.hint, txt: loginL0.txt.slice(0, 120) }));
+    /* L1 (§5.171, revierte el alt decorativo de L0 por decisión de Lucas del 2026-11-14): el logo lleva el nombre de la institución. <img alt="Fundación Instituto
+       Psicopedagógico Uruguayo"> cargado y con la proporción del archivo; 44 px o más de alto en la barra (que sigue midiendo --topbar-h, 60 px) y entre 72 y 96 en el
+       login; el único texto de la barra es «Historia Clínica Electrónica». */
+    const ALT_LOGO = 'Fundación Instituto Psicopedagógico Uruguayo';
     const logos = await page.evaluate(() => ['header.topbar img.logo', '#loginScreen img.login-logo'].map((q) => { const i = document.querySelector(q); if (!i) return { q, falta: true };
       const r = i.getBoundingClientRect(); return { q, alt: i.getAttribute('alt'), h: Math.round(r.height), proporcion: Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) < 0.02, cargado: i.complete && i.naturalWidth > 0 }; }));
-    check('l0-logo', 'logo de IPPU en la barra (34 px de alto) y en el login (48 px): <img alt=""> cargado, con la proporción del archivo; el nombre «Fundación IPPU» sigue como texto',
-      logos[0].alt === '' && Math.abs(logos[0].h - 34) <= 1 && logos[1].alt === '' && Math.abs(logos[1].h - 48) <= 1 && logos.every((l) => l.proporcion && l.cargado) && /Fundación IPPU/.test(await page.evaluate(() => document.querySelector('header.topbar .title').textContent)), JSON.stringify(logos));
+    const barraL1 = await page.evaluate(() => ({ titulo: document.querySelector('header.topbar .title').textContent.replace(/\s+/g, ' ').trim(), alto: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height) }));
+    check('l0-logo', 'logo de IPPU informativo (alt «Fundación Instituto Psicopedagógico Uruguayo») en la barra (≥ 44 px de alto, barra de 60 px) y en el login (72–96 px), cargado y con la proporción del archivo; el único texto de la barra es «Historia Clínica Electrónica»',
+      logos[0].alt === ALT_LOGO && logos[0].h >= 44 && barraL1.alto === 60 && logos[1].alt === ALT_LOGO && logos[1].h >= 72 && logos[1].h <= 96 && logos.every((l) => l.proporcion && l.cargado) && barraL1.titulo === 'Historia Clínica Electrónica', JSON.stringify({ logos, barraL1 }));
+    /* A 320 px: el login (logo y tarjeta) sin desborde y la barra con el emblema circular solo (mismo alt), sin desborde de la página. */
+    {
+      await page.setViewportSize({ width: 320, height: 568 });
+      await page.waitForTimeout(150);
+      const a320 = await page.evaluate(() => { const l = document.querySelector('#loginScreen img.login-logo'), c = document.querySelector('#loginScreen .login-card'), t = document.querySelector('header.topbar img.logo');
+        const rl = l.getBoundingClientRect(), rc = c.getBoundingClientRect(), rt = t.getBoundingClientRect();
+        return { loginH: Math.round(rl.height), loginDentro: rl.left >= rc.left - 0.5 && rl.right <= rc.right + 0.5, proporcion: Math.abs(rl.width / rl.height - l.naturalWidth / l.naturalHeight) < 0.02,
+          emblema: /emblema-ippu\.png$/.test(t.currentSrc), alt: t.getAttribute('alt'), barraAlto: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height), barraH: Math.round(rt.height),
+          cargado: t.complete && t.naturalWidth > 0, desborde: document.documentElement.scrollWidth > window.innerWidth }; });
+      check('l1-logo-320', 'a 320 px: el logo del login (≥ 72 px) cabe en la tarjeta con su proporción; la barra lleva el emblema circular solo con el mismo alt (≥ 36 px de alto); sin desborde de la página',
+        a320.loginH >= 72 && a320.loginDentro && a320.proporcion && a320.emblema && a320.alt === ALT_LOGO && a320.barraH >= 36 && a320.cargado && !a320.desborde && a320.barraAlto === 60, JSON.stringify(a320));
+      await page.setViewportSize({ width: 1280, height: 800 });
+    }
     check('3a-pre', 'el login NO trae usuario ni contraseña precargados',
       (await page.inputValue('#loginUser')) === '' && (await page.inputValue('#loginPass')) === '');
     const dlg = await page.evaluate(() => {
@@ -696,7 +715,19 @@ async function loguear(page) {
         hosts.push(await ps.evaluate(() => ({ api: API_BASE, linea: !document.getElementById('loginApi').hidden })));
       }
       check('sec-host', '?api= con un host que no es localhost ni 127.0.0.1 (evil.example, «localhost.evil.example», «localhost@evil.example», 127.0.0.2, file:) se ignora: API_BASE es la de omisión y el login no muestra ninguna línea de API',
-        hosts.every((h) => h.api === 'http://localhost:8000' && !h.linea) && vistos.filter((v) => v.authorization).length === 0, JSON.stringify(hosts));
+        hosts.every((h) => h.api === 'http://127.0.0.1:8000' && !h.linea) && vistos.filter((v) => v.authorization).length === 0, JSON.stringify(hosts));
+
+      /* L1 (§5.171): la API por omisión es http://127.0.0.1:8000 (§5.166), la de la URL de la presentación: con ?api=http://127.0.0.1:8000 (o sin ?api=) el login NO muestra el aviso
+         «… que no es la habitual»; con otra API (la de esta corrida) sí. */
+      const avisoApi = [];
+      for (const q of ['?api=' + encodeURIComponent('http://127.0.0.1:8000'), '', '?api=' + encodeURIComponent(API)]) {
+        await ps.goto(DEMO + '/index.html' + q);
+        await ps.waitForSelector('#loginScreen:not(.hidden)', { timeout: 8000 });
+        avisoApi.push(await ps.evaluate(() => { const e = document.getElementById('loginApi'); return { api: API_BASE, visible: !e.hidden && e.offsetParent !== null, habitual: /no es la habitual/.test(document.getElementById('loginScreen').innerText) }; }));
+      }
+      check('l1-api', 'API por omisión = http://127.0.0.1:8000: con ?api=http://127.0.0.1:8000 y sin ?api= el login no muestra el aviso «… que no es la habitual»; con la API de esta corrida sí',
+        avisoApi[0].api === 'http://127.0.0.1:8000' && !avisoApi[0].visible && !avisoApi[0].habitual && avisoApi[1].api === 'http://127.0.0.1:8000' && !avisoApi[1].visible && !avisoApi[1].habitual
+          && avisoApi[2].api === API && avisoApi[2].visible === (API !== 'http://127.0.0.1:8000') && avisoApi[2].habitual === (API !== 'http://127.0.0.1:8000'), JSON.stringify(avisoApi));
 
       await loguear(ps);   // vuelta a la API de esta corrida: entra y una recarga conserva la sesión
       await esperarResumen(ps, 'Mostrando 7 de 7');
@@ -1005,7 +1036,7 @@ async function loguear(page) {
       lb.sel === 'true' && !/Modo demostración — no se guarda/.test(lb.panel) && /Línea base — IDEA/.test(lb.panel) && !/🔒|Bloquead/i.test(lb.panel));
     await p5.click('#tabExp-log');                                  // F1: «Ver auditoría» se retiró; la reemplaza la pestaña «Auditoría» (conectada en C1)
     await p5.waitForSelector('#panelExp .log-table', { timeout: 8000 });
-    check('3b-e3', 'la pestaña «Auditoría» (reemplaza a «Ver auditoría») abre el registro de cambios conectado (C1), no el panel de modo demostración', !/Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && /Registra cambios, no accesos/.test(await txt(p5, '#panelExp')) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
+    check('3b-e3', 'la pestaña «Auditoría» (reemplaza a «Ver auditoría») abre el registro de cambios conectado (C1), no el panel de modo demostración', !/Modo demostración — no se guarda/.test(await txt(p5, '#panelExp')) && /Registra cambios, no accesos/.test(await p5.locator('#panelExp').first().textContent()) && (await p5.getAttribute('#tabExp-log', 'aria-selected')) === 'true');
 
     // pestaña CI: GET 404 = pendiente (estado, no error)
     const resp404 = p5.waitForResponse((r) => /\/consentimiento$/.test(r.url()) && r.request().method() === 'GET');
@@ -1193,21 +1224,38 @@ async function loguear(page) {
       return { n: els.length, desc: f.querySelectorAll('.opcion .desc').length, chicos, recortados, consigna: document.querySelectorAll('#ideaComoPuntuar').length, repetida: f.querySelectorAll('.dinstr,.inter-nota').length,
         pregunta: (f.textContent.match(/entre dos niveles/g) || []).length, desborde: document.documentElement.scrollWidth > window.innerWidth };
     };
-    /* ---------- l0-ayudas: el texto que sólo explica una pestaña o vista está detrás de un «?» (L0, E, §5.169) ---------- */
+    /* ---------- l0-ayudas: la descripción de cada pestaña y vista está detrás de un chevron (L0 §5.169; L1 §5.171 reemplaza el «?» por un chevron en TODAS las pestañas) ---------- */
     {
       await p3.setViewportSize({ width: 1280, height: 800 });
-      const esperadas = { listado: 1, 'lb-editor': 2, 'ic-editor': 1, sev: 1, inc: 1, doc: 1, grupos: 1, ateneos: 1 };   // sin contar el «?» del ciclo anual (#btnAyudaFlujo)
-      const porPantalla = {}, malas = [], conteo = {};
-      for (const [k, ir] of PANTALLAS) {
+      /* Cuántos chevrons de descripción hay en cada pantalla (sin contar «Estados del ciclo», #btnAyuda_flujo, que no describe la pestaña abierta). La lista de pestañas de
+         TABS_EXP sale del código: cada una tiene su chevron o está en SIN_FUENTE (pestañas sin texto en el repo de donde sacar una descripción; hoy, ninguna). */
+      const SIN_FUENTE = [];
+      const esperadas = { listado: 1, hce00: 1, ci: 1, lb: 1, 'lb-editor': 2, pa: 1, pb: 1, 'ic-editor': 1, ic: 1, vf: 1, sev: 1, inc: 1, org: 1, doc: 1, log: 1, pai: 1, grupos: 1, ateneos: 1,
+        pendientes: 0, inclusion: 0, panel: 0 };
+      const porPantalla = {}, malas = [], conteo = {}, flujo = {}, interrogaciones = [];
+      const PANTALLAS_L1 = [...PANTALLAS, ['pai', () => abrir3(idM3, 'pai')]];
+      for (const [k, ir] of PANTALLAS_L1) {
         await ir();
         const r = await probarAyudas(p3);
         porPantalla[k] = r.length;
-        conteo[k] = r.filter((x) => x.id !== 'btnAyudaFlujo').length;
+        conteo[k] = r.filter((x) => x.id !== 'btnAyuda_flujo').length;
+        flujo[k] = r.filter((x) => x.id === 'btnAyuda_flujo').length;
         for (const x of r) if (!x.ok) malas.push({ pantalla: k, ...x });
+        interrogaciones.push(...(await p3.evaluate((pant) => [...document.querySelectorAll('button')].filter((b) => b.textContent.trim() === '?' || b.classList.contains('btn-ayuda') || /^Ayuda: /.test(b.getAttribute('aria-label') || '')).map((b) => pant + ':' + (b.id || b.className)), k)));
       }
       const faltan = Object.entries(esperadas).filter(([k, n]) => conteo[k] !== n).map(([k, n]) => `${k}: ${conteo[k]} ≠ ${n}`);
-      check('l0-ayudas', 'cada «?» (listado, IDEA y su «Cómo puntuar», informe de cierre, SEV, INC, DOC, Grupos, Ateneos y el del ciclo anual): cerrado por omisión, abre con clic / Enter / Espacio debajo de su título empujando el contenido, Esc lo cierra y devuelve el foco al botón, objetivo ≥ 24×24 y nombre «Ayuda: …»',
-        malas.length === 0 && faltan.length === 0, malas.length || faltan.length ? JSON.stringify({ malas: malas.slice(0, 2), faltan }).slice(0, 700) : JSON.stringify(conteo));
+      const tabsSin = (await p3.evaluate(() => TABS_EXP.map((t) => t.k))).filter((k) => !SIN_FUENTE.includes(k) && !(conteo[k] >= 1 || (k === 'lb' && conteo['lb-editor'] >= 1)));
+      const enExp = Object.keys(flujo).filter((k) => ['hce00', 'ci', 'lb', 'lb-editor', 'pa', 'pb', 'ic', 'ic-editor', 'vf', 'sev', 'inc', 'org', 'doc', 'log', 'pai'].includes(k));
+      check('l0-ayudas', 'la descripción de cada pestaña (HCE-00, CI, LB, PA, PB, IC, VF, SEV, INC, ORG, DOC, PAI, LOG) y de Inicio, Grupos y Ateneos va detrás de UN chevron junto al título (lb y ic también con el registro firmado; el IDEA y su «Cómo puntuar» son dos): cerrado por omisión (apunta a la derecha), abre con clic / Enter / Espacio (apunta hacia abajo) debajo de su título empujando el contenido, Esc lo cierra y devuelve el foco al botón, objetivo ≥ 24×24 y nombre «Descripción: …» (o su texto visible); «Estados del ciclo» en las pestañas del expediente; Pendientes, Inclusión y Panel sin chevron (sin texto fijo)',
+        malas.length === 0 && faltan.length === 0 && tabsSin.length === 0 && enExp.every((k) => flujo[k] === 1) && ['listado', 'grupos', 'ateneos'].every((k) => flujo[k] === 0),
+        malas.length || faltan.length || tabsSin.length ? JSON.stringify({ malas: malas.slice(0, 2), faltan, tabsSin }).slice(0, 700) : JSON.stringify(conteo));
+      check('l1-sin-interrogacion', 'ningún botón «?» (ni .btn-ayuda ni «Ayuda: …») queda en ninguna pestaña ni vista conectada',
+        interrogaciones.length === 0, JSON.stringify(interrogaciones).slice(0, 300));
+      /* «Estados del ciclo»: botón con texto visible y el chevron, al final de la tira de pestañas; su panel dice el ciclo y los estados. */
+      await abrir3(idM3, 'lb');
+      const estados = await p3.evaluate(() => { const b = document.getElementById('btnAyuda_flujo'); return b ? { texto: b.textContent.trim(), chevron: !!b.querySelector('.ico-chev'), nombre: b.getAttribute('aria-label') } : null; });
+      check('l1-estados-ciclo', '«Estados del ciclo»: un botón con ese texto visible y el chevron (no un «?»), sin nombre que lo contradiga',
+        !!estados && estados.texto === 'Estados del ciclo' && estados.chevron && estados.nombre === null, JSON.stringify(estados));
     }
     const editor = [];
     for (const [w, h] of tamanios3) { await p3.setViewportSize({ width: w, height: h }); await abrir3(idJ3, 'lb'); editor.push({ w, ...(await p3.evaluate(medirEditor)) }); }
@@ -2917,11 +2965,16 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await pv.evaluate(() => selTabExp('pai'));                     // C5: DOC tiene controles; el panel de demostración que queda es PAI
     await pv.waitForTimeout(80);
     await pv.focus('#tabExp-pai'); await pv.keyboard.press('Tab');
-    const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // el «?» va al final de la tira (F1b): el orden de Tab sigue al visual
+    const tabAlAyuda = await pv.evaluate(() => document.activeElement.id);      // «Estados del ciclo» va al final de la tira (L1, §5.171): el orden de Tab sigue al visual
     await pv.keyboard.press('Tab');
-    const tabAlPanel = await pv.evaluate(() => document.activeElement.id);
-    check('3e-panel', 'el módulo en modo demostración (PAI) no tiene nada operable: su #panelExp lleva tabindex="0" y Tab desde la pestaña llega al «?» (al final de la tira) y el siguiente Tab al panel; en LB, INC (C4) y DOC (C5), conectadas y con controles adentro, no lleva tabindex',
-      ['pai'].every((k) => paneles[k].ti === '0' && paneles[k].operables === 0) && ['lb', 'inc', 'doc'].every((k) => paneles[k].ti === null && paneles[k].operables > 0) && tabAlAyuda === 'btnAyudaFlujo' && tabAlPanel === 'panelExp', JSON.stringify({ paneles, tabAlAyuda, tabAlPanel }).slice(0, 420));
+    const tabAlPanel = await pv.evaluate(() => document.activeElement.id);      // y el siguiente Tab llega al chevron de la descripción, ya DENTRO del panel (L1: PAI tiene un control)
+    /* Desde L1 (§5.171) ningún panel de pestaña está sin controles (todos tienen su chevron), así que la regla «sin nada operable ⇒ tabindex=0» se prueba con un panel sintético:
+       un texto sin controles en #panelExp lleva tabindex="0" y, al volver a pintar la pestaña con sus controles, lo pierde. */
+    const sintetico = await pv.evaluate(() => { const pe = document.getElementById('panelExp'); pe.innerHTML = '<p>Sólo texto</p>'; ajustarFocoPanelExp(); const sin = pe.getAttribute('tabindex'); return new Promise((ok) => setTimeout(() => ok(sin), 60)); });
+    await pv.evaluate(() => selTabExp('pai')); await pv.waitForTimeout(80);
+    const trasRepintar = await pv.evaluate(() => document.getElementById('panelExp').getAttribute('tabindex'));
+    check('3e-panel', 'el panel de una pestaña es alcanzable con Tab sólo si no tiene nada operable adentro: un texto sin controles lleva tabindex="0" (panel sintético) y al repintar la pestaña con sus controles no lleva; PAI (modo demostración) ya tiene su chevron: sin tabindex, y Tab desde la pestaña llega a «Estados del ciclo» (al final de la tira) y el siguiente Tab al chevron del panel; en LB, INC (C4) y DOC (C5), conectadas y con controles adentro, no lleva tabindex',
+      ['pai'].every((k) => paneles[k].ti === null && paneles[k].operables === 1) && ['lb', 'inc', 'doc'].every((k) => paneles[k].ti === null && paneles[k].operables > 0) && sintetico === '0' && trasRepintar === null && tabAlAyuda === 'btnAyuda_flujo' && tabAlPanel === 'btnAyuda_pai', JSON.stringify({ paneles, sintetico, trasRepintar, tabAlAyuda, tabAlPanel }).slice(0, 420));
 
     /* ---------- 3e-demo: el panel «Modo demostración» y la marca «Solo demo» son idénticos en todas partes ---------- */
     const firmas = new Set(), marcas = new Set(); let nPaneles = 0, nMarcas = 0;
@@ -3003,10 +3056,12 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
           libre: Math.floor(l.getBoundingClientRect().right - ultima.right), dAlto: Math.round((Math.max(...altos) - Math.min(...altos)) * 10) / 10, unaLinea,
           nombres: [...document.querySelectorAll('.exp-tab .tab-nombre')].map((e) => e.textContent).join('|'), marcas: marcas.join(','),
           solo: tabs.filter((t) => t.querySelector('.solo-demo')).map((t) => t.dataset.tab).join(','),
-          ayudaAlFinal: (() => { const a = document.getElementById('btnAyudaFlujo').getBoundingClientRect(); return a.left >= ultima.right && Math.abs((a.bottom + 4) - ultima.bottom) < 8; })(),
+          ayudaAlFinal: (() => { const bt = document.getElementById('btnAyuda_flujo'), a = bt.getBoundingClientRect(), barra = document.querySelector('.tabs-barra').getBoundingClientRect();
+            const sobre = tabs.some((t) => { const r = t.getBoundingClientRect(); return a.left < r.right && a.right > r.left && a.top < r.bottom - 0.5 && a.bottom > r.top + 0.5; });
+            return Math.abs(a.right - barra.right) <= 1 && !sobre && !!(l.compareDocumentPosition(bt) & Node.DOCUMENT_POSITION_FOLLOWING) && a.width > 100; })(),
           titulos: [...document.querySelectorAll('#tabExp-ic,#tabExp-vf')].map((t) => t.title).join('|') }; }, w));
     }
-    check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); el «?» al final de la tira; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
+    check('f1-tabs', 'pestañas: a 1280 px una sola fila con ≥ 40 px libres al final, a 1024 px dos como mucho, sin scroll horizontal; todas del mismo alto (±1 px) con el nombre en una línea; «Solo demo» = glifo + texto sólo para lectores de pantalla (sin insignia punteada); «Estados del ciclo» (texto visible) en el borde derecho de la tira, sin tapar ninguna pestaña; el nombre completo en el tooltip; orden Datos · Ciclo anual · Seguimiento · Registro',
       filasTabs[0].filas === 1 && filasTabs[0].libre >= 40 && filasTabs[1].filas <= 2 && filasTabs.every((f) => f.sw <= f.cw && f.n === 13 && f.dAlto <= 1 && f.unaLinea && f.ayudaAlFinal) && filasTabs[0].solo === 'pai'           // C5: DOC conectada; sólo PAI lleva la marca
         && filasTabs[0].marcas === 'pai:glifo+texto-sr'
         && filasTabs[0].titulos === 'Informe de cierre anual|Valoración funcional'
@@ -3148,7 +3203,7 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const visibleF1 = await pf.evaluate(() => ({ nav: [...document.querySelectorAll('.sidebar .navitem')].map((b) => b.textContent.trim()), secciones: [...document.querySelectorAll('.sidebar .sec')].map((s) => s.textContent.trim()), marca: document.querySelector('.topbar .title').textContent.replace(/\s+/g, ' ').trim(), pie: document.querySelector('.sidebar .foot').textContent.trim() }));
     check('f1-h', 'no queda la vista «Intermedia» (ruta, manejador, entrada de navegación ni reglas .lik-*) ni los textos de desarrollo; navegación «General» → «Panel institucional» y «Servicio de Atención Diurna» → NNA y HCE · Pendientes · Grupos de referencia · Inclusión · Ateneos y capacitación (sin Taller Terapéutico ni Clínica); marca y pie del prototipo',
       Object.values(prohibidosF1).every((v) => v.length === 0) && JSON.stringify(visibleF1.secciones) === '["General","Servicio de Atención Diurna"]'
-        && JSON.stringify(visibleF1.nav) === '["Panel institucional","NNA y HCE","Pendientes","Grupos de referencia","Inclusión","Ateneos y capacitación"]' && visibleF1.marca === 'Fundación IPPU · Historia Clínica Electrónica' && visibleF1.pie === 'Prototipo · IPPU × UTEC-LIDIA · 2026',
+        && JSON.stringify(visibleF1.nav) === '["Panel institucional","NNA y HCE","Pendientes","Grupos de referencia","Inclusión","Ateneos y capacitación"]' && visibleF1.marca === 'Historia Clínica Electrónica' && visibleF1.pie === 'Prototipo · IPPU × UTEC-LIDIA · 2026',
       JSON.stringify({ prohibidosF1, visibleF1 }).slice(0, 500));
 
     /* ---------- f1-i: aria-current="page" en el ítem activo de la barra lateral (también dentro de un expediente) ---------- */

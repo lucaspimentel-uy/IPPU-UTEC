@@ -208,12 +208,11 @@
     border-bottom:1px solid #000;
     box-shadow:inset 0 -3px 0 var(--orange);
   }
-  /* Logo de IPPU (L0, §5.169): la marca de la fundación, decorativa (alt vacío; el nombre va como texto al lado). Versión blanca con fondo
-     transparente sobre la barra oscura; no se recolorea con CSS ni se estira: alto fijo y ancho automático. */
-  .logo{height:34px;width:auto;display:block;flex:0 0 auto}
-  .topbar .title{line-height:1.2;white-space:nowrap}
-  .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
-  .topbar .title span{font-size:var(--fs-sm);color:var(--on-dark-2)}
+  /* Logo de IPPU (L0, §5.169; informativo desde L1, §5.171): lleva el nombre de la fundación (alt «Fundación Instituto Psicopedagógico Uruguayo»), así que
+     el texto de la barra es sólo «Historia Clínica Electrónica». Versión blanca con fondo transparente sobre la barra oscura; no se recolorea con
+     CSS ni se estira: alto fijo y ancho automático. 44 px dentro de la barra de 60 px (no la agranda). */
+  .logo{height:44px;width:auto;display:block;flex:0 0 auto}
+  .topbar .title{line-height:1.2;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
   .topbar .spacer{flex:1}
   /* B2: el perfil pasó de <div> a <button> — es el acceso a «Mi usuario». */
   .userchip{
@@ -456,12 +455,17 @@
     /* La topbar no entra completa: se conserva la identidad (logo + nombre) y la
        salida; el subtítulo y los datos del usuario ya están en «Mi usuario». */
     .topbar{gap:var(--s2);padding:0 var(--s3)}
-    .topbar .title span,.userchip-txt{display:none}
-    .topbar .title b{font-size:var(--fs-sm)}
+    .userchip-txt{display:none}
+    .topbar .title{font-size:var(--fs-sm)}
     h1.pagetitle{font-size:var(--fs-lg)}
     .kpi .val{font-size:var(--fs-xl)}
   }
-  @media(max-width:400px){.logo{height:26px}}   /* a 320 px el logo de 34 px haría desbordar la barra (logo + nombre + perfil + «Salir»); la identidad se conserva */
+  /* A ≤ 480 px la barra lleva el emblema circular solo (el <picture> de index.html; mismo alt) y el nombre de la HCE puede partirse en dos renglones:
+     el logo completo + «Historia Clínica Electrónica» + perfil + «Salir» desbordaban la barra (3e-flow). */
+  @media(max-width:480px){
+    .logo{height:40px}
+    .topbar .title{white-space:normal;font-size:var(--fs-2xs);line-height:1.15;min-width:0}
+  }
 
   /* ============ MODAL / WIZARD ALTA NNA ============ */
   .modal-bg{
@@ -771,9 +775,10 @@
     padding:var(--s7) var(--s6) var(--s5);border:1px solid var(--rule);border-top:3px solid var(--ink);
     box-shadow:var(--shadow-pop);text-align:center;animation:popin .25s ease
   }
-  .login-logo{height:48px;width:auto;display:block;margin:0 auto var(--s3)}   /* versión en tinta (la de la barra es blanca) */
-  .login-card h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;color:var(--ink)}
-  .login-sub{font-size:var(--fs-2xs);color:var(--ink-2);margin:var(--s1) 0 var(--s6)}
+  /* El logo lleva el nombre de la fundación (alt informativo, L1 §5.171): 80 px de alto (≈ 222 px de ancho), el máximo que entra en la tarjeta a 320 px
+     sin desbordar; el único texto es el h1 «Historia Clínica Electrónica». Versión en tinta (la de la barra es blanca). */
+  .login-logo{height:80px;width:auto;max-width:100%;object-fit:contain;display:block;margin:0 auto var(--s4)}
+  .login-card h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;color:var(--ink);margin:0 0 var(--s6)}
   .login-field{text-align:left;margin-bottom:var(--s3)}
   .login-field label{display:block;font-size:var(--fs-2xs);font-weight:600;color:var(--ink);margin-bottom:var(--s1)}
   .login-field input{
@@ -1376,12 +1381,27 @@
          en cada pestaña. Todas miden lo mismo (dos renglones fijos), el rótulo de grupo reserva su renglón también en «Datos», y a
          1280 px la tira entra en una fila con holgura (conectada.js, f1-tabs); a 1024 px, en dos como mucho. --- */
   .tabs-exp{margin-bottom:6px}
-  .tabs-barra{display:flex;align-items:flex-end;gap:var(--s2)}
-  .btn-ayuda{
-    flex:0 0 auto;width:24px;height:24px;margin-bottom:4px;border-radius:var(--r-sm);
-    border:1px solid var(--control-borde);background:var(--paper);color:var(--ink);font-weight:700;font-size:var(--fs-2xs);line-height:1
+  /* «Estados del ciclo» (L1, §5.171) lleva texto visible: junto a las pestañas ya no entra en una fila a 1280 px (la tira de 13 pestañas pasaba a dos),
+     así que va en la franja de los rótulos de grupo, pegado al borde derecho de la tira (sobre el final, sin tapar ninguna pestaña: la franja mide
+     lo que el botón, 24 px). Por debajo de 761 px va en su propia fila, a la derecha. */
+  .tabs-barra{position:relative;display:flex;align-items:flex-end;gap:var(--s2);padding-top:6px}
+  .tabs-barra>.btn-desc{position:absolute;top:0;right:0}
+  @media(max-width:760px){
+    .tabs-barra{flex-direction:column;align-items:stretch;padding-top:0}
+    .tabs-barra>.btn-desc{position:static;align-self:flex-end;margin-top:var(--s2)}
   }
-  .btn-ayuda:hover,.btn-ayuda[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  /* La descripción detrás de un chevron (L1, §5.171; js/utils.js · ayudaBotonHtml): el mismo botón junto al título de cada pestaña y vista, y
+     «Estados del ciclo» al final de la tira. Objetivo ≥ 24 px; borde --control-borde; foco global; el chevron mira a la derecha cerrado y hacia abajo
+     abierto, sin animación (con movimiento permitido, una transición corta). */
+  .btn-desc{
+    flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);min-width:24px;height:24px;padding:0;
+    border-radius:var(--r-sm);border:1px solid var(--control-borde);background:var(--paper);color:var(--ink);font-size:var(--fs-2xs);font-weight:600;line-height:1
+  }
+  .btn-desc-txt{padding:0 var(--s2)}
+  .btn-desc:hover,.btn-desc[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn-desc .ico-chev{flex:0 0 auto;display:block}
+  .btn-desc[aria-expanded="true"] .ico-chev{transform:rotate(90deg)}
+  @media(prefers-reduced-motion:no-preference){.btn-desc .ico-chev{transition:transform .12s ease}}
   .exp-tabs{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:var(--s3);row-gap:var(--s1)}
   .tabs-grupo{display:flex;flex-direction:column;min-width:0}
   .tabs-grupo-rot{
@@ -1418,17 +1438,19 @@
   .mod-cab .spacer{flex:1}
   .mod-cab .st{line-height:1.35}
   .mod-cab .btn-mini{padding-top:3px;padding-bottom:3px}
-  /* Ayuda detrás de un «?» (L0, §5.169; js/utils.js · ayudaBotonHtml): el mismo botón y el mismo panel del ciclo anual (.btn-ayuda,
-     .ayuda-panel), ahora también junto al título de cada pestaña y vista. Objetivo de 24 px; borde --control-borde; foco global; sin animación. */
+  /* Descripción detrás de un chevron (L1, §5.171; antes un «?», L0 §5.169; js/utils.js · ayudaBotonHtml): el panel .ayuda-panel que abre
+     el botón .btn-desc, junto al título de cada pestaña y vista. */
   .ayuda-panel[hidden]{display:none}
   .ayuda-panel>p{margin:0}
   .ayuda-panel>p+p{margin-top:var(--s1)}
-  .mod-cab .btn-ayuda,.titulo-ayuda .btn-ayuda{margin:0 0 0 var(--s1)}
+  .mod-cab .btn-desc,.titulo-ayuda .btn-desc{margin:0 0 0 var(--s1)}
+  .info-card>h3 .btn-desc{margin:0}   /* en la barra de título de una tarjeta, pegado al título (la barra ya tiene su separación) */
+  .info-card>.ayuda-panel{margin:0;border:0;border-bottom:1px solid var(--rule);border-radius:0;max-width:none}
   .titulo-ayuda{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:var(--s5)}   /* el hueco que antes daba el pagedesc */
   .titulo-ayuda+.ayuda-panel{margin-top:calc(var(--s2) - var(--s5));margin-bottom:var(--s5)}
   .titulo-ayuda h1.pagetitle{margin-bottom:0}
   .ayuda-fila{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s2);font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
-  .ayuda-fila .btn-ayuda{margin:0}
+  .ayuda-fila .btn-desc{margin:0}
   .mod-nota{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.5;max-width:110ch;margin:0 0 var(--s3)}
   #panelExp>.avisos-api,#panelExp>.form-errores{margin:0 0 var(--s3)}
 

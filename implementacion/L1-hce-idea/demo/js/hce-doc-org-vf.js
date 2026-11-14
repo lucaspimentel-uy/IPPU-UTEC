@@ -365,8 +365,11 @@ function vfAvisosHtml(){
 }
 function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){ el.innerHTML = ""; el.hidden = true; } }
 
+/* Descripción de la pestaña (L1, §5.171). Fuente: Documento Técnico §7 (1: «IPPU registra, no certifica: la valoración oficial la realizan los equipos habilitados
+   mediante el BUND»; 3: «perfil funcional en clave CIF: seis dominios de la vida diaria con niveles simples de autonomía») y handoff §5.118 / CLAUDE.md (el baremo sale sólo del %). */
+const VF_DESC = `<p>Registro de la valoración oficial de discapacidad (BUND), que realizan los equipos habilitados, y perfil funcional en clave CIF: seis dominios de la vida diaria con niveles simples de autonomía. IPPU registra, no certifica: la categoría según el baremo sale sólo del porcentaje.</p>`;
 function vfPanelHtml(){
-  const cab = `<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2></div>`;
+  const cab = cabConAyudaHtml(`<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2></div>`, "desc_vf", "VF · Valoración funcional (BUND / CIF)", VF_DESC);
   if(VF.hceId !== EXP.id || VF.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando la valoración funcional…")}</div></div>`;
   if(VF.estado === "error"){
     return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(VF.error, "vfReintentar()")}</div></div>`;
@@ -412,8 +415,8 @@ function vfEditorHtml(){
         ${vfAlertaHtml(rec)}</div>`
     : `<p class="hint">La categoría según el baremo y la alerta de vigencia aparecen cuando se guarda la valoración.</p>`;
   // F1: el encabezado es un renglón; la nota «IPPU registra, no certifica» abre el primer bloque (el registro oficial).
-  return `<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2>
-      <span class="ev-estado"><span class="st ${rec ? "st-registrada" : "st-sin_iniciar"}"><span aria-hidden="true">${rec ? "●" : "○"}</span> ${rec ? "Registrada" : "Por registrar"}</span></span></div>
+  return `${cabConAyudaHtml(`<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2>
+      <span class="ev-estado"><span class="st ${rec ? "st-registrada" : "st-sin_iniciar"}"><span aria-hidden="true">${rec ? "●" : "○"}</span> ${rec ? "Registrada" : "Por registrar"}</span></span></div>`, "desc_vf", "VF · Valoración funcional (BUND / CIF)", VF_DESC)}
     <div id="vfAvisos" class="review-note avisos-api" role="status"${(VF.avisos || []).length ? "" : " hidden"}>${vfAvisosHtml()}</div>
     <div id="vfErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
 

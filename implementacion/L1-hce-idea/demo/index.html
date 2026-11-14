@@ -16,9 +16,8 @@
 <!-- ===================== LOGIN (usuario pre-creado) ===================== -->
 <div class="login-screen" id="loginScreen" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
   <div class="login-card">
-    <img class="login-logo" src="img/logo-ippu-tinta.png" width="134" height="48" alt="">
-    <h1 id="loginTitulo">Fundación IPPU</h1>
-    <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
+    <img class="login-logo" src="img/logo-ippu-tinta.png" width="222" height="80" alt="Fundación Instituto Psicopedagógico Uruguayo">
+    <h1 id="loginTitulo">Historia Clínica Electrónica</h1>
 <p id="loginApi" class="login-api" hidden></p>
     <form id="loginForm" onsubmit="return doLogin(event)" novalidate>
       <div id="loginError" class="login-error" role="alert" tabindex="-1" hidden></div>
@@ -39,10 +38,13 @@
 
 <!-- ===================== TOPBAR ===================== -->
 <header class="topbar" inert>
-  <img class="logo" src="img/logo-ippu.png" width="95" height="34" alt="">
-  <div class="title">
-    <b>Fundación IPPU</b><span class="title-sep" aria-hidden="true"> · </span><span>Historia Clínica Electrónica</span>
-  </div>
+  <!-- L1 (§5.171): el logo lleva el nombre de la institución (alt informativo); el único texto es «Historia Clínica Electrónica».
+       A ≤ 480 px el logo completo no entra con el nombre de la HCE, el perfil y «Salir»: va el emblema circular solo, con el mismo alt. -->
+  <picture>
+    <source media="(max-width: 480px)" srcset="img/emblema-ippu.png">
+    <img class="logo" src="img/logo-ippu.png" width="122" height="44" alt="Fundación Instituto Psicopedagógico Uruguayo">
+  </picture>
+  <div class="title">Historia Clínica Electrónica</div>
   <div class="spacer"></div>
   <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
        Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
@@ -80,7 +82,7 @@
     <!-- ============ VISTA: INICIO / NNA ============ -->
     <section class="view active" id="view-inicio">
       <div class="crumbs">Servicio de Atención Diurna › <b>NNA y HCE</b></div>
-      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1><button type="button" class="btn-ayuda" id="btnAyuda_inicio" aria-expanded="false" aria-controls="ayuda_inicio" aria-label="Ayuda: Niños, niñas y adolescentes en seguimiento" onclick="ayudaAlternar('btnAyuda_inicio')"><span aria-hidden="true">?</span></button></div>
+      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1><button type="button" class="btn-desc" id="btnAyuda_inicio" aria-expanded="false" aria-controls="ayuda_inicio" aria-label="Descripción: Niños, niñas y adolescentes en seguimiento" onclick="ayudaAlternar('btnAyuda_inicio')"><svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></button></div>
       <div class="ayuda-panel" id="ayuda_inicio" hidden><p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá un nombre para abrir su expediente.</p></div>
 
       <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
@@ -221,7 +223,7 @@
          `ateneo_acuerdo`). Lista (con el indicador arriba) y detalle viven los dos dentro de #ateneosContent. -->
     <section class="view" id="view-ateneos">
       <div class="crumbs">Servicio de Atención Diurna › <b>Ateneos y capacitación</b></div>
-      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1><button type="button" class="btn-ayuda" id="btnAyuda_ateneos" aria-expanded="false" aria-controls="ayuda_ateneos" aria-label="Ayuda: Ateneos clínicos y jornadas de capacitación" onclick="ayudaAlternar('btnAyuda_ateneos')"><span aria-hidden="true">?</span></button></div>
+      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1><button type="button" class="btn-desc" id="btnAyuda_ateneos" aria-expanded="false" aria-controls="ayuda_ateneos" aria-label="Descripción: Ateneos clínicos y jornadas de capacitación" onclick="ayudaAlternar('btnAyuda_ateneos')"><svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></button></div>
       <div class="ayuda-panel" id="ayuda_ateneos" hidden><p class="pagedesc">Registro institucional con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos clínicos aparecen también en el expediente del NNA.</p></div>
       <div id="ateneosContent"></div>
     </section>

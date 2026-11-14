@@ -146,25 +146,28 @@ function saltarAlContenido(ev){
   return false;
 }
 
-/* ===== Ayuda detrás de un «?» (L0, §5.169) =====
-   UN componente para el texto que sólo explica una pestaña o sección bajo su título (antes siempre a la vista); es el mismo «?» del
-   ciclo anual del expediente (F1b, §5.141), no un patrón nuevo (notas-accesibilidad-ui §2.6). Es una divulgación, no un tooltip: un
-   <button class="btn-ayuda"> con «?» junto al título (aria-expanded, aria-controls, nombre «Ayuda: <título>») y el texto, sin cambios,
-   en un panel `.ayuda-panel` con `hidden` que abre justo debajo del título y empuja el contenido. Clic, Enter y Espacio alternan (es un
-   <button>); Esc lo cierra y devuelve el foco al botón. NO va detrás de un «?»: errores, estados, avisos de bloque, «Modo demostración»
-   y todo lo que dice por qué una acción está bloqueada. Una ayuda abierta sigue abierta tras repintar la pestaña (se guarda por id). */
+/* ===== Descripción detrás de un chevron (L1, §5.171; antes un «?», L0 §5.169) =====
+   UN componente para el texto que sólo explica una pestaña o sección bajo su título (antes siempre a la vista). Es una divulgación,
+   no un tooltip: un <button class="btn-desc"> con un chevron (›, hacia la derecha cerrado y hacia abajo abierto; sin animación si el
+   usuario pidió menos movimiento) junto al título, con aria-expanded, aria-controls y el nombre «Descripción: <título>» (notas-accesibilidad-ui
+   §2.6); y el texto, sin cambios, en un panel `.ayuda-panel` con `hidden` que abre justo debajo del título y empuja el contenido. Clic,
+   Enter y Espacio alternan (es un <button>); Esc lo cierra y devuelve el foco al botón. Con `rotulo` el botón lleva ese texto visible
+   (el nombre accesible es ese texto) y el chevron: es el caso de lo que NO describe la pestaña abierta (los estados del ciclo anual,
+   «Cómo puntuar»). NO va detrás de un chevron: errores, estados, avisos de bloque, «Modo demostración» y todo lo que dice por qué una acción
+   está bloqueada. Una descripción abierta sigue abierta tras repintar la pestaña (se guarda por id). */
 const _AYUDA_ABIERTAS = new Set();
 let _ayudaUltima = null;
-function ayudaBotonHtml(clave, titulo){
+const _CHEVRON = '<svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg>';
+function ayudaBotonHtml(clave, titulo, rotulo){
   const id = "btnAyuda_" + clave;
-  return `<button type="button" class="btn-ayuda" id="${id}" aria-expanded="${_AYUDA_ABIERTAS.has(id)}" aria-controls="ayuda_${clave}" aria-label="Ayuda: ${escHtml(titulo)}" onclick="ayudaAlternar('${id}')"><span aria-hidden="true">?</span></button>`;
+  return `<button type="button" class="btn-desc${rotulo ? " btn-desc-txt" : ""}" id="${id}" aria-expanded="${_AYUDA_ABIERTAS.has(id)}" aria-controls="ayuda_${clave}"${rotulo ? "" : ` aria-label="Descripción: ${escHtml(titulo)}"`} onclick="ayudaAlternar('${id}')">${rotulo ? `<span>${escHtml(rotulo)}</span>` : ""}${_CHEVRON}</button>`;
 }
-/* Cabecera de módulo (.mod-cab) con su ayuda: el «?» va justo después del <h2> y el panel justo debajo de la cabecera. */
+/* Cabecera de módulo (.mod-cab) con su descripción: el chevron va justo después del <h2> y el panel justo debajo de la cabecera. */
 function cabConAyudaHtml(cab, clave, titulo, notaHtml){
   return cab.replace("</h2>", "</h2>" + ayudaBotonHtml(clave, titulo)) + ayudaPanelHtml(clave, notaHtml);
 }
 function ayudaCerrarTodas(){
-  document.querySelectorAll(".btn-ayuda[aria-expanded='true']").forEach(b => ayudaAlternar(b.id, false));
+  document.querySelectorAll(".btn-desc[aria-expanded='true']").forEach(b => ayudaAlternar(b.id, false));
   _AYUDA_ABIERTAS.clear(); _ayudaUltima = null;
 }
 function ayudaPanelHtml(clave, html){
@@ -185,8 +188,8 @@ document.addEventListener("keydown", e => {
   const f = document.activeElement, t = f && f !== document.body ? f : null;
   let idBoton = null;
   if(t){
-    const b = t.closest(".btn-ayuda"), p = t.closest(".ayuda-panel");
-    idBoton = b ? b.id : p ? (document.querySelector(`.btn-ayuda[aria-controls="${p.id}"]`) || {}).id : null;
+    const b = t.closest(".btn-desc"), p = t.closest(".ayuda-panel");
+    idBoton = b ? b.id : p ? (document.querySelector(`.btn-desc[aria-controls="${p.id}"]`) || {}).id : null;
   } else idBoton = _ayudaUltima;
   const b = idBoton && document.getElementById(idBoton), p = b && document.getElementById(b.getAttribute("aria-controls"));
   if(!p || p.hidden) return;

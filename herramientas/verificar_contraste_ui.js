@@ -825,7 +825,7 @@ function buscarContornosApagados() {
   await abrirPorNombre('Martín', 'lb');
   anillos.push(await medirAnilloTeclado(page, '.exp-tab[aria-selected="true"]', 'pestaña'));
   anillos.push(await medirAnilloTeclado(page, '#expHead .banda-editar', 'botón de la banda del paciente'));
-  anillos.push(await medirAnilloTeclado(page, '#btnAyudaFlujo', 'botón de ayuda del ciclo anual («?»)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnAyuda_flujo', 'botón «Estados del ciclo» (chevron)'));
   anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
 
   // ---------------------------------------------------------------- GRUPOS COMO ADMIN: «Asignar técnicos» y su diálogo, SIN guardar

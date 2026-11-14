@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-14 · L1 — login, barra y descripción de cada pestaña** (Lucas con Claude, local en Windows, rama `l1-diseno`, sobre `main` f40724b; §5.171). Sólo `demo/`, arnés y docs.
+  - **Hecho:** el logo lleva el nombre de la institución (alt informativo, revierte L0): login 80 px, barra 44 px (60 px de barra), emblema solo a ≤ 480 px; el único texto es «Historia Clínica Electrónica». Un chevron con la descripción en las 13 pestañas y en Inicio, Ateneos y Grupos (sin «?»); «Estados del ciclo» con texto; API por omisión `127.0.0.1:8000` (sin aviso en la presentación; `localhost:5500` también entra).
+  - **Verificación:** runner 2 corridas OK (328 chequeos), contraste sin fallas; presentación OK con 0 escrituras en `ippu_presentacion_ver` (borrada). Pendiente: aprobar las descripciones nuevas (HCE-00, CI, VF, ORG, PAI). Siguiente: integrar en `hce-post26`, después A1c.
+
 - **2026-11-14 · L1 — D2b: `preparar_presentacion.ps1` sobrevive a un registro viejo** (Lucas con Claude, local en Windows, rama `d2b-estado-viejo`, sobre `main` e3976d3; §5.170). Sólo `herramientas/` y docs.
   - **Defecto reproducido en `main`:** con un registro cuyo PID es el de un `svchost` (inicio ilegible), `-Detener` y `-Base …` dan «You cannot call a method on a null-valued expression» (exit 1), cada vez. **Arreglo:** un PID cuyo inicio no se lee o no coincide no es nuestro: no se baja, se avisa y se sigue (`Detener-Propio`; y el chequeo previo de `correr_conectada.ps1`, que contaba como «viva» cualquier PID). PID inexistente: en silencio, como antes.
   - **Verificación:** protegido → `-Detener` y `-Base ippu_presentacion_ver` siguen (el svchost intacto); PID inexistente → sigue; camino normal → `-Detener` libera :8000 y :5500. `correr_conectada.ps1 -Corridas 1 -ConContraste` OK (324/324, contraste sin pares que fallen); `verificar_presentacion.js` OK con 0 escrituras; `verificar_estado.py --check` y `generar_catalogos_backend.py --check` OK; `ippu_presentacion_ver` y su carpeta, borradas. Hueco anotado, sin arreglar: Ctrl+C durante la preparación del runner. Siguiente: recargar `ippu_presentacion` desde `main`; A1c en `hce-post26`.

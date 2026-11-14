@@ -67,8 +67,8 @@ function _tabHtml(t){
     aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}" title="${escHtml(titulo)}" onclick="selTabExp('${t.k}')">
     <span class="tab-nombre">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}${t.demo ? badgeSoloDemoTab() : ""}</span></button>`;
 }
-/* Las pestañas van en grupos con su rótulo (decorativo: aria-hidden; el año del ciclo va en el nombre de la lista). La ayuda «?»
-   (orden y estados) va al FINAL de la tira, en el DOM y a la vista (F1b, §5.141): el orden de Tab sigue al visual. */
+/* Las pestañas van en grupos con su rótulo (decorativo: aria-hidden; el año del ciclo va en el nombre de la lista). «Estados del ciclo» (orden y estados; no describe la pestaña abierta: L1, §5.171) va al FINAL de la tira, en el DOM y a la vista
+   (F1b, §5.141): el orden de Tab sigue al visual. */
 function tabsExpedienteHtml(){
   const anio = EXP.flujo ? EXP.flujo.anio : "";
   const grupos = GRUPOS_TABS.map(([g, rot]) => `<div class="tabs-grupo tabs-grupo-${g}" role="presentation">
@@ -77,10 +77,9 @@ function tabsExpedienteHtml(){
   const estadoFlujo = EXP.flujoError ? estadoErrorInlineHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()") : "";
   return `<div class="tabs-barra">
       <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
-      <button type="button" class="btn-ayuda" id="btnAyudaFlujo" aria-expanded="${_AYUDA_ABIERTAS.has("btnAyudaFlujo")}" aria-controls="ayudaFlujo" onclick="ayudaAlternar('btnAyudaFlujo')"
-        aria-label="Ayuda: orden y estados del ciclo anual" title="Orden y estados del ciclo anual"><span aria-hidden="true">?</span></button>
+      ${ayudaBotonHtml("flujo", "Estados del ciclo", "Estados del ciclo")}
     </div>
-    <div class="ayuda-panel" id="ayudaFlujo"${_AYUDA_ABIERTAS.has("btnAyudaFlujo") ? "" : " hidden"}>
+    <div class="ayuda-panel" id="ayuda_flujo"${_AYUDA_ABIERTAS.has("btnAyuda_flujo") ? "" : " hidden"}>
       <p><b>Ciclo anual${anio ? " " + escHtml(anio) : ""}:</b> Consentimiento → Línea base → Protocolo A → Protocolo B → Informe de cierre.</p>
       <p><span aria-hidden="true">●</span> firmado · <span aria-hidden="true">◐</span> en curso · <span aria-hidden="true">○</span> sin iniciar · <span aria-hidden="true">✚</span> con addenda · <span aria-hidden="true">!</span> fuera de secuencia · <span aria-hidden="true">⚠</span> consentimiento pendiente.</p>
       <p>El orden y el consentimiento no bloquean ningún módulo: se puede trabajar en cualquier orden y, si algo queda fuera de secuencia, se avisa al guardar.</p>
@@ -157,6 +156,14 @@ function filaTecnico(rotulo, nombre, rol){
     : "— <span class=\"rol-tec\">(sin asignar)</span>"}</dd></div>`;
 }
 
+/* Descripciones de las pestañas sin texto previo (L1, §5.171). Cada una sale sólo de texto que ya está en el repo: la fuente va al lado. */
+/* Fuente: Documento Técnico, tabla de módulos, HCE-00 («Datos generales, diagnóstico, CIE-11, … técnicos responsables, anamnesis completa. Siempre abierto y actualizable»). */
+const DESC_HCE00 = `<p>Datos generales del NNA, diagnóstico, CIE-11, técnicos responsables y anamnesis. Siempre abierto y actualizable.</p>`;
+/* Fuente: Documento Técnico, tabla de módulos, HCE-CI («Autorización de la familia (evaluación, registro, comunicación a organismos)»); «no bloquea»: el texto que ya muestra
+   esta pestaña cuando el consentimiento está pendiente y handoff §5.94 (el CI no traba). */
+const DESC_CI = `<p>Autorización de la familia para la evaluación, el registro en la HCE y la comunicación a organismos (INAU / BPS). Es un estado visible del expediente: no bloquea ninguna evaluación.</p>`;
+/* Fuente: handoff §5.22 («El PAI de INAU es un documento dinámico que debe reflejar el estado actual del NNA, con actualización en SIPI ante cualquier cambio significativo y revisiones formales periódicas»). */
+const DESC_PAI = `<p>Propuesta de atención individual de INAU: un documento dinámico que refleja el estado actual del NNA, con actualización en SIPI ante cualquier cambio significativo y revisiones formales periódicas.</p>`;
 function hce00Html(p){
   const a = p.anamnesis;
   const anam = a
@@ -165,7 +172,8 @@ function hce00Html(p){
   return `<div class="exp-grid">
     <div>
       <div class="info-card">
-        <h3>HCE-00 · Identificación y datos clínicos</h3>
+        <h3>HCE-00 · Identificación y datos clínicos${ayudaBotonHtml("hce00", "HCE-00 · Identificación y datos clínicos")}</h3>
+        ${ayudaPanelHtml("hce00", DESC_HCE00)}
         <dl class="ib">
           ${filaDato("Diagnóstico", p.dx)}
           ${filaDato("CIE-11", p.cie11)}
@@ -289,7 +297,7 @@ function ciFormHtml(d, registrar){
 
 function ciPanelHtml(){
   const ci = _ci();
-  const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1">CI · Consentimiento informado ${estado || ""}</h3>`;
+  const cab = (estado) => `<h3 id="ciTitulo" tabindex="-1">CI · Consentimiento informado${ayudaBotonHtml("ci", "CI · Consentimiento informado")} ${estado || ""}</h3>${ayudaPanelHtml("ci", DESC_CI)}`;
   if(ci.estado === "cargando") return `<div class="info-card">${cab()}<div class="ib">${estadoCargandoHtml("Cargando consentimiento…")}</div></div>`;
   if(ci.estado === "error"){
     return `<div class="info-card">${cab()}<div class="ib">${estadoErrorHtml(ci.mensaje, "cargarCi()")}</div></div>`;
@@ -399,7 +407,7 @@ function panelTabExpHtml(k){
   if(k === "log") return logPanelHtml();
   const t = TABS_EXP.find(x => x.k === k);
   return `<div class="info-card">
-    <h3>${t.r} · ${escHtml(t.d)} ${badgeSoloDemo()}</h3>
+    <h3>${t.r} · ${escHtml(t.d)}${ayudaBotonHtml(k, t.r + " · " + t.d)} ${badgeSoloDemo()}</h3>${ayudaPanelHtml(k, DESC_PAI)}
     <div class="ib">${panelModoDemo("Este módulo todavía no está conectado al servidor.")}</div>
   </div>`;
 }
