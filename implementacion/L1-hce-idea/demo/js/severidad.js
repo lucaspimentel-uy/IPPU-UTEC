@@ -107,10 +107,9 @@ function sevPanelHtml(){
   const cuerpo = rec ? sevLecturaHtml(rec) : `<div class="ib">${estadoVacioHtml("◌", `<b>Sin registrar.</b> Todavía no se registró la severidad DSM-5-TR de este expediente.<br>
       <span class="hint">Se registra por juicio clínico, los dos dominios juntos, y se corrige cuando el equipo lo considere.</span>`,
       `<button type="button" class="btn btn-primary" id="btnSevNuevo" onclick="sevAbrirForm()">+ Registrar severidad</button>`)}</div>`;
-  return `${cab}
+  return `${cabConAyudaHtml(cab, "nota_sev", "SEV · Severidad (DSM-5-TR)", `<p class="hint sev-nota" id="sevNota"><b>Regla del módulo:</b> ${escHtml(SEV_REGLA)}</p>`)}
     <div id="sevAvisos" class="review-note avisos-api" role="status"${(SEV.avisos || []).length ? "" : " hidden"}>${sevAvisosHtml()}</div>
     <div class="info-card">
-      <p class="hint sev-nota" id="sevNota"><b>Regla del módulo:</b> ${escHtml(SEV_REGLA)}</p>
       ${cuerpo}
     </div>
     ${sevReferenciaHtml()}`;

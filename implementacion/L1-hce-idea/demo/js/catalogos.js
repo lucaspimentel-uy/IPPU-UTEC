@@ -37,7 +37,7 @@ function lbTotales(dim){
 
 /* =============== ESCALA IPPU-TEA — Instrumento propio de IPPU (M5) ===============
    4 escalas × 6 ítems = 24, Likert 1–5 de PROGRESO (lógica inversa al IDEA).
-   Citas: referencia documental, NO verificadas (bajo riesgo, §Precauciones del plan). */
+   Citas: las 24 referencias las confirmó IPPU (reunión de 2026-08, handoff §5.48; puntos-a-validar §1.4, CERRADO). */
 const IPPU_ESCALAS = ["Relación Social","Comunicación y Lenguaje","Anticipación y Flexibilidad","Simbolización"];
 const IPPU_ITEMS = [
   {e:0,t:"Calidad y frecuencia del contacto visual intencional en intercambios con adultos y pares",r:"DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)"},

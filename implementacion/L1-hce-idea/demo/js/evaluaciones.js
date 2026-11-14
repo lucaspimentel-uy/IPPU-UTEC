@@ -310,10 +310,11 @@ function evEstadoHtml(ev){
 }
 /* Encabezado del módulo (F1): un renglón —título, estado y addenda—, sin tarjeta. La nota metodológica, una sola vez, va debajo
    (sólo en el editor); los avisos y los errores, debajo de ella y sólo cuando los hay (nada de bloques vacíos, H17). */
-function evEncabezadoHtml(ev){
+function evEncabezadoHtml(ev, notaHtml){
   const inf = EV_INFO[ev.k];
-  return `<div class="mod-cab"><h2 id="evTitulo" tabindex="-1">${inf.corto} · ${escHtml(inf.nombre)} — ${escHtml(ev.anio)}</h2>
+  const cab = `<div class="mod-cab"><h2 id="evTitulo" tabindex="-1">${inf.corto} · ${escHtml(inf.nombre)} — ${escHtml(ev.anio)}</h2>
     <span id="evEstado" class="ev-estado">${evEstadoHtml(ev)}</span></div>`;
+  return notaHtml ? cabConAyudaHtml(cab, "nota_" + ev.k, `${inf.corto} · ${inf.nombre}`, notaHtml) : cab;
 }
 function evAvisosBloqueHtml(ev){
   return `<div id="evAvisos" class="review-note avisos-api" role="status"${(ev.avisos || []).length ? "" : " hidden"}>${evAvisosHtml(ev)}</div>`;
@@ -402,13 +403,13 @@ function ideaHtml(ev){
     <header><span>${escHtml(escala.escName)}</span><span class="dims">D${ei * 3 + 1} · D${ei * 3 + 2} · D${ei * 3 + 3} — Máx. 24 pts</span></header>
     ${escala.dims.map((_, di) => ideaDimHtml(ev, ei, di)).join("")}
     <div class="esc-foot"><span class="spacer"></span><span>Subtotal escala: <b id="sub${ei}"></b></span></div></div>`).join("");
-  return `${evEncabezadoHtml(ev)}
-    <p class="mod-nota">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). El total y la banda se calculan al guardar: la banda es una orientación para el equipo y el juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda).</p>
+  return `${evEncabezadoHtml(ev, `<p class="mod-nota">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). El total y la banda se calculan al guardar: la banda es una orientación para el equipo y el juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda).</p>`)}
     ${evAvisosBloqueHtml(ev)}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}
     <div id="ideaForm" class="tarjeta-sep">
-      <p class="review-note ev-como" id="ideaComoPuntuar"><span><b>Cómo puntuar cada dimensión:</b> elegí la descripción que mejor caracterice al NNA, siempre la puntuación más baja posible (0 = sin trastorno · 8 = afectación severa); tocá de nuevo la elegida para dejarla sin puntuar. Si el caso se sitúa claramente entre dos niveles, usá un puntaje intermedio (1, 3, 5 o 7, Rivière). NS = observación insuficiente: impide firmar.</span></p>
+      <div class="ayuda-fila"><span>Cómo puntuar cada dimensión</span>${ayudaBotonHtml("ideaComo", "Cómo puntuar cada dimensión")}</div>
+      ${ayudaPanelHtml("ideaComo", `<p class="mod-nota" id="ideaComoPuntuar"><span><b>Cómo puntuar cada dimensión:</b> elegí la descripción que mejor caracterice al NNA, siempre la puntuación más baja posible (0 = sin trastorno · 8 = afectación severa); tocá de nuevo la elegida para dejarla sin puntuar. Si el caso se sitúa claramente entre dos niveles, usá un puntaje intermedio (1, 3, 5 o 7, Rivière). NS = observación insuficiente: impide firmar.</span></p>`)}
       ${escalas}</div>
     <div class="card tarjeta-sep">
       <div class="cardhead"><h2>Datos de la línea base (HCE-LB)</h2></div>
@@ -657,7 +658,7 @@ function protItemHtml(ev, ix){
       <textarea id="pobs-${n}" data-ev aria-describedby="err_pobs-${n}" oninput="evObsItem(${n})">${escHtml(st.obs)}</textarea></div>
       <div class="ev-err" id="err_pobs-${n}"></div>
     </div>
-    <div class="pit-r">Ref.: ${escHtml(it.r)} · <i>cita documental no verificada</i></div>
+    <div class="pit-r">${escHtml(it.r)}</div>
   </div>`;
 }
 function protObsRotulo(v){
@@ -669,8 +670,7 @@ function protHtml(ev){
   const esc = IPPU_ESCALAS.map((nom, e) => `<div class="prot-esc"><header><span>E${e + 1} · ${escHtml(nom)}</span><span class="sub" id="protSubW${e}">Ítems ${e * 6 + 1}–${e * 6 + 6} — <span id="protSub${e}"></span></span></header>
     ${IPPU_ITEMS.map((it, ix) => ix).filter(ix => IPPU_ITEMS[ix].e === e).map(ix => protItemHtml(ev, ix)).join("")}</div>`).join("");
   const esB = ev.k === "pb";
-  return `${evEncabezadoHtml(ev)}
-    <p class="mod-nota">Instrumento propio de IPPU para medir <b>progreso</b> (mayor = más progreso): 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos. El total y las escalas se calculan al guardar, con los ítems completos. La firma bloquea el protocolo (corrección por addenda).</p>
+  return `${evEncabezadoHtml(ev, `<p class="mod-nota">Instrumento propio de IPPU para medir <b>progreso</b> (mayor = más progreso): 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos. El total y las escalas se calculan al guardar, con los ítems completos. La firma bloquea el protocolo (corrección por addenda).</p>`)}
     ${evAvisosBloqueHtml(ev)}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${evEvaluadoresHtml(ev)}

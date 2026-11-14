@@ -96,8 +96,8 @@ function gruposPintarLista(){
   const lista = gruposVisibles();
   const admin = gruposEsAdmin();
   cont.innerHTML = `<div class="crumbs">Servicio de Atención Diurna › <b>Grupos de referencia</b></div>
-    <h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>
-    <p class="pagedesc">Los grupos de ${GRP.anio === null ? "este año" : GRP.anio} ${admin ? "con sus dos técnicos" : "donde sos técnico o técnica"} y los NNA activos de cada uno. Tocá un grupo para ver sus integrantes.</p>
+    <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloGrupos" tabindex="-1">Grupos de referencia</h1>${ayudaBotonHtml("grupos", "Grupos de referencia")}</div>
+    ${ayudaPanelHtml("grupos", `<p class="pagedesc">Los grupos de ${GRP.anio === null ? "este año" : GRP.anio} ${admin ? "con sus dos técnicos" : "donde sos técnico o técnica"} y los NNA activos de cada uno. Tocá un grupo para ver sus integrantes.</p>`)}
     ${lista.length ? `<div class="grupos-grid">${lista.map(g => {
       const n = gruposCuenta(g).length;
       return `<article class="card grupo-card" id="grupoCard_${g.id}">

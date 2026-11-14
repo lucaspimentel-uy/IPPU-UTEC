@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fundación IPPU · Historia Clínica Electrónica</title>
+<link rel="icon" type="image/png" sizes="64x64" href="img/favicon.png">
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
@@ -15,7 +16,7 @@
 <!-- ===================== LOGIN (usuario pre-creado) ===================== -->
 <div class="login-screen" id="loginScreen" role="dialog" aria-modal="true" aria-labelledby="loginTitulo">
   <div class="login-card">
-    <div class="login-logo">IP</div>
+    <img class="login-logo" src="img/logo-ippu-tinta.png" width="134" height="48" alt="">
     <h1 id="loginTitulo">Fundación IPPU</h1>
     <p class="login-sub">Historia Clínica Electrónica · Protocolo IDEA</p>
 <p id="loginApi" class="login-api" hidden></p>
@@ -31,7 +32,6 @@
         <input id="loginPass" type="password" autocomplete="current-password" aria-describedby="loginError">
       </div>
       <button class="btn btn-primary login-btn" id="loginBtn" type="submit">Ingresar</button>
-      <div class="login-hint">Ingresá con tu usuario de la HCE.</div>
     </form>
     <div class="login-foot">Prototipo · IPPU × UTEC-LIDIA · 2026 · Datos de demostración</div>
   </div>
@@ -39,7 +39,7 @@
 
 <!-- ===================== TOPBAR ===================== -->
 <header class="topbar" inert>
-  <div class="logo">IP</div>
+  <img class="logo" src="img/logo-ippu.png" width="95" height="34" alt="">
   <div class="title">
     <b>Fundación IPPU</b><span class="title-sep" aria-hidden="true"> · </span><span>Historia Clínica Electrónica</span>
   </div>
@@ -80,8 +80,8 @@
     <!-- ============ VISTA: INICIO / NNA ============ -->
     <section class="view active" id="view-inicio">
       <div class="crumbs">Servicio de Atención Diurna › <b>NNA y HCE</b></div>
-      <h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1>
-      <p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá un nombre para abrir su expediente.</p>
+      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1><button type="button" class="btn-ayuda" id="btnAyuda_inicio" aria-expanded="false" aria-controls="ayuda_inicio" aria-label="Ayuda: Niños, niñas y adolescentes en seguimiento" onclick="ayudaAlternar('btnAyuda_inicio')"><span aria-hidden="true">?</span></button></div>
+      <div class="ayuda-panel" id="ayuda_inicio" hidden><p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá un nombre para abrir su expediente.</p></div>
 
       <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
            que se derivan de esas respuestas; el resto de la demo vive en vistas marcadas. -->
@@ -221,8 +221,8 @@
          `ateneo_acuerdo`). Lista (con el indicador arriba) y detalle viven los dos dentro de #ateneosContent. -->
     <section class="view" id="view-ateneos">
       <div class="crumbs">Servicio de Atención Diurna › <b>Ateneos y capacitación</b></div>
-      <h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1>
-      <p class="pagedesc">Registro institucional con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos clínicos aparecen también en el expediente del NNA.</p>
+      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1><button type="button" class="btn-ayuda" id="btnAyuda_ateneos" aria-expanded="false" aria-controls="ayuda_ateneos" aria-label="Ayuda: Ateneos clínicos y jornadas de capacitación" onclick="ayudaAlternar('btnAyuda_ateneos')"><span aria-hidden="true">?</span></button></div>
+      <div class="ayuda-panel" id="ayuda_ateneos" hidden><p class="pagedesc">Registro institucional con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos clínicos aparecen también en el expediente del NNA.</p></div>
       <div id="ateneosContent"></div>
     </section>
 

@@ -30,6 +30,42 @@ function check(id, nombre, ok, detalle) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  (${id}) ${nombre}${detalle ? '  → ' + detalle : ''}`);
 }
 
+/* Ayuda detrás de un «?» (L0, §5.169): prueba CADA .btn-ayuda a la vista de la vista activa. Cerrada por omisión; clic abre (aria-expanded, el panel
+   queda DEBAJO del botón y empuja lo que sigue, sin taparlo); clic cierra; Enter y Espacio alternan; Esc cierra y deja el foco en el botón;
+   objetivo ≥ 24×24; nombre accesible «Ayuda: …». Devuelve [{id, ok, ...}] y no deja nada abierto. */
+async function probarAyudas(page) {
+  const ids = await page.evaluate(() => [...document.querySelectorAll('.view.active .btn-ayuda')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.id));
+  const leer = (id) => page.evaluate((i) => {
+    const b = document.getElementById(i), p = document.getElementById(b.getAttribute('aria-controls'));
+    const rb = b.getBoundingClientRect(), rp = p.getBoundingClientRect();
+    let sig = p.nextElementSibling; while (sig && sig.getBoundingClientRect().height === 0) sig = sig.nextElementSibling;   // el siguiente que ocupa lugar (los avisos ocultos no cuentan)
+    if (!sig) { let u = p.parentElement; while (u && !sig) { sig = u.nextElementSibling; while (sig && sig.getBoundingClientRect().height === 0) sig = sig.nextElementSibling; u = u.parentElement; } }
+    return { exp: b.getAttribute('aria-expanded'), oculto: p.hidden, visible: rp.width > 0 && rp.height > 0, texto: p.textContent.trim().length,
+      w: rb.width, h: rb.height, nombre: b.getAttribute('aria-label') || '', foco: document.activeElement === b,
+      debajo: rp.top >= rb.bottom - 1, sigTop: sig ? Math.round(sig.getBoundingClientRect().top) : null, panelBottom: Math.round(rp.bottom) };
+  }, id);
+  const out = [];
+  for (const id of ids) {
+    const sel = '#' + id, r = {};
+    await page.evaluate((i) => document.getElementById(i).scrollIntoView({ block: 'center' }), id);
+    r.cerrada = await leer(id);
+    await page.click(sel); r.abierta = await leer(id);
+    await page.click(sel); r.cerrada2 = await leer(id);
+    await page.focus(sel); await page.keyboard.press('Enter'); r.enter = await leer(id);
+    await page.keyboard.press('Enter'); r.enter2 = await leer(id);
+    await page.keyboard.press('Space'); r.espacio = await leer(id);
+    await page.keyboard.press('Escape'); r.esc = await leer(id);
+    const c = r.cerrada, a = r.abierta;
+    r.ok = c.exp === 'false' && c.oculto && !c.visible && c.w >= 23.9 && c.h >= 23.9 && /^Ayuda: \S/.test(c.nombre)
+      && a.exp === 'true' && !a.oculto && a.visible && a.texto > 20 && (!r.cerrada.sigTop || a.sigTop > r.cerrada.sigTop) && a.debajo && (a.sigTop === null || a.panelBottom <= a.sigTop + 1)
+      && r.cerrada2.exp === 'false' && r.cerrada2.oculto
+      && r.enter.exp === 'true' && r.enter2.exp === 'false' && r.espacio.exp === 'true' && r.espacio.visible
+      && r.esc.exp === 'false' && r.esc.oculto && r.esc.foco;
+    out.push({ id, ok: r.ok, ...(r.ok ? {} : r) });
+  }
+  return out;
+}
+
 /* Archivos estáticos de la demo que NO llegaron (§5.166 d): un `requestfailed` de un pedido al origen de la demo (index.html, js/, css/).
    Antes la corrida no se enteraba: el navegador lo deja en la consola como «Failed to load resource» y el chequeo z descarta ese texto
    (es lo esperado para un 4xx/5xx de la API). Un módulo que falta se ve como un clic que no manda ningún pedido. Ver el chequeo z-carga. */
@@ -342,6 +378,16 @@ async function pantallaMotivo(page, id, opts) {
   {
     const { ctx, page } = await nuevaPagina();
     await page.goto(urlDemo());
+    const loginL0 = await page.evaluate(() => ({ hint: !!document.querySelector('.login-hint'), txt: document.getElementById('loginScreen').innerText, h1: (document.querySelector('#loginScreen h1') || {}).textContent,
+      etiquetas: ['loginUser', 'loginPass'].map((i) => !!document.querySelector(`label[for="${i}"]`)) }));
+    check('l0-login', 'el login ya no trae la pista «Ingresá con tu usuario de la HCE.»; conserva su h1 «Fundación IPPU» y sus dos campos con etiqueta',
+      !loginL0.hint && !/Ingresá con tu usuario/.test(loginL0.txt) && loginL0.h1 === 'Fundación IPPU' && loginL0.etiquetas.every(Boolean), JSON.stringify({ h1: loginL0.h1, hint: loginL0.hint }));
+    /* L0 (D, §5.169): el logo de IPPU reemplaza al cuadrado «IP»: decorativo (alt vacío; «Fundación IPPU» sigue como texto), 34 px de alto en la barra
+       y 48 en el login, ancho automático con la proporción del archivo, y cargado. Sin ningún «IP» de marcador. */
+    const logos = await page.evaluate(() => ['header.topbar img.logo', '#loginScreen img.login-logo'].map((q) => { const i = document.querySelector(q); if (!i) return { q, falta: true };
+      const r = i.getBoundingClientRect(); return { q, alt: i.getAttribute('alt'), h: Math.round(r.height), proporcion: Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) < 0.02, cargado: i.complete && i.naturalWidth > 0 }; }));
+    check('l0-logo', 'logo de IPPU en la barra (34 px de alto) y en el login (48 px): <img alt=""> cargado, con la proporción del archivo; el nombre «Fundación IPPU» sigue como texto',
+      logos[0].alt === '' && Math.abs(logos[0].h - 34) <= 1 && logos[1].alt === '' && Math.abs(logos[1].h - 48) <= 1 && logos.every((l) => l.proporcion && l.cargado) && /Fundación IPPU/.test(await page.evaluate(() => document.querySelector('header.topbar .title').textContent)), JSON.stringify(logos));
     check('3a-pre', 'el login NO trae usuario ni contraseña precargados',
       (await page.inputValue('#loginUser')) === '' && (await page.inputValue('#loginPass')) === '');
     const dlg = await page.evaluate(() => {
@@ -1180,8 +1226,24 @@ async function pantallaMotivo(page, id, opts) {
       const recortados = els.filter((e) => { const cs = getComputedStyle(e); const caja = e.closest('.opcion,.inter-btn,.dimension,.escala') || f; const r = e.getBoundingClientRect(), rc = caja.getBoundingClientRect();
         return (cs.overflow !== 'visible' && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1)) || r.right > rc.right + 0.5 || r.left < rc.left - 0.5; }).map((e) => e.className + ' «' + e.textContent.trim().slice(0, 20) + '»');
       return { n: els.length, desc: f.querySelectorAll('.opcion .desc').length, chicos, recortados, consigna: document.querySelectorAll('#ideaComoPuntuar').length, repetida: f.querySelectorAll('.dinstr,.inter-nota').length,
-        pregunta: (f.innerText.match(/entre dos niveles/g) || []).length, desborde: document.documentElement.scrollWidth > window.innerWidth };
+        pregunta: (f.textContent.match(/entre dos niveles/g) || []).length, desborde: document.documentElement.scrollWidth > window.innerWidth };
     };
+    /* ---------- l0-ayudas: el texto que sólo explica una pestaña o vista está detrás de un «?» (L0, E, §5.169) ---------- */
+    {
+      await p3.setViewportSize({ width: 1280, height: 800 });
+      const esperadas = { listado: 1, 'lb-editor': 2, 'ic-editor': 1, sev: 1, inc: 1, doc: 1, grupos: 1, ateneos: 1 };   // sin contar el «?» del ciclo anual (#btnAyudaFlujo)
+      const porPantalla = {}, malas = [], conteo = {};
+      for (const [k, ir] of PANTALLAS) {
+        await ir();
+        const r = await probarAyudas(p3);
+        porPantalla[k] = r.length;
+        conteo[k] = r.filter((x) => x.id !== 'btnAyudaFlujo').length;
+        for (const x of r) if (!x.ok) malas.push({ pantalla: k, ...x });
+      }
+      const faltan = Object.entries(esperadas).filter(([k, n]) => conteo[k] !== n).map(([k, n]) => `${k}: ${conteo[k]} ≠ ${n}`);
+      check('l0-ayudas', 'cada «?» (listado, IDEA y su «Cómo puntuar», informe de cierre, SEV, INC, DOC, Grupos, Ateneos y el del ciclo anual): cerrado por omisión, abre con clic / Enter / Espacio debajo de su título empujando el contenido, Esc lo cierra y devuelve el foco al botón, objetivo ≥ 24×24 y nombre «Ayuda: …»',
+        malas.length === 0 && faltan.length === 0, malas.length || faltan.length ? JSON.stringify({ malas: malas.slice(0, 2), faltan }).slice(0, 700) : JSON.stringify(conteo));
+    }
     const editor = [];
     for (const [w, h] of tamanios3) { await p3.setViewportSize({ width: w, height: h }); await abrir3(idJ3, 'lb'); editor.push({ w, ...(await p3.evaluate(medirEditor)) }); }
     check('f3-descriptores', 'editor del LB de Joaquín (borrador) a 1280 y a 1024: los 60 descriptores, los nombres de dimensión, los puntajes y los intermedios miden ≥ 12 px y ninguno se recorta ni se sale de su caja; la consigna («Cómo puntuar…») está UNA vez, no en cada dimensión',
@@ -1519,6 +1581,10 @@ async function pantallaMotivo(page, id, opts) {
     const paDraft = (await get(`/hce/${idSofia}/protocolo`)).json.find((x) => x.tipo === 'A');
     check('3c-b0', 'el borrador del PA de Sofía se carga desde la API (24 ítems, evaluadores del borrador precargados, sin fecha ni síntesis)',
       (await pc.locator('#panelExp .likert-btn.sel').count()) === 24 && paDraft.firmado === false && (await pc.inputValue('#ev_t1')) === String(paDraft.evaluador_t1_id) && (await pc.inputValue('#prot_fecha')) === '', '24 ítems');
+    /* L0 (B, §5.169): las 24 referencias las confirmó IPPU (§5.48): cada ítem muestra su referencia, sin «Ref.:» ni «no verificada» */
+    const refs = await pc.evaluate(() => [...document.querySelectorAll('#panelExp .prot-item .pit-r')].map((e) => e.textContent.trim()));
+    check('l0-refs', 'Escala IPPU-TEA: los 24 ítems muestran su referencia (p. ej. «DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)»), sin «Ref.:» y ninguno dice «no verificada»',
+      refs.length === 24 && refs.every((t) => t.length > 8 && !/no verificada|^Ref\./i.test(t)) && refs[0] === 'DSM-5-TR A1a · CIF d710 · Pelphrey et al. (2005)', JSON.stringify(refs.slice(0, 2)));
     await pc.click('#pitem-1 .likert-btn[data-v="1"]');
     await pc.fill('#prot_fecha', '2026-07-08'); await pc.fill('#prot_sint1', 'Síntesis del técnico 1 (prueba 3-c).'); await pc.fill('#prot_sint2', 'Síntesis del técnico 2 (prueba 3-c).');
     const vivo = await pc.evaluate(() => ({ total: document.getElementById('evTotal').textContent, etq: document.getElementById('evTotalEtq').textContent, cuenta: document.getElementById('evCuenta').textContent, sub0: document.getElementById('protSub0').textContent }));
@@ -1993,6 +2059,23 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
       anchosPrint.every((a) => a.scrollWidth === a.vw && a.tablaDisplay === 'table' && a.tablaNowrap === 'normal' && a.firmasCols === 3 && a.fuera === 0), JSON.stringify(anchosPrint));
     await pd.setViewportSize(VIEWPORT_BASE);
     await pd.emulateMedia({ media: null });
+
+    /* (1b) L0 (A, §5.169): el «Saltar al contenido» no se imprime. Con el foco en el enlace (Tab) y el informe en media print, el enlace no se ve
+       ni ocupa lugar (no tapa «Valoración anual — técnico/a 2»); en pantalla, Tab lo muestra y Enter lleva el foco a <main>. */
+    const aInicioTab = () => pd.evaluate(() => { const b = document.body; b.setAttribute('tabindex', '-1'); b.focus(); b.removeAttribute('tabindex'); window.scrollTo(0, 0); });
+    await aInicioTab();
+    await pd.keyboard.press('Tab');
+    const skipFoco = await pd.evaluate(() => document.activeElement.classList.contains('skip-link'));
+    await pd.emulateMedia({ media: 'print' });
+    const skipPrint = await pd.evaluate(() => { const a = document.querySelector('a.skip-link'), r = a.getBoundingClientRect(); return { display: getComputedStyle(a).display, w: r.width, h: r.height, visible: a.checkVisibility ? a.checkVisibility() : null }; });
+    await pd.emulateMedia({ media: null });
+    await aInicioTab();
+    await pd.keyboard.press('Tab');
+    const skipPant = await pd.evaluate(() => { const a = document.activeElement, r = a.getBoundingClientRect(); return { skip: a.classList.contains('skip-link'), visible: r.top >= 0 && r.left >= 0 && r.width > 40 && r.bottom <= innerHeight }; });
+    if (skipPant.skip) await pd.keyboard.press('Enter');          // sólo si el foco está de verdad en el enlace: otro Enter activaría un botón y sacaría al informe de la pantalla
+    const skipEnter = await pd.evaluate(() => document.activeElement === document.querySelector('main'));
+    check('l0-skip-print', 'informe de cierre en media print: con el foco en «Saltar al contenido» (Tab) el enlace NO se ve (display:none, 0×0); en pantalla Tab lo muestra y Enter mueve el foco a <main>',
+      skipFoco && skipPrint.display === 'none' && skipPrint.w === 0 && skipPrint.h === 0 && skipPrint.visible !== true && skipPant.skip && skipPant.visible && skipEnter, JSON.stringify({ skipFoco, skipPrint, skipPant, skipEnter }));
 
     /* (2) page.pdf() A4 a escala de Playwright 1, 1,25 y 1,5 (no CSS zoom): los cortes de hoja caen en lugares distintos, así que «nada
        partido» no es casualidad de un solo diseño. Encabezado en cada hoja; tabla, cada radar, firmas y membrete en UNA hoja. El margen derecho
@@ -3413,9 +3496,9 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     await abrirSev(idM);
     const sevM = (await api('GET', `/hce/${idM}/severidad`)).json;
     const lect = await ps.evaluate(() => ({ cs: document.getElementById('sevCs')?.innerText, crr: document.getElementById('sevCrr')?.innerText, just: document.getElementById('sevJust')?.innerText,
-      fecha: document.getElementById('sevFecha')?.innerText, autor: document.getElementById('sevAutor')?.innerText, panel: document.getElementById('panelExp').innerText,
+      fecha: document.getElementById('sevFecha')?.innerText, autor: document.getElementById('sevAutor')?.innerText, panel: document.getElementById('panelExp').textContent,
       demo: document.querySelectorAll('#panelExp .demo-panel, #panelExp .solo-demo, #tabExp-sev .solo-demo').length, color: document.querySelectorAll('#panelExp .banda-chip, #panelExp [data-banda-paso]').length,
-      notas: (document.getElementById('panelExp').innerText.match(/No se deriva del puntaje IDEA ni de la Escala IPPU-TEA/g) || []).length }));
+      notas: (document.getElementById('panelExp').textContent.match(/No se deriva del puntaje IDEA ni de la Escala IPPU-TEA/g) || []).length }));
     const REGLA = 'El nivel de severidad DSM-5-TR se registra por juicio clínico del profesional habilitado y se especifica por separado para cada dominio diagnóstico. No se deriva del puntaje IDEA ni de la Escala IPPU-TEA (instrumentos no homologables). La severidad puede variar según el contexto y fluctuar en el tiempo: este registro describe la necesidad de apoyo actual y no sustituye la determinación de elegibilidad para servicios o prestaciones.';
     check('c2-lectura', 'pestaña Severidad de Martín: los dos dominios (distintos) con la etiqueta que devuelve la API, la justificación, la fecha y el autor; la regla del módulo verbatim, una sola vez; sin panel ni marca «Solo demo» y sin color por grado',
       sevM.nivel_cs !== sevM.nivel_crr && lect.cs === sevM.etiqueta_cs && lect.crr === sevM.etiqueta_crr && lect.just === sevM.justificacion && lect.fecha === await fmt(sevM.fecha)

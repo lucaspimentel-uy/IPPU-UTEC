@@ -359,7 +359,8 @@ function limpiarUiDeSesion(){
   ["kpiTotal","kpiAlDia","kpiPend","kpiCi"].forEach(id => setKpi(id, "…"));
   // Cargas en vuelo del expediente: la secuencia sube y se descarta todo lo que tenga datos de un NNA.
   EXP.seq++;
-  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null, ayuda:false});
+  ayudaCerrarTodas();     // ninguna ayuda abierta de la sesión anterior
+  Object.assign(EXP, {id:null, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null});
   if(typeof evReiniciar === "function") evReiniciar(true);     // evaluaciones: ni borradores ni profesionales de la sesión anterior
   if(typeof icReiniciar === "function") icReiniciar();         // informe de cierre y su documento impreso: nada del NNA anterior detrás del login
   if(typeof vfReiniciar === "function") vfReiniciar();         // valoración funcional

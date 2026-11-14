@@ -208,12 +208,9 @@
     border-bottom:1px solid #000;
     box-shadow:inset 0 -3px 0 var(--orange);
   }
-  .logo{
-    width:34px;height:34px;border-radius:var(--r-sm);background:var(--orange);
-    display:flex;align-items:center;justify-content:center;
-    font-family:var(--f-text);font-weight:700;font-size:var(--fs-xs);letter-spacing:.02em;
-    color:#fff;flex:0 0 auto;
-  }
+  /* Logo de IPPU (L0, §5.169): la marca de la fundación, decorativa (alt vacío; el nombre va como texto al lado). Versión blanca con fondo
+     transparente sobre la barra oscura; no se recolorea con CSS ni se estira: alto fijo y ancho automático. */
+  .logo{height:34px;width:auto;display:block;flex:0 0 auto}
   .topbar .title{line-height:1.2;white-space:nowrap}
   .topbar .title b{font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
   .topbar .title span{font-size:var(--fs-sm);color:var(--on-dark-2)}
@@ -464,6 +461,7 @@
     h1.pagetitle{font-size:var(--fs-lg)}
     .kpi .val{font-size:var(--fs-xl)}
   }
+  @media(max-width:400px){.logo{height:26px}}   /* a 320 px el logo de 34 px haría desbordar la barra (logo + nombre + perfil + «Salir»); la identidad se conserva */
 
   /* ============ MODAL / WIZARD ALTA NNA ============ */
   .modal-bg{
@@ -773,11 +771,7 @@
     padding:var(--s7) var(--s6) var(--s5);border:1px solid var(--rule);border-top:3px solid var(--ink);
     box-shadow:var(--shadow-pop);text-align:center;animation:popin .25s ease
   }
-  .login-logo{
-    width:48px;height:48px;border-radius:var(--r);background:var(--orange);color:#fff;
-    font-family:var(--f-text);font-weight:700;letter-spacing:.02em;
-    font-size:var(--fs-md);display:flex;align-items:center;justify-content:center;margin:0 auto var(--s3)
-  }
+  .login-logo{height:48px;width:auto;display:block;margin:0 auto var(--s3)}   /* versión en tinta (la de la barra es blanca) */
   .login-card h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;color:var(--ink)}
   .login-sub{font-size:var(--fs-2xs);color:var(--ink-2);margin:var(--s1) 0 var(--s6)}
   .login-field{text-align:left;margin-bottom:var(--s3)}
@@ -788,12 +782,6 @@
   }
   .login-field input:focus{border-color:var(--orange)}
   .login-btn{width:100%;padding:11px;font-size:var(--fs-sm);margin-top:var(--s2)}
-  .login-hint{
-    font-size:var(--fs-2xs);color:var(--ink-2);margin-top:var(--s3);background:var(--orange-soft);
-    border:1px solid var(--orange-line);border-radius:var(--r-sm);
-    padding:var(--s2) var(--s3);line-height:1.5;text-align:left
-  }
-  .login-hint b{color:var(--ink)}
   .login-foot{
     font-size:var(--fs-3xs);color:var(--ink-2);margin-top:var(--s5);
     border-top:1px solid var(--rule);padding-top:var(--s3)
@@ -1077,7 +1065,7 @@
   /* ============ IMPRESIÓN (informe → PDF) ============ */
   @media print{
     .topbar,.sidebar,.toast,.no-print,.login-screen,.crumbs,.eval-bar,
-    .section-nav,.barra-acciones,.banda-nna,.tabs-exp{display:none!important}
+    .section-nav,.barra-acciones,.banda-nna,.tabs-exp,.skip-link{display:none!important}
     .layout{display:block}
     main{max-width:none;padding:0}
     body{background:#fff;font-size:11pt}
@@ -1418,11 +1406,10 @@
   .exp-tab[aria-selected="true"]{position:relative;z-index:1;background:var(--paper);box-shadow:inset 0 3px 0 var(--orange);margin-bottom:-1px;padding-bottom:4px}
   .exp-tab:focus-visible{outline-offset:-2px}   /* hacia adentro: la pestaña toca a sus vecinas y al filete de abajo */
   .st-mini.st-fuera{color:var(--ink);font-weight:700}
-  .ayuda-flujo{
-    margin:var(--s2) 0 0;padding:var(--s2) var(--s3);background:var(--paper);border:1px solid var(--rule);border-radius:var(--r-sm);
+  .ayuda-panel{
+    margin:var(--s2) 0 var(--s3);padding:var(--s2) var(--s3);background:var(--paper);border:1px solid var(--rule);border-radius:var(--r-sm);
     font-size:var(--fs-2xs);line-height:1.5;color:var(--ink);max-width:90ch
   }
-  .ayuda-flujo p+p{margin-top:var(--s1)}
   .tabs-exp .estado-inline{margin:var(--s2) 0 0}
 
   /* --- Encabezado del módulo: un renglón, sin tarjeta; la nota metodológica una sola vez debajo (sólo en los editores) --- */
@@ -1431,6 +1418,17 @@
   .mod-cab .spacer{flex:1}
   .mod-cab .st{line-height:1.35}
   .mod-cab .btn-mini{padding-top:3px;padding-bottom:3px}
+  /* Ayuda detrás de un «?» (L0, §5.169; js/utils.js · ayudaBotonHtml): el mismo botón y el mismo panel del ciclo anual (.btn-ayuda,
+     .ayuda-panel), ahora también junto al título de cada pestaña y vista. Objetivo de 24 px; borde --control-borde; foco global; sin animación. */
+  .ayuda-panel[hidden]{display:none}
+  .ayuda-panel>p{margin:0}
+  .ayuda-panel>p+p{margin-top:var(--s1)}
+  .mod-cab .btn-ayuda,.titulo-ayuda .btn-ayuda{margin:0 0 0 var(--s1)}
+  .titulo-ayuda{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:var(--s5)}   /* el hueco que antes daba el pagedesc */
+  .titulo-ayuda+.ayuda-panel{margin-top:calc(var(--s2) - var(--s5));margin-bottom:var(--s5)}
+  .titulo-ayuda h1.pagetitle{margin-bottom:0}
+  .ayuda-fila{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s2);font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
+  .ayuda-fila .btn-ayuda{margin:0}
   .mod-nota{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.5;max-width:110ch;margin:0 0 var(--s3)}
   #panelExp>.avisos-api,#panelExp>.form-errores{margin:0 0 var(--s3)}
 
@@ -1544,7 +1542,6 @@
   .card .cardhead h2,.card .cardhead h3{font-family:var(--f-text);font-size:var(--fs-sm);font-weight:600;line-height:1.4;color:var(--ink);margin:0}
   .card-n,.org-total{margin-left:var(--s2);font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}   /* la cuenta de una tarjeta: texto, sin chip */
   .escala>header .dims,.prot-esc>header .sub{font-size:var(--fs-2xs);font-weight:600;color:var(--ink-2);white-space:nowrap}
-  .ev-como{margin:0 0 var(--s4)}   /* «Cómo puntuar», una sola vez antes de las escalas del IDEA */
   .card>.cardbody-editor{padding:var(--s4)}   /* el cuerpo de las tarjetas de los editores (antes «padding:16px 18px» en línea) */
   .tarjeta-sep{margin-top:var(--s4)}          /* separación entre tarjetas apiladas (antes «margin-top:16px» en línea) */
   /* Antes estilos en línea de los templates (F3, ítem 12): mismas medidas, ahora con nombre. */

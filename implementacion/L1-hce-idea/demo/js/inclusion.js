@@ -194,9 +194,8 @@ function incPanelHtml(){
   const cab = `<div class="mod-cab"><h2 id="incTitulo" tabindex="-1">INC · Inclusión educativa y social</h2></div>`;
   if(INC.hceId !== EXP.id || INC.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando la inclusión…")}</div></div>`;
   if(INC.estado === "error") return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(INC.noEncontrado ? "No se encontró el expediente." : INC.error, INC.noEncontrado ? "" : "incReintentar()")}</div></div>`;
-  return `${cab}
+  return `${cabConAyudaHtml(cab, "nota_inc", "INC · Inclusión educativa y social", `<p class="hint org-nota" id="incNota">La situación educativa del NNA fuera de IPPU, con su estado vigente, y las gestiones del área (familia, centro, acompañante, otras instituciones).</p>`)}
     <div id="incAvisos" class="review-note avisos-api" role="status"${(INC.avisos || []).length ? "" : " hidden"}>${incAvisosHtml()}</div>
-    <p class="hint org-nota" id="incNota">La situación educativa del NNA fuera de IPPU, con su estado vigente, y las gestiones del área (familia, centro, acompañante, otras instituciones).</p>
     ${incFichaHtml()}
     ${incGestionesHtml()}
     ${incReferenciaHtml()}`;
