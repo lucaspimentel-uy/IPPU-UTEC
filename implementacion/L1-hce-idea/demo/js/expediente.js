@@ -12,7 +12,7 @@
    de ejemplo. El expediente de ejemplo (datos.js) sigue en abrirExpedienteDemo().
    El estado de cada modulo sale SIEMPRE de GET /hce/{id}/flujo: nada se bloquea en el navegador (§5.94,
    §5.95); fuera de secuencia es un aviso, y el CI pendiente es un estado visible, no un candado. */
-const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null, ayuda:false };
+const EXP = { id:null, seq:0, hce:null, raw:null, flujo:null, flujoError:false, tab:"hce00", ci:null, avisos:[], mods:null, idea:null };
 
 /* Pestañas del expediente (F1, H1/H8): nombre completo + código como texto secundario, agrupadas. El flujo del año vive en las
    pestañas del «Ciclo anual» (ya no hay tarjeta aparte): cada una lleva su estado de GET /hce/{id}/flujo, con glifo y texto.
@@ -77,21 +77,15 @@ function tabsExpedienteHtml(){
   const estadoFlujo = EXP.flujoError ? estadoErrorInlineHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()") : "";
   return `<div class="tabs-barra">
       <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
-      <button type="button" class="btn-ayuda" id="btnAyudaFlujo" aria-expanded="${EXP.ayuda}" aria-controls="ayudaFlujo" onclick="alternarAyudaFlujo()"
+      <button type="button" class="btn-ayuda" id="btnAyudaFlujo" aria-expanded="${_AYUDA_ABIERTAS.has("btnAyudaFlujo")}" aria-controls="ayudaFlujo" onclick="ayudaAlternar('btnAyudaFlujo')"
         aria-label="Ayuda: orden y estados del ciclo anual" title="Orden y estados del ciclo anual"><span aria-hidden="true">?</span></button>
     </div>
-    <div class="ayuda-flujo" id="ayudaFlujo"${EXP.ayuda ? "" : " hidden"}>
+    <div class="ayuda-panel" id="ayudaFlujo"${_AYUDA_ABIERTAS.has("btnAyudaFlujo") ? "" : " hidden"}>
       <p><b>Ciclo anual${anio ? " " + escHtml(anio) : ""}:</b> Consentimiento → Línea base → Protocolo A → Protocolo B → Informe de cierre.</p>
       <p><span aria-hidden="true">●</span> firmado · <span aria-hidden="true">◐</span> en curso · <span aria-hidden="true">○</span> sin iniciar · <span aria-hidden="true">✚</span> con addenda · <span aria-hidden="true">!</span> fuera de secuencia · <span aria-hidden="true">⚠</span> consentimiento pendiente.</p>
       <p>El orden y el consentimiento no bloquean ningún módulo: se puede trabajar en cualquier orden y, si algo queda fuera de secuencia, se avisa al guardar.</p>
     </div>${estadoFlujo}`;
 }
-function alternarAyudaFlujo(){
-  EXP.ayuda = !EXP.ayuda;
-  pintarTabsExp();
-  const b = document.getElementById("btnAyudaFlujo"); if(b) b.focus();
-}
-
 function teclaTabExp(ev){
   const ks = TABS_EXP.map(t=>t.k);
   let i = ks.indexOf(EXP.tab);

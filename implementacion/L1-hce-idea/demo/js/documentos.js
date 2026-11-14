@@ -234,9 +234,8 @@ function docPanelConectadoHtml(){
   const cab = `<div class="mod-cab"><h2 id="docTitulo" tabindex="-1">DOC · Documentos y fotos</h2></div>`;
   if(DOCS.hceId !== EXP.id || DOCS.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando los documentos…")}</div></div>`;
   if(DOCS.estado === "error") return `${cab}<div class="info-card"><div class="ib">${estadoErrorHtml(DOCS.noEncontrado ? "No se encontró el expediente." : DOCS.error, DOCS.noEncontrado ? "" : "docReintentar()")}</div></div>`;
-  return `${cab}
+  return `${cabConAyudaHtml(cab, "nota_doc", "DOC · Documentos y fotos", `<p class="hint org-nota" id="docNota">Copias digitalizadas que acompañan la historia (informes externos, documentos de organismos, autorizaciones, estudios) y las fotos del NNA.</p>`)}
     <div id="docAvisos" class="review-note avisos-api" role="status"${(DOCS.avisos || []).length ? "" : " hidden"}>${docAvisosHtml()}</div>
-    <p class="hint org-nota" id="docNota">Copias digitalizadas que acompañan la historia (informes externos, documentos de organismos, autorizaciones, estudios) y las fotos del NNA.</p>
     ${docDocumentosHtml()}
     ${docFotosHtml()}
     ${docAutorizacionHtml()}`;

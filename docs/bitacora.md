@@ -20,6 +20,12 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-13 · L1 — L0: logo de IPPU, impresión sin el «Saltar al contenido» y notas de diseño** (Lucas con Claude, local en Windows, rama `l0-diseno`, sobre `main` 603f10b; §5.169). Sólo `demo/`, arnés y docs.
+  - **A–C:** `.skip-link` fuera de la impresión (en `main` tapaba el encabezado de las 3 hojas del IC; PDF antes/después idéntico salvo ese recuadro); la Escala IPPU-TEA muestra sólo la referencia (IPPU las confirmó, §5.48); el login sin la pista.
+  - **D–F:** el JPEG de IPPU era blanco sobre gris claro, sin transparencia; Lucas pidió derivar una versión legible: PNG con alfa, blanco (barra) y en tinta (login), 512×184, y un favicon. A 320 px el logo baja a 26 px (a 34 px la barra desbordaba).
+  - **E:** un solo «?» (el del ciclo anual, generalizado): IDEA, Escala, IC, «Cómo puntuar», DOC, INC, SEV, Inicio, Ateneos y Grupos; quedan visibles `#orgNota`, `#atNota`, las descripciones dinámicas y todo lo que dice por qué algo está bloqueado.
+  - **Verificación:** runner 2 corridas OK (324 chequeos), contraste sin fallas; presentación OK con 0 escrituras en `ippu_presentacion_ver` (borrada). Hallazgos: `esquema-datos-v2.md` (backend) aún dice «no verificada». Siguiente: integrar S1b y L0 en `hce-post26` (`integracion-s1b`), después A1c.
+
 - **2026-11-13 · L1 — S1b: los ids de módulo fallan cerrado** (Lucas con Claude, local en Windows, rama `s1b-ids-modulo`, sobre `main` 1f69a1d; §5.168). Backend, sin DDL ni migración; nada bajo `demo/`.
   - **Hallazgo (reproducido en `main`, base `ippu_ver`, API `:8001`):** un técnico que no trata el expediente leía `/protocolo/1.0`, `%2B1`, ` 1`, `1 `, `1\n` y `/idea/3.0`, y modificaba el IDEA con `PATCH /idea/%2B3` (200; el canónico, 404). Causa: `_visible_por` leía el id crudo y volvía sin revisar si `not isdigit()`; la ruta lo convertía aparte. 14 rutas (IDEA, protocolo, informe).
   - **Arreglo:** `dependencias.py` recibe el id tipado (`Annotated[int, Path(alias=…)]`), el mismo valor que el endpoint; `errores.py` cuenta una vez el error de validación repetido que eso producía (el 422 de `abc` sale idéntico: 14 pedidos comparados antes/después). `openapi.json` no cambia en esas rutas.

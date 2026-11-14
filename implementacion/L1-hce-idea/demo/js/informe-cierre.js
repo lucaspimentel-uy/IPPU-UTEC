@@ -213,10 +213,11 @@ function icEstadoHtml(){
   return `<span class="st st-${est}"><span aria-hidden="true">${ESTADO_MOD_TXT[est].glifo}</span> ${txt}</span>${add}`;
 }
 /* Encabezado del módulo (F1): un renglón —título, estado, «Ver informe impreso»—, sin tarjeta; los avisos debajo, sólo si los hay. */
-function icEncabezadoHtml(){
-  return `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual — ${escHtml(IC.anio)}</h2>
+function icEncabezadoHtml(notaHtml){
+  const cab = `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual — ${escHtml(IC.anio)}</h2>
     <span id="icEstado" class="ev-estado">${icEstadoHtml()}</span><span class="spacer"></span>
     <button type="button" class="btn btn-ghost btn-mini" id="btnIcImpreso" onclick="icAbrirDocumento()">${iconoHtml("imprimir")} Ver informe impreso</button></div>`;
+  return notaHtml ? cabConAyudaHtml(cab, "nota_ic", "IC · Informe de cierre anual", notaHtml) : cab;
 }
 function icAvisosBloqueHtml(){
   return `<div id="icAvisos" class="review-note avisos-api" role="status"${(IC.avisos || []).length ? "" : " hidden"}>${icAvisosHtml()}</div>`;
@@ -282,8 +283,7 @@ function icEditorHtml(){
   }).join("");
   const campo = (id, rot, base, extra) => `<div class="field"><label for="${id}">${rot} <span class="req" aria-hidden="true">*</span><span class="sr-only">(necesario para firmar)</span></label>
       <textarea id="${id}" data-ic aria-describedby="err_${id}" oninput="icSucio()"${extra || ""}>${escHtml(_cvI(id, base || ""))}</textarea><div class="ev-err" id="err_${id}"></div></div>`;
-  return `${icEncabezadoHtml()}
-    <p class="mod-nota">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. Elaboración sugerida: en los días posteriores al cierre del Protocolo B. El PDF con membrete es <b>el único informe válido</b> (§5.3): se genera desde el informe firmado.</p>
+  return `${icEncabezadoHtml(`<p class="mod-nota">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. Elaboración sugerida: en los días posteriores al cierre del Protocolo B. El PDF con membrete es <b>el único informe válido</b> (§5.3): se genera desde el informe firmado.</p>`)}
     ${icAvisosBloqueHtml()}
     <div id="evErrores" class="form-errores" role="alert" tabindex="-1" hidden></div>
     ${icCuantCardHtml()}

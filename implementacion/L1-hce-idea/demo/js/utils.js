@@ -145,3 +145,52 @@ function saltarAlContenido(ev){
   if(m){ m.focus(); m.scrollIntoView({block: "start"}); }
   return false;
 }
+
+/* ===== Ayuda detrás de un «?» (L0, §5.169) =====
+   UN componente para el texto que sólo explica una pestaña o sección bajo su título (antes siempre a la vista); es el mismo «?» del
+   ciclo anual del expediente (F1b, §5.141), no un patrón nuevo (notas-accesibilidad-ui §2.6). Es una divulgación, no un tooltip: un
+   <button class="btn-ayuda"> con «?» junto al título (aria-expanded, aria-controls, nombre «Ayuda: <título>») y el texto, sin cambios,
+   en un panel `.ayuda-panel` con `hidden` que abre justo debajo del título y empuja el contenido. Clic, Enter y Espacio alternan (es un
+   <button>); Esc lo cierra y devuelve el foco al botón. NO va detrás de un «?»: errores, estados, avisos de bloque, «Modo demostración»
+   y todo lo que dice por qué una acción está bloqueada. Una ayuda abierta sigue abierta tras repintar la pestaña (se guarda por id). */
+const _AYUDA_ABIERTAS = new Set();
+let _ayudaUltima = null;
+function ayudaBotonHtml(clave, titulo){
+  const id = "btnAyuda_" + clave;
+  return `<button type="button" class="btn-ayuda" id="${id}" aria-expanded="${_AYUDA_ABIERTAS.has(id)}" aria-controls="ayuda_${clave}" aria-label="Ayuda: ${escHtml(titulo)}" onclick="ayudaAlternar('${id}')"><span aria-hidden="true">?</span></button>`;
+}
+/* Cabecera de módulo (.mod-cab) con su ayuda: el «?» va justo después del <h2> y el panel justo debajo de la cabecera. */
+function cabConAyudaHtml(cab, clave, titulo, notaHtml){
+  return cab.replace("</h2>", "</h2>" + ayudaBotonHtml(clave, titulo)) + ayudaPanelHtml(clave, notaHtml);
+}
+function ayudaCerrarTodas(){
+  document.querySelectorAll(".btn-ayuda[aria-expanded='true']").forEach(b => ayudaAlternar(b.id, false));
+  _AYUDA_ABIERTAS.clear(); _ayudaUltima = null;
+}
+function ayudaPanelHtml(clave, html){
+  return `<div class="ayuda-panel" id="ayuda_${clave}"${_AYUDA_ABIERTAS.has("btnAyuda_" + clave) ? "" : " hidden"}>${html}</div>`;
+}
+/* `idBoton` es el id del <button>; su panel es el de aria-controls. `abrir` fuerza el estado; sin él, alterna. */
+function ayudaAlternar(idBoton, abrir){
+  const b = document.getElementById(idBoton), p = b && document.getElementById(b.getAttribute("aria-controls"));
+  if(!b || !p) return;
+  const abre = abrir === undefined ? p.hidden : !!abrir;
+  p.hidden = !abre; b.setAttribute("aria-expanded", String(abre));
+  if(abre){ _AYUDA_ABIERTAS.add(idBoton); _ayudaUltima = idBoton; }
+  else { _AYUDA_ABIERTAS.delete(idBoton); if(_ayudaUltima === idBoton) _ayudaUltima = null; }
+}
+/* Esc: sólo si el foco está en el botón, dentro de su panel o en ningún lado (tras tocar el texto del panel); así no pisa a un diálogo. */
+document.addEventListener("keydown", e => {
+  if(e.key !== "Escape" || e.defaultPrevented) return;
+  const f = document.activeElement, t = f && f !== document.body ? f : null;
+  let idBoton = null;
+  if(t){
+    const b = t.closest(".btn-ayuda"), p = t.closest(".ayuda-panel");
+    idBoton = b ? b.id : p ? (document.querySelector(`.btn-ayuda[aria-controls="${p.id}"]`) || {}).id : null;
+  } else idBoton = _ayudaUltima;
+  const b = idBoton && document.getElementById(idBoton), p = b && document.getElementById(b.getAttribute("aria-controls"));
+  if(!p || p.hidden) return;
+  e.preventDefault();
+  ayudaAlternar(idBoton, false);
+  b.focus();
+});
