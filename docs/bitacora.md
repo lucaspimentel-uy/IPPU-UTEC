@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-14 · L1 — D2b: `preparar_presentacion.ps1` sobrevive a un registro viejo** (Lucas con Claude, local en Windows, rama `d2b-estado-viejo`, sobre `main` e3976d3; §5.170). Sólo `herramientas/` y docs.
+  - **Defecto reproducido en `main`:** con un registro cuyo PID es el de un `svchost` (inicio ilegible), `-Detener` y `-Base …` dan «You cannot call a method on a null-valued expression» (exit 1), cada vez. **Arreglo:** un PID cuyo inicio no se lee o no coincide no es nuestro: no se baja, se avisa y se sigue (`Detener-Propio`; y el chequeo previo de `correr_conectada.ps1`, que contaba como «viva» cualquier PID). PID inexistente: en silencio, como antes.
+  - **Verificación:** protegido → `-Detener` y `-Base ippu_presentacion_ver` siguen (el svchost intacto); PID inexistente → sigue; camino normal → `-Detener` libera :8000 y :5500. `correr_conectada.ps1 -Corridas 1 -ConContraste` OK (324/324, contraste sin pares que fallen); `verificar_presentacion.js` OK con 0 escrituras; `verificar_estado.py --check` y `generar_catalogos_backend.py --check` OK; `ippu_presentacion_ver` y su carpeta, borradas. Hueco anotado, sin arreglar: Ctrl+C durante la preparación del runner. Siguiente: recargar `ippu_presentacion` desde `main`; A1c en `hce-post26`.
+
 - **2026-11-13 · L1 — L0: logo de IPPU, impresión sin el «Saltar al contenido» y notas de diseño** (Lucas con Claude, local en Windows, rama `l0-diseno`, sobre `main` 603f10b; §5.169). Sólo `demo/`, arnés y docs.
   - **A–C:** `.skip-link` fuera de la impresión (en `main` tapaba el encabezado de las 3 hojas del IC; PDF antes/después idéntico salvo ese recuadro); la Escala IPPU-TEA muestra sólo la referencia (IPPU las confirmó, §5.48); el login sin la pista.
   - **D–F:** el JPEG de IPPU era blanco sobre gris claro, sin transparencia; Lucas pidió derivar una versión legible: PNG con alfa, blanco (barra) y en tinta (login), 512×184, y un favicon. A 320 px el logo baja a 26 px (a 34 px la barra desbordaba).

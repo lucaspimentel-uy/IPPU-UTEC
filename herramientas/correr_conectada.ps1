@@ -95,11 +95,22 @@ if ($Salida.StartsWith($Repo, [StringComparison]::OrdinalIgnoreCase)) { Parar "-
 New-Item -ItemType Directory -Force $Salida | Out-Null
 
 # La presentacion preparada: preparar_presentacion.ps1 detendria "la corrida anterior" y la base se recrearia sobre ella.
+# "Viva" = el mismo proceso que registro preparar (PID e inicio): un PID reasignado a otro proceso, o cuyo inicio no se puede leer,
+# no cuenta (la misma regla de Detener-Propio en preparar_presentacion.ps1, §5.170).
+function Es-Proceso-Registrado($Registro) {
+  $id = 0
+  if (-not [int]::TryParse("$($Registro.pid)", [ref]$id)) { return $false }
+  $p = Get-Process -Id $id -ErrorAction SilentlyContinue
+  if (-not $p) { return $false }
+  $inicio = $null
+  try { $inicio = $p.StartTime } catch { }
+  return [bool]($inicio -and $inicio.ToString('o') -eq $Registro.inicio)
+}
 if (Test-Path $Estado) {
   try {
     $e = Get-Content $Estado -Raw | ConvertFrom-Json
     $vivo = $false
-    foreach ($r in @($e.api, $e.demo)) { if ($r -and (Get-Process -Id $r.pid -ErrorAction SilentlyContinue)) { $vivo = $true } }
+    foreach ($r in @($e.api, $e.demo)) { if ($r -and (Es-Proceso-Registrado $r)) { $vivo = $true } }
     if ($vivo -and $e.base -ne $Base) { Parar "Hay una corrida de preparar_presentacion.ps1 viva sobre la base '$($e.base)': no la piso. Detenerla antes (-Detener) o esperar." }
   } catch { }
 }

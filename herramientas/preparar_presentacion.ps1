@@ -102,14 +102,24 @@ function Leer-Estado {
   try { return Get-Content $Estado -Raw | ConvertFrom-Json } catch { return $null }
 }
 
-# Detiene (con sus hijos) un proceso que arranco este script: solo si el PID sigue siendo el mismo proceso.
+# Detiene (con sus hijos) un proceso que arranco este script: solo si el PID sigue siendo el mismo proceso. Un PID que
+# existe pero cuyo inicio no se puede leer (un proceso protegido de Windows al que el sistema reasigno el PID de un registro
+# viejo: StartTime vuelve $null) o no coincide NO es nuestro: se deja en paz y se avisa; nunca se baja (§5.170). Un PID que
+# ya no existe sigue siendo silencioso.
 function Detener-Propio($Registro, [string]$Nombre) {
   if (-not $Registro) { return }
-  $p = Get-Process -Id $Registro.pid -ErrorAction SilentlyContinue
-  if ($p -and $p.StartTime.ToString('o') -eq $Registro.inicio) {
-    Nativo { taskkill /PID $Registro.pid /T /F | Out-Null }
+  $idRegistro = 0
+  if (-not [int]::TryParse("$($Registro.pid)", [ref]$idRegistro)) { return }
+  $p = Get-Process -Id $idRegistro -ErrorAction SilentlyContinue
+  if (-not $p) { return }
+  $inicio = $null
+  try { $inicio = $p.StartTime } catch { }
+  if ($inicio -and $inicio.ToString('o') -eq $Registro.inicio) {
+    Nativo { taskkill /PID $idRegistro /T /F | Out-Null }
     $donde = if ($Registro.puerto) { ", puerto $($Registro.puerto)" } else { '' }
-    Write-Host "  detenido: $Nombre (PID $($Registro.pid)$donde)"
+    Write-Host "  detenido: $Nombre (PID $idRegistro$donde)"
+  } else {
+    Write-Host "  $Nombre`: el PID $idRegistro ya no es nuestro ($($p.ProcessName), inicio no verificable o distinto del registrado): lo dejo en paz"
   }
 }
 
