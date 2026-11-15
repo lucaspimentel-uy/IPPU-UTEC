@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-15 · L1 — L2: chevrons, descripciones y la barra superior** (Lucas con Claude, local en Windows, rama `l2-diseno`, sobre `main` b675cf7; §5.173). Sólo `demo/`, arnés y docs.
+  - **Hecho:** el chevron de la descripción apunta abajo cerrado y arriba abierto; NNA, Ateneos y Grupos muestran la descripción a la vista (sin chevron); descripciones breves aprobadas en CI, LB, PA, PB, IC, VF, ORG y PAI; «Cómo puntuar» a 12 px cerrado y 16 px abierto de la primera escala; cuatro preguntas para el 26/11. Tres variantes de la barra superior en `l2-var-a`, `-b`, `-c` (capturas en `%TEMP%\ippu-l2\`), sin integrar: falta la elección del equipo.
+  - **Verificación:** `correr_conectada.ps1 -Corridas 2 -ConContraste`: dos corridas OK (331 chequeos), contraste sin pares que fallen; presentación sobre `-Base ippu_presentacion_ver` (borrada después, con su carpeta): `verificar_presentacion.js` OK con 0 escrituras; `verificar_estado.py --check` OK. `main` se congela el 2026-11-21.
+
 - **2026-11-15 · L1 — D2c: el servidor de la demo no deja cachear** (Lucas con Claude, local en Windows, rama `d2c-sin-cache`, sobre `main` b0b7d66; §5.172). Sólo `herramientas/`, `CLAUDE.md` y docs.
   - **Hecho:** `servidor_demo.py` manda `Cache-Control: no-store` (antes sólo `Last-Modified`: Chrome cacheaba por heurística y mezclaba archivos viejos con nuevos tras un `git pull`); `verificar_presentacion.js` comprueba el encabezado en tres archivos (falla contra `http.server`) y sale con 1 en vez de abortar node; `CLAUDE.md` sirve la demo con `servidor_demo.py`. Un navegador con copias viejas necesita un Ctrl+F5.
   - **Verificación:** presentación OK con 0 escrituras en `ippu_presentacion_ver` (borrada). Runner, 4 corridas: 3 OK, 1 con `z-carga` (`/js/evaluaciones.js`, `ERR_NO_BUFFER_SPACE`); contraste sin fallas. Pendiente: la línea base de `main`.
