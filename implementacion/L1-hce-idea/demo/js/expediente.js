@@ -156,14 +156,15 @@ function filaTecnico(rotulo, nombre, rol){
     : "— <span class=\"rol-tec\">(sin asignar)</span>"}</dd></div>`;
 }
 
-/* Descripciones de las pestañas sin texto previo (L1, §5.171). Cada una sale sólo de texto que ya está en el repo: la fuente va al lado. */
+/* Descripciones de las pestañas sin texto previo (L1, §5.171). Cada una sale sólo de texto que ya está en el repo: la fuente va al lado.
+   L2 (§5.173 f): las de CI y PAI se acortaron al texto aprobado por el equipo (qué hace la página). */
 /* Fuente: Documento Técnico, tabla de módulos, HCE-00 («Datos generales, diagnóstico, CIE-11, … técnicos responsables, anamnesis completa. Siempre abierto y actualizable»). */
 const DESC_HCE00 = `<p>Datos generales del NNA, diagnóstico, CIE-11, técnicos responsables y anamnesis. Siempre abierto y actualizable.</p>`;
 /* Fuente: Documento Técnico, tabla de módulos, HCE-CI («Autorización de la familia (evaluación, registro, comunicación a organismos)»); «no bloquea»: el texto que ya muestra
    esta pestaña cuando el consentimiento está pendiente y handoff §5.94 (el CI no traba). */
-const DESC_CI = `<p>Autorización de la familia para la evaluación, el registro en la HCE y la comunicación a organismos (INAU / BPS). Es un estado visible del expediente: no bloquea ninguna evaluación.</p>`;
+const DESC_CI = `<p>Registra la autorización de la familia. Es un estado visible del expediente: no bloquea ninguna evaluación.</p>`;
 /* Fuente: handoff §5.22 («El PAI de INAU es un documento dinámico que debe reflejar el estado actual del NNA, con actualización en SIPI ante cualquier cambio significativo y revisiones formales periódicas»). */
-const DESC_PAI = `<p>Propuesta de atención individual de INAU: un documento dinámico que refleja el estado actual del NNA, con actualización en SIPI ante cualquier cambio significativo y revisiones formales periódicas.</p>`;
+const DESC_PAI = `<p>Propuesta de atención individual de INAU, con el estado actual del NNA.</p>`;
 function hce00Html(p){
   const a = p.anamnesis;
   const anam = a

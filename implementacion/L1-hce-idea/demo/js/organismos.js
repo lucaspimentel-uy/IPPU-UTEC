@@ -133,9 +133,9 @@ function orgRegistrosHtml(k){
     <div class="ib">${tabla}
       <div class="org-reg-acciones"><button type="button" class="btn btn-ghost" id="btnOrg${K}Agregar" onclick="orgAbrirRegistro('${k}')">${R.boton}</button></div></div></div>`;
 }
-/* Descripción de la pestaña (L1, §5.171). Fuente: Documento Técnico, tabla de módulos, HCE-ORG («Por NNA: SIPI, convenio, referente, registro de informes enviados (INAU);
+/* Descripción de la pestaña (L1, §5.171; texto breve aprobado en L2, §5.173 f). Fuente: Documento Técnico, tabla de módulos, HCE-ORG («Por NNA: SIPI, convenio, referente, registro de informes enviados (INAU);
    prestación, trámite, estado, vencimiento, registro de gestiones (BPS)») y handoff §5.144 a (la alerta AYEX a 60 y 30 días, que se calcula al leer). */
-const ORG_DESC = `<p>Por NNA, el vínculo con INAU (SIPI, convenio, referente) con el registro de informes enviados, y con BPS (prestación, trámite, estado, vencimiento) con el registro de gestiones. Para la prestación AYEX, el servidor avisa cuando el vencimiento está a 60 y a 30 días.</p>`;
+const ORG_DESC = `<p>El vínculo del NNA con INAU y con BPS, con sus informes y gestiones. Para la prestación AYEX, la HCE avisa cuando el vencimiento está a 60 y a 30 días.</p>`;
 function orgTabHtml(){
   const cab = cabConAyudaHtml(`<div class="mod-cab"><h2 id="orgTitulo" tabindex="-1">ORG · Organismos (INAU y BPS)</h2></div>`, "desc_org", "ORG · Organismos (INAU y BPS)", ORG_DESC);
   if(ORG.hceId !== EXP.id || ORG.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando los organismos…")}</div></div>`;

@@ -213,7 +213,7 @@ function icEstadoHtml(){
   return `<span class="st st-${est}"><span aria-hidden="true">${ESTADO_MOD_TXT[est].glifo}</span> ${txt}</span>${add}`;
 }
 /* Encabezado del módulo (F1): un renglón —título, estado, «Ver informe impreso»—, sin tarjeta; los avisos debajo, sólo si los hay. */
-const IC_DESC = `<p class="mod-nota">Integra los tres instrumentos (IDEA · Protocolo A · Protocolo B) con la síntesis cualitativa del equipo. Elaboración sugerida: en los días posteriores al cierre del Protocolo B. El PDF con membrete es <b>el único informe válido</b> (§5.3): se genera desde el informe firmado.</p>`;   // L1 §5.171: el texto de L0, sin cambios; también con el informe firmado
+const IC_DESC = `<p class="mod-nota">Reúne los tres instrumentos del año con la síntesis del equipo. El PDF con membrete se genera desde el informe firmado.</p>`;   // L1 §5.171; texto breve aprobado en L2 (§5.173 f); también con el informe firmado
 function icEncabezadoHtml(){
   const cab = `<div class="mod-cab"><h2 id="icTitulo" tabindex="-1">IC · Informe de cierre anual — ${escHtml(IC.anio)}</h2>
     <span id="icEstado" class="ev-estado">${icEstadoHtml()}</span><span class="spacer"></span>

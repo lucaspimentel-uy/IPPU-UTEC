@@ -82,8 +82,8 @@
     <!-- ============ VISTA: INICIO / NNA ============ -->
     <section class="view active" id="view-inicio">
       <div class="crumbs">Servicio de Atención Diurna › <b>NNA y HCE</b></div>
-      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1><button type="button" class="btn-desc" id="btnAyuda_inicio" aria-expanded="false" aria-controls="ayuda_inicio" aria-label="Descripción: Niños, niñas y adolescentes en seguimiento" onclick="ayudaAlternar('btnAyuda_inicio')"><svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></button></div>
-      <div class="ayuda-panel" id="ayuda_inicio" hidden><p class="pagedesc">Expedientes del convenio INAU. La evaluación IDEA se aplica con <b>frecuencia anual</b>. Tocá un nombre para abrir su expediente.</p></div>
+      <h1 class="pagetitle" id="tituloInicio" tabindex="-1">Niños, niñas y adolescentes en seguimiento</h1>
+      <p class="pagedesc">Expedientes del convenio INAU. Tocá un nombre para abrir su expediente.</p>
 
       <!-- Fase 3-a: KPIs, filtros y listado salen de la API (GET /hce). Solo se muestran los KPI
            que se derivan de esas respuestas; el resto de la demo vive en vistas marcadas. -->
@@ -223,8 +223,8 @@
          `ateneo_acuerdo`). Lista (con el indicador arriba) y detalle viven los dos dentro de #ateneosContent. -->
     <section class="view" id="view-ateneos">
       <div class="crumbs">Servicio de Atención Diurna › <b>Ateneos y capacitación</b></div>
-      <div class="titulo-ayuda"><h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1><button type="button" class="btn-desc" id="btnAyuda_ateneos" aria-expanded="false" aria-controls="ayuda_ateneos" aria-label="Descripción: Ateneos clínicos y jornadas de capacitación" onclick="ayudaAlternar('btnAyuda_ateneos')"><svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></button></div>
-      <div class="ayuda-panel" id="ayuda_ateneos" hidden><p class="pagedesc">Registro institucional con cuatro tipos: <b>ateneo clínico (NNA)</b>, <b>ateneo de grupo</b>, <b>ateneo institucional</b> y <b>jornada de capacitación</b>. Los ateneos clínicos aparecen también en el expediente del NNA.</p></div>
+      <h1 class="pagetitle" id="tituloAteneos" tabindex="-1">Ateneos clínicos y jornadas de capacitación</h1>
+      <p class="pagedesc">Registro institucional de ateneos y jornadas de capacitación. Los ateneos clínicos aparecen también en el expediente del NNA.</p>
       <div id="ateneosContent"></div>
     </section>
 

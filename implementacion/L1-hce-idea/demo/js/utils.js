@@ -157,7 +157,7 @@ function saltarAlContenido(ev){
    está bloqueada. Una descripción abierta sigue abierta tras repintar la pestaña (se guarda por id). */
 const _AYUDA_ABIERTAS = new Set();
 let _ayudaUltima = null;
-const _CHEVRON = '<svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg>';
+const _CHEVRON = '<svg class="ico-chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6l5 5 5-5"/></svg>';   // cerrado apunta hacia abajo; abierto, el CSS lo gira 180° (L2, §5.173 d)
 function ayudaBotonHtml(clave, titulo, rotulo){
   const id = "btnAyuda_" + clave;
   return `<button type="button" class="btn-desc${rotulo ? " btn-desc-txt" : ""}" id="${id}" aria-expanded="${_AYUDA_ABIERTAS.has(id)}" aria-controls="ayuda_${clave}"${rotulo ? "" : ` aria-label="Descripción: ${escHtml(titulo)}"`} onclick="ayudaAlternar('${id}')">${rotulo ? `<span>${escHtml(rotulo)}</span>` : ""}${_CHEVRON}</button>`;

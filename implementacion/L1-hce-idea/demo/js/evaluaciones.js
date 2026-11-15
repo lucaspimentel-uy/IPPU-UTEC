@@ -308,12 +308,12 @@ function evEstadoHtml(ev){
   const add = ev.rec && ev.rec.addendas ? addendaMarcaHtml(ev.rec.addendas.length, false) : "";
   return `<span class="st st-${est}"><span aria-hidden="true">${glifo}</span> ${txt}</span>${add}`;
 }
-/* Descripción de cada módulo bajo su título (detrás del chevron, L1 §5.171): el texto de L0, sin cambios; ahora también con el registro firmado
+/* Descripción de cada módulo bajo su título (detrás del chevron, L1 §5.171): texto breve aprobado en L2 (§5.173 f: qué hace la página, no cómo trabaja IPPU); también con el registro firmado
    (antes sólo en el editor). PA y PB comparten el de la Escala IPPU-TEA. */
 const EV_DESC = {
-  lb: `<p class="mod-nota">Protocolo de Á. Rivière: 4 escalas, 12 dimensiones, 0 – 96. La línea base es <b>una por año</b>; el progreso dentro del año se mide con la Escala IPPU-TEA (PA y PB). El total y la banda se calculan al guardar: la banda es una orientación para el equipo y el juicio clínico prevalece sobre el puntaje. La firma bloquea la línea base (corrección por addenda).</p>`,
-  pa: `<p class="mod-nota">Instrumento propio de IPPU para medir <b>progreso</b> (mayor = más progreso): 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos. El total y las escalas se calculan al guardar, con los ítems completos. La firma bloquea el protocolo (corrección por addenda).</p>`,
-  pb: `<p class="mod-nota">Instrumento propio de IPPU para medir <b>progreso</b> (mayor = más progreso): 24 ítems (4 escalas × 6), Likert 1–5 (1 = regresión significativa · 5 = progreso notable). <b>Observación cualitativa obligatoria en todo ítem puntuado 1 o 5.</b> No homologable con el IDEA: nunca se comparan puntajes entre ambos instrumentos. El total y las escalas se calculan al guardar, con los ítems completos. La firma bloquea el protocolo (corrección por addenda).</p>`
+  lb: `<p class="mod-nota">Línea base del año con el protocolo IDEA. El total y la banda se calculan al guardar. La firma bloquea el registro; después se corrige por addenda.</p>`,
+  pa: `<p class="mod-nota">Protocolo de la Escala IPPU-TEA: 24 ítems de 1 a 5. Los ítems puntuados 1 o 5 llevan observación. El total se calcula al guardar y la firma bloquea el registro.</p>`,
+  pb: `<p class="mod-nota">Protocolo de la Escala IPPU-TEA: 24 ítems de 1 a 5. Los ítems puntuados 1 o 5 llevan observación. El total se calcula al guardar y la firma bloquea el registro.</p>`
 };
 /* Encabezado del módulo (F1): un renglón —título, estado y addenda—, sin tarjeta. La nota metodológica, una sola vez, va debajo
    (sólo en el editor); los avisos y los errores, debajo de ella y sólo cuando los hay (nada de bloques vacíos, H17). */

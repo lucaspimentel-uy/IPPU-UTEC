@@ -365,9 +365,9 @@ function vfAvisosHtml(){
 }
 function vfCerrarAvisos(){ VF.avisos = []; const el = _vfEl("vfAvisos"); if(el){ el.innerHTML = ""; el.hidden = true; } }
 
-/* Descripción de la pestaña (L1, §5.171). Fuente: Documento Técnico §7 (1: «IPPU registra, no certifica: la valoración oficial la realizan los equipos habilitados
+/* Descripción de la pestaña (L1, §5.171; texto breve aprobado en L2, §5.173 f). Fuente: Documento Técnico §7 (1: «IPPU registra, no certifica: la valoración oficial la realizan los equipos habilitados
    mediante el BUND»; 3: «perfil funcional en clave CIF: seis dominios de la vida diaria con niveles simples de autonomía») y handoff §5.118 / CLAUDE.md (el baremo sale sólo del %). */
-const VF_DESC = `<p>Registro de la valoración oficial de discapacidad (BUND), que realizan los equipos habilitados, y perfil funcional en clave CIF: seis dominios de la vida diaria con niveles simples de autonomía. IPPU registra, no certifica: la categoría según el baremo sale sólo del porcentaje.</p>`;
+const VF_DESC = `<p>Registro de la valoración oficial de discapacidad (BUND) y perfil funcional en clave CIF. La categoría del baremo se calcula a partir del porcentaje.</p>`;
 function vfPanelHtml(){
   const cab = cabConAyudaHtml(`<div class="mod-cab"><h2 id="vfTitulo" tabindex="-1">VF · Valoración funcional (BUND / CIF)</h2></div>`, "desc_vf", "VF · Valoración funcional (BUND / CIF)", VF_DESC);
   if(VF.hceId !== EXP.id || VF.estado === "cargando") return `${cab}<div class="info-card"><div class="ib">${estadoCargandoHtml("Cargando la valoración funcional…")}</div></div>`;

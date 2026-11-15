@@ -1391,7 +1391,7 @@
     .tabs-barra>.btn-desc{position:static;align-self:flex-end;margin-top:var(--s2)}
   }
   /* La descripción detrás de un chevron (L1, §5.171; js/utils.js · ayudaBotonHtml): el mismo botón junto al título de cada pestaña y vista, y
-     «Estados del ciclo» al final de la tira. Objetivo ≥ 24 px; borde --control-borde; foco global; el chevron mira a la derecha cerrado y hacia abajo
+     «Estados del ciclo» al final de la tira. Objetivo ≥ 24 px; borde --control-borde; foco global; el chevron mira hacia abajo cerrado y hacia arriba
      abierto, sin animación (con movimiento permitido, una transición corta). */
   .btn-desc{
     flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);min-width:24px;height:24px;padding:0;
@@ -1400,7 +1400,7 @@
   .btn-desc-txt{padding:0 var(--s2)}
   .btn-desc:hover,.btn-desc[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
   .btn-desc .ico-chev{flex:0 0 auto;display:block}
-  .btn-desc[aria-expanded="true"] .ico-chev{transform:rotate(90deg)}
+  .btn-desc[aria-expanded="true"] .ico-chev{transform:rotate(180deg)}
   @media(prefers-reduced-motion:no-preference){.btn-desc .ico-chev{transition:transform .12s ease}}
   .exp-tabs{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:var(--s3);row-gap:var(--s1)}
   .tabs-grupo{display:flex;flex-direction:column;min-width:0}
@@ -1443,14 +1443,14 @@
   .ayuda-panel[hidden]{display:none}
   .ayuda-panel>p{margin:0}
   .ayuda-panel>p+p{margin-top:var(--s1)}
-  .mod-cab .btn-desc,.titulo-ayuda .btn-desc{margin:0 0 0 var(--s1)}
+  .mod-cab .btn-desc{margin:0 0 0 var(--s1)}
   .info-card>h3 .btn-desc{margin:0}   /* en la barra de título de una tarjeta, pegado al título (la barra ya tiene su separación) */
   .info-card>.ayuda-panel{margin:0;border:0;border-bottom:1px solid var(--rule);border-radius:0;max-width:none}
-  .titulo-ayuda{display:flex;align-items:center;flex-wrap:wrap;margin-bottom:var(--s5)}   /* el hueco que antes daba el pagedesc */
-  .titulo-ayuda+.ayuda-panel{margin-top:calc(var(--s2) - var(--s5));margin-bottom:var(--s5)}
-  .titulo-ayuda h1.pagetitle{margin-bottom:0}
   .ayuda-fila{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s2);font-size:var(--fs-sm);font-weight:700;color:var(--ink)}
   .ayuda-fila .btn-desc{margin:0}
+  /* «Cómo puntuar cada dimensión» (L2, §5.173): 12 px entre el botón y lo que sigue (el panel o la primera escala) y 16 px entre el panel abierto y la primera escala. */
+  #ideaForm>.ayuda-fila{margin-bottom:var(--s3)}
+  #ideaForm>.ayuda-panel{margin:0 0 var(--s4)}
   .mod-nota{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.5;max-width:110ch;margin:0 0 var(--s3)}
   #panelExp>.avisos-api,#panelExp>.form-errores{margin:0 0 var(--s3)}
 

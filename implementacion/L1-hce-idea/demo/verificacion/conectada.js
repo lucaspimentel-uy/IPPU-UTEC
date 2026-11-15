@@ -33,7 +33,7 @@ function check(id, nombre, ok, detalle) {
 /* Descripción detrás de un chevron (L1, §5.171; antes el «?» de L0, §5.169): prueba CADA .btn-desc a la vista de la vista activa. Cerrada por omisión; clic abre
    (aria-expanded, el panel queda DEBAJO del botón y empuja lo que sigue, sin taparlo); clic cierra; Enter y Espacio alternan; Esc cierra y deja el foco en el
    botón; objetivo ≥ 24×24; nombre accesible «Descripción: …» (o, si el botón lleva texto visible, ese texto); el chevron mira a la derecha cerrado y hacia abajo
-   abierto (se mide la rotación). Devuelve [{id, ok, ...}] y no deja nada abierto. */
+   abierto (se mide la dirección dibujada: hacia abajo cerrado, hacia arriba abierto; L2 §5.173 d). Devuelve [{id, ok, ...}] y no deja nada abierto. */
 async function probarAyudas(page) {
   const ids = await page.evaluate(() => [...document.querySelectorAll('.view.active .btn-desc')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.id));
   const leer = async (id) => { await page.waitForTimeout(220); return leerAhora(id); };   // el chevron gira con una transición de .12 s (con movimiento permitido): se mide ya quieto
@@ -44,7 +44,12 @@ async function probarAyudas(page) {
     if (!sig) { let u = p.parentElement; while (u && !sig) { sig = u.nextElementSibling; while (sig && sig.getBoundingClientRect().height === 0) sig = sig.nextElementSibling; u = u.parentElement; } }
     return { exp: b.getAttribute('aria-expanded'), oculto: p.hidden, visible: rp.width > 0 && rp.height > 0, texto: p.textContent.trim().length,
       w: rb.width, h: rb.height, nombre: b.getAttribute('aria-label') || '', rotulo: (b.textContent || '').trim(), foco: document.activeElement === b,
-      giro: (() => { const m = getComputedStyle(b.querySelector('.ico-chev')).transform; if (m === 'none') return 0; const [a, bb] = m.match(/matrix\(([^)]*)\)/)[1].split(',').map(Number); return Math.round(Math.atan2(bb, a) * 180 / Math.PI); })(),
+      giro: (() => {   // hacia dónde apunta el chevron EN PANTALLA: el vértice del trazo respecto del medio de sus extremos, pasado por la transformación calculada del <svg>
+        const svg = b.querySelector('.ico-chev'), tr = svg.querySelector('path'), n = tr.getTotalLength(), p0 = tr.getPointAtLength(0), pm = tr.getPointAtLength(n / 2), p1 = tr.getPointAtLength(n);
+        const dx = pm.x - (p0.x + p1.x) / 2, dy = pm.y - (p0.y + p1.y) / 2, m = getComputedStyle(svg).transform;
+        const [ma, mb, mc, md] = m === 'none' ? [1, 0, 0, 1] : m.match(/matrix\(([^)]*)\)/)[1].split(',').map(Number);
+        const x = ma * dx + mc * dy, y = mb * dx + md * dy;
+        return Math.abs(y) > Math.abs(x) * 2 ? (y > 0 ? 'abajo' : 'arriba') : Math.abs(x) > Math.abs(y) * 2 ? (x > 0 ? 'derecha' : 'izquierda') : 'oblicuo'; })(),
       debajo: rp.top >= rb.bottom - 1, sigTop: sig ? Math.round(sig.getBoundingClientRect().top) : null, panelBottom: Math.round(rp.bottom) };
   }, id);
   const out = [];
@@ -59,12 +64,12 @@ async function probarAyudas(page) {
     await page.keyboard.press('Space'); r.espacio = await leer(id);
     await page.keyboard.press('Escape'); r.esc = await leer(id);
     const c = r.cerrada, a = r.abierta;
-    r.ok = c.exp === 'false' && c.oculto && !c.visible && c.w >= 23.9 && c.h >= 23.9 && (/^Descripción: \S/.test(c.nombre) || (c.nombre === '' && c.rotulo.length > 3)) && c.giro === 0 && a.giro === 90
+    r.ok = c.exp === 'false' && c.oculto && !c.visible && c.w >= 23.9 && c.h >= 23.9 && (/^Descripción: \S/.test(c.nombre) || (c.nombre === '' && c.rotulo.length > 3)) && c.giro === 'abajo' && a.giro === 'arriba' && r.cerrada2.giro === 'abajo'
       && a.exp === 'true' && !a.oculto && a.visible && a.texto > 20 && (!r.cerrada.sigTop || a.sigTop > r.cerrada.sigTop) && a.debajo && (a.sigTop === null || a.panelBottom <= a.sigTop + 1)
       && r.cerrada2.exp === 'false' && r.cerrada2.oculto
       && r.enter.exp === 'true' && r.enter2.exp === 'false' && r.espacio.exp === 'true' && r.espacio.visible
       && r.esc.exp === 'false' && r.esc.oculto && r.esc.foco;
-    out.push({ id, ok: r.ok, ...(r.ok ? {} : r) });
+    out.push({ id, ok: r.ok, giro: [r.cerrada.giro, r.abierta.giro], ...(r.ok ? {} : r) });
   }
   return out;
 }
@@ -1224,20 +1229,28 @@ async function loguear(page) {
       return { n: els.length, desc: f.querySelectorAll('.opcion .desc').length, chicos, recortados, consigna: document.querySelectorAll('#ideaComoPuntuar').length, repetida: f.querySelectorAll('.dinstr,.inter-nota').length,
         pregunta: (f.textContent.match(/entre dos niveles/g) || []).length, desborde: document.documentElement.scrollWidth > window.innerWidth };
     };
-    /* ---------- l0-ayudas: la descripción de cada pestaña y vista está detrás de un chevron (L0 §5.169; L1 §5.171 reemplaza el «?» por un chevron en TODAS las pestañas) ---------- */
+    /* ---------- l0-ayudas: la descripción de cada pestaña está detrás de un chevron (L0 §5.169; L1 §5.171 reemplaza el «?» por un chevron en TODAS las pestañas; L2 §5.173: abajo cerrado y arriba abierto, y las seis vistas principales la llevan a la vista, sin chevron) ---------- */
     {
       await p3.setViewportSize({ width: 1280, height: 800 });
       /* Cuántos chevrons de descripción hay en cada pantalla (sin contar «Estados del ciclo», #btnAyuda_flujo, que no describe la pestaña abierta). La lista de pestañas de
          TABS_EXP sale del código: cada una tiene su chevron o está en SIN_FUENTE (pestañas sin texto en el repo de donde sacar una descripción; hoy, ninguna). */
       const SIN_FUENTE = [];
-      const esperadas = { listado: 1, hce00: 1, ci: 1, lb: 1, 'lb-editor': 2, pa: 1, pb: 1, 'ic-editor': 1, ic: 1, vf: 1, sev: 1, inc: 1, org: 1, doc: 1, log: 1, pai: 1, grupos: 1, ateneos: 1,
+      const esperadas = { listado: 0, hce00: 1, ci: 1, lb: 1, 'lb-editor': 2, pa: 1, pb: 1, 'ic-editor': 1, ic: 1, vf: 1, sev: 1, inc: 1, org: 1, doc: 1, log: 1, pai: 1, grupos: 0, ateneos: 0,
         pendientes: 0, inclusion: 0, panel: 0 };
-      const porPantalla = {}, malas = [], conteo = {}, flujo = {}, interrogaciones = [];
+      const porPantalla = {}, malas = [], conteo = {}, flujo = {}, interrogaciones = [], giros = {}, vistasL2 = {};
       const PANTALLAS_L1 = [...PANTALLAS, ['pai', () => abrir3(idM3, 'pai')]];
+      /* L2 (§5.173 e): las seis vistas principales llevan su descripción a la vista —h1.pagetitle y, justo debajo, p.pagedesc— sin chevron ni panel. El texto fijo se compara entero;
+         el de Grupos, por su forma (no cambió); el de las tres que llena JS, que exista. */
+      const VISTAS_L2 = { listado: /^Expedientes del convenio INAU\. Tocá un nombre para abrir su expediente\.$/, ateneos: /^Registro institucional de ateneos y jornadas de capacitación\. Los ateneos clínicos aparecen también en el expediente del NNA\.$/,
+        grupos: /^Los grupos de .+ y los NNA activos de cada uno\. Tocá un grupo para ver sus integrantes\.$/, pendientes: /\S{3}/, inclusion: /\S{3}/, panel: /\S{3}/ };
       for (const [k, ir] of PANTALLAS_L1) {
         await ir();
         const r = await probarAyudas(p3);
         porPantalla[k] = r.length;
+        for (const x of r) giros[k + ':' + x.id] = x.giro;
+        if (VISTAS_L2[k]) vistasL2[k] = await p3.evaluate(() => { const v = document.querySelector('.view.active'), h = v.querySelector('h1.pagetitle'), d = h && h.nextElementSibling, r = d && d.getBoundingClientRect();
+          return { h1: h ? h.textContent.trim() : null, esDesc: !!d && d.matches('p.pagedesc'), visible: !!r && r.width > 0 && r.height > 0 && getComputedStyle(d).visibility !== 'hidden', texto: d ? d.textContent.replace(/\s+/g, ' ').trim() : '',
+            px: d ? parseFloat(getComputedStyle(d).fontSize) : 0, botones: v.querySelectorAll('.btn-desc').length, paneles: v.querySelectorAll('.ayuda-panel').length, envoltorio: v.querySelectorAll('.titulo-ayuda').length, enPanel: !!d && !!d.closest('.ayuda-panel') }; });
         conteo[k] = r.filter((x) => x.id !== 'btnAyuda_flujo').length;
         flujo[k] = r.filter((x) => x.id === 'btnAyuda_flujo').length;
         for (const x of r) if (!x.ok) malas.push({ pantalla: k, ...x });
@@ -1246,16 +1259,36 @@ async function loguear(page) {
       const faltan = Object.entries(esperadas).filter(([k, n]) => conteo[k] !== n).map(([k, n]) => `${k}: ${conteo[k]} ≠ ${n}`);
       const tabsSin = (await p3.evaluate(() => TABS_EXP.map((t) => t.k))).filter((k) => !SIN_FUENTE.includes(k) && !(conteo[k] >= 1 || (k === 'lb' && conteo['lb-editor'] >= 1)));
       const enExp = Object.keys(flujo).filter((k) => ['hce00', 'ci', 'lb', 'lb-editor', 'pa', 'pb', 'ic', 'ic-editor', 'vf', 'sev', 'inc', 'org', 'doc', 'log', 'pai'].includes(k));
-      check('l0-ayudas', 'la descripción de cada pestaña (HCE-00, CI, LB, PA, PB, IC, VF, SEV, INC, ORG, DOC, PAI, LOG) y de Inicio, Grupos y Ateneos va detrás de UN chevron junto al título (lb y ic también con el registro firmado; el IDEA y su «Cómo puntuar» son dos): cerrado por omisión (apunta a la derecha), abre con clic / Enter / Espacio (apunta hacia abajo) debajo de su título empujando el contenido, Esc lo cierra y devuelve el foco al botón, objetivo ≥ 24×24 y nombre «Descripción: …» (o su texto visible); «Estados del ciclo» en las pestañas del expediente; Pendientes, Inclusión y Panel sin chevron (sin texto fijo)',
+      check('l0-ayudas', 'la descripción de cada pestaña (HCE-00, CI, LB, PA, PB, IC, VF, SEV, INC, ORG, DOC, PAI, LOG) va detrás de UN chevron junto al título (lb y ic también con el registro firmado; el IDEA y su «Cómo puntuar» son dos): cerrado por omisión (apunta hacia abajo), abre con clic / Enter / Espacio (apunta hacia arriba) debajo de su título empujando el contenido, Esc lo cierra y devuelve el foco al botón, objetivo ≥ 24×24 y nombre «Descripción: …» (o su texto visible); «Estados del ciclo» en las pestañas del expediente; las seis vistas principales sin chevron (L2, §5.173 d, e)',
         malas.length === 0 && faltan.length === 0 && tabsSin.length === 0 && enExp.every((k) => flujo[k] === 1) && ['listado', 'grupos', 'ateneos'].every((k) => flujo[k] === 0),
         malas.length || faltan.length || tabsSin.length ? JSON.stringify({ malas: malas.slice(0, 2), faltan, tabsSin }).slice(0, 700) : JSON.stringify(conteo));
       check('l1-sin-interrogacion', 'ningún botón «?» (ni .btn-ayuda ni «Ayuda: …») queda en ninguna pestaña ni vista conectada',
         interrogaciones.length === 0, JSON.stringify(interrogaciones).slice(0, 300));
+      {
+        const malV = Object.entries(VISTAS_L2).filter(([k, re]) => { const v = vistasL2[k]; return !(v && v.h1 && v.esDesc && v.visible && re.test(v.texto) && v.px >= 12 && v.botones === 0 && v.paneles === 0 && v.envoltorio === 0 && !v.enPanel); }).map(([k]) => ({ k, ...vistasL2[k] }));
+        check('l2-vistas-descripcion', 'las seis vistas principales (NNA en seguimiento, Pendientes, Grupos, Inclusión, Ateneos, Panel) muestran su descripción a la vista: h1.pagetitle y, justo debajo, un p.pagedesc visible con texto (≥ 12 px); ningún .btn-desc ni .ayuda-panel en la vista (L2, §5.173 e); el texto de NNA y de Ateneos es el aprobado',
+          malV.length === 0, malV.length ? JSON.stringify(malV).slice(0, 600) : JSON.stringify(Object.fromEntries(Object.entries(vistasL2).map(([k, v]) => [k, v.texto.slice(0, 40)]))));
+        /* La dirección dibujada, nombrada en los tres lugares de la decisión (d): el título de una pestaña, «Cómo puntuar cada dimensión» y «Estados del ciclo». */
+        const tres = { 'título de pestaña (LB)': giros['lb:btnAyuda_nota_lb'], '«Cómo puntuar cada dimensión»': giros['lb-editor:btnAyuda_ideaComo'], '«Estados del ciclo»': giros['lb:btnAyuda_flujo'] };
+        check('l2-chevron-direccion', 'el chevron de la descripción apunta hacia abajo cerrado y hacia arriba abierto (dirección dibujada, no el ángulo): en el título de una pestaña, en «Cómo puntuar cada dimensión» y en «Estados del ciclo»; y en todos los demás .btn-desc (L2, §5.173 d)',
+          Object.values(tres).every((g) => Array.isArray(g) && g[0] === 'abajo' && g[1] === 'arriba') && Object.values(giros).every((g) => g[0] === 'abajo' && g[1] === 'arriba'), JSON.stringify(tres));
+        /* «Cómo puntuar cada dimensión» (editor del LB de Joaquín, 1280×800): con el panel abierto, 16 px o más hasta la primera escala; cerrado, 12 px o más entre el botón y la escala. */
+        await abrir3(idJ3, 'lb');
+        const hueco = () => p3.evaluate(() => { const r = (x) => x.getBoundingClientRect(), b = document.getElementById('btnAyuda_ideaComo'), pn = document.getElementById('ayuda_ideaComo'), e = document.querySelector('#ideaForm .escala');
+          return { abierto: !pn.hidden, escala: e.querySelector('header span').textContent.trim(), px: +(r(e).top - r(pn.hidden ? b : pn).bottom).toFixed(1), botonAPanel: pn.hidden ? null : +(r(pn).top - r(b).bottom).toFixed(1) }; });
+        const hCerrado = await hueco();
+        await p3.click('#btnAyuda_ideaComo'); await p3.waitForTimeout(220);
+        const hAbierto = await hueco();
+        await p3.click('#btnAyuda_ideaComo');
+        check('l2-como-puntuar-hueco', '«Cómo puntuar cada dimensión» a 1280×800: abierto, el panel queda a 16 px o más de la primera escala («Relación Social»); cerrado, el botón queda a 12 px o más de ella (L2, §5.173)',
+          !hCerrado.abierto && hAbierto.abierto && hAbierto.escala === 'Relación Social' && hAbierto.px >= 16 && hCerrado.px >= 12 && hAbierto.botonAPanel >= 8, JSON.stringify({ cerrado: hCerrado, abierto: hAbierto }));
+      }
       /* «Estados del ciclo»: botón con texto visible y el chevron, al final de la tira de pestañas; su panel dice el ciclo y los estados. */
       await abrir3(idM3, 'lb');
       const estados = await p3.evaluate(() => { const b = document.getElementById('btnAyuda_flujo'); return b ? { texto: b.textContent.trim(), chevron: !!b.querySelector('.ico-chev'), nombre: b.getAttribute('aria-label') } : null; });
-      check('l1-estados-ciclo', '«Estados del ciclo»: un botón con ese texto visible y el chevron (no un «?»), sin nombre que lo contradiga',
-        !!estados && estados.texto === 'Estados del ciclo' && estados.chevron && estados.nombre === null, JSON.stringify(estados));
+      if (estados) estados.giro = giros['lb:btnAyuda_flujo'];
+      check('l1-estados-ciclo', '«Estados del ciclo»: un botón con ese texto visible y el chevron (no un «?»; hacia abajo cerrado y hacia arriba abierto), sin nombre que lo contradiga',
+        !!estados && estados.texto === 'Estados del ciclo' && estados.chevron && estados.nombre === null && !!estados.giro && estados.giro[0] === 'abajo' && estados.giro[1] === 'arriba', JSON.stringify(estados));
     }
     const editor = [];
     for (const [w, h] of tamanios3) { await p3.setViewportSize({ width: w, height: h }); await abrir3(idJ3, 'lb'); editor.push({ w, ...(await p3.evaluate(medirEditor)) }); }
