@@ -212,7 +212,9 @@
      el texto de la barra es sólo «Historia Clínica Electrónica». Versión blanca con fondo transparente sobre la barra oscura; no se recolorea con
      CSS ni se estira: alto fijo y ancho automático. 44 px dentro de la barra de 60 px (no la agranda). */
   .logo{height:44px;width:auto;display:block;flex:0 0 auto}
-  .topbar .title{line-height:1.2;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
+  /* Variante C (L2): el nombre de la HCE acompaña al logo sin competir con él: 14 px / 400 en --on-dark-2, tras un filete. */
+  .topbar .title{line-height:1.2;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-sm);font-weight:400;color:var(--on-dark-2);
+    margin-left:var(--s1);padding:var(--s1) 0 var(--s1) var(--s4);border-left:1px solid var(--navy-3)}
   .topbar .spacer{flex:1}
   /* B2: el perfil pasó de <div> a <button> — es el acceso a «Mi usuario». */
   .userchip{
@@ -464,7 +466,7 @@
      el logo completo + «Historia Clínica Electrónica» + perfil + «Salir» desbordaban la barra (3e-flow). */
   @media(max-width:480px){
     .logo{height:40px}
-    .topbar .title{white-space:normal;font-size:var(--fs-2xs);line-height:1.15;min-width:0}
+    .topbar .title{white-space:normal;font-size:var(--fs-2xs);line-height:1.15;min-width:0;margin-left:0;padding-left:var(--s2)}
   }
 
   /* ============ MODAL / WIZARD ALTA NNA ============ */
