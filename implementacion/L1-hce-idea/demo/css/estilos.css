@@ -184,7 +184,7 @@
   html{scroll-padding-top:calc(var(--topbar-h) + 12px);scroll-padding-bottom:12px}
   html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + var(--banda-h) + 12px)}
   html:has(#view-expediente.active .barra-acciones){scroll-padding-bottom:calc(var(--barra-h) + 12px)}
-  .sidebar,.skip-link{--ring:var(--ring-dark)}   /* el cromo oscuro es sólo la barra lateral (la superior es clara: anillo global) */
+  .sidebar{--ring:var(--ring-dark)}   /* el cromo oscuro es sólo la barra lateral; la superior es clara y el enlace de salto cae sobre ella: anillo global */
   main:focus,main:focus-visible{outline:none}   /* destino del enlace «Saltar al contenido»: un contenedor, no un control */
   .skip-link{
     position:fixed;top:8px;left:8px;z-index:300;padding:10px var(--s4);background:var(--ink);color:#fff;
