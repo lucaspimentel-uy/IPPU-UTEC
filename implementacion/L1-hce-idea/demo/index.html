@@ -40,11 +40,8 @@
 <header class="topbar" inert>
   <!-- L1 (§5.171): el logo lleva el nombre de la institución (alt informativo); el único texto es «Historia Clínica Electrónica».
        A ≤ 480 px el logo completo no entra con el nombre de la HCE, el perfil y «Salir»: va el emblema circular solo, con el mismo alt. -->
-  <picture>
-    <source media="(max-width: 480px)" srcset="img/emblema-ippu.png">
-    <img class="logo" src="img/logo-ippu.png" width="122" height="44" alt="Fundación Instituto Psicopedagógico Uruguayo">
-  </picture>
-  <div class="title">Historia Clínica Electrónica</div>
+  <!-- Variante B (L2): la barra dice dónde está el usuario (ui-core.js · ubicacionPintar); el logo está en la barra lateral. -->
+  <div class="crumbs ubicacion" id="ubicacion"></div>
   <div class="spacer"></div>
   <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
        Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
@@ -65,6 +62,10 @@
          B2: «Mi usuario» salió de acá — se entra por el perfil de la topbar. -->
     <!-- F1 (§5.138 f): la estructura de servicios de IPPU (§5.11). Taller Terapéutico y Clínica están fuera de alcance
          (§5.12) y no se muestran. El ítem activo lleva aria-current="page" (ui-core.js · go). -->
+    <div class="sidebar-marca"><picture>
+      <source media="(max-width: 760px)" srcset="img/emblema-ippu.png">
+      <img class="logo" src="img/logo-ippu.png" width="156" height="56" alt="Fundación Instituto Psicopedagógico Uruguayo">
+    </picture></div>
     <div class="sec">General</div>
     <button class="navitem" data-view="analitica">Panel institucional</button>
     <div class="sec">Servicio de Atención Diurna</div>
