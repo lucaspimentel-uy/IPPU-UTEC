@@ -40,11 +40,8 @@
 <header class="topbar" inert>
   <!-- L1 (§5.171): el logo lleva el nombre de la institución (alt informativo); el único texto es «Historia Clínica Electrónica».
        A ≤ 480 px el logo completo no entra con el nombre de la HCE, el perfil y «Salir»: va el emblema circular solo, con el mismo alt. -->
-  <picture>
-    <source media="(max-width: 480px)" srcset="img/emblema-ippu.png">
-    <img class="logo" src="img/logo-ippu.png" width="122" height="44" alt="Fundación Instituto Psicopedagógico Uruguayo">
-  </picture>
-  <div class="title">Historia Clínica Electrónica</div>
+  <!-- Variante A (L2): barra clara; logo en tinta, sin el nombre de la HCE (queda en el login y en <title>). -->
+  <img class="logo" src="img/logo-ippu-tinta.png" width="111" height="40" alt="Fundación Instituto Psicopedagógico Uruguayo">
   <div class="spacer"></div>
   <!-- B2: el perfil es el acceso a «Mi usuario» (salió de la barra de navegación).
        Es un <button> real: enfocable por teclado, con hover y foco visibles. -->
