@@ -5,6 +5,20 @@
 /* ================= NAVEGACIÓN ================= */
 /* El expediente y su documento impreso cuelgan de «NNA y HCE»: ese ítem sigue marcado mientras se los ve (F1, H21). */
 const NAV_DE_VISTA = {expediente:"inicio", informe:"inicio"};
+/* L2 (§5.173 h): la barra superior dice dónde está el usuario, con lo que la navegación ya sabe (sin pedir nada a la API):
+   la sección de la barra lateral › el ítem activo › el NNA del expediente abierto. El último tramo va en negrita (.crumbs b). */
+function ubicacionPintar(){
+  const el = document.getElementById("ubicacion"); if(!el) return;
+  const item = document.querySelector(".navitem.active"), tramos = [];
+  if(item){
+    let sec = item.previousElementSibling; while(sec && !sec.classList.contains("sec")) sec = sec.previousElementSibling;
+    if(sec) tramos.push(sec.textContent.trim());
+    tramos.push(item.textContent.trim());
+    const enExp = document.querySelector("#view-expediente.active, #view-informe.active"), h1 = document.getElementById("expTitulo");
+    if(enExp && h1 && h1.textContent.trim()) tramos.push(h1.textContent.trim());
+  } else tramos.push("Mi usuario");
+  el.innerHTML = tramos.map((t, i) => i === tramos.length - 1 ? `<b>${escHtml(t)}</b>` : escHtml(t)).join(" › ");
+}
 function go(view){
   const target = document.getElementById("view-"+view);
   if(!target) return;
@@ -24,8 +38,10 @@ function go(view){
   if(view === "ateneos" && typeof atAlAbrir === "function") atAlAbrir();   // C6: lista + indicador (o el registro pedido desde un expediente)
   if(view === "analitica" && typeof panelAlAbrir === "function") panelAlAbrir();   // C7: GET /panel + GET /recordatorios
   if(typeof fotosLiberarVista === "function") fotosLiberarVista(view);   // C5: las miniaturas (Blob URLs) de la vista que se deja se revocan
+  ubicacionPintar();
 }
 document.querySelectorAll(".navitem").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+ubicacionPintar();   // la vista inicial
 /* Los KPI de pendientes llevan a la vista Pendientes ya filtrada («lb» o «ci»); el foco pasa a su título. */
 function irAPendientes(filtro){
   if(typeof pendPedirFiltro === "function") pendPedirFiltro(filtro);

@@ -492,6 +492,7 @@ async function abrirExpediente(id, opts){
   if(opts && opts.tab && TABS_EXP.some(t => t.k === opts.tab)) selTabExp(opts.tab);   // p. ej. desde la vista Inclusión
   const h1 = document.getElementById("expTitulo");
   if(h1) h1.focus();
+  if(typeof ubicacionPintar === "function") ubicacionPintar();   // L2 (§5.173 h): el nombre del NNA en la barra
 }
 
 /* ===================== EXPEDIENTE DE EJEMPLO (modo demostración) =====================

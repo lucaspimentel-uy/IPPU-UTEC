@@ -109,7 +109,8 @@
        Alturas del cromo que queda pegado a la ventana: la barra superior, la banda del paciente (expediente) y la barra de
        acciones de los editores. De ellas sale el scroll-padding que evita que lo enfocado quede tapado (WCAG 2.2 · 2.4.11).
        --banda-h es el máximo de diseño; expediente.js lo reemplaza por el alto real de la banda (una alerta larga la agranda). */
-    --topbar-h:60px;
+    --topbar-h:48px;
+    --sidebar-w:224px;   /* L2 (§5.173 h): la barra superior empieza donde termina la lateral */
     --banda-h:64px;
     --barra-h:64px;
     --shadow-banda:0 2px 6px rgba(22,35,44,.08);      /* banda del paciente: flota sobre el contenido que pasa por debajo */
@@ -184,7 +185,8 @@
   html{scroll-padding-top:calc(var(--topbar-h) + 12px);scroll-padding-bottom:12px}
   html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + var(--banda-h) + 12px)}
   html:has(#view-expediente.active .barra-acciones){scroll-padding-bottom:calc(var(--barra-h) + 12px)}
-  .topbar,.sidebar,.skip-link{--ring:var(--ring-dark)}   /* el cromo oscuro es sólo la barra superior y la lateral */
+  .sidebar{--ring:var(--ring-dark)}   /* el cromo oscuro es sólo la barra lateral (la superior es clara: anillo global; L2, §5.173 h) */
+  @media(min-width:761px){.skip-link{--ring:var(--ring-dark)}}   /* el enlace de salto cae sobre la lateral oscura; a ≤ 760 px, sobre la barra clara: anillo global */
   main:focus,main:focus-visible{outline:none}   /* destino del enlace «Saltar al contenido»: un contenedor, no un control */
   .skip-link{
     position:fixed;top:8px;left:8px;z-index:300;padding:10px var(--s4);background:var(--ink);color:#fff;
@@ -202,51 +204,55 @@
 
   /* ============ TOPBAR ============ */
   .topbar{
-    background:var(--navy); color:#fff; height:var(--topbar-h);
+    background:var(--paper); color:var(--ink); height:var(--topbar-h);
     display:flex; align-items:center; gap:var(--s3); padding:0 var(--s5);
     position:sticky; top:0; z-index:50;
-    border-bottom:1px solid #000;
-    box-shadow:inset 0 -3px 0 var(--orange);
+    box-shadow:inset 0 -3px 0 var(--orange);   /* el filete naranja sigue: es la marca */
+    margin-left:var(--sidebar-w);
   }
   /* Logo de IPPU (L0, §5.169; informativo desde L1, §5.171): lleva el nombre de la fundación (alt «Fundación Instituto Psicopedagógico Uruguayo»), así que
      el texto de la barra es sólo «Historia Clínica Electrónica». Versión blanca con fondo transparente sobre la barra oscura; no se recolorea con
      CSS ni se estira: alto fijo y ancho automático. 44 px dentro de la barra de 60 px (no la agranda). */
-  .logo{height:44px;width:auto;display:block;flex:0 0 auto}
-  .topbar .title{line-height:1.2;white-space:nowrap;font-family:var(--f-display);font-size:var(--fs-md);font-weight:600}
+  .logo{height:56px;width:auto;display:block;flex:0 0 auto}   /* L2 (§5.173 h): el logo va en la cabecera de la barra lateral (blanco sobre --navy-2) */
+  .sidebar-marca{padding:var(--s1) var(--s5) var(--s3)}
+  .logo-emblema{display:none}
+  /* La ubicación (L2, §5.173 h): el estilo de .crumbs, en un renglón; si no entra, se recorta con puntos suspensivos. */
+  .topbar .ubicacion{margin:0;min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--fs-xs)}
+  main .crumbs:not(:has(button)){display:none}   /* la ubicación ya está en la barra; las migas con un botón «volver» se quedan */
   .topbar .spacer{flex:1}
   /* B2: el perfil pasó de <div> a <button> — es el acceso a «Mi usuario». */
   .userchip{
     display:flex;align-items:center;gap:var(--s2);font-family:inherit;font-size:var(--fs-xs);
-    color:var(--on-dark-2);line-height:1.3;text-align:left;
-    background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:4px var(--s2);
+    color:var(--ink);line-height:1.3;text-align:left;
+    background:none;border:1px solid transparent;border-radius:var(--r-sm);padding:3px var(--s2);
     transition:background .12s ease,border-color .12s ease
   }
-  .userchip:hover{background:var(--navy-2);border-color:var(--navy-3);color:#fff}
+  .userchip:hover{background:var(--paper-2);border-color:var(--control-borde);color:var(--ink)}
   .userchip .avatar{
-    width:30px;height:30px;border-radius:var(--r-pill);background:var(--navy-3);flex:0 0 auto;
+    width:30px;height:30px;border-radius:var(--r-pill);background:var(--navy-3);color:#fff;flex:0 0 auto;
     display:flex;align-items:center;justify-content:center;
     font-family:var(--f-text);font-size:var(--fs-3xs);font-weight:700;letter-spacing:.02em;
     transition:background .12s ease
   }
-  .userchip .rol{font-size:var(--fs-3xs);color:var(--on-dark-3)}
-  .userchip:hover .rol{color:var(--on-dark-2)}
+  .userchip .rol{font-size:var(--fs-3xs);color:var(--ink-2)}
   .btn-exit{
-    background:transparent;color:var(--on-dark-2);border:1px solid var(--navy-3);border-radius:var(--r-sm);
+    background:var(--paper);color:var(--ink);border:1px solid var(--control-borde);border-radius:var(--r-sm);
     padding:6px 12px;font-size:var(--fs-2xs);font-weight:600
   }
-  .btn-exit:hover{background:var(--navy-3);color:#fff}
+  .btn-exit:hover{background:var(--ink);border-color:var(--ink);color:#fff}
 
   /* ============ LAYOUT ============ */
-  .layout{display:flex;min-height:calc(100vh - var(--topbar-h))}
+  .layout{display:flex;min-height:100vh;margin-top:calc(-1 * var(--topbar-h))}   /* L2 (§5.173 h): la lateral llega hasta arriba; la barra superior va sólo sobre el contenido */
+  main{margin-top:var(--topbar-h)}
   .sidebar{
-    width:224px;background:var(--navy-2);padding:var(--s4) 0;flex:0 0 auto;
+    width:var(--sidebar-w);background:var(--navy-2);padding:var(--s4) 0;flex:0 0 auto;
     display:flex;flex-direction:column;
   }
   .sidebar .sec{
     font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
     color:var(--on-dark-3);padding:var(--s4) var(--s5) var(--s2)
   }
-  .sidebar .sec:first-child{padding-top:var(--s2)}
+  .sidebar .sidebar-marca+.sec{padding-top:var(--s2);border-top:1px solid var(--on-dark-borde)}
   /* Sin glifos decorativos: los que había eran de familias
      distintas y pesos distintos, y leían como marcadores de posición. La
      jerarquía la dan el tipo y el filete del ítem activo. */
@@ -441,6 +447,14 @@
   @media(max-width:760px){
     .layout{flex-direction:column}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:0}
+    /* L2 (§5.173 h) a ≤ 760 px: la lateral es una fila; el logo pasa al emblema circular (el segundo <img>), primer elemento de la fila y pegado a la izquierda al desplazarla */
+    .topbar{margin-left:0}
+    .layout{margin-top:0;min-height:calc(100vh - var(--topbar-h))}
+    main{margin-top:0}
+    .sidebar-marca{position:sticky;left:0;z-index:1;display:flex;align-items:center;padding:0 var(--s2) 0 var(--s3);background:var(--navy-2)}
+    .logo{height:36px}
+    .logo-completo{display:none}
+    .logo-emblema{display:block}
     .sidebar .sec,.sidebar .foot{display:none}
     .navitem{border-left:none;border-bottom:3px solid transparent;white-space:nowrap;padding:11px var(--s4)}
     .navitem.active{border-bottom-color:var(--orange)}
@@ -456,15 +470,11 @@
        salida; el subtítulo y los datos del usuario ya están en «Mi usuario». */
     .topbar{gap:var(--s2);padding:0 var(--s3)}
     .userchip-txt{display:none}
-    .topbar .title{font-size:var(--fs-sm)}
     h1.pagetitle{font-size:var(--fs-lg)}
     .kpi .val{font-size:var(--fs-xl)}
   }
-  /* A ≤ 480 px la barra lleva el emblema circular solo (el <picture> de index.html; mismo alt) y el nombre de la HCE puede partirse en dos renglones:
-     el logo completo + «Historia Clínica Electrónica» + perfil + «Salir» desbordaban la barra (3e-flow). */
   @media(max-width:480px){
-    .logo{height:40px}
-    .topbar .title{white-space:normal;font-size:var(--fs-2xs);line-height:1.15;min-width:0}
+    .topbar .ubicacion{font-size:var(--fs-2xs)}   /* L2 (§5.173 h) a ≤ 480 px: el emblema sigue en la fila de navegación; la ubicación se recorta */
   }
 
   /* ============ MODAL / WIZARD ALTA NNA ============ */
@@ -1344,7 +1354,9 @@
 
   /* --- Layout por debajo de 1180 px (H11) --- */
   @media(min-width:761px) and (max-width:1179px){
-    .sidebar{width:192px}
+    :root{--sidebar-w:192px}
+    .sidebar-marca{padding-left:var(--s4);padding-right:var(--s4)}
+    .logo{height:52px}
     .sidebar .sec{padding-left:var(--s4);padding-right:var(--s4)}
     .navitem{padding-left:var(--s4);padding-right:var(--s3)}
     .sidebar .foot{padding-left:var(--s4);padding-right:var(--s4)}
@@ -1384,7 +1396,8 @@
   /* «Estados del ciclo» (L1, §5.171) lleva texto visible: junto a las pestañas ya no entra en una fila a 1280 px (la tira de 13 pestañas pasaba a dos),
      así que va en la franja de los rótulos de grupo, pegado al borde derecho de la tira (sobre el final, sin tapar ninguna pestaña: la franja mide
      lo que el botón, 24 px). Por debajo de 761 px va en su propia fila, a la derecha. */
-  .tabs-barra{position:relative;display:flex;align-items:flex-end;gap:var(--s2);padding-top:6px}
+  /* L2 (§5.173 n): el botón quedaba pegado a las pestañas de «Seguimiento» y «Registro»; la franja crece --s2 y deja 8 px entre el botón y la fila de pestañas. */
+  .tabs-barra{position:relative;display:flex;align-items:flex-end;gap:var(--s2);padding-top:calc(6px + var(--s2))}
   .tabs-barra>.btn-desc{position:absolute;top:0;right:0}
   @media(max-width:760px){
     .tabs-barra{flex-direction:column;align-items:stretch;padding-top:0}
@@ -1399,6 +1412,10 @@
   }
   .btn-desc-txt{padding:0 var(--s2)}
   .btn-desc:hover,.btn-desc[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  /* L2 (§5.173 m): el chevron que va junto a un título (sin texto) es más delicado: sin recuadro ni relleno en reposo y abierto —el recuadro aparece con el puntero;
+     el foco, con el anillo global— y más cerca del título. El objetivo sigue midiendo 24×24. Los que llevan texto («Estados del ciclo», «Cómo puntuar…») conservan el recuadro. */
+  .btn-desc:not(.btn-desc-txt),.btn-desc:not(.btn-desc-txt)[aria-expanded="true"]{background:none;border-color:transparent;color:var(--ink)}
+  .btn-desc:not(.btn-desc-txt):hover{background:var(--paper);border-color:var(--control-borde);color:var(--ink)}
   .btn-desc .ico-chev{flex:0 0 auto;display:block}
   .btn-desc[aria-expanded="true"] .ico-chev{transform:rotate(180deg)}
   @media(prefers-reduced-motion:no-preference){.btn-desc .ico-chev{transition:transform .12s ease}}
@@ -1443,7 +1460,7 @@
   .ayuda-panel[hidden]{display:none}
   .ayuda-panel>p{margin:0}
   .ayuda-panel>p+p{margin-top:var(--s1)}
-  .mod-cab .btn-desc{margin:0 0 0 var(--s1)}
+  .mod-cab .btn-desc{margin:0 0 0 calc(-1 * var(--s2))}   /* L2 (§5.173 m): a 4 px del título (la cabecera separa con --s3) */
   .info-card>h3 .btn-desc{margin:0}   /* en la barra de título de una tarjeta, pegado al título (la barra ya tiene su separación) */
   .info-card>.ayuda-panel{margin:0;border:0;border-bottom:1px solid var(--rule);border-radius:0;max-width:none}
   .ayuda-fila{display:flex;align-items:center;gap:var(--s2);margin:0 0 var(--s2);font-size:var(--fs-sm);font-weight:700;color:var(--ink)}

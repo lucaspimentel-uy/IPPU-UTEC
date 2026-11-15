@@ -359,22 +359,22 @@ async function loguear(page) {
        Psicopedagógico Uruguayo"> cargado y con la proporción del archivo; 44 px o más de alto en la barra (que sigue midiendo --topbar-h, 60 px) y entre 72 y 96 en el
        login; el único texto de la barra es «Historia Clínica Electrónica». */
     const ALT_LOGO = 'Fundación Instituto Psicopedagógico Uruguayo';
-    const logos = await page.evaluate(() => ['header.topbar img.logo', '#loginScreen img.login-logo'].map((q) => { const i = document.querySelector(q); if (!i) return { q, falta: true };
+    const logos = await page.evaluate(() => ['nav.sidebar .sidebar-marca img.logo-completo', '#loginScreen img.login-logo'].map((q) => { const i = document.querySelector(q); if (!i) return { q, falta: true };
       const r = i.getBoundingClientRect(); return { q, alt: i.getAttribute('alt'), h: Math.round(r.height), proporcion: Math.abs(r.width / r.height - i.naturalWidth / i.naturalHeight) < 0.02, cargado: i.complete && i.naturalWidth > 0 }; }));
-    const barraL1 = await page.evaluate(() => ({ titulo: document.querySelector('header.topbar .title').textContent.replace(/\s+/g, ' ').trim(), alto: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height) }));
-    check('l0-logo', 'logo de IPPU informativo (alt «Fundación Instituto Psicopedagógico Uruguayo») en la barra (≥ 44 px de alto, barra de 60 px) y en el login (72–96 px), cargado y con la proporción del archivo; el único texto de la barra es «Historia Clínica Electrónica»',
-      logos[0].alt === ALT_LOGO && logos[0].h >= 44 && barraL1.alto === 60 && logos[1].alt === ALT_LOGO && logos[1].h >= 72 && logos[1].h <= 96 && logos.every((l) => l.proporcion && l.cargado) && barraL1.titulo === 'Historia Clínica Electrónica', JSON.stringify({ logos, barraL1 }));
+    const barraL1 = await page.evaluate(() => ({ titulo: document.querySelector('header.topbar .title') ? 'hay título' : null, logoEnBarra: !!document.querySelector('header.topbar img'), alto: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height), token: getComputedStyle(document.documentElement).getPropertyValue('--topbar-h').trim() }));
+    check('l0-logo', 'logo de IPPU informativo (alt «Fundación Instituto Psicopedagógico Uruguayo») en la cabecera de la barra lateral (≥ 44 px de alto; L2, §5.173 h: ya no en la barra superior, que mide --topbar-h = 48 px y no lleva título) y en el login (72–96 px), cargado y con la proporción del archivo',
+      logos[0].alt === ALT_LOGO && logos[0].h >= 44 && barraL1.alto === 48 && barraL1.token === '48px' && logos[1].alt === ALT_LOGO && logos[1].h >= 72 && logos[1].h <= 96 && logos.every((l) => l.proporcion && l.cargado) && barraL1.titulo === null && !barraL1.logoEnBarra, JSON.stringify({ logos, barraL1 }));
     /* A 320 px: el login (logo y tarjeta) sin desborde y la barra con el emblema circular solo (mismo alt), sin desborde de la página. */
     {
       await page.setViewportSize({ width: 320, height: 568 });
       await page.waitForTimeout(150);
-      const a320 = await page.evaluate(() => { const l = document.querySelector('#loginScreen img.login-logo'), c = document.querySelector('#loginScreen .login-card'), t = document.querySelector('header.topbar img.logo');
+      const a320 = await page.evaluate(() => { const l = document.querySelector('#loginScreen img.login-logo'), c = document.querySelector('#loginScreen .login-card'), t = document.querySelector('nav.sidebar .sidebar-marca img.logo-emblema');
         const rl = l.getBoundingClientRect(), rc = c.getBoundingClientRect(), rt = t.getBoundingClientRect();
         return { loginH: Math.round(rl.height), loginDentro: rl.left >= rc.left - 0.5 && rl.right <= rc.right + 0.5, proporcion: Math.abs(rl.width / rl.height - l.naturalWidth / l.naturalHeight) < 0.02,
           emblema: /emblema-ippu\.png$/.test(t.currentSrc), alt: t.getAttribute('alt'), barraAlto: Math.round(document.querySelector('header.topbar').getBoundingClientRect().height), barraH: Math.round(rt.height),
           cargado: t.complete && t.naturalWidth > 0, desborde: document.documentElement.scrollWidth > window.innerWidth }; });
-      check('l1-logo-320', 'a 320 px: el logo del login (≥ 72 px) cabe en la tarjeta con su proporción; la barra lleva el emblema circular solo con el mismo alt (≥ 36 px de alto); sin desborde de la página',
-        a320.loginH >= 72 && a320.loginDentro && a320.proporcion && a320.emblema && a320.alt === ALT_LOGO && a320.barraH >= 36 && a320.cargado && !a320.desborde && a320.barraAlto === 60, JSON.stringify(a320));
+      check('l1-logo-320', 'a 320 px: el logo del login (≥ 72 px) cabe en la tarjeta con su proporción; la fila de navegación lleva el emblema circular solo con el mismo alt (≥ 36 px de alto; L2, §5.173 h); la barra superior mide 48 px; sin desborde de la página',
+        a320.loginH >= 72 && a320.loginDentro && a320.proporcion && a320.emblema && a320.alt === ALT_LOGO && a320.barraH >= 36 && a320.cargado && !a320.desborde && a320.barraAlto === 48, JSON.stringify(a320));
       await page.setViewportSize({ width: 1280, height: 800 });
     }
     check('3a-pre', 'el login NO trae usuario ni contraseña precargados',
@@ -1282,6 +1282,54 @@ async function loguear(page) {
         await p3.click('#btnAyuda_ideaComo');
         check('l2-como-puntuar-hueco', '«Cómo puntuar cada dimensión» a 1280×800: abierto, el panel queda a 16 px o más de la primera escala («Relación Social»); cerrado, el botón queda a 12 px o más de ella (L2, §5.173)',
           !hCerrado.abierto && hAbierto.abierto && hAbierto.escala === 'Relación Social' && hAbierto.px >= 16 && hCerrado.px >= 12 && hAbierto.botonAPanel >= 8, JSON.stringify({ cerrado: hCerrado, abierto: hAbierto }));
+        /* ---------- L2, etapa 3 (§5.173 h, m, n): la barra superior, el chevron sin recuadro y «Estados del ciclo» separado de las pestañas ---------- */
+        const ubic = () => p3.evaluate(() => { const u = document.getElementById('ubicacion'); return u ? { texto: u.textContent.replace(/\s+/g, ' ').trim(), ultimo: (u.querySelector('b:last-child') || {}).textContent || '', px: parseFloat(getComputedStyle(u).fontSize),
+          migasPlanas: [...document.querySelectorAll('main .view.active .crumbs')].filter((c) => !c.querySelector('button') && c.getBoundingClientRect().height > 0).length } : null; });
+        const barra = {};
+        await p3.evaluate(() => go('inicio')); await p3.waitForTimeout(150); barra.listado = await ubic();
+        await vista3('analitica', () => PANEL.estado === 'listo'); barra.panel = await ubic();
+        await abrir3(idM3, 'lb'); barra.exp = await ubic(); barra.nombre = await p3.evaluate(() => document.getElementById('expTitulo').textContent.trim());
+        barra.cromo = await p3.evaluate(() => { const t = document.querySelector('header.topbar'), cs = getComputedStyle(t), r = (q) => { const x = document.querySelector(q).getBoundingClientRect(); return [Math.round(x.width), Math.round(x.height)]; };
+          const sb = document.querySelector('nav.sidebar').getBoundingClientRect(), tb = t.getBoundingClientRect(), banda = document.getElementById('expHead').getBoundingClientRect();
+          return { fondo: cs.backgroundColor, alto: Math.round(tb.height), token: getComputedStyle(document.documentElement).getPropertyValue('--topbar-h').trim(), izq: Math.round(tb.left - sb.right), lateralArriba: Math.round(sb.top + scrollY),
+            chip: r('#userChip'), salir: r('.btn-exit'), chipId: !!document.querySelector('header.topbar button#userChip.userchip'), salirTxt: document.querySelector('header.topbar .btn-exit').textContent.trim(), titulo: !!t.querySelector('.title'), img: !!t.querySelector('img'),
+            bandaBajoBarra: Math.round(banda.top - tb.bottom), secciones: [...document.querySelectorAll('.sidebar .sec')].map((x) => x.textContent.trim()).join('|'), desborde: document.documentElement.scrollWidth > innerWidth }; });
+        await p3.click('#userChip'); await p3.waitForTimeout(150); barra.perfil = await ubic();
+        await p3.setViewportSize({ width: 760, height: 800 }); await p3.evaluate(() => go('inicio')); await p3.waitForTimeout(200);
+        barra.angosto = await p3.evaluate(() => { const i = document.querySelector('nav.sidebar .sidebar-marca img.logo-emblema'), t = document.querySelector('header.topbar').getBoundingClientRect(), u = document.getElementById('ubicacion').getBoundingClientRect();
+          return { emblema: /emblema-ippu\.png$/.test(i.currentSrc) && i.getBoundingClientRect().height >= 36 && document.querySelector('nav.sidebar .logo-completo').getBoundingClientRect().height === 0, barraIzq: Math.round(t.left), ubicacionDentro: u.right <= document.getElementById('userChip').getBoundingClientRect().left + 0.5, desborde: document.documentElement.scrollWidth > innerWidth }; });
+        await p3.setViewportSize({ width: 1280, height: 800 }); await p3.waitForTimeout(150);
+        const c = barra.cromo;
+        check('l2-barra', 'la barra superior (L2, §5.173 h) es clara, mide --topbar-h (48 px), empieza donde termina la lateral y no lleva logo ni título; dice la ubicación con el estilo de .crumbs (≥ 12 px, el último tramo en negrita): «Servicio de Atención Diurna › NNA y HCE», «General › Panel institucional», «… › NNA y HCE › <NNA>» y «Mi usuario»; las migas planas de las vistas no se repiten; #userChip y «Salir» siguen (≥ 24 px); la lateral llega hasta arriba con sus dos secciones; la banda del paciente queda bajo la barra; a 760 px la barra ocupa el ancho, la ubicación no pisa el perfil y el logo es el emblema; sin desborde',
+          barra.listado.texto === 'Servicio de Atención Diurna › NNA y HCE' && barra.listado.ultimo === 'NNA y HCE' && barra.panel.texto === 'General › Panel institucional'
+            && barra.exp.texto === 'Servicio de Atención Diurna › NNA y HCE › ' + barra.nombre && barra.exp.ultimo === barra.nombre && barra.perfil.texto === 'Mi usuario'
+            && [barra.listado, barra.panel, barra.exp].every((u) => u.px >= 12 && u.migasPlanas === 0)
+            && c.fondo === 'rgb(255, 255, 255)' && c.alto === 48 && c.token === '48px' && c.izq === 0 && c.lateralArriba === 0 && !c.titulo && !c.img && c.chipId && c.salirTxt === 'Salir' && c.chip[1] >= 24 && c.salir[1] >= 24
+            && c.bandaBajoBarra >= 0 && c.secciones === 'General|Servicio de Atención Diurna' && !c.desborde && barra.angosto.emblema && barra.angosto.barraIzq === 0 && barra.angosto.ubicacionDentro && !barra.angosto.desborde,
+          JSON.stringify(barra).slice(0, 900));
+        /* El chevron junto al título de una pestaña: sin recuadro ni relleno en reposo y abierto, a 0–6 px del título (sin pisarlo), objetivo ≥ 24×24. */
+        await abrir3(idM3, 'lb');
+        const chev = async () => p3.evaluate(() => { const b = document.getElementById('btnAyuda_nota_lb'), h = document.getElementById('evTitulo'), cs = getComputedStyle(b), rb = b.getBoundingClientRect(), rh = h.getBoundingClientRect();
+          return { borde: cs.borderTopColor, fondo: cs.backgroundColor, w: rb.width, h: rb.height, hueco: +(rb.left - rh.right).toFixed(1), color: cs.color }; });
+        await p3.mouse.move(5, 400); await p3.evaluate(() => document.activeElement && document.activeElement.blur()); await p3.waitForTimeout(200);
+        const chevCerrado = await chev();
+        await p3.evaluate(() => ayudaAlternar('btnAyuda_nota_lb', true)); await p3.waitForTimeout(200);
+        const chevAbierto = await chev();
+        await p3.evaluate(() => ayudaAlternar('btnAyuda_nota_lb', false));
+        const transparente = (x) => /rgba\(\d+, \d+, \d+, 0\)|transparent/.test(x);
+        check('l2-chevron-delicado', 'el chevron junto al título de una pestaña (L2, §5.173 m) va sin recuadro ni relleno, cerrado y abierto, en tinta, a 0–6 px del título sin pisarlo y con el objetivo de 24×24; los botones con texto («Estados del ciclo») conservan su recuadro',
+          [chevCerrado, chevAbierto].every((x) => transparente(x.borde) && transparente(x.fondo) && x.color === 'rgb(22, 35, 44)' && x.w >= 23.9 && x.h >= 23.9 && x.hueco >= 0 && x.hueco <= 6)
+            && (await p3.evaluate(() => { const cs = getComputedStyle(document.getElementById('btnAyuda_flujo')); return !/, 0\)|transparent/.test(cs.borderTopColor); })),
+          JSON.stringify({ chevCerrado, chevAbierto }));
+        /* «Estados del ciclo» no queda pegado a las pestañas: 8 px o más hasta la pestaña más cercana, a 1280 y a 1024. */
+        const sep = [];
+        for (const [w, hh] of tamanios3) { await p3.setViewportSize({ width: w, height: hh }); await abrir3(idM3, 'lb');
+          sep.push(await p3.evaluate((ww) => { const a = document.getElementById('btnAyuda_flujo').getBoundingClientRect();
+            const d = [...document.querySelectorAll('.exp-tab')].map((t) => { const r = t.getBoundingClientRect(); const dx = Math.max(0, r.left - a.right, a.left - r.right), dy = Math.max(0, r.top - a.bottom, a.top - r.bottom); return Math.hypot(dx, dy); });
+            return { ww, min: +Math.min(...d).toFixed(1) }; }, w)); }
+        await p3.setViewportSize({ width: 1280, height: 800 });
+        check('l2-estados-separado', '«Estados del ciclo» queda a 8 px o más de la pestaña más cercana (las de «Seguimiento» y «Registro»), a 1280×800 y a 1024×768 (L2, §5.173 n)',
+          sep.every((x) => x.min >= 8), JSON.stringify(sep));
       }
       /* «Estados del ciclo»: botón con texto visible y el chevron, al final de la tira de pestañas; su panel dice el ciclo y los estados. */
       await abrir3(idM3, 'lb');
@@ -3233,10 +3281,10 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     const halla = (re) => fuentesF1.filter(([, t]) => re.test(t)).map(([f]) => f);
     const prohibidosF1 = { vista: halla(/view-intermedia|data-view="intermedia"|go\(['"]intermedia['"]\)/), manejador: halla(/lik-opts|likSel|likFormula/), reglas: fuentesF1.filter(([f, t]) => f.endsWith('.css') && /\.lik-[a-z]/.test(t)).map(([f]) => f),
       frases: ['v4.1 — Demo L1', 'Demo parcialmente conectada a la API', 'se van conectando por etapas', 'la API lo avisa', '(calculado por el servidor)', 'Avisos de la API', 'La contraseña se envía a la API'].filter((fr) => fuentesF1.some(([, t]) => t.includes(fr))) };
-    const visibleF1 = await pf.evaluate(() => ({ nav: [...document.querySelectorAll('.sidebar .navitem')].map((b) => b.textContent.trim()), secciones: [...document.querySelectorAll('.sidebar .sec')].map((s) => s.textContent.trim()), marca: document.querySelector('.topbar .title').textContent.replace(/\s+/g, ' ').trim(), pie: document.querySelector('.sidebar .foot').textContent.trim() }));
+    const visibleF1 = await pf.evaluate(() => ({ nav: [...document.querySelectorAll('.sidebar .navitem')].map((b) => b.textContent.trim()), secciones: [...document.querySelectorAll('.sidebar .sec')].map((s) => s.textContent.trim()), marca: document.querySelector('.sidebar .sidebar-marca img.logo').getAttribute('alt'), pie: document.querySelector('.sidebar .foot').textContent.trim() }));
     check('f1-h', 'no queda la vista «Intermedia» (ruta, manejador, entrada de navegación ni reglas .lik-*) ni los textos de desarrollo; navegación «General» → «Panel institucional» y «Servicio de Atención Diurna» → NNA y HCE · Pendientes · Grupos de referencia · Inclusión · Ateneos y capacitación (sin Taller Terapéutico ni Clínica); marca y pie del prototipo',
       Object.values(prohibidosF1).every((v) => v.length === 0) && JSON.stringify(visibleF1.secciones) === '["General","Servicio de Atención Diurna"]'
-        && JSON.stringify(visibleF1.nav) === '["Panel institucional","NNA y HCE","Pendientes","Grupos de referencia","Inclusión","Ateneos y capacitación"]' && visibleF1.marca === 'Historia Clínica Electrónica' && visibleF1.pie === 'Prototipo · IPPU × UTEC-LIDIA · 2026',
+        && JSON.stringify(visibleF1.nav) === '["Panel institucional","NNA y HCE","Pendientes","Grupos de referencia","Inclusión","Ateneos y capacitación"]' && visibleF1.marca === 'Fundación Instituto Psicopedagógico Uruguayo' && visibleF1.pie === 'Prototipo · IPPU × UTEC-LIDIA · 2026',
       JSON.stringify({ prohibidosF1, visibleF1 }).slice(0, 500));
 
     /* ---------- f1-i: aria-current="page" en el ítem activo de la barra lateral (también dentro de un expediente) ---------- */
