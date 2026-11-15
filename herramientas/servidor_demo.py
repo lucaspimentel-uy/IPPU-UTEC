@@ -1,8 +1,11 @@
-"""Servidor mínimo de la demo con cola de conexiones grande (§5.167 f). Es una VARIANTE para medir, no el servidor de la presentación.
+"""Servidor mínimo de la demo con cola de conexiones grande (§5.167 f, g). Nació como una variante para medir; desde §5.167 g es el
+servidor por omisión de la demo de la presentación (`herramientas/preparar_presentacion.ps1 -ServidorDemo cola128`) y el de `CLAUDE.md`.
 
 `python -m http.server` es un ThreadingHTTPServer con `request_queue_size = 5` (el valor de socketserver.TCPServer): Chromium abre
 hasta 6 conexiones en paralelo por página y, con la cola llena, Windows contesta RST (ERR_CONNECTION_REFUSED). Esto es lo mismo
-—mismo manejador, HTTP/1.0, mismo registro por stderr— salvo la cola: 128.
+—mismo manejador, HTTP/1.0, mismo registro por stderr— salvo la cola: 128. Y manda `Cache-Control: no-store` en toda respuesta
+(§5.172): el manejador estándar sólo manda `Last-Modified` y Chrome cachea por heurística, así que tras un `git pull` el navegador
+mezclaba archivos viejos con nuevos.
 
 Uso:  python herramientas/servidor_demo.py [puerto] [--bind 127.0.0.1] [--directory carpeta]
 """
@@ -11,8 +14,14 @@ import functools
 import http.server
 
 
+class ManejadorSinCache(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self) -> None:
+        self.send_header('Cache-Control', 'no-store')      # §5.172: el navegador nunca reutiliza una copia de la demo
+        super().end_headers()
+
+
 class ServidorDemo(http.server.ThreadingHTTPServer):
-    request_queue_size = 128          # único cambio respecto de `python -m http.server` (5)
+    request_queue_size = 128          # único cambio de red respecto de `python -m http.server` (5)
 
 
 def main() -> None:
@@ -21,9 +30,9 @@ def main() -> None:
     ap.add_argument('--bind', default='127.0.0.1')
     ap.add_argument('--directory', default='.')
     a = ap.parse_args()
-    manejador = functools.partial(http.server.SimpleHTTPRequestHandler, directory=a.directory)
+    manejador = functools.partial(ManejadorSinCache, directory=a.directory)
     with ServidorDemo((a.bind, a.puerto), manejador) as srv:
-        print(f'Sirviendo {a.directory} en http://{a.bind}:{a.puerto}/ (cola {ServidorDemo.request_queue_size})', flush=True)
+        print(f'Sirviendo {a.directory} en http://{a.bind}:{a.puerto}/ (cola {ServidorDemo.request_queue_size}, cache del navegador apagada: Cache-Control no-store)', flush=True)
         try:
             srv.serve_forever()
         except KeyboardInterrupt:

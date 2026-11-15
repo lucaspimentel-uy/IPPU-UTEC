@@ -20,6 +20,10 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-15 · L1 — D2c: el servidor de la demo no deja cachear** (Lucas con Claude, local en Windows, rama `d2c-sin-cache`, sobre `main` b0b7d66; §5.172). Sólo `herramientas/`, `CLAUDE.md` y docs.
+  - **Hecho:** `servidor_demo.py` manda `Cache-Control: no-store` (antes sólo `Last-Modified`: Chrome cacheaba por heurística y mezclaba archivos viejos con nuevos tras un `git pull`); `verificar_presentacion.js` comprueba el encabezado en tres archivos (falla contra `http.server`) y sale con 1 en vez de abortar node; `CLAUDE.md` sirve la demo con `servidor_demo.py`. Un navegador con copias viejas necesita un Ctrl+F5.
+  - **Verificación:** presentación OK con 0 escrituras en `ippu_presentacion_ver` (borrada). Runner, 4 corridas: 3 OK, 1 con `z-carga` (`/js/evaluaciones.js`, `ERR_NO_BUFFER_SPACE`); contraste sin fallas. Pendiente: la línea base de `main`.
+
 - **2026-11-14 · L1 — login, barra y descripción de cada pestaña** (Lucas con Claude, local en Windows, rama `l1-diseno`, sobre `main` f40724b; §5.171). Sólo `demo/`, arnés y docs.
   - **Hecho:** el logo lleva el nombre de la institución (alt informativo, revierte L0): login 80 px, barra 44 px (60 px de barra), emblema solo a ≤ 480 px; el único texto es «Historia Clínica Electrónica». Un chevron con la descripción en las 13 pestañas y en Inicio, Ateneos y Grupos (sin «?»); «Estados del ciclo» con texto; API por omisión `127.0.0.1:8000` (sin aviso en la presentación; `localhost:5500` también entra).
   - **Verificación:** runner 2 corridas OK (328 chequeos), contraste sin fallas; presentación OK con 0 escrituras en `ippu_presentacion_ver` (borrada). Pendiente: aprobar las descripciones nuevas (HCE-00, CI, VF, ORG, PAI). Siguiente: integrar en `hce-post26`, después A1c.
