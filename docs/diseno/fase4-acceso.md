@@ -221,8 +221,19 @@ forma canónica de §5.110 (`5.789.123-4` = `57891234`); si no coincide, la resp
 (el mismo cuerpo). Sin `ci` (o en blanco) es 422 por campo: no revela nada que el 403 `reason_required` no haya dicho. Coordinación
 no la manda (si la manda, no se mira). **Por qué:** los ids son correlativos; sin esto un técnico abriría cualquier expediente
 recorriéndolos, con el registro como único control y después del hecho. La pantalla del motivo le pide al técnico «C.I. del NNA»
-(con su rótulo) y no se la pide a coordinación. El orden en la ruta: el rol (403) → la existencia (404) → la C.I. del técnico
-(404) → el motivo (422).
+(con su rótulo) y no se la pide a coordinación. ~~El orden en la ruta: el rol (403) → la existencia (404) → la C.I. del técnico
+(404) → el motivo (422).~~ *Invertido el 2026-11-13 (A1c, §5.174), ver abajo.*
+
+**2026-11-15 · El orden de la C.I. y el motivo se invierte (A1c, §5.174; decisión del equipo del 2026-11-13).** La auditoría
+dinámica encontró que, con un motivo inválido, `POST /hce/{id}/accesos` respondía 422 para la C.I. correcta y 404 para una
+equivocada: un técnico no tratante confirmaba una C.I. sin dejar ninguna fila. Ahora el orden es: el rol (403) → la existencia
+(404) → **todo el cuerpo, junto, en un solo 422** (el motivo del catálogo y de la relación, el texto, y para el técnico no
+tratante que la `ci` *esté*, sin mirar si coincide) → **la C.I. (404)** → la fila. Con un motivo inválido, la C.I. correcta y
+la equivocada reciben **el mismo 422**; con motivo válido y C.I. equivocada, el 404 de un inexistente; **la única forma de
+confirmar una C.I. es abrir una ventana, y eso deja una fila.** Coordinación no cambia (no manda C.I.). Es un orden de *nuestro*
+diseño, no una exigencia de IPPU. Los errores salen en el orden del diálogo: `motivo_codigo`, `ci`, `motivo_texto`. Además, la
+ventana sólo vale si su relación es la del rol actual del usuario (`no_tratante` al técnico, `supervision` a coordinación):
+si el rol cambia, la ventana abierta con el anterior no abre nada (A4 hará subir la `token_version` en ese cambio).
 
 ## d. El registro de accesos
 

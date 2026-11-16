@@ -21,9 +21,10 @@ permitida (`403:forbidden`) → (6) lo de siempre (422, 409…). Un 403 lleva s�
 
 - **tratante**(usuario, expediente) ⇔ el expediente tiene grupo y el usuario es su técnico 1 o 2 (F4-2), para `tecnico` y
   `coordinacion`; no mira el año del grupo ni `activo`. Se deriva en cada pedido, nunca se guarda.
-- **Ventana vigente** ⇔ una fila de `acceso_hce` del usuario sobre ese expediente, de relación `no_tratante` o
-  `supervision`, con `vence > now()` y la `token_version` del usuario (F4-9, F4-12). La de otro usuario o de otro
-  expediente no cuenta; la de gestión o la copia a la familia no abren nada.
+- **Ventana vigente** ⇔ una fila de `acceso_hce` del usuario sobre ese expediente, de la relación **que le toca a su rol
+  actual** (`no_tratante` al técnico, `supervision` a coordinación), con `vence > now()` y la `token_version` del usuario
+  (F4-9, F4-12; A1c, §5.174). La de otro usuario o de otro expediente no cuenta; la de gestión, la del tratante o la copia
+  a la familia no abren nada, ni la que abrió el rol anterior si el rol cambió.
 
 El servicio no importa FastAPI (regla de `app/services/__init__.py`).
 """
@@ -31,7 +32,8 @@ from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    ACCESO_RELACIONES_VENTANA, ROL_ADMINISTRATIVO, ROL_COORDINACION, ROL_TECNICO, ROLES_ASIGNABLES,
+    ACCESO_NO_TRATANTE, ACCESO_RELACIONES_VENTANA, ACCESO_SUPERVISION, ROL_ADMINISTRATIVO, ROL_COORDINACION, ROL_TECNICO,
+    ROLES_ASIGNABLES,
 )
 from app.models.acceso import AccesoHce
 from app.models.identidad import Grupo, HceDiurna, Profesional
@@ -127,13 +129,19 @@ def relacion(usuario: Profesional, hce: HceDiurna) -> str | None:
     return TRATANTE if es_tecnico_del_grupo(usuario, hce.grupo) else NO_TRATANTE
 
 
+#: La relación de la ventana que abre cada rol (F4-9): el técnico, `no_tratante`; coordinación, `supervision`. Una ventana
+#: abierta con otro rol (el rol cambió después) no vale: cuenta el rol **actual** (A1c, §5.174).
+RELACION_DE_VENTANA: dict[str, str] = {ROL_TECNICO: ACCESO_NO_TRATANTE, ROL_COORDINACION: ACCESO_SUPERVISION}
+
+
 def _ventana_vigente_sql(usuario: Profesional, hce_id):
     """La condición «hay una ventana vigente del usuario sobre `hce_id`» (un id o una columna correlacionada)."""
+    relaciones = tuple(r for r in (RELACION_DE_VENTANA.get(usuario.rol),) if r in ACCESO_RELACIONES_VENTANA)
     return exists().where(
         AccesoHce.usuario_id == usuario.id,
         AccesoHce.hce_id == hce_id,
         AccesoHce.vence > func.now(),
-        AccesoHce.relacion.in_(ACCESO_RELACIONES_VENTANA),
+        AccesoHce.relacion.in_(relaciones),
         AccesoHce.token_version == usuario.token_version,
     )
 

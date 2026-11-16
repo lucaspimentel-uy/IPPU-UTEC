@@ -12,6 +12,12 @@ NNA, que se compara canónica (§5.110) con la del expediente; si no coincide, l
 inexistente**. Los ids son correlativos: sin esto, un técnico abriría cualquier expediente recorriéndolos, con el registro
 como único control y después del hecho. Coordinación no la manda (si la manda, no se mira).
 
+**Orden (A1c, §5.174; invierte el de A1):** el rol y la existencia los miró la dependencia (403, 404); después **se valida
+todo el cuerpo y se devuelve junto, en un solo 422** (el motivo del catálogo y de la relación, el texto y, para el técnico no
+tratante, que la C.I. *esté*); **recién entonces se compara la C.I.** (el 404). Así la comparación es el último paso y no
+hay respuesta que dependa de ella sin que quede una fila: con un motivo inválido, la C.I. correcta y la equivocada reciben
+el mismo 422, y la única manera de confirmar una C.I. es abrir una ventana, que se registra.
+
 **Reglas del motivo** (sección e): del catálogo `MOTIVOS_ACCESO` y para la relación de quien lo pide (422 por campo si no);
 `motivo_texto` vacío o en blanco → NULL; obligatorio en `copia_familia` y `otro`; hasta `MOTIVO_TEXTO_MAX` caracteres; sin
 NUL (lo rechaza la dependencia `sin_caracter_nulo`, §5.163 a); los caracteres Cf y Cc se quitan **salvo** salto de línea,
@@ -57,27 +63,28 @@ def _quien(usuario: Profesional, relacion: str | None) -> str:
 
 
 def abrir(db: Session, usuario: Profesional, hce_id: int, datos: Mapping[str, Any]) -> tuple[AccesoHce, list[dict]]:
-    """La fila de `acceso_hce` y los avisos. El rol y la existencia los miró la dependencia de la ruta."""
+    """La fila de `acceso_hce` y los avisos. El rol y la existencia los miró la dependencia de la ruta; acá, primero el
+    cuerpo entero (422) y después la C.I. (404)."""
     hce = matriz.exigir_en_hce(db, usuario, "accesos.abrir", hce_id)
     relacion = matriz.relacion(usuario, hce)
     errores: list[tuple[str | None, str]] = []
     avisos: list[dict] = []
 
-    # (a) El técnico no tratante prueba que tiene la C.I. de la interconsulta. Antes que el motivo: una C.I. que no
-    # coincide no dice nada más (es el 404 de un inexistente).
-    if matriz.es_tecnico(usuario) and relacion != matriz.TRATANTE:
-        ci = datos.get("ci")
-        if not isinstance(ci, str) or normalizar_texto(ci) is None:
-            raise ValidationFailed([("ci", "Es obligatoria: escribí la C.I. completa del NNA.")])
-        if clave_ci(ci).strip() != hce.persona.ci:
-            raise NotFound("No existe el expediente")
-
+    # (1) TODO el cuerpo se valida primero y se devuelve junto (un solo 422), **sin mirar si la C.I. coincide**. Si la
+    # C.I. se comparara antes, un 422 por el motivo (C.I. correcta) y un 404 (C.I. equivocada) le dirían al técnico no
+    # tratante cuál de sus C.I. es la del expediente sin dejar ninguna fila (hallazgo 2 de la auditoría del 2026-11-13).
     codigo = datos.get("motivo_codigo")
     motivo = MOTIVOS_ACCESO.get(codigo) if isinstance(codigo, str) else None
     if motivo is None:
         errores.append(("motivo_codigo", "Elegí uno de los motivos del catálogo."))
     elif _quien(usuario, relacion) not in motivo["quien"]:
         errores.append(("motivo_codigo", "Ese motivo no corresponde a tu relación con este expediente."))
+
+    # Del técnico no tratante, además, que **mande** la C.I. (sólo que esté, no si es la del expediente).
+    ci = datos.get("ci")
+    pide_ci = matriz.es_tecnico(usuario) and relacion != matriz.TRATANTE
+    if pide_ci and (not isinstance(ci, str) or normalizar_texto(ci) is None):
+        errores.append(("ci", "Es obligatoria: escribí la C.I. completa del NNA."))
 
     texto = datos.get("motivo_texto")
     if texto is not None and not isinstance(texto, str):
@@ -94,6 +101,11 @@ def abrir(db: Session, usuario: Profesional, hce_id: int, datos: Mapping[str, An
         errores.append(("motivo_texto", "Es obligatorio para este motivo: escribilo (sin datos clínicos del NNA)."))
     if errores:
         raise ValidationFailed(errores)
+
+    # (2) Recién con el cuerpo válido se compara la C.I.: la **única** forma de confirmarla es abrir una ventana, y eso
+    # deja una fila. Si no coincide, el 404 de un expediente inexistente (el mismo cuerpo que el de un id que no existe).
+    if pide_ci and clave_ci(ci).strip() != hce.persona.ci:
+        raise NotFound("No existe el expediente")
 
     titular = codigo == MOTIVO_COPIA_FAMILIA
     ahora = func.now()

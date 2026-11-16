@@ -20,6 +20,14 @@
 
 ## 13. Bitácora de sesiones
 
+- **2026-11-15 · L1 — A1c: el orden del motivo y la C.I. de `POST /hce/{id}/accesos`, y lo que la suite de la matriz no probaba** (Lucas con Claude, local en Windows, rama `a1c-matriz` desde `origin/hce-post26` 7173840; §5.174). Sin DDL ni demo.
+  - **Cambio:** `accesos.abrir` valida todo el cuerpo (motivo, texto y, para el técnico no tratante, que la `ci` esté) en un solo 422 y recién después compara la C.I. (404 de inexistente); `matriz._ventana_vigente_sql` acepta sólo la relación del rol actual (`no_tratante` al técnico, `supervision` a coordinación). Docs: `fase4-acceso.md` c.
+  - **En vivo (`ippu_ver`, `:8001`):** antes, motivo inválido + C.I. correcta → 422 y + C.I. equivocada → 404; después, 422 idénticos; motivo válido + C.I. equivocada = el 404 de un id inexistente; válido + correcta → 201 y `GET /hce/1` 200.
+  - **Backend:** `pytest -q` 1676 → 1759 passed, 0 skipped (83 nuevos: `test_a1c_matriz.py` 69, `test_a1c_matriz_ids.py` 14; bases descartables `TEST_DATABASE_URL`) · `alembic check` limpio, head `dc897506906b` · `verificar_estado.py --check` y `generar_catalogos_backend.py --check` OK · rutas de la app = filas del CSV (94 = 94).
+  - **Mutantes** (plugin descartable, no commiteado): coordinación nunca tratante, 46 fallos; cualquier fila abre la ventana, 7; `accesos.py` de 7173840, 7; `matriz.py` de 7173840, 1 (el cambio de rol). Sin mutante pasan los 83.
+  - **Los ids no canónicos van en un archivo aparte:** en el mismo que `mundo` (módulo) `tramos` se bloqueaba con él (pytest colgado más de una hora).
+  - **Runner, 2 corridas con contraste:** OK · OK; `conectada.js` 329/329 y 329/329 (los `a1-motivo-*` pasan sin tocar la demo), contraste sin pares, anillos (0 de 84) ni contornos apagados que fallen. Bases y carpetas descartables borradas; :8001 y :5500 libres.
+
 - **2026-11-13 · L1 — Integración: `main` (S1b §5.168, L0 §5.169) en `hce-post26` (A1 §5.165)** (Lucas con Claude, local en Windows, rama `integracion-s1b` desde `origin/hce-post26` 0a349e0, `main` e3976d3; un commit de mezcla, sin rebase). Sin §5 nuevo.
   - **Conflictos (4, de texto):** `handoff.md` (cabecera con S1b y L0; §5.168 y §5.169 tras §5.167; §6 con las líneas de los dos lados), `docs/bitacora.md`, `backend/README.md` (conteo) y `app/routers/dependencias.py`: el cuerpo de A1 (acción según el método, `matriz.exigir_en_hce` con `no_existe`, el rol antes que la fila) con el parámetro tipado de S1b (`Annotated[int, Path(alias=…)]`); no queda lectura cruda de `path_params`.
   - **Test:** `test_s1b_ids_no_canonicos.py` compara cada forma con la respuesta canónica del mismo sujeto (en esta rama, 403 `reason_required` al leer y 403 `forbidden` al escribir, no 404). Barre 14 rutas de `app.routes` (la auditoría contó 16: no se reproduce). Con el cuerpo viejo fallan 14 de 18; con el fusionado pasan 18.
