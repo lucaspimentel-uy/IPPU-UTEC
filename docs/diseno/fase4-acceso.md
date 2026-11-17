@@ -180,6 +180,7 @@ los módulos por id (`/idea/{id}`…) mira el rol **antes** que la fila del mód
 | A1 | `GET /accesos/motivos` | todo usuario con sesión | el catálogo de motivos, con qué rol puede usar cada uno (F4-11) |
 | A2 | `GET /hce/{id}/accesos` | coordinación | el registro de accesos de un expediente |
 | A2 | `GET /accesos?desde=&hasta=&usuario_id=&hce_id=&relacion=&motivo=&limit=&offset=` | coordinación | el registro institucional, paginado (`X-Total-Count`): la auditoría semestral |
+| A2 | `GET /accesos/intentos?desde=&hasta=&usuario_id=&tipo=&limit=&offset=` | coordinación | las consultas por C.I. y las C.I. equivocadas (§5.178 e) |
 | A3 | `POST /auth/logout` · `POST /auth/password` | todo usuario con sesión | cerrar la sesión en el servidor; cambiar la propia contraseña |
 | A4 | `/usuarios`, `POST /grupos`, `/talleres`, `/centros-educativos`, `GET /auditoria` | coordinación | administración (sección g) |
 
@@ -252,7 +253,7 @@ se toca (sacarlo es DDL sin beneficio).
 | `usuario_id` | FK `profesional` RESTRICT, índice | la persona que accede; con la credencial individual es la **firma** (§5.162 g) |
 | `rol` | `String(20)` | el rol al momento del acceso (el rol cambia) |
 | `relacion` | `String(20)`, CHECK | `tratante` · `no_tratante` · `supervision` · `gestion` (coordinación o administrativo en la identificación u ORG) · `titular` (copia a la familia) |
-| `motivo_codigo` | `String(30)` nullable, CHECK generado de `MOTIVOS_ACCESO` | el motivo (§8); NULL sólo en `tratante` y `gestion` (CHECK) |
+| `motivo_codigo` | `String(30)` nullable, CHECK generado de `MOTIVOS_ACCESO` | el motivo (§8); NULL sólo en `tratante` y `gestion` (CHECK): su motivo es **fijo** y lo pone el servidor al leer (`motivo_label`, §5.178 b) |
 | `motivo_texto` | `Text` nullable | el texto libre (F4-11) |
 | `ateneo_id` | FK `ateneo` nullable | si el acceso fue por un ateneo clínico |
 | `inicio` | `timestamptz` default `now()` | la fecha (§8) |
@@ -276,17 +277,24 @@ motivo útil es la copia a la familia); para él no abre nada que no tenga.
 
 **El tratante, automáticamente (Protocolo §7: «registro automático de accesos»).** En el **primer pedido** de un usuario tratante
 (o de coordinación o administrativo en lo de gestión) a una ruta de un expediente sin ventana vigente, el servidor inserta una fila
-(`relacion` `tratante` o `gestion`, sin motivo, 120 minutos). Los pedidos siguientes de esa ventana no escriben. Detalles que A2
-tiene que resolver así: (1) **en su propia transacción**: las lecturas usan `sesion_lectura`, que nunca commitea (§5.115 d), y un
+(`relacion` `tratante` o `gestion`, sin `motivo_codigo`, 120 minutos). Los pedidos siguientes de esa ventana no escriben. **El
+motivo de esas filas es fijo y es un rótulo, no un valor guardado** (§5.176 e, §5.178 b; el Protocolo §8 pide un motivo en cada
+registro): toda respuesta que muestra una fila lleva `motivo_label`, puesto por el servidor — «Atención directa (tratante)» en
+`tratante`, «Gestión (identificación y organismos)» en `gestion`, el rótulo del catálogo en las demás. Una coordinación asignada
+al grupo es tratante: su fila lleva `rol` `coordinacion`. **Hecho en A2 (§5.178)**, así: (1) **en su propia transacción**: las lecturas usan `sesion_lectura`, que nunca commitea (§5.115 d), y un
 acceso que ocurrió se registra aunque el GET falle después; (2) **con candado**: la demo pide `GET /hce/{id}` y `GET
 /hce/{id}/flujo` en paralelo, así que el chequeo-e-inserción va bajo `pg_advisory_xact_lock(<constante>, hash(usuario, expediente))`,
 como el correlativo de ateneos (§5.158 b): dos pedidos simultáneos dejan una fila; (3) las **listas** (`GET /hce`, `GET /inclusion`,
-`GET /ateneos`, `/panel`) no registran accesos: no abren ninguna HC (F4-8).
+`GET /ateneos`, `/panel`) no registran accesos: no abren ninguna HC (F4-8); (4) un pedido que termina en 401, 403 o 404 —el
+token, el rol, la relación, la existencia: lo que se decide antes de abrir— tampoco. Un solo gancho para todas las rutas de un
+expediente, también las 14 por id de módulo (`abrir_expediente`, `app/routers/dependencias.py`); el porqué de cada cosa, en el
+docstring de `app/services/registro_accesos.py`.
 
 **El ateneo clínico.** Abrir un ateneo clínico sin ser tratante del expediente referido (coordinación; los participantes cuando
 exista el bloque M) registra solo una fila `motivo_codigo='ateneo'`, `ateneo_id`, sin diálogo: el ateneo **es** el canal documentado
 (Protocolo §6.1, §5.70 condición 3). No abre ventana sobre la HCE (§5.162 h): la fila se deduplica por usuario y ateneo dentro de 120
-minutos.
+minutos. *Como quedó (A2, §5.178 c):* `vence = inicio` (por eso no es una ventana: `GET /hce/{id}` sigue pidiendo el motivo) y
+`relacion` la de la ventana del rol (`supervision` a coordinación; `no_tratante` al técnico que llegó al ateneo con su ventana).
 
 **La copia de la HC a la familia (§5.103).** Es un acceso **del titular**: `POST /hce/{id}/accesos {motivo_codigo: "copia_familia",
 motivo_texto: "<a quién se entregó y qué partes>"}` por el tratante o coordinación, que deja una fila `relacion='titular'`, `vence =
@@ -297,6 +305,15 @@ inicio` (no abre ventana) y con quien la entregó como `usuario_id`. No va a `di
 /hce/{id}/auditoria`, que lleva los valores completos, §5.162 j): el **tratante** (es su registro de trabajo; C1 se construyó para
 él) y **coordinación con motivo**. Nadie más: ni el no tratante (minimización), ni administrativo, ni dirección NT (fila 5: sin
 contenido individual).
+
+**Los intentos (A2, §5.178 e; hallazgo 2 de la auditoría del 2026-11-13).** Una consulta por C.I. o una C.I. equivocada no son
+un acceso (no se abrió ninguna HC), pero tienen que dejar rastro: tabla aparte, de sólo inserción, **`acceso_intento`**
+(`usuario_id`, `rol`, `tipo` `consulta_ci` | `ci_errada`, `hce_id` nullable, `resultado` `encontrado` | `no_encontrado` |
+`rechazado`, `momento`). Una fila por cada `POST /hce/consulta` que se ejecutó y por cada `POST /hce/{id}/accesos` rechazado
+porque la C.I. no es la del expediente; `hce_id` es el expediente encontrado o el destino de la C.I. equivocada (NULL si la
+consulta no encontró nada). **No guarda la C.I. escrita.** En su propia transacción, porque el 404 deshace el pedido; ese 404
+conserva el cuerpo de un id inexistente (§5.174 a). Lo lee **sólo coordinación**: `GET /accesos/intentos` (filtros por usuario,
+período y tipo; paginado). El tope de consultas por usuario es de A3.
 
 **La auditoría interna semestral (Protocolo §8).** **Ahora (A2):** `GET /accesos` con filtros por período, usuario, expediente,
 relación y motivo, paginado, para que coordinación revise cada semestre. **Después** (no es parte de la HCE terminada): exportar el
@@ -317,6 +334,11 @@ tiene que pasar por revisión. `MOTIVOS_ACCESO` en `core/constantes.py`, con el 
 | `supervision` | Supervisión clínica | coordinación | opcional | Protocolo §5 fila 3 |
 | `copia_familia` | Copia de la HC entregada a la familia | tratante, coordinación | **obligatorio** | §5.103; Ley 18.335 art. 18 lit. A |
 | `otro` | Otro motivo | técnico no tratante, coordinación | **obligatorio** | decisión de diseño: el catálogo corto no cubre todo |
+
+**El catálogo se contrastó con el Protocolo §5 y §6.1 (2026-11-17, §5.176 e, §5.178 b): sin cambios.** Las filas automáticas no
+usan un código del catálogo: su motivo fijo —«Atención directa (tratante)», «Gestión (identificación y organismos)»— es un
+**rótulo** (`MOTIVO_LABEL_DE_RELACION`, en `core/constantes.py`) que el servidor pone en `motivo_label` al leer; `motivo_codigo`
+queda en NULL y el CHECK no cambia.
 
 **Reglas del texto libre:** como cualquier texto opcional, `''` o blanco → NULL (`services/texto.py`); hasta 500 caracteres (422 por
 campo); sin NUL (§5.163 a); se quitan los caracteres Cf y Cc **salvo** salto de línea, retorno y tabulación, con el aviso de §5.163 b
@@ -386,7 +408,7 @@ del `.env` después de A1; la de la presentación (`ippu_presentacion`) es de `m
 | Sesión | DDL |
 |---|---|
 | A1 | `profesional.rol`: CHECK `rol IN ('tecnico','coordinacion','administrativo','direccion_nt')` (el CHECK de hoy acepta `admin`) · `profesional.token_version integer NOT NULL DEFAULT 0` (en A1 para que `acceso_hce.token_version` tenga contra qué compararse; queda en 0 hasta que A3 lo haga subir) · tabla **`acceso_hce`** completa (sección d; A2 no la vuelve a tocar) con el CHECK de `motivo_codigo` generado de `MOTIVOS_ACCESO` |
-| A2 | ninguno |
+| A2 | tabla **`acceso_intento`** (sección d; §5.178 e, decidida después de este diseño) |
 | A3 | tabla **`intento_login`** (`id`, `ts`, `email_hash char(64)`, `ip varchar(45)`, `exito`; índices `(email_hash, ts)` e `(ip, ts)`) |
 | A4 | `grupo.archivado_en date` · `catalogo_centro_educativo.retirado_en date` |
 

@@ -668,6 +668,18 @@ cabecera `pai` (43) y siete hijas que cuelgan de `pai_id` con `ON DELETE CASCADE
 > El techo de 999 no es cosmético — `f"{n:03d}"` ensancha y `lpad(t,3,'0')` **trunca**, así que con
 > `numero=1000` las dos mitades de `codigo` devolverían códigos distintos y colisionantes.
 
+### 2.5b El registro de accesos (Fase 4 · A1, A2) — sólo inserción
+
+| Tabla | Columnas | Notas |
+|---|---|---|
+| **`acceso_hce`** (A1, §5.165; filas automáticas en A2, §5.178) | id · **hce_id FK `hce_diurna` `RESTRICT`** · **usuario_id FK `profesional` `RESTRICT`** · rol · relacion CHECK (`tratante\|no_tratante\|supervision\|gestion\|titular`) · motivo_codigo CHECK nullable · motivo_texto · ateneo_id FK `ateneo` `RESTRICT` nullable · inicio · vence (CHECK `>= inicio`) · token_version | Un acceso a una HC (Protocolo §8): **una fila por ventana de 120 minutos**, no por GET. El detalle, columna por columna, en `docs/diseno/fase4-acceso.md` d. `motivo_codigo` es NULL sólo en `tratante` y `gestion` (CHECK): su motivo fijo lo pone el servidor al leer (`motivo_label`). |
+| **`acceso_intento`** (A2, §5.178 e) | id · **usuario_id FK `profesional` `RESTRICT`, index** · rol · **tipo CHECK** (`consulta_ci\|ci_errada`) · **hce_id FK `hce_diurna` `RESTRICT`, nullable, index** · **resultado CHECK** (`encontrado\|no_encontrado\|rechazado`) · momento `timestamptz` default `now()`, index | Cada `POST /hce/consulta` que se ejecutó y cada `POST /hce/{id}/accesos` rechazado porque la C.I. no es la del expediente. **No guarda la C.I. escrita.** `hce_id`: el expediente encontrado o el destino de la C.I. equivocada; NULL si la consulta no encontró nada. Dos CHECK de coherencia: `(tipo = 'ci_errada') = (resultado = 'rechazado')` y `(hce_id IS NOT NULL) = (resultado IN ('encontrado','rechazado'))`. |
+
+Las dos se escriben **en su propia transacción** (`app/services/registro_accesos.py`): la única excepción a «una transacción por
+request» (§4), porque un acceso que ocurrió se registra aunque el pedido falle después y el 404 de una C.I. equivocada deshace el
+pedido. FK `RESTRICT` y no `CASCADE`: el registro sobrevive al expediente. Las lee sólo coordinación (`GET /accesos`,
+`GET /hce/{id}/accesos`, `GET /accesos/intentos`).
+
 ### 2.6 NO construido — esbozos registrados
 
 > ⛔ **CANCELADA el 2026-10-05 (`handoff.md` §5.100).** IPPU contestó **B6 «No»** (no hace falta ver quién

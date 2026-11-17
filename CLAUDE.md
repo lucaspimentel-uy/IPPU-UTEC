@@ -146,6 +146,8 @@ La identidad por omisión del `client` de la suite (la coordinación de pruebas)
 (`tests/conftest.py::_identidad_de_la_suite_sin_matriz`): así los pedidos que cargan lo clínico sobre expedientes sin tratante siguen
 probando lo mismo. Por eso **todo test de acceso usa `token_de(<su propio usuario>)`**, nunca el `client` por omisión: con él la
 matriz no se ejerce (ver `tests/test_a1_matriz.py`).
+El marcador **`pytestmark = pytest.mark.matriz_real`** apaga ese atajo (y esa identidad deja de no registrar accesos): lo llevan los
+módulos de acceso (`test_a1_*`, `test_a1c_*`, `test_a2_*`) y todo módulo de acceso nuevo (A2, §5.178 f).
 
 ## Verificación — reglas de higiene
 - **Las sesiones corren `conectada.js` con `herramientas/correr_conectada.ps1`** (§5.167 d), no con una receta propia: recrea la base descartable
