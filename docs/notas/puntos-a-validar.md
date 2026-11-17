@@ -620,7 +620,9 @@ lista de IPPU.
 
 ---
 
-### 1.19 Estudiantes e investigadores UTEC-LIDIA: ¿son un rol de la aplicación o sólo destinatarios de un dato disociado? — abierto (2026-11-08)
+### 1.19 Estudiantes e investigadores UTEC-LIDIA: ¿son un rol de la aplicación o sólo destinatarios de un dato disociado? — **cerrado (2026-11-16)**
+
+> **Cerrado por el equipo (`handoff.md` §5.176 c):** no son un rol de la aplicación, son destinatarios por `divulgacion`; fuente: Protocolo §5 (fila 14) y §6.7, y la respuesta A1 de IPPU del 2026-10-05. Ya no se pregunta.
 
 **Qué es.** La matriz §5 del Protocolo da a «Estudiantes en formación, pasantes, investigadores (incl. convenio UTEC-LIDIA)» *«acceso supervisado; datos preferentemente disociados/anonimizados»*, con acuerdo de confidencialidad previo. §5.72 dejó este sexto candidato sin resolver; el 2026-11-07 el equipo confirmó los roles de la aplicación (hoy cuatro, corregido el 2026-11-08) y lo **dejó afuera** (`handoff.md` §5.162 d).
 
@@ -628,7 +630,9 @@ lista de IPPU.
 
 **Qué bloquea.** **Nada** — se construye con la decisión del equipo. **Cómo se construye mientras:** no hay rol para ellos; si la respuesta es «destinatario», lo cubre `divulgacion` (§5.71, §5.80) con su guard; si es «rol», se agrega un sexto rol con acceso supervisado en una sesión aparte.
 
-### 1.20 ¿Existe un «perfil del área de Inclusión» y qué ve? — abierto (2026-11-08)
+### 1.20 ¿Existe un «perfil del área de Inclusión» y qué ve? — **cerrado (2026-11-16)**
+
+> **Cerrado por el equipo (`handoff.md` §5.176 d):** no hay perfil de Inclusión; la matriz del Protocolo §5 no lo lista. Ya no se pregunta.
 
 **Qué es.** La demo v4.1 traía un «perfil de área de Inclusión» al lado de coordinación y dirección técnica; no está en la matriz §5 del Protocolo ni en nuestro CHECK de roles (§5.72). IPPU nunca contestó si existe (B5c; §5.101 lo dejó fuera del 26/11); el 2026-11-07 el equipo lo **dejó afuera** de los roles de la aplicación (hoy cuatro, §5.162 d). Recordar que la demo no es norma (§5.92).
 
@@ -730,7 +734,7 @@ protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
 
 **Qué es.** Hoy el modelo exige un nombre de grupo único por año (`UNIQUE(nombre, anio)`, `handoff.md` §5.18).
 
-> *Pregunta para IPPU (2026-11-26): ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?*
+> *Pregunta para IPPU (por escrito, no en la presentación del 2026-11-26; `handoff.md` §5.176 g): ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?*
 
 **Qué bloquea.** **Nada.** **Mientras:** un grupo por nombre y año. (`preguntas-ippu.md` D12 · `handoff.md` §5.173)
 
@@ -738,7 +742,7 @@ protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
 
 **Qué es.** La demo usa una versión del logo derivada del JPEG que tenemos (`handoff.md` §5.169).
 
-> *Pregunta para IPPU (2026-11-26): ¿Nos pueden pasar un archivo oficial del logo (SVG o PNG con transparencia)?*
+> *Pregunta para IPPU (por escrito, no en la presentación del 2026-11-26; `handoff.md` §5.176 g): ¿Nos pueden pasar un archivo oficial del logo (SVG o PNG con transparencia)?*
 
 **Qué bloquea.** **Nada.** **Mientras:** la versión derivada. (`preguntas-ippu.md` D13 · `handoff.md` §5.173)
 
@@ -746,7 +750,7 @@ protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
 
 **Qué es.** No hay forma de «abrir un año nuevo» de grupos (§2.8 de este archivo).
 
-> *Pregunta para IPPU (2026-11-26): ¿Cómo hacen el pase de año: cuándo arman los grupos del año siguiente y cómo reasignan a los NNA?*
+> *Pregunta para IPPU (por escrito, no en la presentación del 2026-11-26; `handoff.md` §5.176 g): ¿Cómo hacen el pase de año: cuándo arman los grupos del año siguiente y cómo reasignan a los NNA?*
 
 **Qué bloquea.** **Nada hoy.** **Mientras:** no hay pantalla; se diseña en A4 con lo que digan. (`preguntas-ippu.md` D14 · `handoff.md` §5.173)
 
@@ -754,7 +758,7 @@ protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
 
 **Qué es.** Ya está en `handoff.md` §7 (auditoría de seguridad, 2026-11-05); se carga también acá. Hoy la API acepta como evaluador a cualquier profesional activo.
 
-> *Pregunta para IPPU (2026-11-26): ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA?*
+> *Pregunta para IPPU (por escrito, no en la presentación del 2026-11-26; `handoff.md` §5.176 g): ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA?*
 
 **Qué bloquea.** **Nada.** **Mientras:** cualquier profesional activo. (`preguntas-ippu.md` D15 · `handoff.md` §5.173)
 

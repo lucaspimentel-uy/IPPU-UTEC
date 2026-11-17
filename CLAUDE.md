@@ -11,6 +11,7 @@
    (`git merge --ff-only`) y se sube a `origin` **y** a `gitlab`, sin `--force`. **Desde el 2026-11-13 hasta el 2026-11-26** el
    trabajo nuevo sale de la rama de integración `hce-post26` y vuelve a ella; llega a `main` **después de la presentación**, y
    `main` sólo recibe arreglos de la presentación (`hce-post26` se rebasa sobre ellos) (§5.162 a).
+   Hasta que `hce-post26` entre en `main` (2026-11-27) se trabaja en su propio clon, con su propio `.venv`.
 3. Nadie tiene módulos exclusivos (§5.6): se avisa qué se toma. En la demo, **archivos distintos** de `demo/js/`;
    `index.html` y `js/utils.js` los tocan todos → coordinar (§12.3).
 4. Al terminar, verificar y escribir **sólo**: entrada de `docs/bitacora.md` (≤ 15 líneas), casilla de §6, un §5 si hubo

@@ -376,12 +376,14 @@ usuario a la aplicación, o se le entrega un conjunto de datos disociado fuera d
 **Por qué importa.** El Protocolo (matriz §5) les da «acceso supervisado»; decide si son un sexto rol o un destinatario del registro de divulgación.
 **Qué bloquea.** Nada: hoy no hay rol para ellos.
 **Dónde aterriza.** `puntos-a-validar.md` §1.19 · `handoff.md` §5.72, §5.162 d.
+> **CERRADA (2026-11-16, equipo; `handoff.md` §5.176 c).** Estudiantes e investigadores no son un rol de la aplicación: son destinatarios por `divulgacion`. Fuente: Protocolo §5 (fila 14) y §6.7, y la respuesta A1 de IPPU del 2026-10-05 (`respuestas-ippu-2026-10-05.txt`). Ya no se pregunta.
 
 ### D2 · ¿Existe un «perfil del área de Inclusión»? ¿Qué ve?
 **Qué se pregunta.** ¿El área de Inclusión tiene personas con acceso propio al sistema? Si es así, ¿qué necesitan ver y qué no?
 **Por qué importa.** Un prototipo lo mostraba, pero ni el Protocolo ni IPPU lo mencionan; no se construye un rol que nadie confirmó.
 **Qué bloquea.** Nada: quien trabaja en Inclusión usa uno de los cuatro roles confirmados.
 **Dónde aterriza.** `puntos-a-validar.md` §1.20 · `handoff.md` §5.72, §5.162 d.
+> **CERRADA (2026-11-16, equipo; `handoff.md` §5.176 d).** No hay perfil de Inclusión: la matriz del Protocolo §5 no lo lista. Ya no se pregunta.
 
 ### D3 · ¿Quién ocupa cada rol en la institución?
 **Qué se pregunta.** ¿Quién es hoy dirección técnica-clínica o coordinación, quién es personal administrativo vinculado a la atención y
@@ -445,7 +447,7 @@ la severidad, la ficha de inclusión)?
 **Qué bloquea.** Nada: se construye con el Panel institucional y el indicador de ateneos.
 **Dónde aterriza.** `puntos-a-validar.md` §1.29 · `handoff.md` §5.164 (F4-7).
 
-> **D12–D15 (2026-11-15, NUEVAS, para la reunión del 2026-11-26; `handoff.md` §5.173).** Ninguna bloquea. **Aterrizan en:** `puntos-a-validar.md` §1.30–§1.33.
+> **D12–D15 (2026-11-15, NUEVAS, por escrito; `handoff.md` §5.173, §5.176 g).** No se plantean en la presentación del 2026-11-26: van por escrito (https://claude.ai/artifact/KETWCLQnrGDRYmFeJUmdMH) y en una visita al instituto. Ninguna bloquea. **Aterrizan en:** `puntos-a-validar.md` §1.30–§1.33.
 
 ### D12 · ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?
 **Qué se pregunta.** ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?
@@ -490,7 +492,7 @@ la severidad, la ficha de inclusión)?
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 | Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 11 nuevas del 2026-11-08** (D1–D11, serie D, sin preguntar; D6–D11 del diseño de la Fase 4) **y 4 del 2026-11-15** (D12–D15, para el 2026-11-26, `handoff.md` §5.173). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 11 nuevas del 2026-11-08** (D1–D11, serie D, sin preguntar; D6–D11 del diseño de la Fase 4) **y 4 del 2026-11-15** (D12–D15, por escrito y en una visita al instituto, no en la presentación del 2026-11-26; `handoff.md` §5.173, §5.176 g). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 
