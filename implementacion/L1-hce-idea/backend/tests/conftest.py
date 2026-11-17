@@ -443,6 +443,10 @@ def crear_grupo(db_api):
     return _crear
 
 
+#: Piso, no cifra exacta: la app tiene 95 rutas (2026-11-16); una ruta más o menos no debe romper esto.
+RUTAS_MINIMAS = 60
+
+
 def rutas_api():
     """Cada ruta real de la app (un `RouteContext`: `.path` completo, `.methods`, `.endpoint`), sin las de Starlette
     (`/docs`, `/openapi.json`).
@@ -454,4 +458,11 @@ def rutas_api():
 
     from app.main import app
 
-    return [c for c in iter_route_contexts(app.routes) if isinstance(c.original_route, APIRoute)]
+    rutas = [c for c in iter_route_contexts(app.routes) if isinstance(c.original_route, APIRoute)]
+    if len(rutas) < RUTAS_MINIMAS:
+        raise AssertionError(
+            f"rutas_api() encontró {len(rutas)} rutas (la app tiene más de {RUTAS_MINIMAS}): cambió la forma de recorrer "
+            f"las rutas de FastAPI (`app.routes` / `iter_route_contexts`). Un barrido sobre 0 rutas pasaría en vacío: "
+            f"ajustar esta función (§5.177 f)."
+        )
+    return rutas

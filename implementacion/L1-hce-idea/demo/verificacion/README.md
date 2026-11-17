@@ -37,8 +37,8 @@ npm ci                          # instala lo del lockfile
 npx playwright install chromium # una vez por máquina y por versión de Playwright
 ```
 
-`conectada.js` lee el PDF del informe de cierre con el `python` que haya en el PATH: necesita `pypdf`
-(`pip install pypdf`). No instalar con `npm install playwright --no-save`: trae la última y rompe el pin.
+`conectada.js` lee el PDF del informe de cierre con el `python` que haya en el PATH: necesita `pypdf`, que ya viene en
+`backend/requirements.txt` (§5.177 e). No instalar con `npm install playwright --no-save`: trae la última y rompe el pin.
 
 ## Base descartable
 
