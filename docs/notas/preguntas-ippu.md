@@ -445,6 +445,32 @@ la severidad, la ficha de inclusión)?
 **Qué bloquea.** Nada: se construye con el Panel institucional y el indicador de ateneos.
 **Dónde aterriza.** `puntos-a-validar.md` §1.29 · `handoff.md` §5.164 (F4-7).
 
+> **D12–D15 (2026-11-15, NUEVAS, para la reunión del 2026-11-26; `handoff.md` §5.173).** Ninguna bloquea. **Aterrizan en:** `puntos-a-validar.md` §1.30–§1.33.
+
+### D12 · ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?
+**Qué se pregunta.** ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?
+**Por qué importa.** Hoy el modelo exige nombre único por año (`UNIQUE(nombre, anio)`, `handoff.md` §5.18).
+**Mientras.** Un grupo por nombre y año.
+**Dónde aterriza.** `puntos-a-validar.md` §1.30.
+
+### D13 · ¿Nos pueden pasar un archivo oficial del logo (SVG o PNG con transparencia)?
+**Qué se pregunta.** ¿Nos pueden pasar un archivo oficial del logo (SVG o PNG con transparencia)?
+**Por qué importa.** La demo usa una versión derivada (`handoff.md` §5.169).
+**Mientras.** La versión derivada.
+**Dónde aterriza.** `puntos-a-validar.md` §1.31.
+
+### D14 · ¿Cómo hacen el pase de año: cuándo arman los grupos del año siguiente y cómo reasignan a los NNA?
+**Qué se pregunta.** ¿Cómo hacen el pase de año: cuándo arman los grupos del año siguiente y cómo reasignan a los NNA?
+**Por qué importa.** Se relaciona con `puntos-a-validar.md` §2.8 (no hay forma de abrir un año nuevo de grupos).
+**Mientras.** No hay pantalla; se diseña en A4 con lo que digan.
+**Dónde aterriza.** `puntos-a-validar.md` §1.32 y §2.8.
+
+### D15 · ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA?
+**Qué se pregunta.** ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA?
+**Por qué importa.** Ya está en `handoff.md` §7; se carga también acá. Hoy la API acepta a cualquier profesional activo.
+**Mientras.** Cualquier profesional activo.
+**Dónde aterriza.** `puntos-a-validar.md` §1.33 · `handoff.md` §7.
+
 ---
 
 ## Apéndice — conteo por fuente y solapamientos
@@ -464,7 +490,7 @@ la severidad, la ficha de inclusión)?
 | Nuevas en M12.8a-3 (al construir `divulgacion`, `handoff.md` §5.80) | **2** | anonimizado individual vs. estadística agregada en el log (B11) · copia de la HC a la familia = ¿divulgación o acceso? Ley 18.335 Art. 18 lit. A (B12) |
 | Nueva en M12.8b-2 (sincronización de prosa, `handoff.md` §9/§1) | **1** | población total: ~120 vs. 138 (30 INAU + 108 BPS) (C11) |
 
-**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 11 nuevas del 2026-11-08** (D1–D11, serie D, sin preguntar; D6–D11 del diseño de la Fase 4). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
+**Total de preguntas distintas tras deduplicar: 28** (A1–A5, B1–B12, C1–C11); **más 11 nuevas del 2026-11-08** (D1–D11, serie D, sin preguntar; D6–D11 del diseño de la Fase 4) **y 4 del 2026-11-15** (D12–D15, para el 2026-11-26, `handoff.md` §5.173). *(La fila «Nuevas / afiladas en L9» dejó de contar A5: respondida el 2026-10-05, `handoff.md` §5.107.)*
 
 **Preguntas que aparecen en dos fuentes con redacción distinta:**
 

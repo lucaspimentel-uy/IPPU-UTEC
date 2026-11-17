@@ -39,7 +39,7 @@
   Con que servidor se sirve la demo (§5.167 f, MEDICION; la presentacion usa el valor por omision):
     http.server  `python -m http.server` (HTTP/1.0, cola de 5 conexiones). El de antes de §5.167 g.
     http11       `python -m http.server --protocol HTTP/1.1`.
-    cola128      herramientas\servidor_demo.py: lo mismo que http.server pero con la cola en 128. Por omision (§5.167 g).
+    cola128      herramientas\servidor_demo.py: cola de 128 y sin cache del navegador. Por omision (§5.167 g).
 .PARAMETER Detener
   Detiene la API y la demo que arranco este script (no toca la base) y termina. Informa los puertos que realmente
   detuvo (los de la corrida que los arranco, no los de -PuertoApi / -PuertoDemo de esta llamada).
@@ -102,14 +102,24 @@ function Leer-Estado {
   try { return Get-Content $Estado -Raw | ConvertFrom-Json } catch { return $null }
 }
 
-# Detiene (con sus hijos) un proceso que arranco este script: solo si el PID sigue siendo el mismo proceso.
+# Detiene (con sus hijos) un proceso que arranco este script: solo si el PID sigue siendo el mismo proceso. Un PID que
+# existe pero cuyo inicio no se puede leer (un proceso protegido de Windows al que el sistema reasigno el PID de un registro
+# viejo: StartTime vuelve $null) o no coincide NO es nuestro: se deja en paz y se avisa; nunca se baja (§5.170). Un PID que
+# ya no existe sigue siendo silencioso.
 function Detener-Propio($Registro, [string]$Nombre) {
   if (-not $Registro) { return }
-  $p = Get-Process -Id $Registro.pid -ErrorAction SilentlyContinue
-  if ($p -and $p.StartTime.ToString('o') -eq $Registro.inicio) {
-    Nativo { taskkill /PID $Registro.pid /T /F | Out-Null }
+  $idRegistro = 0
+  if (-not [int]::TryParse("$($Registro.pid)", [ref]$idRegistro)) { return }
+  $p = Get-Process -Id $idRegistro -ErrorAction SilentlyContinue
+  if (-not $p) { return }
+  $inicio = $null
+  try { $inicio = $p.StartTime } catch { }
+  if ($inicio -and $inicio.ToString('o') -eq $Registro.inicio) {
+    Nativo { taskkill /PID $idRegistro /T /F | Out-Null }
     $donde = if ($Registro.puerto) { ", puerto $($Registro.puerto)" } else { '' }
-    Write-Host "  detenido: $Nombre (PID $($Registro.pid)$donde)"
+    Write-Host "  detenido: $Nombre (PID $idRegistro$donde)"
+  } else {
+    Write-Host "  $Nombre`: el PID $idRegistro ya no es nuestro ($($p.ProcessName), inicio no verificable o distinto del registrado): lo dejo en paz"
   }
 }
 

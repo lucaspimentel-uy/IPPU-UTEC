@@ -5,7 +5,8 @@
  *   (2) el listado muestra los 7 activos del seed (Tomás, dado de baja, no);
  *   (3) Martín: LB 58 con su banda, PA 60, PB 79 y Δ +19 (+4/+6/+4/+5), cada cifra tal como la devuelve la API
  *       (la pantalla debe mostrar lo mismo que el GET correspondiente);
- *   (4) su informe de cierre impreso abre.
+ *   (4) su informe de cierre impreso abre;
+ *   (5) la demo se sirve con `Cache-Control: no-store` (index.html, js/utils.js, css/estilos.css; §5.172).
  *
  * Termina con código 0 y UNA línea que empieza con «OK», o con código 1 y UNA línea «FALLA …» que nombra el primer
  * problema. No arregla nada: si falla, se vuelve a correr herramientas\preparar_presentacion.ps1.
@@ -78,8 +79,18 @@ async function main() {
   paso = 'API y demo arriba';
   for (const [nombre, url] of [['la API', API + '/health'], ['la demo', DEMO + '/index.html']]) {
     let r;
-    try { r = await fetch(url); } catch (e) { fallar(`no responde ${nombre} en ${url} (${e.message}); ¿corrió preparar_presentacion.ps1?`); }
+    try { r = await fetch(url); await r.arrayBuffer(); } catch (e) { fallar(`no responde ${nombre} en ${url} (${e.message}); ¿corrió preparar_presentacion.ps1?`); }
     if (!r.ok) fallar(`${nombre} respondió ${r.status} en ${url}`);
+  }
+  /* §5.172: la demo se sirve sin caché del navegador (servidor_demo.py manda `Cache-Control: no-store`). Sólo GET. */
+  paso = 'la demo se sirve sin caché';
+  for (const archivo of ['/index.html', '/js/utils.js', '/css/estilos.css']) {
+    const r = await fetch(DEMO + archivo);
+    await r.arrayBuffer();
+    const cc = r.headers.get('cache-control') || '';
+    if (r.status !== 200 || !/no-store/i.test(cc)) {
+      fallar(`${archivo} respondió ${r.status} con Cache-Control «${cc || 'ausente'}»: la demo no se está sirviendo con herramientas\\servidor_demo.py con la caché apagada (no-store); el navegador puede mostrar archivos viejos (§5.172)`);
+    }
   }
 
   const browser = await chromium.launch();
@@ -203,8 +214,11 @@ async function main() {
   }
 }
 
-main().then(() => process.exit(0)).catch((e) => {
+/* Salir con un respiro: con `process.exit(1)` directo y sockets keep-alive de fetch abiertos (la API), node en Windows aborta con una
+ * assertion de libuv (código -1073740791) en vez de salir con 1 (§5.172). */
+const salir = (codigo) => { process.exitCode = codigo; setTimeout(() => process.exit(codigo), 100); };
+main().then(() => salir(0)).catch((e) => {
   const detalle = abortados.length ? ` (escrituras frenadas: ${abortados.join(' · ')})` : '';
   console.error(e instanceof Falla ? `FALLA ${e.message}${detalle}` : `FALLA en «${paso}»: ${norm(e.message).slice(0, 200)}${detalle}`);
-  process.exit(1);
+  salir(1);
 });

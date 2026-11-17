@@ -11,11 +11,11 @@
    boundary) y apiBlob() descarga un archivo con el token, como Blob (nunca un enlace directo sin token). */
 
 /* ---------- URL base: UN solo lugar (auditoria de seguridad M2, handoff §5.157 b) ----------
-   Por omision http://localhost:8000. Se puede cambiar con ?api=<url> en la URL de la pagina (p. ej. la verificacion,
+   Por omision http://127.0.0.1:8000 (§5.166: siempre 127.0.0.1; con la URL de la presentacion, ?api=http://127.0.0.1:8000, el login no muestra aviso). Se puede cambiar con ?api=<url> en la URL de la pagina (p. ej. la verificacion,
    contra una API en :8001), pero SOLO hacia esta maquina: el host tiene que ser localhost o 127.0.0.1 (cualquier
    puerto). Cualquier otro host se ignora y se usa el de omision: un enlace con ?api= ajeno no puede llevarse el token
    ni la proxima contrasena. Cuando la API no es la de omision, el login lo dice en una linea (#loginApi). */
-const API_BASE_POR_DEFECTO = "http://localhost:8000";
+const API_BASE_POR_DEFECTO = "http://127.0.0.1:8000";
 const API_HOSTS_PERMITIDOS = ["localhost", "127.0.0.1"];
 const API_BASE = (function(){
   try{

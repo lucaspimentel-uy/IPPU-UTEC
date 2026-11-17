@@ -834,10 +834,19 @@ function buscarContornosApagados() {
   await ev(() => { document.body.setAttribute('tabindex', '-1'); document.body.focus(); document.body.removeAttribute('tabindex'); });
   await page.keyboard.press('Tab'); await esperar(150);
   await cap('Enlace «Saltar al contenido» (enfocado)');
-  anillos.push(await medirAnilloTeclado(page, 'a.skip-link', 'enlace (salto al contenido, sobre la barra oscura)'));
+  anillos.push(await medirAnilloTeclado(page, 'a.skip-link', 'enlace (salto al contenido, sobre la barra lateral oscura)'));
   anillos.push(await medirAnilloTeclado(page, '.navitem[data-view="analitica"]', 'ítem de la barra lateral'));
   anillos.push(await medirAnilloTeclado(page, '.userchip', 'perfil (barra superior)'));
   anillos.push(await medirAnilloTeclado(page, '.btn-exit', 'botón «Salir» (barra superior)'));
+  /* L2 (§5.173 h): la barra superior clara en sus estados —reposo (con la ubicación), puntero sobre el perfil, puntero sobre «Salir»—; el foco de los dos lo miden los anillos de arriba. */
+  await ev(() => { if (document.activeElement) document.activeElement.blur(); });
+  await page.mouse.move(5, 500); await esperar(200);
+  await cap('Barra superior · reposo (ubicación, perfil, «Salir»)');
+  await page.hover('.userchip'); await esperar(250);
+  await cap('Barra superior · puntero sobre el perfil');
+  await page.hover('.btn-exit'); await esperar(250);
+  await cap('Barra superior · puntero sobre «Salir»');
+  await page.mouse.move(5, 500); await esperar(150);
   anillos.push(await medirAnilloTeclado(page, '#searchNNA', 'campo de búsqueda'));
   anillos.push(await medirAnilloTeclado(page, '#filtroGrupo', 'lista desplegable (filtro de grupo)'));
   anillos.push(await medirAnilloTeclado(page, '.chip-estado', 'botón de filtro (chip)'));
@@ -846,7 +855,7 @@ function buscarContornosApagados() {
   await abrirPorNombre('Martín', 'lb');
   anillos.push(await medirAnilloTeclado(page, '.exp-tab[aria-selected="true"]', 'pestaña'));
   anillos.push(await medirAnilloTeclado(page, '#expHead .banda-editar', 'botón de la banda del paciente'));
-  anillos.push(await medirAnilloTeclado(page, '#btnAyudaFlujo', 'botón de ayuda del ciclo anual («?»)'));
+  anillos.push(await medirAnilloTeclado(page, '#btnAyuda_flujo', 'botón «Estados del ciclo» (chevron)'));
   anillos.push(await medirAnilloTeclado(page, '#ev_add_texto', 'área de texto (addenda)'));
 
   // ---------------------------------------------------------------- GRUPOS COMO ADMIN: «Asignar técnicos» y su diálogo, SIN guardar

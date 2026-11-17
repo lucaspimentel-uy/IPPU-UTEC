@@ -726,6 +726,38 @@ protocolo ocultas cuando hay menos de 5 NNA, y el indicador de ateneos.
 
 **Qué bloquea.** **Nada.** **Mientras:** el Panel con esa supresión y el indicador de ateneos.
 
+### 1.30 ¿Puede haber más de un grupo del mismo tipo en un año? — abierto (2026-11-15)
+
+**Qué es.** Hoy el modelo exige un nombre de grupo único por año (`UNIQUE(nombre, anio)`, `handoff.md` §5.18).
+
+> *Pregunta para IPPU (2026-11-26): ¿En un mismo año puede haber más de un grupo del mismo tipo? ¿Cómo los nombran?*
+
+**Qué bloquea.** **Nada.** **Mientras:** un grupo por nombre y año. (`preguntas-ippu.md` D12 · `handoff.md` §5.173)
+
+### 1.31 El archivo oficial del logo — abierto (2026-11-15)
+
+**Qué es.** La demo usa una versión del logo derivada del JPEG que tenemos (`handoff.md` §5.169).
+
+> *Pregunta para IPPU (2026-11-26): ¿Nos pueden pasar un archivo oficial del logo (SVG o PNG con transparencia)?*
+
+**Qué bloquea.** **Nada.** **Mientras:** la versión derivada. (`preguntas-ippu.md` D13 · `handoff.md` §5.173)
+
+### 1.32 El pase de año: cuándo se arman los grupos y cómo se reasigna a los NNA — abierto (2026-11-15)
+
+**Qué es.** No hay forma de «abrir un año nuevo» de grupos (§2.8 de este archivo).
+
+> *Pregunta para IPPU (2026-11-26): ¿Cómo hacen el pase de año: cuándo arman los grupos del año siguiente y cómo reasignan a los NNA?*
+
+**Qué bloquea.** **Nada hoy.** **Mientras:** no hay pantalla; se diseña en A4 con lo que digan. (`preguntas-ippu.md` D14 · `handoff.md` §5.173)
+
+### 1.33 ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA? — abierto (2026-11-15)
+
+**Qué es.** Ya está en `handoff.md` §7 (auditoría de seguridad, 2026-11-05); se carga también acá. Hoy la API acepta como evaluador a cualquier profesional activo.
+
+> *Pregunta para IPPU (2026-11-26): ¿Los evaluadores del IDEA, PA y PB tienen que ser técnicos del grupo del NNA?*
+
+**Qué bloquea.** **Nada.** **Mientras:** cualquier profesional activo. (`preguntas-ippu.md` D15 · `handoff.md` §5.173)
+
 ---
 
 ## 2. Para el equipo (grupo + Matías)

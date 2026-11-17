@@ -181,8 +181,9 @@ function logPaginadoHtml(){
   </nav>`;
 }
 function logPanelHtml(){
-  const cab = `<div class="mod-cab"><h2 id="logTitulo" tabindex="-1">LOG · Auditoría</h2></div>`;
-  const nota = `<p class="hint log-nota">Registra cambios, no accesos. Es de solo lectura: nada de lo que se ve acá se puede modificar.</p>`;
+  /* La nota que ya tenía la pestaña (a la vista, dentro de la tarjeta), sin cambios, ahora detrás del chevron junto al título (L1, §5.171). */
+  const cab = cabConAyudaHtml(`<div class="mod-cab"><h2 id="logTitulo" tabindex="-1">LOG · Auditoría</h2></div>`, "desc_log", "LOG · Auditoría",
+    `<p class="log-nota">Registra cambios, no accesos. Es de solo lectura: nada de lo que se ve acá se puede modificar.</p>`);
   let cuerpo;
   if(LOG.hceId !== EXP.id || LOG.estado === "cargando") cuerpo = estadoCargandoHtml("Cargando el registro de cambios…");
   else if(LOG.estado === "error") cuerpo = estadoErrorHtml(LOG.noEncontrado ? "No se encontró el expediente." : LOG.error, LOG.noEncontrado ? "" : "logReintentar()");
@@ -195,5 +196,5 @@ function logPanelHtml(){
       : estadoVacioHtml("☰", filtrado ? "No hay cambios que coincidan con los filtros." : "Este expediente todavía no tiene cambios registrados.");
     cuerpo = `${logFiltrosHtml()}${lista}`;
   }
-  return `${cab}<div class="info-card"><div class="ib">${nota}${cuerpo}</div></div>`;
+  return `${cab}<div class="info-card"><div class="ib">${cuerpo}</div></div>`;
 }
