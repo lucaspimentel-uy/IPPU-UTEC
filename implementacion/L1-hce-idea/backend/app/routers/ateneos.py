@@ -21,7 +21,9 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.identidad import Profesional
-from app.routers.dependencias import permitido, sesion_lectura, SesionTransaccional, usuario_actual
+from app.routers.dependencias import (
+    RegistroPropio, SesionTransaccional, abrir_ateneo_clinico, permitido, sesion_lectura, usuario_actual,
+)
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.ateneos import (
@@ -36,12 +38,15 @@ from app.services.hce import LIMITE_MAXIMO, LIMITE_POR_OMISION
 
 
 def ateneo_visible(
-    ateneo_id: int, request: Request, usuario: Annotated[Profesional, Depends(usuario_actual)], db: Session = Depends(get_db),
+    ateneo_id: int, request: Request, usuario: Annotated[Profesional, Depends(usuario_actual)], registro_: RegistroPropio,
+    db: Session = Depends(get_db),
 ) -> None:
     """La matriz de un ateneo (`ateneo.leer` en un GET, `ateneo.escribir` en otro método): 403 para los roles sin ateneos
     (exista o no), **404** si no existe o es un clínico que el usuario no puede abrir (el mismo mensaje), 403 si lo lee
-    con su ventana pero no lo puede escribir. Corre antes de leer el cuerpo o el formulario de la ruta."""
-    servicio.exigir_visible(db, usuario, ateneo_id, escribir=request.method not in ("GET", "HEAD"))
+    con su ventana pero no lo puede escribir. Corre antes de leer el cuerpo o el formulario de la ruta. Si el ateneo es
+    clínico y quien lo abre no trata el expediente referido, deja la fila del registro de accesos (A2, §5.178 c)."""
+    hce_referida_id = servicio.exigir_visible(db, usuario, ateneo_id, escribir=request.method not in ("GET", "HEAD"))
+    abrir_ateneo_clinico(db, usuario, ateneo_id, hce_referida_id, registro_)
 
 
 router = APIRouter(prefix="/ateneos", tags=["ateneos"])

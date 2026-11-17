@@ -18,10 +18,12 @@ Organización (espeja `backend/docs/esquema-datos-v2.md` §2):
                       terceros. Append-only por postura; sin seed
   transversales §2.3  DOC · ORG · VF · LOG + seguimiento
   acceso        Fase 4 (A1) — el registro de accesos a la HC (`acceso_hce`), con su
-                ventana (`docs/diseno/fase4-acceso.md` d)
+                ventana (`docs/diseno/fase4-acceso.md` d); A2: los intentos por C.I.
+                (`acceso_intento`, §5.178 e)
 """
 from app.models.acceso import (
     AccesoHce,
+    AccesoIntento,
 )
 from app.models.ateneo import (
     Ateneo,
@@ -94,8 +96,8 @@ from app.models.transversales import (
 )
 
 __all__ = [
-    # registro de accesos (Fase 4, A1)
-    "AccesoHce",
+    # registro de accesos (Fase 4, A1) y de intentos (A2)
+    "AccesoHce", "AccesoIntento",
     # ateneos y jornadas (M12.7)
     "Ateneo", "AteneoAcuerdo",
     # HCE-DIV · divulgación (M12.8a)

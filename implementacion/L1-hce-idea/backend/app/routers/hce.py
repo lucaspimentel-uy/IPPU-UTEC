@@ -10,9 +10,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
+from app.core.constantes import INTENTO_CONSULTA_CI, INTENTO_ENCONTRADO, INTENTO_NO_ENCONTRADO
 from app.models.identidad import Profesional
 from app.routers.dependencias import (
-    hce_identificacion, hce_visible, permitido, sesion_lectura, SesionTransaccional, usuario_actual,
+    RegistroPropio, hce_identificacion, hce_visible, permitido, sesion_lectura, SesionTransaccional, usuario_actual,
 )
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.hce import (
@@ -21,8 +22,8 @@ from app.schemas.hce import (
 )
 from app.services import flujo as servicio_flujo
 from app.services import hce as servicio
-from app.services import matriz
-from app.services.errores import ConflictError, DuplicadoError, ValidationFailed
+from app.services import matriz, registro_accesos
+from app.services.errores import ConflictError, DuplicadoError, NotFound, ValidationFailed
 
 router = APIRouter(prefix="/hce", tags=["hce"])
 
@@ -191,17 +192,29 @@ def buscar(
     },
 )
 def consultar(datos: ConsultaCi, db: Annotated[Session, Depends(sesion_lectura)], usuario: _USUARIO,
-              _condicion: Annotated[str | None, Depends(permitido("hce.consulta"))]):
+              _condicion: Annotated[str | None, Depends(permitido("hce.consulta"))], registro_: RegistroPropio):
     """**Coincidencia exacta** de la C.I. canónica (§5.110), activo o no: la fila mínima —id, N.º de HC, nombre, apellido,
     grupo y la relación de quien consulta (`tratante` | `no_tratante`)—, sin fecha de nacimiento, flujo ni nada clínico.
-    Por **cuerpo** y no por URL, para no dejar C.I. en el log de accesos del servidor (B8). No escribe (F4-8): abrir el
-    expediente es `GET /hce/{id}`, con el motivo si hace falta."""
-    hce = servicio.consultar_por_ci(db, datos.ci)
-    return Resultado(data=ConsultaFila(
+    Por **cuerpo** y no por URL, para no dejar C.I. en el log de accesos del servidor (B8). No abre el expediente ni
+    escribe en él (F4-8): abrirlo es `GET /hce/{id}`, con el motivo si hace falta.
+
+    **Cada consulta que se ejecuta deja un intento** (`acceso_intento`, §5.178 e: quién, cuándo, si encontró y qué
+    expediente; **nunca la C.I.**), que coordinación lee en `GET /accesos/intentos`. Un 422 (sin C.I.) o un 403 no
+    consultan nada y no dejan fila."""
+    quien = registro_accesos.Quien.de(usuario)
+    try:
+        hce = servicio.consultar_por_ci(db, datos.ci)
+    except NotFound:
+        registro_.escribir(registro_accesos.registrar_intento, quien, INTENTO_CONSULTA_CI, INTENTO_NO_ENCONTRADO, None)
+        raise
+    # La respuesta se arma **antes** de registrar: registrar suelta la transacción del pedido y expira sus objetos.
+    respuesta = Resultado(data=ConsultaFila(
         id=hce.id, hc_historico=hce.hc_historico, nombre=hce.persona.nombre, apellido=hce.persona.apellido,
         grupo=GrupoResumen.model_validate(hce.grupo) if hce.grupo is not None else None,
         relacion=matriz.TRATANTE if matriz.relacion(usuario, hce) == matriz.TRATANTE else matriz.NO_TRATANTE,
     ))
+    registro_.escribir(registro_accesos.registrar_intento, quien, INTENTO_CONSULTA_CI, INTENTO_ENCONTRADO, respuesta.data.id)
+    return respuesta
 
 
 @router.get(

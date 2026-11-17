@@ -26,14 +26,21 @@ permitida (`403:forbidden`) → (6) lo de siempre (422, 409…). Un 403 lleva s�
   (F4-9, F4-12; A1c, §5.174). La de otro usuario o de otro expediente no cuenta; la de gestión, la del tratante o la copia
   a la familia no abren nada, ni la que abrió el rol anterior si el rol cambió.
 
+## Qué deja en el registro de accesos (A2, §5.178)
+
+La matriz decide también **qué fila automática** deja un pedido que ya pasó (`registro_al_abrir`, `registro_por_ateneo`):
+`tratante` a quien trata el expediente, `gestion` a quien entra sin tratarlo y sin ventana (coordinación o administrativo
+en la identificación u ORG), nada a quien entra por su ventana (su fila es la del `POST /hce/{id}/accesos`). Escribirla es
+de `app/services/registro_accesos.py`; el único lugar que junta las dos cosas es `app/routers/dependencias.py`.
+
 El servicio no importa FastAPI (regla de `app/services/__init__.py`).
 """
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    ACCESO_NO_TRATANTE, ACCESO_RELACIONES_VENTANA, ACCESO_SUPERVISION, ROL_ADMINISTRATIVO, ROL_COORDINACION, ROL_TECNICO,
-    ROLES_ASIGNABLES,
+    ACCESO_GESTION, ACCESO_NO_TRATANTE, ACCESO_RELACIONES_VENTANA, ACCESO_SUPERVISION, ACCESO_TRATANTE, ROL_ADMINISTRATIVO,
+    ROL_COORDINACION, ROL_TECNICO, ROLES_ASIGNABLES,
 )
 from app.models.acceso import AccesoHce
 from app.models.identidad import Grupo, HceDiurna, Profesional
@@ -112,6 +119,10 @@ MATRIZ: dict[str, dict[str, str]] = {
     "grupos.lista": _fila(*(_MIS,) * 3, PERMITIR, PERMITIR, PERMITIR, PROHIBIDO),
     "grupos.editar": _fila(PROHIBIDO, PROHIBIDO, PROHIBIDO, PERMITIR, PERMITIR, PROHIBIDO, PROHIBIDO),
     "profesionales.lista": _fila(*("permitir@asignables",) * 3, PERMITIR, PERMITIR, PROHIBIDO, PROHIBIDO),
+    #: Los lectores del registro (`GET /hce/{id}/accesos`, `GET /accesos`, `GET /accesos/intentos`; F4-10, §5.178 d, e):
+    #: **sólo coordinación, sin motivo**. Se decide **por rol, nunca por relación** (`exigir_rol`): la columna `tratante`
+    #: es la del técnico; una coordinación asignada al grupo lo lee como coordinación.
+    "accesos.leer": _fila(PROHIBIDO, PROHIBIDO, PROHIBIDO, PERMITIR, PERMITIR, PROHIBIDO, PROHIBIDO),
     #: Auth, los seis catálogos de referencia (F4-19) y `GET /accesos/motivos`: todo usuario con sesión.
     "catalogo": _igual(PERMITIR),
 }
@@ -229,6 +240,43 @@ def _necesita_ventana(usuario: Profesional, accion: str, rel: str | None) -> boo
     """Consultar la ventana sólo cuando cambia la respuesta (evita una consulta en cada pedido del tratante o de un rol
     para el que la ventana no existe)."""
     return celda(usuario, accion, relacion_=rel, ventana=False) != celda(usuario, accion, relacion_=rel, ventana=True)
+
+
+# ── Qué deja en el registro de accesos (A2, §5.178) ──────────────────────────
+#: Las acciones que **abren** un expediente: un pedido permitido de una de ellas deja la fila automática. `accesos.abrir`
+#: no está (ese POST escribe su propia fila, con motivo) ni `accesos.leer` (el registro no es la HC).
+ACCIONES_QUE_ABREN: frozenset[str] = frozenset({
+    "hce.leer", "hce.escribir", "hce.reservado", "org.leer", "org.escribir", "identificacion.leer",
+    "identificacion.escribir",
+})
+
+
+def registro_al_abrir(usuario: Profesional, accion: str, hce: HceDiurna) -> str | None:
+    """La `relacion` de la fila automática que deja un pedido **que la matriz ya permitió** sobre `hce`, o `None`:
+
+    - `tratante`: quien trata el expediente —técnico o coordinación asignada al grupo (su fila lleva `rol`
+      `coordinacion`)—, en cualquier ruta suya;
+    - `gestion`: quien no lo trata y **entra sin ventana** (la celda de su rol es `permitir` igual): coordinación o
+      administrativo en la identificación, administrativo en ORG;
+    - `None`: quien entró por su ventana (la fila es la de su `POST /hce/{id}/accesos`) y las acciones que no abren."""
+    if accion not in ACCIONES_QUE_ABREN:
+        return None
+    rel = relacion(usuario, hce)
+    if rel == TRATANTE:
+        return ACCESO_TRATANTE
+    if resolver(celda(usuario, accion, relacion_=rel, ventana=False))[0] == PERMITIR:
+        return ACCESO_GESTION
+    return None
+
+
+def registro_por_ateneo(db: Session, usuario: Profesional, hce_referida_id: int | None) -> str | None:
+    """La `relacion` de la fila que deja **abrir un ateneo clínico sin tratar el expediente referido** (sección d): la
+    de la ventana de su rol (`supervision` a coordinación, `no_tratante` al técnico que llegó con su ventana), o `None`
+    si lo trata (o si el ateneo no refiere un expediente). No mira si puede abrirlo: eso lo decidió `exigir_ateneo`."""
+    hce = db.get(HceDiurna, hce_referida_id) if hce_referida_id is not None else None
+    if hce is None or relacion(usuario, hce) != NO_TRATANTE:
+        return None
+    return RELACION_DE_VENTANA.get(usuario.rol)
 
 
 # ── Fotos grupales ───────────────────────────────────────────────────────────

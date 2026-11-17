@@ -793,6 +793,28 @@ ACCESO_RELACIONES: tuple[str, ...] = (ACCESO_TRATANTE, ACCESO_NO_TRATANTE, ACCES
 ACCESO_RELACIONES_VENTANA: tuple[str, ...] = (ACCESO_NO_TRATANTE, ACCESO_SUPERVISION)
 #: La ventana de acceso (F4-9): 120 minutos desde el pedido que la abre (decisión de diseño, constante).
 VENTANA_ACCESO_MINUTOS = 120
+#: El motivo de la fila que deja abrir un ateneo clínico sin tratar el expediente referido (A2, §5.178 c).
+MOTIVO_ATENEO = "ateneo"
+#: El motivo **fijo** de las filas automáticas (A2, §5.176 e, §5.178 b): es un **rótulo que pone el servidor al leer**
+#: (`motivo_label`), no un valor guardado — `motivo_codigo` sigue en NULL y el CHECK no cambia. El Protocolo §8 pide un
+#: motivo en cada registro: el del tratante es la atención directa; el de gestión, lo identificatorio y lo logístico.
+MOTIVO_LABEL_DE_RELACION: dict[str, str] = {
+    ACCESO_TRATANTE: "Atención directa (tratante)",
+    ACCESO_GESTION: "Gestión (identificación y organismos)",
+}
+#: Claves de los candados de transacción del registro automático (`pg_advisory_xact_lock(clave, hash)`, A2, §5.178 a, c):
+#: el del expediente (hash de usuario y expediente) y el del ateneo clínico (hash de usuario y ateneo). «AC» y «AD».
+ACCESO_CANDADO_EXPEDIENTE = 0x4143
+ACCESO_CANDADO_ATENEO = 0x4144
+#: `acceso_intento` (A2, §5.178 e): cada consulta por C.I. y cada `POST /hce/{id}/accesos` rechazado porque la C.I. no
+#: es la del expediente. Los CHECK de `tipo` y `resultado` se generan de acá. **La C.I. escrita no se guarda.**
+INTENTO_CONSULTA_CI = "consulta_ci"
+INTENTO_CI_ERRADA = "ci_errada"
+INTENTO_TIPOS: tuple[str, ...] = (INTENTO_CONSULTA_CI, INTENTO_CI_ERRADA)
+INTENTO_ENCONTRADO = "encontrado"
+INTENTO_NO_ENCONTRADO = "no_encontrado"
+INTENTO_RECHAZADO = "rechazado"
+INTENTO_RESULTADOS: tuple[str, ...] = (INTENTO_ENCONTRADO, INTENTO_NO_ENCONTRADO, INTENTO_RECHAZADO)
 #: Dirección no técnica no ve una media del protocolo de menos de 5 NNA (F4-7; Protocolo §6.6).
 UMBRAL_CELDA_CHICA = 5
 

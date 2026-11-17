@@ -23,22 +23,26 @@ el mismo 422, y la única manera de confirmar una C.I. es abrir una ventana, que
 NUL (lo rechaza la dependencia `sin_caracter_nulo`, §5.163 a); los caracteres Cf y Cc se quitan **salvo** salto de línea,
 retorno y tabulación, con el aviso de §5.163 b.
 
-Lo que sigue en A2 (no acá): el registro automático del tratante, de la gestión y del ateneo clínico; los lectores del
-registro (`GET /hce/{id}/accesos`, `GET /accesos`).
+**A2 (§5.178).** El registro automático del tratante, de la gestión y del ateneo clínico y los intentos por C.I. se
+escriben en `app/services/registro_accesos.py`. Acá, además de `abrir`, están **los lectores** (`listar`,
+`listar_intentos`: sólo coordinación, sin motivo; quién, cuándo y por qué, **sin contenido clínico**) y `vista`, que pone
+`motivo_label` en toda fila que sale: el rótulo del catálogo o, en una fila automática, el motivo fijo de su relación
+(«Atención directa (tratante)», «Gestión (identificación y organismos)»: §5.176 e) — un rótulo del servidor, no un valor
+guardado.
 """
 from collections.abc import Mapping
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.constantes import (
-    ACCESO_NO_TRATANTE, ACCESO_SUPERVISION, ACCESO_TITULAR, MOTIVO_COPIA_FAMILIA, MOTIVO_QUIEN_COORDINACION,
-    MOTIVO_TEXTO_MAX, MOTIVOS_ACCESO, VENTANA_ACCESO_MINUTOS,
+    ACCESO_NO_TRATANTE, ACCESO_RELACIONES, ACCESO_SUPERVISION, ACCESO_TITULAR, INTENTO_TIPOS, MOTIVO_COPIA_FAMILIA,
+    MOTIVO_LABEL_DE_RELACION, MOTIVO_QUIEN_COORDINACION, MOTIVO_TEXTO_MAX, MOTIVOS_ACCESO, VENTANA_ACCESO_MINUTOS,
 )
-from app.models.acceso import AccesoHce
-from app.models.identidad import Profesional
+from app.models.acceso import AccesoHce, AccesoIntento
+from app.models.identidad import HceDiurna, Profesional
 from app.services import matriz
 from app.services.errores import NotFound, ValidationFailed
 from app.services.hce import clave_ci
@@ -46,6 +50,16 @@ from app.services.texto import aviso_invisibles, normalizar_texto, quitar_invisi
 
 #: Lo que se conserva de los caracteres de control en el texto del motivo (puede tener varias líneas).
 _CONSERVAR = "\n\r\t"
+
+
+class CiNoCoincide(NotFound):
+    """La C.I. que mandó el técnico no tratante no es la del expediente. **Para el cliente es el 404 de un id que no
+    existe** (el mismo `code`, el mismo mensaje: §5.174 a); la subclase existe para que el router deje el intento en
+    `acceso_intento` antes de responder (§5.178 e). `hce_id` es el expediente al que apuntaba; la C.I. no viaja."""
+
+    def __init__(self, hce_id: int):
+        super().__init__("No existe el expediente")
+        self.hce_id = hce_id
 
 
 def motivos() -> list[dict[str, Any]]:
@@ -105,7 +119,7 @@ def abrir(db: Session, usuario: Profesional, hce_id: int, datos: Mapping[str, An
     # (2) Recién con el cuerpo válido se compara la C.I.: la **única** forma de confirmarla es abrir una ventana, y eso
     # deja una fila. Si no coincide, el 404 de un expediente inexistente (el mismo cuerpo que el de un id que no existe).
     if pide_ci and clave_ci(ci).strip() != hce.persona.ci:
-        raise NotFound("No existe el expediente")
+        raise CiNoCoincide(hce.id)
 
     titular = codigo == MOTIVO_COPIA_FAMILIA
     ahora = func.now()
@@ -122,9 +136,98 @@ def abrir(db: Session, usuario: Profesional, hce_id: int, datos: Mapping[str, An
     return fila, avisos
 
 
+def motivo_label(fila: AccesoHce) -> str | None:
+    """El motivo **como lo lee una persona**, siempre puesto por el servidor (§5.178 b): el rótulo del catálogo o, en una
+    fila automática (`motivo_codigo` NULL), el motivo fijo de su relación."""
+    if fila.motivo_codigo:
+        return MOTIVOS_ACCESO[fila.motivo_codigo]["label"]
+    return MOTIVO_LABEL_DE_RELACION.get(fila.relacion)
+
+
 def vista(fila: AccesoHce) -> dict[str, Any]:
     return {
         "id": fila.id, "hce_id": fila.hce_id, "relacion": fila.relacion, "motivo_codigo": fila.motivo_codigo,
-        "motivo_label": MOTIVOS_ACCESO[fila.motivo_codigo]["label"] if fila.motivo_codigo else None,
+        "motivo_label": motivo_label(fila),
         "motivo_texto": fila.motivo_texto, "inicio": fila.inicio, "vence": fila.vence,
+    }
+
+
+# ── Los lectores (A2, §5.178 d, e): sólo coordinación, sin motivo ────────────
+def _autor(p: Profesional) -> dict[str, Any]:
+    return {"id": p.id, "nombre": p.nombre}
+
+
+def vista_de_registro(fila: AccesoHce, autor: Profesional) -> dict[str, Any]:
+    """Una fila del registro para quien lo audita: quién, con qué rol **en ese momento**, sobre qué expediente, por qué
+    y cuándo. Nada clínico (ni el nombre del NNA: el expediente va por su id)."""
+    return {**vista(fila), "usuario": _autor(autor), "rol": fila.rol, "ateneo_id": fila.ateneo_id}
+
+
+def exigir_expediente(db: Session, hce_id: int) -> None:
+    """404 si el expediente no existe (el rol ya lo miró la dependencia de la ruta: 403 exista o no)."""
+    if db.scalar(select(HceDiurna.id).where(HceDiurna.id == hce_id)) is None:
+        raise NotFound("No existe el expediente")
+
+
+def _periodo(columna, desde: datetime | None, hasta: datetime | None) -> list:
+    """`desde` incluido, `hasta` excluido."""
+    condiciones = []
+    if desde is not None:
+        condiciones.append(columna >= desde)
+    if hasta is not None:
+        condiciones.append(columna < hasta)
+    return condiciones
+
+
+def listar(
+    db: Session, *, hce_id: int | None = None, usuario_id: int | None = None, relacion: str | None = None,
+    motivo: str | None = None, desde: datetime | None = None, hasta: datetime | None = None, limit: int, offset: int,
+) -> tuple[list[tuple[AccesoHce, Profesional]], int]:
+    """Las filas de `acceso_hce` que cumplen los filtros (se combinan con **Y**), **la más nueva primero** (`inicio` e
+    `id` descendentes), y el total. `relacion` o `motivo` fuera de las constantes es 422 por campo (los dos a la vez).
+    `motivo` filtra por `motivo_codigo`: las filas automáticas (sin código) se piden por su `relacion`."""
+    problemas = []
+    if relacion is not None and relacion not in ACCESO_RELACIONES:
+        problemas.append(("relacion", f"Debe ser una de: {', '.join(ACCESO_RELACIONES)}"))
+    if motivo is not None and motivo not in MOTIVOS_ACCESO:
+        problemas.append(("motivo", f"Debe ser uno de: {', '.join(MOTIVOS_ACCESO)}"))
+    if problemas:
+        raise ValidationFailed(problemas)
+
+    condiciones = _periodo(AccesoHce.inicio, desde, hasta)
+    for columna, valor in ((AccesoHce.hce_id, hce_id), (AccesoHce.usuario_id, usuario_id),
+                           (AccesoHce.relacion, relacion), (AccesoHce.motivo_codigo, motivo)):
+        if valor is not None:
+            condiciones.append(columna == valor)
+    total = db.scalar(select(func.count()).select_from(AccesoHce).where(*condiciones))
+    filas = db.execute(
+        select(AccesoHce, Profesional).join(Profesional, Profesional.id == AccesoHce.usuario_id)
+        .where(*condiciones).order_by(AccesoHce.inicio.desc(), AccesoHce.id.desc()).limit(limit).offset(offset)
+    ).all()
+    return [(a, p) for a, p in filas], total
+
+
+def listar_intentos(
+    db: Session, *, usuario_id: int | None = None, tipo: str | None = None, desde: datetime | None = None,
+    hasta: datetime | None = None, limit: int, offset: int,
+) -> tuple[list[tuple[AccesoIntento, Profesional]], int]:
+    """Las filas de `acceso_intento`, la más nueva primero, y el total. Un `tipo` fuera de `INTENTO_TIPOS` es 422."""
+    if tipo is not None and tipo not in INTENTO_TIPOS:
+        raise ValidationFailed([("tipo", f"Debe ser uno de: {', '.join(INTENTO_TIPOS)}")])
+    condiciones = _periodo(AccesoIntento.momento, desde, hasta)
+    for columna, valor in ((AccesoIntento.usuario_id, usuario_id), (AccesoIntento.tipo, tipo)):
+        if valor is not None:
+            condiciones.append(columna == valor)
+    total = db.scalar(select(func.count()).select_from(AccesoIntento).where(*condiciones))
+    filas = db.execute(
+        select(AccesoIntento, Profesional).join(Profesional, Profesional.id == AccesoIntento.usuario_id)
+        .where(*condiciones).order_by(AccesoIntento.momento.desc(), AccesoIntento.id.desc()).limit(limit).offset(offset)
+    ).all()
+    return [(i, p) for i, p in filas], total
+
+
+def vista_de_intento(fila: AccesoIntento, autor: Profesional) -> dict[str, Any]:
+    return {
+        "id": fila.id, "usuario": _autor(autor), "rol": fila.rol, "tipo": fila.tipo, "hce_id": fila.hce_id,
+        "resultado": fila.resultado, "momento": fila.momento,
     }

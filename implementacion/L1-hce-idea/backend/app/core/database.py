@@ -42,3 +42,19 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def fabrica_registro():
+    """Dependencia de FastAPI: **la fábrica de sesiones del registro de accesos** (A2, §5.178).
+
+    Las filas automáticas de `acceso_hce` y las de `acceso_intento` se escriben en **su propia sesión** —otra conexión
+    del pool, otra transacción—, que se commitea antes de que siga el pedido: lo que le pase después a la transacción del
+    pedido no las toca (`app/services/registro_accesos.py` dice por qué). En producción es `SessionLocal`; un test la
+    reemplaza por `app.dependency_overrides[fabrica_registro]` (la suite, por una fábrica sobre su única conexión; los
+    de concurrencia, por una sobre conexiones reales).
+
+    Es la misma fábrica y el mismo pool que `get_db` a propósito: quien registra **suelta primero** la conexión del
+    pedido (`Registro.escribir`, en `app/routers/dependencias.py`), así que nadie espera una segunda conexión con una en
+    la mano y el pool no se puede trabar.
+    """
+    return SessionLocal

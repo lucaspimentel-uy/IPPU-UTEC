@@ -11,15 +11,22 @@ expediente, vencimiento)`, un índice chico acá; `GET /hce/{id}/auditoria` (C1)
 la HC a la familia (`titular`) no abre ninguna: `vence = inicio`.
 
 **Sólo inserción**, como `auditoria`: ningún servicio hace UPDATE ni DELETE (`REVOKE` recomendado en el despliegue).
-A1 escribe las filas de `POST /hce/{id}/accesos`; el registro automático del tratante, de la gestión y del ateneo
-clínico es de A2, sobre esta misma tabla (sin DDL).
+A1 escribe las filas de `POST /hce/{id}/accesos`; A2 (§5.178), las automáticas del tratante, de la gestión y del ateneo
+clínico, sobre esta misma tabla (`app/services/registro_accesos.py`).
+
+**Los intentos van aparte (`acceso_intento`, A2, §5.178 e):** una consulta por C.I. o una C.I. equivocada no son un
+acceso (no se abrió ninguna HC), así que no ensucian el registro que pide el Protocolo §8; pero tienen que dejar
+rastro (hallazgo 2 de la auditoría del 2026-11-13: se podían probar C.I. sin que quedara nada).
 """
 from datetime import datetime
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.constantes import ACCESO_GESTION, ACCESO_RELACIONES, ACCESO_TRATANTE, MOTIVOS_ACCESO
+from app.core.constantes import (
+    ACCESO_GESTION, ACCESO_RELACIONES, ACCESO_TRATANTE, INTENTO_CI_ERRADA, INTENTO_ENCONTRADO, INTENTO_RECHAZADO,
+    INTENTO_RESULTADOS, INTENTO_TIPOS, MOTIVOS_ACCESO,
+)
 from app.core.database import Base
 
 
@@ -59,4 +66,35 @@ class AccesoHce(Base):
         ),
         CheckConstraint("vence >= inicio", name="vence_desde_inicio"),
         Index("ix_acceso_hce_usuario_hce_vence", "usuario_id", "hce_id", "vence"),
+    )
+
+
+class AccesoIntento(Base):
+    """Un intento de llegar a un expediente por su C.I. (A2, §5.178 e): cada `POST /hce/consulta` que se ejecutó y cada
+    `POST /hce/{id}/accesos` rechazado porque la C.I. no es la del expediente. **Sólo inserción. No guarda la C.I.
+    escrita**: guarda quién, cuándo, qué se intentó y qué expediente quedó señalado."""
+    __tablename__ = "acceso_intento"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("profesional.id", ondelete="RESTRICT"), index=True)
+    #: El rol al momento del intento.
+    rol: Mapped[str] = mapped_column(String(20))
+    tipo: Mapped[str] = mapped_column(String(20))
+    #: El expediente encontrado por la consulta, o el destino de la C.I. equivocada; NULL si la consulta no encontró nada.
+    hce_id: Mapped[int | None] = mapped_column(ForeignKey("hce_diurna.id", ondelete="RESTRICT"), index=True)
+    resultado: Mapped[str] = mapped_column(String(20))
+    momento: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    __table_args__ = (
+        CheckConstraint(_en("tipo", INTENTO_TIPOS), name="tipo_valido"),
+        CheckConstraint(_en("resultado", INTENTO_RESULTADOS), name="resultado_valido"),
+        #: La C.I. equivocada siempre es un rechazo; una consulta, nunca.
+        CheckConstraint(
+            f"(tipo = '{INTENTO_CI_ERRADA}') = (resultado = '{INTENTO_RECHAZADO}')", name="resultado_segun_tipo",
+        ),
+        #: Hay expediente salvo —y sólo— cuando la consulta no encontró nada.
+        CheckConstraint(
+            f"(hce_id IS NOT NULL) = (resultado IN ('{INTENTO_ENCONTRADO}', '{INTENTO_RECHAZADO}'))",
+            name="expediente_segun_resultado",
+        ),
     )

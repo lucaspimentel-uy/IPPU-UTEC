@@ -1,8 +1,8 @@
-"""esquema v2 inicial a1
+"""esquema v2 inicial a2
 
-Revision ID: dc897506906b
+Revision ID: 6082d519ffe3
 Revises: 
-Create Date: 2026-11-08 23:22:13.944862
+Create Date: 2026-11-17 00:51:10.355293
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'dc897506906b'
+revision: str = '6082d519ffe3'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -273,7 +273,7 @@ def upgrade() -> None:
     sa.Column('derivacion', sa.String(length=200), nullable=True),
     sa.Column('medicacion', sa.Text(), nullable=True),
     sa.Column('alerta', sa.Text(), nullable=True),
-    sa.Column('anamnesis', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('anamnesis', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('activo', sa.Boolean(), nullable=False),
     sa.Column('fecha_baja', sa.Date(), nullable=True),
     sa.Column('creado_en', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -290,6 +290,25 @@ def upgrade() -> None:
     sa.UniqueConstraint('persona_id', name=op.f('uq_hce_diurna_persona_id'))
     )
     op.create_index(op.f('ix_hce_diurna_grupo_id'), 'hce_diurna', ['grupo_id'], unique=False)
+    op.create_table('acceso_intento',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('usuario_id', sa.Integer(), nullable=False),
+    sa.Column('rol', sa.String(length=20), nullable=False),
+    sa.Column('tipo', sa.String(length=20), nullable=False),
+    sa.Column('hce_id', sa.Integer(), nullable=True),
+    sa.Column('resultado', sa.String(length=20), nullable=False),
+    sa.Column('momento', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint("(hce_id IS NOT NULL) = (resultado IN ('encontrado', 'rechazado'))", name=op.f('ck_acceso_intento_expediente_segun_resultado')),
+    sa.CheckConstraint("(tipo = 'ci_errada') = (resultado = 'rechazado')", name=op.f('ck_acceso_intento_resultado_segun_tipo')),
+    sa.CheckConstraint("resultado IN ('encontrado', 'no_encontrado', 'rechazado')", name=op.f('ck_acceso_intento_resultado_valido')),
+    sa.CheckConstraint("tipo IN ('consulta_ci', 'ci_errada')", name=op.f('ck_acceso_intento_tipo_valido')),
+    sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_acceso_intento_hce_id_hce_diurna'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['usuario_id'], ['profesional.id'], name=op.f('fk_acceso_intento_usuario_id_profesional'), ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_acceso_intento'))
+    )
+    op.create_index(op.f('ix_acceso_intento_hce_id'), 'acceso_intento', ['hce_id'], unique=False)
+    op.create_index(op.f('ix_acceso_intento_momento'), 'acceso_intento', ['momento'], unique=False)
+    op.create_index(op.f('ix_acceso_intento_usuario_id'), 'acceso_intento', ['usuario_id'], unique=False)
     op.create_table('ateneo',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('anio_correlativo', sa.SmallInteger(), nullable=False),
@@ -382,7 +401,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('anio', sa.SmallInteger(), nullable=False),
-    sa.Column('dim', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('dim', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('fecha_consenso', sa.Date(), nullable=True),
     sa.Column('sesiones', sa.Integer(), nullable=True),
     sa.Column('sintesis', sa.Text(), nullable=True),
@@ -394,9 +413,9 @@ def upgrade() -> None:
     sa.Column('esc_c', sa.Integer(), nullable=True),
     sa.Column('esc_d', sa.Integer(), nullable=True),
     sa.Column('firmado', sa.Boolean(), nullable=False),
-    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('firmas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('addendas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('excepcion', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('evaluador_t1_id', sa.Integer(), nullable=True),
     sa.Column('evaluador_t2_id', sa.Integer(), nullable=True),
     sa.Column('sistema_origen', sa.String(length=120), nullable=True),
@@ -446,16 +465,16 @@ def upgrade() -> None:
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('anio', sa.Integer(), nullable=False),
     sa.Column('fecha', sa.Date(), nullable=True),
-    sa.Column('sint_escala', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('sint_escala', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('val_tec1', sa.Text(), nullable=True),
     sa.Column('val_tec2', sa.Text(), nullable=True),
     sa.Column('recomendaciones', sa.Text(), nullable=True),
     sa.Column('orientaciones', sa.Text(), nullable=True),
-    sa.Column('recibi', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('recibi', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('firmado', sa.Boolean(), nullable=False),
-    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('firmas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('addendas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('excepcion', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_informe_cierre_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_informe_cierre')),
     sa.UniqueConstraint('hce_id', 'anio', name='uq_informe_cierre_hce_anio')
@@ -556,21 +575,21 @@ def upgrade() -> None:
     sa.Column('anio', sa.Integer(), nullable=False),
     sa.Column('fecha', sa.Date(), nullable=True),
     sa.Column('semanas', sa.Integer(), nullable=True),
-    sa.Column('items', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('items', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('sint_tec1', sa.Text(), nullable=True),
     sa.Column('sint_tec2', sa.Text(), nullable=True),
     sa.Column('otros', sa.Text(), nullable=True),
     sa.Column('ajustes', sa.Text(), nullable=True),
-    sa.Column('deltas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('deltas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('total', sa.Integer(), nullable=True),
     sa.Column('esc_1', sa.Integer(), nullable=True),
     sa.Column('esc_2', sa.Integer(), nullable=True),
     sa.Column('esc_3', sa.Integer(), nullable=True),
     sa.Column('esc_4', sa.Integer(), nullable=True),
     sa.Column('firmado', sa.Boolean(), nullable=False),
-    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('firmas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('addendas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('excepcion', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('evaluador_t1_id', sa.Integer(), nullable=True),
     sa.Column('evaluador_t2_id', sa.Integer(), nullable=True),
     sa.CheckConstraint("tipo = 'B' OR deltas IS NULL", name=op.f('ck_protocolo_deltas_solo_en_b')),
@@ -624,7 +643,7 @@ def upgrade() -> None:
     sa.Column('categoria_id', sa.Integer(), nullable=True),
     sa.Column('vigencia', sa.Date(), nullable=True),
     sa.Column('rnpcd', sa.String(length=60), nullable=True),
-    sa.Column('dominios', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('dominios', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('capacidades', sa.Text(), nullable=True),
     sa.Column('barreras', sa.Text(), nullable=True),
     sa.Column('apoyos', sa.Text(), nullable=True),
@@ -858,12 +877,12 @@ def upgrade() -> None:
     sa.Column('hce_id', sa.Integer(), nullable=False),
     sa.Column('firmante', sa.String(length=120), nullable=True),
     sa.Column('fecha', sa.Date(), nullable=True),
-    sa.Column('autorizaciones', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('autorizaciones', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.Column('documento_id', sa.Integer(), nullable=True),
     sa.Column('firmado', sa.Boolean(), nullable=False),
-    sa.Column('firmas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('addendas', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('excepcion', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('firmas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('addendas', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
+    sa.Column('excepcion', postgresql.JSONB(none_as_null=True, astext_type=sa.Text()), nullable=True),
     sa.ForeignKeyConstraint(['documento_id'], ['documento.id'], name=op.f('fk_consentimiento_documento_id_documento')),
     sa.ForeignKeyConstraint(['hce_id'], ['hce_diurna.id'], name=op.f('fk_consentimiento_hce_id_hce_diurna'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('hce_id', name=op.f('pk_consentimiento'))
@@ -1001,6 +1020,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_ateneo_fecha'), table_name='ateneo')
     op.drop_index(op.f('ix_ateneo_autor_id'), table_name='ateneo')
     op.drop_table('ateneo')
+    op.drop_index(op.f('ix_acceso_intento_usuario_id'), table_name='acceso_intento')
+    op.drop_index(op.f('ix_acceso_intento_momento'), table_name='acceso_intento')
+    op.drop_index(op.f('ix_acceso_intento_hce_id'), table_name='acceso_intento')
+    op.drop_table('acceso_intento')
     op.drop_index(op.f('ix_hce_diurna_grupo_id'), table_name='hce_diurna')
     op.drop_table('hce_diurna')
     op.drop_index(op.f('ix_persona_servicio_servicio_id'), table_name='persona_servicio')

@@ -1,16 +1,16 @@
 """Dependencias compartidas por los routers."""
-from collections.abc import Iterator
-from typing import Annotated
+from collections.abc import Callable, Iterator
+from typing import Annotated, Any
 
 from fastapi import Depends, Path, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.database import fabrica_registro, get_db
 from app.models.identidad import Profesional
 from app.models.modulos import Idea, InformeCierre, Protocolo
-from app.services import auth, matriz
+from app.services import auth, matriz, registro_accesos
 
 
 def sesion_transaccional(db: Session = Depends(get_db)) -> Iterator[Session]:
@@ -90,18 +90,102 @@ def _es_lectura(request: Request) -> bool:
     return request.method in ("GET", "HEAD")
 
 
+# ── El registro de accesos: transacción propia (A2, §5.178) ──────────────────
+class Registro:
+    """Escribe en el registro de accesos (`acceso_hce`, `acceso_intento`) **en su propia transacción**, commiteada antes
+    de que el pedido siga. Es la **única** excepción a «una transacción por request» (§5.178; las razones, en el
+    docstring de `app/services/registro_accesos.py`).
+
+    `escribir` **suelta primero la transacción del pedido** (`rollback()`): por eso sólo se llama cuando el pedido
+    todavía no escribió nada (la dependencia de acceso, antes del endpoint) o ya no va a escribir (el camino de un 404 y
+    una consulta de sólo lectura). Lo que la función necesite del pedido viaja como **valores** (`Quien`, ids): los
+    objetos del ORM del pedido quedan expirados.
+    """
+
+    def __init__(self, db: Session, fabrica: Callable[[], Session]):
+        self._db = db
+        self._fabrica = fabrica
+
+    def escribir(self, funcion: Callable[..., Any], *args: Any) -> None:
+        """`funcion(sesion_del_registro, *args)` y su `commit`. Si falla, la excepción sigue (el pedido termina en 500
+        antes de leer nada: sin registro no hay acceso)."""
+        if self._db.new or self._db.dirty or self._db.deleted:
+            # Un error de programación, no del usuario: soltar la transacción acá se llevaría esos cambios sin avisar.
+            raise RuntimeError("Registro.escribir se llamó con cambios pendientes en la sesión del pedido")
+        self._db.rollback()
+        sesion = self._fabrica()
+        try:
+            funcion(sesion, *args)
+            sesion.commit()
+        except BaseException:
+            sesion.rollback()
+            raise
+        finally:
+            sesion.close()
+
+
+def registro(
+    db: Session = Depends(get_db), fabrica: Callable[[], Session] = Depends(fabrica_registro),
+) -> Registro:
+    """La dependencia que da el `Registro` del pedido: la sesión del pedido y la fábrica de la sesión propia
+    (`fabrica_registro`, que un test reemplaza con `app.dependency_overrides`)."""
+    return Registro(db, fabrica)
+
+
+RegistroPropio = Annotated[Registro, Depends(registro)]
+
+
+def abrir_expediente(
+    db: Session, usuario: Profesional, accion: str, hce_id: int | None, registro_: Registro, *,
+    no_existe: str = "No existe el expediente",
+) -> None:
+    """**La única puerta de un expediente** (A2, §5.178): la matriz y, si pasa, el registro automático del acceso. La
+    usan las dos dependencias de abajo —las rutas `/hce/{hce_id}/…` y las 14 por id de módulo—, así que una ruta nueva de
+    cualquiera de las dos familias registra sin hacer nada.
+
+    1. `matriz.exigir_en_hce`: el rol, la existencia, la relación y la ventana (403 o 404: **nada se registra**).
+    2. `matriz.registro_al_abrir`: qué fila le toca (`tratante`, `gestion`) o ninguna (entró por su ventana con motivo).
+    3. Si ya hay una fila vigente, nada (**una consulta**, en la sesión del pedido). Si no, la fila, en su transacción.
+    """
+    hce = matriz.exigir_en_hce(db, usuario, accion, hce_id, no_existe=no_existe)
+    relacion = matriz.registro_al_abrir(usuario, accion, hce)
+    if relacion is None:
+        return
+    quien, expediente = registro_accesos.Quien.de(usuario), hce.id
+    if not registro_accesos.apertura_registrada(db, quien, expediente, relacion):
+        registro_.escribir(registro_accesos.registrar_apertura, quien, expediente, relacion)
+        db.refresh(usuario)  # el endpoint recibe al usuario cargado, como siempre (soltar la transacción lo expiró)
+
+
+def abrir_ateneo_clinico(
+    db: Session, usuario: Profesional, ateneo_id: int, hce_referida_id: int | None, registro_: Registro,
+) -> None:
+    """La otra fila automática (sección d, §5.178 c): **abrir un ateneo clínico sin tratar el expediente referido** deja
+    una fila `motivo_codigo='ateneo'` con su `ateneo_id`, sin diálogo y **sin ventana** sobre la HCE; una por usuario y
+    ateneo cada 120 minutos. `hce_referida_id` es `None` si el ateneo no es clínico (no registra). La llama la
+    dependencia de `/ateneos/{ateneo_id}/…` después de que la matriz dejó pasar; la lista `GET /ateneos` no registra."""
+    relacion = matriz.registro_por_ateneo(db, usuario, hce_referida_id)
+    if relacion is None:
+        return
+    quien = registro_accesos.Quien.de(usuario)
+    if not registro_accesos.ateneo_registrado(db, quien, ateneo_id):
+        registro_.escribir(registro_accesos.registrar_ateneo, quien, hce_referida_id, ateneo_id, relacion)
+        db.refresh(usuario)  # ídem `abrir_expediente`
+
+
 def acceso_hce(lectura: str, escritura: str):
     """La dependencia de las rutas `/hce/{hce_id}/…`: la acción de la matriz (`app/services/matriz.py`) es `lectura` en un
     GET y `escritura` en cualquier otro método. Corre antes de leer el cuerpo: el orden de la sección b del diseño (rol →
-    existencia → relación y ventana → escritura) vale antes que cualquier 422."""
+    existencia → relación y ventana → escritura) vale antes que cualquier 422. Registra el acceso (`abrir_expediente`)."""
 
     def dependencia(
         hce_id: int,
         request: Request,
         usuario: Annotated[Profesional, Depends(usuario_actual)],
+        registro_: RegistroPropio,
         db: Session = Depends(get_db),
     ) -> None:
-        matriz.exigir_en_hce(db, usuario, lectura if _es_lectura(request) else escritura, hce_id)
+        abrir_expediente(db, usuario, lectura if _es_lectura(request) else escritura, hce_id, registro_)
 
     return dependencia
 
@@ -134,7 +218,8 @@ def _visible_por(modelo, parametro: str, nombre: str):
     que el servicio pide después (PATCH, firma, addenda) traería la fila bloqueada pero el
     mapa de identidad conservaría el estado leído antes del lock, y dos firmas simultáneas
     podrían ver las dos «sin firmar». El rol se mira **antes** que la fila (403 exista o no); si la fila no existe, el
-    404 de siempre; si existe, la matriz sobre su expediente, con «No existe <nombre>» como cuerpo del 404.
+    404 de siempre; si existe, la matriz sobre su expediente, con «No existe <nombre>» como cuerpo del 404. Registra el
+    acceso igual que las rutas `/hce/{hce_id}/…` (`abrir_expediente`).
     """
     columna_id = modelo.id
 
@@ -142,11 +227,12 @@ def _visible_por(modelo, parametro: str, nombre: str):
         identificador: Annotated[int, Path(alias=parametro)],
         request: Request,
         usuario: Annotated[Profesional, Depends(usuario_actual)],
+        registro_: RegistroPropio,
         db: Session = Depends(get_db),
     ) -> None:
         hce_id = db.scalar(select(modelo.hce_id).where(columna_id == identificador))
         accion = "hce.leer" if _es_lectura(request) else "hce.escribir"
-        matriz.exigir_en_hce(db, usuario, accion, hce_id, no_existe=f"No existe {nombre}")
+        abrir_expediente(db, usuario, accion, hce_id, registro_, no_existe=f"No existe {nombre}")
 
     return dependencia
 

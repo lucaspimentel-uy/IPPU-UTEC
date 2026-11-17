@@ -103,10 +103,11 @@ def obtener(db: Session, usuario: Profesional, ateneo_id: int, *, para_escribir:
     return ateneo
 
 
-def exigir_visible(db: Session, usuario: Profesional, ateneo_id: int, *, escribir: bool = False) -> None:
+def exigir_visible(db: Session, usuario: Profesional, ateneo_id: int, *, escribir: bool = False) -> int | None:
     """Para la dependencia de las rutas `/ateneos/{ateneo_id}/…`, en el orden de la matriz: el rol (403 exista o no), la
     existencia (404) y, en un clínico, la relación con el expediente referido y la ventana (404 sin ella; con ella, leer
-    sí y escribir 403). Lee sólo `tipo` y `hce_referida_id`."""
+    sí y escribir 403). Lee sólo `tipo` y `hce_referida_id`. Devuelve **el expediente referido si el ateneo es clínico**
+    (`None` si no lo es): lo que el registro de accesos necesita para la fila del ateneo (A2, §5.178 c)."""
     if matriz.ateneo_prohibido_por_rol(usuario, escribir):
         matriz.rechazar_por_rol(usuario)
     fila = db.execute(select(Ateneo.tipo, Ateneo.hce_referida_id).where(Ateneo.id == ateneo_id)).first()
@@ -114,6 +115,7 @@ def exigir_visible(db: Session, usuario: Profesional, ateneo_id: int, *, escribi
         raise NotFound(_NO_EXISTE)
     tipo, hce_id = fila
     matriz.exigir_ateneo(db, usuario, clinico=tipo == TIPO_SENSIBLE, hce_referida_id=hce_id, escribir=escribir)
+    return hce_id if tipo == TIPO_SENSIBLE else None
 
 
 # ── Vistas ───────────────────────────────────────────────────────────────────
