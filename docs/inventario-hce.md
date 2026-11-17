@@ -217,7 +217,7 @@ terminada nombra **B1–B17** (§5.162 b, corregido el 2026-11-08: B12, B13, B16
 | B13 | Sin cabeceras de seguridad en la API ni CSP en la demo; `allow_credentials=True` sin cookies | **abierto** | `main.py:102` (`allow_credentials=True`); sólo las descargas de archivos llevan `nosniff` (`routers/documentos.py:89`) | (c): la CSP estricta es una de las razones de React |
 | B14 | La demo se servía en todas las interfaces | **hecho** (§5.157 e) | — | — |
 | B15 | `.env` no estaba ignorado en cualquier carpeta | **hecho** (§5.157 e) | — | — |
-| B16 | Starlette 0.41.3 y `python-jose` 3.3.0 con avisos de `pip-audit` | **abierto** | `requirements.txt:5` (`fastapi==0.115.6`), `:20` (`python-jose[cryptography]==3.3.0`) | — |
+| B16 | Starlette 0.41.3 y `python-jose` 3.3.0 con avisos de `pip-audit` | **cerrado** (§5.177) | `requirements.txt` (`fastapi==0.163.1`, `PyJWT==2.15.1`) | — |
 | B17 | Ids y fechas sin `escHtml`; renderizadores de demostración sin escapar | **abierto** | los renderizadores de `flujo.js` y `hce-doc-org-vf.js` (3.1) | (c): el escape por omisión de React |
 
 No se volvió a correr `pip-audit` ni se sondeó la API en esta sesión: las filas B12 a B16 salen del código y del texto de §5.157.
