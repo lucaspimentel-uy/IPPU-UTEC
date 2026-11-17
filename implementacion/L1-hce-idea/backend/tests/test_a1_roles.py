@@ -15,6 +15,8 @@ from app.models.acceso import AccesoHce
 from app.models.identidad import HceDiurna, Persona, Profesional
 from tests.test_d0_guardia_destino import ARGS_USUARIO, VARIABLE, _profesionales, base_destino, entorno, sesiones_de_test  # noqa: F401
 
+#: Un módulo de acceso: la identidad por omisión de la suite no saltea la matriz (A2, §5.178 f).
+pytestmark = pytest.mark.matriz_real
 
 def test_los_roles_son_las_cuatro_claves_del_diseno():
     assert list(ROLES) == ["tecnico", "coordinacion", "administrativo", "direccion_nt"]

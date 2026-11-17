@@ -29,6 +29,9 @@ from test_a1_matriz import (  # noqa: F401  (carpeta_uploads y mundo: fixtures)
 from app.core.seguridad import crear_token
 from app.models.identidad import Profesional
 
+#: Un módulo de acceso: la identidad por omisión de la suite no saltea la matriz (A2, §5.178 f).
+pytestmark = pytest.mark.matriz_real
+
 CI_DE_H = "5.789.123-4"
 CI_OTRA = "1.234.567-8"
 
@@ -132,16 +135,29 @@ def coordinadora_tratante(mundo):
 
 
 _RUTAS_DE_UN_EXPEDIENTE = [f for f in FILAS if "{hce_id}" in f["ruta"]]
+#: La única ruta `{hce_id}` que **no** se decide por la relación con el expediente sino por el rol (A2, §5.178 d): el
+#: registro de accesos es sólo de coordinación. Su columna `tratante` es la del técnico (403); a la coordinación
+#: asignada al grupo le toca la celda de coordinación (`permitir`).
+_POR_ROL = {("GET", "/hce/{hce_id}/accesos")}
 
 
-def test_hay_48_rutas_de_un_expediente_en_el_csv():
-    assert len(_RUTAS_DE_UN_EXPEDIENTE) == 48
+def test_hay_49_rutas_de_un_expediente_en_el_csv_y_una_sola_se_decide_por_rol():
+    assert len(_RUTAS_DE_UN_EXPEDIENTE) == 49
+    assert {(f["metodo"], f["ruta"]) for f in _RUTAS_DE_UN_EXPEDIENTE if not f["tratante"].startswith("permitir")} == _POR_ROL
 
 
 @pytest.mark.parametrize("fila", _RUTAS_DE_UN_EXPEDIENTE, ids=[f"{f['metodo']} {f['ruta']}" for f in _RUTAS_DE_UN_EXPEDIENTE])
 def test_la_coordinacion_asignada_a_un_grupo_es_tratante_en_cada_ruta_de_su_expediente(mundo, coordinadora_tratante, fila):
-    """La celda del sujeto `tratante` del CSV vale para ella (todas `permitir`: sin motivo, sin 403 ni el 404 de la matriz)."""
+    """La celda del sujeto `tratante` del CSV vale para ella (todas `permitir`: sin motivo, sin 403 ni el 404 de la
+    matriz). En la ruta que se decide por rol (`_POR_ROL`) le vale la de coordinación, y la técnica tratante recibe el
+    403 de su columna."""
     cab_cleo, _ = coordinadora_tratante
+    if (fila["metodo"], fila["ruta"]) in _POR_ROL:
+        assert (fila["tratante"], fila["coord_sin_motivo"]) == ("403:forbidden", "permitir")
+        m = {**mundo, "cab": {**mundo["cab"], "coord_sin_motivo": cab_cleo}}
+        _afirmar(m, fila, "coord_sin_motivo", clinico=False)  # Cleo, técnica 2 del grupo: lo lee como coordinación
+        _afirmar(mundo, fila, "tratante", clinico=False)      # Tina, técnica tratante: 403
+        return
     m = {**mundo, "cab": {**mundo["cab"], "tratante": cab_cleo}}
     assert fila["tratante"].startswith("permitir")
     _afirmar(m, fila, "tratante", clinico=False)

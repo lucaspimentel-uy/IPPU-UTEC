@@ -6,15 +6,20 @@ tratante recibe lo de siempre.
 
 Va en su propio archivo y no en `test_a1c_matriz.py` porque `mundo` (A1) es de módulo y deja los catálogos sembrados en una
 transacción abierta: `tramos` (S1b) inserta las mismas filas de `delta_interpretacion` desde otra conexión y las dos se
-bloquean para siempre. Con usuarios reales, no la identidad de la suite.
+bloquean para siempre. Con usuarios reales, no la identidad de la suite. (A2, §5.178 g, arregló ese bloqueo en su causa
+—`conftest.conexion_api`—; el archivo se queda donde está.)
 """
 from types import SimpleNamespace
 
 import pytest
+from fastapi.testclient import TestClient
 
+from app.main import app
 from test_m11_3c_protocolo_ic import equipo, tramos  # noqa: F401  (fixtures)
 from test_s1b_ids_no_canonicos import CASOS, FORMAS, RUTAS, _ancho_completo, _foto, _pedir, _registro, _url
 
+#: Un módulo de acceso: la identidad por omisión de la suite no saltea la matriz (A2, §5.178 f).
+pytestmark = pytest.mark.matriz_real
 
 # ── 4 · Los ids no canónicos de las 14 rutas por id de módulo, con los demás roles ─────────────────────────
 @pytest.fixture
@@ -28,8 +33,11 @@ def roles(client, crear_grupo, crear_profesional, hash_test, equipo, tramos, tok
         rol: crear_profesional(nombre=f"{rol} a1c", email=f"{rol}@a1c.ippu.test", rol=rol, hashed_password=hash_test)
         for rol in ("administrativo", "direccion_nt", "coordinacion")
     }
-    return SimpleNamespace(client=client, equipo=equipo, hce=_alta(client, grupo.id), cab_tratante=token_de(tratante),
-                           cabs={rol: token_de(p) for rol, p in otros.items()})
+    # El escenario lo arma **quien trata el expediente**: con `matriz_real` la identidad por omisión (`client`) es una
+    # coordinación sin grupos, que no escribe lo clínico (A2, §5.178 f). `client` sigue pedido: inyecta las sesiones.
+    del_tratante = TestClient(app, headers=token_de(tratante))
+    return SimpleNamespace(client=del_tratante, equipo=equipo, hce=_alta(del_tratante, grupo.id),
+                           cab_tratante=token_de(tratante), cabs={rol: token_de(p) for rol, p in otros.items()})
 
 
 def _esperado(rol: str, metodo: str) -> str:

@@ -30,14 +30,16 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
 from app.core.config import settings
-from app.core.database import get_db
 from app.core.seguridad import crear_token
 from app.main import app
 from app.models.acceso import AccesoHce
 from app.models.identidad import Grupo, HceDiurna, Profesional
 from app.seed_catalogos import run as sembrar_catalogos
 from app.services import matriz
-from tests.conftest import _fabrica_sesiones, rutas_api
+from tests.conftest import _fabrica_sesiones, rutas_api, sesiones_inyectadas
+
+#: Un módulo de acceso: la identidad por omisión de la suite no saltea la matriz (A2, §5.178 f).
+pytestmark = pytest.mark.matriz_real
 
 CSV = Path(__file__).resolve().parents[4] / "docs" / "diseno" / "fase4-matriz-rutas.csv"
 FILAS = list(csv.DictReader(CSV.open(encoding="utf-8")))
@@ -61,6 +63,9 @@ def accion_de(metodo: str, ruta: str) -> str:
         ("POST", "/ateneos"): "ateneos.alta", ("GET", "/ateneos/indicador"): "ateneos.indicador",
         ("GET", "/grupos"): "grupos.lista", ("PATCH", "/grupos/{grupo_id}"): "grupos.editar",
         ("GET", "/profesionales"): "profesionales.lista", ("POST", "/hce/{hce_id}/accesos"): "accesos.abrir",
+        # Los lectores del registro (A2, §5.178 d, e): por rol, también el que lleva `{hce_id}`.
+        ("GET", "/hce/{hce_id}/accesos"): "accesos.leer", ("GET", "/accesos"): "accesos.leer",
+        ("GET", "/accesos/intentos"): "accesos.leer",
     }
     if (metodo, ruta) in fijas:
         return fijas[(metodo, ruta)]
@@ -103,21 +108,12 @@ def carpeta_uploads():
 
 
 @pytest.fixture(scope="module")
-def mundo(engine, hash_test, tmp_path_factory):
-    conexion = engine.connect()
-    externa = conexion.begin()
-    Sesion = _fabrica_sesiones(conexion)
+def mundo(conexion_modulo, hash_test, tmp_path_factory):
+    Sesion = _fabrica_sesiones(conexion_modulo)
     parche = pytest.MonkeyPatch()
     parche.setattr(settings, "uploads_dir", str(tmp_path_factory.mktemp("uploads_a1")))
-
-    def _get_db():
-        s = Sesion()
-        try:
-            yield s
-        finally:
-            s.close()
-
-    app.dependency_overrides[get_db] = _get_db
+    inyeccion = sesiones_inyectadas(Sesion)
+    inyeccion.__enter__()
     try:
         with Sesion() as s:
             sembrar_catalogos(db=s, verboso=False)
@@ -177,11 +173,8 @@ def mundo(engine, hash_test, tmp_path_factory):
             s.commit()
         yield {"cliente": cliente, "cab": cab, "ids": ids, "e": e, "Sesion": Sesion}
     finally:
-        app.dependency_overrides.pop(get_db, None)
+        inyeccion.__exit__(None, None, None)
         parche.undo()
-        if externa.is_active:
-            externa.rollback()
-        conexion.close()
 
 
 def _ruta(plantilla: str, e: dict, *, clinico: bool, inexistente: bool = False) -> str:

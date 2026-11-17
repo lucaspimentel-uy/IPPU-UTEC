@@ -13,7 +13,7 @@ import json
 from datetime import date
 
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from app.core.constantes import PROTOCOLO_ESCALAS, PROTOCOLO_ITEMS
 from app.models.catalogos import DeltaInterpretacion
@@ -67,10 +67,13 @@ def equipo(crear_profesional):
 
 @pytest.fixture
 def tramos(db_api):
+    """Los tramos reales de `delta_interpretacion`. Si el módulo ya sembró los catálogos (el `mundo` de A1, en la misma
+    conexión: `conftest.conexion_api`), no se insertan de nuevo: las `etiqueta` son únicas (§5.178 g)."""
     filas = json.loads(DATOS.read_text(encoding="utf-8"))["delta_interpretacion"]
-    for fila in filas:
-        db_api.add(DeltaInterpretacion(**fila))
-    db_api.commit()
+    if db_api.scalar(select(func.count()).select_from(DeltaInterpretacion)) == 0:
+        for fila in filas:
+            db_api.add(DeltaInterpretacion(**fila))
+        db_api.commit()
     return filas
 
 

@@ -21,7 +21,7 @@ from app.seed_demo import (
     ANIO, GONZALEZ, INCLUSION_DEMO, NNA, TORRES, UBICACION_DEMO, DemoNoCargable, cargar_demo, ejecutar,
     preparar_usuarios,
 )
-from tests.conftest import EMAIL_ADMIN, PASSWORD_TEST, _fabrica_sesiones
+from tests.conftest import EMAIL_ADMIN, PASSWORD_TEST, _fabrica_sesiones, sesiones_inyectadas
 
 
 @pytest.fixture
@@ -361,20 +361,11 @@ def cliente_sin_usuarios(conexion_api):
     el admin): es la base recién migrada de la CLI."""
     from fastapi.testclient import TestClient
 
-    from app.core.database import get_db
     from app.main import app
 
     sesiones = _fabrica_sesiones(conexion_api)
-
-    def _get_db():
-        with sesiones() as sesion:
-            yield sesion
-
-    app.dependency_overrides[get_db] = _get_db
-    try:
+    with sesiones_inyectadas(sesiones):
         yield TestClient(app), sesiones
-    finally:
-        app.dependency_overrides.pop(get_db, None)
 
 
 def _profesionales(sesiones) -> int:

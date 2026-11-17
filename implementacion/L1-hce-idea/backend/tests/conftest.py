@@ -36,6 +36,7 @@ segundo `skip`, en `tests/test_esquema_v2.py`, y también se retiró.
 cada sub-módulo de M12: el head se deriva de los archivos de migración en tiempo
 de ejecución y las tablas se cuentan, no se comparan contra una constante.
 """
+from contextlib import contextmanager
 from datetime import date
 import os
 from pathlib import Path
@@ -61,6 +62,18 @@ import app.models  # noqa: F401  (registra las tablas en Base.metadata)
 
 BACKEND = Path(__file__).resolve().parent.parent
 _LINEA = "═" * 74
+
+#: El marcador que **apaga** el atajo de la identidad de la suite (A2, §5.178 f): en un módulo que lo lleva
+#: (`pytestmark = pytest.mark.matriz_real`), el `client` por omisión pasa por la matriz como cualquier coordinación.
+MARCADOR_MATRIZ_REAL = "matriz_real"
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        f"{MARCADOR_MATRIZ_REAL}: la identidad por omisión de la suite NO saltea la matriz de acceso ni el registro de "
+        "accesos (los módulos de acceso: test_a1_*, test_a1c_*, test_a2_*; §5.178 f).",
+    )
 
 
 def _sin_credenciales(url: str) -> str:
@@ -257,8 +270,45 @@ def db(engine):
 # el rollback de la transacción externa lo deshace todo.
 #
 # `db` y esta familia no se mezclan en un mismo test: `db` tiene su propia conexión.
+#: La conexión del escenario **de módulo** que esté abierto (`conexion_modulo`), o `None`. Ver `conexion_api`.
+_CONEXION_DE_MODULO: list = []
+
+
+@pytest.fixture(scope="module")
+def conexion_modulo(engine):
+    """La conexión de un escenario que dura **todo el módulo** (el `mundo` de `test_a1_matriz.py`): una transacción
+    externa que se deshace al final. Mientras está abierta, `conexion_api` no abre otra: usa ésta (ver ahí por qué)."""
+    conexion = engine.connect()
+    externa = conexion.begin()
+    _CONEXION_DE_MODULO.append(conexion)
+    try:
+        yield conexion
+    finally:
+        _CONEXION_DE_MODULO.remove(conexion)
+        if externa.is_active:
+            externa.rollback()
+        conexion.close()
+
+
 @pytest.fixture
 def conexion_api(engine):
+    """La conexión del test, dentro de una transacción que se deshace al terminar.
+
+    **Si el módulo tiene un escenario abierto (`conexion_modulo`), es esa misma conexión**, con un SAVEPOINT por test
+    (A2, §5.178 g). Antes eran dos: el escenario de módulo dejaba los catálogos sembrados en su transacción, sin
+    commitear, y una fixture por test (`tramos`) insertaba las mismas claves únicas de `delta_interpretacion` desde la
+    otra. Postgres hace esperar al segundo INSERT hasta que termine la primera transacción —para saber si la clave
+    quedó o no— y la primera es una fixture del mismo hilo, que no termina hasta el fin del módulo: pytest quedaba
+    colgado para siempre (§5.174 f). Con una sola conexión nadie espera a nadie."""
+    if _CONEXION_DE_MODULO:
+        conexion = _CONEXION_DE_MODULO[-1]
+        del_test = conexion.begin_nested()
+        try:
+            yield conexion
+        finally:
+            if del_test.is_active:
+                del_test.rollback()
+        return
     conexion = engine.connect()
     externa = conexion.begin()
     try:
@@ -274,6 +324,63 @@ def _fabrica_sesiones(conexion):
         bind=conexion, autocommit=False, autoflush=False,
         join_transaction_mode="create_savepoint",
     )
+
+
+@contextmanager
+def sesiones_inyectadas(Sesion):
+    """Apunta la app a `Sesion` **para las dos sesiones que usa un pedido**: la del pedido (`get_db`, una por request) y
+    la del registro de accesos (`fabrica_registro`, A2, §5.178). Al salir deja lo que había (no un `pop`: un `client`
+    dentro de un módulo con `mundo` no le saca la inyección al módulo).
+
+    Sobre la conexión única de la suite, la del registro es otro SAVEPOINT de la misma conexión: sirve para ver **qué
+    fila queda**; no es otra transacción ni puede esperar un candado. Lo que eso prueba y lo que no: docstring de
+    `app/services/registro_accesos.py`; lo demás, en `tests/test_a2_registro_real.py`."""
+    from app.core.database import fabrica_registro, get_db
+    from app.main import app
+
+    def _get_db():
+        sesion = Sesion()
+        try:
+            yield sesion
+        finally:
+            sesion.close()
+
+    antes = {d: app.dependency_overrides.get(d) for d in (get_db, fabrica_registro)}
+    app.dependency_overrides[get_db] = _get_db
+    app.dependency_overrides[fabrica_registro] = lambda: Sesion
+    try:
+        yield
+    finally:
+        for dependencia, valor in antes.items():
+            if valor is None:
+                app.dependency_overrides.pop(dependencia, None)
+            else:
+                app.dependency_overrides[dependencia] = valor
+
+
+def _registro_sin_inyectar():
+    raise AssertionError(
+        "Este test hizo un pedido que escribe en el registro de accesos sin inyectar su sesión: la de producción "
+        "(`SessionLocal`) apunta a la base de DATABASE_URL, no a la de test. Usar `client`, `sesiones_inyectadas(Sesion)` "
+        "o `app.dependency_overrides[fabrica_registro]` (tests/conftest.py, §5.178)."
+    )
+
+
+@pytest.fixture(autouse=True)
+def _registro_de_accesos_nunca_en_la_base_de_desarrollo():
+    """**La sesión del registro de accesos de producción no se usa en la suite** (A2, §5.178): `fabrica_registro`
+    devuelve `SessionLocal`, que escribe —con commit— en la base de `DATABASE_URL`. Un test que reemplaza `get_db` por
+    su cuenta y se olvida de `fabrica_registro` escribiría ahí; con esto falla y dice qué falta."""
+    from app.core.database import fabrica_registro
+    from app.main import app
+
+    puesta = fabrica_registro not in app.dependency_overrides
+    if puesta:
+        app.dependency_overrides[fabrica_registro] = lambda: _registro_sin_inyectar
+    yield
+    if puesta and app.dependency_overrides.get(fabrica_registro) is not None:
+        if app.dependency_overrides[fabrica_registro]() is _registro_sin_inyectar:
+            app.dependency_overrides.pop(fabrica_registro, None)
 
 
 @pytest.fixture
@@ -340,7 +447,7 @@ def es_identidad_de_la_suite(usuario) -> bool:
 
 
 @pytest.fixture(autouse=True)
-def _identidad_de_la_suite_sin_matriz():
+def _identidad_de_la_suite_sin_matriz(request):
     """**La identidad por omisión de la suite (`EMAIL_ADMIN`) pasa la matriz de acceso** (Fase 4, A1, §5.165).
 
     Hasta A1 esa identidad era el `admin`, que leía y escribía todo, y ~1000 pedidos de la suite cargan y leen módulos
@@ -353,18 +460,38 @@ def _identidad_de_la_suite_sin_matriz():
     usuarios propios (tratante, no tratante, coordinación, administrativo, dirección no técnica), igual que los tests de
     alcance que entran con `token_de(otro)`. Ningún código de la aplicación sabe de esta fixture.
 
+    **Tampoco deja filas automáticas en el registro de accesos** (A2, §5.178 f): quien saltea la matriz no «abre»
+    nada que haya que registrar, y esos ~1000 pedidos no tienen que escribir `acceso_hce`.
+
+    **El marcador `matriz_real` la apaga** (A2, §5.178 f): los módulos de acceso (`test_a1_*`, `test_a1c_*`,
+    `test_a2_*`) lo llevan en `pytestmark`, así que ahí un test que use el `client` por omisión **ejerce** la matriz
+    —como la coordinación sin grupos que es— en vez de saltearla.
+
     Usa su **propio** `MonkeyPatch`: un test que hace `monkeypatch.undo()` no la deshace."""
+    if request.node.get_closest_marker(MARCADOR_MATRIZ_REAL) is not None:
+        yield
+        return
+
     from app.services import matriz
 
     original = matriz.celda
+    al_abrir, por_ateneo = matriz.registro_al_abrir, matriz.registro_por_ateneo
 
     def celda(usuario, accion, **kw):
         if es_identidad_de_la_suite(usuario):
             return "permitir@institucion"
         return original(usuario, accion, **kw)
 
+    def registro_al_abrir(usuario, accion, hce):
+        return None if es_identidad_de_la_suite(usuario) else al_abrir(usuario, accion, hce)
+
+    def registro_por_ateneo(db, usuario, hce_referida_id):
+        return None if es_identidad_de_la_suite(usuario) else por_ateneo(db, usuario, hce_referida_id)
+
     parche = pytest.MonkeyPatch()
     parche.setattr(matriz, "celda", celda)
+    parche.setattr(matriz, "registro_al_abrir", registro_al_abrir)
+    parche.setattr(matriz, "registro_por_ateneo", registro_por_ateneo)
     yield
     parche.undo()
 
@@ -386,23 +513,10 @@ def client(conexion_api, admin, token_de):
     autenticado como `admin` (cabecera por omisión; un request la pisa con `headers=`)."""
     from fastapi.testclient import TestClient
 
-    from app.core.database import get_db
     from app.main import app
 
-    Sesion = _fabrica_sesiones(conexion_api)
-
-    def _get_db():
-        sesion = Sesion()
-        try:
-            yield sesion
-        finally:
-            sesion.close()
-
-    app.dependency_overrides[get_db] = _get_db
-    try:
+    with sesiones_inyectadas(_fabrica_sesiones(conexion_api)):
         yield TestClient(app, headers=token_de(admin))
-    finally:
-        app.dependency_overrides.pop(get_db, None)
 
 
 # La base de test se arma con `create_all()`: **no tiene catálogos sembrados**. Los

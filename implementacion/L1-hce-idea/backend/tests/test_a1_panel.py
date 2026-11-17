@@ -8,6 +8,9 @@ import pytest
 
 from app.seed_catalogos import run as sembrar_catalogos
 
+#: Un módulo de acceso: la identidad por omisión de la suite no saltea la matriz (A2, §5.178 f).
+pytestmark = pytest.mark.matriz_real
+
 ANIO = date.today().year
 
 # ── El panel de dirección no técnica (F4-7) ──────────────────────────────────
