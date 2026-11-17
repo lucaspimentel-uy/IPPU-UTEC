@@ -45,7 +45,8 @@ expediente que existe y se abre con motivo es **403** `reason_required` (`POST /
 
 ## Transacción
 
-**Una por request**, con el commit en `app.routers.dependencias.sesion_transaccional`.
+**Una por request**, con el commit en `app.routers.dependencias.sesion_transaccional`, que los endpoints piden
+como `SesionTransaccional` (con `scope="function"`: el commit corre antes de enviar la respuesta, §5.177).
 **Los GET no commitean**: usan `sesion_lectura` (§5.115 d). La regla completa está en
 `app/services/__init__.py`.
 

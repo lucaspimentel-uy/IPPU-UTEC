@@ -8,13 +8,14 @@ puede entrar y qué ve lo decide `app/services/auth.py`.
   `requirements.txt` y se usa la librería que ya estaba instalada como su backend.
   bcrypt sólo mira los primeros **72 bytes**; una contraseña más larga se rechaza al
   crearla (`crear_usuario`), nunca se trunca en silencio.
-- **Tokens:** JWT HS256 con `python-jose`. `sub` = `profesional.id` (texto, como pide el
-  RFC 7519), `exp` = ahora + `ACCESS_TOKEN_EXPIRE_MINUTES`. La clave es `SECRET_KEY`.
+- **Tokens:** JWT HS256 con `PyJWT` (`python-jose` salió en §5.177: cuatro avisos de pip-audit, sin mantenimiento).
+  `sub` = `profesional.id` (texto, como pide el RFC 7519), `exp` = ahora + `ACCESS_TOKEN_EXPIRE_MINUTES`. La clave
+  es `SECRET_KEY`.
 """
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
 
 from app.core.config import settings
 
@@ -75,9 +76,10 @@ def leer_token(token: str) -> int | None:
     firmado con la clave correcta pero sin `exp` no vence nunca, así que no se acepta)."""
     try:
         carga = jwt.decode(
-            token, settings.secret_key, algorithms=[ALGORITMO], options={"require_exp": True, "require_sub": True},
+            token, settings.secret_key, algorithms=[ALGORITMO], options={"require": ["exp", "sub"]},
         )
-    except JWTError:
+    except jwt.PyJWTError:
         return None
     sub = carga.get("sub")
-    return int(sub) if isinstance(sub, str) and sub.isdigit() else None
+    # `isascii()`: `str.isdigit()` acepta `²` o `１` y `int()` no los convierte (o los convierte a otro valor).
+    return int(sub) if isinstance(sub, str) and sub.isascii() and sub.isdigit() else None

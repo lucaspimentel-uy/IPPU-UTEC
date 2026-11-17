@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import permitido, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import permitido, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.referencias import (
@@ -81,7 +81,7 @@ def listar_recordatorios(db: Annotated[Session, Depends(sesion_lectura)]):
 )
 def asignar_tecnicos(
     grupo_id: int, datos: GrupoTecnicosActualizar,
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: SesionTransaccional,
     usuario: Annotated[Profesional, Depends(usuario_actual)],
     _condicion: Annotated[str | None, Depends(permitido("grupos.editar"))],
 ):

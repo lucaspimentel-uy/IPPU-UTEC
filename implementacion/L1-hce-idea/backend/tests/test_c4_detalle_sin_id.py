@@ -8,10 +8,9 @@ expediente, no sólo la de la carga.
 import re
 
 import pytest
-from fastapi.routing import APIRoute
 from sqlalchemy import select, text
 
-from app.main import app
+from tests.conftest import rutas_api
 
 from app.models.transversales import Auditoria
 from test_c2_severidad import CUERPO as SEV, niveles  # noqa: F401  (fixture)
@@ -177,8 +176,8 @@ def _sin_id_en_la_auditoria(db_api) -> int:
 
 
 def _rutas_con_parametros():
-    for ruta in app.routes:
-        if isinstance(ruta, APIRoute) and "{" in ruta.path:
+    for ruta in rutas_api():
+        if "{" in ruta.path:
             for metodo in sorted(ruta.methods & {"GET", "PATCH", "POST", "PUT", "DELETE"}):
                 yield metodo, ruta.path
 

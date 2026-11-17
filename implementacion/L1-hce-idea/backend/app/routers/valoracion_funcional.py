@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.valoracion_funcional import EJEMPLO_RESULTADO_VF, EJEMPLO_VF, VfActualizar, VfCrear, VfDetalle
@@ -37,7 +37,7 @@ _ERROR_422 = {422: {"model": RespuestaError, "description": (
         409: {"model": RespuestaError, "description": "El expediente ya tiene VF: se edita con PATCH."},
     },
 )
-def crear(hce_id: int, datos: VfCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear(hce_id: int, datos: VfCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Una por expediente. La **categoría del baremo** se deriva de `pct` contra `baremo_categoria`
     (`pct` `null` → «No corresponde»). Deja una fila `auditoria` `tipo='carga'`."""
     vf = servicio.crear_vf(db, hce_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
@@ -62,7 +62,7 @@ def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     summary="Edición parcial de la valoración funcional",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_VF), **_ERROR_404, **_ERROR_422},
 )
-def actualizar(hce_id: int, datos: VfActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar(hce_id: int, datos: VfActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """La VF no se firma: siempre es editable. Sólo se tocan las claves presentes; si cambia `pct`, se
     re-deriva la categoría. Una fila de auditoría por campo que cambió (`dominios.<dominio>` por dominio,
     y `categoria_id` si el `pct` nuevo la mueve)."""

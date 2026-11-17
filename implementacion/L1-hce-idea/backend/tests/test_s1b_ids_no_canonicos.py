@@ -16,18 +16,17 @@ trata, con el id canónico, recibe lo de siempre (200, 201).
 test **no fija el código**. Compara cada forma no canónica con la respuesta **canónica del mismo sujeto** y exige que esa
 respuesta canónica sea un rechazo de acceso (`not_found`, `reason_required` o `forbidden`), no un 2xx ni un 422.
 
-El barrido sale de `app.routes`, no de una lista a mano: una ruta nueva por id sin caso acá falla el test de cobertura.
+El barrido sale de las rutas de la app (`rutas_api()`), no de una lista a mano: una ruta nueva por id sin caso acá falla el test de cobertura.
 """
 import re
 from types import SimpleNamespace
 from urllib.parse import quote
 
 import pytest
-from fastapi.routing import APIRoute
 from sqlalchemy import func, select
 from sqlalchemy import inspect as sa_inspect
 
-from app.main import app
+from tests.conftest import rutas_api
 from app.models.modulos import Idea, InformeCierre, Protocolo
 from app.models.transversales import Auditoria
 from test_m11_3b_idea_flujo import _completo, _crear
@@ -44,8 +43,8 @@ def _rutas_por_id() -> list[tuple[str, str]]:
     """`(método, plantilla)` de **toda** ruta de los tres routers que lleva el id del recurso en el path."""
     return sorted(
         (metodo, ruta.path)
-        for ruta in app.routes
-        if isinstance(ruta, APIRoute) and _RUTA_POR_ID.fullmatch(ruta.path)
+        for ruta in rutas_api()
+        if _RUTA_POR_ID.fullmatch(ruta.path)
         for metodo in ruta.methods
     )
 

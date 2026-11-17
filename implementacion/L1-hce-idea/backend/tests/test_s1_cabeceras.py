@@ -5,9 +5,9 @@ Convención del repo: cada rechazo va con el caso que pasa.
 """
 from datetime import UTC, datetime, timedelta
 
+import jwt
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
 
 from app.core.config import settings
 from app.core.seguridad import ALGORITMO, crear_token, leer_token
@@ -34,6 +34,13 @@ def _vence(minutos: int) -> datetime:
     return datetime.now(UTC) + timedelta(minutes=minutos)
 
 
+OTRA_CLAVE = "otra-clave-de-32-bytes-o-mas-0123456789"
+
+
+def _bearer(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
 def test_un_token_bien_firmado_sin_exp_es_401_y_el_de_la_app_pasa(client, admin):
     r = client.get("/hce", headers=_firmar(sub=str(admin.id)))
     assert r.status_code == 401 and r.json()["code"] == "unauthorized"
@@ -51,6 +58,31 @@ def test_un_token_sin_sub_es_401(client, admin):
     assert client.get("/hce", headers=_firmar(sub=str(admin.id), exp=_vence(5))).status_code == 200
 
 
+def test_un_token_firmado_con_otra_clave_es_401(client, admin):
+    ajeno = jwt.encode({"sub": str(admin.id), "exp": _vence(5)}, OTRA_CLAVE, algorithm=ALGORITMO)
+    r = client.get("/hce", headers=_bearer(ajeno))
+    assert r.status_code == 401 and r.json()["code"] == "unauthorized"
+    assert client.get("/hce", headers=_firmar(sub=str(admin.id), exp=_vence(5))).status_code == 200
+
+
+def test_un_token_con_alg_none_es_401(client, admin):
+    """Sin firma y con `alg: none` en el encabezado: la lista `algorithms=[HS256]` lo rechaza."""
+    sin_firma = jwt.encode({"sub": str(admin.id), "exp": _vence(5)}, None, algorithm="none")
+    assert sin_firma.endswith(".") and jwt.get_unverified_header(sin_firma)["alg"] == "none"
+    r = client.get("/hce", headers=_bearer(sin_firma))
+    assert r.status_code == 401 and r.json()["code"] == "unauthorized"
+    assert client.get("/hce", headers=_firmar(sub=str(admin.id), exp=_vence(5))).status_code == 200
+
+
+@pytest.mark.parametrize("sub", [7, 7.0, None, ["7"], {"id": 7}, True, "²", "１", "-7", "7 ", "", "siete"])
+def test_un_token_con_un_sub_que_no_es_un_id_en_texto_es_401(client, admin, sub):
+    """Un `sub` que no es texto (número, nulo, lista…) o que no es un entero ASCII: 401, nunca un 500
+    (`"²".isdigit()` es verdadero y `int("²")` falla)."""
+    r = client.get("/hce", headers=_firmar(sub=sub, exp=_vence(5)))
+    assert r.status_code == 401 and r.json()["code"] == "unauthorized", sub
+    assert client.get("/hce", headers=_firmar(sub=str(admin.id), exp=_vence(5))).status_code == 200
+
+
 def test_un_token_sin_exp_tampoco_pasa_por_el_middleware_de_los_limites(client, admin):
     """El 401 temprano de los POST/PATCH/PUT usa el mismo `leer_token`."""
     r = client.post("/hce", json={}, headers=_firmar(sub=str(admin.id)))
@@ -64,7 +96,11 @@ def test_leer_token_exige_exp_y_sub():
     assert leer_token(jwt.encode({"sub": "7"}, settings.secret_key, algorithm=ALGORITMO)) is None
     assert leer_token(jwt.encode({"exp": _vence(5)}, settings.secret_key, algorithm=ALGORITMO)) is None
     assert leer_token(jwt.encode({"sub": "7", "exp": _vence(-1)}, settings.secret_key, algorithm=ALGORITMO)) is None
-    assert leer_token(jwt.encode({"sub": "7", "exp": _vence(5)}, "otra-clave-de-32-bytes-o-mas-0123456789", algorithm=ALGORITMO)) is None
+    assert leer_token(jwt.encode({"sub": "7", "exp": _vence(5)}, OTRA_CLAVE, algorithm=ALGORITMO)) is None
+    assert leer_token(jwt.encode({"sub": "7", "exp": _vence(5)}, None, algorithm="none")) is None
+    assert leer_token(jwt.encode({"sub": 7, "exp": _vence(5)}, settings.secret_key, algorithm=ALGORITMO)) is None
+    assert leer_token(jwt.encode({"sub": "²", "exp": _vence(5)}, settings.secret_key, algorithm=ALGORITMO)) is None
+    assert leer_token("no-es-un-jwt") is None and leer_token("") is None
 
 
 # ── B12: la documentación sólo en dev ────────────────────────────────────────

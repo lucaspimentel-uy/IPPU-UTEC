@@ -20,7 +20,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import Aviso, FechaOpcional, RespuestaError, Resultado
 from app.schemas.documentos import (
@@ -127,7 +127,7 @@ def listar(hce_id: int, response: Response, db: Annotated[Session, Depends(sesio
 )
 def cargar(
     hce_id: int,
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: SesionTransaccional,
     usuario: _USUARIO,
     recibidos: Annotated[frozenset[str], Depends(campos_del_formulario)],
     archivo: Annotated[UploadFile, File(description="PDF, JPG o PNG (por el contenido), hasta 10 MB.")],
@@ -167,7 +167,7 @@ def leer(hce_id: int, doc_id: int, db: Annotated[Session, Depends(sesion_lectura
         )},
     },
 )
-def editar(hce_id: int, doc_id: int, datos: DocumentoActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def editar(hce_id: int, doc_id: int, datos: DocumentoActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """`nombre`, `categoria_id` y `fecha_original` (sólo las claves presentes). **Un registro histórico es inmutable
     (409).** Cada campo que cambia deja una fila de auditoría con el valor anterior y el nuevo."""
     doc, avisos = servicio.actualizar(db, hce_id, doc_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -204,7 +204,7 @@ def leer_autorizacion(hce_id: int, db: Annotated[Session, Depends(sesion_lectura
     responses={**_ejemplo(201, EJEMPLO_RESULTADO_AUTORIZACION), **_ERROR_404, **_ERROR_422_AUT,
                409: {"model": RespuestaError, "description": "Ya está registrada: se edita con PATCH."}},
 )
-def registrar_autorizacion(hce_id: int, datos: AutorizacionCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def registrar_autorizacion(hce_id: int, datos: AutorizacionCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Una por expediente. **No condiciona nada ni avisa** (§5.99): guardar fotos no la requiere; regula compartir,
     que no está en esta versión. Deja una fila `carga`."""
     aut = servicio.crear_autorizacion(db, hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -215,7 +215,7 @@ def registrar_autorizacion(hce_id: int, datos: AutorizacionCrear, db: Annotated[
     "", response_model=Resultado[AutorizacionDetalle], summary="Editar la autorización de uso de imagen",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_AUTORIZACION), **_ERROR_404_AUT, **_ERROR_422_AUT},
 )
-def editar_autorizacion(hce_id: int, datos: AutorizacionActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def editar_autorizacion(hce_id: int, datos: AutorizacionActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo las claves presentes; `registrada` no admite `null`. Cada campo que cambia deja su fila de auditoría."""
     aut = servicio.actualizar_autorizacion(db, hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
     return Resultado(data=AutorizacionDetalle.model_validate(servicio.vista_autorizacion(db, aut)))

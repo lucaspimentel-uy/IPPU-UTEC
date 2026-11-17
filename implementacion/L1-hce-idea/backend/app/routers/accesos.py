@@ -10,11 +10,10 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.orm import Session
 
 from app.core.constantes import MOTIVO_TEXTO_MAX
 from app.models.identidad import Profesional
-from app.routers.dependencias import acceso_hce, sesion_transaccional, usuario_actual
+from app.routers.dependencias import acceso_hce, SesionTransaccional, usuario_actual
 from app.schemas.comunes import Aviso, RespuestaError, Resultado
 from app.services import accesos as servicio
 
@@ -75,7 +74,7 @@ def listar_motivos():
         422: {"model": RespuestaError, "description": "Motivo fuera del catálogo o de otra relación, texto obligatorio que falta, más de 500 caracteres, o falta la C.I. (técnico no tratante)."},
     },
 )
-def abrir(hce_id: int, datos: AccesoCrear, db: Annotated[Session, Depends(sesion_transaccional)],
+def abrir(hce_id: int, datos: AccesoCrear, db: SesionTransaccional,
           usuario: Annotated[Profesional, Depends(usuario_actual)]):
     """Deja **una fila** del registro de accesos (quién, cuándo, a qué expediente y por qué: Protocolo §8). Para el
     técnico no tratante y coordinación abre una **ventana de 120 minutos**: durante ella el expediente responde como a

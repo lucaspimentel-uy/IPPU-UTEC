@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
 from app.routers.dependencias import (
-    hce_visible, informe_visible, sesion_lectura, sesion_transaccional, usuario_actual,
+    hce_visible, informe_visible, sesion_lectura, SesionTransaccional, usuario_actual,
 )
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
@@ -44,7 +44,7 @@ def _detalle(informe) -> InformeDetalle:
         409: {"model": RespuestaError, "description": "Ya existe un informe de cierre de ese año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: InformeCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear(hce_id: int, datos: InformeCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Uno por `(expediente, año)`. Crear el IC sin LB, PA o PB del año firmados **se acepta** con
     `fuera_de_secuencia` y una fila `excepcion`. Deja una fila `auditoria` `tipo='carga'`."""
     informe, avisos = servicio.crear_informe(db, hce_id, datos.model_dump(exclude_unset=True), usuario_id=usuario.id)
@@ -81,7 +81,7 @@ def leer(informe_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     },
 )
 def actualizar(
-    informe_id: int, datos: InformeActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    informe_id: int, datos: InformeActualizar, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Sólo se tocan las claves presentes; de `sint_escala`, sólo las escalas que vengan (una fila de
     auditoría `sint_escala.esc_N` por escala cambiada). El recibí **no** va por acá: `/recibi`."""
@@ -102,7 +102,7 @@ def actualizar(
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(informe_id: int, datos: InformeFirmar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def firmar(informe_id: int, datos: InformeFirmar, db: SesionTransaccional, usuario: _USUARIO):
     """El IC no tiene evaluadores propios: el cuerpo trae los **dos** `profesional_id` que firman,
     distintos y activos (§5.117 b). LB, PA o PB sin firmar **no bloquean**: avisan con
     `fuera_de_secuencia` y dejan una fila `excepcion`. Deja una fila `auditoria` `tipo='firma'`."""
@@ -121,7 +121,7 @@ def firmar(informe_id: int, datos: InformeFirmar, db: Annotated[Session, Depends
     },
 )
 def agregar_addenda(
-    informe_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    informe_id: int, datos: AddendaCrear, db: SesionTransaccional, usuario: _USUARIO,
 ):
     informe = servicio.agregar_addenda(
         db, informe_id, texto=datos.texto, profesional_id=usuario.id, usuario_id=usuario.id,
@@ -141,7 +141,7 @@ def agregar_addenda(
     },
 )
 def registrar_recibi(
-    informe_id: int, datos: RecibiCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    informe_id: int, datos: RecibiCrear, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """`{firmante, fecha}` de la familia, **después** de la firma y **una sola vez** (§5.117 e). Registra
     la entrega: no edita el contenido firmado. Deja una fila `auditoria` `tipo='carga'`."""

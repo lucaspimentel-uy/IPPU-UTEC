@@ -1,8 +1,10 @@
 # --- API ---
-# fastapi: NO subir sin correr tests/test_m11_3a3_convenciones.py. Desde ~0.118 el código de salida de
-# las dependencias con `yield` corre DESPUÉS de enviar la respuesta: el `commit()` de
-# `sesion_transaccional` fallaría con el 201 ya en el cable (§5.115 d).
-fastapi==0.115.6
+# fastapi: NO bajar de 0.121 y NO subir sin correr tests/test_m11_3a3_convenciones.py. Desde 0.118 el código de salida
+# de las dependencias con `yield` corre, por omisión (scope="request"), DESPUÉS de enviar la respuesta: el `commit()` de
+# `sesion_transaccional` fallaría con el 201 ya en el cable. Desde 0.121 `Depends(..., scope="function")` lo corre
+# antes de enviarla: los endpoints piden `SesionTransaccional` (app/routers/dependencias.py), que lo declara en un solo
+# lugar (§5.177; reemplaza el §5.115 d, que fijaba 0.115.6). Starlette viene con FastAPI y no se fija aparte.
+fastapi==0.163.1
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
 pydantic-settings==2.7.1
@@ -17,12 +19,15 @@ psycopg[binary]==3.2.3
 # `bcrypt` directo y no `passlib[bcrypt]`: passlib 1.7.4 (sin mantenimiento) falla con bcrypt ≥ 4.1
 # al hashear (`ValueError: password cannot be longer than 72 bytes` en su prueba interna).
 bcrypt==5.0.0
-python-jose[cryptography]==3.3.0
+# PyJWT y no python-jose (§5.177): jose tenía 4 avisos de pip-audit, sin versión que arregle dos, y arrastraba ecdsa (sin versión arreglada).
+PyJWT==2.15.1
 # python-multipart: 0.0.31 es la más baja que arregla los seis avisos de pip-audit (CVE-2026-24486, -40347, -42561,
-# -53538, -53539, -53540; §5.157 d), que se alcanzan sin token. Anda con starlette 0.41.3 (importa `python_multipart`).
+# -53538, -53539, -53540; §5.157 d), que se alcanzan sin token. Anda con starlette 1.10.0 (importa `python_multipart`).
 # `tests/test_dependencias.py` falla si la instalada es más vieja que este pin.
 python-multipart==0.0.31
 
 # --- Dev / tests ---
 pytest==8.3.4
 httpx==0.28.1
+# pypdf: `conectada.js` lee el PDF del informe de cierre con el `python` del PATH, que el runner arma con este `.venv` primero (§5.177 e).
+pypdf==7.1.0

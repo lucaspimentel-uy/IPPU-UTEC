@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, permitido, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, permitido, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.inclusion import (
@@ -104,7 +104,7 @@ def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
         409: {"model": RespuestaError, "description": "El expediente ya tiene ficha: se edita con PATCH."},
     },
 )
-def registrar(hce_id: int, datos: FichaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def registrar(hce_id: int, datos: FichaCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Una por expediente. **422** con `campo` null si todo viene vacío, **409** la segunda vez. Con `estado`,
     el servidor fija `fecha_estado` = hoy. Deja una fila de `auditoria` `tipo='carga'`."""
     ficha = servicio.crear_ficha(db, hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -115,7 +115,7 @@ def registrar(hce_id: int, datos: FichaCrear, db: Annotated[Session, Depends(ses
     "", response_model=Resultado[FichaDetalle], summary="Edición parcial de la ficha de inclusión",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_FICHA), **_ERROR_404_FICHA, **_ERROR_422},
 )
-def actualizar(hce_id: int, datos: FichaActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar(hce_id: int, datos: FichaActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo se tocan las claves presentes; `null` borra un campo, salvo `estado` (422). Si el estado cambia,
     `fecha_estado` = hoy. Cada campo que cambia deja **una fila** de auditoría con el valor anterior y el
     nuevo (también `fecha_estado`); si nada cambió, ninguna."""
@@ -150,7 +150,7 @@ def listar_bitacora(hce_id: int, response: Response, db: Annotated[Session, Depe
         )},
     },
 )
-def crear_gestion(hce_id: int, datos: GestionCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear_gestion(hce_id: int, datos: GestionCrear, db: SesionTransaccional, usuario: _USUARIO):
     """`fecha`, `interlocutor`, `tema` y `contenido` obligatorios (los textos no en blanco). El autor es el
     usuario del token: `autor_id` en el cuerpo es 422. Deja una fila `carga` que no nombra el tema ni el
     contenido."""

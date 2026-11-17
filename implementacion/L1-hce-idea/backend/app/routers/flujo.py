@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.consentimiento import (
@@ -71,7 +71,7 @@ def leer_consentimiento(hce_id: int, db: Annotated[Session, Depends(sesion_lectu
     },
 )
 def registrar_consentimiento(
-    hce_id: int, datos: ConsentimientoCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    hce_id: int, datos: ConsentimientoCrear, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Una vez por expediente. **No traba nada**: registrarlo pasa el estado del CI de `pendiente`
     a `registrado` y nada más. `firmante` y `fecha` son obligatorios; `autorizaciones`, si viene,
@@ -88,7 +88,7 @@ def registrar_consentimiento(
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_CI), **_ERROR_404_CI, **_ERROR_422},
 )
 def actualizar_consentimiento(
-    hce_id: int, datos: ConsentimientoActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    hce_id: int, datos: ConsentimientoActualizar, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Sólo se tocan las claves presentes. Cada campo que cambia deja **una fila** de auditoría
     (`campo`, valor anterior y nuevo); si nada cambió, ninguna."""

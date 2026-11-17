@@ -64,8 +64,7 @@ docker compose up -d                     # Postgres 16 en 127.0.0.1:5440 (conten
 if (-not (Test-Path .venv)) { python -m venv .venv }
 .venv\Scripts\Activate.ps1; pip install -r requirements.txt
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }   # completar SECRET_KEY (obligatoria, §5.119): python -c "import secrets; print(secrets.token_urlsafe(48))"
-Push-Location ..\demo\verificacion; npm ci; npx playwright install chromium; Pop-Location
-pip install pypdf                        # conectada.js lee el PDF del IC con el `python` del PATH
+Push-Location ..\demo\verificacion; npm ci; npx playwright install chromium; Pop-Location   # pypdf (que lee conectada.js) ya viene en requirements.txt
 
 # 2 · Base descartable + esquema + catálogos (DATABASE_URL en ESTA terminal, ANTES de alembic y del seed)
 docker exec ippu-postgres psql -U ippu -d ippu -c "DROP DATABASE IF EXISTS ippu_ver WITH (FORCE)" -c "CREATE DATABASE ippu_ver"

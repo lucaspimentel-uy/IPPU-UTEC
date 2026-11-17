@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.severidad import (
@@ -61,7 +61,7 @@ def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
         409: {"model": RespuestaError, "description": "El expediente ya tiene severidad: se edita con PATCH."},
     },
 )
-def registrar(hce_id: int, datos: SeveridadCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def registrar(hce_id: int, datos: SeveridadCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Una por expediente, **entera**: los dos dominios, la justificación y la fecha. El autor es el
     usuario del token. Deja una fila de `auditoria` `tipo='carga'`."""
     sev = servicio.registrar_severidad(db, hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -74,7 +74,7 @@ def registrar(hce_id: int, datos: SeveridadCrear, db: Annotated[Session, Depends
     summary="Edición parcial de la severidad",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_SEV), **_ERROR_404, **_ERROR_422},
 )
-def actualizar(hce_id: int, datos: SeveridadActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar(hce_id: int, datos: SeveridadActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sin firma: siempre editable. Sólo se tocan las claves presentes (`null` o blanco es 422). Si algo
     cambia, el autor pasa a ser quien edita, y cada campo que cambió deja **una fila** de auditoría con
     el valor anterior y el nuevo (también `profesional_id`); si nada cambió, ninguna."""

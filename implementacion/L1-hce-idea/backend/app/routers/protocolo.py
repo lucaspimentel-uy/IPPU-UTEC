@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
 from app.routers.dependencias import (
-    hce_visible, protocolo_visible, sesion_lectura, sesion_transaccional, usuario_actual,
+    hce_visible, protocolo_visible, sesion_lectura, SesionTransaccional, usuario_actual,
 )
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
@@ -63,7 +63,7 @@ def _detalle(db: Session, protocolo) -> ProtocoloDetalle:
         409: {"model": RespuestaError, "description": "Ya existe un protocolo de ese tipo y año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: ProtocoloCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear(hce_id: int, datos: ProtocoloCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Uno por `(expediente, tipo, año)`. `items` puede venir parcial. Calcula los totales (cada escala
     y el total **sólo completos**; mientras falte un ítem, `null`). `ajustes` sólo en el B.
 
@@ -103,7 +103,7 @@ def leer(protocolo_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_PROTOCOLO), **_ERROR_404, **_ERROR_422, **_ERROR_409_FIRMADO},
 )
 def actualizar(
-    protocolo_id: int, datos: ProtocoloActualizar, db: Annotated[Session, Depends(sesion_transaccional)],
+    protocolo_id: int, datos: ProtocoloActualizar, db: SesionTransaccional,
     usuario: _USUARIO,
 ):
     """Sólo se tocan las claves presentes; de `items`, sólo los ítems que vengan. **Recalcula** los
@@ -138,7 +138,7 @@ def actualizar(
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def firmar(protocolo_id: int, db: SesionTransaccional, usuario: _USUARIO):
     """**Un solo acto** (como el IDEA): firman los dos evaluadores cargados. Valida la integridad del
     Documento Técnico §4.3 (24 ítems, fecha, obs en los 1 y 5, síntesis de los dos técnicos),
     congela los totales y deja una fila `auditoria` `tipo='firma'`.
@@ -163,7 +163,7 @@ def firmar(protocolo_id: int, db: Annotated[Session, Depends(sesion_transacciona
     },
 )
 def agregar_addenda(
-    protocolo_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    protocolo_id: int, datos: AddendaCrear, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Única forma de corregir un protocolo firmado: agrega `{texto, profesional_id, fecha}` y deja
     una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del protocolo."""

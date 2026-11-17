@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_visible, idea_visible, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_visible, idea_visible, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.idea import (
@@ -45,7 +45,7 @@ _ERROR_409_FIRMADO = {409: {
         409: {"model": RespuestaError, "description": "Ya existe un IDEA de ese año para el expediente."},
     },
 )
-def crear(hce_id: int, datos: IdeaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear(hce_id: int, datos: IdeaCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Un IDEA por `(expediente, año)`. `anio` es obligatorio; `dim` puede venir parcial (las
     dimensiones se completan con PATCH). Calcula `total` y las 4 escalas.
 
@@ -120,7 +120,7 @@ def leer(idea_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     summary="Edición parcial de un IDEA sin firmar",
     responses={**_ejemplo(200, EJEMPLO_RESULTADO_IDEA), **_ERROR_404, **_ERROR_422, **_ERROR_409_FIRMADO},
 )
-def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar(idea_id: int, datos: IdeaActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo se tocan las claves presentes; de `dim`, sólo las dimensiones que vengan. **Recalcula**
     `total` y `esc_a`…`esc_d` (sin las dimensiones `NS` ni las vacías). Cada campo que cambia deja
     **una fila** de auditoría; de `dim`, una por dimensión (`campo='dim.D5'`); un PATCH idéntico no
@@ -154,7 +154,7 @@ def actualizar(idea_id: int, datos: IdeaActualizar, db: Annotated[Session, Depen
         409: {"model": RespuestaError, "description": "Ya está firmado (`code: signed_module`)."},
     },
 )
-def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def firmar(idea_id: int, db: SesionTransaccional, usuario: _USUARIO):
     """**Un solo acto** (§5.98: un único puntaje de consenso, acordado en persona): firman los dos
     evaluadores ya cargados en el IDEA. Valida la integridad del Documento Técnico §4.3, recalcula y
     **congela** `total` y escalas, escribe `manual_version` y `firmas` (`{profesional_id, rol, fecha}`
@@ -177,7 +177,7 @@ def firmar(idea_id: int, db: Annotated[Session, Depends(sesion_transaccional)], 
     },
 )
 def agregar_addenda(
-    idea_id: int, datos: AddendaCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    idea_id: int, datos: AddendaCrear, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Es la única forma de corregir un IDEA firmado (§4.1): agrega `{texto, profesional_id, fecha}` a
     `addendas` y deja una fila `auditoria` `tipo='addenda'`. No modifica ningún dato del IDEA."""

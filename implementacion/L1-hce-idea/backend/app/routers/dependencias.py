@@ -28,12 +28,17 @@ def sesion_transaccional(db: Session = Depends(get_db)) -> Iterator[Session]:
     (`Schema.model_validate(...)` dentro de la función): el commit expira los
     objetos del ORM y no se debe depender de que se serialicen después.
 
-    **Un commit que falla tiene que salir como error, no como 2xx.** Eso depende de
-    que FastAPI corra el código de salida de las dependencias *antes* de enviar la
-    respuesta, que es el comportamiento de `fastapi==0.115.x`; versiones posteriores
-    (~0.118+, según su changelog) lo mueven *después*, y un `commit()` fallido pasaría a ser un 201 con
-    datos que no se guardaron. `tests/test_m11_3a3_convenciones.py` lo verifica, y
-    `requirements.txt` fija la versión por esto.
+    **Un commit que falla tiene que salir como error, no como 2xx (§5.177, que reemplaza el §5.115 d).**
+    Desde FastAPI 0.118 el código de salida de una dependencia con `yield` corre, por omisión
+    (`scope="request"`), *después* de enviar la respuesta: un `commit()` fallido sería un 201 con datos
+    que no se guardaron y un error sólo en el log. Con `scope="function"` corre al volver el endpoint y
+    *antes* de enviarla (FastAPI ≥ 0.121). **Por eso los endpoints no la declaran con
+    `Depends(sesion_transaccional)`: usan `SesionTransaccional`** (abajo), el único lugar donde está
+    `scope="function"`. `tests/test_m11_3a3_convenciones.py` falla si se pierde (verificado quitándolo).
+
+    Orden de cierre: esta dependencia (`function`) cierra primero, con el `commit`; `get_db` (`request`,
+    la sesión compartida con `usuario_actual` y la matriz) cierra después. La regla de FastAPI lo permite:
+    una dependencia de scope `function` puede depender de una de scope `request`, no al revés.
     """
     try:
         yield db
@@ -41,6 +46,12 @@ def sesion_transaccional(db: Session = Depends(get_db)) -> Iterator[Session]:
     except BaseException:
         db.rollback()
         raise
+
+
+#: La sesión de las **mutaciones**: `sesion_transaccional` con `scope="function"` declarado en un solo lugar.
+#: `get_db` y `sesion_lectura` quedan con el scope por omisión: no escriben, y que `db.close()` corra después de
+#: enviar la respuesta no puede cambiar lo que recibe el cliente.
+SesionTransaccional = Annotated[Session, Depends(sesion_transaccional, scope="function")]
 
 
 def sesion_lectura(db: Session = Depends(get_db)) -> Session:

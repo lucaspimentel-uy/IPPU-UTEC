@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.models.identidad import Grupo, Profesional
-from app.routers.dependencias import hce_reservado, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_reservado, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import Aviso, FechaOpcional, RespuestaError, Resultado
@@ -75,7 +75,7 @@ def listar(hce_id: int, response: Response, db: Annotated[Session, Depends(sesio
 @router_hce.post("", status_code=201, response_model=Resultado[FotoDetalle], summary="Cargar una foto individual (multipart)",
                  responses={**_ejemplo(201, EJEMPLO_RESULTADO_FOTO), **_ERROR_404_HCE, **_ERRORES_ARCHIVO})
 def cargar(
-    hce_id: int, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    hce_id: int, db: SesionTransaccional, usuario: _USUARIO,
     recibidos: Annotated[frozenset[str], Depends(campos_del_formulario)],
     archivo: _ARCHIVO, descripcion: _DESCRIPCION = None, fecha: _FECHA = None,
 ):
@@ -118,7 +118,7 @@ def listar_grupo(grupo: _GRUPO, response: Response, db: Annotated[Session, Depen
 @router_grupo.post("", status_code=201, response_model=Resultado[FotoDetalle], summary="Cargar una foto grupal (multipart)",
                    responses={**_ejemplo(201, EJEMPLO_RESULTADO_FOTO), **_ERROR_404_GRUPO, **_ERRORES_ARCHIVO})
 def cargar_grupo(
-    grupo: _GRUPO, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    grupo: _GRUPO, db: SesionTransaccional, usuario: _USUARIO,
     recibidos: Annotated[frozenset[str], Depends(campos_del_formulario)],
     archivo: _ARCHIVO, descripcion: _DESCRIPCION = None, fecha: _FECHA = None,
 ):

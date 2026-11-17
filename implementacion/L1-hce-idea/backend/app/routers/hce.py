@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.models.identidad import Profesional
 from app.routers.dependencias import (
-    hce_identificacion, hce_visible, permitido, sesion_lectura, sesion_transaccional, usuario_actual,
+    hce_identificacion, hce_visible, permitido, sesion_lectura, SesionTransaccional, usuario_actual,
 )
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.hce import (
@@ -87,7 +87,7 @@ def _ejemplo(status: int, cuerpo) -> dict:
     },
 )
 def crear(
-    datos: HceCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    datos: HceCrear, db: SesionTransaccional, usuario: _USUARIO,
     _condicion: Annotated[str | None, Depends(permitido("hce.alta"))],
 ):
     """Crea la persona y su expediente en **una sola transacción**.
@@ -225,7 +225,7 @@ def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     dependencies=_VISIBLE,
 )
 def actualizar(
-    hce_id: int, datos: HceActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    hce_id: int, datos: HceActualizar, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """HCE-00 **siempre es editable** (sin firma), **por el equipo tratante** (F4-4, F4-5: quien no trata no escribe;
     coordinación y administrativo editan lo logístico por `PATCH /hce/{id}/identificacion`). Sólo se tocan las claves que
@@ -268,7 +268,7 @@ def leer_identificacion(hce_id: int, db: Annotated[Session, Depends(sesion_lectu
     dependencies=[Depends(hce_identificacion)],
 )
 def actualizar_identificacion(
-    hce_id: int, datos: IdentificacionActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO,
+    hce_id: int, datos: IdentificacionActualizar, db: SesionTransaccional, usuario: _USUARIO,
 ):
     """Las reglas de `PATCH /hce/{id}` sobre **sólo** la persona, `hc_historico`, `grupo_id`, `activo` y `fecha_baja`:
     otra clave es 422 por campo. Mover el expediente de grupo (un pase de caso) cambia desde este pedido quién es

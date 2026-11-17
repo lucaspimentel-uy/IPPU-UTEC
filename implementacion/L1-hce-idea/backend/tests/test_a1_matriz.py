@@ -37,7 +37,7 @@ from app.models.acceso import AccesoHce
 from app.models.identidad import Grupo, HceDiurna, Profesional
 from app.seed_catalogos import run as sembrar_catalogos
 from app.services import matriz
-from tests.conftest import _fabrica_sesiones
+from tests.conftest import _fabrica_sesiones, rutas_api
 
 CSV = Path(__file__).resolve().parents[4] / "docs" / "diseno" / "fase4-matriz-rutas.csv"
 FILAS = list(csv.DictReader(CSV.open(encoding="utf-8")))
@@ -85,7 +85,7 @@ def test_el_csv_no_tiene_filas_repetidas_ni_sin_fuente():
 
 
 def test_las_rutas_de_la_app_son_las_filas_del_csv():
-    rutas = {(m, r.path) for r in app.routes if hasattr(r, "methods") and r.endpoint.__module__.startswith("app.routers.")
+    rutas = {(m, r.path) for r in rutas_api() if r.endpoint.__module__.startswith("app.routers.")
              for m in r.methods - {"HEAD", "OPTIONS"}}
     assert rutas == {(f["metodo"], f["ruta"]) for f in FILAS}
 

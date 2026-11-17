@@ -441,3 +441,17 @@ def crear_grupo(db_api):
         return g
 
     return _crear
+
+
+def rutas_api():
+    """Cada ruta real de la app (un `RouteContext`: `.path` completo, `.methods`, `.endpoint`), sin las de Starlette
+    (`/docs`, `/openapi.json`).
+
+    **No recorrer `app.routes`** (§5.177): desde FastAPI 0.16x los routers incluidos son `_IncludedRouter` perezosos y
+    `app.routes` ya no trae las rutas: un barrido sobre él ve 0 y pasa en vacío (o falla con «0 > 60»). Lo mismo que usa
+    FastAPI para armar `openapi.json`."""
+    from fastapi.routing import APIRoute, iter_route_contexts
+
+    from app.main import app
+
+    return [c for c in iter_route_contexts(app.routes) if isinstance(c.original_route, APIRoute)]

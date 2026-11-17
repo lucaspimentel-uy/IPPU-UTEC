@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.identidad import Profesional
-from app.routers.dependencias import permitido, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import permitido, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.documentos import DESCARGA, campos_del_formulario, exigir_campos, respuesta_de_archivo
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.ateneos import (
@@ -118,7 +118,7 @@ def listar(
 
 @router.post("", status_code=201, response_model=Resultado[AteneoDetalle], summary="Registrar un ateneo o una jornada",
              responses={**_ejemplo(201, EJEMPLO_RESULTADO), **_ERROR_422}, dependencies=[Depends(permitido("ateneos.alta"))])
-def registrar(datos: AteneoCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def registrar(datos: AteneoCrear, db: SesionTransaccional, usuario: _USUARIO):
     """**Un solo POST completo** con sus acuerdos. El servidor asigna el código (`AT-<año de hoy>-<siguiente>`), el autor
     (el usuario del token) y deja una fila `carga`. Una fecha fuera del año del grupo es un **aviso**, no un error."""
     ateneo, avisos = servicio.crear(db, datos.model_dump(exclude_unset=True), usuario=usuario)
@@ -134,7 +134,7 @@ def leer(ateneo_id: int, db: Annotated[Session, Depends(sesion_lectura)], usuari
 
 @router_ateneo.patch("", response_model=Resultado[AteneoDetalle], summary="Editar un ateneo",
                      responses={**_ejemplo(200, EJEMPLO_RESULTADO), **_ERROR_404, **_ERROR_422})
-def editar(ateneo_id: int, datos: AteneoActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def editar(ateneo_id: int, datos: AteneoActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo las claves presentes. La forma se valida sobre el estado **final** (cambiar un clínico a otro tipo exige
     `hce_referida_id: null` en el mismo pedido). Cada campo que cambia deja una fila de auditoría."""
     ateneo, avisos = servicio.actualizar(db, ateneo_id, datos.model_dump(exclude_unset=True), usuario=usuario)
@@ -143,7 +143,7 @@ def editar(ateneo_id: int, datos: AteneoActualizar, db: Annotated[Session, Depen
 
 @router_ateneo.post("/acuerdos", status_code=201, response_model=Resultado[AcuerdoDetalle], summary="Agregar un acuerdo",
                     responses={**_ejemplo(201, EJEMPLO_ACUERDO), **_ERROR_404, **_ERROR_422})
-def agregar_acuerdo(ateneo_id: int, datos: AcuerdoCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def agregar_acuerdo(ateneo_id: int, datos: AcuerdoCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Al final del acta. Una jornada no lleva acuerdos (422). Deja una fila `carga`."""
     acuerdo = servicio.crear_acuerdo(db, ateneo_id, datos.model_dump(exclude_unset=True), usuario=usuario)
     return Resultado(data=AcuerdoDetalle.model_validate(servicio.vista_acuerdo(acuerdo)))
@@ -152,7 +152,7 @@ def agregar_acuerdo(ateneo_id: int, datos: AcuerdoCrear, db: Annotated[Session, 
 @router_ateneo.patch("/acuerdos/{acuerdo_id}", response_model=Resultado[AcuerdoDetalle], summary="Editar un acuerdo",
                      responses={**_ejemplo(200, EJEMPLO_ACUERDO), **_ERROR_404, **_ERROR_422})
 def editar_acuerdo(ateneo_id: int, acuerdo_id: int, datos: AcuerdoActualizar,
-                   db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+                   db: SesionTransaccional, usuario: _USUARIO):
     """Un acuerdo equivocado se edita (no se borra). Cada campo que cambia deja una fila de auditoría."""
     acuerdo = servicio.actualizar_acuerdo(db, ateneo_id, acuerdo_id, datos.model_dump(exclude_unset=True), usuario=usuario)
     return Resultado(data=AcuerdoDetalle.model_validate(servicio.vista_acuerdo(acuerdo)))
@@ -181,7 +181,7 @@ def listar_documentos(ateneo_id: int, response: Response, db: Annotated[Session,
 )
 def adjuntar(
     ateneo_id: int,
-    db: Annotated[Session, Depends(sesion_transaccional)],
+    db: SesionTransaccional,
     usuario: _USUARIO,
     recibidos: Annotated[frozenset[str], Depends(campos_del_formulario)],
     archivo: Annotated[UploadFile, File(description="PDF, JPG, PNG o PPTX (por el contenido), hasta 10 MB.")],

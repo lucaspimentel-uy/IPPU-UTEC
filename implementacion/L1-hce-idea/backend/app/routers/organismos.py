@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.constantes import ORGANISMOS
 from app.models.identidad import Profesional
-from app.routers.dependencias import hce_organismos, sesion_lectura, sesion_transaccional, usuario_actual
+from app.routers.dependencias import hce_organismos, sesion_lectura, SesionTransaccional, usuario_actual
 from app.routers.hce import CABECERA_TOTAL, _ejemplo
 from app.schemas.comunes import RespuestaError, Resultado
 from app.schemas.organismos import (
@@ -70,7 +70,7 @@ def leer(hce_id: int, db: Annotated[Session, Depends(sesion_lectura)]):
     "/inau", status_code=201, response_model=Resultado[InauDetalle], summary="Registrar el vínculo con INAU",
     responses={**_ejemplo(201, EJEMPLO_INAU), **_ERROR_404, **_ERROR_422, **_ERROR_409},
 )
-def crear_inau(hce_id: int, datos: InauCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear_inau(hce_id: int, datos: InauCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Uno por expediente. **422** si todos los campos vienen vacíos (un vínculo vacío no dice nada) y
     **409** la segunda vez. Deja una fila de `auditoria` `tipo='carga'`."""
     fila = servicio.crear_vinculo(db, "inau", hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -81,7 +81,7 @@ def crear_inau(hce_id: int, datos: InauCrear, db: Annotated[Session, Depends(ses
     "/inau", response_model=Resultado[InauDetalle], summary="Edición parcial del vínculo con INAU",
     responses={**_ejemplo(200, EJEMPLO_INAU), **_ERROR_404_VINCULO, **_ERROR_422},
 )
-def actualizar_inau(hce_id: int, datos: InauActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar_inau(hce_id: int, datos: InauActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo se tocan las claves presentes; `null` borra el campo. Cada campo que cambia deja **una fila**
     de auditoría (`inau.<campo>`) con el valor anterior y el nuevo; si nada cambió, ninguna."""
     fila = servicio.actualizar_vinculo(db, "inau", hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -93,7 +93,7 @@ def actualizar_inau(hce_id: int, datos: InauActualizar, db: Annotated[Session, D
     "/bps", status_code=201, response_model=Resultado[BpsDetalle], summary="Registrar el vínculo con BPS",
     responses={**_ejemplo(201, EJEMPLO_BPS), **_ERROR_404, **_ERROR_422, **_ERROR_409},
 )
-def crear_bps(hce_id: int, datos: BpsCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear_bps(hce_id: int, datos: BpsCrear, db: SesionTransaccional, usuario: _USUARIO):
     """Uno por expediente. **422** si todos los campos vienen vacíos y **409** la segunda vez. La respuesta
     trae la `alerta` AYEX. Deja una fila de `auditoria` `tipo='carga'`."""
     fila = servicio.crear_vinculo(db, "bps", hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -104,7 +104,7 @@ def crear_bps(hce_id: int, datos: BpsCrear, db: Annotated[Session, Depends(sesio
     "/bps", response_model=Resultado[BpsDetalle], summary="Edición parcial del vínculo con BPS",
     responses={**_ejemplo(200, EJEMPLO_BPS), **_ERROR_404_VINCULO, **_ERROR_422},
 )
-def actualizar_bps(hce_id: int, datos: BpsActualizar, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def actualizar_bps(hce_id: int, datos: BpsActualizar, db: SesionTransaccional, usuario: _USUARIO):
     """Sólo se tocan las claves presentes; `null` borra el campo. Una fila de auditoría (`bps.<campo>`) por
     campo que cambió, ninguna si nada cambió. La `alerta` AYEX no deja fila: se calcula, no se guarda."""
     fila = servicio.actualizar_vinculo(db, "bps", hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
@@ -145,7 +145,7 @@ def listar_registros(
     "/registros", status_code=201, response_model=Resultado[RegistroDetalle], summary="Registrar un envío o una gestión",
     responses={**_ejemplo(201, EJEMPLO_REGISTRO), **_ERROR_404, **_ERROR_422},
 )
-def crear_registro(hce_id: int, datos: RegistroCrear, db: Annotated[Session, Depends(sesion_transaccional)], usuario: _USUARIO):
+def crear_registro(hce_id: int, datos: RegistroCrear, db: SesionTransaccional, usuario: _USUARIO):
     """`organismo`, `fecha` y `detalle` (no en blanco) son obligatorios. El autor es el usuario del token:
     `autor_id` en el cuerpo es 422. Deja una fila de `auditoria` `tipo='carga'`."""
     registro, autor = servicio.crear_registro(db, hce_id, datos.model_dump(exclude_unset=True), profesional_id=usuario.id)
