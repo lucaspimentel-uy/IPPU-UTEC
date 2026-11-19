@@ -248,6 +248,11 @@
     width:var(--sidebar-w);background:var(--navy-2);padding:var(--s4) 0;flex:0 0 auto;
     display:flex;flex-direction:column;
   }
+  /* D3 (§5.179 e): por encima de 760 px la lateral (logo y navegación) queda a la vista mientras baja la columna principal; si la navegación es
+     más alta que la ventana, la lateral se desplaza sola. No tapa nada (va al lado del contenido, WCAG 2.2 · 2.4.11). A ≤ 760 px es la fila de siempre. */
+  @media(min-width:761px){
+    .sidebar{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:var(--navy-3) var(--navy-2)}
+  }
   .sidebar .sec{
     font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;
     color:var(--on-dark-3);padding:var(--s4) var(--s5) var(--s2)
@@ -990,7 +995,7 @@
   /* M9 · HCE-VF — valoración funcional (BUND/CIF) */
   .vf-alerta,.org-alerta{
     border:1px solid var(--warn-line);border-left:3px solid var(--warn);background:var(--warn-soft);
-    padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-xs);margin:var(--s3) 0;line-height:1.55
+    padding:var(--s3) var(--s4);border-radius:var(--r-sm);font-size:var(--fs-sm);margin:var(--s3) 0;line-height:1.55;border-left-width:4px
   }
   .vf-alerta.bad{border-color:var(--bad-line);border-left-color:var(--bad);background:var(--bad-soft)}
   .vf-salva{
@@ -1244,7 +1249,9 @@
   .ev-confirma>span{max-width:36ch;line-height:1.35}
   .ev-alerta{font-weight:700;color:var(--ink)}
   .ev-alertas{margin-bottom:var(--s3)}
-  .tot-lectura{font-size:var(--fs-xl);font-weight:700;font-variant-numeric:tabular-nums}
+  /* D3 (§5.179 c): el total del IDEA, del PA y del PB es la cifra más grande de su panel (28 px, antes 22) y la banda va al menos al tamaño del cuerpo. */
+  .tot-lectura{font-size:var(--fs-2xl);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+  .ev-puntaje .banda-chip{font-size:var(--fs-md);line-height:1.25}   /* un renglón: 32 px de alto, como pide f3-banda (< 34) */
   .tot-lectura small{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
   .ev-puntaje{display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
   .ev-largo{white-space:pre-wrap;text-align:left}
@@ -1266,7 +1273,7 @@
     padding:var(--s2);border-bottom:1px solid var(--rule-2)
   }
   .comp-table tr:last-child th[scope="row"]{border-bottom:none}
-  .ic-total th,.ic-total td{border-top:2px solid var(--ink-3)}
+  .ic-total th,.ic-total td,.comp-table .ic-total th[scope="row"]{border-top:2px solid var(--ink-3);font-size:var(--fs-md)}   /* D3 (§5.179 c): la fila de totales y el Δ, por encima del cuerpo de la tabla */
   .ic-nota{font-size:var(--fs-3xs);color:var(--ink-2);margin:var(--s2) 0 0;line-height:1.5}
   .ic-radars-nota{flex:0 0 100%;text-align:center}
   .ic-legend span{display:inline-flex;align-items:center;gap:var(--s1)}
@@ -1326,7 +1333,9 @@
   .estado-inline .estado-msg-txt{flex:1 1 auto}
 
   /* --- Avisos no bloqueantes de la API y «Cambió en el servidor» (warn): glifo + texto --- */
-  .avisos-api{margin-bottom:var(--s4);background:var(--aviso-bg);border-color:var(--aviso-borde);border-left-color:var(--aviso-borde);color:var(--aviso-fg)}
+  /* D3 (§5.179 c): los avisos (fuera de secuencia, CI pendiente) y la alerta AYEX se despegan del cuerpo: 14 px (antes 12 y 13), filete de 4 px y el ⚠ a 16 px. */
+  .avisos-api{margin-bottom:var(--s4);background:var(--aviso-bg);border-color:var(--aviso-borde);border-left-color:var(--aviso-borde);color:var(--aviso-fg);font-size:var(--fs-sm);border-left-width:4px}
+  .avisos-api>[aria-hidden="true"]:first-child,.vf-alerta>[aria-hidden="true"]:first-child{font-size:var(--fs-md)}
   .avisos-api b{color:var(--aviso-fg)}
 
   /* --- Acciones --- */
@@ -1374,16 +1383,22 @@
     padding:6px var(--s4);margin-bottom:6px
   }
   .banda-id{flex:0 1 auto;min-width:12rem}
-  .banda-nna h1{font-family:var(--f-display);font-size:1.125rem;font-weight:600;line-height:1.2;color:var(--ink)}
+  /* D3 (§5.179 c): el nombre y los identificadores son lo primero que se lee del expediente: el nombre a 20 px (antes 18) y HC y C.I. en tinta a 600. */
+  .banda-nna h1{font-family:var(--f-display);font-size:var(--fs-lg);font-weight:600;line-height:1.2;color:var(--ink)}
   .banda-meta{font-size:var(--fs-2xs);line-height:1.3;color:var(--ink-2)}
+  .banda-meta .cod{font-weight:600}
   .banda-meta .chip-inactivo{margin-left:var(--s1)}
   /* La alerta clínica: tinta sobre papel, con ⚠ y texto. No es un estado de la app: nunca ok/warn/bad. */
+  /* D3 (§5.179 f): la alerta mide lo que su texto (antes `flex:1 1 180px` estiraba el recuadro hasta el ancho libre); una larga se achica y se parte. */
   .banda-alerta{
-    flex:1 1 180px;min-width:0;max-width:64ch;margin:0;font-size:var(--fs-2xs);line-height:1.35;color:var(--ink);
+    flex:0 1 auto;min-width:0;max-width:64ch;margin:0;font-size:var(--fs-2xs);line-height:1.35;color:var(--ink);
     background:var(--paper);border:1px solid var(--ink);border-radius:var(--r-sm);padding:2px var(--s2)
   }
   .banda-editar{margin-left:auto;flex:0 0 auto}
   @media(min-width:761px){.banda-nna{flex-wrap:nowrap}}   /* un solo renglón: si la alerta es larga, se parte ella */
+  /* D3 (§5.179 c, f): en ese renglón el nombre y los identificadores no ceden ante la alerta (que ahora mide su texto): no se achican hasta el 60 % de
+     la banda y antes se parte la alerta; en una banda más angosta que eso se parten ellos. */
+  @media(min-width:761px){.banda-id{flex:0 0 auto;max-width:60%}}
   @media(max-width:760px){
     .banda-nna{position:static}
     html:has(#view-expediente.active .banda-nna){scroll-padding-top:calc(var(--topbar-h) + 12px)}
@@ -1426,21 +1441,41 @@
     color:var(--ink-2);white-space:nowrap
   }
   .tabs-grupo-fila{display:flex;flex-wrap:wrap;align-items:stretch;border-bottom:1px solid var(--rule)}   /* en pantallas angostas la fila de un grupo parte, nunca desborda la página */
+  /* D3 (§5.179 d): pestañas más grandes dentro del margen medido de f1-tabs y f1-a: 4 px más altas (relleno 4/5/5, antes 2/5/3). Más anchas
+     no entran: a 1280 px el ancho del nombre a 700 que se reserva (ver .tab-nombre) ya usa parte de la holgura, y con 1 px más de relleno por lado
+     o el nombre a 13 px la tira quedaba con menos de 40 px libres (f1-tabs). */
   .exp-tab{
     display:flex;flex-direction:column;align-items:flex-start;gap:0;text-align:left;
-    padding:2px 5px 3px;border:1px solid var(--rule);border-bottom:none;margin-left:-1px;
+    padding:4px 5px 5px;border:1px solid var(--rule);border-bottom:none;margin-left:-1px;
     background:var(--paper-2);color:var(--ink-2);border-radius:var(--r-sm) var(--r-sm) 0 0
   }
   .tabs-grupo-fila .exp-tab:first-child{margin-left:0}
   .exp-tab:hover{background:var(--paper)}
-  .exp-tab .tab-nombre{font-size:var(--fs-2xs);font-weight:600;line-height:1.25;color:var(--ink);white-space:nowrap}
+  .exp-tab:hover .tab-nombre{color:var(--ink)}
+  /* D3 (§5.179 a): las cerradas, el nombre en --ink-2 a 600; la abierta, en --ink a 700 (ver [aria-selected]). El ::after reserva el ancho del
+     nombre a 700 en todas, así abrir una pestaña no corre a las vecinas. */
+  .exp-tab .tab-nombre{display:inline-grid;font-size:var(--fs-2xs);font-weight:600;line-height:1.25;color:var(--ink-2);white-space:nowrap}
+  .exp-tab .tab-nombre::after{content:attr(data-nombre);font-weight:700;height:0;overflow:hidden;visibility:hidden}
+  /* D3 (§5.179 c): el estado del ciclo, la addenda y «fuera de secuencia» en la pestaña son un glifo de 16 px (antes 12), sin agrandar el renglón. */
+  .exp-tab .tab-cod .st-mini>[aria-hidden="true"],.exp-tab .tab-prox>[aria-hidden="true"]{display:inline-block;font-size:var(--fs-md);line-height:15px}
+  .exp-tab .tab-cod{height:15px}   /* el renglón del código mide lo mismo que con el glifo de 12 px */
+  /* D3 (§5.179 b): el próximo paso del ciclo (el primer módulo de CI → LB → PA → PB → IC sin firmar / registrar, de GET /hce/{id}/flujo): → en tinta en
+     su pestaña y «→ Próximo paso: <pestaña>» en el rótulo «Ciclo anual»; no se guarda ni bloquea nada (§5.95). */
+  .exp-tab .tab-prox{color:var(--ink);font-family:var(--f-text);font-weight:700}
+  .tabs-grupo-ciclo .tabs-grupo-rot{width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis}   /* el rótulo no ensancha el grupo */
+  .tabs-prox-rot{color:var(--ink)}
+  .tabs-prox-rot b{font-weight:700}
   .exp-tab .tab-cod{
     display:inline-flex;align-items:center;gap:4px;font-family:var(--f-dato);font-size:var(--fs-3xs);font-weight:400;
     line-height:1.25;color:var(--ink-2);white-space:nowrap
   }
   /* «Solo demo» en la pestaña: marca compacta (glifo ◇ + texto sólo para lectores de pantalla); el panel de adentro lo dice completo. */
   .exp-tab .solo-demo{border:0;background:none;padding:0;color:var(--ink-2);font-size:var(--fs-3xs);font-weight:600;line-height:1.25}
-  .exp-tab[aria-selected="true"]{position:relative;z-index:1;background:var(--paper);box-shadow:inset 0 3px 0 var(--orange);margin-bottom:-1px;padding-bottom:4px}
+  /* D3 (§5.179 a): la abierta se lee de un vistazo con el mismo patrón en todas: fondo --paper (las otras --paper-2), filete naranja de 4 px (antes 3),
+     borde --ink-3 (las otras --rule) y el nombre en --ink a 700. aria-selected y el foco itinerante no cambian. */
+  .exp-tab[aria-selected="true"]{position:relative;z-index:2;background:var(--paper);border-color:var(--ink-3);box-shadow:inset 0 4px 0 var(--orange);margin-bottom:-1px;padding-bottom:6px}
+  .exp-tab[aria-selected="true"] .tab-nombre{color:var(--ink);font-weight:700}
+  .exp-tab[aria-selected="true"] .tab-cod{color:var(--ink)}
   .exp-tab:focus-visible{outline-offset:-2px}   /* hacia adentro: la pestaña toca a sus vecinas y al filete de abajo */
   .st-mini.st-fuera{color:var(--ink);font-weight:700}
   .ayuda-panel{
@@ -1512,6 +1547,8 @@
   .res-celda{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
   .res-rot{display:block;font-family:var(--f-text);font-size:var(--fs-2xs);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-2)}
   .res-tot b,.res-delta{font-size:var(--fs-lg);font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+  /* D3 (§5.179 c): los totales B y A y el Δ total son las cifras más grandes del «Resultado» (28 px); el Δ de cada escala sigue a 20 px. */
+  .res-tot b,.res-celda[data-delta="total"] .res-delta{font-size:var(--fs-2xl)}
   .res-tot small{font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
   .res-etq{font-size:var(--fs-xs);font-weight:600;color:var(--ink)}
   .res-accion{font-size:var(--fs-2xs);color:var(--ink-2);line-height:1.45}

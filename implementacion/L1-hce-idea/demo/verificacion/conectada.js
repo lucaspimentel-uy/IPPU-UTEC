@@ -1356,6 +1356,105 @@ async function loguear(page) {
       radares.length >= 6 && radares.every((r) => r.n >= 7 && r.min >= 11.99 && r.fuera === 0), JSON.stringify(radares));
     await p3.setViewportSize({ width: 1280, height: 800 });
 
+    /* =====================================================================================================================
+       D3 (§5.179): la pestaña abierta, el próximo paso del ciclo, la lateral fija y el énfasis de los resultados. Sólo lee.
+       Va acá (antes de 3c, que firma el PA de Sofía): Sofía tiene LB firmado y PA en borrador; Martín, todo firmado; Bruno, sin CI.
+       ===================================================================================================================== */
+    {
+      /* ---------- d3-tab: la pestaña abierta se distingue de TODAS las cerradas en dos o más propiedades calculadas de la pestaña misma, a 1280 y a 1024,
+                    y es el mismo patrón con otra pestaña abierta (LB y ORG); aria-selected y tabindex="0" sólo en la abierta ---------- */
+      const tabD3 = [];
+      for (const [w, hh] of tamanios3) {
+        await p3.setViewportSize({ width: w, height: hh });
+        for (const k of ['lb', 'org']) {
+          await abrir3(idM3, k);
+          await p3.mouse.move(5, hh - 5);   // sin puntero sobre una pestaña (el :hover también cambia el fondo)
+          tabD3.push(await p3.evaluate(([ww, kk]) => {
+            const props = (t) => { const cs = getComputedStyle(t), n = getComputedStyle(t.querySelector('.tab-nombre'));
+              return { fondo: cs.backgroundColor, sombra: cs.boxShadow, borde: cs.borderTopColor, peso: n.fontWeight, color: n.color }; };
+            const tabs = [...document.querySelectorAll('.exp-tab')], sel = tabs.filter((t) => t.getAttribute('aria-selected') === 'true');
+            const abierta = sel.length === 1 ? props(sel[0]) : null, otras = tabs.filter((t) => t !== sel[0]).map(props);
+            const tabPropia = ['fondo', 'sombra', 'borde'].filter((p) => abierta && otras.every((o) => o[p] !== abierta[p]));
+            const nombre = ['peso', 'color'].filter((p) => abierta && otras.every((o) => o[p] !== abierta[p]));
+            return { ww, k: kk, abierta: sel.length === 1 ? sel[0].dataset.tab : sel.length, foco0: tabs.filter((t) => t.tabIndex === 0).map((t) => t.dataset.tab).join(','), tabPropia, nombre, estilo: abierta }; }, [w, k]));
+        }
+      }
+      await p3.setViewportSize({ width: 1280, height: 800 });
+      const mismoPatron = tabD3.filter((x) => x.ww === 1280).map((x) => JSON.stringify(x.estilo));
+      check('d3-tab', 'la pestaña abierta se lee como abierta (D3, §5.179 a): a 1280×800 y a 1024×768 difiere de cada pestaña cerrada en dos o más propiedades calculadas de la pestaña (fondo, filete, borde) y además en el peso y el color del nombre; con LB o con ORG abierta es el mismo patrón; aria-selected y tabindex="0" sólo en la abierta',
+        tabD3.length === 4 && tabD3.every((x) => x.abierta === x.k && x.foco0 === x.k && x.tabPropia.length >= 2 && x.nombre.length === 2) && mismoPatron[0] === mismoPatron[1],
+        JSON.stringify(tabD3.map(({ ww, k, tabPropia, nombre, estilo }) => ({ ww, k, tabPropia, nombre, estilo: ww === 1280 && k === 'lb' ? estilo : undefined }))).slice(0, 700));
+
+      /* ---------- d3-proximo: el próximo paso del ciclo = la primera de CI → LB → PA → PB → IC sin firmar / registrar en GET /hce/{id}/flujo (Sofía: PA;
+                    Bruno, sin CI: CI; Martín, todo firmado: ninguna), con → y «próximo paso» para lectores de pantalla en la pestaña y «→ Próximo paso: …» en el rótulo ---------- */
+      const idB3 = await id3('Bruno');
+      const proxD3 = {};
+      for (const [nom, id] of [['sofia', idS3], ['bruno', idB3], ['martin', idM3]]) {
+        await abrir3(id, 'hce00');
+        const f = (await get3(`/hce/${id}/flujo`)).json;
+        const est = { CI: f.ci, ...Object.fromEntries((f.modulos || []).map((m) => [m.modulo.replace('HCE-', ''), m.estado])) };
+        proxD3[nom] = { api: ['CI', 'LB', 'PA', 'PB', 'IC'].map((k) => k + ':' + est[k]).join(' '), ...(await p3.evaluate(() => {
+          const marcadas = [...document.querySelectorAll('.exp-tab.tab-proximo')];
+          const m = marcadas[0], g = m && m.querySelector('.tab-prox > [aria-hidden="true"]'), sr = m && m.querySelector('.tab-prox .sr-only'), rot = document.querySelector('.tabs-grupo-ciclo .tabs-grupo-rot');
+          return { marcadas: marcadas.map((t) => t.dataset.tab).join(','), glifo: g ? g.textContent : '', glifoPx: g ? parseFloat(getComputedStyle(g).fontSize) : 0, sr: sr ? sr.textContent : '',
+            titulo: m ? m.title : '', rotulo: rot.textContent.replace(/\s+/g, ' ').trim(), rotPx: parseFloat(getComputedStyle(rot).fontSize), rotRecortado: rot.scrollWidth > rot.clientWidth + 1 }; })) };
+      }
+      const pD = proxD3;
+      check('d3-proximo', 'el próximo paso del ciclo (D3, §5.179 b): Sofía (LB firmado, PA en borrador) lleva marcada sólo PA; Bruno (sin CI) sólo CI; Martín (todo firmado) ninguna; la pestaña marcada lleva → (≥ 12 px) y «, próximo paso» para lectores de pantalla y el tooltip lo dice; el rótulo «Ciclo anual» dice «→ Próximo paso: <pestaña>» (≥ 12 px, sin recortar) y, sin próximo paso, nada',
+        pD.sofia.marcadas === 'pa' && /^CI:registrado LB:firmado PA:en_curso/.test(pD.sofia.api) && pD.bruno.marcadas === 'ci' && /^CI:(?!registrado)/.test(pD.bruno.api) && pD.martin.marcadas === '' && /^CI:registrado LB:firmado PA:firmado PB:firmado IC:firmado$/.test(pD.martin.api)
+          && [pD.sofia, pD.bruno].every((x) => x.glifo === '→' && x.glifoPx >= 12 && x.sr === ', próximo paso' && / — próximo paso$/.test(x.titulo) && x.rotPx >= 12 && !x.rotRecortado)
+          && /Próximo paso: Protocolo A$/.test(pD.sofia.rotulo) && /Próximo paso: Consentimiento$/.test(pD.bruno.rotulo) && !/Próximo paso/.test(pD.martin.rotulo),
+        JSON.stringify(pD).slice(0, 900));
+
+      /* ---------- d3-lateral: por encima de 760 px la lateral queda a la vista al bajar hasta el final del LB de Martín (logo e ítem activo), no pisa el contenido y,
+                    con una ventana más baja que la navegación, se desplaza sola; a 390 px es la fila de siempre (no queda fija) ---------- */
+      const latD3 = [];
+      for (const [w, hh] of [...tamanios3, [1280, 360]]) {
+        await p3.setViewportSize({ width: w, height: hh });
+        await abrir3(idM3, 'lb');
+        await p3.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await p3.waitForTimeout(200);
+        latD3.push(await p3.evaluate(([ww, alto]) => {
+          const sb = document.querySelector('nav.sidebar'), main = document.querySelector('main'), logo = sb.querySelector('img.logo-completo'), act = sb.querySelector('.navitem.active');
+          const r = (e) => e.getBoundingClientRect(), enVista = (e) => { const x = r(e); return x.height > 0 && x.top >= -0.5 && x.bottom <= innerHeight + 0.5; };
+          const centro = (e) => { const x = r(e); const hit = document.elementFromPoint(x.left + x.width / 2, x.top + x.height / 2); return !!hit && e.contains(hit); };
+          const out = { ww, alto, scrollY: Math.round(scrollY), pos: getComputedStyle(sb).position, logo: enVista(logo) && centro(logo), activo: enVista(act) && centro(act), pisa: r(sb).right > r(main).left + 0.5,
+            desplaza: getComputedStyle(sb).overflowY, sobra: sb.scrollHeight > sb.clientHeight };
+          if (out.sobra) { sb.scrollTop = 10000; out.lateralBaja = sb.scrollTop > 0; out.paginaQuieta = Math.round(scrollY) === out.scrollY; out.pieEnVista = enVista(sb.querySelector('.foot')); sb.scrollTop = 0; }
+          return out; }, [w, hh]));
+      }
+      await p3.setViewportSize({ width: 390, height: 800 });
+      await p3.evaluate(() => go('inicio')); await p3.waitForTimeout(200);
+      await p3.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await p3.waitForTimeout(150);
+      const fila390 = await p3.evaluate(() => { const sb = document.querySelector('nav.sidebar'), cs = getComputedStyle(sb), x = sb.getBoundingClientRect();
+        return { pos: cs.position, dir: cs.flexDirection, ancho: Math.round(x.width), alto: Math.round(x.height), scrollY: Math.round(scrollY), seFue: x.bottom <= 0, desborde: document.documentElement.scrollWidth > innerWidth }; });
+      await p3.setViewportSize({ width: 1280, height: 800 });
+      await p3.evaluate(() => window.scrollTo(0, 0));
+      const [l1280, l1024, lBaja] = latD3;
+      check('d3-lateral', 'la lateral fija (D3, §5.179 e): al bajar hasta el final del LB de Martín a 1280×800 y a 1024×768 el logo y el ítem activo siguen a la vista (y en su centro está el elemento mismo) y la lateral no pisa la columna principal; con la ventana más baja que la navegación (1280×360) la lateral se desplaza sola hasta su pie sin mover la página; a 390 px es la fila de siempre (posición estática, en fila, de todo el ancho; al bajar se va con la página), sin desborde',
+        [l1280, l1024].every((x) => x.scrollY > 200 && x.pos === 'sticky' && x.logo && x.activo && !x.pisa && x.desplaza === 'auto')
+          && lBaja.pos === 'sticky' && lBaja.sobra && lBaja.lateralBaja && lBaja.paginaQuieta && lBaja.pieEnVista
+          && fila390.pos === 'static' && fila390.dir === 'row' && fila390.ancho === 390 && fila390.alto <= 64 && fila390.scrollY > 100 && fila390.seFue && !fila390.desborde,
+        JSON.stringify({ latD3, fila390 }).slice(0, 900));
+
+      /* ---------- d3-enfasis: el total es la cifra más grande de su panel (LB: total > valores de la ficha, banda ≥ valores; PB: totales y Δ total > Δ por escala y cuerpo;
+                    IC: la fila del total > el cuerpo de la tabla); los glifos de estado del ciclo en la pestaña ≥ 12 px ---------- */
+      const px = (sel) => p3.evaluate((s) => [...document.querySelectorAll(s)].filter((e) => e.getBoundingClientRect().height > 0).map((e) => parseFloat(getComputedStyle(e).fontSize)), sel);
+      const enf = {};
+      await abrir3(idM3, 'lb');
+      enf.lb = { total: await px('#panelExp .tot-lectura'), banda: await px('#panelExp .ev-puntaje .banda-chip'), cuerpo: await px('#panelExp .ev-puntaje ~ dl .data-row dd') };
+      enf.glifos = await px('.tabs-grupo-ciclo .exp-tab .tab-cod .st-mini > [aria-hidden="true"]');
+      await abrir3(idM3, 'pb');
+      enf.pb = { totales: await px('#evResultado .res-tot b'), deltaTotal: await px('#evResultado .res-celda[data-delta="total"] .res-delta'), deltaEscala: await px('#evResultado .res-escalas .res-delta'), cuerpo: await px('#evResultado .res-accion, #evResultado .res-rot, #evResultado .hint') };
+      await abrir3(idM3, 'ic');
+      enf.ic = { total: await px('#panelExp .ic-total td'), cuerpo: await px('#panelExp .comp-table tbody tr:not(.ic-total) td') };
+      const mx = (a) => Math.max(...a), mn = (a) => Math.min(...a);
+      check('d3-enfasis', 'los resultados se leen primero (D3, §5.179 c): LB de Martín, el total es más grande que los valores de la ficha de su panel y la banda no es más chica que ellos; PB, los totales B y A y el Δ total son más grandes que el Δ de cada escala y que el cuerpo del «Resultado»; IC, la fila del total es más grande que el cuerpo de la tabla; los glifos de estado del ciclo en las pestañas miden ≥ 12 px',
+        enf.lb.total.length === 1 && enf.lb.cuerpo.length >= 4 && enf.lb.total[0] > mx(enf.lb.cuerpo) && enf.lb.banda.length === 1 && enf.lb.banda[0] >= mx(enf.lb.cuerpo)
+          && enf.pb.totales.length === 2 && enf.pb.deltaTotal.length === 1 && enf.pb.deltaEscala.length === 4 && mn([...enf.pb.totales, ...enf.pb.deltaTotal]) > mx([...enf.pb.deltaEscala, ...enf.pb.cuerpo])
+          && enf.ic.total.length >= 4 && enf.ic.cuerpo.length >= 12 && mn(enf.ic.total) > mx(enf.ic.cuerpo) && enf.glifos.length >= 5 && mn(enf.glifos) >= 12,
+        JSON.stringify(Object.fromEntries(Object.entries(enf).map(([k, v]) => [k, Array.isArray(v) ? [...new Set(v)] : Object.fromEntries(Object.entries(v).map(([a, b]) => [a, [...new Set(b)]]))]))));
+    }
+
     /* ---------- f3-texto: valores de ficha sin negrita, avatar sin signos, Pendientes sin repetir la columna ---------- */
     await abrir3(idM3, 'hce00');
     const ficha = await p3.evaluate(() => { const dd = getComputedStyle(document.querySelector('.data-row dd')), dt = getComputedStyle(document.querySelector('.data-row dt'));
@@ -3274,6 +3373,32 @@ print(json.dumps({"paginas": len(r.pages), "tam": [[round(float(p.mediabox.width
     check('f1-g', 'una alerta cargada desde la edición de HCE-00 (PATCH {alerta}) aparece en la banda en las 13 pestañas, con ⚠, «Alerta clínica» y el texto, en tinta (no ok/warn/bad)',
       sinAntes === 0 && JSON.stringify(Object.keys(bodyAl)) === '["alerta"]' && apiAl === textoAlerta && enTabs.length === 13
         && enTabs.every((t) => t.visible && t.txt.includes('⚠') && t.txt.includes('Alerta clínica') && t.txt.includes(textoAlerta) && t.color === hexF(t.ink) && t.borde === hexF(t.ink)), JSON.stringify(enTabs.slice(0, 3)).slice(0, 400));
+
+    /* ---------- d3-alerta (D3, §5.179 f): la alerta de la banda mide lo que su texto. ESCRIBE: PATCH {alerta} del expediente nuevo de F1 (antes «Epilepsia», después una de 200
+                  caracteres). A 1280×800: la corta mide su texto + relleno + borde (±2 px); la larga se parte dentro de la banda, sin sacar «Editar datos» de la vista ni pasarlo a otro renglón ---------- */
+    await pf.setViewportSize({ width: 1280, height: 800 });
+    const medirAlerta = () => pf.evaluate(() => {
+      const a = document.getElementById('bandaAlerta'), b = document.getElementById('expHead'), ed = b.querySelector('.banda-editar'), id = b.querySelector('.banda-id');
+      const cs = getComputedStyle(a), rg = document.createRange(); rg.selectNodeContents(a);
+      const lineas = [...rg.getClientRects()].map((r) => Math.round(r.top)).filter((t, i, xs) => xs.indexOf(t) === i).length;
+      const extra = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((s, k) => s + parseFloat(cs[k]), 0);
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), re = ed.getBoundingClientRect(), ri = id.getBoundingClientRect();
+      const solapan = (x, y) => x.top < y.bottom && x.bottom > y.top;
+      return { ancho: +ra.width.toFixed(1), texto: +(rg.getBoundingClientRect().width + extra).toFixed(1), lineas, flex: cs.flex, envuelve: getComputedStyle(b).flexWrap,
+        dentro: ra.left >= rb.left && ra.right <= rb.right && ra.top >= rb.top && ra.bottom <= rb.bottom, editarDentro: re.right <= rb.right + 0.5 && re.right <= innerWidth && re.left >= ra.right,
+        unRenglon: solapan(re, ra) && solapan(re, ri) && solapan(ra, ri), txt: a.textContent.replace(/\s+/g, ' ').trim().slice(0, 40) };
+    });
+    const larga = ('Alergia grave a la penicilina y a las cefalosporinas; epilepsia en tratamiento con valproato; ante una crisis, llamar a la familia y a la emergencia móvil. '.repeat(3)).slice(0, 200);
+    const alertaD3 = {};
+    for (const [k, txt] of [['corta', 'Epilepsia'], ['larga', larga]]) {
+      const r = await apiF('PATCH', `/hce/${idNuevoF}`, { alerta: txt });
+      await abrirF1(idNuevoF, 'hce00');
+      alertaD3[k] = { status: r.status, largo: txt.length, ...(await medirAlerta()) };
+    }
+    const { corta: aC, larga: aL } = alertaD3;
+    check('d3-alerta', 'la alerta clínica de la banda mide lo que su texto (D3, §5.179 f): a 1280×800 «Epilepsia» mide su texto más relleno y borde (±2 px), no el ancho libre; una de 200 caracteres se parte en dos o más renglones dentro de la banda y «Editar datos» sigue en el borde derecho, a la vista y en el mismo renglón de la banda',
+      aC.status === 200 && aL.status === 200 && aL.largo === 200 && /^0 1 auto$/.test(aC.flex) && Math.abs(aC.ancho - aC.texto) <= 2 && aC.lineas === 1 && aC.dentro && aC.editarDentro
+        && aL.envuelve === 'nowrap' && aL.lineas >= 2 && aL.dentro && aL.editarDentro && aL.unRenglon, JSON.stringify(alertaD3).slice(0, 700));
 
     /* ---------- f1-h: sin la vista «Intermedia» (ruta, manejador, entrada de navegación, reglas .lik-*) y sin los textos de desarrollo ---------- */
     const archivos = ['index.html', 'css/estilos.css', ...['utils.js', 'api.js', 'adaptadores.js', 'datos.js', 'flujo.js', 'catalogos.js', 'ui-core.js', 'wizard-nna.js', 'expediente.js', 'evaluaciones.js', 'informe-cierre.js', 'hce-doc-org-vf.js', 'panel.js', 'pendientes.js', 'grupos-usuario.js', 'inclusion.js', 'ateneos.js'].map((f) => 'js/' + f)];   // C7: panel.js reemplaza a recordatorios.js

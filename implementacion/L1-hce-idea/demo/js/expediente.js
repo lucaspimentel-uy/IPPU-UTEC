@@ -57,23 +57,33 @@ function _marcasTab(t){
     ? `<span class="st-mini st-fuera"><span aria-hidden="true">!</span><span class="sr-only">, fuera de secuencia: falta firmar ${escHtml(mo.faltantes.map(x => MOD_CORTO[x] || x).join(", "))}</span></span>` : "";
   return `<span class="st-mini st-${est}"><span aria-hidden="true">${e.glifo}</span><span class="sr-only">: ${e.txt}</span></span>${addendaMarcaHtml(nAddendas(t.k), true)}${fuera}`;
 }
-function _tabHtml(t){
-  const sel = EXP.tab === t.k;
+/* D3 (§5.179 b): el próximo paso del ciclo del año abierto = la primera pestaña de «Ciclo anual» (CI → LB → PA → PB → IC) cuyo estado en
+   GET /hce/{id}/flujo (EXP.flujo) no es firmado / registrado. Sólo muestra estados que ya da la API: no se guarda y no bloquea nada (la
+   secuencia sólo avisa, §5.95). Con todo firmado, ninguna pestaña lo lleva; sin flujo (o sin el estado de un módulo), no se marca. */
+function proximoPasoTab(){
+  if(!EXP.flujo) return null;
+  return TABS_EXP.find(t => { if(t.g !== "ciclo") return false; const e = _estadoTab(t); return !!e && e !== "firmado" && e !== "registrado"; }) || null;
+}
+function _tabHtml(t, prox){
+  const sel = EXP.tab === t.k, esProx = !!prox && prox.k === t.k;
   const nombre = escHtml(t.c || t.t);
   const mo = t.mod && EXP.flujo ? EXP.flujo.modulos[t.mod] : null;
-  const titulo = mo && mo.faltantes && mo.faltantes.length && mo.estado !== "sin_iniciar"
-    ? `${t.d} — fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}` : t.d;
-  return `<button type="button" role="tab" class="exp-tab" id="tabExp-${t.k}" data-tab="${t.k}"${t.mod ? ` data-mod="${t.mod}"` : ""}
+  const titulo = (mo && mo.faltantes && mo.faltantes.length && mo.estado !== "sin_iniciar"
+    ? `${t.d} — fuera de secuencia: falta firmar ${mo.faltantes.map(x => MOD_CORTO[x] || x).join(", ")}` : t.d) + (esProx ? " — próximo paso" : "");
+  const marcaProx = esProx ? `<span class="tab-prox"><span aria-hidden="true">→</span><span class="sr-only">, próximo paso</span></span>` : "";
+  return `<button type="button" role="tab" class="exp-tab${esProx ? " tab-proximo" : ""}" id="tabExp-${t.k}" data-tab="${t.k}"${t.mod ? ` data-mod="${t.mod}"` : ""}
     aria-selected="${sel}" aria-controls="panelExp" tabindex="${sel ? 0 : -1}" title="${escHtml(titulo)}" onclick="selTabExp('${t.k}')">
-    <span class="tab-nombre">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}${t.demo ? badgeSoloDemoTab() : ""}</span></button>`;
+    <span class="tab-nombre" data-nombre="${nombre}">${nombre}</span><span class="tab-cod">${t.r}${_marcasTab(t)}${marcaProx}${t.demo ? badgeSoloDemoTab() : ""}</span></button>`;
 }
 /* Las pestañas van en grupos con su rótulo (decorativo: aria-hidden; el año del ciclo va en el nombre de la lista). «Estados del ciclo» (orden y estados; no describe la pestaña abierta: L1, §5.171) va al FINAL de la tira, en el DOM y a la vista
    (F1b, §5.141): el orden de Tab sigue al visual. */
 function tabsExpedienteHtml(){
   const anio = EXP.flujo ? EXP.flujo.anio : "";
+  const prox = proximoPasoTab();
+  const proxRot = prox ? ` · <span class="tabs-prox-rot"><span aria-hidden="true">→</span> Próximo paso: <b>${escHtml(prox.c || prox.t)}</b></span>` : "";
   const grupos = GRUPOS_TABS.map(([g, rot]) => `<div class="tabs-grupo tabs-grupo-${g}" role="presentation">
-      <span class="tabs-grupo-rot" aria-hidden="true">${rot === "Ciclo anual" && anio ? `${rot} ${escHtml(anio)}` : rot}</span>
-      <div class="tabs-grupo-fila" role="presentation">${TABS_EXP.filter(t => t.g === g).map(_tabHtml).join("")}</div></div>`).join("");
+      <span class="tabs-grupo-rot" aria-hidden="true">${rot === "Ciclo anual" && anio ? `${rot} ${escHtml(anio)}` : rot}${g === "ciclo" ? proxRot : ""}</span>
+      <div class="tabs-grupo-fila" role="presentation">${TABS_EXP.filter(t => t.g === g).map(t => _tabHtml(t, prox)).join("")}</div></div>`).join("");
   const estadoFlujo = EXP.flujoError ? estadoErrorInlineHtml("No se pudo cargar el estado de los módulos.", "recargarFlujoExp()") : "";
   return `<div class="tabs-barra">
       <div class="exp-tabs" role="tablist" aria-label="Módulos del expediente${anio ? ` (ciclo anual ${escHtml(anio)})` : ""}" onkeydown="teclaTabExp(event)">${grupos}</div>
